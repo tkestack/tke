@@ -11,7 +11,9 @@ import { router } from '../router';
 import { configStore } from '../stores/RootStore';
 import { ApiKeyContainer } from './apikey/ApiKeyContainer';
 import { RepoContainer } from './repo/RepoContainer';
-import { ChartContainer } from './chart/ChartContainer';
+import { ChartApp } from './chart/ChartApp';
+import { ChartGroupApp } from './chartgroup/ChartGroupApp';
+import { AppCenter } from './AppCenter';
 
 const store = configStore();
 
@@ -36,10 +38,7 @@ export interface RootProps extends RootState {
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 @((router.serve as any)())
 class RegistryApp extends React.Component<RootProps, {}> {
   componentDidMount() {
@@ -49,13 +48,12 @@ class RegistryApp extends React.Component<RootProps, {}> {
   render() {
     let { route } = this.props,
       urlParam = router.resolve(route);
-
-    if (urlParam['sub'] === 'apikey') {
+    if (!urlParam['sub'] || urlParam['sub'] === 'chart' || urlParam['sub'] === 'chartgroup') {
+      return <AppCenter {...this.props} />;
+    } else if (urlParam['sub'] === 'apikey') {
       return <ApiKeyContainer {...this.props} />;
     } else if (urlParam['sub'] === 'repo') {
       return <RepoContainer {...this.props} />;
-    } else if (urlParam['sub'] === 'chart') {
-      return <ChartContainer {...this.props} />;
     } else {
       return <RepoContainer {...this.props} />;
     }

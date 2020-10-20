@@ -54,4 +54,6 @@ export interface CreateIC extends Identifiable {
   gpu?: boolean;
 
   gpuType?: string;
+
+  merticsServer?: boolean;
 }

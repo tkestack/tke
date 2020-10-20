@@ -101,13 +101,19 @@ export class CreateICPanel extends React.Component<RootProps, State> {
         vipType,
         v_networkDevice,
         gpu,
-        gpuType
+        gpuType,
+        merticsServer
       } = createIC;
 
     let hasEditing = computerList.filter(c => c.isEditing).length > 0 || this.state.isAdding;
     let canAdd = !hasEditing;
 
-    let canSave = !hasEditing && v_name.status === 1 && computerList.length !== 0 && v_networkDevice.status !== 2;
+    let canSave =
+      !hasEditing &&
+      v_name.status === 1 &&
+      computerList.length !== 0 &&
+      v_networkDevice.status !== 2 &&
+      k8sVersion !== '';
 
     let showExistVipUnuseTip = false;
     if (vipType === CreateICVipType.existed) {
@@ -239,6 +245,10 @@ export class CreateICPanel extends React.Component<RootProps, State> {
                   </Bubble>
                 </React.Fragment>
               )}
+            </FormPanel.Item>
+
+            <FormPanel.Item label="mertics server" text>
+              <FormPanel.Checkbox value={merticsServer} onChange={actions.createIC.useMerticsServer} />
             </FormPanel.Item>
 
             <FormPanel.Item label="GPU" text>

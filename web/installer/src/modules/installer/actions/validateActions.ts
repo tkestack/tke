@@ -701,14 +701,8 @@ export const validateActions = {
     if (editState.openAudit) {
       result =
         validateActions._validateESUrl(editState.auditEsUrl, 'es').status === 1 &&
-        validateActions._validateESUsername(
-          editState.auditEsUsername,
-          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
-        ).status === 1 &&
-        validateActions._validateESPassword(
-          editState.auditEsPassword,
-          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
-        ).status === 1;
+        validateActions._validateESUsername(editState.auditEsUsername, 'es').status === 1 &&
+        validateActions._validateESPassword(editState.auditEsPassword, 'es').status === 1;
     }
 
     return result;
@@ -717,14 +711,8 @@ export const validateActions = {
   validateStep6(editState: EditState) {
     return dispatch => {
       const v_auditEsUrl = validateActions._validateESUrl(editState.auditEsUrl, 'es'),
-        v_auditEsUsername = validateActions._validateESUsername(
-          editState.auditEsUsername,
-          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
-        ),
-        v_auditEsPassword = validateActions._validateESPassword(
-          editState.auditEsPassword,
-          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
-        );
+        v_auditEsUsername = validateActions._validateESUsername(editState.auditEsUsername, 'es'),
+        v_auditEsPassword = validateActions._validateESPassword(editState.auditEsPassword, 'es');
 
       dispatch(
         installerActions.updateEdit({
@@ -770,8 +758,8 @@ export const validateActions = {
     //验证ES用户名
     if (monitorType === 'es') {
       if (!esUsername) {
-        status = 2;
-        message = 'ES用户名不能为空';
+        status = 1;
+        message = '';
       } else {
         status = 1;
         message = '';
@@ -797,8 +785,8 @@ export const validateActions = {
     //验证ES密码
     if (monitorType === 'es') {
       if (!esPassword) {
-        status = 2;
-        message = 'ES密码不能为空';
+        status = 1;
+        message = '';
       } else {
         status = 1;
         message = '';

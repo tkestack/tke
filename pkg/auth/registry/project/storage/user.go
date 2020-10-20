@@ -213,11 +213,7 @@ func getUserPolicyMap(policyList *auth.ProjectPolicyBindingList) map[string][]st
 	userPolicyMap := make(map[string][]string)
 	for _, policy := range policyList.Items {
 		for _, subj := range policy.Spec.Users {
-			if _, ok := userPolicyMap[subj.ID]; ok {
-				userPolicyMap[subj.ID] = append(userPolicyMap[subj.ID], policy.Spec.PolicyID)
-			} else {
-				userPolicyMap[subj.ID] = []string{policy.Spec.PolicyID}
-			}
+			userPolicyMap[subj.ID] = append(userPolicyMap[subj.ID], policy.Spec.PolicyID)
 		}
 	}
 

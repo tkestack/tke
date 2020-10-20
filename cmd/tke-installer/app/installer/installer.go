@@ -275,6 +275,10 @@ func (t *TKE) initSteps() {
 				Name: "Install tke-registry-api",
 				Func: t.installTKERegistryAPI,
 			},
+			{
+				Name: "Install tke-registry-controller",
+				Func: t.installTKERegistryController,
+			},
 		}...)
 	}
 
@@ -330,6 +334,19 @@ func (t *TKE) initSteps() {
 			{
 				Name: "Install tke-logagent-controller",
 				Func: t.installTKELogagentController,
+			},
+		}...)
+	}
+
+	if t.Para.Config.Application != nil {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Install tke-application-api",
+				Func: t.installTKEApplicationAPI,
+			},
+			{
+				Name: "Install tke-application-controller",
+				Func: t.installTKEApplicationController,
 			},
 		}...)
 	}
@@ -597,7 +614,14 @@ func (t *TKE) setConfigDefault(config *types.Config) {
 	}
 
 	config.Logagent = new(types.Logagent)
+
+	if config.Application != nil {
+		config.Application.RegistryDomain = config.Registry.Domain()
+		config.Application.RegistryUsername = config.Registry.Username()
+		config.Application.RegistryPassword = config.Registry.Password()
+	}
 }
+
 func (t *TKE) setClusterDefault(cluster *platformv1.Cluster, config *types.Config) {
 	if cluster.APIVersion == "" {
 		cluster.APIVersion = platformv1.SchemeGroupVersion.String()
@@ -667,7 +691,7 @@ func (t *TKE) validateConfig(config types.Config) *apierrors.StatusError {
 		return apierrors.NewBadRequest("tke registry or third party registry required")
 	}
 
-	if config.Registry.ThirdPartyRegistry != nil {
+	if config.Registry.ThirdPartyRegistry != nil && config.Registry.ThirdPartyRegistry.Username != "" {
 		cmd := exec.Command("docker", "login",
 			"--username", config.Registry.ThirdPartyRegistry.Username,
 			"--password", string(config.Registry.ThirdPartyRegistry.Password),
@@ -1256,6 +1280,14 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	webhookCrt, err := ioutil.ReadFile(constants.WebhookCrtFile)
+	if err != nil {
+		return err
+	}
+	webhookKey, err := ioutil.ReadFile(constants.WebhookKeyFile)
+	if err != nil {
+		return err
+	}
 
 	if t.Cluster.Spec.Etcd.External != nil {
 		return fmt.Errorf("external etcd specified, but ca key is not provided yet")
@@ -1283,6 +1315,8 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 			"server.key":         string(serverKey),
 			"admin.crt":          string(adminCrt),
 			"admin.key":          string(adminKey),
+			"webhook.crt":        string(webhookCrt),
+			"webhook.key":        string(webhookKey),
 		},
 	}
 
@@ -1304,7 +1338,19 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 }
 
 func (t *TKE) authzWebhookBuiltinEndpoint() string {
-	return utilhttp.MakeEndpoint("https", t.Para.Cluster.Spec.Machines[0].IP,
+	endPointHost := t.Para.Cluster.Spec.Machines[0].IP
+
+	// use VIP in HA situation
+	if t.Para.Cluster.Spec.Features.HA != nil {
+		if t.Para.Cluster.Spec.Features.HA.TKEHA != nil {
+			endPointHost = t.Para.Cluster.Spec.Features.HA.TKEHA.VIP
+		}
+		if t.Para.Cluster.Spec.Features.HA.ThirdPartyHA != nil {
+			endPointHost = t.Para.Cluster.Spec.Features.HA.ThirdPartyHA.VIP
+		}
+	}
+
+	return utilhttp.MakeEndpoint("https", endPointHost,
 		constants.AuthzWebhookNodePort, "/auth/authz")
 }
 
@@ -1341,6 +1387,10 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 		{
 			Name: "provider-config",
 			File: baremetalconstants.ConfDir + "*.yaml",
+		},
+		{
+			Name: "provider-config",
+			File: baremetalconstants.ConfDir + "*.conf",
 		},
 		{
 			Name: "docker",
@@ -1393,31 +1443,17 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 }
 
 func (t *TKE) prepareImages(ctx context.Context) error {
-	pod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "tke-gateway",
-			Namespace: t.namespace,
-		},
-		Spec: corev1.PodSpec{
-			NodeSelector: map[string]string{
-				"node-role.kubernetes.io/master": "",
-			},
-			Containers: []corev1.Container{
-				{
-					Name:  "tke-gateway",
-					Image: images.Get().TKEGateway.FullName(),
-				},
-			},
-		},
+	for _, machine := range t.Cluster.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+		cmdString := fmt.Sprintf("docker pull %s", images.Get().TKEGateway.FullName())
+		_, err = machineSSH.CombinedOutput(cmdString)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
 	}
-	ctx, cancel := context.WithTimeout(ctx, time.Minute)
-	defer cancel()
-
-	err := apiclient.PullImageWithPod(ctx, t.globalClient, pod)
-	if err != nil {
-		return fmt.Errorf("prepare image error: %w", err)
-	}
-
 	return nil
 }
 
@@ -1435,15 +1471,16 @@ func (t *TKE) stopLocalRegistry(ctx context.Context) error {
 
 func (t *TKE) installTKEGateway(ctx context.Context) error {
 	option := map[string]interface{}{
-		"Image":            images.Get().TKEGateway.FullName(),
-		"OIDCClientSecret": t.readOrGenerateString(constants.OIDCClientSecretFile),
-		"SelfSigned":       t.Para.Config.Gateway.Cert.SelfSignedCert != nil,
-		"EnableRegistry":   t.Para.Config.Registry.TKERegistry != nil,
-		"EnableAuth":       t.Para.Config.Auth.TKEAuth != nil,
-		"EnableMonitor":    t.Para.Config.Monitor != nil,
-		"EnableBusiness":   t.businessEnabled(),
-		"EnableLogagent":   t.Para.Config.Logagent != nil,
-		"EnableAudit":      t.auditEnabled(),
+		"Image":             images.Get().TKEGateway.FullName(),
+		"OIDCClientSecret":  t.readOrGenerateString(constants.OIDCClientSecretFile),
+		"SelfSigned":        t.Para.Config.Gateway.Cert.SelfSignedCert != nil,
+		"EnableRegistry":    t.Para.Config.Registry.TKERegistry != nil,
+		"EnableAuth":        t.Para.Config.Auth.TKEAuth != nil,
+		"EnableMonitor":     t.Para.Config.Monitor != nil,
+		"EnableBusiness":    t.businessEnabled(),
+		"EnableLogagent":    t.Para.Config.Logagent != nil,
+		"EnableAudit":       t.auditEnabled(),
+		"EnableApplication": t.Para.Config.Application != nil,
 	}
 	if t.Para.Config.Registry.TKERegistry != nil {
 		option["RegistryDomainSuffix"] = t.Para.Config.Registry.TKERegistry.Domain
@@ -1748,10 +1785,16 @@ func (t *TKE) installTKEBusinessController(ctx context.Context) error {
 }
 
 func (t *TKE) installInfluxDB(ctx context.Context) error {
-	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/influxdb/*.yaml",
+
+	node, err := apiclient.GetNodeByMachineIP(ctx, t.globalClient, t.servers[0])
+	if err != nil {
+		return err
+	}
+
+	err = apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/influxdb/*.yaml",
 		map[string]interface{}{
 			"Image":    images.Get().InfluxDB.FullName(),
-			"NodeName": t.servers[0],
+			"NodeName": node.Name,
 		})
 	if err != nil {
 		return err
@@ -1917,27 +1960,118 @@ func (t *TKE) installTKENotifyController(ctx context.Context) error {
 }
 
 func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
+
+	node, err := apiclient.GetNodeByMachineIP(ctx, t.globalClient, t.servers[0])
+	if err != nil {
+		return err
+	}
+
 	options := map[string]interface{}{
-		"Image":         images.Get().TKERegistryAPI.FullName(),
-		"NodeName":      t.servers[0],
-		"AdminUsername": t.Para.Config.Registry.TKERegistry.Username,
-		"AdminPassword": string(t.Para.Config.Registry.TKERegistry.Password),
-		"EnableAuth":    t.Para.Config.Auth.TKEAuth != nil,
-		"DomainSuffix":  t.Para.Config.Registry.TKERegistry.Domain,
-		"EnableAudit":   t.auditEnabled(),
+		"Replicas":       t.Config.Replicas,
+		"Image":          images.Get().TKERegistryAPI.FullName(),
+		"NodeName":       node.Name,
+		"AdminUsername":  t.Para.Config.Registry.TKERegistry.Username,
+		"AdminPassword":  string(t.Para.Config.Registry.TKERegistry.Password),
+		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
+		"EnableBusiness": t.businessEnabled(),
+		"DomainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
+		"EnableAudit":    t.auditEnabled(),
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
 		options["OIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
 		options["UseOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
 	}
-	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-registry-api/*.yaml", options)
+	err = apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-registry-api/*.yaml", options)
 	if err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
 		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-registry-api")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+func (t *TKE) installTKERegistryController(ctx context.Context) error {
+
+	node, err := apiclient.GetNodeByMachineIP(ctx, t.globalClient, t.servers[0])
+	if err != nil {
+		return err
+	}
+
+	err = apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-registry-controller/*.yaml",
+		map[string]interface{}{
+			"Replicas":       t.Config.Replicas,
+			"Image":          images.Get().TKERegistryController.FullName(),
+			"NodeName":       node.Name,
+			"AdminUsername":  t.Para.Config.Registry.TKERegistry.Username,
+			"AdminPassword":  string(t.Para.Config.Registry.TKERegistry.Password),
+			"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
+			"EnableBusiness": t.businessEnabled(),
+			"DomainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
+		})
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-registry-controller")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+func (t *TKE) installTKEApplicationAPI(ctx context.Context) error {
+	options := map[string]interface{}{
+		"Replicas":              t.Config.Replicas,
+		"Image":                 images.Get().TKEApplicationAPI.FullName(),
+		"EnableAuth":            t.Para.Config.Auth.TKEAuth != nil,
+		"EnableRegistry":        t.Para.Config.Registry.TKERegistry != nil,
+		"EnableAudit":           t.auditEnabled(),
+		"RegistryAdminUsername": t.Para.Config.Application.RegistryUsername,
+		"RegistryAdminPassword": string(t.Para.Config.Application.RegistryPassword),
+		"RegistryDomainSuffix":  t.Para.Config.Application.RegistryDomain,
+	}
+	if t.Para.Config.Auth.OIDCAuth != nil {
+		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
+		options["OIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
+		options["UseOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
+	}
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-application-api/*.yaml", options)
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-application-api")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+func (t *TKE) installTKEApplicationController(ctx context.Context) error {
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-application-controller/*.yaml",
+		map[string]interface{}{
+			"Replicas":              t.Config.Replicas,
+			"Image":                 images.Get().TKEApplicationController.FullName(),
+			"RegistryAdminUsername": t.Para.Config.Application.RegistryUsername,
+			"RegistryAdminPassword": string(t.Para.Config.Application.RegistryPassword),
+			"RegistryDomainSuffix":  t.Para.Config.Application.RegistryDomain,
+		})
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-application-controller")
 		if err != nil {
 			return false, nil
 		}
@@ -2010,6 +2144,9 @@ func (t *TKE) registerAPI(ctx context.Context) error {
 	}
 	if t.Para.Config.Registry.TKERegistry != nil {
 		svcs = append(svcs, "tke-registry-api")
+	}
+	if t.Para.Config.Application != nil {
+		svcs = append(svcs, "tke-application-api")
 	}
 	for _, one := range svcs {
 		name := strings.TrimSuffix(one[4:], "-api")

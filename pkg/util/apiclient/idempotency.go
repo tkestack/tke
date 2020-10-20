@@ -23,7 +23,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -36,14 +38,19 @@ import (
 	rbac "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+	utilsnet "k8s.io/utils/net"
 	controllerutils "tkestack.io/tke/pkg/controller"
 )
+
+// PlatformLabel represents the type of platform.tkestack.io related label.
+type PlatformLabel string
 
 const (
 	// APICallRetryInterval defines how long should wait before retrying a failed API operation
@@ -54,6 +61,12 @@ const (
 	UpdateNodeTimeout = 2 * time.Minute
 	// LabelHostname specifies the lable in node.
 	LabelHostname = "kubernetes.io/hostname"
+	// LabelMachineIPV4 specifies the lable in node.
+	LabelMachineIPV4 PlatformLabel = "platform.tkestack.io/machine-ip"
+	// LabelMachineIPV6Head specifies the lable in node.
+	LabelMachineIPV6Head PlatformLabel = "platform.tkestack.io/machine-ipv6-head"
+	// LabelMachineIPV6Tail specifies the lable in node.
+	LabelMachineIPV6Tail PlatformLabel = "platform.tkestack.io/machine-ipv6-tail"
 )
 
 // CreateOrUpdateConfigMap creates a ConfigMap if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
@@ -413,7 +426,7 @@ func CreateOrUpdateAPIService(ctx context.Context, client kubeaggregatorclientse
 	return nil
 }
 
-// CreateOrUpdateConfigMapFromFile like kubectl create configmap --from-file
+// CreateOrUpdateConfigMapFromFile like kubectl apply configmap --from-file
 func CreateOrUpdateConfigMapFromFile(ctx context.Context, client clientset.Interface, cm *corev1.ConfigMap, pattern string) error {
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
@@ -421,6 +434,14 @@ func CreateOrUpdateConfigMapFromFile(ctx context.Context, client clientset.Inter
 	}
 	if len(matches) == 0 {
 		return errors.New("no matches found")
+	}
+
+	existCM, err := client.CoreV1().ConfigMaps(cm.Namespace).Get(ctx, cm.Name, metav1.GetOptions{})
+	if err == nil {
+		cm.Data = existCM.Data
+	}
+	if err != nil && !apierrors.IsNotFound(err) {
+		return err
 	}
 
 	if cm.Data == nil {
@@ -621,4 +642,37 @@ func RemoveNodeTaints(ctx context.Context, client clientset.Interface, nodeName 
 		}
 		n.Spec.Taints = newTaints
 	})
+}
+
+// GetNodeByMachineIP get node by machine ip.
+func GetNodeByMachineIP(ctx context.Context, client clientset.Interface, ip string) (*corev1.Node, error) {
+	// try to get node by name = machine ip
+	node, err := client.CoreV1().Nodes().Get(ctx, ip, metav1.GetOptions{})
+	if !apierrors.IsNotFound(err) {
+		return node, err
+	}
+	labelSelector := fields.OneTermEqualSelector(string(LabelMachineIPV4), ip).String()
+	if utilsnet.IsIPv6String(ip) {
+		labelSelector = GetNodeIPV6Label(ip)
+	}
+	nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return &corev1.Node{}, err
+	}
+	if len(nodes.Items) == 0 {
+		return &corev1.Node{}, apierrors.NewNotFound(corev1.Resource("Node"), labelSelector)
+	}
+	return &nodes.Items[0], nil
+}
+
+// GetNodeIPV6Label split ip v6 address to head and tail ensure lable value
+// less than 63 character, since k8s lable doesn't support ":" so that replace
+// to "a", then return the consolidated label string
+// Todo: add more check and corner case handle here later
+func GetNodeIPV6Label(ip string) string {
+	midLength := len(ip) / 2
+	splitLength := int(math.Ceil(float64(midLength)))
+	lableipv6Head := fmt.Sprintf("%s=%s", LabelMachineIPV6Head, strings.Replace(ip[0:splitLength], ":", "a", -1))
+	lableipv6Tail := fmt.Sprintf("%s=%s", LabelMachineIPV6Tail, strings.Replace(ip[splitLength:], ":", "a", -1))
+	return lableipv6Head + "," + lableipv6Tail
 }

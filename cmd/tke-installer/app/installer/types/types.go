@@ -34,16 +34,17 @@ type CreateClusterPara struct {
 
 // Config is the installer config
 type Config struct {
-	Basic     *Basic    `json:"basic"`
-	Auth      Auth      `json:"auth"`
-	Registry  Registry  `json:"registry"`
-	Business  *Business `json:"business,omitempty"`
-	Monitor   *Monitor  `json:"monitor,omitempty"`
-	Logagent  *Logagent `json:"logagent,omitempty"`
-	HA        *HA       `json:"ha,omitempty"`
-	Gateway   *Gateway  `json:"gateway,omitempty"`
-	Audit     *Audit    `json:"audit,omitempty"`
-	SkipSteps []string  `json:"skipSteps,omitempty"`
+	Basic       *Basic       `json:"basic"`
+	Auth        Auth         `json:"auth"`
+	Registry    Registry     `json:"registry"`
+	Business    *Business    `json:"business,omitempty"`
+	Monitor     *Monitor     `json:"monitor,omitempty"`
+	Logagent    *Logagent    `json:"logagent,omitempty"`
+	HA          *HA          `json:"ha,omitempty"`
+	Gateway     *Gateway     `json:"gateway,omitempty"`
+	Audit       *Audit       `json:"audit,omitempty"`
+	Application *Application `json:"application,omitempty"`
+	SkipSteps   []string     `json:"skipSteps,omitempty"`
 }
 
 type Basic struct {
@@ -99,6 +100,20 @@ func (r *Registry) Namespace() string {
 	return r.TKERegistry.Namespace
 }
 
+func (r *Registry) Username() string {
+	if r.ThirdPartyRegistry != nil {
+		return r.ThirdPartyRegistry.Username
+	}
+	return r.TKERegistry.Username
+}
+
+func (r *Registry) Password() []byte {
+	if r.ThirdPartyRegistry != nil {
+		return r.ThirdPartyRegistry.Password
+	}
+	return r.TKERegistry.Password
+}
+
 func (r *Registry) Prefix() string {
 	return path.Join(r.Domain(), r.Namespace())
 }
@@ -117,11 +132,17 @@ type TKERegistry struct {
 type ThirdPartyRegistry struct {
 	Domain    string `json:"domain" validate:"required"`
 	Namespace string `json:"namespace" validate:"required"`
-	Username  string `json:"username" validate:"required"`
-	Password  []byte `json:"password" validate:"required"`
+	Username  string `json:"username"`
+	Password  []byte `json:"password"`
 }
 
 type Business struct {
+}
+
+type Application struct {
+	RegistryDomain   string `json:"registryDomain" validate:"hostname_rfc1123"`
+	RegistryUsername string `json:"registryUsername"`
+	RegistryPassword []byte `json:"registryPassword"`
 }
 
 type Monitor struct {

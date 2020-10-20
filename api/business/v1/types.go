@@ -127,7 +127,7 @@ const (
 	// ImageNamespaceFinalize is an internal finalizer values to ImageNamespace.
 	ImageNamespaceFinalize FinalizerName = "imagenamespace"
 	// ChartGroupFinalize is an internal finalizer values to ChartGroup.
-	ChartGroupFinalize FinalizerName = "imagenamespace"
+	ChartGroupFinalize FinalizerName = "chartgroup"
 )
 
 // ResourceList is a set of (resource name, quantity) pairs.

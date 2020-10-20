@@ -1,70 +1,82 @@
-## GPU-Manager说明
+# GPU-Manager
 
-### 组件介绍
+## GPU-Manager 介绍
 
-GPU Manager提供一个All-in-One的GPU管理器, 基于Kubernets DevicePlugin插件系统实现, 该管理器提供了分配并共享GPU, GPU指标查询, 容器运行前的GPU相关设备准备等功能, 支持用户在Kubernetes集群中使用GPU设备.
+GPU Manager 提供一个 All-in-One 的 GPU 管理器, 基于 Kubernets Device Plugin 插件系统实现，该管理器提供了分配并共享 GPU，GPU 指标查询，容器运行前的 GPU 相关设备准备等功能，支持用户在 Kubernetes 集群中使用 GPU 设备。
 
-管理器包含如下功能:
+GPU-Manager 包含如下功能:
 
-- **拓扑分配**：提供基于GPU拓扑分配功能, 当用户分配超过1张GPU卡的的应用, 可以选择拓扑连接最快的方式分配GPU设备
+- **拓扑分配**：提供基于 GPU 拓扑分配功能，当用户分配超过1张 GPU 卡的应用，可以选择拓扑连接最快的方式分配GPU设备
 
-- **GPU共享**：允许用户提交小于1张卡资源的的任务, 并提供QoS保证
+- **GPU 共享**：允许用户提交小于1张卡资源的的任务，并提供 QoS 保证
 
-- **应用GPU指标的查询**：用户可以访问主机的端口(默认为5678)的/metrics路径,可以为Prometheus提供GPU指标的收集功能, /usage路径可以提供可读性的容器状况查询
+- **[应用 GPU 指标的查询](#通过后台手工查询)**：用户可以访问主机的端口(默认为5678)的`/metrics` 路径，可以为 Prometheus 提供 GPU 指标的收集功能，`/usage` 路径可以提供可读性的容器状况查询
 
-### 部署在集群内kubernetes对象
+### GPU-Manager 使用场景
 
-在集群内部署GPU-Manager Add-on , 将在集群内部署以下kubernetes对象
+在 Kubernetes 集群中运行 GPU 应用时，可以解决 AI 训练等场景中申请独立卡造成资源浪费的情况，让计算资源得到充分利用。
 
-| kubernetes对象名称        | 类型         | 建议预留资源 | 所属Namespaces |
-| --------------------- | ---------- | ------ | ------------ |
-| gpu-manager-daemonset | DaemonSet  | 每节点1核CPU, 1Gi内存 | kube-system  |
-| gpu-quota-admission   | Deployment | 1核CPU, 1Gi内存      | kube-system  |
+### GPU-Manager 限制条件
 
-## GPU-Manager使用场景
+1. 该组件基于 Kubernetes DevicePlugin 实现，只能运行在支持  DevicePlugin 的 kubernetes版本（Kubernetes 1.10 之上的版本）
 
-在Kubernetes集群中运行GPU应用时, 可以解决AI训练等场景中申请独立卡造成资源浪费的情况，让计算资源得到充分利用。
+2. 使用 GPU-Manager 要求集群内包含 GPU 机型节点
 
-## GPU-Manager限制条件
+3. TKEStack 的 GPU-Manager 将每张 GPU 卡视为一个有100个单位的资源
 
-1. 该组件基于Kubernetes DevicePlugin实现, 只能运行在支持DevicePlugin的TKE的1.10kubernetes版本之上。
+   > 特别注意：
+   >
+   > 1. 当前仅支持 0-1 的小数张卡，如 20、35、50；以及正整数张卡，如200、500等；不支持类似150、250的资源请求
+   > 2. 显存资源是以 256MiB 为最小的一个单位的分配显存
 
-2. 每张GPU卡一共有100个单位的资源, 仅支持0-1的小数卡,以及1的倍数的整数卡设置. 显存资源是以256MiB为最小的一个单位的分配显存。
+### 部署在集群内 kubernetes 对象
 
-3. 使用GPU-Manager 要求集群内包含GPU机型节点。
+在集群内部署 GPU-Manager，将在集群内部署以下 kubernetes 对象：
 
-## GPU-Manager使用方法
+| kubernetes 对象名称   | 类型       | 建议预留资源           | 所属 Namespaces |
+| --------------------- | ---------- | ---------------------- | --------------- |
+| gpu-manager-daemonset | DaemonSet  | 每节点1核 CPU, 1Gi内存 | kube-system     |
+| gpu-quota-admission   | Deployment | 1核 CPU, 1Gi内存       | kube-system     |
 
-### 安装
+## GPU-Manager 使用方法
 
-1. 登录[容器服务控制台](https://console.qcloud.com/tke2)。
+### 安装 GPU-Manager
 
-2. 在左侧导航栏中，单击【扩展组件】，进入扩展组件管理页面。
+集群部署阶段选择 vGPU，平台会为集群部署 GPU-Manager ，如下图新建独立集群所示，Global 集群的也是如此安装。
 
-3. 选择需要安装的GPU-Manager集群，点击【新建】，如图：
-   
-   ![](https://main.qcloudimg.com/raw/e8622930e549d8ec457c51104222e514.png)
+![image-20201001152250353](../../../docs/images/image-20201001152250353.png)
 
-### 创建细粒度的GPU工作负载
+### 在节点安装 GPU 驱动
 
-#### TKE控制台创建
+集群部署阶段添加 GPU 节点时有勾选 GPU 选项，平台会自动为节点安装 GPU 驱动，如下图所示：
 
-1. 登录[容器服务控制台](https://console.qcloud.com/tke2)。
+> 注意：如果集群部署阶段节点没有勾选 GPU，需要自行在有 GPU 的节点上安装 GPU 驱动
 
-2. 在左侧导航栏中，单击【集群】，选择需要创建GPU应用的集群，创建工作负载。
+![image-20201001152802300](../../../docs/images/image-20201001152802300.png)
 
-3. 创建工作负载设置GPU限制，如图：
+### 工作负载使用 GPU
 
-4. ![](https://main.qcloudimg.com/raw/c06872ddc0fafbf92345c0d9f26e4ecd.png)
+#### 通过控制台使用
 
-#### yaml创建
+在安装了 GPU-Manager 的集群中，创建工作负载时可以设置 GPU 限制，如下图所示：
 
-提交的时候需要在yaml为容器设置GPU的的使用资源, 核资源需要在resource上填写`tencent.com/vcuda-core`, 显存资源需要在resource上填写`tencent.com/vcuda-memory`,
+> 注意：
+>
+> 1. 卡数只能填写 0.1 到 1 之间的两位小数或者是所有自然数，例如：0、0.3、0.56、0.7、0.9、1、6、34，不支持 1.5、2.7、3.54
+> 2. 显存只能填写自然数 n，负载使用的显存为 n*256MiB
 
-- 使用1张卡的P4设备
+![image-20201001153047837](../../../docs/images/image-20201001153047837.png)
+
+#### 通过 YAML 使用
+
+如果使用 YAML 创建使用 GPU 的工作负载，提交的时候需要在 YAML 为容器设置 GPU 的使用资源。
+
+* CPU 资源需要在 resource 上填写`tencent.com/vcuda-core` 
+* 显存资源需要在 resource 上填写`tencent.com/vcuda-memory`
+
+例1：使用1张卡的 Pod
 
 ```
-
 apiVersion: v1
 
 kind: Pod
@@ -73,19 +85,20 @@ kind: Pod
 
 spec:
 
-containers:
+  containers:
 
-- name: gpu
+    - name: gpu
 
-resources:
-
-tencent.com/vcuda-core: 100
+      resources:
+        limits: 
+          tencent.com/vcuda-core: 100
+        requests:
+          tencent.com/vcuda-core: 100
 ```
 
-- 使用0.3张卡, 5GiB显存的应用
+例2，使用 0.3 张卡、5GiB 显存的应用（5GiB = 20*256MB）
 
 ```
-
 apiVersion: v1
 
 kind: Pod
@@ -94,13 +107,38 @@ kind: Pod
 
 spec:
 
-containers:
+  containers:
 
-- name: gpu
+  - name: gpu
 
-resources:
-
-tencent.com/vcuda-core: 30
-
-tencent.com/vcuda-memory: 20
+    resources:
+      limits:
+        tencent.com/vcuda-core: 30
+        tencent.com/vcuda-memory: 20
+      requests:
+        tencent.com/vcuda-core: 30
+        tencent.com/vcuda-memory: 20
 ```
+
+## GPU 监控数据查询
+
+### 通过控制台查询
+
+> 前提：在集群的[【基本信息】](../../../docs/guide/zh-CN/products/platform/cluster.md#基本信息)页里打开“监控告警”
+
+可以通过集群多个页面的监控按钮里查看到 GPU 的相关监控数据，下图以 集群管理 页对集群的监控为例：
+
+![image-20201009103335039](../../../docs/images/image-20201009103335039.png)
+
+### 通过后台手动查询
+
+手动获取 GPU 监控数据方式（需要先安装[socat](http://www.dest-unreach.org/socat/)）：
+
+```
+kubectl port-forward svc/gpu-manager-metric -n kube-system 5678:5678 &
+curl http://127.0.0.1:5678/metric
+```
+
+结果示例：
+
+![img](../../../docs/images/gpu-metric-result.png)

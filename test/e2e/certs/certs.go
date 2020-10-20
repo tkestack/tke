@@ -90,6 +90,14 @@ func (c *TkeCert) CreateCertMap(ctx context.Context, client kubernetes.Interface
 	if err != nil {
 		return err
 	}
+	webhookCert, err := files.ReadFileWithDir(c.tmpDir, constants.WebhookCrtFileBaseName)
+	if err != nil {
+		return err
+	}
+	webhookKey, err := files.ReadFileWithDir(c.tmpDir, constants.WebhookKeyFileBaseName)
+	if err != nil {
+		return err
+	}
 
 	cm := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -106,6 +114,8 @@ func (c *TkeCert) CreateCertMap(ctx context.Context, client kubernetes.Interface
 			"server.key":  string(serverKey),
 			"admin.crt":   string(adminCert),
 			"admin.key":   string(adminKey),
+			"webhook.crt": string(webhookCert),
+			"webhook.key": string(webhookKey),
 		},
 	}
 
@@ -117,8 +127,7 @@ func (c *TkeCert) CreateCertMap(ctx context.Context, client kubernetes.Interface
 
 func (c *TkeCert) WriteKubeConfig(host string, port int, namespace string) error {
 	fmt.Println("write kube config")
-	addr := fmt.Sprintf("%s:%d", host, port)
-
+	addr := net.JoinHostPort(host, fmt.Sprintf("%d", port))
 	fmt.Println("kubeconfig addr:", addr)
 
 	caCert, err := files.ReadFileWithDir(c.tmpDir, constants.CACrtFileBaseName)

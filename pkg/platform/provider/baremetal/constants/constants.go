@@ -29,11 +29,13 @@ const (
 	AuthzWebhookConfigName = "tke-authz-webhook.yaml"
 	OIDCCACertName         = "oidc-ca.crt"
 	AdminCertName          = "admin.crt"
-	AdminkeyName           = "admin.key"
+	AdminKeyName           = "admin.key"
+	WebhookCertName        = "webhook.crt"
+	WebhookKeyName         = "webhook.key"
 	// Kubernetes Config
 	KubernetesDir                       = "/etc/kubernetes/"
-	KuberentesSchedulerPolicyConfigFile = KubernetesDir + "scheduler-policy-config.json"
-	KuberentesAuditWebhookConfigFile    = KubernetesDir + "audit-api-client-config.yaml"
+	KubernetesSchedulerPolicyConfigFile = KubernetesDir + "scheduler-policy-config.json"
+	KubernetesAuditWebhookConfigFile    = KubernetesDir + "audit-api-client-config.yaml"
 	TokenFile                           = KubernetesDir + "known_tokens.csv"
 	KubernetesAuditPolicyConfigFile     = KubernetesDir + AuditPolicyConfigName
 	KubernetesAuthzWebhookConfigFile    = KubernetesDir + AuthzWebhookConfigName
@@ -56,7 +58,7 @@ const (
 
 	// AppCert
 	AppAdminCertFile = AppCertDir + AdminCertName
-	AppAdminKeyFile  = AppCertDir + AdminkeyName
+	AppAdminKeyFile  = AppCertDir + AdminKeyName
 
 	// ETC
 	EtcdDataDir          = "/var/lib/etcd"
@@ -66,8 +68,8 @@ const (
 	// PKI
 	CertificatesDir = KubernetesDir + "pki/"
 	OIDCCACertFile  = CertificatesDir + OIDCCACertName
-	AdminCertFile   = CertificatesDir + AdminCertName
-	AdminKeyFile    = CertificatesDir + AdminkeyName
+	WebhookCertFile = CertificatesDir + WebhookCertName
+	WebhookKeyFile  = CertificatesDir + WebhookKeyName
 
 	// CACertName defines certificate name
 	CACertName = CertificatesDir + "ca.crt"

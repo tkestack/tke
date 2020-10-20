@@ -19,7 +19,7 @@ const TempReducer = combineReducers({
 
   maxNodePodNum: reduceToPayload(ActionType.IC_MaxNodePodNum, 256),
 
-  k8sVersion: reduceToPayload(ActionType.IC_K8SVersion, '1.16.6'),
+  k8sVersion: reduceToPayload(ActionType.IC_K8SVersion, ''),
 
   k8sVersionList: reduceToPayload(ActionType.IC_FetchK8SVersion, []),
 
@@ -37,6 +37,8 @@ const TempReducer = combineReducers({
   vipType: reduceToPayload(ActionType.v_IC_Vip, CreateICVipType.unuse),
 
   gpu: reduceToPayload(ActionType.v_IC_Gpu, false),
+
+  merticsServer: reduceToPayload(ActionType.v_IC_Mertics_server, true),
 
   gpuType: reduceToPayload(ActionType.v_IC_GpuType, GPUTYPE.PGPU)
 });

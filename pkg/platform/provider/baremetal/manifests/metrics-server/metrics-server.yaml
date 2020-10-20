@@ -162,8 +162,13 @@ spec:
     spec:
       priorityClassName: system-cluster-critical
       serviceAccountName: metrics-server
-      nodeSelector:
-        kubernetes.io/os: linux
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/master
+                    operator: Exists
       containers:
       - name: metrics-server
         image: {{ .MetricsServerImage }}
@@ -233,3 +238,6 @@ spec:
       tolerations:
         - key: "CriticalAddonsOnly"
           operator: "Exists"
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/master
+          operator: Exists

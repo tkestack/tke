@@ -59,6 +59,13 @@ function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] 
 }
 
 export async function createCluster(edits: Array<EditState>) {
+  // 先把host用分号分割的展平为多个
+
+  edits[0].machines = edits[0].machines.reduce(
+    (all, { host, ...restMachine }) => all.concat(host.split(';').map(ip => ({ host: ip, ...restMachine }))),
+    []
+  );
+
   try {
     // 先校验机器连通性
     let requests = edits[0].machines.map(m => {
@@ -78,6 +85,7 @@ export async function createCluster(edits: Array<EditState>) {
           }
           params['privateKey'] = Base64.encode(m.cert);
         }
+
         let rsp = await axios.post(`http://${host}/api/ssh`, params);
         return rsp;
       };
@@ -159,7 +167,9 @@ export async function createCluster(edits: Array<EditState>) {
           kind: 'Cluster',
           spec: {
             networkDevice: edits[0].networkDevice,
-            features: {},
+            features: {
+              enableMetricsServer: true
+            },
             dockerExtraArgs: edits[0].dockerExtraArgs.reduce((prev, next) => {
               if (next.key) {
                 return Object.assign({}, prev, { [next.key]: next.value });
@@ -214,9 +224,7 @@ export async function createCluster(edits: Array<EditState>) {
 
       // GPU设置
       if (edits[0].gpuType !== 'none') {
-        params.cluster.spec['features'] = {
-          gpuType: edits[0].gpuType
-        };
+        params.cluster.spec.features['gpuType'] = edits[0].gpuType;
       }
 
       // 认证模块设置
@@ -252,6 +260,11 @@ export async function createCluster(edits: Array<EditState>) {
             password: Base64.encode(edits[0].repoPassword)
           }
         };
+      }
+
+      // 应用商店
+      if (edits[0].application) {
+        params.config['application'] = {};
       }
 
       // 业务模块设置

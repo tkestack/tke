@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { FormPanel } from '@tencent/ff-component';
 import { bindActionCreators, insertCSS } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Bubble, Checkbox, FormItem, Form } from '@tencent/tea-component';
+import { Bubble, Checkbox, FormItem, Form, Tooltip, Select } from '@tencent/tea-component';
 
 import { LinkButton, SelectList } from '../../common/components';
 import { cloneDeep } from '../../common/utils';
@@ -15,6 +15,7 @@ import { ContainerLogs, Resource } from '../models';
 import { isCanAddContainerLog } from './EditOriginContainerPanel';
 import { ContainerItemProps } from './ListOriginContainerItemPanel';
 import { clusterActions } from '@src/modules/logStash/actions/clusterActions';
+import { PlatformContext, IPlatformContext, PlatformTypeEnum } from '@/Wrapper';
 
 insertCSS(
   'EditOriginContainerItemPanel',
@@ -49,11 +50,11 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditOriginContainerItemPanel extends React.Component<ContainerItemProps, any> {
+  static contextType = PlatformContext;
+  context: IPlatformContext;
+
   render() {
     let { actions, logStashEdit, cKey, namespaceList } = this.props,
       { containerLogs } = logStashEdit;
@@ -69,6 +70,46 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
 
     //当前可以进行下拉选择的namespace列表，需要剔除已经选择过的
     let optinalNameSpaceList = this._getOptionalNameSpaceList();
+
+    let selectProps = {};
+
+    if (this.context.type === PlatformTypeEnum.Business) {
+      const groups = namespaceList.data.records.reduce((gr, { cluster }) => {
+        const value = `${cluster.spec.displayName}(${cluster.metadata.name})`;
+        return { ...gr, [cluster.metadata.name]: <Tooltip title={value}>{value}</Tooltip> };
+      }, {});
+
+      let options = namespaceList.data.recordCount
+        ? namespaceList.data.records.map(item => {
+            const text = `${item.cluster.spec.displayName}-${item.namespace}`;
+
+            return {
+              value: item.namespaceValue,
+              text: <Tooltip title={text}>{text}</Tooltip>,
+              groupKey: item.cluster.metadata.name,
+              realText: text
+            };
+          })
+        : [{ value: '', text: t('无可用命名空间'), disabled: true }];
+
+      selectProps = {
+        groups,
+        options,
+        filter: (inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)
+      };
+    } else {
+      let options = namespaceList.data.recordCount
+        ? namespaceList.data.records.map((item, index) => ({
+            value: item.namespaceValue,
+            text: item.cluster.metadata.name
+          }))
+        : [{ value: '', text: t('无可用命名空间'), disabled: true }];
+
+      selectProps = {
+        options
+      };
+    }
+
     return (
       <FormPanel fixed isNeedCard={false} style={{ minWidth: 600, padding: '30px' }}>
         <div className="run-docker-box" style={containerLog.collectorWay === 'workload' ? { minWidth: '750px' } : {}}>
@@ -90,7 +131,28 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
                             'is-error': containerLog.v_namespaceSelection.status === 2
                           })}
                         >
-                          <SelectList
+                          <Select
+                            {...selectProps}
+                            type="simulate"
+                            searchable
+                            appearence="button"
+                            size="s"
+                            style={{ width: '130px', marginRight: '5px' }}
+                            value={containerLog.namespaceSelection}
+                            onChange={value => {
+                              actions.editLogStash.selectContainerLogNamespace(value, containerLogIndex);
+                              actions.namespace.selectNamespace(value);
+                              // 兼容业务侧的处理
+                              if (window.location.href.includes('tkestack-project')) {
+                                let namespaceFound = namespaceList.data.records.find(
+                                  item => item.namespaceValue === value
+                                );
+                                actions.cluster.selectClusterFromEditNamespace(namespaceFound.cluster);
+                              }
+                            }}
+                            placeholder={namespaceList.data.recordCount ? t('请选择命名空间') : t('无可用命名空间')}
+                          />
+                          {/* <SelectList
                             value={containerLog.namespaceSelection}
                             recordData={optinalNameSpaceList}
                             valueField="namespaceValue"
@@ -101,7 +163,9 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
                               actions.namespace.selectNamespace(value);
                               // 兼容业务侧的处理
                               if (window.location.href.includes('tkestack-project')) {
-                                let namespaceFound = namespaceList.data.records.find(item => item.namespaceValue === value);
+                                let namespaceFound = namespaceList.data.records.find(
+                                  item => item.namespaceValue === value
+                                );
                                 actions.cluster.selectClusterFromEditNamespace(namespaceFound.cluster);
                               }
                             }}
@@ -110,7 +174,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
                             style={{
                               display: 'inline-block'
                             }}
-                          />
+                          /> */}
                         </div>
                       </Bubble>
                     )}

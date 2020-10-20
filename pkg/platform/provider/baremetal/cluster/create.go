@@ -41,6 +41,7 @@ import (
 	"k8s.io/client-go/rest"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+	utilsnet "k8s.io/utils/net"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
@@ -59,6 +60,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/thirdpartyha"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/preflight"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
@@ -82,59 +84,47 @@ func (p *Provider) EnsureCopyFiles(ctx context.Context, c *v1.Cluster) error {
 			if err != nil {
 				return err
 			}
-
-			err = machineSSH.CopyFile(file.Src, file.Dst)
+			s, err := os.Stat(file.Src)
 			if err != nil {
 				return err
 			}
+			if s.Mode().IsDir() {
+				if err != nil {
+					return err
+				}
+				err = machineSSH.CopyDir(file.Src, file.Dst)
+				if err != nil {
+					return err
+				}
+			} else {
+				err = machineSSH.CopyFile(file.Src, file.Dst)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
-
 	return nil
+}
+
+func (p *Provider) EnsurePreClusterInstallHook(ctx context.Context, c *v1.Cluster) error {
+
+	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPreClusterInstall, c.Spec.Machines[:1])
 }
 
 func (p *Provider) EnsurePreInstallHook(ctx context.Context, c *v1.Cluster) error {
-	hook := c.Spec.Features.Hooks[platformv1.HookPreInstall]
-	if hook == "" {
-		return nil
-	}
-	cmd := strings.Split(hook, " ")[0]
 
-	for _, machine := range c.Spec.Machines {
-		machineSSH, err := machine.SSH()
-		if err != nil {
-			return err
-		}
-
-		machineSSH.Execf("chmod +x %s", cmd)
-		_, stderr, exit, err := machineSSH.Exec(hook)
-		if err != nil || exit != 0 {
-			return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
-		}
-	}
-	return nil
+	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPreInstall, c.Spec.Machines)
 }
 
 func (p *Provider) EnsurePostInstallHook(ctx context.Context, c *v1.Cluster) error {
-	hook := c.Spec.Features.Hooks[platformv1.HookPostInstall]
-	if hook == "" {
-		return nil
-	}
-	cmd := strings.Split(hook, " ")[0]
 
-	for _, machine := range c.Spec.Machines {
-		machineSSH, err := machine.SSH()
-		if err != nil {
-			return err
-		}
+	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPostInstall, c.Spec.Machines)
+}
 
-		machineSSH.Execf("chmod +x %s", cmd)
-		_, stderr, exit, err := machineSSH.Exec(hook)
-		if err != nil || exit != 0 {
-			return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
-		}
-	}
-	return nil
+func (p *Provider) EnsurePostClusterInstallHook(ctx context.Context, c *v1.Cluster) error {
+
+	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPostClusterInstall, c.Spec.Machines[:1])
 }
 
 func (p *Provider) EnsurePreflight(ctx context.Context, c *v1.Cluster) error {
@@ -261,6 +251,22 @@ func (p *Provider) EnsureDisableSwap(ctx context.Context, c *v1.Cluster) error {
 	return nil
 }
 
+func (p *Provider) EnsureDisableOffloading(ctx context.Context, c *v1.Cluster) error {
+	for _, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		_, err = machineSSH.CombinedOutput(`ethtool --offload flannel.1 rx off tx off || true`)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
 // 因为validate那里没法更新对象（不能存储）
 // PreCrete，在api中错误只能panic，响应不会有报错提示，所以只能挪到这里处理
 func (p *Provider) EnsureClusterComplete(ctx context.Context, cluster *v1.Cluster) error {
@@ -281,24 +287,54 @@ func (p *Provider) EnsureClusterComplete(ctx context.Context, cluster *v1.Cluste
 
 func completeNetworking(cluster *v1.Cluster) error {
 	var (
+		clusterCIDR      = cluster.Spec.ClusterCIDR
 		serviceCIDR      string
 		nodeCIDRMaskSize int32
 		err              error
 	)
 
+	// dual stack case
+	if cluster.Spec.Features.IPv6DualStack {
+		clusterCidrs := strings.Split(serviceCIDR, ",")
+		serviceCidrs := strings.Split(clusterCIDR, ",")
+		for _, cidr := range clusterCidrs {
+			if maskSize, isIPv6 := CalcNodeCidrSize(cidr); isIPv6 {
+				cluster.Status.NodeCIDRMaskSizeIPv6 = maskSize
+				cluster.Status.SecondaryClusterCIDR = cidr
+			} else {
+				cluster.Status.NodeCIDRMaskSizeIPv4 = maskSize
+				cluster.Status.ClusterCIDR = cidr
+			}
+		}
+		for _, cidr := range serviceCidrs {
+			if utilsnet.IsIPv6CIDRString(cidr) {
+				cluster.Status.SecondaryServiceCIDR = cidr
+			} else {
+				cluster.Status.ServiceCIDR = cidr
+			}
+		}
+		return nil
+	}
+	// single stack case incldue ipv4 and ipv6
 	if cluster.Spec.ServiceCIDR != nil {
 		serviceCIDR = *cluster.Spec.ServiceCIDR
-		nodeCIDRMaskSize, err = GetNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxNodePodNum)
-		if err != nil {
-			return errors.Wrap(err, "GetNodeCIDRMaskSize error")
+		if utilsnet.IsIPv6CIDRString(clusterCIDR) {
+			nodeCIDRMaskSize, _ = CalcNodeCidrSize(clusterCIDR)
+		} else {
+			nodeCIDRMaskSize, err = GetNodeCIDRMaskSize(clusterCIDR, *cluster.Spec.Properties.MaxNodePodNum)
+			if err != nil {
+				return errors.Wrap(err, "GetNodeCIDRMaskSize error")
+			}
 		}
 	} else {
-		serviceCIDR, nodeCIDRMaskSize, err = GetServiceCIDRAndNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxClusterServiceNum, *cluster.Spec.Properties.MaxNodePodNum)
+		serviceCIDR, nodeCIDRMaskSize, err = GetServiceCIDRAndNodeCIDRMaskSize(clusterCIDR, *cluster.Spec.Properties.MaxClusterServiceNum, *cluster.Spec.Properties.MaxNodePodNum)
 		if err != nil {
 			return errors.Wrap(err, "GetServiceCIDRAndNodeCIDRMaskSize error")
 		}
 	}
+
 	cluster.Status.ServiceCIDR = serviceCIDR
+	cluster.Status.ClusterCIDR = clusterCIDR
 	cluster.Status.NodeCIDRMaskSize = nodeCIDRMaskSize
 
 	return nil
@@ -658,7 +694,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 			return errors.Wrap(err, machine.IP)
 		}
 
-		err = machineSSH.WriteFile(bytes.NewReader(schedulerPolicyConfig), constants.KuberentesSchedulerPolicyConfigFile)
+		err = machineSSH.WriteFile(bytes.NewReader(schedulerPolicyConfig), constants.KubernetesSchedulerPolicyConfigFile)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -676,7 +712,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
 				}
-				err = machineSSH.WriteFile(bytes.NewReader(auditWebhookConfig), constants.KuberentesAuditWebhookConfigFile)
+				err = machineSSH.WriteFile(bytes.NewReader(auditWebhookConfig), constants.KubernetesAuditWebhookConfigFile)
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
 				}
@@ -692,8 +728,11 @@ func (p *Provider) EnsureKubeadmInitPhaseKubeletStart(ctx context.Context, c *v1
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c),
-		fmt.Sprintf("kubelet-start --node-name=%s", c.Spec.Machines[0].IP))
+	phase := "kubelet-start"
+	if !c.Spec.HostnameAsNodename {
+		phase += fmt.Sprintf(" --node-name=%s", c.Spec.Machines[0].IP)
+	}
+	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), phase)
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseCerts(ctx context.Context, c *v1.Cluster) error {
@@ -765,10 +804,19 @@ func (p *Provider) EnsureGalaxy(ctx context.Context, c *v1.Cluster) error {
 	if err != nil {
 		return err
 	}
+	backendType := "vxlan"
+	clusterSpec := c.Cluster.Spec
+	if clusterSpec.NetworkArgs != nil {
+		backendTypeArg, ok := clusterSpec.NetworkArgs["backendType"]
+		if ok {
+			backendType = backendTypeArg
+		}
+	}
 	return galaxy.Install(ctx, clientset, &galaxy.Option{
-		Version:   galaxyimages.LatestVersion,
-		NodeCIDR:  c.Cluster.Spec.ClusterCIDR,
-		NetDevice: c.Cluster.Spec.NetworkDevice,
+		Version:     galaxyimages.LatestVersion,
+		NodeCIDR:    clusterSpec.ClusterCIDR,
+		NetDevice:   clusterSpec.NetworkDevice,
+		BackendType: backendType,
 	})
 }
 
@@ -995,7 +1043,11 @@ func (p *Provider) EnsureMarkControlPlane(ctx context.Context, c *v1.Cluster) er
 				machine.Taints = append(machine.Taints, taint)
 			}
 		}
-		err := apiclient.MarkNode(ctx, clientset, machine.IP, machine.Labels, machine.Taints)
+		node, err := apiclient.GetNodeByMachineIP(ctx, clientset, machine.IP)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+		err = apiclient.MarkNode(ctx, clientset, node.Name, machine.Labels, machine.Taints)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -1054,6 +1106,9 @@ func (p *Provider) EnsureGPUManager(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureMetricsServer(ctx context.Context, c *v1.Cluster) error {
+	if !c.Cluster.Spec.Features.EnableMetricsServer {
+		return nil
+	}
 	client, err := c.Clientset()
 	if err != nil {
 		return err
@@ -1106,7 +1161,7 @@ func (p *Provider) EnsureCSIOperator(ctx context.Context, c *v1.Cluster) error {
 	return nil
 }
 
-func (p *Provider) EnsureKeepalivedWithLB(ctx context.Context, c *v1.Cluster) error {
+func (p *Provider) EnsureKeepalivedWithLBOption(ctx context.Context, c *v1.Cluster) error {
 	if c.Spec.Features.HA == nil || c.Spec.Features.HA.TKEHA == nil {
 		return nil
 	}

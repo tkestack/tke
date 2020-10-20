@@ -29,15 +29,16 @@ import (
 func TestManifest(t *testing.T) {
 	data, err := template.ParseFile("tke-gateway.yaml",
 		map[string]interface{}{
-			"Image":            "Image",
-			"OIDCClientSecret": "OIDCClientSecret",
-			"SelfSigned":       true,
-			"EnableRegistry":   true,
-			"EnableAuth":       true,
-			"EnableMonitor":    true,
-			"EnableBusiness":   true,
-			"EnableLogagent":   true,
-			"EnableAudit":      true,
+			"Image":             "Image",
+			"OIDCClientSecret":  "OIDCClientSecret",
+			"SelfSigned":        true,
+			"EnableRegistry":    true,
+			"EnableAuth":        true,
+			"EnableMonitor":     true,
+			"EnableBusiness":    true,
+			"EnableLogagent":    true,
+			"EnableAudit":       true,
+			"EnableApplication": true,
 		})
 	if !assert.Nil(t, err) {
 		t.FailNow()

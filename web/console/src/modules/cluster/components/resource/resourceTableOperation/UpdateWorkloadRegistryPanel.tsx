@@ -395,12 +395,12 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
         return !isTapp //对于tapp来说，由于更新方式是merge（非strategy-merge），所以需要带上原本的container之前的内容 不然之前的内容会被清空掉
           ? {
               name: c.name,
-              image: c.registry + (c.tag ? ':' + c.tag : '')
+              image: c.registry + ':' + (c.tag ? c.tag : 'latest')
             }
           : {
               ...targetContainer,
               name: c.name,
-              image: c.registry + (c.tag ? ':' + c.tag : '')
+              image: c.registry + ':' + (c.tag ? c.tag : 'latest')
             };
       });
 

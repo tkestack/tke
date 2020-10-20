@@ -348,7 +348,7 @@ func deleteRelatedProjectPolicyBinding(ctx context.Context, deleter *loalIdentit
 	var errs []error
 	belongsProjectPolicies := make(map[string][]string)
 	for _, r := range rules {
-		if len(r) != 3 {
+		if len(r) != util.GRuleFieldNumber {
 			log.Warn("invalid rule", log.Strings("rule", r))
 			continue
 		}

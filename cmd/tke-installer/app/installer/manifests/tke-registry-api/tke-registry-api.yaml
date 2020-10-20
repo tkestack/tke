@@ -23,7 +23,7 @@ metadata:
   name: tke-registry-api
   namespace: tke
 spec:
-  replicas: 1
+  replicas: {{ .Replicas }}
   selector:
     matchLabels:
       app: tke-registry-api
@@ -157,8 +157,28 @@ data:
     keyfile = "/app/certs/etcd.key"
 
     [generic]
-    external_hostname = "tke-registry-api"
+    external_scheme = "https"
+    external_hostname = "{{ .DomainSuffix }}"
     external_port = 443
+    external_ca_file = "/app/certs/ca.crt"
+
+    [client]
+
+      [client.platform]
+      api_server = "https://tke-platform-api"
+      api_server_client_config = "/app/conf/tke-platform-config.yaml"
+
+{{- if .EnableBusiness }}
+      [client.business]
+      api_server = "https://tke-business-api"
+      api_server_client_config = "/app/conf/tke-business-config.yaml"
+{{- end }}
+
+{{- if .EnableAuth }}
+      [client.auth]
+      api_server = "https://tke-auth-api"
+      api_server_client_config = "/app/conf/tke-auth-config.yaml"
+{{- end }}
 
   tke-registry-config.yaml: |
     apiVersion: registry.config.tkestack.io/v1
@@ -166,6 +186,8 @@ data:
     storage:
       fileSystem:
         rootDirectory: /storage
+      delete:
+        enabled: true
     security:
       tokenPrivateKeyFile: /etc/registry/private_key.pem
       tokenPublicKeyFile: /etc/registry/public_key.crt
@@ -223,4 +245,68 @@ data:
           cluster: tke
         name: tke
 
+{{- end }}
+
+  tke-platform-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-platform-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
+
+{{- if .EnableBusiness }}
+  tke-business-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-business-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
+{{- end }}
+
+{{- if .EnableAuth }}
+  tke-auth-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-auth-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
 {{- end }}

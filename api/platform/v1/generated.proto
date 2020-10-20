@@ -370,6 +370,12 @@ message ClusterFeature {
   // For kube-apiserver authorization webhook
   // +optional
   optional AuthzWebhookAddr authzWebhookAddr = 11;
+
+  // +optional
+  optional bool enableMetricsServer = 12;
+
+  // +optional
+  optional bool ipv6DualStack = 13;
 }
 
 // ClusterList is the whole list of all clusters which owned by a tenant.
@@ -505,6 +511,13 @@ message ClusterSpec {
   // Upgrade control upgrade process.
   // +optional
   optional Upgrade upgrade = 22;
+
+  // If true will use hostname as nodename, if false will use machine IP as nodename.
+  // +optional
+  optional bool hostnameAsNodename = 23;
+
+  // +optional
+  map<string, string> networkArgs = 24;
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -556,6 +569,21 @@ message ClusterStatus {
 
   // +optional
   repeated string registryIPs = 14;
+
+  // +optional
+  optional string secondaryServiceCIDR = 15;
+
+  // +optional
+  optional string clusterCIDR = 16;
+
+  // +optional
+  optional string secondaryClusterCIDR = 17;
+
+  // +optional
+  optional int32 nodeCIDRMaskSizeIPv4 = 18;
+
+  // +optional
+  optional int32 nodeCIDRMaskSizeIPv6 = 19;
 }
 
 // ConfigMap holds configuration data for tke to consume.

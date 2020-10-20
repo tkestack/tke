@@ -48,6 +48,20 @@ export const subRouterConfig = () => {
       ]
     },
     {
+      name: t('自动伸缩'),
+      path: 'scale',
+      sub: [
+        {
+          name: 'HPA',
+          path: 'hpa'
+        },
+        {
+          name: 'CronHPA',
+          path: 'cronhpa'
+        }
+      ]
+    },
+    {
       name: t('服务'),
       path: 'service', // 用于判断哪个二级菜单栏需要展开
       sub: [

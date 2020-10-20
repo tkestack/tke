@@ -31,7 +31,9 @@ const fetchNamespaceActions = generateFetcherActionCreator({
           displayName: `${item.spec.namespace}(${item.spec.clusterName})`,
           clusterVersion: item.spec.clusterVersion,
           clusterId: item.spec.clusterVersion,
-          clusterDisplayName: item.spec.clusterDisplayName
+          clusterDisplayName: item.spec.clusterDisplayName,
+          namespace: item.spec.namespace,
+          clusterName: item.spec.clusterName
         });
       });
 
@@ -74,7 +76,7 @@ const restActions = {
 
       dispatch({
         type: ActionType.SelectNamespace,
-        payload: namespace
+        payload: finder.metadata.name
       });
 
       // 这里进行路由的更新，如果不需要命名空间的话，路由就不需要有np的信息

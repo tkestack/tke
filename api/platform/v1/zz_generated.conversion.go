@@ -1650,6 +1650,8 @@ func autoConvert_v1_ClusterFeature_To_platform_ClusterFeature(in *ClusterFeature
 	out.Hooks = *(*map[platform.HookType]string)(unsafe.Pointer(&in.Hooks))
 	out.CSIOperator = (*platform.CSIOperatorFeature)(unsafe.Pointer(in.CSIOperator))
 	out.AuthzWebhookAddr = (*platform.AuthzWebhookAddr)(unsafe.Pointer(in.AuthzWebhookAddr))
+	out.EnableMetricsServer = in.EnableMetricsServer
+	out.IPv6DualStack = in.IPv6DualStack
 	return nil
 }
 
@@ -1670,6 +1672,8 @@ func autoConvert_platform_ClusterFeature_To_v1_ClusterFeature(in *platform.Clust
 	out.Hooks = *(*map[HookType]string)(unsafe.Pointer(&in.Hooks))
 	out.CSIOperator = (*CSIOperatorFeature)(unsafe.Pointer(in.CSIOperator))
 	out.AuthzWebhookAddr = (*AuthzWebhookAddr)(unsafe.Pointer(in.AuthzWebhookAddr))
+	out.EnableMetricsServer = in.EnableMetricsServer
+	out.IPv6DualStack = in.IPv6DualStack
 	return nil
 }
 
@@ -1831,6 +1835,8 @@ func autoConvert_v1_ClusterSpec_To_platform_ClusterSpec(in *ClusterSpec, out *pl
 	if err := Convert_v1_Upgrade_To_platform_Upgrade(&in.Upgrade, &out.Upgrade, s); err != nil {
 		return err
 	}
+	out.HostnameAsNodename = in.HostnameAsNodename
+	out.NetworkArgs = *(*map[string]string)(unsafe.Pointer(&in.NetworkArgs))
 	return nil
 }
 
@@ -1868,6 +1874,8 @@ func autoConvert_platform_ClusterSpec_To_v1_ClusterSpec(in *platform.ClusterSpec
 	if err := Convert_platform_Upgrade_To_v1_Upgrade(&in.Upgrade, &out.Upgrade, s); err != nil {
 		return err
 	}
+	out.HostnameAsNodename = in.HostnameAsNodename
+	out.NetworkArgs = *(*map[string]string)(unsafe.Pointer(&in.NetworkArgs))
 	return nil
 }
 
@@ -1892,6 +1900,11 @@ func autoConvert_v1_ClusterStatus_To_platform_ClusterStatus(in *ClusterStatus, o
 	out.NodeCIDRMaskSize = in.NodeCIDRMaskSize
 	out.DNSIP = in.DNSIP
 	out.RegistryIPs = *(*[]string)(unsafe.Pointer(&in.RegistryIPs))
+	out.SecondaryServiceCIDR = in.SecondaryServiceCIDR
+	out.ClusterCIDR = in.ClusterCIDR
+	out.SecondaryClusterCIDR = in.SecondaryClusterCIDR
+	out.NodeCIDRMaskSizeIPv4 = in.NodeCIDRMaskSizeIPv4
+	out.NodeCIDRMaskSizeIPv6 = in.NodeCIDRMaskSizeIPv6
 	return nil
 }
 
@@ -1916,6 +1929,11 @@ func autoConvert_platform_ClusterStatus_To_v1_ClusterStatus(in *platform.Cluster
 	out.NodeCIDRMaskSize = in.NodeCIDRMaskSize
 	out.DNSIP = in.DNSIP
 	out.RegistryIPs = *(*[]string)(unsafe.Pointer(&in.RegistryIPs))
+	out.ClusterCIDR = in.ClusterCIDR
+	out.SecondaryServiceCIDR = in.SecondaryServiceCIDR
+	out.SecondaryClusterCIDR = in.SecondaryClusterCIDR
+	out.NodeCIDRMaskSizeIPv4 = in.NodeCIDRMaskSizeIPv4
+	out.NodeCIDRMaskSizeIPv6 = in.NodeCIDRMaskSizeIPv6
 	return nil
 }
 

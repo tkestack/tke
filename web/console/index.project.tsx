@@ -17,6 +17,7 @@ import { LogStash } from '@src/modules/logStash';
 import { PersistentEvent } from '@src/modules/persistentEvent';
 import { AlarmPolicy } from '@src/modules/alarmPolicy';
 import { Notify } from '@src/modules/notify';
+import { Application as App } from '@src/modules/application';
 // 公有云的图表组件为异步加载，这里为了减少路径配置，还是保留为同步加载，预先import即可变成不split
 import '@tencent/tchart/build/ChartsComponents';
 import { Project } from '@src/modules/project';
@@ -167,10 +168,23 @@ Entry.register({
     },
 
     /**
+     * @url https://{{domain}}/tkestack/helm-application
+     */
+    app: {
+      title: t('Helm 应用 - TKEStack业务侧'),
+      container: (
+        <Wrapper platformType={PlatformTypeEnum.Business}>
+          <ForbiddentDialog />
+          <App />
+        </Wrapper>
+      )
+    },
+
+    /**
      * @url https://{{domain}}/tkestack/helm
      */
     helm: {
-      title: t('Helm 应用 - TKEStack业务侧'),
+      title: t('Helm2 应用 - TKEStack业务侧'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Business}>
           <ForbiddentDialog />

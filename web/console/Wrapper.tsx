@@ -10,7 +10,17 @@ import { ResourceInfo, RequestParams } from './src/modules/common/models';
 import { resourceConfig } from './config';
 import { isEmpty } from './src/modules/common/utils';
 import * as classnames from 'classnames';
-import { Button, Icon, Text, Bubble, NavMenu, List } from '@tencent/tea-component';
+import { Button, Icon, Text, Bubble, NavMenu, List, ExternalLink } from '@tencent/tea-component';
+import { insertCSS } from '@tencent/ff-redux';
+
+insertCSS(
+  'tkestack-nav-logo',
+  `
+  .tkestack-nav-logo a {
+    display: inline;
+  }
+`
+);
 
 // @ts-ignore
 const routerSea = seajs.require('router');
@@ -47,7 +57,10 @@ export enum ConsoleModuleEnum {
   Auth = 'auth',
 
   /** 审计模块 */
-  Audit = 'audit'
+  Audit = 'audit',
+
+  /** Helm应用模块 */
+  Application = 'application'
 }
 
 export enum PlatformTypeEnum {
@@ -57,6 +70,12 @@ export enum PlatformTypeEnum {
   /** 业务 */
   Business = 'business'
 }
+
+export interface IPlatformContext {
+  type: PlatformTypeEnum;
+}
+
+export const PlatformContext = React.createContext<IPlatformContext>({ type: PlatformTypeEnum.Manager });
 
 interface RouterConfig {
   /** 导航的路由 */
@@ -106,9 +125,14 @@ const commonRouterConfig: RouterConfig[] = [
         title: '镜像仓库管理',
         watchModule: ConsoleModuleEnum.Registry
       },
+      // {
+      //   url: '/tkestack/registry/chartgroup',
+      //   title: 'Helm仓库',
+      //   watchModule: ConsoleModuleEnum.Registry
+      // },
       {
         url: '/tkestack/registry/chart',
-        title: 'Chart包仓库管理',
+        title: 'Helm模板',
         watchModule: ConsoleModuleEnum.Registry
       },
       {
@@ -157,13 +181,23 @@ const commonRouterConfig: RouterConfig[] = [
   },
   {
     title: '运维中心',
-    watchModule: [ConsoleModuleEnum.PLATFORM, ConsoleModuleEnum.Audit, ConsoleModuleEnum.LogAgent],
+    watchModule: [
+      ConsoleModuleEnum.Application,
+      ConsoleModuleEnum.PLATFORM,
+      ConsoleModuleEnum.Audit,
+      ConsoleModuleEnum.LogAgent
+    ],
     subRouterConfig: [
       {
-        url: '/tkestack/helm',
+        url: '/tkestack/application/app',
         title: 'Helm应用',
-        watchModule: ConsoleModuleEnum.PLATFORM
+        watchModule: ConsoleModuleEnum.Application
       },
+      // {
+      //   url: '/tkestack/helm',
+      //   title: 'Helm2应用',
+      //   watchModule: ConsoleModuleEnum.PLATFORM
+      // },
       {
         url: '/tkestack/log',
         title: '日志采集',
@@ -191,11 +225,6 @@ const businessCommonRouterConfig: RouterConfig[] = [
     watchModule: ConsoleModuleEnum.Business
   },
   {
-    url: '/tkestack-project/helm',
-    title: 'Helm应用',
-    watchModule: ConsoleModuleEnum.PLATFORM
-  },
-  {
     url: '/tkestack-project/project',
     title: '业务管理',
     watchModule: ConsoleModuleEnum.Business
@@ -206,7 +235,17 @@ const businessCommonRouterConfig: RouterConfig[] = [
     subRouterConfig: [
       {
         url: '/tkestack-project/registry/repo',
-        title: '仓库管理',
+        title: '镜像仓库管理',
+        watchModule: ConsoleModuleEnum.Registry
+      },
+      // {
+      //   url: '/tkestack-project/registry/chartgroup',
+      //   title: 'Helm仓库',
+      //   watchModule: ConsoleModuleEnum.Registry
+      // },
+      {
+        url: '/tkestack-project/registry/chart',
+        title: 'Helm模板',
         watchModule: ConsoleModuleEnum.Registry
       },
       {
@@ -233,9 +272,19 @@ const businessCommonRouterConfig: RouterConfig[] = [
     ]
   },
   {
-    title: '运维中心',
-    watchModule: [ConsoleModuleEnum.LogAgent],
+    title: '运维管理',
+    watchModule: [ConsoleModuleEnum.Application, ConsoleModuleEnum.LogAgent, ConsoleModuleEnum.PLATFORM],
     subRouterConfig: [
+      {
+        url: '/tkestack-project/app/app',
+        title: 'Helm应用',
+        watchModule: ConsoleModuleEnum.Application
+      },
+      // {
+      //   url: '/tkestack-project/helm',
+      //   title: 'Helm2应用',
+      //   watchModule: ConsoleModuleEnum.PLATFORM
+      // },
       {
         url: '/tkestack-project/log',
         title: '日志采集',
@@ -442,6 +491,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
           userType,
           projects
         });
+        let isInBlankPage = window.location.pathname.indexOf('tkestack/blank') !== -1;
         if (userType === UserType.member && this.props.platformType === PlatformTypeEnum.Manager) {
           location.href = location.origin + '/tkestack-project/application';
         } else if (
@@ -450,8 +500,14 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
           this.props.platformType === PlatformTypeEnum.Business
         ) {
           location.href = location.origin + '/tkestack';
-        } else if (userType === UserType.other && window.location.pathname.indexOf('tkestack/blank') === -1) {
+        } else if (userType === UserType.other && !isInBlankPage) {
           window.location.pathname = 'tkestack/blank';
+        } else if (isInBlankPage) {
+          if (userType === UserType.admin) {
+            location.href = location.origin + '/tkestack';
+          } else if (userType === UserType.member) {
+            location.href = location.origin + '/tkestack-project/application';
+          }
         }
       }
     } catch (error) {}
@@ -509,7 +565,9 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
         </React.Fragment>
       );
     }
-    return finalContent;
+    return (
+      <PlatformContext.Provider value={{ type: this.props.platformType }}>{finalContent}</PlatformContext.Provider>
+    );
   }
 
   /**
@@ -520,13 +578,17 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
       <NavMenu
         left={
           <React.Fragment>
-            <NavMenu.Item type="logo">
+            <NavMenu.Item type="logo" className={'tkestack-nav-logo'}>
               <img src="/static/icon/logo.svg" style={{ height: '30px' }} alt="logo" />
             </NavMenu.Item>
           </React.Fragment>
         }
         right={
           <React.Fragment>
+            <NavMenu.Item>
+              <ExternalLink href={'https://tkestack.github.io/docs/'}>容器服务帮助手册</ExternalLink>
+            </NavMenu.Item>
+
             <NavMenu.Item
               type="dropdown"
               overlay={() => (

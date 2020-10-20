@@ -12,15 +12,6 @@ export class OverviewHeadPanel extends React.Component<RootProps, {}> {
   render() {
     let { actions } = this.props;
 
-    return (
-      <Justify
-        left={<h2>{t('概览')}</h2>}
-        right={
-          <ExternalLink href={'https://github.com/tkestack/tke/tree/master/docs/guide/zh-CN'}>
-            容器服务帮助手册
-          </ExternalLink>
-        }
-      ></Justify>
-    );
+    return <Justify left={<h2>{t('概览')}</h2>}></Justify>;
   }
 }

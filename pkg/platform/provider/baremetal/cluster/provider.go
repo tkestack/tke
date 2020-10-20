@@ -69,6 +69,7 @@ func NewProvider() (*Provider, error) {
 
 		CreateHandlers: []clusterprovider.Handler{
 			p.EnsureCopyFiles,
+			p.EnsurePreClusterInstallHook,
 			p.EnsurePreInstallHook,
 
 			// configure system
@@ -76,7 +77,6 @@ func NewProvider() (*Provider, error) {
 			p.EnsureKernelModule,
 			p.EnsureSysctl,
 			p.EnsureDisableSwap,
-
 			p.EnsurePreflight, // wait basic setting done
 
 			p.EnsureClusterComplete,
@@ -118,7 +118,7 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsurePatchAnnotation, // wait rest master ready
 			p.EnsureMarkControlPlane,
-			p.EnsureKeepalivedWithLB,
+			p.EnsureKeepalivedWithLBOption,
 			p.EnsureThirdPartyHA,
 			// deploy apps
 			p.EnsureNvidiaDevicePlugin,
@@ -128,16 +128,20 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsureCleanup,
 			p.EnsureCreateClusterMark,
+			p.EnsureDisableOffloading, // will remove it when upgrade to k8s v1.18.5
 			p.EnsurePostInstallHook,
+			p.EnsurePostClusterInstallHook,
 		},
 		UpdateHandlers: []clusterprovider.Handler{
+			p.EnsurePreClusterUpgradeHook,
 			p.EnsureUpgradeControlPlaneNode,
 
 			p.EnsureRenewCerts,
 			p.EnsureAPIServerCert,
 			p.EnsureStoreCredential,
-			p.EnsureKeepalivedWithLB,
+			p.EnsureKeepalivedWithLBOption,
 			p.EnsureThirdPartyHA,
+			p.EnsurePostClusterUpgradeHook,
 		},
 		DeleteHandlers: []clusterprovider.Handler{
 			p.EnsureCleanClusterMark,

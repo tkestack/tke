@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Button, Form, Switch, Input, InputNumber } from '@tencent/tea-component';
+import { Button, Form, Switch, Input, InputNumber, InputAdorment } from '@tencent/tea-component';
 
 import { RootProps } from './InstallerApp';
 import { getValidateStatus } from '../../common/utils';
@@ -41,11 +41,14 @@ export class Step6 extends React.Component<RootProps> {
                       onChange={value => actions.installer.updateEdit({ auditEsUrl: value })}
                     />
                   </Form.Item>
-                  <Form.Item label="保留数据时间" required>
-                    <InputNumber
-                      value={editState.auditEsReserveDays}
-                      onChange={value => actions.installer.updateEdit({ auditEsReserveDays: value })}
-                    />
+                  <Form.Item label="保留数据时间" required align={'middle'}>
+                    <InputAdorment after={'天'} appearence={'pure'}>
+                      <InputNumber
+                        min={1}
+                        value={editState.auditEsReserveDays}
+                        onChange={value => actions.installer.updateEdit({ auditEsReserveDays: value })}
+                      />
+                    </InputAdorment>
                   </Form.Item>
                   <Form.Item
                     label="用户名"

@@ -79,6 +79,9 @@ const (
 
 	// RoleFinalize is an internal finalizer values to Role.
 	RoleFinalize FinalizerName = "role"
+
+	// CustomPolicyBindingFinalize is an internal finalizer values to CustomPolicyBinding.
+	CustomPolicyBindingFinalize FinalizerName = "custompolicybinding"
 )
 
 // LocalIdentitySpec is a description of an identity.
@@ -583,6 +586,47 @@ type ProjectPolicyBindingList struct {
 	metav1.ListMeta
 	// List of policies.
 	Items []ProjectPolicyBinding
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// CustomPolicyBinding represents a subjects bind to a policy in a custom scope.
+type CustomPolicyBinding struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+
+	Spec   CustomPolicyBindingSpec
+	Status CustomPolicyBindingStatus
+}
+
+// CustomPolicyBindingSpec defines the desired identities of CustomPolicyBindingSpec document in this set.
+type CustomPolicyBindingSpec struct {
+	Finalizers []FinalizerName
+	TenantID   string
+	Domain     string
+	LastDomain string
+	PolicyID   string
+	Resources  []string
+	RulePrefix string
+	Users      []Subject
+	Groups     []Subject
+}
+
+// CustomPolicyBindingStatus represents information about the status of a CustomPolicyBinding.
+type CustomPolicyBindingStatus struct {
+	Phase BindingPhase
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// CustomPolicyBindingList is the whole list of all CustomPolicyBindings.
+type CustomPolicyBindingList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+	// List of CustomPolicyBinding.
+	Items []CustomPolicyBinding
 }
 
 const (

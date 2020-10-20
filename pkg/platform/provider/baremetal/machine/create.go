@@ -29,7 +29,6 @@ import (
 
 	"github.com/imdario/mergo"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -62,9 +61,20 @@ func (p *Provider) EnsureCopyFiles(ctx context.Context, machine *platformv1.Mach
 	}
 
 	for _, file := range cluster.Spec.Features.Files {
-		err = machineSSH.CopyFile(file.Src, file.Dst)
+		s, err := os.Stat(file.Src)
 		if err != nil {
 			return err
+		}
+		if s.Mode().IsDir() {
+			err = machineSSH.CopyDir(file.Src, file.Dst)
+			if err != nil {
+				return err
+			}
+		} else {
+			err = machineSSH.CopyFile(file.Src, file.Dst)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -72,45 +82,29 @@ func (p *Provider) EnsureCopyFiles(ctx context.Context, machine *platformv1.Mach
 }
 
 func (p *Provider) EnsurePreInstallHook(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	hook := cluster.Spec.Features.Hooks[platformv1.HookPreInstall]
-	if hook == "" {
-		return nil
-	}
 
-	machineSSH, err := machine.Spec.SSH()
-	if err != nil {
-		return err
+	mc := []platformv1.ClusterMachine{
+		{
+			IP:       machine.Spec.IP,
+			Port:     machine.Spec.Port,
+			Username: machine.Spec.Username,
+			Password: machine.Spec.Password,
+		},
 	}
-
-	cmd := strings.Split(hook, " ")[0]
-
-	machineSSH.Execf("chmod +x %s", cmd)
-	_, stderr, exit, err := machineSSH.Exec(hook)
-	if err != nil || exit != 0 {
-		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
-	}
-	return nil
+	return util.ExcuteCustomizedHook(ctx, cluster, platformv1.HookPreInstall, mc)
 }
 
 func (p *Provider) EnsurePostInstallHook(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	hook := cluster.Spec.Features.Hooks[platformv1.HookPostInstall]
-	if hook == "" {
-		return nil
-	}
 
-	machineSSH, err := machine.Spec.SSH()
-	if err != nil {
-		return err
+	mc := []platformv1.ClusterMachine{
+		{
+			IP:       machine.Spec.IP,
+			Port:     machine.Spec.Port,
+			Username: machine.Spec.Username,
+			Password: machine.Spec.Password,
+		},
 	}
-
-	cmd := strings.Split(hook, " ")[0]
-
-	machineSSH.Execf("chmod +x %s", cmd)
-	_, stderr, exit, err := machineSSH.Exec(hook)
-	if err != nil || exit != 0 {
-		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
-	}
-	return nil
+	return util.ExcuteCustomizedHook(ctx, cluster, platformv1.HookPostInstall, mc)
 }
 
 func (p *Provider) EnsureClean(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
@@ -232,6 +226,20 @@ func (p *Provider) EnsureDisableSwap(ctx context.Context, machine *platformv1.Ma
 	}
 
 	_, err = machineSSH.CombinedOutput(`swapoff -a && sed -i "s/^[^#]*swap/#&/" /etc/fstab`)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureDisableOffloading(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	_, err = machineSSH.CombinedOutput(`ethtool --offload flannel.1 rx off tx off || true`)
 	if err != nil {
 		return err
 	}
@@ -419,7 +427,11 @@ func (p *Provider) EnsureMarkNode(ctx context.Context, machine *platformv1.Machi
 		return err
 	}
 
-	err = apiclient.MarkNode(ctx, clientset, machine.Spec.IP, machine.Spec.Labels, machine.Spec.Taints)
+	node, err := apiclient.GetNodeByMachineIP(ctx, clientset, machine.Spec.IP)
+	if err != nil {
+		return err
+	}
+	err = apiclient.MarkNode(ctx, clientset, node.Name, machine.Spec.Labels, machine.Spec.Taints)
 	if err != nil {
 		return err
 	}
@@ -433,7 +445,7 @@ func (p *Provider) EnsureNodeReady(ctx context.Context, machine *platformv1.Mach
 	}
 
 	return wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		node, err := clientset.CoreV1().Nodes().Get(ctx, machine.Spec.IP, metav1.GetOptions{})
+		node, err := apiclient.GetNodeByMachineIP(ctx, clientset, machine.Spec.IP)
 		if err != nil {
 			return false, nil
 		}

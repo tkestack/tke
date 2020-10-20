@@ -73,8 +73,21 @@ export const requestMethodForAction = (type: string) => {
  * 统一的请求处理
  * @param userParams: RequestParams
  */
-export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?: string, keyword?: string) => {
-  let { method, url, userDefinedHeader = {}, data = {}, apiParams, baseURL = GET_CONSOLE_MODULE_BASE_URL } = userParams;
+export const reduceNetworkRequest = async (
+  userParams: RequestParams,
+  clusterId?: string,
+  projectId?: string,
+  keyword?: string,
+) => {
+  let {
+    method,
+    url,
+    userDefinedHeader = {},
+    data = {},
+    apiParams,
+    // baseURL = getConsoleAPIAddress(ConsoleModuleAddressEnum.PLATFORM)
+    baseURL = GET_CONSOLE_MODULE_BASE_URL
+  } = userParams;
 
   let rsp;
   // 请求tke-apiserver的 cluster的header
@@ -84,25 +97,36 @@ export const reduceNetworkRequest = async (userParams: RequestParams, clusterId?
     });
   }
 
+  let pid = projectId;
   /// #if project
   let searchParams;
   try {
     searchParams = parseQueryString(location.search);
   } catch (error) {}
-  let projectId = '';
-  if (searchParams && (searchParams.projectName || searchParams.projectId)) {
-    projectId = searchParams.projectName || searchParams.projectId;
-  } else {
-    projectId = getProjectName();
+  // 这里指定为undefined而不是''，因为业务视图下helm仓库的逻辑有时候不需要传业务id，但会因为这里的逻辑从cookie中读取业务id并传到后端，
+  // 导致过滤逻辑出现问题。调用方会显式指定 projectId = '' 来避免这种情况
+  if (pid === undefined) {
+    if (searchParams && (searchParams.projectName || searchParams.projectId)) {
+      pid = searchParams.projectName || searchParams.projectId;
+    } else {
+      pid = getProjectName();
+    }
   }
-  userDefinedHeader = Object.assign(
-    {},
-    {
-      'X-TKE-ProjectName': projectId
-    },
-    userDefinedHeader
-  );
   /// #endif
+  if (pid) {
+    userDefinedHeader = Object.assign(
+      {},
+      {
+        'X-TKE-ProjectName': pid
+      },
+      userDefinedHeader
+    );
+  }
+  if (keyword) {
+    userDefinedHeader = Object.assign({}, userDefinedHeader, {
+      'X-TKE-FuzzyResourceName': keyword
+    });
+  }
 
   let params = {
     method,

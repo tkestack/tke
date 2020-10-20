@@ -28,6 +28,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/pkg/sftp"
@@ -65,7 +66,7 @@ type Config struct {
 }
 
 func (c *Config) addr() string {
-	return fmt.Sprintf("%s:%d", c.Host, c.Port)
+	return net.JoinHostPort(c.Host, fmt.Sprintf("%d", c.Port))
 }
 
 func New(c *Config) (*SSH, error) {
@@ -171,6 +172,21 @@ func (s *SSH) CopyFile(src, dst string) error {
 	defer file.Close()
 
 	return s.WriteFile(file, dst)
+}
+
+func (s *SSH) CopyDir(src, dst string) error {
+	files, er := ioutil.ReadDir(src)
+	if er != nil {
+		return er
+	}
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		} else {
+			s.CopyFile(filepath.Join(src, file.Name()), filepath.Join(dst, file.Name()))
+		}
+	}
+	return nil
 }
 
 func (s *SSH) WriteFile(src io.Reader, dst string) error {

@@ -202,7 +202,7 @@ export class EditResourceContainerNumPanel extends React.Component<RootProps, {}
             />
             <strong>{t('自动调节')}</strong>
             <span className="text-label" style={{ verticalAlign: '-1px' }}>
-              {t('满足任一设定条件，则自动调节实例（pod）数目')}
+              {t('将新建与负载同名的HPA资源对象，满足任一设定条件，则自动调节实例（Pod）数量。')}
             </span>
           </label>
         </Bubble>

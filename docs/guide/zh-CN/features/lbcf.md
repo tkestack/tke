@@ -1,50 +1,50 @@
-# LBCF说明
+# LBCF
 
 ## 组件介绍 : Load Balancer Controlling Framework (LBCF)
 
-LBCF是一款部署在Kubernetes内的通用负载均衡控制面框架，旨在降低容器对接负载均衡的实现难度，并提供强大的扩展能力以满足业务方在使用负载均衡时的个性化需求。
+LBCF 是一款部署在Kubernetes内的通用负载均衡控制面框架，旨在降低容器对接负载均衡的实现难度，并提供强大的扩展能力以满足业务方在使用负载均衡时的个性化需求。
 
-## 部署在集群内kubernetes对象
+## 部署在集群内 kubernetes  对象
 
-在集群内部署LBCF Add-on , 将在集群内部署以下kubernetes对象
+在集群内部署 LBCF Add-on , 将在集群内部署以下kubernetes对象：
 
-| kubernetes对象名称                                 | 类型                             | 默认占用资源 | 所属Namespaces |
-| ---------------------------------------------- | ------------------------------ | ------ | ------------ |
-| lbcf-controller                                | Deployment                     | /      | kube-system  |
-| lbcf-controller                                | ServiceAccount                 | /      | kube-system  |
-| lbcf-controller                                | ClusterRole                    | /      | /            |
-| lbcf-controller                                | ClusterRoleBinding             | /      | /            |
-| lbcf-controller                                | Secret                         | /      | kube-system  |
-| lbcf-controller                                | Service                        | /      | kube-system  |
-| backendrecords.lbcf.tkestack.io      | CustomResourceDefinition       | /      | /            |
-| backendgroups.lbcf.tkestack.io       | CustomResourceDefinition       | /      | /            |
-| loadbalancers.lbcf.tkestack.io       | CustomResourceDefinition       | /      | /            |
-| loadbalancerdrivers.lbcf.tkestack.io | CustomResourceDefinition       | /      | /            |
-| lbcf-mutate                                    | MutatingWebhookConfiguration   | /      | /            |
-| lbcf-validate                                  | ValidatingWebhookConfiguration | /      | /            |
+| kubernetes 对象名称                  | 类型                           | 默认占用资源 | 所属Namespaces |
+| ------------------------------------ | ------------------------------ | ------------ | -------------- |
+| lbcf-controller                      | Deployment                     | /            | kube-system    |
+| lbcf-controller                      | ServiceAccount                 | /            | kube-system    |
+| lbcf-controller                      | ClusterRole                    | /            | /              |
+| lbcf-controller                      | ClusterRoleBinding             | /            | /              |
+| lbcf-controller                      | Secret                         | /            | kube-system    |
+| lbcf-controller                      | Service                        | /            | kube-system    |
+| backendrecords.lbcf.tkestack.io      | CustomResourceDefinition       | /            | /              |
+| backendgroups.lbcf.tkestack.io       | CustomResourceDefinition       | /            | /              |
+| loadbalancers.lbcf.tkestack.io       | CustomResourceDefinition       | /            | /              |
+| loadbalancerdrivers.lbcf.tkestack.io | CustomResourceDefinition       | /            | /              |
+| lbcf-mutate                          | MutatingWebhookConfiguration   | /            | /              |
+| lbcf-validate                        | ValidatingWebhookConfiguration | /            | /              |
 
-## LBCF使用场景
+## LBCF 使用场景
 
-LBCF对K8S内部晦涩的运行机制进行了封装并以Webhook的形式对外暴露，在容器的全生命周期中提供了多达8种Webhook。通过实现这些Webhook，开发人员可以轻松实现下述功能：
+LBCF 对 K8S 内部晦涩的运行机制进行了封装并以 Webhook 的形式对外暴露，在容器的全生命周期中提供了多达8种 Webhook。通过实现这些 Webhook，开发人员可以轻松实现下述功能：
 
 - 对接任意负载均衡/名字服务，并自定义对接过程
 - 实现自定义灰度升级策略
 - 容器环境与其他环境共享同一个负载均衡
 - 解耦负载均衡数据面与控制面
 
-## LBCF使用方法
+## LBCF 使用方法
 
-1. 通过扩展组件安装LBCF
-1. 开发或选择安装LBCF Webhook规范的要求实现Webhook服务器
-1. 以下按腾讯云CLB开发的webhook服务器为例
+1. 通过扩展组件安装 LBCF
+1. 开发或选择安装 LBCF Webhook 规范的要求实现 Webhook 服务器
+1. 以下按腾讯云 CLB 开发的 webhook 服务器为例
 
-详细的使用方法和帮助文档，请参考[lb-controlling-framework](https://github.com/tkestack/lb-controlling-framework)文档
+详细的使用方法和帮助文档，请参考 [lb-controlling-framework](https://github.com/tkestack/lb-controlling-framework) 项目地址
 
 ## 使用示例
 
-### 使用已有四层CLB
+### 使用已有四层 CLB
 
-本例中使用了id为`lb-7wf394rv`的负载均衡实例，监听器为四层监听器，端口号为20000，协议类型TCP。
+本例中使用了id为`lb-7wf394rv`的负载均衡实例，监听器为四层监听器，端口号为20000，协议类型 TCP。
 
 *注: 程序会以`端口号20000，协议类型TCP`为条件查询监听器，若不存在，会自动创建新的*
 
@@ -64,7 +64,7 @@ spec:
     policy: Always
 ```
 
-### 创建新的七层CLB
+### 创建新的七层 CLB
 
 本例在vpc  `vpc-b5hcoxj4`中创建了公网(OPEN)负载均衡实例，并为之创建了端口号为9999的HTTP监听器，最后会在监听器中创建`mytest.com/index.html`的转发规则
 
@@ -87,9 +87,9 @@ spec:
     policy: Always
 ```
 
-### 设定backend权重
+### 设定 backend 权重
 
-本例展示了Service NodePort的绑定。被绑定Service的名称为svc-test，service port为80（TCP)，绑定到CLB的每个`Node:NodePort`的权重都是66
+本例展示了 Service NodePort 的绑定。被绑定 Service 的名称为 svc-test，service port 为80（TCP)，绑定到 CLB 的每个`Node:NodePort`的权重都是66
 
 ```
 apiVersion: lbcf.tkestack.io/v1beta1
@@ -109,7 +109,7 @@ spec:
 
 ## 附录
 
-### 腾讯云CLB LBCF driver
+### 腾讯云 CLB LBCF driver
 
 ConfigMap：
 

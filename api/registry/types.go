@@ -22,6 +22,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// FinalizerName is the name identifying a finalizer during resource lifecycle.
+type FinalizerName string
+
+const (
+	// ChartGroupFinalize is an internal finalizer values to ChartGroup.
+	ChartGroupFinalize FinalizerName = "chartgroup"
+	// ChartFinalize is an internal finalizer values to Chart.
+	ChartFinalize FinalizerName = "chart"
+)
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:skipVerbs=deleteCollection
@@ -132,7 +142,7 @@ type ChartGroup struct {
 	// +optional
 	metav1.ObjectMeta
 
-	// Spec defines the desired identities of chart group in this set.
+	// Spec defines the desired identities of chartgroup in this set.
 	// +optional
 	Spec ChartGroupSpec
 	// +optional
@@ -142,17 +152,17 @@ type ChartGroup struct {
 // +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// ChartGroupList is the whole list of all chart groups which owned by a tenant.
+// ChartGroupList is the whole list of all chartgroups which owned by a tenant.
 type ChartGroupList struct {
 	metav1.TypeMeta
 	// +optional
 	metav1.ListMeta
 
-	// List of chart groups
+	// List of chartgroups
 	Items []ChartGroup
 }
 
-// ChartGroupSpec is a description of a chart group.
+// ChartGroupSpec is a description of a chartgroup.
 type ChartGroupSpec struct {
 	Name     string
 	TenantID string
@@ -160,19 +170,72 @@ type ChartGroupSpec struct {
 	DisplayName string
 	// +optional
 	Visibility Visibility
+	// +optional
+	Type RepoType
+	// +optional
+	Description string
+	// +optional
+	Projects []string
+	// +optional
+	Finalizers []FinalizerName
 }
 
-// ChartGroupStatus represents information about the status of a chart group.
+// ChartGroupStatus represents information about the status of a chartgroup.
 type ChartGroupStatus struct {
 	// +optional
 	Locked     *bool
 	ChartCount int32
+	// +optional
+	Phase ChartGroupPhase
+	// The last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time
+	// The reason for the condition's last transition.
+	// +optional
+	Reason string
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message string
 }
+
+// ChartGroupPhase indicates the phase of chartgroups.
+type ChartGroupPhase string
+
+// These are valid phases of chartgroups.
+const (
+	// ChartGroupPending indicates that the chartgroup has been declared,
+	// when the chartgroup has not actually been created.
+	ChartGroupPending ChartGroupPhase = "Pending"
+	// ChartGroupAvailable indicates the chartgroup of the project is available.
+	ChartGroupAvailable ChartGroupPhase = "Available"
+	// ChartGroupFailed indicates that the chartgroup failed to be created or deleted
+	// after it has been created.
+	ChartGroupFailed ChartGroupPhase = "Failed"
+	// ChartGroupTerminating means the chartgroup is undergoing graceful termination.
+	ChartGroupTerminating ChartGroupPhase = "Terminating"
+)
+
+// ChartPhase indicates the phase of chart.
+type ChartPhase string
+
+// These are valid phases of charts.
+const (
+	// ChartPending indicates that the chart has been declared,
+	// when the chart has not actually been created.
+	ChartPending ChartPhase = "Pending"
+	// ChartAvailable indicates the chart of the project is available.
+	ChartAvailable ChartPhase = "Available"
+	// ChartFailed indicates that the chart failed to be created or deleted
+	// after it has been created.
+	ChartFailed ChartPhase = "Failed"
+	// ChartTerminating means the chart is undergoing graceful termination.
+	ChartTerminating ChartPhase = "Terminating"
+)
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Chart is a chart in chart group of chartmuseum registry.
+// Chart is a chart in chartgroup of chartmuseum registry.
 type Chart struct {
 	metav1.TypeMeta
 	// +optional
@@ -187,7 +250,7 @@ type Chart struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// ChartList is the whole list of all charts which owned by a chart group.
+// ChartList is the whole list of all charts which owned by a chartgroup.
 type ChartList struct {
 	metav1.TypeMeta
 	// +optional
@@ -205,6 +268,8 @@ type ChartSpec struct {
 	DisplayName string
 	// +optional
 	Visibility Visibility
+	// +optional
+	Finalizers []FinalizerName
 }
 
 type ChartStatus struct {
@@ -212,23 +277,91 @@ type ChartStatus struct {
 	Locked    *bool
 	PullCount int32
 	Versions  []ChartVersion
+	// +optional
+	Phase ChartPhase
+	// The last time the condition transitioned from one status to another.
+	// +optional
+	LastTransitionTime metav1.Time
+	// The reason for the condition's last transition.
+	// +optional
+	Reason string
+	// A human readable message indicating details about the transition.
+	// +optional
+	Message string
 }
 
 type ChartVersion struct {
 	Version     string
 	ChartSize   int64
 	TimeCreated metav1.Time
+	Description string
+	AppVersion  string
+	Icon        string
 }
 
 // Visibility defines the visible properties of the repo or namespace.
 type Visibility string
+
+// RepoType defines the type properties of the repo or namespace.
+type RepoType string
 
 const (
 	// VisibilityPublic indicates the namespace or repo is public.
 	VisibilityPublic Visibility = "Public"
 	// VisibilityPrivate indicates the namespace or repo is private.
 	VisibilityPrivate Visibility = "Private"
+
+	// RepoTypePersonal indicates the type of namespace or repo is personal.
+	RepoTypePersonal RepoType = "personal"
+	// RepoTypeProject indicates the type of namespace or repo is project.
+	RepoTypeProject RepoType = "project"
+	// RepoTypeSystem indicates the type of namespace or repo is system.
+	RepoTypeSystem RepoType = "system"
+	// RepoTypePublic indicates the type of namespace or repo is visibility public.
+	RepoTypePublic RepoType = "public"
+	// RepoTypeAll indicates all of namespace or repo.
+	RepoTypeAll RepoType = "all"
 )
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ChartProxyOptions is the query options to a ChartInfo proxy call.
+type ChartProxyOptions struct {
+	metav1.TypeMeta
+
+	Version   string
+	Cluster   string
+	Namespace string
+}
+
+// +genclient
+// +genclient:noVerbs
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ChartInfo describes detail of a chart version.
+type ChartInfo struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ObjectMeta
+
+	// Spec defines the desired identities of a chart.
+	// +optional
+	Spec ChartInfoSpec
+}
+
+// ChartInfoSpec is a description of a ChartInfo.
+type ChartInfoSpec struct {
+	// +optional
+	Readme map[string]string
+	// +optional
+	Values map[string]string
+	// +optional
+	RawFiles map[string]string
+	// +optional
+	ChartSpec
+	// +optional
+	ChartVersion
+}
 
 // +genclient
 // +genclient:nonNamespaced

@@ -22,18 +22,18 @@ import (
 	"context"
 	"strings"
 
-	"github.com/casbin/casbin/v2"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apiserver/pkg/endpoints/request"
+	"tkestack.io/tke/api/auth"
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/pkg/auth/util"
 	"tkestack.io/tke/pkg/util/log"
 
+	"github.com/casbin/casbin/v2"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"tkestack.io/tke/api/auth"
-	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 )
 
 // ProjectREST implements the REST endpoint, list policies bound to the user.
@@ -91,7 +91,7 @@ func (r *ProjectREST) List(ctx context.Context, options *metainternalversion.Lis
 
 	rules := r.enforcer.GetFilteredGroupingPolicy(0, util.UserKey(user.Spec.TenantID, user.Spec.Name))
 	for _, r := range rules {
-		if len(r) != 3 {
+		if len(r) != util.GRuleFieldNumber {
 			log.Warn("invalid rule", log.Strings("rule", r))
 			continue
 		}
@@ -100,18 +100,9 @@ func (r *ProjectREST) List(ctx context.Context, options *metainternalversion.Lis
 
 		if strings.HasPrefix(prj, "prj-") {
 			if role == projectOwner {
-				if _, ok := managed[prj]; ok {
-					managed[prj] = append(managed[prj], role)
-				} else {
-					managed[prj] = auth.ExtraValue{role}
-				}
+				managed[prj] = append(managed[prj], role)
 			}
-
-			if _, ok := memberd[prj]; ok {
-				memberd[prj] = append(memberd[prj], role)
-			} else {
-				memberd[prj] = auth.ExtraValue{role}
-			}
+			memberd[prj] = append(memberd[prj], role)
 		}
 	}
 

@@ -48,6 +48,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
@@ -125,6 +126,18 @@ const (
 	kubeStateRoleBinding        = "kube-state-metrics"
 	kubeStateRole               = "kube-state-metrics-resizer"
 	kubeStateWorkLoad           = "kube-state-metrics"
+
+	prometheusAdapterAuthDelegatorClusterRoleBinding  = "custom-metrics:system:auth-delegator"
+	prometheusAdapterServiceAccount                   = "custom-metrics-apiserver"
+	prometheusAdapterWorkLoad                         = "custom-metrics-apiserver"
+	prometheusAdapterService                          = "custom-metrics-apiserver"
+	prometheusAdapterClusterRole                      = "custom-metrics-server-resources"
+	prometheusAdapterResourceReaderClusterRole        = "custom-metrics-resource-reader"
+	prometheusAdapterResourceReaderClusterRoleBinding = "custom-metrics-resource-reader"
+	prometheusAdapterHPAClusterRoleBinding            = "hpa-controller-custom-metrics"
+	prometheusAdapterAuthReaderRoleBinding            = "custom-metrics-auth-reader"
+	prometheusAdapterConfigMap                        = "adapter-config"
+	systemAuthDelegatorClusterRole                    = "system:auth-delegator"
 
 	nodeProblemDetectorWorkload           = "node-problem-detector"
 	nodeProblemDetectorServiceAccount     = "node-problem-detector"
@@ -581,21 +594,26 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 
 	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, prometheus.Spec.ClusterName, metav1.GetOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("get cluster failed: %v", err)
 	}
 	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
-		return err
+		return fmt.Errorf("get kubeClient failed: %v", err)
+	}
+
+	kaClient, err := util.BuildKubeAggregatorClientSet(ctx, cluster, c.client.PlatformV1())
+	if err != nil {
+		return fmt.Errorf("get kaClient failed: %v", err)
 	}
 
 	crdClient, err := util.BuildExternalExtensionClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
-		return err
+		return fmt.Errorf("get crdClient failed: %v", err)
 	}
 
 	mclient, err := util.BuildExternalMonitoringClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
-		return err
+		return fmt.Errorf("get mclient failed: %v", err)
 	}
 
 	// Set remote write address
@@ -604,18 +622,18 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 	case "influxdb":
 		remoteWrites, err = c.initInfluxdb(cluster.Name)
 		if err != nil {
-			return err
+			return fmt.Errorf("init Influxdb failed: %v", err)
 		}
 	case "elasticsearch":
 		remoteWrites, err = c.initESAdapter(ctx, kubeClient, components)
 		if err != nil {
-			return err
+			return fmt.Errorf("init ESAdapter failed: %v", err)
 		}
 		prometheus.Status.SubVersion[PrometheusBeatService] = components.PrometheusBeatWorkLoad.Tag
 	case "thanos":
 		remoteWrites, err = c.initThanos()
 		if err != nil {
-			return err
+			return fmt.Errorf("init Thanos failed: %v", err)
 		}
 	default:
 	}
@@ -629,13 +647,14 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 		remoteReads = prometheus.Spec.RemoteAddress.ReadAddr
 	}
 
+	log.Infof("Start to create crds")
 	crds := getCRDs()
 	for _, crd := range crds {
 		if apiclient.ClusterVersionIsBefore116(kubeClient) {
 			crdObj := apiextensionsv1beta1.CustomResourceDefinition{}
 			err := json.Unmarshal([]byte(crd), &crdObj)
 			if err != nil {
-				return err
+				return fmt.Errorf("Unmarshal crd failed: %v", err)
 			}
 			crdObj.TypeMeta.APIVersion = "apiextensions.k8s.io/v1beta1"
 			_, err = crdClient.ApiextensionsV1beta1().CustomResourceDefinitions().Create(ctx, &crdObj, metav1.CreateOptions{})
@@ -647,7 +666,7 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 			crdObj := apiextensionsv1.CustomResourceDefinition{}
 			err := json.Unmarshal([]byte(crd), &crdObj)
 			if err != nil {
-				return err
+				return fmt.Errorf("Unmarshal crd failed: %v", err)
 			}
 
 			_, err = crdClient.ApiextensionsV1().CustomResourceDefinitions().Create(ctx, &crdObj, metav1.CreateOptions{})
@@ -658,25 +677,26 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 		}
 	}
 
+	log.Infof("Start to create prometheus-operator")
 	// Service prometheus-operator
 	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, servicePrometheusOperator(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create prometheus-operator service failed: %v", err)
 	}
 	// ServiceAccount for prometheus-operator
 	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccountPrometheusOperator(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create prometheus-operator ServiceAccount failed: %v", err)
 	}
 	// ClusterRole for prometheus-operator
 	if _, err := kubeClient.RbacV1().ClusterRoles().Create(ctx, clusterRolePrometheusOperator(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create prometheus-operator ClusterRole failed: %v", err)
 	}
 	// ClusterRoleBinding prometheus-operator
 	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, clusterRoleBindingPrometheusOperator(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create prometheus-operator ClusterRoleBinding failed: %v", err)
 	}
 	// Deployment for prometheus-operator
 	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deployPrometheusOperatorApps(components, prometheus), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create prometheus-operator Deployment failed: %v", err)
 	}
 
 	prometheus.Status.SubVersion[PrometheusOperatorService] = components.PrometheusOperatorService.Tag
@@ -691,128 +711,182 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 		webhookAddr = c.notifyAPIAddress + "/webhook"
 	}
 
+	log.Infof("Start to create alertmanager")
 	// secret for alertmanager
 	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(ctx, createSecretForAlertmanager(webhookAddr, prometheus.Spec.AlertRepeatInterval), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create alertmanager secret failed: %v", err)
 	}
 
 	// ServiceAccount for alertmanager
 	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccountAlertmanager(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create alertmanager ServiceAccount failed: %v", err)
 	}
 
 	// Service for alertmanager
 	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, createServiceForAlerterManager(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create alertmanager Service failed: %v", err)
 	}
 
 	// Crd alertmanager instance
 	if _, err := mclient.MonitoringV1().Alertmanagers(metav1.NamespaceSystem).Create(ctx, createAlertManagerCRD(components, prometheus), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create alertmanager Crd instance failed: %v", err)
 	}
 
 	prometheus.Status.SubVersion[AlertManagerService] = components.AlertManagerService.Tag
 
+	log.Infof("Start to create prometheus")
 	// Secret for prometheus-etcd
 	credential, err := util.GetClusterCredentialV1(ctx, c.client.PlatformV1(), cluster)
 	if err != nil {
-		return err
+		return fmt.Errorf("get credential failed: %v", err)
 	}
 	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(ctx, secretETCDPrometheus(credential), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create prometheus-etcd Secret failed: %v", err)
 	}
 	// Service Prometheus
 	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, servicePrometheus(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create prometheus Service failed: %v", err)
 	}
 	// Secret for prometheus
 	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(ctx, createSecretForPrometheus(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create prometheus Secret failed: %v", err)
 	}
 	// ServiceAccount for prometheus
 	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccountPrometheus(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create prometheus ServiceAccount failed: %v", err)
 	}
 	// ClusterRole for prometheus
 	if _, err := kubeClient.RbacV1().ClusterRoles().Create(ctx, clusterRolePrometheus(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create prometheus ClusterRole failed: %v", err)
 	}
 	// ClusterRoleBinding Prometheus
 	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, clusterRoleBindingPrometheus(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create prometheus ClusterRoleBinding failed: %v", err)
 	}
 	// prometheus rule record
 	if _, err := mclient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Create(ctx, recordsForPrometheus(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create prometheus rule record failed: %v", err)
 	}
 	// prometheus rule alert, empty for now, edit by tke-monitor
 	if _, err := mclient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Create(ctx, alertsForPrometheus(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create prometheus rule alert failed: %v", err)
 	}
 	// Crd prometheus instance
 	if _, err := mclient.MonitoringV1().Prometheuses(metav1.NamespaceSystem).Create(ctx, createPrometheusCRD(components, prometheus, cluster, remoteWrites, remoteReads, c.remoteType), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create prometheus crd instance failed: %v", err)
 	}
 	prometheus.Status.SubVersion[PrometheusService] = components.PrometheusService.Tag
 
+	log.Infof("Start to create node-exporter")
 	// DaemonSet for node-exporter
 	if _, err := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(ctx, createDaemonSetForNodeExporter(components), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create node-exporter failed: %v", err)
 	}
 	prometheus.Status.SubVersion[nodeExporterService] = components.NodeExporterService.Tag
 
+	log.Infof("Start to create kube-state-metrics")
 	// Service for kube-state-metrics
 	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, createServiceForMetrics(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create kube-state-metrics Service failed: %v", err)
 	}
 	// ServiceAccount for kube-state-metrics
 	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, createServiceAccountForMetrics(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create kube-state-metrics ServiceAccount failed: %v", err)
 	}
 	// ClusterRole for kube-state-metrics
 	if _, err := kubeClient.RbacV1().ClusterRoles().Create(ctx, createClusterRoleForMetrics(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create kube-state-metrics ClusterRole failed: %v", err)
 	}
 	// ClusterRoleBinding for kube-state-metrics
 	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, createClusterRoleBindingForMetrics(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create kube-state-metrics ClusterRoleBinding failed: %v", err)
 	}
 	// Role for kube-state-metrics
 	if _, err := kubeClient.RbacV1().Roles(metav1.NamespaceSystem).Create(ctx, createRoleForMetrics(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create kube-state-metrics Role failed: %v", err)
 	}
 	// RoleBinding for kube-state-metrics
 	if _, err := kubeClient.RbacV1().RoleBindings(metav1.NamespaceSystem).Create(ctx, createRoleBingdingForMetrics(), metav1.CreateOptions{}); err != nil {
-		return err
+		return fmt.Errorf("create kube-state-metrics RoleBinding failed: %v", err)
 	}
 	// Deployment for kube-state-metrics
 	if extensionsAPIGroup {
 		if _, err := kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Create(ctx, createExtensionDeploymentForMetrics(components, prometheus), metav1.CreateOptions{}); err != nil {
-			return err
+			return fmt.Errorf("create kube-state-metrics Deployment failed: %v", err)
 		}
 	} else {
 		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, createAppsDeploymentForMetrics(components, prometheus), metav1.CreateOptions{}); err != nil {
-			return err
+			return fmt.Errorf("create kube-state-metrics Deployment failed: %v", err)
 		}
 	}
 	prometheus.Status.SubVersion[kubeStateService] = components.KubeStateService.Tag
 
+	log.Infof("Start to create promtheus-adapter")
+	// Service for prometheus-adapter
+	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, createServiceForPrometheusAdapter(), metav1.CreateOptions{}); err != nil {
+		return fmt.Errorf("create prometheus-adapter Service failed: %v", err)
+	}
+	// ServiceAccount for prometheus-adapter
+	if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, createServiceAccountForPrometheusAdapter(), metav1.CreateOptions{}); err != nil {
+		return fmt.Errorf("create prometheus-adapter ServiceAccount failed: %v", err)
+	}
+	// ResourceReaderClusterRole for prometheus-adapter
+	if _, err := kubeClient.RbacV1().ClusterRoles().Create(ctx, createResourceReaderClusterRoleForPrometheusAdapter(), metav1.CreateOptions{}); err != nil {
+		return fmt.Errorf("create prometheus-adapter ResourceReaderClusterRole failed: %v", err)
+	}
+	// ClusterRole for prometheus-adapter
+	if _, err := kubeClient.RbacV1().ClusterRoles().Create(ctx, createClusterRoleForPrometheusAdapter(), metav1.CreateOptions{}); err != nil {
+		return fmt.Errorf("create prometheus-adapter ClusterRole failed: %v", err)
+	}
+	// AuthDelegatorClusterRoleBinding for prometheus-adapter
+	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, createAuthDelegatorClusterRoleBindingForPrometheusAdapter(), metav1.CreateOptions{}); err != nil {
+		return fmt.Errorf("create prometheus-adapter AuthDelegatorClusterRoleBinding failed: %v", err)
+	}
+	// ResourceReaderClusterRoleBinding for prometheus-adapter
+	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, createResourceReaderClusterRoleBindingForPrometheusAdapter(), metav1.CreateOptions{}); err != nil {
+		return fmt.Errorf("create prometheus-adapter ResourceReaderClusterRoleBinding failed: %v", err)
+	}
+	// HPAClusterRoleBinding for prometheus-adapter
+	if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, createHPAClusterRoleBindingForPrometheusAdapter(), metav1.CreateOptions{}); err != nil {
+		return fmt.Errorf("create prometheus-adapter HPAClusterRoleBinding failed: %v", err)
+	}
+	// AuthReaderRoleBinding for prometheus-adapter
+	if _, err := kubeClient.RbacV1().RoleBindings(metav1.NamespaceSystem).Create(ctx, createAuthReaderRoleBingdingForPrometheusAdapter(), metav1.CreateOptions{}); err != nil {
+		return fmt.Errorf("create prometheus-adapter AuthReaderRoleBinding failed: %v", err)
+	}
+	// APIService for prometheus-adapter
+	for _, apiservice := range createAPIServiceForPrometheusAdapter() {
+		if _, err := kaClient.ApiregistrationV1().APIServices().Create(ctx, apiservice, metav1.CreateOptions{}); err != nil {
+			return fmt.Errorf("create prometheus-adapter APIService failed: %v", err)
+		}
+	}
+	// ConfigMap for prometheus-adapter
+	if _, err := kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(ctx, createConfigMapForPrometheusAdapter(), metav1.CreateOptions{}); err != nil {
+		return fmt.Errorf("create prometheus-adapter ConfigMap failed: %v", err)
+	}
+	// Deployment for prometheus-adapter
+	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, createAppsDeploymentForPrometheusAdapter(components, prometheus), metav1.CreateOptions{}); err != nil {
+		return fmt.Errorf("create prometheus-adapter Deployment failed: %v", err)
+	}
+
+	prometheus.Status.SubVersion[prometheusAdapterService] = components.PrometheusAdapter.Tag
+
 	if prometheus.Spec.WithNPD {
 		// ServiceAccount for node-problem-detector
 		if _, err := kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, createServiceAccountForNPD(), metav1.CreateOptions{}); err != nil {
-			return err
+			return fmt.Errorf("create node-problem-detector ServiceAccount failed: %v", err)
 		}
 		// ClusterRole for node-problem-detector
 		if _, err := kubeClient.RbacV1().ClusterRoles().Create(ctx, createClusterRoleForNPD(), metav1.CreateOptions{}); err != nil {
-			return err
+			return fmt.Errorf("create node-problem-detector ClusterRole failed: %v", err)
 		}
 		// ClusterRoleBinding for node-problem-detector
 		if _, err := kubeClient.RbacV1().ClusterRoleBindings().Create(ctx, createClusterRoleBindingForNPD(), metav1.CreateOptions{}); err != nil {
-			return err
+			return fmt.Errorf("create node-problem-detector ClusterRoleBinding failed: %v", err)
 		}
 		// DaemonSet for node-problem-detector
 		if _, err := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(ctx, createDaemonSetForNPD(components), metav1.CreateOptions{}); err != nil {
-			return err
+			return fmt.Errorf("create node-problem-detector DaemonSet failed: %v", err)
 		}
 		prometheus.Status.SubVersion[nodeProblemDetectorWorkload] = components.NodeProblemDetector.Tag
 	}
@@ -1162,7 +1236,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 				rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 					{
 						SourceLabels: []string{"__name__"},
-						Regex:        "k8s_(.*)|apiserver_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
+						Regex:        "k8s_(.*)|apiserver_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)|grpc_(.*)|process_(.*)|scheduler_(.*)|workqueue_(.*)|rest_client_requests_(.*)|go_goroutines|kubelet_(.*)|volume_manager_(.*)|storage_operation_(.*)|coredns_(.*)|up",
 						Action:       "keep",
 					},
 				}
@@ -1178,7 +1252,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
-					Regex:        "project_(.*)|apiserver_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
+					Regex:        "project_(.*)|apiserver_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)|grpc_(.*)|process_(.*)|scheduler_(.*)|workqueue_(.*)|rest_client_requests_(.*)|go_goroutines|kubelet_(.*)|volume_manager_(.*)|storage_operation_(.*)|coredns_(.*)|up",
 					Action:       "keep",
 				},
 			}
@@ -1193,7 +1267,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
-					Regex:        "project_(.*)|apiserver_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)",
+					Regex:        "project_(.*)|apiserver_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)|grpc_(.*)|process_(.*)|scheduler_(.*)|workqueue_(.*)|rest_client_requests_(.*)|go_goroutines|kubelet_(.*)|volume_manager_(.*)|storage_operation_(.*)|coredns_(.*)|up",
 					Action:       "keep",
 				},
 			}
@@ -1959,6 +2033,373 @@ func createAppsDeploymentForMetrics(components images.Components, prometheus *v1
 	return deploy
 }
 
+var selectorForPrometheusAdapter = metav1.LabelSelector{
+	MatchLabels: map[string]string{specialLabelName: specialLabelValue, "k8s-app": prometheusAdapterWorkLoad},
+}
+
+func createAuthDelegatorClusterRoleBindingForPrometheusAdapter() *rbacv1.ClusterRoleBinding {
+	return &rbacv1.ClusterRoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ClusterRoleBinding",
+			APIVersion: "rbac.authorization.k8s.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: prometheusAdapterAuthDelegatorClusterRoleBinding,
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     systemAuthDelegatorClusterRole,
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      prometheusAdapterServiceAccount,
+				Namespace: metav1.NamespaceSystem,
+			},
+		},
+	}
+}
+
+func createAuthReaderRoleBingdingForPrometheusAdapter() *rbacv1.RoleBinding {
+	return &rbacv1.RoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "RoleBinding",
+			APIVersion: "rbac.authorization.k8s.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      prometheusAdapterAuthReaderRoleBinding,
+			Namespace: metav1.NamespaceSystem,
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "Role",
+			Name:     "extension-apiserver-authentication-reader",
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      prometheusAdapterServiceAccount,
+				Namespace: metav1.NamespaceSystem,
+			},
+		},
+	}
+}
+
+func createResourceReaderClusterRoleBindingForPrometheusAdapter() *rbacv1.ClusterRoleBinding {
+	return &rbacv1.ClusterRoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ClusterRoleBinding",
+			APIVersion: "rbac.authorization.k8s.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: prometheusAdapterResourceReaderClusterRoleBinding,
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     prometheusAdapterResourceReaderClusterRole,
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      prometheusAdapterServiceAccount,
+				Namespace: metav1.NamespaceSystem,
+			},
+		},
+	}
+}
+
+func createResourceReaderClusterRoleForPrometheusAdapter() *rbacv1.ClusterRole {
+	return &rbacv1.ClusterRole{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "rbac.authorization.k8s.io/v1",
+			Kind:       "ClusterRole",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: prometheusAdapterResourceReaderClusterRole,
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{""},
+				Resources: []string{"pods", "nodes", "nodes/stats", "configmaps"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
+		},
+	}
+}
+
+func createServiceAccountForPrometheusAdapter() *corev1.ServiceAccount {
+	return &corev1.ServiceAccount{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ServiceAccount",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      prometheusAdapterServiceAccount,
+			Namespace: metav1.NamespaceSystem,
+		},
+	}
+}
+
+func createServiceForPrometheusAdapter() *corev1.Service {
+	return &corev1.Service{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Service",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      prometheusAdapterService,
+			Namespace: metav1.NamespaceSystem,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: selectorForPrometheusAdapter.MatchLabels,
+			Ports: []corev1.ServicePort{
+				{Port: 443, TargetPort: intstr.FromInt(6443)},
+			},
+		},
+	}
+}
+
+func createClusterRoleForPrometheusAdapter() *rbacv1.ClusterRole {
+	return &rbacv1.ClusterRole{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "rbac.authorization.k8s.io/v1",
+			Kind:       "ClusterRole",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: prometheusAdapterClusterRole,
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"custom.metrics.k8s.io", "external.metrics.k8s.io"},
+				Resources: []string{"*"},
+				Verbs:     []string{"*"},
+			},
+		},
+	}
+}
+
+func createHPAClusterRoleBindingForPrometheusAdapter() *rbacv1.ClusterRoleBinding {
+	return &rbacv1.ClusterRoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ClusterRoleBinding",
+			APIVersion: "rbac.authorization.k8s.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: prometheusAdapterHPAClusterRoleBinding,
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     prometheusAdapterClusterRole,
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      "horizontal-pod-autoscaler",
+				Namespace: metav1.NamespaceSystem,
+			},
+		},
+	}
+}
+
+func createConfigMapForPrometheusAdapter() *corev1.ConfigMap {
+	cm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      prometheusAdapterConfigMap,
+			Namespace: metav1.NamespaceSystem,
+		},
+		Data: map[string]string{
+			"config.yaml": configForPrometheusAdapter(),
+		},
+	}
+	return cm
+}
+
+func createAPIServiceForPrometheusAdapter() []*apiregistrationv1.APIService {
+	apiServices := []*apiregistrationv1.APIService{}
+	customMetricsV1beta1 := &apiregistrationv1.APIService{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "APIService",
+			APIVersion: "apiregistration.k8s.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "v1beta1.custom.metrics.k8s.io",
+		},
+		Spec: apiregistrationv1.APIServiceSpec{
+			Service: &apiregistrationv1.ServiceReference{
+				Namespace: metav1.NamespaceSystem,
+				Name:      prometheusAdapterService,
+			},
+			Group:                 "custom.metrics.k8s.io",
+			Version:               "v1beta1",
+			InsecureSkipTLSVerify: true,
+			GroupPriorityMinimum:  100,
+			VersionPriority:       100,
+		},
+	}
+	apiServices = append(apiServices, customMetricsV1beta1)
+	customMetricsV1beta2 := &apiregistrationv1.APIService{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "APIService",
+			APIVersion: "apiregistration.k8s.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "v1beta2.custom.metrics.k8s.io",
+		},
+		Spec: apiregistrationv1.APIServiceSpec{
+			Service: &apiregistrationv1.ServiceReference{
+				Namespace: metav1.NamespaceSystem,
+				Name:      prometheusAdapterService,
+			},
+			Group:                 "custom.metrics.k8s.io",
+			Version:               "v1beta2",
+			InsecureSkipTLSVerify: true,
+			GroupPriorityMinimum:  100,
+			VersionPriority:       200,
+		},
+	}
+	apiServices = append(apiServices, customMetricsV1beta2)
+	externalMetricsV1beta1 := &apiregistrationv1.APIService{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "APIService",
+			APIVersion: "apiregistration.k8s.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "v1beta1.external.metrics.k8s.io",
+		},
+		Spec: apiregistrationv1.APIServiceSpec{
+			Service: &apiregistrationv1.ServiceReference{
+				Namespace: metav1.NamespaceSystem,
+				Name:      prometheusAdapterService,
+			},
+			Group:                 "external.metrics.k8s.io",
+			Version:               "v1beta1",
+			InsecureSkipTLSVerify: true,
+			GroupPriorityMinimum:  100,
+			VersionPriority:       100,
+		},
+	}
+	apiServices = append(apiServices, externalMetricsV1beta1)
+	return apiServices
+}
+
+func createAppsDeploymentForPrometheusAdapter(components images.Components, prometheus *v1.Prometheus) *appsv1.Deployment {
+	deploy := &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Deployment",
+			APIVersion: "apps/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      prometheusAdapterWorkLoad,
+			Namespace: metav1.NamespaceSystem,
+			Labels:    map[string]string{"kubernetes.io/cluster-service": "true", "addonmanager.kubernetes.io/mode": "Reconcile", specialLabelName: specialLabelValue, "k8s-app": prometheusAdapterWorkLoad},
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: controllerutil.Int32Ptr(1),
+			Selector: &selectorForPrometheusAdapter,
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{specialLabelName: specialLabelValue, "k8s-app": prometheusAdapterWorkLoad},
+				},
+				Spec: corev1.PodSpec{
+					ServiceAccountName: prometheusAdapterServiceAccount,
+					Affinity: &corev1.Affinity{
+						NodeAffinity: &corev1.NodeAffinity{
+							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+								NodeSelectorTerms: []corev1.NodeSelectorTerm{
+									{
+										MatchExpressions: []corev1.NodeSelectorRequirement{
+											{
+												Key:      "node-role.kubernetes.io/master",
+												Operator: corev1.NodeSelectorOpExists,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					Containers: []corev1.Container{
+						{
+							Name:  prometheusAdapterWorkLoad,
+							Image: components.PrometheusAdapter.FullName(),
+							Args: []string{
+								"--secure-port=6443",
+								"--logtostderr=true",
+								"--prometheus-url=http://prometheus.kube-system.svc.cluster.local:9090/",
+								"--metrics-relist-interval=1m",
+								"--v=3",
+								"--config=/etc/adapter/config.yaml",
+								"--cert-dir=/tmp",
+								"--requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt",
+								"--requestheader-allowed-names=front-proxy-client,admin",
+								"--requestheader-extra-headers-prefix=X-Remote-Extra-",
+								"--requestheader-group-headers=X-Remote-Group",
+								"--requestheader-username-headers=X-Remote-User",
+							},
+							Ports: []corev1.ContainerPort{
+								{ContainerPort: 6443},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									MountPath: "/etc/adapter/",
+									Name:      "config",
+									ReadOnly:  true,
+								},
+								{
+									MountPath: "/tmp",
+									Name:      "tmp-vol",
+								},
+								{
+									MountPath: "/etc/kubernetes/pki/",
+									Name:      "etc-kubernetes-pki",
+									ReadOnly:  true,
+								},
+							},
+						},
+					},
+					Volumes: []corev1.Volume{
+						{
+							Name: "etc-kubernetes-pki",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{
+									Path: "/etc/kubernetes/pki/",
+								},
+							},
+						},
+						{
+							Name: "config",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: prometheusAdapterConfigMap,
+									},
+								},
+							},
+						},
+						{
+							Name: "tmp-vol",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{},
+							},
+						},
+					},
+					Tolerations: []corev1.Toleration{
+						{
+							Key:      "node-role.kubernetes.io/master",
+							Operator: corev1.TolerationOpExists,
+							Effect:   corev1.TaintEffectNoSchedule,
+						},
+					},
+				},
+			},
+		},
+	}
+	return deploy
+}
+
 func createServiceAccountForNPD() *corev1.ServiceAccount {
 	return &corev1.ServiceAccount{
 		TypeMeta: metav1.TypeMeta{
@@ -2157,6 +2598,11 @@ func (c *Controller) uninstallPrometheus(ctx context.Context, prometheus *v1.Pro
 		return err
 	}
 
+	kaClient, err := util.BuildKubeAggregatorClientSet(ctx, cluster, c.client.PlatformV1())
+	if err != nil {
+		return fmt.Errorf("get kaClient failed: %v", err)
+	}
+
 	crdClient, err := util.BuildExternalExtensionClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
@@ -2299,6 +2745,53 @@ func (c *Controller) uninstallPrometheus(ctx context.Context, prometheus *v1.Pro
 		}
 		err = kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(ctx, nodeProblemDetectorServiceAccount, metav1.DeleteOptions{})
 		if err != nil && !errors.IsNotFound(err) {
+			errs = append(errs, err)
+		}
+	}
+
+	// delete prometheus-adapter
+	err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Delete(ctx, prometheusAdapterWorkLoad, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		errs = append(errs, err)
+	}
+	err = kubeClient.CoreV1().Services(metav1.NamespaceSystem).Delete(ctx, prometheusAdapterService, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		errs = append(errs, err)
+	}
+	err = kubeClient.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Delete(ctx, prometheusAdapterServiceAccount, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		errs = append(errs, err)
+	}
+	err = kubeClient.RbacV1().ClusterRoles().Delete(ctx, prometheusAdapterResourceReaderClusterRole, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		errs = append(errs, err)
+	}
+	err = kubeClient.RbacV1().ClusterRoles().Delete(ctx, prometheusAdapterClusterRole, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		errs = append(errs, err)
+	}
+	err = kubeClient.RbacV1().ClusterRoleBindings().Delete(ctx, prometheusAdapterAuthDelegatorClusterRoleBinding, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		errs = append(errs, err)
+	}
+	err = kubeClient.RbacV1().ClusterRoleBindings().Delete(ctx, prometheusAdapterResourceReaderClusterRoleBinding, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		errs = append(errs, err)
+	}
+	err = kubeClient.RbacV1().ClusterRoleBindings().Delete(ctx, prometheusAdapterHPAClusterRoleBinding, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		errs = append(errs, err)
+	}
+	err = kubeClient.RbacV1().RoleBindings(metav1.NamespaceSystem).Delete(ctx, prometheusAdapterAuthReaderRoleBinding, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		errs = append(errs, err)
+	}
+	err = kubeClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Delete(ctx, prometheusAdapterConfigMap, metav1.DeleteOptions{})
+	if err != nil && !errors.IsNotFound(err) {
+		errs = append(errs, err)
+	}
+	for _, apiservice := range createAPIServiceForPrometheusAdapter() {
+		if err := kaClient.ApiregistrationV1().APIServices().Delete(ctx, apiservice.Name, metav1.DeleteOptions{}); err != nil && !errors.IsNotFound(err) {
 			errs = append(errs, err)
 		}
 	}

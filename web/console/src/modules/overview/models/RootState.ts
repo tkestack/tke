@@ -28,12 +28,14 @@ export interface ClusterDetail {
   nodeAbnormal: number;
   workloadCount: number;
   workloadAbnormal: number;
+  cpuUsage: string;
   cpuRequest: number;
   cpuLimit: number;
   cpuCapacity: number;
   cpuAllocatable: number;
   cpuRequestRate: string;
   cpuAllocatableRate: string;
+  memUsage: string;
   memRequest: number;
   memLimit: number;
   memCapacity: number;
@@ -43,4 +45,5 @@ export interface ClusterDetail {
   schedulerHealthy: boolean;
   controllerManagerHealthy: boolean;
   etcdHealthy: boolean;
+  clusterDisplayName?: string;
 }

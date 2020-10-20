@@ -86,6 +86,7 @@ export interface EditState extends Identifiable {
   v_repoPassword?: Validation;
   repoNamespace?: string;
   v_repoNamespace?: Validation;
+  application: boolean;
 
   //业务模块设置
   openBusiness?: boolean;

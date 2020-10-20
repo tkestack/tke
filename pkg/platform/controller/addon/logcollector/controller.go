@@ -780,7 +780,7 @@ func (c *Controller) checkLogCollectorStatus(
 			if time.Now().After(initDelay) {
 				LogCollector = LogCollector.DeepCopy()
 				LogCollector.Status.Phase = v1.AddonPhaseFailed
-				LogCollector.Status.Reason = fmt.Sprintf("Log Collector is not healthy")
+				LogCollector.Status.Reason = "Log Collector is not healthy"
 				if err = c.persistUpdate(ctx, LogCollector); err != nil {
 					return false, err
 				}

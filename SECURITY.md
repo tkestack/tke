@@ -1,6 +1,6 @@
 # Reporting security issues
 
-The TKE maintainers take security seriously. If you discover a security issue, please bring it to their attention right away!
+The TKEStack maintainers take security seriously. If you discover a security issue, please bring it to their attention right away!
 
 ## Reporting a Vulnerability
 

@@ -127,6 +127,11 @@ type ClusterSpec struct {
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
+	// If true will use hostname as nodename, if false will use machine IP as nodename.
+	// +optional
+	HostnameAsNodename bool `json:"hostnameAsNodename,omitempty" protobuf:"bytes,23,opt,name=hostnameAsNodename"`
+	// +optional
+	NetworkArgs map[string]string `json:"networkArgs,omitempty" protobuf:"bytes,24,name=networkArgs"`
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -166,6 +171,16 @@ type ClusterStatus struct {
 	DNSIP string `json:"dnsIP,omitempty" protobuf:"bytes,13,opt,name=dnsIP"`
 	// +optional
 	RegistryIPs []string `json:"registryIPs,omitempty" protobuf:"bytes,14,opt,name=registryIPs"`
+	// +optional
+	SecondaryServiceCIDR string `json:"secondaryServiceCIDR,omitempty" protobuf:"bytes,15,opt,name=secondaryServiceCIDR"`
+	// +optional
+	ClusterCIDR string `json:"clusterCIDR,omitempty" protobuf:"bytes,16,opt,name=clusterCIDR"`
+	// +optional
+	SecondaryClusterCIDR string `json:"secondaryClusterCIDR,omitempty" protobuf:"bytes,17,opt,name=secondaryClusterCIDR"`
+	// +optional
+	NodeCIDRMaskSizeIPv4 int32 `json:"nodeCIDRMaskSizeIPv4,omitempty" protobuf:"varint,18,opt,name=nodeCIDRMaskSizeIPv4"`
+	// +optional
+	NodeCIDRMaskSizeIPv6 int32 `json:"nodeCIDRMaskSizeIPv6,omitempty" protobuf:"varint,19,opt,name=nodeCIDRMaskSizeIPv6"`
 }
 
 // FinalizerName is the name identifying a finalizer during cluster lifecycle.
@@ -340,6 +355,10 @@ type ClusterFeature struct {
 	// For kube-apiserver authorization webhook
 	// +optional
 	AuthzWebhookAddr *AuthzWebhookAddr `json:"authzWebhookAddr,omitempty" protobuf:"bytes,11,opt,name=authzWebhookAddr"`
+	// +optional
+	EnableMetricsServer bool `json:"enableMetricsServer,omitempty" protobuf:"bytes,12,opt,name=enableMetricsServer"`
+	// +optional
+	IPv6DualStack bool `json:"ipv6DualStack,omitempty" protobuf:"bytes,13,opt,name=ipv6DualStack"`
 }
 
 type HA struct {
@@ -382,8 +401,19 @@ type ExternalAuthzWebhookAddr struct {
 }
 
 const (
+	// node lifecycle hook
 	HookPreInstall  HookType = "PreInstall"
 	HookPostInstall HookType = "PostInstall"
+	HookPreUpgrade  HookType = "PreUpgrade"
+	HookPostUpgrade HookType = "PostUpgrade"
+
+	// custer lifecycle hook
+	HookPreClusterInstall  HookType = "PreClusterInstall"
+	HookPostClusterInstall HookType = "PostClusterInstall"
+	HookPreClusterUpgrade  HookType = "PreClusterUpgrade"
+	HookPostClusterUpgrade HookType = "PostClusterUpgrade"
+	HookPreClusterDelete   HookType = "PreClusterDelete"
+	HookPostClusterDelete  HookType = "PostClusterDelete"
 )
 
 // ClusterProperty records the attribute information of the cluster.

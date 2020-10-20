@@ -30,6 +30,7 @@ import (
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -129,6 +130,11 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 	return nil
 }
 
+func (p *Provider) EnsurePreClusterUpgradeHook(ctx context.Context, c *v1.Cluster) error {
+
+	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPreClusterUpgrade, c.Spec.Machines[:1])
+}
+
 func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Cluster) error {
 	client, err := c.Clientset()
 	if err != nil {
@@ -141,7 +147,7 @@ func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Clus
 	}
 	for i, machine := range c.Spec.Machines {
 		option.MachineName = machine.Username
-		option.NodeName = machine.IP
+		option.MachineIP = machine.IP
 		option.BootstrapNode = i == 0
 		s, err := machine.SSH()
 		if err != nil {
@@ -163,4 +169,9 @@ func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Clus
 	c.Status.Phase = platformv1.ClusterRunning
 
 	return nil
+}
+
+func (p *Provider) EnsurePostClusterUpgradeHook(ctx context.Context, c *v1.Cluster) error {
+
+	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPostClusterUpgrade, c.Spec.Machines[:1])
 }

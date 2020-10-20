@@ -145,6 +145,10 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		return authorizer.DecisionDeny, "", err
 	}
 	if !allow {
+		allowAll, err := a.enforcer.Enforce(authutil.UserKey(tenantID, authutil.DefaultAll), projectID, resource, action)
+		if err == nil && allowAll {
+			return authorizer.DecisionAllow, reason, nil
+		}
 		log.Info("Casbin enforcer: ", log.Any("att", attr), log.String("projectID", projectID), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.String("allow", "false"))
 		if debug {
 			return authorizer.DecisionDeny, reason, nil
