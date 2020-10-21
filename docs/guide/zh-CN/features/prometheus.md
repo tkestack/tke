@@ -4,6 +4,8 @@
 
 TKEStack 使用开源的 Prometheus 作为监控组件，免去您部署和配置 Prometheus 的复杂操作，TKEStack 提供高可用性和可扩展性的细粒度监控系统，实时监控 CPU，GPU，内存，显存，网络带宽，磁盘 IO 等多种指标并自动绘制趋势曲线，帮助运维人员全维度的掌握平台运行状态。
 
+TKEStack 使用 Prometheus 的架构和原理可以参考 [Prometheus 组件](../../../../hack/addon/readme/Prometheus.md)
+
 > 指标具体含义可参考：[监控 & 告警指标列表](../FAQ/Platform/alert&monitor-metrics.md)
 
 ![img](../../../images/1588923649_45_w2536_h1362.png)
@@ -103,3 +105,5 @@ Prometheus 为 TKEStack 扩展组件，需要在集群的 [【基本信息】](.
 > 2. 选择 Container ，需要在其右侧选择 Container 所属 Pod
 > ![image-20200831165554727](../../../images/image-20200831165554727.png)
 > 指标具体含义可参考：[监控 & 告警指标列表](../FAQ/Platform/alert&monitor-metrics.md)
+
+TKEStack 使用 Prometheus 的架构和原理可以参考 [Prometheus 组件](../../../../hack/addon/readme/Prometheus.md)

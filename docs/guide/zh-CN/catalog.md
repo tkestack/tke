@@ -4,14 +4,12 @@
   * [产品架构 & 能力说明](installation/installation-architecture.md)
   * [部署环境要求](installation/installation-requirement.md)
   * [安装步骤](installation/installation-procedures.md)
-
 * [产品快速入门](QuickStart)
   * [快速入门](QuickStart/快速入门.md)
   * [入门示例](QuickStart/examples)
     * [创建简单的 Nginx 服务](QuickStart/examples/创建简单nginx服务.md)
     * [编写 Hello World 程序](QuickStart/examples/编写Hello-World程序.md)
     * [如何构建 Docker 镜像](QuickStart/examples/如何构建Docker镜像.md)
-
 * [产品使用指南](products)
   * [切换控制台](products/controlpannel.md)
   * [平台管理控制台](products/platform)
@@ -79,7 +77,6 @@
     * [运维管理](products/business-control-pannel/operation)
       * [Helm 应用](products/business-control-pannel/operation/helm应用.md)
       * [日志采集](products/business-control-pannel/operation/logcollect.md)
-  
 * [产品特色功能](features)
   * [Galaxy](features/galaxy.md)
   * [TAPP](../../../hack/addon/readme/TappController.md)
@@ -87,8 +84,6 @@
   * [CronHPA](../../../hack/addon/readme/CronHPA.md)
   * [LBCF](features/lbcf.md)
 
-* [产品 API 文档](API.md)
-  
 * [FAQ](FAQ)
 
   * [部署类](FAQ/Installation)
@@ -107,6 +102,13 @@
   * [平台类](FAQ/品台类)
     * [平台使用常见问题](FAQ/Platform/平台使用常见问题.md)
     * [监控&告警指标列表](FAQ/Platform/alert&monitor-metrics.md)
+
+* [产品 API 文档](API.md)
+* [开发指引](../../devel)
+  * [项目模块介绍](../../devel/components.md)
+  * [开发手册](../../devel/development.md)
+  * [本地运行 TKEStack](../../devel/running-locally.md)
+
 
 * [Release Note](../../../CHANGELOG)
   * [1.0](../../../CHANGELOG/CHANGELOG-1.0.md)

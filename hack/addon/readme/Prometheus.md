@@ -42,9 +42,9 @@ Prometheus 是 Kubernetes 监控的事实标准，为容器平台提供了一整
 | prometheus-operator                       | ClusterRole                    | /      | /            |
 | prometheus-operator                       | ClusterRoleBinding             | /      | /            |
 | prometheus-operator                       | Service                        | /      | kube-system  |
-| alertmanager-main                         | Statefulset                    | 0.3核CPU,75MB内存      | kube-system  |
+| alertmanager-main                         | StatefulSet                   | 0.3核CPU,75MB内存      | kube-system  |
 | alertmanager                              | Service                        | /      | kube-system  |
-| prometheus-k8s                            | Statefulset                    | 0.3核CPU,200MB内存      | kube-system  |
+| prometheus-k8s                            | StatefulSet                   | 0.3核CPU,200MB内存      | kube-system  |
 | prometheus-k8s                            | ServiceAccount                 | /      | kube-system  |
 | prometheus-k8s                            | ClusterRole                    | /      | /            |
 | prometheus-k8s                            | ClusterRoleBinding             | /      | /            |
