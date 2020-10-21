@@ -154,7 +154,7 @@ function check_installer() {
   do
     echo "Step.6 check tke-installer status [doing]"
     url="http://127.0.0.1:8080/index.html"
-    if ! curl -sSf "$url" >/dev/null; then
+    if ! curl -sSf "$url" > /dev/null 2>&1; then
       sleep 3
       echo "Step.6 retries left $(($s-$i))"
       continue
@@ -166,7 +166,7 @@ function check_installer() {
   done
   echo "check installer status error"
   docker logs tke-installer
-  exit 1 
+  exit 1
 }
 
 prefight
