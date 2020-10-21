@@ -1,0 +1,20 @@
+{
+  "kind": "Machine",
+  "apiVersion": "platform.tkestack.io/v1",
+  "metadata": {
+    "name": "mc-9r2dkcqj",
+    "generateName": "mc-"
+  },
+  "spec": {
+    "finalizers": [
+      "machine"
+    ],
+    "tenantID": "default",
+    "clusterName": "cls-7q46p7mt",
+    "type": "Baremetal",
+    "ip": "172.22.0.102",
+    "port": 22,
+    "username": "root",
+    "password": "xxxxxx"
+  }
+}
