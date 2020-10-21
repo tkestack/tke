@@ -1,4 +1,4 @@
-#  产品架构&能力说明
+#  产品架构 & 能力说明
 
 ## 总体架构
 
@@ -40,12 +40,12 @@ tke-installer 自动等待和检查每一步骤安装完成，如果中间过程
 * **Logagent**: 日志管理组件，为平台提供日志管理相关服务；
 * **Audit**: 审计组件，提供审计服务功能。
 
-此外还有诸如 **Prometheus** 、**TApp**、**GPUManager** 等组件都可以安装在平台上的任意集群，以增强集群功能。
+此外还有诸如 **[Prometheus](../../../../hack/addon/readme/Prometheus.md)** 、**[TApp](../../../../hack/addon/readme/TappController.md)**、**[GPUManager](../../../../hack/addon/readme/GPUManager.md)**、**[CronHPA](../../../../hack/addon/readme/CronHPA.md)**、**[LogAgent](../../../../hack/addon/readme/LogAgent.md)** 等组件都可以安装在平台上的任意集群，以增强集群功能。
 
 ## 能力说明
 
 - **原生**：TKEStack 兼容了 Kubernetes 原生服务访问模式。
-- **产品特色**：TKEStack 扩展 Galaxy（网络）、TAPP（工作负载）、GPUManage（GPU）、CronHPA（扩缩容）、LBCF（负载均衡）等组件，界面化支持，插件化部署。
+- **产品特色**：TKEStack 扩展 [Galaxy](../features/galaxy.md)（网络）、TAPP（工作负载）、GPUManage（GPU）、CronHPA（扩缩容）、LBCF（负载均衡）等组件，界面化支持，插件化部署。
 - **多集群管理**：提供多集群统一管理能力。
 - **多租户统一认证**：支持 OIDC 和 LDAP 对接，实现企业租户身份的统一认证。
 - **权限管理**：提供多租户统一认证与权限管理能力。不同于 Kubernetes RBAC，TKEStack 权限管理是基于 Casbin 模型。TKEStack 支持平台用户和业务用户，可为用户/用户组配置不同的角色，并绑定对应的策略，从而实现资源共享和访问隔离。

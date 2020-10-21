@@ -2,9 +2,9 @@
 
 ## CronHPA 介绍
 
-Cron Horizontal Pod Autoscaler(CronHPA) 可让用户利用 [Crontab](https://en.wikipedia.org/wiki/Cron) 实现对负载（Deployment、StatefulSet、TApp 这些支持扩缩容的资源对象）**定期自动扩缩容**。
+Cron Horizontal Pod Autoscaler([CronHPA](https://github.com/tkestack/cron-hpa)) 可让用户利用 [CronTab](https://en.wikipedia.org/wiki/Cron) 实现对负载（Deployment、StatefulSet、[TApp](TappController.md) 这些支持扩缩容的资源对象）**定期自动扩缩容**。
 
-[Crontab](https://en.wikipedia.org/wiki/Cron) 格式说明如下：
+[CronTab](https://en.wikipedia.org/wiki/Cron) 格式说明如下：
 
 ```
 # 文件格式说明
@@ -23,7 +23,7 @@ CronHPA 定义了一个新的 CRD，cron-hpa-controller 是该 CRD 对应的 con
 
 以游戏服务为例，从星期五晚上到星期日晚上，游戏玩家数量暴增。如果可以将游戏服务器在星期五晚上扩大规模，并在星期日晚上缩放为原始规模，则可以为玩家提供更好的体验。这就是游戏服务器管理员每周要做的事情。
 
-其他一些服务也会存在类似的情况，这些产品使用情况会定期出现高峰和低谷。CronHPA可以自动化实现提前扩缩Pod，为用户提供更好的体验。
+其他一些服务也会存在类似的情况，这些产品使用情况会定期出现高峰和低谷。CronHPA 可以自动化实现提前扩缩 Pod，为用户提供更好的体验。
 
 ### 部署在集群内 kubernetes 对象
 
@@ -32,6 +32,9 @@ CronHPA 定义了一个新的 CRD，cron-hpa-controller 是该 CRD 对应的 con
 | kubernetes 对象名称 | 类型 | 默认占用资源 | 所属 Namespaces |
 | ----------------- | --- | ---------- | ------------- |
 | cron-hpa-controller |Deployment |每节点1核 CPU, 512MB内存|kube-system|
+| cronhpas.extensions.tkestack.io |CustomResourceDefinition |/|/|
+| cron-hpa-controller |ClusterRoleBinding（ClusterRole/cluster-admin） |/|/|
+| cron-hpa-controller |ServiceAccount |/|kube-system|
 
 ## CronHPA 使用方法
 
@@ -137,3 +140,4 @@ spec:
 kubectl delete cronhpa example-cron-hpa
 ```
 
+CronHPA 项目请参考 [CronHPA Repository](https://github.com/tkestack/cron-hpa)

@@ -4,7 +4,7 @@
 
 TKEStack 使用开源的 Prometheus 作为监控组件，免去您部署和配置 Prometheus 的复杂操作，TKEStack 提供高可用性和可扩展性的细粒度监控系统，实时监控 CPU，GPU，内存，显存，网络带宽，磁盘 IO 等多种指标并自动绘制趋势曲线，帮助运维人员全维度的掌握平台运行状态。
 
-> 指标具体含义可参考：[监控 & 告警指标列表](../FAQ/Platform/alert&monitor-metrics.md)
+
 
 ![img](../../../images/1588923649_45_w2536_h1362.png)
 

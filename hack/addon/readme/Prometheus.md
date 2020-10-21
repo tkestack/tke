@@ -2,7 +2,11 @@
 
 ## Prometheus 介绍
 
+良好的监控环境为 TKEStack 高可靠性、高可用性和高性能提供重要保证。您可以方便为不同资源收集不同维度的监控数据，能方便掌握资源的使用状况，轻松定位故障。
+
 TKEStack 使用 Prometheus 为 Kubernetes 集群提供监控告警服务。旨在降低对容器平台监控告警方案的实现难度，为用户提供开箱即用的监控告警能力，同时提供灵活的扩展能力以满足用户在使用监控告警时的个性化需求。允许用户自定义对接 influxdb，ElasticSearch 等后端存储监控数据。针对在可用性和可扩展性方面，支持使用 thanos 架构提供可靠的细粒度监控和警报服务，构建具有高可用性和可扩展性的细粒度监控能力。
+
+> 指标具体含义可参考：[监控 & 告警指标列表](../FAQ/Platform/alert&monitor-metrics.md)
 
 ![image-20201001171647665](../../../docs/images/image-20201001171647665.png)
 
@@ -16,11 +20,11 @@ Prometheus 是 Kubernetes 监控的事实标准，为容器平台提供了一整
 
 3. 方案基于 Prometheus Operator 实现，利用其能力，用户可以非常方便的进行二次开发。
 
-## Prometheus 限制条件
+### Prometheus 限制条件
 
-1. 安装 Prometheus 将占用集群1核CPU,600MB内存的资源。同时随着集群规模的扩大，Prometheus会占用更多的系统资源。
+1. 安装 Prometheus 将占用集群 1核 CPU,600MB 内存的资源。同时随着集群规模的扩大，Prometheus 会占用更多的系统资源
 
-2. 仅在1.8版本以上的kubernetes集群支持。
+2. 仅在1.8版本以上的 kubernetes 集群支持
 
 ### 部署在集群内 kubernetes 对象
 
@@ -51,6 +55,7 @@ Prometheus 是 Kubernetes 监控的事实标准，为容器平台提供了一整
 | prometheuses.monitoring.coreos.com        | CustomResourceDefinition       | /      | /            |
 | prometheusrules.monitoring.coreos.com     | CustomResourceDefinition       | /      | /            |
 | servicemonitors.monitoring.coreos.com     | CustomResourceDefinition       | /      | /            |
+| thanosrulers.monitoring.coreos.com | CustomResourceDefinition | / | / |
 
 ## Prometheus 使用方法
 
@@ -62,6 +67,12 @@ Prometheus 为 TKEStack 扩展组件，需要在集群的 [【基本信息】](.
 
 1. 在左侧导航栏中，单击【监控&告警】，进入监控告警管理页面，可管理告警项及通知相关设置。
 
+   ![image-20201021134520950](images/image-20201021134520950.png)
+
+   > 更多请参考 [告警设置](../../../docs/guide/zh-CN/products/platform/monitor&alert/alertsetting.md)
+
 2. 在左侧导航栏中，单击【集群管理】，进入集群管理页面，可查看集群及工作负载的监控数据。
 
-3. 在左侧导航栏中，单击【项目管理】，进入项目管理页面，可查看项目的监控数据。
+   ![image-20201021134336352](images/image-20201021134336352.png)
+
+   > 更多使用请参考 [利用 Prometheus 监控](../../../docs/guide/zh-CN/features/prometheus.md)

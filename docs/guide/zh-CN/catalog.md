@@ -1,7 +1,7 @@
 # TKEStack 文档目录
 
 * [产品部署指南](installation)
-  * [产品架构&能力说明](installation/installation-architecture.md)
+  * [产品架构 & 能力说明](installation/installation-architecture.md)
   * [部署环境要求](installation/installation-requirement.md)
   * [安装步骤](installation/installation-procedures.md)
 
@@ -19,10 +19,10 @@
     * [集群管理](products/platform/cluster.md)
     * [业务管理](products/platform/business.md)
     * [扩展组件](products/platform/extender.md)
-      * [TApp](../zh-CN/products/business-control-pannel/application/workload/tapp.md)
+      * [TApp](../../../hack/addon/readme/TappController.md)
       * [CronHPA](../../../hack/addon/readme/CronHPA.md)
       * [Prometheus](../zh-CN/features/prometheus.md)
-      * [日志](../zh-CN/products/business-control-pannel/operation/logcollect.md)
+      * [日志](../../../hack/addon/readme/LogAgent.md)
       * [GPUManager](../../../hack/addon/readme/GPUManager.md)
       * [CSIOperator](../../../hack/addon/readme/CSIOperator.md)
     * [组织资源](products/platform/resource)
@@ -82,7 +82,7 @@
   
 * [产品特色功能](features)
   * [Galaxy](features/galaxy.md)
-  * [TAPP](features/tapp.md)
+  * [TAPP](../../../hack/addon/readme/TappController.md)
   * [GPUManager](../../../hack/addon/readme/GPUManager.md)
   * [CronHPA](../../../hack/addon/readme/CronHPA.md)
   * [LBCF](features/lbcf.md)
