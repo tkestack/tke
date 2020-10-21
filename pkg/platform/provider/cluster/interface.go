@@ -206,14 +206,18 @@ func (p *DelegateProvider) OnUpdate(ctx context.Context, cluster *v1.Cluster) er
 	for _, handler := range p.UpdateHandlers {
 		ctx := log.FromContext(ctx).WithName("ClusterProvider.OnUpdate").WithName(handler.Name()).WithContext(ctx)
 		log.FromContext(ctx).Info("Doing")
+		log.Infof("update cluster doing %s cluster:%s", handler.Name(), cluster.Name)
 		startTime := time.Now()
 		err := handler(ctx, cluster)
+		log.Infof("update cluster done %s cluster:%s, cost:%s err:%s", handler.Name(), cluster.Name,
+			time.Since(startTime).String(), err)
 		log.FromContext(ctx).Info("Done", "error", err, "cost", time.Since(startTime).String())
 		if err != nil {
 			cluster.Status.Reason = ReasonFailedUpdate
 			cluster.Status.Message = fmt.Sprintf("%s error: %v", handler.Name(), err)
 			return err
 		}
+
 	}
 	cluster.Status.Reason = ""
 	cluster.Status.Message = ""
