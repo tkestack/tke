@@ -136,4 +136,4 @@ Kubernetes 现有应用类型（如：Deployment、StatefulSet 等）无法满�
 
 
 
-查询[TApp](../../../../../../../hack/addon/readme/TappController.md)可查看更多相关信息
+查询[TApp](../../../../../../../hack/addon/readme/TappController.md)可查看更多相关信息。

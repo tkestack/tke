@@ -52,19 +52,19 @@ Kubernetes 凭借其强大的声明式 API、丰富的特性和可扩展性，�
 
 ## TApp 使用方法
 
-### 安装TApp 组件
+### 安装 TApp 组件
 
 1. 登录 TKEStack
 2. 切换至 平台管理控制台，选择扩展组件页面。
 3. 选择需要安装组件的集群，点击【新建】按钮。如下图所示：
-![新建组件](images/新建扩展组件.png)
+![新建组件](images/image-20201021131604323.png)
 4. 在弹出的扩展组件列表里，滑动列表窗口找到tapp组件。如下图所示：
-![tapp组件](images/tapp.png)
+![tapp组件](images/image-20201021131635548.png)
 5. 单击【完成】
 
    安装完成后会在刚刚安装了 TApp 扩展组件的集群里 【工作负载】下面出现【TApp】，如下图所示：
 
-   ![tapp按钮](images/tapp按钮.png)
+   ![tapp按钮](images/image-20201021131708502.png)
 
 ### 使用 TApp 组件
 
