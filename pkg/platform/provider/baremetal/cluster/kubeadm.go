@@ -210,7 +210,7 @@ func (p *Provider) getAPIServerExtraArgs(c *v1.Cluster) map[string]string {
 	}
 	if p.config.AuditEnabled() {
 		args["audit-policy-file"] = constants.KubernetesAuditPolicyConfigFile
-		args["audit-webhook-config-file"] = constants.KuberentesAuditWebhookConfigFile
+		args["audit-webhook-config-file"] = constants.KubernetesAuditWebhookConfigFile
 	}
 	if c.AuthzWebhookEnabled() {
 		args["authorization-webhook-config-file"] = constants.KubernetesAuthzWebhookConfigFile
@@ -252,7 +252,7 @@ func (p *Provider) getControllerManagerExtraArgs(c *v1.Cluster) map[string]strin
 func (p *Provider) getSchedulerExtraArgs(c *v1.Cluster) map[string]string {
 	args := map[string]string{
 		"use-legacy-policy-config": "true",
-		"policy-config-file":       constants.KuberentesSchedulerPolicyConfigFile,
+		"policy-config-file":       constants.KubernetesSchedulerPolicyConfigFile,
 	}
 	for k, v := range c.Spec.SchedulerExtraArgs {
 		args[k] = v

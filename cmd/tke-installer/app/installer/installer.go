@@ -1280,6 +1280,14 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	webhookCrt, err := ioutil.ReadFile(constants.WebhookCrtFile)
+	if err != nil {
+		return err
+	}
+	webhookKey, err := ioutil.ReadFile(constants.WebhookKeyFile)
+	if err != nil {
+		return err
+	}
 
 	if t.Cluster.Spec.Etcd.External != nil {
 		return fmt.Errorf("external etcd specified, but ca key is not provided yet")
@@ -1307,6 +1315,8 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 			"server.key":         string(serverKey),
 			"admin.crt":          string(adminCrt),
 			"admin.key":          string(adminKey),
+			"webhook.crt":        string(webhookCrt),
+			"webhook.key":        string(webhookKey),
 		},
 	}
 
