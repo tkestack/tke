@@ -17,7 +17,7 @@ Cron Horizontal Pod Autoscaler([CronHPA](https://github.com/tkestack/cron-hpa)) 
 # * * * * *
 ```
 
-CronHPA 定义了一个新的 CRD，cron-hpa-controller 是该 CRD 对应的 controller/operator，它解析 CRD 中的配置，根据系统时间信息对相应的工作负载进行扩缩容操作。
+CronHPA 定义了一个新的 CRD，cron-hpa-controller 是该 CRD 对应的 Controller/operator，它解析 CRD 中的配置，根据系统时间信息对相应的工作负载进行扩缩容操作。
 
 ### CronHPA 使用场景
 
