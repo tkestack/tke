@@ -105,9 +105,10 @@
 
 * [产品 API 文档](API.md)
 * [开发指引](../../devel)
-  * [项目模块介绍](../../devel/components.md)
+  * [项目组件介绍](../../devel/components.md)
   * [开发手册](../../devel/development.md)
   * [本地运行 TKEStack](../../devel/running-locally.md)
+  * [贡献指南](../../../CONTRIBUTING.md)
 
 
 * [Release Note](../../../CHANGELOG)
