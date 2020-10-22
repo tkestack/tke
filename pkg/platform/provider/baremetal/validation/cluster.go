@@ -56,7 +56,7 @@ func ValidatClusterSpec(spec *platform.ClusterSpec, fldPath *field.Path, phase p
 	allErrs = append(allErrs, ValidateCIDRs(spec, fldPath)...)
 	allErrs = append(allErrs, ValidateClusterProperty(spec, fldPath.Child("properties"))...)
 	allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
-	allErrs = append(allErrs, ValidateClusterFeature(&spec.Features, fldPath.Child("features"))...)
+	allErrs = append(allErrs, ValidateClusterFeature(spec, fldPath.Child("features"))...)
 
 	return allErrs
 }
@@ -190,10 +190,14 @@ func ValidateClusterMachines(machines []platform.ClusterMachine, fldPath *field.
 	return allErrs
 }
 
-func ValidateClusterFeature(feature *platform.ClusterFeature, fldPath *field.Path) field.ErrorList {
+func ValidateClusterFeature(spec *platform.ClusterSpec, fldPath *field.Path) field.ErrorList {
+	features := spec.Features
 	allErrs := field.ErrorList{}
-	if feature.CSIOperator != nil {
-		allErrs = append(allErrs, ValidateCSIOperator(feature.CSIOperator, fldPath.Child("csiOperator"))...)
+	if features.CSIOperator != nil {
+		allErrs = append(allErrs, ValidateCSIOperator(features.CSIOperator, fldPath.Child("csiOperator"))...)
+	}
+	if features.IPVS != nil {
+		allErrs = append(allErrs, ValidateIPVS(spec, features.IPVS, fldPath.Child("ipvs"))...)
 	}
 
 	return allErrs
@@ -201,4 +205,14 @@ func ValidateClusterFeature(feature *platform.ClusterFeature, fldPath *field.Pat
 
 func ValidateCSIOperator(csioperator *platform.CSIOperatorFeature, fldPath *field.Path) field.ErrorList {
 	return utilvalidation.ValidateEnum(csioperator.Version, fldPath.Child("version"), csioperatorimage.Versions())
+}
+
+func ValidateIPVS(spec *platform.ClusterSpec, ipvs *bool, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if *ipvs {
+		if spec.ServiceCIDR == nil {
+			allErrs = append(allErrs, field.Invalid(fldPath, ipvs, "ClusterCIDR is not allowed empty string when enable ipvs"))
+		}
+	}
+	return allErrs
 }
