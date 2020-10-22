@@ -447,7 +447,7 @@ func (c *Controller) installCSIOperator(ctx context.Context, csiOperator *v1.CSI
 	}
 
 	// Create Deployment.
-	return version, c.installDeployment(ctx, csiOperator, kubeClient, svInfo)
+	return version, c.installDeployment(ctx, csiOperator, kubeClient, svInfo, cluster.Spec.Type == containerregistryutil.ImportedClusterType)
 }
 
 func (c *Controller) installSVC(ctx context.Context, csiOperator *v1.CSIOperator, kubeClient kubernetes.Interface) error {
@@ -501,8 +501,9 @@ func (c *Controller) installDeployment(
 	ctx context.Context,
 	csiOperator *v1.CSIOperator,
 	kubeClient kubernetes.Interface,
-	svInfo *storageutil.SVInfo) error {
-	deploy := c.genDeployment(images.Get(csiOperator.Spec.Version).CSIOperator.FullName(), svInfo)
+	svInfo *storageutil.SVInfo,
+	isImportedCluster bool) error {
+	deploy := c.genDeployment(images.Get(csiOperator.Spec.Version).CSIOperator.FullName(isImportedCluster), svInfo, isImportedCluster)
 	deployClient := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem)
 
 	oldDeploy, err := deployClient.Get(ctx, deploy.Name, metav1.GetOptions{})
@@ -559,7 +560,7 @@ func genCRB() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func (c *Controller) genDeployment(image string, svInfo *storageutil.SVInfo) *appsv1.Deployment {
+func (c *Controller) genDeployment(image string, svInfo *storageutil.SVInfo, isImportedCluster bool) *appsv1.Deployment {
 	deploy := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -592,7 +593,7 @@ func (c *Controller) genDeployment(image string, svInfo *storageutil.SVInfo) *ap
 						{
 							Name:  deploymentName,
 							Image: image,
-							Args:  genContainerArgs(svInfo),
+							Args:  genContainerArgs(svInfo, isImportedCluster),
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
 									// TODO: add support for configuring them
@@ -610,11 +611,11 @@ func (c *Controller) genDeployment(image string, svInfo *storageutil.SVInfo) *ap
 	return deploy
 }
 
-func genContainerArgs(svInfo *storageutil.SVInfo) []string {
+func genContainerArgs(svInfo *storageutil.SVInfo, isImportedCluster bool) []string {
 	args := []string{
 		"--leader-election=true",
 		"--kubelet-root-dir=/var/lib/kubelet",
-		"--registry-domain=" + containerregistryutil.GetPrefix(),
+		"--registry-domain=" + containerregistryutil.GetPrefix(isImportedCluster),
 		"--logtostderr=true",
 		"--v=5",
 	}
@@ -849,7 +850,7 @@ func (c *Controller) upgradeCSIOperator(
 		}
 
 		newDeploy := oldDeploy.DeepCopy()
-		newDeploy.Spec.Template.Spec.Containers[0].Args = genContainerArgs(svInfo)
+		newDeploy.Spec.Template.Spec.Containers[0].Args = genContainerArgs(svInfo, cluster.Spec.Type == containerregistryutil.ImportedClusterType)
 		patchData, err := storageutil.GetPatchData(oldDeploy, newDeploy)
 		if err != nil {
 			log.Error("get deployment patch data of CSIOperator failed",

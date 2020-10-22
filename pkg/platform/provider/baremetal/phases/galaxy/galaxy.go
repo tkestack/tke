@@ -183,7 +183,7 @@ func configMapGalaxy(netDevice string) ([]*corev1.ConfigMap, error) {
 }
 
 func daemonsetFlannel(version string) (*appsv1.DaemonSet, error) {
-	imageName := images.Get(version).Flannel.FullName()
+	imageName := images.Get(version).Flannel.FullName(false)
 	reader := strings.NewReader(strings.Replace(FlannelDaemonset, "{{ .Image }}", imageName, -1))
 	payload := &appsv1.DaemonSet{}
 	err := yaml.NewYAMLOrJSONDecoder(reader, 4096).Decode(payload)
@@ -202,7 +202,7 @@ func daemonsetGalaxy(version string) (*appsv1.DaemonSet, error) {
 		return nil, err
 	}
 	payload.Name = daemonsetGalaxyName
-	payload.Spec.Template.Spec.Containers[0].Image = images.Get(version).GalaxyDaemon.FullName()
+	payload.Spec.Template.Spec.Containers[0].Image = images.Get(version).GalaxyDaemon.FullName(false)
 	return payload, nil
 }
 

@@ -92,12 +92,12 @@ func Get() Components {
 func ListKubernetesImageFullNamesWithVerion(version string) []string {
 	var items []string
 	for _, name := range kubecomponetNames {
-		items = append(items, containerregistry.Image{Name: name, Tag: "v" + version}.FullName())
+		items = append(items, containerregistry.Image{Name: name, Tag: "v" + version}.FullName(false))
 	}
 
-	items = append(items, components.ETCD.FullName())
-	items = append(items, components.Pause.FullName())
-	items = append(items, components.CoreDNS.FullName())
+	items = append(items, components.ETCD.FullName(false))
+	items = append(items, components.Pause.FullName(false))
+	items = append(items, components.CoreDNS.FullName(false))
 
 	return items
 }

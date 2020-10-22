@@ -47,6 +47,7 @@ import (
 	v1 "tkestack.io/tke/api/platform/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -397,7 +398,7 @@ func (c *Controller) installTappController(ctx context.Context, tappController *
 		return err
 	}
 	// Deployment TappController
-	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deploymentTappController(images.Get(tappController.Spec.Version)), metav1.CreateOptions{}); err != nil {
+	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deploymentTappController(images.Get(tappController.Spec.Version), cluster.Spec.Type == containerregistry.ImportedClusterType), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// Service TappController
@@ -445,7 +446,7 @@ func crbTappController() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func deploymentTappController(components images.Components) *appsv1.Deployment {
+func deploymentTappController(components images.Components, isImportedCluster bool) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -471,7 +472,7 @@ func deploymentTappController(components images.Components) *appsv1.Deployment {
 					Containers: []corev1.Container{
 						{
 							Name:  controllerName,
-							Image: components.TappController.FullName(),
+							Image: components.TappController.FullName(isImportedCluster),
 							Args:  []string{"--v", "3", "--register-admission", "true"},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -650,7 +651,7 @@ func (c *Controller) upgradeTappController(ctx context.Context, tappController *
 		if err != nil {
 			return false, err
 		}
-		newImage := images.Get(tappController.Spec.Version).TappController.FullName()
+		newImage := images.Get(tappController.Spec.Version).TappController.FullName(cluster.Spec.Type == containerregistry.ImportedClusterType)
 
 		patch := fmt.Sprintf(`[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"%s"}]`, newImage)
 		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Patch(ctx, deployTappControllerName, types.JSONPatchType, []byte(patch), metav1.PatchOptions{}); err != nil {

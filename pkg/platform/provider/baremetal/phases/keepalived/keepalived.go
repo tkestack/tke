@@ -78,7 +78,7 @@ func Install(s ssh.Interface, option *Option) error {
 	}
 
 	data, err = template.ParseFile(constants.ManifestsDir+"keepalived/keepalived.yaml", map[string]interface{}{
-		"Image": images.Get().Keepalived.FullName(),
+		"Image": images.Get().Keepalived.FullName(false),
 	})
 	if err != nil {
 		return errors.Wrap(err, option.IP)

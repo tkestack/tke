@@ -625,7 +625,7 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 			return fmt.Errorf("init Influxdb failed: %v", err)
 		}
 	case "elasticsearch":
-		remoteWrites, err = c.initESAdapter(ctx, kubeClient, components)
+		remoteWrites, err = c.initESAdapter(ctx, kubeClient, components, cluster.Spec.Type == containerregistryutil.ImportedClusterType)
 		if err != nil {
 			return fmt.Errorf("init ESAdapter failed: %v", err)
 		}
@@ -695,7 +695,7 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 		return fmt.Errorf("create prometheus-operator ClusterRoleBinding failed: %v", err)
 	}
 	// Deployment for prometheus-operator
-	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deployPrometheusOperatorApps(components, prometheus), metav1.CreateOptions{}); err != nil {
+	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deployPrometheusOperatorApps(components, prometheus, cluster.Spec.Type == containerregistryutil.ImportedClusterType), metav1.CreateOptions{}); err != nil {
 		return fmt.Errorf("create prometheus-operator Deployment failed: %v", err)
 	}
 
@@ -728,7 +728,7 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 	}
 
 	// Crd alertmanager instance
-	if _, err := mclient.MonitoringV1().Alertmanagers(metav1.NamespaceSystem).Create(ctx, createAlertManagerCRD(components, prometheus), metav1.CreateOptions{}); err != nil {
+	if _, err := mclient.MonitoringV1().Alertmanagers(metav1.NamespaceSystem).Create(ctx, createAlertManagerCRD(components, prometheus, cluster.Spec.Type == containerregistryutil.ImportedClusterType), metav1.CreateOptions{}); err != nil {
 		return fmt.Errorf("create alertmanager Crd instance failed: %v", err)
 	}
 
@@ -779,7 +779,7 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 
 	log.Infof("Start to create node-exporter")
 	// DaemonSet for node-exporter
-	if _, err := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(ctx, createDaemonSetForNodeExporter(components), metav1.CreateOptions{}); err != nil {
+	if _, err := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(ctx, createDaemonSetForNodeExporter(components, cluster.Spec.Type == containerregistryutil.ImportedClusterType), metav1.CreateOptions{}); err != nil {
 		return fmt.Errorf("create node-exporter failed: %v", err)
 	}
 	prometheus.Status.SubVersion[nodeExporterService] = components.NodeExporterService.Tag
@@ -811,11 +811,11 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 	}
 	// Deployment for kube-state-metrics
 	if extensionsAPIGroup {
-		if _, err := kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Create(ctx, createExtensionDeploymentForMetrics(components, prometheus), metav1.CreateOptions{}); err != nil {
+		if _, err := kubeClient.ExtensionsV1beta1().Deployments(metav1.NamespaceSystem).Create(ctx, createExtensionDeploymentForMetrics(components, prometheus, cluster.Spec.Type == containerregistryutil.ImportedClusterType), metav1.CreateOptions{}); err != nil {
 			return fmt.Errorf("create kube-state-metrics Deployment failed: %v", err)
 		}
 	} else {
-		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, createAppsDeploymentForMetrics(components, prometheus), metav1.CreateOptions{}); err != nil {
+		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, createAppsDeploymentForMetrics(components, prometheus, cluster.Spec.Type == containerregistryutil.ImportedClusterType), metav1.CreateOptions{}); err != nil {
 			return fmt.Errorf("create kube-state-metrics Deployment failed: %v", err)
 		}
 	}
@@ -865,7 +865,7 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 		return fmt.Errorf("create prometheus-adapter ConfigMap failed: %v", err)
 	}
 	// Deployment for prometheus-adapter
-	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, createAppsDeploymentForPrometheusAdapter(components, prometheus), metav1.CreateOptions{}); err != nil {
+	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, createAppsDeploymentForPrometheusAdapter(components, prometheus, cluster.Spec.Type == containerregistryutil.ImportedClusterType), metav1.CreateOptions{}); err != nil {
 		return fmt.Errorf("create prometheus-adapter Deployment failed: %v", err)
 	}
 
@@ -885,7 +885,7 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 			return fmt.Errorf("create node-problem-detector ClusterRoleBinding failed: %v", err)
 		}
 		// DaemonSet for node-problem-detector
-		if _, err := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(ctx, createDaemonSetForNPD(components), metav1.CreateOptions{}); err != nil {
+		if _, err := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(ctx, createDaemonSetForNPD(components, cluster.Spec.Type == containerregistryutil.ImportedClusterType), metav1.CreateOptions{}); err != nil {
 			return fmt.Errorf("create node-problem-detector DaemonSet failed: %v", err)
 		}
 		prometheus.Status.SubVersion[nodeProblemDetectorWorkload] = components.NodeProblemDetector.Tag
@@ -1011,7 +1011,7 @@ func clusterRoleBindingPrometheusOperator() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func deployPrometheusOperatorApps(components images.Components, prometheus *v1.Prometheus) *appsv1.Deployment {
+func deployPrometheusOperatorApps(components images.Components, prometheus *v1.Prometheus, isImportedCluster bool) *appsv1.Deployment {
 	deploy := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -1042,12 +1042,12 @@ func deployPrometheusOperatorApps(components images.Components, prometheus *v1.P
 					Containers: []corev1.Container{
 						{
 							Name:  prometheusOperatorWorkLoad,
-							Image: components.PrometheusOperatorService.FullName(),
+							Image: components.PrometheusOperatorService.FullName(isImportedCluster),
 							Args: []string{
 								"--kubelet-service=kube-system/kubelet",
 								"--logtostderr=true",
-								"--config-reloader-image=" + components.ConfigMapReloadWorkLoad.FullName(),
-								"--prometheus-config-reloader=" + components.PrometheusConfigReloaderWorkload.FullName(),
+								"--config-reloader-image=" + components.ConfigMapReloadWorkLoad.FullName(isImportedCluster),
+								"--prometheus-config-reloader=" + components.PrometheusConfigReloaderWorkload.FullName(isImportedCluster),
 							},
 							//Command:         []string{"tail", "-f"},
 							//Command: []string{"/bin/sh", "-c", "./prometheus --storage.tsdb.retention=1h --storage.tsdb.path=/data --web.enable-lifecycle --config.file=config/prometheus.yml"},
@@ -1323,7 +1323,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 					},
 				},
 			},
-			BaseImage: containerregistryutil.GetImagePrefix(prometheusImagePath),
+			BaseImage: containerregistryutil.GetImagePrefix(prometheusImagePath, cluster.Spec.Type == containerregistryutil.ImportedClusterType),
 			Replicas:  controllerutil.Int32Ptr(1),
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
@@ -1495,7 +1495,7 @@ func serviceAccountAlertmanager() *corev1.ServiceAccount {
 	}
 }
 
-func createAlertManagerCRD(components images.Components, prometheus *v1.Prometheus) *monitoringv1.Alertmanager {
+func createAlertManagerCRD(components images.Components, prometheus *v1.Prometheus, isImportedCluster bool) *monitoringv1.Alertmanager {
 	monitorV1Alertmanager := &monitoringv1.Alertmanager{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: monitoring.GroupName + "/v1",
@@ -1520,7 +1520,7 @@ func createAlertManagerCRD(components images.Components, prometheus *v1.Promethe
 					Effect:   corev1.TaintEffectNoSchedule,
 				},
 			},
-			BaseImage: containerregistryutil.GetImagePrefix(alertManagerImagePath),
+			BaseImage: containerregistryutil.GetImagePrefix(alertManagerImagePath, isImportedCluster),
 			Replicas:  controllerutil.Int32Ptr(3),
 			SecurityContext: &corev1.PodSecurityContext{
 				FSGroup:      controllerutil.Int64Ptr(2000),
@@ -1578,7 +1578,7 @@ var selectorForNodeExporter = metav1.LabelSelector{
 	MatchLabels: map[string]string{specialLabelName: specialLabelValue, "k8s-app": "node-exporter"},
 }
 
-func createDaemonSetForNodeExporter(components images.Components) *appsv1.DaemonSet {
+func createDaemonSetForNodeExporter(components images.Components, isImportedCluster bool) *appsv1.DaemonSet {
 	return &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -1603,7 +1603,7 @@ func createDaemonSetForNodeExporter(components images.Components) *appsv1.Daemon
 					Containers: []corev1.Container{
 						{
 							Name:  nodeExporterDaemonSet,
-							Image: components.NodeExporterService.FullName(),
+							Image: components.NodeExporterService.FullName(isImportedCluster),
 							Args: []string{
 								"--path.rootfs=/host",
 								"--no-collector.arp",
@@ -1883,7 +1883,7 @@ func createRoleBingdingForMetrics() *rbacv1.RoleBinding {
 	}
 }
 
-func createExtensionDeploymentForMetrics(components images.Components, prometheus *v1.Prometheus) *extensionsv1beta1.Deployment {
+func createExtensionDeploymentForMetrics(components images.Components, prometheus *v1.Prometheus, isImportedCluster bool) *extensionsv1beta1.Deployment {
 	deploy := &extensionsv1beta1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -1906,7 +1906,7 @@ func createExtensionDeploymentForMetrics(components images.Components, prometheu
 					Containers: []corev1.Container{
 						{
 							Name:  kubeStateWorkLoad,
-							Image: components.KubeStateService.FullName(),
+							Image: components.KubeStateService.FullName(isImportedCluster),
 							Args: []string{
 								"--port=8080",
 								"--telemetry-port=8081",
@@ -1958,7 +1958,7 @@ func createExtensionDeploymentForMetrics(components images.Components, prometheu
 	return deploy
 }
 
-func createAppsDeploymentForMetrics(components images.Components, prometheus *v1.Prometheus) *appsv1.Deployment {
+func createAppsDeploymentForMetrics(components images.Components, prometheus *v1.Prometheus, isImportedCluster bool) *appsv1.Deployment {
 	deploy := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -1981,7 +1981,7 @@ func createAppsDeploymentForMetrics(components images.Components, prometheus *v1
 					Containers: []corev1.Container{
 						{
 							Name:  kubeStateWorkLoad,
-							Image: components.KubeStateService.FullName(),
+							Image: components.KubeStateService.FullName(isImportedCluster),
 							Args: []string{
 								"--port=8080",
 								"--telemetry-port=8081",
@@ -2285,7 +2285,7 @@ func createAPIServiceForPrometheusAdapter() []*apiregistrationv1.APIService {
 	return apiServices
 }
 
-func createAppsDeploymentForPrometheusAdapter(components images.Components, prometheus *v1.Prometheus) *appsv1.Deployment {
+func createAppsDeploymentForPrometheusAdapter(components images.Components, prometheus *v1.Prometheus, isImportedCluster bool) *appsv1.Deployment {
 	deploy := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -2324,7 +2324,7 @@ func createAppsDeploymentForPrometheusAdapter(components images.Components, prom
 					Containers: []corev1.Container{
 						{
 							Name:  prometheusAdapterWorkLoad,
-							Image: components.PrometheusAdapter.FullName(),
+							Image: components.PrometheusAdapter.FullName(isImportedCluster),
 							Args: []string{
 								"--secure-port=6443",
 								"--logtostderr=true",
@@ -2473,7 +2473,7 @@ var selectorForNPD = metav1.LabelSelector{
 	MatchLabels: map[string]string{specialLabelName: specialLabelValue, "k8s-app": "node-problem-detector"},
 }
 
-func createDaemonSetForNPD(components images.Components) *appsv1.DaemonSet {
+func createDaemonSetForNPD(components images.Components, isImportedCluster bool) *appsv1.DaemonSet {
 	return &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -2498,7 +2498,7 @@ func createDaemonSetForNPD(components images.Components) *appsv1.DaemonSet {
 					Containers: []corev1.Container{
 						{
 							Name:  nodeProblemDetectorWorkload,
-							Image: components.NodeProblemDetector.FullName(),
+							Image: components.NodeProblemDetector.FullName(isImportedCluster),
 							Command: []string{
 								"/node-problem-detector",
 								"--logtostderr",
@@ -2992,7 +2992,7 @@ func (c *Controller) checkPrometheusUpgrade(ctx context.Context, prometheus *v1.
 		for name, version := range prometheus.Status.SubVersion {
 			if image := newComponents.Get(name); image != nil {
 				if image.Tag != version {
-					patch := fmt.Sprintf(`[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"%s"}]`, image.FullName())
+					patch := fmt.Sprintf(`[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"%s"}]`, image.FullName(cluster.Spec.Type == containerregistryutil.ImportedClusterType))
 					err = upgradeVersion(ctx, kubeClient, name, patch)
 					if err != nil {
 						if time.Now().After(initDelay) {
@@ -3171,7 +3171,7 @@ func (c *Controller) dropInfluxdb(dbName string) error {
 	return nil
 }
 
-func (c *Controller) initESAdapter(ctx context.Context, kubeClient *kubernetes.Clientset, components images.Components) ([]string, error) {
+func (c *Controller) initESAdapter(ctx context.Context, kubeClient *kubernetes.Clientset, components images.Components, isImportedCluster bool) ([]string, error) {
 	var (
 		remoteWrites []string
 		hosts        []string
@@ -3251,7 +3251,7 @@ func (c *Controller) initESAdapter(ctx context.Context, kubeClient *kubernetes.C
 					Containers: []corev1.Container{
 						{
 							Name:  prometheusBeatWorkLoad,
-							Image: components.PrometheusBeatWorkLoad.FullName(),
+							Image: components.PrometheusBeatWorkLoad.FullName(isImportedCluster),
 							Args: []string{
 								"-c",
 								"config/prometheusbeat.yml",

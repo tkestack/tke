@@ -30,7 +30,7 @@ import (
 	"tkestack.io/tke/cmd/tke-logagent-controller/app/options"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
 	controlleroptions "tkestack.io/tke/pkg/controller/options"
-	"tkestack.io/tke/pkg/logagent/util"
+	"tkestack.io/tke/pkg/util/containerregistry"
 )
 
 // Config is the running configuration structure of the TKE controller manager.
@@ -100,6 +100,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	if err := opts.Debug.ApplyTo(&controllerManagerConfig.Component.Debugging); err != nil {
 		return nil, err
 	}
-	util.Init(opts.FeatureOptions.Domain, opts.FeatureOptions.Namespace)
+	containerregistry.Init(opts.FeatureOptions.Domain, opts.FeatureOptions.Namespace)
 	return controllerManagerConfig, nil
 }

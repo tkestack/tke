@@ -1193,7 +1193,7 @@ func (t *TKE) startLocalRegistry() error {
 		return err
 	}
 
-	registryImage := strings.ReplaceAll(images.Get().Registry.FullName(), ":", fmt.Sprintf("-%s:", goruntime.GOARCH))
+	registryImage := strings.ReplaceAll(images.Get().Registry.FullName(false), ":", fmt.Sprintf("-%s:", goruntime.GOARCH))
 
 	err = t.docker.RunImage(registryImage, constants.RegistryHTTPOptions, "")
 	if err != nil {
@@ -1448,7 +1448,7 @@ func (t *TKE) prepareImages(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		cmdString := fmt.Sprintf("docker pull %s", images.Get().TKEGateway.FullName())
+		cmdString := fmt.Sprintf("docker pull %s", images.Get().TKEGateway.FullName(false))
 		_, err = machineSSH.CombinedOutput(cmdString)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
@@ -1471,7 +1471,7 @@ func (t *TKE) stopLocalRegistry(ctx context.Context) error {
 
 func (t *TKE) installTKEGateway(ctx context.Context) error {
 	option := map[string]interface{}{
-		"Image":             images.Get().TKEGateway.FullName(),
+		"Image":             images.Get().TKEGateway.FullName(false),
 		"OIDCClientSecret":  t.readOrGenerateString(constants.OIDCClientSecretFile),
 		"SelfSigned":        t.Para.Config.Gateway.Cert.SelfSignedCert != nil,
 		"EnableRegistry":    t.Para.Config.Registry.TKERegistry != nil,
@@ -1509,7 +1509,7 @@ func (t *TKE) installTKEGateway(ctx context.Context) error {
 func (t *TKE) installTKELogagentAPI(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":       t.Config.Replicas,
-		"Image":          images.Get().TKELogagentAPI.FullName(),
+		"Image":          images.Get().TKELogagentAPI.FullName(false),
 		"TenantID":       t.Para.Config.Auth.TKEAuth.TenantID,
 		"Username":       t.Para.Config.Auth.TKEAuth.Username,
 		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
@@ -1538,7 +1538,7 @@ func (t *TKE) installTKELogagentAPI(ctx context.Context) error {
 func (t *TKE) installTKELogagentController(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":          t.Config.Replicas,
-		"Image":             images.Get().TKELogagentController.FullName(),
+		"Image":             images.Get().TKELogagentController.FullName(false),
 		"EnableAuth":        t.Para.Config.Auth.TKEAuth != nil,
 		"EnableRegistry":    t.Para.Config.Registry.TKERegistry != nil,
 		"RegistryDomain":    t.Para.Config.Registry.Domain(),
@@ -1580,7 +1580,7 @@ func (t *TKE) installTKEAuthAPI(ctx context.Context) error {
 
 	option := map[string]interface{}{
 		"Replicas":         t.Config.Replicas,
-		"Image":            images.Get().TKEAuthAPI.FullName(),
+		"Image":            images.Get().TKEAuthAPI.FullName(false),
 		"OIDCClientSecret": t.readOrGenerateString(constants.OIDCClientSecretFile),
 		"AdminUsername":    t.Para.Config.Auth.TKEAuth.Username,
 		"TenantID":         t.Para.Config.Auth.TKEAuth.TenantID,
@@ -1606,7 +1606,7 @@ func (t *TKE) installTKEAuthController(ctx context.Context) error {
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-auth-controller/*.yaml",
 		map[string]interface{}{
 			"Replicas":      t.Config.Replicas,
-			"Image":         images.Get().TKEAuthController.FullName(),
+			"Image":         images.Get().TKEAuthController.FullName(false),
 			"AdminUsername": t.Para.Config.Auth.TKEAuth.Username,
 			"AdminPassword": string(t.Para.Config.Auth.TKEAuth.Password),
 		})
@@ -1626,7 +1626,7 @@ func (t *TKE) installTKEAuthController(ctx context.Context) error {
 func (t *TKE) installTKEAudit(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":   t.Config.Replicas,
-		"Image":      images.Get().TKEAudit.FullName(),
+		"Image":      images.Get().TKEAudit.FullName(false),
 		"EnableAuth": t.Para.Config.Auth.TKEAuth != nil,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
@@ -1659,7 +1659,7 @@ func (t *TKE) installTKEAudit(ctx context.Context) error {
 func (t *TKE) installTKEPlatformAPI(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":    t.Config.Replicas,
-		"Image":       images.Get().TKEPlatformAPI.FullName(),
+		"Image":       images.Get().TKEPlatformAPI.FullName(false),
 		"EnableAuth":  t.Para.Config.Auth.TKEAuth != nil,
 		"EnableAudit": t.auditEnabled(),
 	}
@@ -1685,8 +1685,8 @@ func (t *TKE) installTKEPlatformAPI(ctx context.Context) error {
 func (t *TKE) installTKEPlatformController(ctx context.Context) error {
 	params := map[string]interface{}{
 		"Replicas":                t.Config.Replicas,
-		"Image":                   images.Get().TKEPlatformController.FullName(),
-		"ProviderResImage":        images.Get().ProviderRes.FullName(),
+		"Image":                   images.Get().TKEPlatformController.FullName(false),
+		"ProviderResImage":        images.Get().ProviderRes.FullName(false),
 		"RegistryDomain":          t.Para.Config.Registry.Domain(),
 		"RegistryNamespace":       t.Para.Config.Registry.Namespace(),
 		"MonitorStorageType":      "",
@@ -1736,7 +1736,7 @@ func (t *TKE) installTKEPlatformController(ctx context.Context) error {
 func (t *TKE) installTKEBusinessAPI(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":                   t.Config.Replicas,
-		"Image":                      images.Get().TKEBusinessAPI.FullName(),
+		"Image":                      images.Get().TKEBusinessAPI.FullName(false),
 		"TenantID":                   t.Para.Config.Auth.TKEAuth.TenantID,
 		"Username":                   t.Para.Config.Auth.TKEAuth.Username,
 		"SyncProjectsWithNamespaces": t.Config.SyncProjectsWithNamespaces,
@@ -1767,7 +1767,7 @@ func (t *TKE) installTKEBusinessController(ctx context.Context) error {
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-business-controller/*.yaml",
 		map[string]interface{}{
 			"Replicas":       t.Config.Replicas,
-			"Image":          images.Get().TKEBusinessController.FullName(),
+			"Image":          images.Get().TKEBusinessController.FullName(false),
 			"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
 			"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
 		})
@@ -1793,7 +1793,7 @@ func (t *TKE) installInfluxDB(ctx context.Context) error {
 
 	err = apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/influxdb/*.yaml",
 		map[string]interface{}{
-			"Image":    images.Get().InfluxDB.FullName(),
+			"Image":    images.Get().InfluxDB.FullName(false),
 			"NodeName": node.Name,
 		})
 	if err != nil {
@@ -1811,7 +1811,7 @@ func (t *TKE) installInfluxDB(ctx context.Context) error {
 func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":       t.Config.Replicas,
-		"Image":          images.Get().TKEMonitorAPI.FullName(),
+		"Image":          images.Get().TKEMonitorAPI.FullName(false),
 		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
 		"EnableBusiness": t.businessEnabled(),
 		"EnableAudit":    t.auditEnabled(),
@@ -1857,7 +1857,7 @@ func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 	params := map[string]interface{}{
 		"Replicas":                t.Config.Replicas,
-		"Image":                   images.Get().TKEMonitorController.FullName(),
+		"Image":                   images.Get().TKEMonitorController.FullName(false),
 		"EnableBusiness":          t.businessEnabled(),
 		"RegistryDomain":          t.Para.Config.Registry.Domain(),
 		"RegistryNamespace":       t.Para.Config.Registry.Namespace(),
@@ -1917,7 +1917,7 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 func (t *TKE) installTKENotifyAPI(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":    t.Config.Replicas,
-		"Image":       images.Get().TKENotifyAPI.FullName(),
+		"Image":       images.Get().TKENotifyAPI.FullName(false),
 		"EnableAuth":  t.Para.Config.Auth.TKEAuth != nil,
 		"EnableAudit": t.auditEnabled(),
 	}
@@ -1944,7 +1944,7 @@ func (t *TKE) installTKENotifyController(ctx context.Context) error {
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-notify-controller/*.yaml",
 		map[string]interface{}{
 			"Replicas": t.Config.Replicas,
-			"Image":    images.Get().TKENotifyController.FullName(),
+			"Image":    images.Get().TKENotifyController.FullName(false),
 		})
 	if err != nil {
 		return err
@@ -1968,7 +1968,7 @@ func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 
 	options := map[string]interface{}{
 		"Replicas":       t.Config.Replicas,
-		"Image":          images.Get().TKERegistryAPI.FullName(),
+		"Image":          images.Get().TKERegistryAPI.FullName(false),
 		"NodeName":       node.Name,
 		"AdminUsername":  t.Para.Config.Registry.TKERegistry.Username,
 		"AdminPassword":  string(t.Para.Config.Registry.TKERegistry.Password),
@@ -2006,7 +2006,7 @@ func (t *TKE) installTKERegistryController(ctx context.Context) error {
 	err = apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-registry-controller/*.yaml",
 		map[string]interface{}{
 			"Replicas":       t.Config.Replicas,
-			"Image":          images.Get().TKERegistryController.FullName(),
+			"Image":          images.Get().TKERegistryController.FullName(false),
 			"NodeName":       node.Name,
 			"AdminUsername":  t.Para.Config.Registry.TKERegistry.Username,
 			"AdminPassword":  string(t.Para.Config.Registry.TKERegistry.Password),
@@ -2030,7 +2030,7 @@ func (t *TKE) installTKERegistryController(ctx context.Context) error {
 func (t *TKE) installTKEApplicationAPI(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":              t.Config.Replicas,
-		"Image":                 images.Get().TKEApplicationAPI.FullName(),
+		"Image":                 images.Get().TKEApplicationAPI.FullName(false),
 		"EnableAuth":            t.Para.Config.Auth.TKEAuth != nil,
 		"EnableRegistry":        t.Para.Config.Registry.TKERegistry != nil,
 		"EnableAudit":           t.auditEnabled(),
@@ -2061,7 +2061,7 @@ func (t *TKE) installTKEApplicationController(ctx context.Context) error {
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-application-controller/*.yaml",
 		map[string]interface{}{
 			"Replicas":              t.Config.Replicas,
-			"Image":                 images.Get().TKEApplicationController.FullName(),
+			"Image":                 images.Get().TKEApplicationController.FullName(false),
 			"RegistryAdminUsername": t.Para.Config.Application.RegistryUsername,
 			"RegistryAdminPassword": string(t.Para.Config.Application.RegistryPassword),
 			"RegistryDomainSuffix":  t.Para.Config.Application.RegistryDomain,

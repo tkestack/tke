@@ -23,6 +23,12 @@ import (
 	"path"
 )
 
+const (
+	ImportedClusterType = "Imported"
+	dockerhubDomain     = "docker.io"
+	dockerhubOrg        = "tkestack"
+)
+
 var (
 	registryDomain    string
 	registryNamespace string
@@ -47,14 +53,24 @@ func (i Image) BaseName() string {
 	return b.String()
 }
 
-func (i Image) FullName() string {
+// func (i Image) FullName(isImportedCluster bool) string {
+func (i Image) FullName(isImportedCluster bool) string {
+	if isImportedCluster {
+		return path.Join(dockerhubDomain, dockerhubOrg, i.BaseName())
+	}
 	return path.Join(registryDomain, registryNamespace, i.BaseName())
 }
 
-func GetImagePrefix(name string) string {
+func GetImagePrefix(name string, isImportedCluster bool) string {
+	if isImportedCluster {
+		return path.Join(dockerhubDomain, dockerhubOrg, name)
+	}
 	return path.Join(registryDomain, registryNamespace, name)
 }
 
-func GetPrefix() string {
+func GetPrefix(isImportedCluster bool) string {
+	if isImportedCluster {
+		return path.Join(dockerhubDomain, dockerhubOrg)
+	}
 	return path.Join(registryDomain, registryNamespace)
 }

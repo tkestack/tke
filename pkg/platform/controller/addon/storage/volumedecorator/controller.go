@@ -36,6 +36,7 @@ import (
 	controllerutil "tkestack.io/tke/pkg/controller"
 	storageutil "tkestack.io/tke/pkg/platform/controller/addon/storage/util"
 	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/metrics"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -496,7 +497,7 @@ func (c *Controller) installDecorator(ctx context.Context, decorator *v1.VolumeD
 	}
 
 	// Create Deployment. The decorator will create the webhook after started.
-	return version, c.installDeployment(ctx, decorator, kubeClient, svInfo)
+	return version, c.installDeployment(ctx, decorator, kubeClient, svInfo, cluster.Spec.Type == containerregistry.ImportedClusterType)
 }
 
 func (c *Controller) installSVCAccount(ctx context.Context, decorator *v1.VolumeDecorator, kubeClient kubernetes.Interface) error {
@@ -616,8 +617,9 @@ func (c *Controller) installDeployment(
 	ctx context.Context,
 	decorator *v1.VolumeDecorator,
 	kubeClient kubernetes.Interface,
-	svInfo *storageutil.SVInfo) error {
-	deploy, err := c.genDeployment(decorator, svInfo)
+	svInfo *storageutil.SVInfo,
+	isImportedCluster bool) error {
+	deploy, err := c.genDeployment(decorator, svInfo, isImportedCluster)
 	if err != nil {
 		return err
 	}
@@ -729,7 +731,7 @@ func genService() *corev1.Service {
 	}
 }
 
-func (c *Controller) genDeployment(decorator *v1.VolumeDecorator, svInfo *storageutil.SVInfo) (*appsv1.Deployment, error) {
+func (c *Controller) genDeployment(decorator *v1.VolumeDecorator, svInfo *storageutil.SVInfo, isImportedCluster bool) (*appsv1.Deployment, error) {
 	labels := map[string]string{"app": controllerName, serviceLabel: deploymentName}
 	deploy := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -764,7 +766,7 @@ func (c *Controller) genDeployment(decorator *v1.VolumeDecorator, svInfo *storag
 		},
 	}
 
-	container, volumes, err := c.genContainerAndVolumes(decorator, svInfo)
+	container, volumes, err := c.genContainerAndVolumes(decorator, svInfo, isImportedCluster)
 	if err != nil {
 		return nil, err
 	}
@@ -1041,7 +1043,7 @@ func (c *Controller) upgradeVolumeDecorator(
 		}
 		oldContainer := &oldDeploy.Spec.Template.Spec.Containers[0]
 
-		container, volumes, err := c.genContainerAndVolumes(decorator, svInfo)
+		container, volumes, err := c.genContainerAndVolumes(decorator, svInfo, cluster.Spec.Type == containerregistry.ImportedClusterType)
 		if err != nil {
 			return false, err
 		}
@@ -1128,14 +1130,15 @@ func (c *Controller) getKubeClient(ctx context.Context, clusterName string) (kub
 	return util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 }
 
-func (c *Controller) getImage(decorator *v1.VolumeDecorator) (string, error) {
-	return images.Get(decorator.Spec.Version).VolumeDecorator.FullName(), nil
+func (c *Controller) getImage(decorator *v1.VolumeDecorator, isImportedCluster bool) (string, error) {
+	return images.Get(decorator.Spec.Version).VolumeDecorator.FullName(isImportedCluster), nil
 }
 
 func (c *Controller) genContainerAndVolumes(
 	decorator *v1.VolumeDecorator,
-	svInfo *storageutil.SVInfo) (*corev1.Container, []corev1.Volume, error) {
-	image, err := c.getImage(decorator)
+	svInfo *storageutil.SVInfo,
+	isImportedCluster bool) (*corev1.Container, []corev1.Volume, error) {
+	image, err := c.getImage(decorator, isImportedCluster)
 	if err != nil {
 		return nil, nil, err
 	}

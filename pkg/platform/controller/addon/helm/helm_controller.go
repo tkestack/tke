@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/containerregistry"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -268,7 +269,11 @@ func (c *Controller) doInitializing(ctx context.Context, key string, holder *v1.
 	if provisioner, err = createProvisioner(ctx, holder, c.client); err != nil {
 		return err
 	}
-	if err := provisioner.Install(ctx); err != nil {
+	cluster, err := c.client.PlatformV1().Clusters().Get(ctx, holder.Spec.ClusterName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	if err := provisioner.Install(ctx, cluster.Spec.Type == containerregistry.ImportedClusterType); err != nil {
 		// if user install his own tiller, update helm status to fail
 		if errors.IsConflict(err) {
 			return updateHelmStatus(ctx, getUpdateObj(holder, v1.AddonPhaseFailed, err.Error()), c.client)
@@ -301,9 +306,16 @@ func (c *Controller) reinitialize(ctx context.Context, key string, holder *v1.He
 	return func() (bool, error) {
 		var provisioner Provisioner
 		var err error
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, holder.Spec.ClusterName, metav1.GetOptions{})
+		if err != nil {
+			return true, updateHelmStatus(
+				ctx,
+				getUpdateObj(holder, v1.AddonPhaseReinitializing, fmt.Sprintf("get cluster %v failed: %v", holder.Spec.ClusterName, err)),
+				c.client)
+		}
 		if provisioner, err = createProvisioner(ctx, holder, c.client); err == nil {
 			_ = provisioner.Uninstall(ctx)
-			if err = provisioner.Install(ctx); err == nil {
+			if err = provisioner.Install(ctx, cluster.Spec.Type == containerregistry.ImportedClusterType); err == nil {
 				newObj := getUpdateObj(holder, v1.AddonPhaseChecking, "")
 				newObj.Status.LastReInitializingTimestamp = metav1.Now()
 				return true, updateHelmStatus(ctx, newObj, c.client)

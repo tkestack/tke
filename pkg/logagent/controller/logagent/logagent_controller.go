@@ -22,7 +22,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path"
 	"reflect"
 	"sync"
 	"time"
@@ -50,6 +49,7 @@ import (
 	"tkestack.io/tke/pkg/logagent/util"
 
 	//"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -507,7 +507,13 @@ func (c *Controller) installDaemonSet(
 	ctx context.Context,
 	LogCollector *v1.LogAgent,
 	kubeClient kubernetes.Interface) error {
-	daemon := c.genDaemonSet(LogCollector.Spec.Version)
+
+	cluster, err := c.platformClient.Clusters().Get(ctx, LogCollector.Spec.ClusterName, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("get cluster %v failed: %v", LogCollector.Spec.ClusterName, err)
+	}
+
+	daemon := c.genDaemonSet(LogCollector.Spec.Version, cluster.Spec.Type == containerregistry.ImportedClusterType)
 	daemonClient := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem)
 
 	oldDaemon, err := daemonClient.Get(ctx, daemon.Name, metav1.GetOptions{})
@@ -570,7 +576,7 @@ func genCRB() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func (c *Controller) genDaemonSet(version string) *appsv1.DaemonSet {
+func (c *Controller) genDaemonSet(version string, isImportedCluster bool) *appsv1.DaemonSet {
 	daemon := &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DaemonSet",
@@ -602,7 +608,7 @@ func (c *Controller) genDaemonSet(version string) *appsv1.DaemonSet {
 					Containers: []corev1.Container{
 						{
 							Name:  daemonSetName,
-							Image: path.Join(util.GetRegistryDomain(), util.GetRegistryNamespace(), images.Get(version).LogCollector.BaseName()),
+							Image: images.Get(version).LogCollector.FullName(isImportedCluster),
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: boolPtr(true),
 								Capabilities: &corev1.Capabilities{
@@ -638,7 +644,7 @@ func (c *Controller) genDaemonSet(version string) *appsv1.DaemonSet {
 						},
 						{
 							Name:  fileContainer,
-							Image: path.Join(util.GetRegistryDomain(), util.GetRegistryNamespace(), images.Get(version).LogFile.BaseName()),
+							Image: images.Get(version).LogFile.FullName(isImportedCluster),
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: boolPtr(false),
 								Capabilities: &corev1.Capabilities{
@@ -888,7 +894,12 @@ func (c *Controller) upgradeLogCollector(
 			return false, err
 		}
 
-		patch := fmt.Sprintf(upgradePatchTemplate, images.Get(LogCollector.Spec.Version).LogCollector.FullName())
+		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, LogCollector.Spec.ClusterName, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+
+		patch := fmt.Sprintf(upgradePatchTemplate, images.Get(LogCollector.Spec.Version).LogCollector.FullName(cluster.Spec.Type == containerregistry.ImportedClusterType))
 
 		_, err = kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).
 			Patch(ctx, daemonSetName, types.JSONPatchType, []byte(patch), metav1.PatchOptions{})

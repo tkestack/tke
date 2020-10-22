@@ -62,7 +62,7 @@ var selectorForHelm = metav1.LabelSelector{
 }
 
 type Provisioner interface {
-	Install(ctx context.Context) error
+	Install(ctx context.Context, isImportedCluster bool) error
 	Uninstall(ctx context.Context) error
 	GetStatus(ctx context.Context) error
 }
@@ -85,7 +85,7 @@ func NewProvisioner(kubeClient kubernetes.Interface, option *Option) Provisioner
 	}
 }
 
-func (p *provisioner) Install(ctx context.Context) error {
+func (p *provisioner) Install(ctx context.Context, isImportedCluster bool) error {
 	// if unOfficial tiller in cluster
 	err := p.isOfficialTiller(ctx)
 	if err != nil {
@@ -106,11 +106,11 @@ func (p *provisioner) Install(ctx context.Context) error {
 	}
 	// Deployment Tiller
 	if option.isExtensionsAPIGroup {
-		if err := apiclient.CreateOrUpdateDeploymentExtensionsV1beta1(ctx, kubeClient, deploymentTillerExtensions(option.version)); err != nil {
+		if err := apiclient.CreateOrUpdateDeploymentExtensionsV1beta1(ctx, kubeClient, deploymentTillerExtensions(option.version, isImportedCluster)); err != nil {
 			return err
 		}
 	} else {
-		if err := apiclient.CreateOrUpdateDeployment(ctx, kubeClient, deploymentTiller(option.version)); err != nil {
+		if err := apiclient.CreateOrUpdateDeployment(ctx, kubeClient, deploymentTiller(option.version, isImportedCluster)); err != nil {
 			return err
 		}
 	}
@@ -120,11 +120,11 @@ func (p *provisioner) Install(ctx context.Context) error {
 	}
 	// Deployment Helm-api
 	if option.isExtensionsAPIGroup {
-		if err := apiclient.CreateOrUpdateDeploymentExtensionsV1beta1(ctx, kubeClient, deploymentHelmAPIExtensions(option.version)); err != nil {
+		if err := apiclient.CreateOrUpdateDeploymentExtensionsV1beta1(ctx, kubeClient, deploymentHelmAPIExtensions(option.version, isImportedCluster)); err != nil {
 			return err
 		}
 	} else {
-		if err := apiclient.CreateOrUpdateDeployment(ctx, kubeClient, deploymentHelmAPI(option.version)); err != nil {
+		if err := apiclient.CreateOrUpdateDeployment(ctx, kubeClient, deploymentHelmAPI(option.version, isImportedCluster)); err != nil {
 			return err
 		}
 	}
@@ -211,7 +211,7 @@ func crbHelm() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func deploymentTiller(version string) *appsv1.Deployment {
+func deploymentTiller(version string, isImportedCluster bool) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -238,7 +238,7 @@ func deploymentTiller(version string) *appsv1.Deployment {
 								{Name: "TILLER_HISTORY_MAX", Value: "0"},
 							},
 							Name:  "tiller",
-							Image: images.Get(version).Tiller.FullName(),
+							Image: images.Get(version).Tiller.FullName(isImportedCluster),
 							LivenessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
 									HTTPGet: &corev1.HTTPGetAction{
@@ -277,7 +277,7 @@ func deploymentTiller(version string) *appsv1.Deployment {
 	}
 }
 
-func deploymentTillerExtensions(version string) *extensionsv1beta1.Deployment {
+func deploymentTillerExtensions(version string, isImportedCluster bool) *extensionsv1beta1.Deployment {
 	return &extensionsv1beta1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -304,7 +304,7 @@ func deploymentTillerExtensions(version string) *extensionsv1beta1.Deployment {
 								{Name: "TILLER_HISTORY_MAX", Value: "0"},
 							},
 							Name:  "tiller",
-							Image: images.Get(version).Tiller.FullName(),
+							Image: images.Get(version).Tiller.FullName(isImportedCluster),
 							LivenessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
 									HTTPGet: &corev1.HTTPGetAction{
@@ -364,7 +364,7 @@ func serviceTiller() *corev1.Service {
 	}
 }
 
-func deploymentHelmAPI(version string) *appsv1.Deployment {
+func deploymentHelmAPI(version string, isImportedCluster bool) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -388,7 +388,7 @@ func deploymentHelmAPI(version string) *appsv1.Deployment {
 					Containers: []corev1.Container{
 						{
 							Name:  "swift",
-							Image: images.Get(version).Swift.FullName(),
+							Image: images.Get(version).Swift.FullName(isImportedCluster),
 							Args:  []string{"run", "--v=3", "--connector=incluster", "--tiller-insecure-skip-verify=true", "--enable-analytics=true"},
 							Ports: []corev1.ContainerPort{
 								{ContainerPort: 9855},
@@ -410,7 +410,7 @@ func deploymentHelmAPI(version string) *appsv1.Deployment {
 						},
 						{
 							Name:  "swift-reverse-proxy",
-							Image: images.Get(version).HelmAPI.FullName(),
+							Image: images.Get(version).HelmAPI.FullName(isImportedCluster),
 							Ports: []corev1.ContainerPort{
 								{ContainerPort: 8080},
 							},
@@ -442,7 +442,7 @@ func deploymentHelmAPI(version string) *appsv1.Deployment {
 	}
 }
 
-func deploymentHelmAPIExtensions(version string) *extensionsv1beta1.Deployment {
+func deploymentHelmAPIExtensions(version string, isImportedCluster bool) *extensionsv1beta1.Deployment {
 	return &extensionsv1beta1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -466,7 +466,7 @@ func deploymentHelmAPIExtensions(version string) *extensionsv1beta1.Deployment {
 					Containers: []corev1.Container{
 						{
 							Name:  "swift",
-							Image: images.Get(version).Swift.FullName(),
+							Image: images.Get(version).Swift.FullName(isImportedCluster),
 							Args:  []string{"run", "--v=3", "--connector=incluster", "--tiller-insecure-skip-verify=true", "--enable-analytics=true"},
 							Ports: []corev1.ContainerPort{
 								{ContainerPort: 9855},
@@ -488,7 +488,7 @@ func deploymentHelmAPIExtensions(version string) *extensionsv1beta1.Deployment {
 						},
 						{
 							Name:  "swift-reverse-proxy",
-							Image: images.Get(version).HelmAPI.FullName(),
+							Image: images.Get(version).HelmAPI.FullName(isImportedCluster),
 							Ports: []corev1.ContainerPort{
 								{ContainerPort: 8080},
 							},

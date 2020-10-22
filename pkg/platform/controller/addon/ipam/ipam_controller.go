@@ -44,6 +44,7 @@ import (
 	"tkestack.io/tke/pkg/platform/controller/addon/ipam/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -395,7 +396,7 @@ func (c *Controller) installIPAM(ctx context.Context, ipam *v1.IPAM) error {
 		}
 	}
 	// Deployment IPAM
-	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deploymentIPAM(ipam.Spec.Version), metav1.CreateOptions{}); err != nil {
+	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deploymentIPAM(ipam.Spec.Version, cluster.Spec.Type == containerregistry.ImportedClusterType), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// Service IPAM
@@ -492,7 +493,7 @@ func crIPAM() *rbacv1.ClusterRole {
 	}
 }
 
-func deploymentIPAM(version string) *appsv1.Deployment {
+func deploymentIPAM(version string, isImportedCluster bool) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -537,7 +538,7 @@ func deploymentIPAM(version string) *appsv1.Deployment {
 					Containers: []corev1.Container{
 						{
 							Name:  "galaxy-ipam",
-							Image: images.Get(version).IPAM.FullName(),
+							Image: images.Get(version).IPAM.FullName(isImportedCluster),
 							Args: []string{
 								"--logtostderr=true",
 								"--profiling",

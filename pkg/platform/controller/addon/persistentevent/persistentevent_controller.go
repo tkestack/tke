@@ -46,6 +46,7 @@ import (
 	v1 "tkestack.io/tke/api/platform/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -393,7 +394,7 @@ func (c *Controller) installPersistentEventComponent(ctx context.Context, persis
 	serviceAccount := c.makeServiceAccount()
 	clusterRole := c.makeClusterRole()
 	clusterRoleBinding := c.makeClusterRoleBinding()
-	deployment := c.makeDeployment(persistentEvent.Spec.Version)
+	deployment := c.makeDeployment(persistentEvent.Spec.Version, cluster.Spec.Type == containerregistry.ImportedClusterType)
 	config, err := c.makeConfigMap(ctx, &persistentEvent.Spec.PersistentBackEnd)
 	if err != nil {
 		return err
@@ -679,7 +680,7 @@ func (c *Controller) makeClusterRoleBinding() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func (c *Controller) makeDeployment(version string) *appsv1.Deployment {
+func (c *Controller) makeDeployment(version string, isImportedCluster bool) *appsv1.Deployment {
 	var replicas int32 = 1
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -709,7 +710,7 @@ func (c *Controller) makeDeployment(version string) *appsv1.Deployment {
 						{
 							Name:    "tke-persistent-event-watcher",
 							Command: []string{"./tke-event-watcher"},
-							Image:   images.Get(version).Watcher.FullName(),
+							Image:   images.Get(version).Watcher.FullName(isImportedCluster),
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      "event-data",
@@ -719,7 +720,7 @@ func (c *Controller) makeDeployment(version string) *appsv1.Deployment {
 						},
 						{
 							Name:  "tke-persistent-event-fluentd",
-							Image: images.Get(version).Collector.FullName(),
+							Image: images.Get(version).Collector.FullName(isImportedCluster),
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									Name:      "fluentd-config",

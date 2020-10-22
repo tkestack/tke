@@ -32,6 +32,7 @@ import (
 	"tkestack.io/tke/pkg/controller"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/metrics"
 
 	"k8s.io/api/admissionregistration/v1beta1"
@@ -422,7 +423,7 @@ func (c *Controller) installLBCF(ctx context.Context, lbcf *v1.LBCF) error {
 	if _, err := kubeClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(ctx, secret(), metav1.CreateOptions{}); err != nil {
 		return err
 	}
-	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deployment(lbcf.Spec.Version), metav1.CreateOptions{}); err != nil {
+	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deployment(lbcf.Spec.Version, cluster.Spec.Type == containerregistry.ImportedClusterType), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).Create(ctx, service(), metav1.CreateOptions{}); err != nil {
@@ -877,7 +878,7 @@ var selectorForLBCF = metav1.LabelSelector{
 	MatchLabels: map[string]string{"lbcf.tkestack.io/component": svcLBCFHealthCheckName},
 }
 
-func deployment(version string) *appsv1.Deployment {
+func deployment(version string, isImportedCluster bool) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      svcLBCFHealthCheckName,
@@ -896,7 +897,7 @@ func deployment(version string) *appsv1.Deployment {
 					Containers: []corev1.Container{
 						{
 							Name:  "controller",
-							Image: images.Get(version).LBCFController.FullName(),
+							Image: images.Get(version).LBCFController.FullName(isImportedCluster),
 							Ports: []corev1.ContainerPort{
 								{ContainerPort: 443, Name: "admit-server"},
 							},

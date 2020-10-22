@@ -1069,7 +1069,7 @@ func (p *Provider) EnsureNvidiaDevicePlugin(ctx context.Context, c *v1.Cluster) 
 		return err
 	}
 	option := &gpu.NvidiaDevicePluginOption{
-		Image: images.Get().NvidiaDevicePlugin.FullName(),
+		Image: images.Get().NvidiaDevicePlugin.FullName(c.Spec.Type == containerregistryutil.ImportedClusterType),
 	}
 	err = gpu.InstallNvidiaDevicePlugin(ctx, client, option)
 	if err != nil {
@@ -1094,9 +1094,9 @@ func (p *Provider) EnsureGPUManager(ctx context.Context, c *v1.Cluster) error {
 	}
 
 	option := map[string]interface{}{
-		"GPUManagerImage":        images.Get().GPUManager.FullName(),
-		"BusyboxImage":           images.Get().Busybox.FullName(),
-		"GPUQuotaAdmissionImage": images.Get().GPUQuotaAdmission.FullName(),
+		"GPUManagerImage":        images.Get().GPUManager.FullName(c.Spec.Type == containerregistryutil.ImportedClusterType),
+		"BusyboxImage":           images.Get().Busybox.FullName(c.Spec.Type == containerregistryutil.ImportedClusterType),
+		"GPUQuotaAdmissionImage": images.Get().GPUQuotaAdmission.FullName(c.Spec.Type == containerregistryutil.ImportedClusterType),
 		"GPUQuotaAdmissionHost":  c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion],
 	}
 
@@ -1125,8 +1125,8 @@ func (p *Provider) EnsureMetricsServer(ctx context.Context, c *v1.Cluster) error
 		return err
 	}
 	option := map[string]interface{}{
-		"MetricsServerImage": images.Get().MetricsServer.FullName(),
-		"AddonResizerImage":  images.Get().AddonResizer.FullName(),
+		"MetricsServerImage": images.Get().MetricsServer.FullName(c.Spec.Type == containerregistryutil.ImportedClusterType),
+		"AddonResizerImage":  images.Get().AddonResizer.FullName(c.Spec.Type == containerregistryutil.ImportedClusterType),
 	}
 
 	err = apiclient.CreateKAResourceWithFile(ctx, client, kaClient, constants.MetricsServerManifest, option)
@@ -1150,8 +1150,8 @@ func (p *Provider) EnsureCSIOperator(ctx context.Context, c *v1.Cluster) error {
 	}
 
 	option := map[string]interface{}{
-		"CSIOperatorImage": csioperatorimage.Get(c.Cluster.Spec.Features.CSIOperator.Version).CSIOperator.FullName(),
-		"RegistryDomain":   containerregistryutil.GetPrefix(),
+		"CSIOperatorImage": csioperatorimage.Get(c.Cluster.Spec.Features.CSIOperator.Version).CSIOperator.FullName(c.Spec.Type == containerregistryutil.ImportedClusterType),
+		"RegistryDomain":   containerregistryutil.GetPrefix(c.Spec.Type == containerregistryutil.ImportedClusterType),
 	}
 
 	err = apiclient.CreateResourceWithFile(ctx, client, constants.CSIOperatorManifest, option)

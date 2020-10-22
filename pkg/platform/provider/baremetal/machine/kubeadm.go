@@ -28,6 +28,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/containerregistry"
 )
 
 func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubeadmv1beta2.JoinConfiguration {
@@ -70,7 +71,7 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubead
 
 func (p *Provider) getKubeletExtraArgs(c *v1.Cluster) map[string]string {
 	args := map[string]string{
-		"pod-infra-container-image": images.Get().Pause.FullName(),
+		"pod-infra-container-image": images.Get().Pause.FullName(c.Spec.Type == containerregistry.ImportedClusterType),
 	}
 
 	utilruntime.Must(mergo.Merge(&args, c.Spec.KubeletExtraArgs))

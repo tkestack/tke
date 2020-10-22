@@ -33,6 +33,7 @@ import (
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/metrics"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -440,7 +441,7 @@ func (c *Controller) installLogCollector(ctx context.Context, LogCollector *v1.L
 	}
 
 	// Create Deployment.
-	return c.installDaemonSet(ctx, LogCollector, kubeClient)
+	return c.installDaemonSet(ctx, LogCollector, kubeClient, cluster.Spec.Type == containerregistry.ImportedClusterType)
 }
 
 func (c *Controller) installSVC(ctx context.Context, LogCollector *v1.LogCollector, kubeClient kubernetes.Interface) error {
@@ -493,8 +494,9 @@ func (c *Controller) installCRB(ctx context.Context, LogCollector *v1.LogCollect
 func (c *Controller) installDaemonSet(
 	ctx context.Context,
 	LogCollector *v1.LogCollector,
-	kubeClient kubernetes.Interface) error {
-	daemon := c.genDaemonSet(LogCollector.Spec.Version)
+	kubeClient kubernetes.Interface,
+	isImportedCluster bool) error {
+	daemon := c.genDaemonSet(LogCollector.Spec.Version, isImportedCluster)
 	daemonClient := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem)
 
 	oldDaemon, err := daemonClient.Get(ctx, daemon.Name, metav1.GetOptions{})
@@ -551,7 +553,7 @@ func genCRB() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func (c *Controller) genDaemonSet(version string) *appsv1.DaemonSet {
+func (c *Controller) genDaemonSet(version string, isImportedCluster bool) *appsv1.DaemonSet {
 	daemon := &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DaemonSet",
@@ -583,7 +585,7 @@ func (c *Controller) genDaemonSet(version string) *appsv1.DaemonSet {
 					Containers: []corev1.Container{
 						{
 							Name:  daemonSetName,
-							Image: images.Get(version).LogCollector.FullName(),
+							Image: images.Get(version).LogCollector.FullName(isImportedCluster),
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: boolPtr(true),
 								Capabilities: &corev1.Capabilities{
@@ -828,7 +830,7 @@ func (c *Controller) upgradeLogCollector(
 			return false, err
 		}
 
-		patch := fmt.Sprintf(upgradePatchTemplate, images.Get(LogCollector.Spec.Version).LogCollector.FullName())
+		patch := fmt.Sprintf(upgradePatchTemplate, images.Get(LogCollector.Spec.Version).LogCollector.FullName(cluster.Spec.Type == containerregistry.ImportedClusterType))
 
 		_, err = kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).
 			Patch(ctx, daemonSetName, types.JSONPatchType, []byte(patch), metav1.PatchOptions{})

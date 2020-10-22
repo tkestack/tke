@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	v1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/config"
@@ -75,7 +76,7 @@ func (t *TKE) Init() {
 }
 
 func (t *TKE) GetFullName(name string) string {
-	return containerregistry.GetImagePrefix(name) + "-amd64:" + t.Version
+	return containerregistry.GetImagePrefix(name, false) + "-amd64:" + t.Version
 }
 
 func (t *TKE) TKEGateway() (option Options) {
@@ -148,7 +149,7 @@ func (t *TKE) TKEPlatformController() (option Options) {
 	option = map[string]interface{}{
 		"Replicas":                t.Config.Replicas,
 		"Image":                   t.GetFullName(images.Get().TKEPlatformController.Name),
-		"ProviderResImage":        images.Get().ProviderRes.FullName(),
+		"ProviderResImage":        images.Get().ProviderRes.FullName(false),
 		"RegistryDomain":          t.Para.Config.Registry.Domain(),
 		"RegistryNamespace":       t.Para.Config.Registry.Namespace(),
 		"MonitorStorageType":      "",
@@ -214,7 +215,7 @@ func (t *TKE) TKEBusinessController() (option Options) {
 
 func (t *TKE) InfluxDB() (option Options) {
 	option = map[string]interface{}{
-		"Image":    images.Get().InfluxDB.FullName(),
+		"Image":    images.Get().InfluxDB.FullName(false),
 		"NodeName": t.Servers[0],
 	}
 	return

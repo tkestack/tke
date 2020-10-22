@@ -47,6 +47,7 @@ import (
 	v1 "tkestack.io/tke/api/platform/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -391,7 +392,7 @@ func (c *Controller) installCronHPA(ctx context.Context, cronHPA *v1.CronHPA) er
 		return err
 	}
 	// Deployment CronHPA
-	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deploymentCronHPA(cronHPA.Spec.Version), metav1.CreateOptions{}); err != nil {
+	if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Create(ctx, deploymentCronHPA(cronHPA.Spec.Version, cluster.Spec.Type == containerregistry.ImportedClusterType), metav1.CreateOptions{}); err != nil {
 		return err
 	}
 	// Service CronHPA
@@ -439,7 +440,7 @@ func crbCronHPA() *rbacv1.ClusterRoleBinding {
 	}
 }
 
-func deploymentCronHPA(cronHPAVersion string) *appsv1.Deployment {
+func deploymentCronHPA(cronHPAVersion string, isImportedCluster bool) *appsv1.Deployment {
 	return &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
@@ -465,7 +466,7 @@ func deploymentCronHPA(cronHPAVersion string) *appsv1.Deployment {
 					Containers: []corev1.Container{
 						{
 							Name:  controllerName,
-							Image: images.Get(cronHPAVersion).CronHPA.FullName(),
+							Image: images.Get(cronHPAVersion).CronHPA.FullName(isImportedCluster),
 							Args:  []string{"--v", "3", "--stderrthreshold", "0", "--register-admission", "true"},
 							Resources: corev1.ResourceRequirements{
 								Requests: corev1.ResourceList{
@@ -639,7 +640,7 @@ func (c *Controller) upgradeCronHPA(ctx context.Context, cronHPA *v1.CronHPA, ke
 		if err != nil {
 			return false, err
 		}
-		newImage := images.Get(cronHPA.Spec.Version).CronHPA.FullName()
+		newImage := images.Get(cronHPA.Spec.Version).CronHPA.FullName(cluster.Spec.Type == containerregistry.ImportedClusterType)
 
 		patch := fmt.Sprintf(`[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"%s"}]`, newImage)
 		if _, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Patch(ctx, deployCronHPAName, types.JSONPatchType, []byte(patch), metav1.PatchOptions{}); err != nil {
