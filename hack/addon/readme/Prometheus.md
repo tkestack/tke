@@ -22,7 +22,7 @@ Prometheus 是 Kubernetes 监控的事实标准，为容器平台提供了一整
 
 ### Prometheus 限制条件
 
-1. 安装 Prometheus 将占用集群 1核 CPU,600MB 内存的资源。同时随着集群规模的扩大，Prometheus 会占用更多的系统资源
+1. 安装 Prometheus 将占用集群 1核 CPU，600MB 内存的资源。同时随着集群规模的扩大，Prometheus 会占用更多的系统资源
 
 2. 仅在1.8版本以上的 kubernetes 集群支持
 
@@ -32,24 +32,25 @@ Prometheus 是 Kubernetes 监控的事实标准，为容器平台提供了一整
 
 | kubernetes 对象名称                        | 类型                           | 默认占用资源 | 所属 Namespaces |
 | ------------------------------------------| ------------------------------ | ---------- | ------------- |
-| kube-state-metrics                        | Deployment                     | 0.1核CPU,128MB内存      | kube-system  |
+| [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics)<br />收集 k8s 集群内资源对象数据 | Deployment                     | 0.1核CPU,128MB内存      | kube-system  |
 | kube-state-metrics                        | ServiceAccount                 | /      | kube-system  |
 | kube-state-metrics                        | ClusterRole                    | /      | /            |
 | kube-state-metrics                        | ClusterRoleBinding             | /      | /            |
-| kube-state-metrics                        | Service                        | /      | kube-system  |
-| prometheus-operator                       | Deployment                     | 0.1核CPU,100MB内存      | kube-system  |
+| kube-state-metrics  | Service                        | /      | kube-system  |
+| [custom-metrics-apiserver](https://github.com/kubernetes-sigs/custom-metrics-apiserver)<br />可支持任意 Prometheus 采集到的指标，同时也可以实现更多指标的 HPA | Deployment | **目前没有限制** | kube-system |
+| [prometheus-operator](https://github.com/prometheus-operator/prometheus-operator)<br />用于部署 prometheus，存储监控数据 | Deployment                     | 0.1核CPU,100MB内存      | kube-system  |
 | prometheus-operator                       | ServiceAccount                 | /      | kube-system  |
 | prometheus-operator                       | ClusterRole                    | /      | /            |
 | prometheus-operator                       | ClusterRoleBinding             | /      | /            |
-| prometheus-operator                       | Service                        | /      | kube-system  |
-| alertmanager-main                         | StatefulSet                   | 0.3核CPU,75MB内存      | kube-system  |
-| alertmanager                              | Service                        | /      | kube-system  |
-| prometheus-k8s                            | StatefulSet                   | 0.3核CPU,200MB内存      | kube-system  |
+| prometheus-operator | Service                        | /      | kube-system  |
+| [alertmanager-main](https://github.com/prometheus/alertmanager)<br />实现监控报警 | StatefulSet                   | 0.3核CPU,75MB内存      | kube-system  |
+| alertmanager                  | Service                        | /      | kube-system  |
+| [prometheus-k8s](https://github.com/prometheus/prometheus)<br />Prometheus 主程序 | StatefulSet                   | 0.3核CPU,200MB内存      | kube-system  |
 | prometheus-k8s                            | ServiceAccount                 | /      | kube-system  |
 | prometheus-k8s                            | ClusterRole                    | /      | /            |
 | prometheus-k8s                            | ClusterRoleBinding             | /      | /            |
-| prometheus                                | Service                        | /      | kube-system  |
-| node-exporter                             | Daemonset                      | 0.1核CPU,128MB内存      | kube-system  |
+| prometheus | Service                        | /      | kube-system  |
+| [node-exporter](https://github.com/prometheus/node_exporter)<br />收集集群中各节点的数据 | Daemonset                      | 0.1核CPU,128MB内存      | kube-system  |
 | alertmanagers.monitoring.coreos.com       | CustomResourceDefinition       | /      | /            |
 | podmonitors.monitoring.coreos.com         | CustomResourceDefinition       | /      | /            |
 | prometheuses.monitoring.coreos.com        | CustomResourceDefinition       | /      | /            |
