@@ -15,13 +15,14 @@
 # specific language governing permissions and limitations under the License.
 
 NODE_SUPPORTED_VERSION = v12
+NPM = npm
 
 .PHONY: web.build
 web.build: web.verify web.build.console web.build.installer
 
 .PHONY: web.verify
 web.verify:
-	@echo "===========> Check NOde.js version"
+	@echo "===========> Check Node.js version"
 ifneq ($(shell node -v | cut -f1 -d.), $(NODE_SUPPORTED_VERSION))
 	@echo "===========> Install Node.js v12"
 	curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
