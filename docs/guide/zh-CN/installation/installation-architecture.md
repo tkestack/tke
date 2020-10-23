@@ -45,34 +45,34 @@ tke-installer 自动等待和检查每一步骤安装完成，如果中间过程
 ## 能力说明
 
 - **原生**：TKEStack 兼容了 Kubernetes 原生服务访问模式。
-- **产品特色**：TKEStack 扩展 [Galaxy](../features/galaxy.md)（网络）、TAPP（工作负载）、GPUManage（GPU）、CronHPA（扩缩容）、LBCF（负载均衡）等组件，界面化支持，插件化部署。
+- **产品特色**：TKEStack 扩展了 [Galaxy](https://github.com/tkestack/galaxy)（网络）、[TApp](https://github.com/tkestack/tapp)（工作负载）、[GPUManage](https://github.com/tkestack/gpu-manager)（GPU）、[CronHPA](https://github.com/tkestack/cron-hpa)（扩缩容）、[LBCF](https://github.com/tkestack/lb-controlling-framework)（负载均衡）等组件，界面化支持，插件化部署。
 - **多集群管理**：提供多集群统一管理能力。
-- **多租户统一认证**：支持 OIDC 和 LDAP 对接，实现企业租户身份的统一认证。
-- **权限管理**：提供多租户统一认证与权限管理能力。不同于 Kubernetes RBAC，TKEStack 权限管理是基于 Casbin 模型。TKEStack 支持平台用户和业务用户，可为用户/用户组配置不同的角色，并绑定对应的策略，从而实现资源共享和访问隔离。
-- **仓库管理**：集成 docker registry 和 chartmuseum 能力，支持创建公/私有仓库。支持创建有效时间范围的访问凭证。
-- **运维能力**：提供集群、节点、工作负载、Pod、Container 五个粒度的监控数据收集和展示功能；提供短信、微信、邮件三种告警机制；提供容器文件、容器输出、节点文件三种日志采集方式，支持 ES、Kafka 两种消费端。
+- **多租户统一认证**：支持 [OIDC](https://en.wikipedia.org/wiki/OpenID_Connect) 和 [LDAP](https://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol) 对接，实现企业租户身份的统一认证。
+- **权限管理**：提供多租户统一认证与权限管理能力。不同于 Kubernetes RBAC，TKEStack 权限管理是基于 [Casbin](https://casbin.org/docs/zh-CN/overview) 模型。TKEStack 支持平台用户和业务用户，可为用户/用户组配置不同的角色，并绑定对应的策略，从而实现资源共享和访问隔离。
+- **仓库管理**：集成 [docker registry](https://github.com/docker/distribution) 和 [chartmuseum](https://github.com/helm/chartmuseum) 能力，支持创建公/私有仓库。支持创建有效时间范围的访问凭证。
+- **运维能力**：提供集群、节点、工作负载、Pod、Container 五个粒度的监控数据收集和展示功能；提供短信、微信、邮件三种告警机制；提供容器文件、容器输出、节点文件三种日志采集方式，支持 [ElasticSearch](https://www.elastic.co/cn/elasticsearch/)、[Kafka](https://kafka.apachecn.org/intro.html) 两种消费端。
 - **界面化**：大量 YAML 配置转换成可视化配置，降低使用门槛。
-- **安全性**：TKEStack 支持 webtty，webtty 的鉴权接入了 TKEStack，减少对 kubeconfig 的依赖，降低集群 hack 风险。
-- **版本升级**：TKEStack 采取了 Kubernetes 的代码理念，通过迭代可以不断适配新版本Kubernetes。
+- **安全性**：TKEStack 支持 [WebTTY](https://github.com/maxmcd/webtty)，WebTTY 的鉴权接入了 TKEStack，减少对 kubeconfig 的依赖，降低集群 hack 风险。
+- **版本升级**：TKEStack 采取了 Kubernetes 的代码理念，通过迭代可以不断适配新版本 Kubernetes。
 - **异构治理**：支持一键部署 x86/arm64 异构容器集群及多型号 GPU 卡异构容器集群。
 
 ## 详细设计
 
 Kubernetes 是高度可配置和可扩展的，TKEStack 支持通过配置和扩展实现对集群的定制，配置只涉及更改标志参数、本地配置文件或 API 资源；扩展涉及运行额外的程序或服务。
 
-TKEStack 自身在设计上充分利用 K8S 的扩展特性，利用 K8S [API 访问扩展](https://kubernetes.io/docs/concepts/overview/extending#api-access-extensions) 能力对请求进行身份认证或根据其内容对其进行阻止、编辑内容以及处理删除操作，实现 TKEStack 的认证和授权功能。 利用 [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) 能力添加 TKEStack 自定义的资源或其他项目已定义的资源，通过 K8S 提供的 Aggregated API 和 CRD 扩展方法，整合 TKEStack 各个组件和资源， 为不同资源提供统一的CRUD、Watch、Discovery、HTTPS、Authentication 及 Authorization [特性](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#common-features)。
+TKEStack 自身在设计上充分利用 K8S 的扩展特性，利用 K8S [API 访问扩展](https://kubernetes.io/docs/concepts/overview/extending#api-access-extensions) 能力对请求进行身份认证或根据其内容对其进行阻止、编辑内容以及处理删除操作，实现 TKEStack 的认证和授权功能。 利用 [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) 能力添加 TKEStack 自定义的资源或其他项目已定义的资源，通过 K8S 提供的 [Aggregated API](https://kubernetes.io/zh/docs/concepts/extend-kubernetes/api-extension/apiserver-aggregation/) 和 [CRD](https://kubernetes.io/zh/docs/concepts/extend-kubernetes/api-extension/custom-resources/) 扩展方法，整合 TKEStack 各个组件和资源， 为不同资源提供统一的 CRUD、Watch、Discovery、HTTPS、Authentication 及 Authorization [特性](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#common-features)。
 
-此外，TKEStack 利用 K8S [调度器扩展](https://kubernetes.io/docs/concepts/overview/extending#scheduler-extensions) 功能实现对资源调度的优化。 使用 [网络插件](https://kubernetes.io/docs/concepts/overview/extending#network-plugins) 和 [存储插件](https://kubernetes.io/docs/concepts/overview/extending#storage-plugins) 等实现 TKEStack 对多种 pod 网络和新存储类型的支持。
+此外，TKEStack 利用 K8S [调度器扩展](https://kubernetes.io/docs/concepts/overview/extending#scheduler-extensions) 功能实现对资源调度的优化。 使用 [网络插件](https://kubernetes.io/docs/concepts/overview/extending#network-plugins) 和 [存储插件](https://kubernetes.io/docs/concepts/overview/extending#storage-plugins) 等实现 TKEStack 对多种 Pod 网络和新存储类型的支持。
 
 ### 基础结构
 
 #### Aggregated API
 
-TKEStack 通过 K8S Aggregated API 聚合层扩展自身的组件和资源，聚合层允许 Kubernetes 通过额外的 API 进行扩展，而不局限于 Kubernetes 核心 API 提供的功能。
+TKEStack 通过 K8S [Aggregated API](https://kubernetes.io/zh/docs/concepts/extend-kubernetes/api-extension/apiserver-aggregation/) 聚合层扩展自身的组件和资源，聚合层允许 Kubernetes 通过额外的 API 进行扩展，而不局限于 Kubernetes 核心 API 提供的功能。
 
-聚合层在 kube-apiserver 进程内运行。在扩展资源注册之前，聚合层不做任何事情。要注册 API，用户必须添加一个 APIService 对象，用它来申领 Kubernetes API 中的 URL 路径。 自此以后，聚合层将会把发给该 API 路径的所有内容（例如 /apis/myextension.mycompany.io/v1/…）代理到已注册的 APIService。
+聚合层在 kube-apiserver 进程内运行。在扩展资源注册之前，聚合层不做任何事情。要注册 API，用户必须添加一个 [APIService](https://kubernetes.io/zh/docs/tasks/extend-kubernetes/setup-extension-api-server/) 对象，用它来申领 Kubernetes API 中的 URL 路径。 自此以后，聚合层将会把发给该 API 路径的所有内容（例如 /apis/myextension.mycompany.io/v1/…）代理到已注册的 APIService。
 
-正常情况下，APIService 会实现为运行于集群中某 Pod 内的 extension-apiserver。如果需要对增加的资源进行动态管理，extension-apiserver 经常需要和一个或多个 controllers 一起使用。
+正常情况下，APIService 会实现为运行于集群中某 Pod 内的 extension-apiserver。如果需要对增加的资源进行动态管理，extension-apiserver 经常需要和一个或多个 Controllers 一起使用。
 
 TKEStack 通过聚合层扩展 Kubernetes API，向 K8S 内注册各个组件的 APIService 对象。
 
@@ -86,7 +86,7 @@ v1.platform.tkestack.io                tke/tke-platform-api   True        28d
 v1.registry.tkestack.io                tke/tke-registry-api   True        28d
 ```
 
-同时实现了 extension-apiserver 和 controllers 提供对资源的管理和控制。
+同时实现了 extension-apiserver 和 Controllers 提供对资源的管理和控制。
 
 ```
 # kubectl get deployment -n tke 
@@ -160,7 +160,7 @@ tke/pkg/business/
 
 ### Platform 组件
 
-Platform 平台管理组件，利用 K8S Aggregated APIServer 方法注册和实现了 Cluster、ClusterCredential、machine及addon 等 CR 资源， 为平台提供包括集群、节点、扩展组件等基础功能和服务。
+Platform 平台管理组件，利用 K8S Aggregated APIServer 方法注册和实现了 Cluster、ClusterCredential、machine 及 addon 等 CR 资源， 为平台提供包括集群、节点、扩展组件等基础功能和服务。
 
 #### 集群管理
 
@@ -183,7 +183,7 @@ cls 存储和描述集群的基本信息，cc 保存和描述集群的凭证信�
 
 ![sequence chart](../../../images/sequence.png)
 
-当触发 OnCreate 创建集群操作后， tke-platform-controller 根据创建集群类型的不同选择对应的 provider，当前版本支持 baremetal provider 和 importal provider 两种类型，对应新建独立集群和导入集群两种操作。 provider 内包含创建集群时所定义的动作和检查，根据用户的配置自动完成集群的创建及健康检查操作。
+当触发 OnCreate 创建集群操作后， tke-platform-controller 根据创建集群类型的不同选择对应的 Provider，当前版本支持 baremetal provider 和 importal provider 两种类型，对应新建独立集群和导入集群两种操作。 Provider 内包含创建集群时所定义的动作和检查，根据用户的配置自动完成集群的创建及健康检查操作。
 
 ![cluster provider](../../../images/clusterprovider.png)
 
@@ -218,13 +218,13 @@ status:
   ..
 ```
 
-后端 machine controller 监视和更新 machine 资源，根据 machine 资源变化来触发对应 provider 的 OnCreate、OnUpdate、OnDelete的操作。
+后端 machine controller 监视和更新 machine 资源，根据 machine 资源变化来触发对应 Provider 的 OnCreate、OnUpdate、OnDelete的操作。
 
 #### addon 管理
 
 Addon 扩展组件用来定制集群的能力，扩展集群的功能。当前 TKEStack 支持多种扩展组件，典型的扩展组件包括：
 
-- **TAPP**：一种全新类型的 Workload，更好的支持传统的有状态应用，实现灰度升级和多版本的发布管理，
+- **TApp**：一种全新类型的 Workload，更好的支持传统的有状态应用，实现灰度升级和多版本的发布管理，
 - **IPAM**：支持用户创建 floating ip，支持 Pod 固定 IP
 - **CSI Operator**：负责 CSI 相关组件的部署与维护，帮助用户在集群中使用存储
 - **LBCF**：一款通用负载均衡控制面框架，提供强大的扩展能力以满足业务方在使用负载均衡时的个性化需求
@@ -309,7 +309,7 @@ status:
 
 ![auth](../../../images/auth.png)
 
-TKEStack web 端的流量入口为 tke-gateway，tke-gateway 的 authn 为 [anonymous](https://kubernetes.io/zh/docs/reference/access-authn-authz/authentication/#anonymous-requests)，authz 为 [AlwaysAllow](https://kubernetes.io/zh/docs/reference/access-authn-authz/authorization/)，这意味着 tke-gateway 本身不做鉴权， 只是负责把请求通过 frontproxy 或 passthrough 方式代理给后端组件。若登录态有效（cookie 中的 token 有效），则 tke-gateway 将请求代理到后端组件， 并根据代理方式设置 token 到 Header；否则，与 tke-auth-api 的 /oidc 部分交互，完成认证流程。
+TKEStack web 端的流量入口为 tke-gateway，tke-gateway 的 authn 为 [anonymous](https://kubernetes.io/zh/docs/reference/access-authn-authz/authentication/#anonymous-requests)，authz 为 [AlwaysAllow](https://kubernetes.io/zh/docs/reference/access-authn-authz/authorization/)，这意味着 tke-gateway 本身不做鉴权， 只是负责把请求通过 frontproxy 或 passthrough 方式代理给后端组件。若登录态有效（cookie 中的 token 有效），则 tke-gateway 将请求代理到后端组件， 并根据代理方式设置 token 到 Header；否则，与 tke-auth-api 的 /oidc/auth 部分交互，完成认证流程。
 
 tke-auth-api 负责 TKEStack 认证、鉴权的整体逻辑。认证模块包括 requestHeader（对应frontproxy）、clientCert（x509）、 token（对应passthrough）、websocket 等，其中 token 模块包括了 localtrust、静态tokenFile、oidc、webhook、apiKey、idToken 等。 认证模块的启用是通过 tke-auth-api 配置文件的配置项决定的。token 模块中，localtrust 一般用于内部组件间 base64 编码的 token 解析， apiKey 用于解析 jwt 形式的 token，idToken 用于解析 oidc idToken。鉴权模块包括 webhook、ABAC、local 等，其中 local 使用了 casbin 模型鉴权。
 
