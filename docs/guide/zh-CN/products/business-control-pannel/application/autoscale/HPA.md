@@ -21,7 +21,7 @@ HPA 后台组件会定期从 metrics-server 拉取容器和 Pod 的监控指标�
 
 ## 安装依赖
 
-**当前Global集群 或者用 TKEStack 控制台新建的独立集群 都自带 metrics-server，导入集群需要检查其是否安装**
+**当前 Global 集群或者用  TKEStack 控制台新建的独立集群都自带 metrics-server，导入集群需要检查其是否安装**
 
 Kubernetes [metrics-server](https://github.com/kubernetes-sigs/metrics-server) 是一个集群范围的资源使用数据聚合器，是 Heapster 的继承者。metrics-server 通过从 kubernet.summary_api 收集数据收集节点和 Pod 的 CPU 和内存使用情况。Summary API 是一个内存有效的 API，用于将数据从 Kubelet/cAdvisor 传递到 metrics-server，下图为 HPA 和 kubectl 等调用 metrics-server 获取相关信息的原理图。
 

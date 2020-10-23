@@ -99,13 +99,14 @@ TKEStack还可以另外**新建独立集群**以及**导入已有集群**实现*
 
 2. **APIServer 地址**：即上图中的访问地址，也可以根据上图中kubeconfig文件里的“server”字段内容填写。
 
-3. **CertFile**：集群证书，kubeconfig中“certificate-authority-data”字段内容。
+3. **CertFile**：集群证书，kubeconfig 中“certificate-authority-data”字段内容。
 
-4. **Token**：由于目前TKE没有自动创建具有admin权限的token，这里需要手动创建，具体方式如下：
+4. **Token**：由于目前 TKE 没有自动创建具有 admin 权限的 token，这里需要手动创建，具体方式如下：
 
-   1. 新建文件admin-role.yaml，用于生成kubernetes集群最高权限admin用户的token
+   1. 生成 kubernetes 集群最高权限 admin 用户的 token
 
       ```yaml
+      cat <<EOF | kubectl apply -f -
       kind: ClusterRoleBinding
       apiVersion: rbac.authorization.k8s.io/v1beta1
       metadata:
@@ -129,28 +130,22 @@ TKEStack还可以另外**新建独立集群**以及**导入已有集群**实现*
         labels:
           kubernetes.io/cluster-service: "true"
           addonmanager.kubernetes.io/mode: Reconcile
+   EOF
       ```
 
-      
-
-   2. 执行下面的命令创建 serviceaccount 和角色绑定
-
-      ```shell
-      kubectl create -f admin-role.yaml
-      ```
-
-   3. 创建完成后获取secret中token的值
+   2. 创建完成后获取secret中token的值
 
       ```shell
       # 获取admin-token的secret名字
       $ kubectl -n kube-system get secret|grep admin-token
-      admin-token-nwphb                          kubernetes.io/service-account-token   3         6m
+   admin-token-nwphb                          kubernetes.io/service-account-token   3         6m
       # 获取token的值
-      $ kubectl -n kube-system describe secret admin-token-nwphb | grep token
+   $ kubectl -n kube-system describe secret admin-token-nwphb | grep token
       Name:         admin-token-w4wcd
       Type:  kubernetes.io/service-account-token
       token:            非常长的字符串
       ```
+   
 
 #### TKEStack 中导入 Rancher 的 RKE 集群
 

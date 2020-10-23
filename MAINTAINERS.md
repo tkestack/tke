@@ -9,10 +9,11 @@
 * Colin Tao <colintao@tencent.com> @lin-credible: Console UI of docker registry.
 * Jun Gong <jungong@tencent.com> @hex108: Tapp controller addon.
 * Yadong Zhang <yadongzhang@tencent.com> @yadzhang: Authentication and authorization.
+* Ao Wang <jasonawang@tencent.com> @wangao1236: Authentication and authorization.
 * Thomas Song <thomassong@tencent.com> @mYmNeo: GPU manage addon.
 * Erick Wu <erickwu@tencent.com> @erikwoo: Console UI of monitor and notify management.
 * Kevin Feng <kevinkfeng@tencent.com> @kevinfeng: Monitor and alert management.
-* Forrest Chen <forrestchen@tencent.com> @ChenLingPeng: Galaxy addon.
+* Forrest Chen <forrestchen@tencent.com> @ChenLingPeng: Galaxy addon and Audit.
 * Louis Gong <louisssgong@tencent.com> @gongguan: Cluster network management.
 * Rami Chen <ramichen@tencent.com> @chenchun: Galaxy addon.
 * Ian Lang <ianlang@tencent.com> @langyenan: Loadbalancer controller framework and addon.

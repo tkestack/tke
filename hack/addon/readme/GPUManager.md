@@ -1,8 +1,8 @@
-# GPU-Manager
+# GPUManager
 
-## GPU-Manager 介绍
+## GPUManager 介绍
 
-GPU Manager 提供一个 All-in-One 的 GPU 管理器, 基于 Kubernets Device Plugin 插件系统实现，该管理器提供了分配并共享 GPU，GPU 指标查询，容器运行前的 GPU 相关设备准备等功能，支持用户在 Kubernetes 集群中使用 GPU 设备。
+[GPUManager ](https://github.com/tkestack/gpu-manager) 提供一个 All-in-One 的 GPU 管理器, 基于 Kubernets Device Plugin 插件系统实现，该管理器提供了分配并共享 GPU，GPU 指标查询，容器运行前的 GPU 相关设备准备等功能，支持用户在 Kubernetes 集群中使用 GPU 设备。
 
 GPU-Manager 包含如下功能:
 
@@ -132,7 +132,7 @@ spec:
 
 ### 通过后台手动查询
 
-手动获取 GPU 监控数据方式（需要先安装[socat](http://www.dest-unreach.org/socat/)）：
+手动获取 GPU 监控数据方式（需要先安装 [socat](http://www.dest-unreach.org/socat/)）：
 
 ```
 kubectl port-forward svc/gpu-manager-metric -n kube-system 5678:5678 &
@@ -142,3 +142,5 @@ curl http://127.0.0.1:5678/metric
 结果示例：
 
 ![img](../../../docs/images/gpu-metric-result.png)
+
+GPUManager 项目请参考：[GPUManager Repository ](https://github.com/tkestack/gpu-manager) 

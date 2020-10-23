@@ -4,11 +4,11 @@ Kubernetes 现有应用类型（如：Deployment、StatefulSet 等）无法满�
 
 为解决上述复杂应用管理场景，TKEStack 基于 Kubernetes CRD 开发了一种新的应用类型 TAPP，它是一种通用类型的 Workload，同时支持 service 和 batch 类型作业，满足绝大部分应用场景，它能让用户更好的将应用迁移到 Kubernetes 集群。
 
-查询 [TApp](../../../../features/tapp.md) 可获取更多相关信息。
+查询 [TApp](../../../../../../../hack/addon/readme/TappController.md) 可获取更多相关信息。
 
 ## 创建 TApp
 
-> 注意：使用前提，在[【扩展组件】](../../../platform/extender.md)安装TApp
+> 注意：使用前提，在[【扩展组件】](../../../platform/extender.md)安装 TApp
 
 1. 登录 TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】
 2. 选择需要创建 TApp 的【业务】下相应的【命名空间】，展开【工作负载】下拉项，进入【TApp】管理页面，如下图所示：
@@ -67,7 +67,7 @@ Kubernetes 现有应用类型（如：Deployment、StatefulSet 等）无法满�
     ![](../../../../../../images/createDeployment-4.png)
       * **手动调节**：直接设定实例个数
       * **自动调节**：将新建与负载同名的 HPA 资源对象，根据设定的触发条件自动调节实例个数，目前支持根据 CPU、内存利用率等调节实例个数，更多请参考 [HPA](../autoscale/HPA.md) 
-      * **定时调节**：将新建与负载同名的 CronHPA 资源对象，根据 [Crontab](https://baike.baidu.com/item/crontab) 语法周期性设置实例个数。前提：在[【扩展组件】](../../../../products/platform/extender.md)里安装 CronHPA，更多请参考 [CronHPA](../../../../../../../hack/addon/readme/CronHPA.md)
+      * **定时调节**：将新建与负载同名的 CronHPA 资源对象，根据 [CronTab](https://baike.baidu.com/item/crontab) 语法周期性设置实例个数。前提：在[【扩展组件】](../../../../products/platform/extender.md)里安装 CronHPA，更多请参考 [CronHPA](../../../../../../../hack/addon/readme/CronHPA.md)
 
    * **显示高级设置**
    * **imagePullSecrets**：镜像拉取密钥，用于拉取用户的私有镜像，使用私有镜像首先需要新建 Secret。如果是公有镜像，即支持匿名拉取，则可以忽略此步骤
@@ -117,7 +117,9 @@ Kubernetes 现有应用类型（如：Deployment、StatefulSet 等）无法满�
    ![](../../../../../../images/tapp-5.png)
 4. 根据实际需求调整 Pod 数量，如3，单击页面下方的【更新实例数目】即可完成调整
 
-## TApp特色功能-指定pod灰度升级
+## TApp 特色功能
+
+### 指定 Pod灰度升级
 
 1. 登录 TKEStack，切换到【业务管理】控制台，选择左侧导航栏中的【应用管理】
 
@@ -134,4 +136,4 @@ Kubernetes 现有应用类型（如：Deployment、StatefulSet 等）无法满�
 
 
 
-查询[TApp](../../../../features/tapp.md)可查看更多相关信息
+查询[TApp](../../../../../../../hack/addon/readme/TappController.md)可查看更多相关信息。

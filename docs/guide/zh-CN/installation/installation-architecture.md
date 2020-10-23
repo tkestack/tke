@@ -1,4 +1,4 @@
-#  产品架构&能力说明
+#  产品架构 & 能力说明
 
 ## 总体架构
 
@@ -40,12 +40,12 @@ tke-installer 自动等待和检查每一步骤安装完成，如果中间过程
 * **Logagent**: 日志管理组件，为平台提供日志管理相关服务；
 * **Audit**: 审计组件，提供审计服务功能。
 
-此外还有诸如 **Prometheus** 、**TApp**、**GPUManager** 等组件都可以安装在平台上的任意集群，以增强集群功能。
+此外还有诸如 **[Prometheus](../../../../hack/addon/readme/Prometheus.md)** 、**[TApp](../../../../hack/addon/readme/TappController.md)**、**[GPUManager](../../../../hack/addon/readme/GPUManager.md)**、**[CronHPA](../../../../hack/addon/readme/CronHPA.md)**、**[LogAgent](../../../../hack/addon/readme/LogAgent.md)** 等组件都可以安装在平台上的任意集群，以增强集群功能。
 
 ## 能力说明
 
 - **原生**：TKEStack 兼容了 Kubernetes 原生服务访问模式。
-- **产品特色**：TKEStack 扩展 Galaxy（网络）、TAPP（工作负载）、GPUManage（GPU）、CronHPA（扩缩容）、LBCF（负载均衡）等组件，界面化支持，插件化部署。
+- **产品特色**：TKEStack 扩展 [Galaxy](../features/galaxy.md)（网络）、TAPP（工作负载）、GPUManage（GPU）、CronHPA（扩缩容）、LBCF（负载均衡）等组件，界面化支持，插件化部署。
 - **多集群管理**：提供多集群统一管理能力。
 - **多租户统一认证**：支持 OIDC 和 LDAP 对接，实现企业租户身份的统一认证。
 - **权限管理**：提供多租户统一认证与权限管理能力。不同于 Kubernetes RBAC，TKEStack 权限管理是基于 Casbin 模型。TKEStack 支持平台用户和业务用户，可为用户/用户组配置不同的角色，并绑定对应的策略，从而实现资源共享和访问隔离。
@@ -106,7 +106,7 @@ tke-platform-controller   1/1     1            1           28d
 tke-registry-api          1/1     1            1           28d
 ```
 
-以 business 组件为例，在代码结构上采用 Aggregated APIServer + Controller 的架构，分别编译出 tke-business-api 和 tke-business-controller, 在 tke-business-api 中注册了 chartgroup，configmap，emigration，imagenamespace，namespace，platform，portal，project 等 CR 资源。 同时在 controller 中实现对上述资源对象的监视和同步，基于 K8S 的声明式 API 和 Controller 机制，实现对自定义资源对象的编排以及 Controller 的管理。
+以 business 组件为例，在代码结构上采用 Aggregated APIServer + Controller 的架构，分别编译出 tke-business-api 和 tke-business-controller, 在 tke-business-api 中注册了 chartgroup，configmap，emigration，imagenamespace，namespace，platform，portal，project 等 CR 资源。 同时在 Controller 中实现对上述资源对象的监视和同步，基于 K8S 的声明式 API 和 Controller 机制，实现对自定义资源对象的编排以及 Controller 的管理。
 
 ```
 # tree tke/cmd/tke-business-*  -L 1
@@ -146,15 +146,15 @@ tke/pkg/business/
 
 #### Controller 框架
 
-声明式API以及Controller机制是Kubernetes设计理念的基础，Controller 不断从 APIServer 同步资源对象的期望状态并且在资源对象的期望状态和实际运行状态之间进行调谐，从而实现两者的最终一致性。 Kubernetes 在 v1.7 引入了 CRD，允许用户自定义资源对象，同时将 Controller 的执行框架封装了在 client-go 这个包里，支持用户自定义编排对象以及相应的 Controller 进行配置管理。
+声明式 API 以及 Controller 机制是 Kubernetes 设计理念的基础，Controller 不断从 APIServer 同步资源对象的期望状态并且在资源对象的期望状态和实际运行状态之间进行调谐，从而实现两者的最终一致性。 Kubernetes 在 v1.7 引入了 CRD，允许用户自定义资源对象，同时将 Controller 的执行框架封装了在 client-go 这个包里，支持用户自定义编排对象以及相应的 Controller 进行配置管理。
 
 下图展示了 client-go 库中的各种组件如何工作，以及它们与将要编写的 custom controller 的交互点。
 
 ![controller](../../../images/client-go-controller-interaction.jpeg)
 
-图的上半部分是client-go封装的与API Server的底层交互逻辑，利用List接口从API Server中获取资源对象的全量数据并存储在缓存中， 之后再利用Watch接口对API Server进行监听并且以增量事件的方式持续接收资源对象的变更。
+图的上半部分是 client-go 封装的与 API Server 的底层交互逻辑，利用 List 接口从 API Server 中获取资源对象的全量数据并存储在缓存中， 之后再利用 Watch 接口对 API Server 进行监听并且以增量事件的方式持续接收资源对象的变更。
 
-下半部分则是 Custom Controller 的业务代码，主要是针对资源对象增量事件的处理。Controller可以对这些资源对象的增量变更事件进行即时处理，也可对缓存进行更新，保证缓存与API Server中的源数据保持最终的一致性。
+下半部分则是 Custom Controller 的业务代码，主要是针对资源对象增量事件的处理。Controller 可以对这些资源对象的增量变更事件进行即时处理，也可对缓存进行更新，保证缓存与 API Server 中的源数据保持最终的一致性。
 
 更多详情参考：[client-go under the hood](https://github.com/kubernetes/sample-controller/blob/master/docs/controller-client-go.md)， [Building and using Kubernetes APIs](https://github.com/kubernetes-sigs/apiserver-builder-alpha/blob/master/docs/concepts/api_building_overview.md)
 
@@ -179,11 +179,11 @@ cc-global                    2020-05-12T02:20:25Z
 clustercredential-lb6tvknq   2020-06-09T13:45:14Z
 ```
 
-cls 存储和描述集群的基本信息，cc 保存和描述集群的凭证信息。前端通过api接口向 tke-platform-api 发送 cluster 资源创建，查询和删除请求，tke-platform 对请求进行校验并在etcd中创建相应的存储对象。 tke-platform-controller 监视 cluster 资源的状态和事件，根据 cluster 资源的变化来触发相应 provider 的 OnCreate、OnUpdate、OnDelete 的操作。
+cls 存储和描述集群的基本信息，cc 保存和描述集群的凭证信息。前端通过 API 接口向 tke-platform-api 发送 cluster 资源创建，查询和删除请求，tke-platform-api 对请求进行校验并在etcd中创建相应的存储对象。 tke-platform-controller 监视 cluster 资源的状态和事件，根据 cluster 资源的变化来触发相应 provider 的 OnCreate、OnUpdate、OnDelete 的操作。
 
 ![sequence chart](../../../images/sequence.png)
 
-当触发 OnCreate 创建集群操作后，platform controller 根据创建集群类型的不同选择对应的provide，当前版本支持 baremetal provider 和 importal provider 两种类型，对应新建独立集群和导入集群两种操作。 provider 内包含创建集群时所定义的动作和检查，根据用户的配置自动完成集群的创建及健康检查操作。
+当触发 OnCreate 创建集群操作后， tke-platform-controller 根据创建集群类型的不同选择对应的 provider，当前版本支持 baremetal provider 和 importal provider 两种类型，对应新建独立集群和导入集群两种操作。 provider 内包含创建集群时所定义的动作和检查，根据用户的配置自动完成集群的创建及健康检查操作。
 
 ![cluster provider](../../../images/clusterprovider.png)
 
@@ -224,14 +224,14 @@ status:
 
 Addon 扩展组件用来定制集群的能力，扩展集群的功能。当前 TKEStack 支持多种扩展组件，典型的扩展组件包括：
 
-- TAPP 一种全新类型的workload，更好的支持传统的有状态应用，实现灰度升级和多版本的发布管理，
-- IPAM 支持用户创建floating ip，支持 Pod 固定 IP
-- CSI Operator 负责CSI相关组件的部署与维护，帮助用户在集群中使用存储
-- LBCF 一款通用负载均衡控制面框架，提供强大的扩展能力以满足业务方在使用负载均衡时的个性化需求
-- CronHPA 使用crontab模式定期自动扩容工作负载，周期性地在给定的调度时间对工作负载进行扩缩容
-- PersistentEvent 集群事件实时导出到配置的存储端
+- **TAPP**：一种全新类型的 Workload，更好的支持传统的有状态应用，实现灰度升级和多版本的发布管理，
+- **IPAM**：支持用户创建 floating ip，支持 Pod 固定 IP
+- **CSI Operator**：负责 CSI 相关组件的部署与维护，帮助用户在集群中使用存储
+- **LBCF**：一款通用负载均衡控制面框架，提供强大的扩展能力以满足业务方在使用负载均衡时的个性化需求
+- **CronHPA**：使用 CronTab 模式定期自动扩容工作负载，周期性地在给定的调度时间对工作负载进行扩缩容
+- **PersistentEvent**：集群事件实时导出到配置的存储端
 
-更多扩展组件详情请见：[TKEStack特性介绍](../../../../hack/addon/readme)
+更多扩展组件详情请见：[TKEStack 特性介绍](../../../../hack/addon/readme)
 
 ```
 # kubectl get clusteraddontypes
@@ -286,7 +286,7 @@ status:
   ..
 ```
 
-每个扩展组件的创建和维护逻辑在 tke-platform-controller 中实现，每个组件有独立的 controller 用以自身的创建，更新和删除操作。 扩展组件使用常用的 K8S 资源，如 deployment、service、clusterrolebinding、configmap等进行部署，controller 自动更新配置并对组件进行健康检查，周期上报组件运行状态。 如扩展组件内部资源故障或退出，controller 获取相应的事件并更新至扩展组件的CR资源中。
+每个扩展组件的创建和维护逻辑在 tke-platform-controller 中实现，每个组件有独立的 Controller 用以自身的创建，更新和删除操作。 扩展组件使用常用的 K8S 资源，如 Deployment、StatefulSet、DaemonSet、Service、ClusterRole、ClusterRoleBinding、ConfigMap 等进行部署，Controller 自动更新配置并对组件进行健康检查，周期上报组件运行状态。 如扩展组件内部资源故障或退出，Controller 获取相应的事件并更新至扩展组件的 CR 资源中。
 
 ```
 # kubectl get ipam ipam-pfsk76kx -o yaml
@@ -367,9 +367,9 @@ Business 组件注册和实现了 projects，namespaces，protal 等CR资源。
 
 免去部署和配置 prometheus 的复杂操作，TKEStack 提供高可用性和可扩展性的细粒度监控系统，实时监控 CPU，GPU，内存，显存，网络带宽，磁盘 IO 等多种指标并自动绘制趋势曲线，帮助运维人员全维度的掌握平台运行状态。
 
-![monitor](../../../images/monitor.png)TKEStack 通过 prometheus 组件监控集群状态，prometheus 组件通过 addon 扩展组件自动完成安装和配置，使用 influxdb，elasticsearch 等存储监控数据。监控数据和指标融入到平台界面中以风格统一图表的风格展示，支持以不同时间，粒度等条件，查询集群，节点，业务，workload 以及容器等多个层级的监控数据，全维度的掌握平台运行状态。
+![monitor](../../../images/monitor.png)TKEStack 通过 Prometheus 组件监控集群状态，Prometheus 组件通过 Addon 扩展组件自动完成安装和配置，使用 InfluxDB，ElasticSearch 等存储监控数据。监控数据和指标融入到平台界面中以风格统一图表的风格展示，支持以不同时间，粒度等条件，查询集群、节点、业务、Workload 以及容器等多个层级的监控数据，全维度的掌握平台运行状态。
 
-同时针对在可用性和可扩展性方面，支持使用 thanos 架构提供可靠的细粒度监控和警报服务，构建具有高可用性和可扩展性的细粒度监控能力。
+同时针对在可用性和可扩展性方面，支持使用 Thanos 架构提供可靠的细粒度监控和警报服务，构建具有高可用性和可扩展性的细粒度监控能力。
 
 ### Logagent 组件
 
@@ -379,9 +379,9 @@ Business 组件注册和实现了 projects，namespaces，protal 等CR资源。
 
 需要为每个集群手动开启日志采集功能。日志采集功能开启后，log-collector 会在集群内以 DaemonSet 的形式运行，并根据用户通过日志采集规则配置的采集源和消费端，从采集源进行日志采集，将日志内容发送到消费端。
 
-- 采集容器标准输出日志 - 采集集群内指定容器的标准输出日志，采集到的日志信息将会以 JSON 格式输出到用户指定的消费端，并会自动附加相关的 Kubernetes metadata， 包括容器所属 pod 的 label 和 annotation 等信息。
-- 采集容器内文件日志 - 采集集群内指定 pod 内文件的日志，用户可以根据自己的需求，灵活的配置所需的容器和路径，采集到的日志信息将会以 JSON 格式输出到用户指定的消费端， 并会附加相关的 Kubernetes metadata，包括容器所属 pod 的 label 和 annotation 等信息。
-- 采集主机内文件日志 - 采集集群内所有节点的指定主机路径的日志，log-collector 会采集集群内所有节点上满足指定路径规则的文件日志，以 JSON 格式输出到用户指定的输出端， 并会附加用户指定的 metadata，包括日志来源文件的路径和用户自定义的 metadata。
+- **采集容器标准输出日志**：采集集群内指定容器的标准输出日志，采集到的日志信息将会以 JSON 格式输出到用户指定的消费端，并会自动附加相关的 Kubernetes metadata， 包括容器所属 Pod 的 label 和 annotation 等信息。
+- **采集容器内文件日志**：采集集群内指定容器内文件的日志，用户可以根据自己的需求，灵活的配置所需的容器和路径，采集到的日志信息将会以 JSON 格式输出到用户指定的消费端， 并会附加相关的 Kubernetes metadata，包括容器所属 pod 的 label 和 annotation 等信息。
+- **采集主机内文件日志**：采集集群内所有节点的指定主机路径的日志，log-collector 会采集集群内所有节点上满足指定路径规则的文件日志，以 JSON 格式输出到用户指定的输出端， 并会附加用户指定的 metadata，包括日志来源文件的路径和用户自定义的 metadata。
 
 ## 参考
 
