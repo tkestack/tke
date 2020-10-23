@@ -6,95 +6,95 @@
 
 ## 前提条件
 
-- 已部署 [TKEStack 控制台](../../installation/installation-procedures.md)。
-- 已创建集群。如没有另外创建集群，可以先使用global集群。如要尝试创建新集群，请参见 [创建集群](../../products/platform/cluster.md)。
+- 已部署 [TKEStack 控制台](../../installation/installation-procedures.md)
+- 已创建集群。如没有另外创建集群，可以先使用 global 集群；如要尝试创建新集群，请参见 [创建集群](../../products/platform/cluster.md)
 
 ## 制作镜像
 ### 编写应用程序
 
-以CentOS 7.6为例
+以 CentOS 7.6为例
 
-1. 安装node.js，然后依次执行以下命令，创建并进入 hellonode 的文件夹。
-```shell
-yum install -y nodejs
-mkdir hellonode
-cd hellonode/
-```
-2. 执行以下命令，新建并打开 server.js 文件。
-```
-vim server.js
-```
-3. 按 “**i**” 或 “**insert**” 切换至编辑模式，将以下内容输入 server.js。
-```js
-var http = require('http');
-var handleRequest = function(request, response) {
-  console.log('Received request for URL: ' + request.url);
-  response.writeHead(200);
-  response.end('Hello World!');
-};
-var www = http.createServer(handleRequest);
-www.listen(80);
-```
-按 “**Esc**”，输入 “**:wq**”，保存文件并返回。
-4. 执行以下命令，执行 server.js 文件。
-```shell
-node server.js
-```
-5. 测试 Hello World 程序，有以下两种办法。
+1. 安装 Node.js，然后创建并进入 hellonode 的文件夹：
+   
+   ```shell
+   yum install -y nodejs
+   mkdir hellonode && cd hellonode/
+   ```
 
-   1. 另起一个终端，再次登录节点，执行以下命令。
+2. 执行以下命令，新建 server.js 文件并输入内容：
+   
+   ```shell
+   cat << EOF >  server.js
+   var http = require('http');
+   var handleRequest = function(request, response) {
+   console.log('Received request for URL: ' + request.url);
+   response.writeHead(200);
+   response.end('Hello World!');
+   };
+   var www = http.createServer(handleRequest);
+   www.listen(80);
+   EOF
+   ```
 
-      ```
+3. 执行以下命令，执行 server.js 文件：
+   
+   ```shell
+   node server.js
+   ```
+   > 如果报错，例如：`Error: listen EADDRINUSE: address already in use :::80`，说明 80 端口被占用，可以通过 `vi server.js` 修改上述文件中的最后一行 `www.listen(80);`，把 80 换成其它端口，例如 88，保存退出后重新执行 `node server.js`
+
+4. 测试 Hello World 程序，有以下两种办法：
+
+   1. 另起一个终端，再次登录节点，执行以下命令：
+
+      ```shell
       curl 127.0.0.1:80
       
       # 终端会输出一下信息
       Hello World!
       ```
 
-   2. 打开本地主机的浏览器，以`IP地址:端口`的形式访问，端口为80。
-      网页出现`Hello world!`说明 Hello World 程序运行成功。
+   2. 打开本地主机的浏览器，以 `IP地址:端口`的形式访问，端口为80。网页出现`Hello world!`说明 Hello World 程序运行成功。
 
       > 注意：如果本地主机不在该节点所在的内网，IP地址应该是该节点的外网地址
 
 
 ### 创建 Docker 镜像
-1. 在 hellonode 文件夹下，创建 Dockerfile 文件。
-```
-[root@VM_1_98_centos hellonode]# vim Dockerfile
-```
-2. 按 “**i**” 或 “**insert**” 切换至编辑模式，将以下内容输入 Dockerfile 文件。
-```shell
-FROM node:4.4
-EXPOSE 80
-COPY server.js .
-CMD node server.js
-```
-按 “**Esc**”，输入 “**:wq**”，保存文件并返回。
-3. 执行以下命令，构建镜像。
-```shell
-docker build -t hello-node:v1 .
-```
-4. <span id="search">执行以下命令，查看构建好的 hello-node 镜像。</span>
-```
-docker images 
-```
-显示结果如下，则说明 hello-node 镜像已成功构建，记录其 IMAGE ID。如下图所示：
-![](../../../../images/helloworld-3.png)
+1. 在 hellonode 文件夹下，创建 Dockerfile 文件并输入内容：
+   ```shell
+   cat << EOF > Dockerfile
+   FROM node:4.4
+   EXPOSE 80
+   COPY server.js .
+   CMD node server.js
+   EOF
+   ```
+
+2. 执行以下命令，构建镜像：
+   ```shell
+   docker build -t hello-node:v1 .
+   ```
+3. 执行以下命令，查看构建好的 hello-node 镜像：
+   ```
+   docker images 
+   ```
+   显示结果如下，则说明 hello-node 镜像已成功构建，记录其 IMAGE ID。如下图所示：
+   ![](../../../../images/helloworld-3.png)
 
 
 ### 上传该镜像到镜像仓库
->- 已在[【组织资源】](../../../zh-CN/products/platform/resource.md)中的【镜像仓库管理】创建命名空间。
->- 已在[【组织资源】](../../../zh-CN/products/platform/resource.md)中的【访问凭证】创建访问凭证。
+>- 已在[【组织资源】](../../../zh-CN/products/platform/resource/registry.md)中的【镜像仓库管理】创建命名空间。
+>- 已在[【组织资源】](../../../zh-CN/products/platform/resource/credentials.md)中的【访问凭证】创建访问凭证。
 
-依次执行以下命令，上传镜像到 qcloud 仓库。
+依次执行以下命令，上传镜像到自己在 TKEStack 上创建的命令空间镜像仓库。
 ```shell
 sudo docker login -u tkestack -p 【访问凭证】 default.registry.tke.com
 sudo docker tag 【IMAGEID】 default.registry.tke.com/【命名空间】/helloworld:v1
 sudo docker push default.registry.tke.com/【命名空间】/helloworld:v1
 ```
->- 请将命令中的 【访问凭证】 替换为 已创建的访问凭证。
->- 请将命令中的 【IMAGEID】 替换为 你自己创建镜像的ID，示例中的ID如上图158204134510。
->- 请将命令中的 【命名空间】 替换为 已创建的命名空间。
+>- 请将命令中的 【访问凭证】 替换为 已创建的访问凭证
+>- 请将命令中的 【IMAGEID】 替换为 你自己创建镜像的 ID，示例中的 ID 如上图158204134510
+>- 请将命令中的 【命名空间】 替换为 已创建的命名空间
 >
 显示以下结果，则说明镜像上传成功。
 ![](../../../../images/helloworld-4.png)
@@ -107,8 +107,8 @@ sudo docker push default.registry.tke.com/【命名空间】/helloworld:v1
 
 ## 通过该镜像创建 Hello World 服务
 
-1. 登录 TKEStack 控制台。
-2. 单击左侧导航栏中【集群管理】，进入“集群管理”页面。
+1. 登录 TKEStack 控制台
+2. 单击左侧导航栏中【集群管理】，进入“集群管理”页面
 2. 单击需要创建服务的集群 ID，进入工作负载 “Deployment” 详情页，选择【新建】。如下图所示：
 ![](../../../../images/helloworld-5.png)
 4. 在“新建Workload”页面，仅输入以下红框内容即可：
@@ -119,16 +119,16 @@ sudo docker push default.registry.tke.com/【命名空间】/helloworld:v1
  >1. 镜像，地址要填全：default.registry.tke.com/【命名空间】/【镜像名】，例如：default.registry.tke.com/test/helloworld
  >
  >2. 服务所在集群的安全组需要放通节点网络及容器网络，同时需要放通30000 - 32768端口，否则可能会出现容器服务无法使用问题。
-5. 单击【创建Workload】，完成 Hello World 服务的创建。
+5. 单击【创建Workload】，完成 Hello World 服务的创建
 
 ## 访问 Hello World 服务 
 可通过以下两种方式访问 Hello World 服务。
 ### 通过主机节点端口访问 Hello World 服务
-1. 选择【服务】>【Service】，在“Service”管理页面，看到与名为helloworld的Deployment同名的 helloworld Service已经运行，如下图所示：![](../../../../images/helloworld-11.png)
+1. 选择【服务】>【Service】，在“Service”管理页面，看到与名为 helloworld 的 Service已经运行，如下图所示：![](../../../../images/helloworld-11.png)
 
-2. 在本地主机的浏览器地址栏输入`集群任意节点IP:30000 端口`，例如`10.0.0.1:30000`即可访问服务。如果服务创建成功，访问服务时页面会返回` Hello World！ `
+2. 在本地主机的浏览器地址栏输入`集群任意节点 IP:30000 端口`，例如`10.0.0.1:30000`即可访问服务。如果服务创建成功，访问服务时页面会返回` Hello World！ `
 
-   > 注意：如果本地主机在集群内网中，输入节点的内网IP地址即可；如果本地主机不在集群内网中，需要输入节点的外网IP地址
+   > 注意：如果本地主机在集群内网中，输入节点的内网 IP 地址即可；如果本地主机不在集群内网中，需要输入节点的外网 IP 地址
 
 ### 通过服务名称访问 Hello World 服务
 

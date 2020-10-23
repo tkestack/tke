@@ -7,23 +7,23 @@ TKEStack 产品架构如下图所示：
 
 ## 架构说明
 
-TKEStack 采用了 Kubernetes on Kubernetes 的设计理念。即**节点仅运行 Kubelet 进程，其他组件均采用容器化部署，由 Kubernetes 进行管理**。
+TKEStack 采用了 Kubernetes on Kubernetes 的设计理念。即**节点仅运行 Kubelet 进程，其他组件均采用容器化部署，由 [Kubernetes](https://kubernetes.io/zh/docs/concepts/overview/what-is-kubernetes/) 进行管理**。
 
 架构上分为 Global 集群和业务集群。Global 集群运行整个容器服务开源版平台自身所需要的组件，业务集群运行用户业务。在实际的部署过程中，可根据实际情况进行调整。
 
 ## 模块说明
 
-* **Installer**: 运行 tke-installer 安装器的节点，用于提供 Web UI 指导用户在 Global 集群部署 TKEStack 控制台；
+* **Installer**: 运行 [tke-installer](../../../user/tke-installer/introduction.md) 安装器的节点，用于提供 Web UI 指导用户在 Global 集群部署 TKEStack 控制台；
 * **Global Cluster**: 统管业务集群（Business Cluster），并且是运行的 TKEStack 控制台的 Kubernetes 集群；
-* **Business Cluster**: 运行业务的 Kubernetes 集群，如上图中的 Cluster A、Cluster B、Cluster C，可以通过 TKEStack 控制台创建或导入，由 Global Cluster 统一管理。
+* **Business Cluster**: 运行业务的 Kubernetes 集群，如上图中的 Cluster A、Cluster B、Cluster C，可以通过 TKEStack 控制台创建或导入已有 Kubernetes 集群，由 Global Cluster 统一管理。
 
 ### Installer
 
-TKEStack 使用 tke-installer 安装工具进行安装，通过界面化的方式引导用户一键部署 TKEStack 容器平台。tke-installer 安装工具能够检查基本的环境信息，自动适配 x86 或 arm 版本安装驱动和镜像。离线的安装方式更免去用户拉取镜像的烦恼，极大的提高了容器平台部署的效率。
+TKEStack 使用 [tke-installer](../../../user/tke-installer/introduction.md) 安装工具进行安装，通过界面化的方式引导用户一键部署 TKEStack 容器平台。tke-installer 安装工具能够检查基本的环境信息，自动适配 x86 或 arm 版本安装驱动和镜像。离线的安装方式更免去用户拉取镜像的烦恼，极大的提高了容器平台部署的效率。
 
 ![installer](../../../images/installer.png)
 
-tke-installer 自动等待和检查每一步骤安装完成，如果中间过程出错会自动在日志界面提示相应的信息，并支持根据用户需要，选择全新安装或从失败步骤继续安装。支持以 hook 方式自定义安装流程，用户可以在安装开始前、集群 ready 后以及安装结束后三个 hook 点添加自己的脚本或命令，实现平台安装的可定制化。
+tke-installer 自动等待和检查每一步骤安装完成，如果中间过程出错会自动在日志界面提示相应的信息，并支持根据用户需要，选择全新安装或从失败步骤继续安装。支持以 [hook](https://github.com/tkestack/tke/tree/master/cmd/tke-installer/app/installer/hooks) 方式自定义安装流程，用户可以在安装开始前、集群 ready 后以及安装结束后三个 hook 点添加自己的脚本或命令，实现平台安装的可定制化。
 
 ### Global
 
@@ -148,11 +148,11 @@ tke/pkg/business/
 
 声明式 API 以及 Controller 机制是 Kubernetes 设计理念的基础，Controller 不断从 APIServer 同步资源对象的期望状态并且在资源对象的期望状态和实际运行状态之间进行调谐，从而实现两者的最终一致性。 Kubernetes 在 v1.7 引入了 CRD，允许用户自定义资源对象，同时将 Controller 的执行框架封装了在 client-go 这个包里，支持用户自定义编排对象以及相应的 Controller 进行配置管理。
 
-下图展示了 client-go 库中的各种组件如何工作，以及它们与将要编写的 custom controller 的交互点。
+下图展示了 client-go 库中的各种组件如何工作，以及它们与将要编写的 Custom Controller 的交互点。
 
 ![controller](../../../images/client-go-controller-interaction.jpeg)
 
-图的上半部分是 client-go 封装的与 API Server 的底层交互逻辑，利用 List 接口从 API Server 中获取资源对象的全量数据并存储在缓存中， 之后再利用 Watch 接口对 API Server 进行监听并且以增量事件的方式持续接收资源对象的变更。
+图的上半部分是 [client-go](https://github.com/kubernetes/client-go/) 封装的与 API Server 的底层交互逻辑，利用 List 接口从 API Server 中获取资源对象的全量数据并存储在缓存中， 之后再利用 Watch 接口对 API Server 进行监听并且以增量事件的方式持续接收资源对象的变更。
 
 下半部分则是 Custom Controller 的业务代码，主要是针对资源对象增量事件的处理。Controller 可以对这些资源对象的增量变更事件进行即时处理，也可对缓存进行更新，保证缓存与 API Server 中的源数据保持最终的一致性。
 
