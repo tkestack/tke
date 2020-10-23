@@ -46,6 +46,7 @@ import (
 	"tkestack.io/tke/pkg/gateway/config/configfiles"
 	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/distribution"
+	"tkestack.io/tke/pkg/registry/harbor"
 	utilfs "tkestack.io/tke/pkg/util/filesystem"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/transport"
@@ -94,6 +95,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, distribution.IgnoredAuthPathPrefixes()...)
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, chartmuseum.IgnoredAuthPathPrefixes()...)
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, authapiserver.IgnoreAuthPathPrefixes()...)
+	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, harbor.IgnoreAuthPathPrefixes()...)
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, audit.IgnoredAuthPathPrefixes()...)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes, nil)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes, nil)

@@ -49,6 +49,7 @@ import (
 	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/config/configfiles"
 	"tkestack.io/tke/pkg/registry/distribution"
+	"tkestack.io/tke/pkg/registry/harbor"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -105,6 +106,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	var ignoredAuthPathPrefixes []string
 	ignoredAuthPathPrefixes = append(ignoredAuthPathPrefixes, distribution.IgnoredAuthPathPrefixes()...)
 	ignoredAuthPathPrefixes = append(ignoredAuthPathPrefixes, chartmuseum.IgnoredAuthPathPrefixes()...)
+	ignoredAuthPathPrefixes = append(ignoredAuthPathPrefixes, harbor.IgnoreAuthPathPrefixes()...)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoredAuthPathPrefixes, nil)
 	// long running function for distribution and chartmuseum path.
 	genericAPIServerConfig.LongRunningFunc = filter.LongRunningRequestCheck(sets.NewString("watch"), sets.NewString(), ignoredAuthPathPrefixes)

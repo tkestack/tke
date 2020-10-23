@@ -197,6 +197,15 @@ data:
     defaultTenant: default
     domainSuffix: "{{ .DomainSuffix }}"
 
+{{- if .HarborEnabled }}
+    harborEnabled: true
+{{- end}}
+
+{{- if .HarborCAFile }}
+    harborCAFile: /app/certs/harbor-ca.crt
+{{- end}}
+
+
   tke-auth-webhook.yaml: |
     apiVersion: v1
     kind: Config

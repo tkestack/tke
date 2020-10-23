@@ -123,10 +123,12 @@ func (r *Registry) IsOfficial() bool {
 }
 
 type TKERegistry struct {
-	Domain    string `json:"domain" validate:"hostname_rfc1123"`
-	Namespace string `json:"namespace"`
-	Username  string `json:"username"`
-	Password  []byte `json:"password"`
+	Domain        string `json:"domain" validate:"hostname_rfc1123"`
+	HarborEnabled bool   `json:"harborEnabled"`
+	HarborCAFile  string `json:"harborCAFile"`
+	Namespace     string `json:"namespace"`
+	Username      string `json:"username"`
+	Password      []byte `json:"password"`
 }
 
 type ThirdPartyRegistry struct {

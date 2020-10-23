@@ -35,6 +35,8 @@ type RegistryConfiguration struct {
 	DefaultTenant string `json:"defaultTenant"`
 	// +optional
 	DomainSuffix string `json:"domainSuffix,omitempty"`
+	HarborEnabled bool  `json:"harborEnabled,omitempty"`
+	HarborCAFile string  `json:"string,omitempty"`
 }
 
 type Storage struct {

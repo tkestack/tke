@@ -35,6 +35,8 @@ type RegistryConfiguration struct {
 	DefaultTenant string
 	// +optional
 	DomainSuffix string
+	HarborEnabled bool
+	HarborCAFile string
 }
 
 type Storage struct {

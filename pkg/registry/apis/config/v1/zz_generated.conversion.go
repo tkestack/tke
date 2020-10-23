@@ -226,6 +226,8 @@ func autoConvert_v1_RegistryConfiguration_To_config_RegistryConfiguration(in *Re
 	out.Redis = (*config.Redis)(unsafe.Pointer(in.Redis))
 	out.DefaultTenant = in.DefaultTenant
 	out.DomainSuffix = in.DomainSuffix
+	out.HarborEnabled = in.HarborEnabled
+	out.HarborCAFile = in.HarborCAFile
 	return nil
 }
 
@@ -244,6 +246,8 @@ func autoConvert_config_RegistryConfiguration_To_v1_RegistryConfiguration(in *co
 	out.Redis = (*Redis)(unsafe.Pointer(in.Redis))
 	out.DefaultTenant = in.DefaultTenant
 	out.DomainSuffix = in.DomainSuffix
+	out.HarborEnabled = in.HarborEnabled
+	out.HarborCAFile = in.HarborCAFile
 	return nil
 }
 

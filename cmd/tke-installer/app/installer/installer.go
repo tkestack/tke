@@ -1324,6 +1324,10 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 		cm.Data["oidc-ca.crt"] = string(t.Para.Config.Auth.OIDCAuth.CACert)
 	}
 
+	if t.Para.Config.Registry.TKERegistry.HarborCAFile != "" {
+		cm.Data["harbor-ca.crt"] = t.Para.Config.Registry.TKERegistry.HarborCAFile
+	}
+
 	cm.Data["password.csv"] = fmt.Sprintf("%s,admin,1,administrator", ksuid.New().String())
 	cm.Data["token.csv"] = fmt.Sprintf("%s,admin,1,administrator", ksuid.New().String())
 
@@ -1976,6 +1980,8 @@ func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 		"EnableBusiness": t.businessEnabled(),
 		"DomainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
 		"EnableAudit":    t.auditEnabled(),
+		"HarborEnabled":  t.Para.Config.Registry.TKERegistry.HarborEnabled,
+		"HarborCAFile":   t.Para.Config.Registry.TKERegistry.HarborCAFile,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
