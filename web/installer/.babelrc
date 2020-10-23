@@ -1,36 +1,14 @@
 {
   "presets": [
-    "@babel/preset-react"
+    "@babel/preset-react",
+    [
+      "@babel/preset-env",
+      {
+        "modules": "commonjs"
+      }
+    ]
   ],
   "plugins": [
-    "@babel/plugin-transform-member-expression-literals",
-    "@babel/plugin-transform-property-literals"
-  ],
-  "env": {
-    "development": {
-      "presets": [
-        [
-          "@babel/preset-env",
-          {
-            "loose": true,
-            "modules": "commonjs",
-            "exclude": [
-              "babel-plugin-transform-async-to-generator",
-              "babel-plugin-transform-regenerator"
-            ]
-          }
-        ]
-      ],
-      "plugins": [
-        [
-          "react-hot-loader/babel"
-        ]
-      ]
-    },
-    "production": {
-      "presets": [
-        "@babel/preset-env"
-      ]
-    }
-  }
+    "@babel/plugin-transform-runtime"
+  ]
 }
