@@ -83,7 +83,7 @@
 
 如果您有合格的开发环境，则只需执行以下操作：
 
-```
+```shell
 mkdir -p ~/tkestack
 cd ~/tkestack
 git clone https://github.com/tkestack/tke
@@ -99,7 +99,7 @@ make
 
 TKEStack 微信群:
 
-- 请扫描下方的二维码并备注： **TKEStack**
+- 请扫描下方的二维码并备注： “**TKEStack**”
 
 ![TKEStack](../../images/wechat.jpeg)
 

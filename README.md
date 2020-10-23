@@ -10,7 +10,7 @@
 
 > Chinese document：https://tkestack.github.io/docs/
 
-***TKEStack*** is an open source project that provides a container management platform built for organizations that deploy containers in production. ***TKEStack*** makes it easy to run https://github.com/kubernetes/kubernetes everywhere, meet IT requirements, and empower https://en.wikipedia.org/wiki/DevOps teams.
+***TKEStack*** is an open source project that provides a container management platform built for organizations that deploy containers in production. ***TKEStack*** makes it easy to run [Kubernetes](https://github.com/kubernetes/kubernetes) everywhere, meet IT requirements, and empower [DevOps](https://en.wikipedia.org/wiki/DevOps) teams.
 
 ## Features
 
@@ -81,7 +81,7 @@ Make sure that you have [Git-LFS](https://github.com/git-lfs/git-lfs) installed 
 
 If you have an eligible development environment, you can simply do it:
 
-```
+```shell
 mkdir -p ~/tkestack
 cd ~/tkestack
 git clone https://github.com/tkestack/tke
@@ -99,7 +99,7 @@ For the full story, head over to the [developer's documentation](docs/devel/deve
 
   * WeChat Group
 
-  * Please scan the following WeChat QRcode and note **TKEStack**, he will add you into the TKEStack WeChat Group.
+  * Please scan the following WeChat QRcode and note "**TKEStack**", he will add you into the TKEStack WeChat Group.
 
     ![TKEStack](docs/images/wechat.jpeg)
 
