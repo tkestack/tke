@@ -183,11 +183,7 @@ cls 存储和描述集群的基本信息，cc 保存和描述集群的凭证信�
 
 ![sequence chart](../../../images/sequence.png)
 
-<<<<<<< HEAD
 当触发 OnCreate 创建集群操作后， tke-platform-controller 根据创建集群类型的不同选择对应的 Provider，当前版本支持 baremetal provider 和 importal provider 两种类型，对应新建独立集群和导入集群两种操作。 Provider 内包含创建集群时所定义的动作和检查，根据用户的配置自动完成集群的创建及健康检查操作。
-=======
-当触发 OnCreate 创建集群操作后， tke-platform-controller 根据创建集群类型的不同选择对应的 provider，当前版本支持 baremetal provider 和 importal provider 两种类型，对应新建独立集群和导入集群两种操作。 provider 内包含创建集群时所定义的动作和检查，根据用户的配置自动完成集群的创建及健康检查操作。
->>>>>>> 42800e42ac6e2b1ded91da38ae533eecbf590894
 
 ![cluster provider](../../../images/clusterprovider.png)
 
@@ -228,11 +224,7 @@ status:
 
 Addon 扩展组件用来定制集群的能力，扩展集群的功能。当前 TKEStack 支持多种扩展组件，典型的扩展组件包括：
 
-<<<<<<< HEAD
 - **TApp**：一种全新类型的 Workload，更好的支持传统的有状态应用，实现灰度升级和多版本的发布管理，
-=======
-- **TAPP**：一种全新类型的 Workload，更好的支持传统的有状态应用，实现灰度升级和多版本的发布管理，
->>>>>>> 42800e42ac6e2b1ded91da38ae533eecbf590894
 - **IPAM**：支持用户创建 floating ip，支持 Pod 固定 IP
 - **CSI Operator**：负责 CSI 相关组件的部署与维护，帮助用户在集群中使用存储
 - **LBCF**：一款通用负载均衡控制面框架，提供强大的扩展能力以满足业务方在使用负载均衡时的个性化需求
