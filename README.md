@@ -10,13 +10,13 @@
 
 > Chinese document：https://tkestack.github.io/docs/
 
-***TKEStack*** is an open source project that provides a container management platform built for organizations that deploy containers in production. ***TKEStack*** makes it easy to run Kubernetes everywhere, meet IT requirements, and empower DevOps teams.
+***TKEStack*** is an open source project that provides a container management platform built for organizations that deploy containers in production. ***TKEStack*** makes it easy to run https://github.com/kubernetes/kubernetes everywhere, meet IT requirements, and empower https://en.wikipedia.org/wiki/DevOps teams.
 
 ## Features
 
 * **Unified Cluster Management**
   * Web console and command-line client for centrally manages multiple Kubernetes clusters.
-  * Integration with your existing authentication mechanisms, including LDAP, Active Directory, front proxy, and public OAuth providers such as GitHub.
+  * Integration with your existing authentication mechanisms, including [LDAP](https://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol), [OIDC](https://en.wikipedia.org/wiki/OpenID_Connect), front proxy, and public OAuth providers such as GitHub.
   * Unified authorization management, not only at the cluster management level, but even at the Kubernetes resource level.
   * Multi-tenancy support, including team and user isolation of containers, builds, and network communication.
 * **Application Workload Management**
@@ -31,6 +31,7 @@
   * Authorization provider plugin.
   * Event persistence storage plugin.
   * System and application log persistence storage plugin.
+  * [Galaxy](https://github.com/tkestack/galaxy)（Network）、[TApp](https://github.com/tkestack/tapp)（Workload）、[GPUManage](https://github.com/tkestack/gpu-manager)（GPU）、[CronHPA](https://github.com/tkestack/cron-hpa)（HPA）、[LBCF](https://github.com/tkestack/lb-controlling-framework)（LoadBalance）
 
 ## Architecture
 
@@ -45,9 +46,9 @@
   * 16 GB of Memory
   * 100 GB of Disk Space
 * **Operating Systems**
-  * Ubuntu 16.04/18.04  LTS (64-bit)
-  * CentOS Linux 7.6 (64-bit)
-  * Tencent Linux 2.2 
+  * ≥ Ubuntu 16.04/18.04  LTS (64-bit)
+  * ≥ CentOS Linux 7.6 (64-bit)
+  * ≥ Tencent Linux 2.2 
 
 ### QuickStart
 
@@ -63,7 +64,7 @@
 3. **Configure Console & Global Cluster:**  Open your browser to `http://【INSTALLER-NODE-IP】:8080/index.html`, the Web GUI will guide you to initialize and install the TKEStack's **Global Cluster and Console**. You can refer to [installation-procedures](docs/guide/zh-CN/installation/installation-procedures.md) for more information.
 4. **Enjoy TKEStack:**  Open your browser to http://console.tke.com.
 
-> TKEStack use tke-installer tool to deploy. Please refer to [tke-installer](docs/user/tke-installer/README.md) for more information.
+> TKEStack use tke-installer tool to deploy. Please refer to [tke-installer](docs/user/tke-installer/introduction.md) for more information.
 > 
 > If you encounter problems during installation, you can refer to [FAQ installation](docs/guide/zh-CN/FAQ/Installation).
 
@@ -74,7 +75,9 @@
 
 ## Developing
 
-Make sure that you have [Git-LFS](https://github.com/git-lfs/git-lfs) installed before developing TKE.
+If you are interested in contributing to the TKEStack, please check the [CONTRIBUTING.md](CONTRIBUTING.md) first. 
+
+Make sure that you have [Git-LFS](https://github.com/git-lfs/git-lfs) installed before developing TKEStack.
 
 If you have an eligible development environment, you can simply do it:
 
@@ -89,8 +92,6 @@ make
 For the full story, head over to the [developer's documentation](docs/devel/development.md).
 
 ## Community
-
-* If you are interested in contributing to the TKEStack, please check the [CONTRIBUTING.md](CONTRIBUTING.md) first. 
 
 * You are encouraged to communicate most things via GitHub [issues](https://github.com/tkestack/tke/issues/new/choose) or [pull requests](https://github.com/tkestack/tke/pulls).
 
