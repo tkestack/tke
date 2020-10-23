@@ -48,11 +48,12 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubead
 	if _, ok := kubeletExtraArgs["node-ip"]; !ok {
 		kubeletExtraArgs["node-ip"] = machineIP
 	}
-	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
-
-	if !c.Spec.HostnameAsNodename {
-		nodeRegistration.Name = machineIP
+	if _, ok := kubeletExtraArgs["hostname-override"]; !ok {
+		if !c.Spec.HostnameAsNodename {
+			nodeRegistration.Name = machineIP
+		}
 	}
+	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
 
 	return &kubeadmv1beta2.JoinConfiguration{
 		NodeRegistration: nodeRegistration,

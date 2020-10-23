@@ -1,0 +1,25 @@
+{
+    "apiVersion": "platform.tkestack.io/v1",
+    "kind": "Cluster",
+    "spec": {
+	"displayName": "ipv6-ds",
+	"clusterCIDR": "200.200.0.0/16,fd00:10:16::/64",
+	"serviceCIDR": "10.200.0.0/16,fd00:10:96::/112",
+        "tenantID": "default",
+        "type": "Baremetal",
+        "version": "1.18.3",
+        "features": {
+	  "ipvs": false,
+	  "ipv6DualStack": true,
+	  "skipConditions": ["EnsureGalaxy"]
+	},
+        "machines": [
+            {
+                "ip": "172.22.0.67",
+                "port": 22,
+                "username": "root",
+                "password": "xxxxxx"
+            }
+        ]
+    }
+}
