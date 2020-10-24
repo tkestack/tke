@@ -344,7 +344,12 @@ func (c *Controller) ensureCreateClusterCredential(ctx context.Context, cluster 
 	credential := &platformv1.ClusterCredential{
 		TenantID:    cluster.Spec.TenantID,
 		ClusterName: cluster.Name,
+		ObjectMeta: metav1.ObjectMeta{
+			OwnerReferences: []metav1.OwnerReference{
+				*metav1.NewControllerRef(cluster, platformv1.SchemeGroupVersion.WithKind("Cluster"))},
+		},
 	}
+
 	credential, err = c.platformClient.ClusterCredentials().Create(ctx, credential, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
