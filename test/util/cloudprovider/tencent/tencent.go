@@ -19,6 +19,7 @@
 package tencent
 
 import (
+	"k8s.io/klog"
 	"os"
 	"time"
 
@@ -47,16 +48,19 @@ type provider struct {
 }
 
 func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error) {
+	klog.Info("Create instances. Count: ", count)
 	result := make([]cloudprovider.Instance, count)
 
 	request := cvm.NewRunInstancesRequest()
 	err := request.FromJsonString(os.Getenv("CREATE_INSTANCES_PARAM"))
 	if err != nil {
+		klog.Error(err)
 		return nil, err
 	}
 	request.InstanceCount = &count
 	response, err := p.cvmClient.RunInstances(request)
 	if err != nil {
+		klog.Error(err)
 		return nil, err
 	}
 
@@ -65,6 +69,7 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 		describeInstancesRequest.InstanceIds = response.Response.InstanceIdSet
 		describeInstancesResponse, err := p.cvmClient.DescribeInstances(describeInstancesRequest)
 		if err != nil {
+			klog.Error(err)
 			return false, nil
 		}
 		for _, one := range describeInstancesResponse.Response.InstanceSet {
@@ -85,14 +90,27 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 		return true, nil
 	})
 	if err != nil {
+		klog.Error(err)
 		_ = p.DeleteInstances(response.Response.InstanceIdSet)
 		return nil, err
+	}
+
+	for _, ins := range result {
+		klog.Info("InstanceId: ", ins.InstanceID, ", PublicIP: ", ins.PublicIP, ", InternalIP: ", ins.InternalIP)
 	}
 
 	return result, nil
 }
 
 func (p *provider) DeleteInstances(instanceIDs []*string) error {
+	var insIds []string
+	for _, insId := range instanceIDs {
+		insIds = append(insIds, *insId)
+	}
+	klog.Info("Delete instances: ", insIds)
+	if len(insIds) == 0 {
+		return nil
+	}
 	request := cvm.NewTerminateInstancesRequest()
 	request.InstanceIds = instanceIDs
 	_, err := p.cvmClient.TerminateInstances(request)
