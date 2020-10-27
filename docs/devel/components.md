@@ -1,6 +1,6 @@
 # TKEStack Components
 
-[`/cmd`](../../cmd) directory includes every TKEStack components and is where all binaries and container images are built. For detail about how to launch the TKEStack cluster see the guide [here](running-locally.md).
+[`/cmd`](../../cmd) directory includes every TKEStack components and is where all binaries and container images are built. For detail about how to launch the TKEStack cluster locally see the guide [here](running-locally.md).
 
 ## Overview
 
@@ -9,7 +9,7 @@ TKEStack contains 12 core components belonging to 6 services, a dependency list 
 ## Core Components
 To bootstrap properly, TKEStack core components need to be run in the order as shown below.
 
-- [`tke-auth-api`](../../cmd/tke-auth-api) integrates [dex](https://github.com/dexidp/dex) to provide an OpenID Connect server, which can provide access to third-party authentication systems, and also provides a default local identify.
+- [`tke-auth-api`](../../cmd/tke-auth-api) integrates [dex](https://github.com/dexidp/dex) to provide an [OpenID Connect](https://en.wikipedia.org/wiki/OpenID_Connect) server, which can provide access to third-party authentication systems, and also provides a default local identify.
 
 - [`tke-auth-controller`](../../cmd/tke-auth-controller) watches the state of the auth API objects through the `tke-auth-api` and configures TKEStack auth resources.
 

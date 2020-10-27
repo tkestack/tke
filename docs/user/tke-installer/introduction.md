@@ -1,6 +1,6 @@
 # Introduction
 
-The tke-installer runs in docker mode, all dependent resources and configuration files are included in the image.
+The [tke-installer](../../../cmd/tke-installer) runs in docker mode, all dependent resources and configuration files are included in the image.
 
 Enter the conatiner: `docker exec -it tke-installer bash`
 
