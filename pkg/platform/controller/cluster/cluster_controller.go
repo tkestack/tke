@@ -25,6 +25,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/rand"
+
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,7 +57,7 @@ const (
 	conditionTypeHealthCheck            = "HealthCheck"
 	failedHealthCheckReason             = "FailedHealthCheck"
 
-	resyncInternal = 1 * time.Minute
+	resyncInternal = 5 * time.Minute
 )
 
 // Controller is responsible for performing actions dependent upon a cluster phase.
@@ -75,6 +77,9 @@ func NewController(
 	clusterInformer platformv1informer.ClusterInformer,
 	resyncPeriod time.Duration,
 	finalizerToken platformv1.FinalizerName) *Controller {
+
+	rand.Seed(time.Now().Unix())
+
 	c := &Controller{
 		queue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "cluster"),
 
@@ -408,10 +413,16 @@ func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) 
 		return cluster
 	}
 
+	pseudo := time.Now().Add(time.Minute * time.Duration(rand.Intn(5)))
+
+	log.Infof("next heart beat time. now:%s pesudo:%s cls:%s", time.Now(), pseudo, cluster.Name)
+
 	healthCheckCondition := platformv1.ClusterCondition{
-		Type:   conditionTypeHealthCheck,
-		Status: platformv1.ConditionFalse,
+		Type:          conditionTypeHealthCheck,
+		Status:        platformv1.ConditionFalse,
+		LastProbeTime: metav1.NewTime(pseudo),
 	}
+
 	client, err := cluster.Clientset()
 	if err != nil {
 		cluster.Status.Phase = platformv1.ClusterFailed
