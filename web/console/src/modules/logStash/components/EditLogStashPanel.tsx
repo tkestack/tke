@@ -157,11 +157,11 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
               <Text parent="p">
                 <Trans>
                   如现有的集群不合适，您可以去控制台
-                  <ExternalLink href={`/tke/cluster/create?rid=${route.queries['rid']}`} target="_self">
+                  <ExternalLink href={`/tkestack/cluster/create?rid=${route.queries['rid']}`} target="_self">
                     导入集群
                   </ExternalLink>
                   或者
-                  <ExternalLink href={`/tke/cluster/createIC?rid=${route.queries['rid']}`} target="_self">
+                  <ExternalLink href={`/tkestack/cluster/createIC?rid=${route.queries['rid']}`} target="_self">
                     新建一个独立集群
                   </ExternalLink>
                 </Trans>
