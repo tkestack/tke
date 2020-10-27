@@ -317,14 +317,21 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 	clusterWrapper = c.checkHealth(ctx, clusterWrapper)
 	if err != nil {
 		// Update status, ignore failure
-		_, _ = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+		if clusterWrapper.IsCredentialChanged {
+			_, _ = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+		}
+
 		_, _ = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 		return err
 	}
-	clusterWrapper.ClusterCredential, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
-	if err != nil {
-		return err
+
+	if clusterWrapper.IsCredentialChanged {
+		clusterWrapper.ClusterCredential, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
 	}
+
 	clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 	if err != nil {
 		return err
