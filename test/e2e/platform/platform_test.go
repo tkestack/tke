@@ -26,7 +26,6 @@ import (
 	"os"
 	"os/exec"
 	"time"
-	"tkestack.io/tke/pkg/util/ssh"
 	"tkestack.io/tke/test/e2e/tke"
 
 	. "github.com/onsi/ginkgo"
@@ -370,17 +369,6 @@ func deleteCluster(clusterName string) (err error) {
 		}
 		return false, nil
 	})
-}
-
-func nodeSSH(ins cloudprovider.Instance) *ssh.SSH {
-	s, err := ssh.New(&ssh.Config{
-		User:     ins.Username,
-		Password: ins.Password,
-		Host:     ins.PublicIP,
-		Port:     int(ins.Port),
-	})
-	Expect(err).To(BeNil())
-	return s
 }
 
 func runCmd(cmd string) (string, error) {
