@@ -104,8 +104,8 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 
 func (p *provider) DeleteInstances(instanceIDs []*string) error {
 	var insIds []string
-	for _, insId := range instanceIDs {
-		insIds = append(insIds, *insId)
+	for _, insID := range instanceIDs {
+		insIds = append(insIds, *insID)
 	}
 	klog.Info("Delete instances: ", insIds)
 	if len(insIds) == 0 {
