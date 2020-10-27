@@ -46,7 +46,7 @@ TKEstack leveraged `kubeadm` to build Kubernetes clusters from `tke-platform` co
 
 - **solution 2**: This need IPv6-only and IPv4/IPv6 dual stack `business` cluster host configured as dual stack host so that `tke-platform` always use ssh to remote IPv4 address to build `business` cluster
 
-2. By default, cluster host IP address will be set as K8S node name, it is ok for IPv6 node case, but for IPv6-only case,  because IPv6 address does not conform with K8S node name pattern, in this case, the `Cluser.spec.hostnameAsNodename=true`is a mandatory setting
+2. By default, cluster host IP address will be set as K8S node name, it is ok for IPv4 node case, but for IPv6-only case,  because IPv6 address does not conform with K8S node name pattern, in this case, the `Cluser.spec.hostnameAsNodename=true`is a mandatory setting
 
 3. To handle`Cluser.spec.hostnameAsNodename=true` case, details from [here](https://github.com/tkestack/tke/blob/master/docs/design-proposals/hostname-as-nodename-support.md),  the label named `platform.tkestack.io/machine-ip` on K8S node used to persist node ip for future retrieve, but it doesn't work for machine IP is IPv6 case, since valid label values must be 63 characters or less, IPv6 address will break the rule. To fix the gap, machine IP string will be split to 2 parts and persist to multiple-labels `platform.tkestack.io/machine-ipv6-head` and `platform.tkestack.io/machine-ipv6-till`,  then combination query used to retrieve the node later.
 
