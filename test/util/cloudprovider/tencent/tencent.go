@@ -44,7 +44,8 @@ func NewTencentProvider() cloudprovider.Provider {
 }
 
 type provider struct {
-	cvmClient *cvm.Client
+	cvmClient   *cvm.Client
+	instanceIds []string
 }
 
 func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error) {
@@ -91,28 +92,29 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 	})
 	if err != nil {
 		klog.Error(err)
-		_ = p.DeleteInstances(response.Response.InstanceIdSet)
+		_ = p.DeleteInstances(common.StringValues(response.Response.InstanceIdSet))
 		return nil, err
 	}
 
 	for _, ins := range result {
 		klog.Info("InstanceId: ", ins.InstanceID, ", PublicIP: ", ins.PublicIP, ", InternalIP: ", ins.InternalIP)
+		p.instanceIds = append(p.instanceIds, ins.InstanceID)
 	}
 
 	return result, nil
 }
 
-func (p *provider) DeleteInstances(instanceIDs []*string) error {
-	var insIds []string
-	for _, insID := range instanceIDs {
-		insIds = append(insIds, *insID)
-	}
-	klog.Info("Delete instances: ", insIds)
-	if len(insIds) == 0 {
+func (p *provider) DeleteAllInstances() error {
+	return p.DeleteInstances(p.instanceIds)
+}
+
+func (p *provider) DeleteInstances(instanceIDs []string) error {
+	klog.Info("Delete instances: ", instanceIDs)
+	if len(instanceIDs) == 0 {
 		return nil
 	}
 	request := cvm.NewTerminateInstancesRequest()
-	request.InstanceIds = instanceIDs
+	request.InstanceIds = common.StringPtrs(instanceIDs)
 	_, err := p.cvmClient.TerminateInstances(request)
 	if err != nil {
 		return err
