@@ -762,10 +762,13 @@ type StorageBackEndCLS struct {
 // StorageBackEndES records the attributes required when the backend storage
 // type is ElasticSearch.
 type StorageBackEndES struct {
-	IP        string `json:"ip,omitempty" protobuf:"bytes,1,opt,name=ip"`
-	Port      int32  `json:"port,omitempty" protobuf:"varint,2,opt,name=port"`
-	Scheme    string `json:"scheme,omitempty" protobuf:"bytes,3,opt,name=scheme"`
-	IndexName string `json:"indexName,omitempty" protobuf:"bytes,4,opt,name=indexName"`
+	IP          string `json:"ip,omitempty" protobuf:"bytes,1,opt,name=ip"`
+	Port        int32  `json:"port,omitempty" protobuf:"varint,2,opt,name=port"`
+	Scheme      string `json:"scheme,omitempty" protobuf:"bytes,3,opt,name=scheme"`
+	IndexName   string `json:"indexName,omitempty" protobuf:"bytes,4,opt,name=indexName"`
+	User        string `json:"user,omitempty" protobuf:"bytes,5,opt,name=user"`
+	Password    string `json:"password,omitempty" protobuf:"bytes,6,opt,name=password"`
+	ReserveDays int32  `json:"reserveDays,omitempty" protobuf:"varint,7,opt,name=reserveDays"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -753,6 +753,9 @@ type StorageBackEndES struct {
 	Port      int32
 	Scheme    string
 	IndexName string
+	User      string
+	Password  string
+	ReserveDays int32
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

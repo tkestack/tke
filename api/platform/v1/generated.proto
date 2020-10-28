@@ -1371,6 +1371,12 @@ message StorageBackEndES {
   optional string scheme = 3;
 
   optional string indexName = 4;
+
+  optional string user = 5;
+
+  optional string password = 6;
+
+  optional int32 reserveDays = 7;
 }
 
 message TKEHA {

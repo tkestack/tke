@@ -3423,6 +3423,9 @@ func autoConvert_v1_StorageBackEndES_To_platform_StorageBackEndES(in *StorageBac
 	out.Port = in.Port
 	out.Scheme = in.Scheme
 	out.IndexName = in.IndexName
+	out.User = in.User
+	out.Password = in.Password
+	out.ReserveDays = in.ReserveDays
 	return nil
 }
 
@@ -3436,6 +3439,9 @@ func autoConvert_platform_StorageBackEndES_To_v1_StorageBackEndES(in *platform.S
 	out.Port = in.Port
 	out.Scheme = in.Scheme
 	out.IndexName = in.IndexName
+	out.User = in.User
+	out.Password = in.Password
+	out.ReserveDays = in.ReserveDays
 	return nil
 }
 

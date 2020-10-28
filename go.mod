@@ -22,8 +22,6 @@ require (
 	github.com/cyphar/filepath-securejoin v0.2.2
 	github.com/dexidp/dex v0.0.0-20200408064242-83d8853fd969
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/docker/cli v0.0.0-20191017083524-a8ff7f821017
-	github.com/docker/compose-on-kubernetes v0.4.24 // indirect
 	github.com/docker/distribution v2.7.2-0.20200708230840-70e0022e42fd+incompatible
 	github.com/docker/go-metrics v0.0.1 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7
@@ -79,6 +77,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/square/go-jose.v2 v2.4.1
 	gopkg.in/yaml.v2 v2.2.8
+	gotest.tools v2.2.0+incompatible
 	helm.sh/chartmuseum v0.12.0
 	helm.sh/helm/v3 v3.2.1
 	k8s.io/api v0.18.2

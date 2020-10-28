@@ -48519,6 +48519,24 @@ func schema_tke_api_platform_v1_StorageBackEndES(ref common.ReferenceCallback) c
 							Format: "",
 						},
 					},
+					"user": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"password": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"reserveDays": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
 				},
 			},
 		},

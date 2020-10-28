@@ -21,12 +21,11 @@ package persistentevent
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	normalerrors "errors"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"reflect"
-	"strings"
 	"time"
 
 	"tkestack.io/tke/pkg/platform/controller/addon/persistentevent/images"
@@ -53,21 +52,48 @@ import (
 const (
 	persistentEventClientRetryCount    = 5
 	persistentEventClientRetryInterval = 5 * time.Second
+	persistentEventMaxRetryCount       = 5
+	persistentEventTimeOut             = 5 * time.Minute
 
-	persistentEventMaxRetryCount = 5
-	persistentEventTimeOut       = 5 * time.Minute
+	configTemplate = `<source>
+  @type tail
+  path /data/log/*
+  pos_file /data/pos
+  tag host.path.*
+  format json
+  read_from_head true
+  path_key path
+</source>
+<match **>
+  @type elasticsearch
+  host {{.ES.IP}}
+  port {{.ES.Port}}
+  scheme {{.ES.Scheme}}
+  index_name {{.ES.IndexName}}
+  log_es_400_reason true
+  type_name _doc{{if .ES.User}}
+  user {{.ES.User}}
+  password {{.ES.Password}}{{end}}
+  flush_interval 5s
+  <buffer>
+    flush_mode interval
+    retry_type exponential_backoff
+    total_limit_size 32MB
+    chunk_limit_size 1MB
+    chunk_full_threshold 0.8
+    @type file
+    path /var/log/td-agent/buffer/ccs.cluster.log_collector.buffer.audit-event-collector.host-path
+    overflow_action block
+    flush_interval 1s
+    flush_thread_burst_interval 0.01
+    chunk_limit_records 8000
+   </buffer>
+</match>
+`
 )
 
 var (
-	regionToDomain = map[string]string{
-		"bj":   "ap-beijing.cls.myqcloud.com",
-		"sh":   "ap-shanghai.cls.myqcloud.com",
-		"gz":   "ap-guangzhou.cls.myqcloud.com",
-		"cd":   "ap-chengdu.cls.myqcloud.com",
-		"szjr": "ap-shenzhen-fsi.cls.myqcloud.com",
-		"shjr": "ap-shanghai-fsi.cls.myqcloud.com",
-		"na":   "na-toronto.cls.myqcloud.com",
-	}
+	configTmpl = template.Must(template.New("fluentd-config").Parse(configTemplate))
 )
 
 // Controller is used to synchronize the installation, upgrade and
@@ -280,6 +306,7 @@ func (c *Controller) persistentEventReinitialize(ctx context.Context, key string
 			}
 			return true, nil
 		}
+		log.Errorf("unable to install PersistentEventComponent %v", err)
 		// First, rollback the persistentEvent
 		if err := c.uninstallPersistentEventComponent(ctx, persistentEvent); err != nil {
 			log.Error("Uninstall persistent event component error.")
@@ -761,66 +788,21 @@ func (c *Controller) makeDeployment(version string) *appsv1.Deployment {
 }
 
 func (c *Controller) makeConfigMap(ctx context.Context, backend *v1.PersistentBackEnd) (*corev1.ConfigMap, error) {
-	domain := ""
-	if backend.CLS != nil {
-		var err error
-		domain, err = c.getCLSDomain(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	config := fmt.Sprintf(`<source>
-  @type tail
-  path /data/log/*
-  pos_file /data/pos
-  tag host.path.*
-  format json
-  read_from_head true
-  path_key path
-</source>
-<match **>
-  {{if .CLS}}
-  @type cls_buffered
-  host %s
-  port 80
-  topic_id {{.CLS.TopicID}}
-  {{else if .ES}}
-  @type elasticsearch
-  host {{.ES.IP}}
-  port {{.ES.Port}}
-  scheme {{.ES.Scheme}}
-  index_name {{.ES.IndexName}}
-  type_name tke-k8s-event
-  flush_interval 5s
-  {{end}}
-  <buffer>
-    flush_mode interval
-    retry_type exponential_backoff
-    total_limit_size 32MB
-    chunk_limit_size 1MB
-    chunk_full_threshold 0.8
-    @type file
-    path /var/log/td-agent/buffer/ccs.cluster.log_collector.buffer.audit-event-collector.host-path
-    overflow_action block
-    flush_interval 1s
-    flush_thread_burst_interval 0.01
-    chunk_limit_records 8000
-   </buffer>
-</match>`, domain)
-
 	var err error
-	t := template.New("fluentd-config")
-	t, err = t.Parse(config)
-	if err != nil {
-		return nil, err
+	password := backend.ES.Password
+	if password != "" {
+		password, err := base64.StdEncoding.DecodeString(password)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse password %v", err)
+		}
+		backend.ES.Password = string(password)
 	}
 
 	var b bytes.Buffer
-	if err = t.Execute(&b, backend); err != nil {
+	if err = configTmpl.Execute(&b, backend); err != nil {
 		return nil, err
 	}
-	config = b.String()
+	config := b.String()
 	return &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "fluentd-config",
@@ -829,35 +811,4 @@ func (c *Controller) makeConfigMap(ctx context.Context, backend *v1.PersistentBa
 			"fluentd.conf": config,
 		},
 	}, nil
-}
-
-func (c *Controller) getCLSDomain(ctx context.Context) (string, error) {
-	f, err := ioutil.ReadFile("/etc/qcloudzone")
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		return "", fmt.Errorf("read qcloudzone error")
-	}
-	zone := string(f)
-	zone = strings.Replace(zone, "\n", "", -1)
-	domain, ok := regionToDomain[zone]
-	if !ok {
-		domain, err := c.getCLSDomainFromConfigMap(ctx, zone)
-		if err != nil {
-			return "", fmt.Errorf("unsupported region")
-		}
-		return domain, nil
-	}
-	return domain, nil
-}
-
-func (c *Controller) getCLSDomainFromConfigMap(ctx context.Context, zone string) (string, error) {
-	configMap, err := c.client.PlatformV1().ConfigMaps().Get(ctx, "tke-controller-persistentevent", metav1.GetOptions{})
-	if err != nil {
-		return "", err
-	}
-	domain, ok := configMap.Data[fmt.Sprintf("cls-zone-%s", zone)]
-	if !ok {
-		return "", fmt.Errorf("unsupported region")
-	}
-	return domain, nil
 }
