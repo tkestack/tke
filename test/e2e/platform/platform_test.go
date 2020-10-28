@@ -257,7 +257,7 @@ var _ = Describe("Platform Test", func() {
 			Expect(importedCluster.Status.Phase).Should(Equal(platformv1.ClusterRunning))
 			Expect(importedCluster.Spec.Type).Should(Equal("Imported"))
 
-			out, err := runCmd("kubectl get clusters --kubeconfig " + tkeKubeConfigFile + " | grep " + importedCluster.Name)
+			out, _ := runCmd("kubectl get clusters --kubeconfig " + tkeKubeConfigFile + " | grep " + importedCluster.Name)
 			Expect(out).Should(ContainSubstring("Running"))
 		})
 	})
