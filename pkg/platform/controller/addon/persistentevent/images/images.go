@@ -49,7 +49,7 @@ func (c Components) Get(name string) *containerregistry.Image {
 
 var versionMap = map[string]Components{
 	LatestVersion: {
-		Collector: containerregistry.Image{Name: "tke-audit-collector", Tag: "v0.3"},
+		Collector: containerregistry.Image{Name: "tke-audit-collector", Tag: "v1.10.0"},
 		Watcher:   containerregistry.Image{Name: "tke-event-watcher", Tag: "v0.1"},
 	},
 }

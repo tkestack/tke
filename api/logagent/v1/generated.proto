@@ -120,6 +120,19 @@ message LogAgentStatus {
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
 }
 
+// LogEsDetection
+message LogEsDetection {
+  optional string scheme = 1;
+
+  optional string ip = 2;
+
+  optional string port = 3;
+
+  optional string user = 4;
+
+  optional string password = 5;
+}
+
 // LogFileContent
 message LogFileContent {
   optional LogFileContentSpec spec = 2;

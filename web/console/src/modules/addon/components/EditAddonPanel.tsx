@@ -27,13 +27,15 @@ import { EditPersistentEventPanel } from './EditPersistentEventPanel';
 
 // import { addonRules } from '../constants/ValidateConfig';
 
+import { Base64 } from 'js-base64';
+
 /**
  * 创建persistentEvent的yaml
  * @param options
  */
 const ReducePersistentEventJsonData = (options: { resourceInfo: ResourceInfo; clusterId: string; peEdit: PeEdit }) => {
   let { resourceInfo, clusterId, peEdit } = options,
-    { esAddress, indexName } = peEdit;
+    { esAddress, indexName, esUsername, esPassword } = peEdit;
 
   let esInfo: EsInfo;
 
@@ -43,8 +45,10 @@ const ReducePersistentEventJsonData = (options: { resourceInfo: ResourceInfo; cl
   esInfo = {
     ip: ipAddress,
     port: +port,
-    scheme,
-    indexName
+    scheme: scheme,
+    indexName: indexName,
+    user: esUsername,
+    password: Base64.encode(esPassword)
   };
 
   let jsonData: AddonEditPeJsonYaml = {

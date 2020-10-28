@@ -69,6 +69,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["logagents/filecontent"] = logagentRest.LogFileContent
 		storageMap["logagents/logcollector"] = logagentRest.LogagentProxy
 		storageMap["logagents/filedownload"] = logagentRest.LogfileProxy
+		storageMap["logagents/esdetection"] = logagentRest.LogESDetection
 		configMapREST := configmapstorage.NewStorage(restOptionsGetter)
 		storageMap["configmaps"] = configMapREST.ConfigMap
 	}

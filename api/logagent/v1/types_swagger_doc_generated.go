@@ -94,6 +94,14 @@ func (LogAgentStatus) SwaggerDoc() map[string]string {
 	return map_LogAgentStatus
 }
 
+var map_LogEsDetection = map[string]string{
+	"": "LogEsDetection",
+}
+
+func (LogEsDetection) SwaggerDoc() map[string]string {
+	return map_LogEsDetection
+}
+
 var map_LogFileContent = map[string]string{
 	"": "LogFileContent",
 }

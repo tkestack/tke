@@ -21,5 +21,21 @@ export const peEditActions = {
       type: ActionType.IndexName,
       payload: indexName
     };
-  }
+  },
+
+  /** 输入当前的索引 */
+  inputEsUsername: (username: string): ReduxAction<string> => {
+    return {
+      type: ActionType.EsUsername,
+      payload: username
+    };
+  },
+
+  /** 输入当前的索引 */
+  inputEsPassword: (password: string): ReduxAction<string> => {
+    return {
+      type: ActionType.EsPassword,
+      payload: password
+    };
+  },
 };
