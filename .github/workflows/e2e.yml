@@ -35,7 +35,7 @@ jobs:
         echo "$LABELNAME_CONTEXT"
     - name: e2e test
       run: |
-        go test -timeout 40m -v tkestack.io/tke/test/e2e/cluster
+        go test -timeout 40m -v tkestack.io/tke/test/e2e/platform
   business:
     name: business test
     needs: image
