@@ -269,10 +269,10 @@ func createCluster(masterNodeNum int64) (cluster *platformv1.Cluster, err error)
 		return nil, err
 	}
 	time.Sleep(10 * time.Second)
-	return createCluster_(masterNodes)
+	return createClusterWithMasterNodes(masterNodes)
 }
 
-func createCluster_(masterNodes []cloudprovider.Instance) (cluster *platformv1.Cluster, err error) {
+func createClusterWithMasterNodes(masterNodes []cloudprovider.Instance) (cluster *platformv1.Cluster, err error) {
 	klog.Info("Create cluster")
 	cluster = &platformv1.Cluster{
 		Spec: platformv1.ClusterSpec{
