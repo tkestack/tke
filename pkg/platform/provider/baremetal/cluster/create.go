@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 	"time"
 
@@ -913,37 +914,61 @@ func (p *Provider) EnsureStoreCredential(ctx context.Context, c *v1.Cluster) err
 	if err != nil {
 		return err
 	}
-	c.ClusterCredential.CACert = data
+
+	if !reflect.DeepEqual(c.ClusterCredential.CACert, data) {
+		c.ClusterCredential.CACert = data
+		c.IsCredentialChanged = true
+	}
 
 	data, err = machineSSH.ReadFile(constants.CAKeyName)
 	if err != nil {
 		return err
 	}
-	c.ClusterCredential.CAKey = data
+
+	if !reflect.DeepEqual(c.ClusterCredential.CAKey, data) {
+		c.ClusterCredential.CAKey = data
+		c.IsCredentialChanged = true
+	}
 
 	data, err = machineSSH.ReadFile(constants.EtcdCACertName)
 	if err != nil {
 		return err
 	}
-	c.ClusterCredential.ETCDCACert = data
+
+	if !reflect.DeepEqual(c.ClusterCredential.ETCDCACert, data) {
+		c.ClusterCredential.ETCDCACert = data
+		c.IsCredentialChanged = true
+	}
 
 	data, err = machineSSH.ReadFile(constants.EtcdCAKeyName)
 	if err != nil {
 		return err
 	}
-	c.ClusterCredential.ETCDCAKey = data
+
+	if !reflect.DeepEqual(c.ClusterCredential.ETCDCAKey, data) {
+		c.ClusterCredential.ETCDCAKey = data
+		c.IsCredentialChanged = true
+	}
 
 	data, err = machineSSH.ReadFile(constants.APIServerEtcdClientCertName)
 	if err != nil {
 		return err
 	}
-	c.ClusterCredential.ETCDAPIClientCert = data
+
+	if !reflect.DeepEqual(c.ClusterCredential.ETCDAPIClientCert, data) {
+		c.ClusterCredential.ETCDAPIClientCert = data
+		c.IsCredentialChanged = true
+	}
 
 	data, err = machineSSH.ReadFile(constants.APIServerEtcdClientKeyName)
 	if err != nil {
 		return err
 	}
-	c.ClusterCredential.ETCDAPIClientKey = data
+
+	if !reflect.DeepEqual(c.ClusterCredential.ETCDAPIClientKey, data) {
+		c.ClusterCredential.ETCDAPIClientKey = data
+		c.IsCredentialChanged = true
+	}
 
 	return nil
 }

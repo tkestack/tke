@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	defaultSyncPeriod      = 5 * time.Minute
+	defaultSyncPeriod      = 1 * time.Minute
 	defaultConcurrentSyncs = 10
 )
 
