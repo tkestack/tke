@@ -21,7 +21,7 @@ package platform_test
 import (
 	"context"
 	"errors"
-	"k8s.io/client-go/kubernetes"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog"
 	"os"
 	"os/exec"
@@ -42,13 +42,10 @@ import (
 var (
 	t                 = tke.TKE{Namespace: "platform"}
 	tkeClient         *tkeclientset.Clientset
-	client            *kubernetes.Clientset
 	provider          = tencent.NewTencentProvider()
-	clusterName       string
-	masterNodes       []cloudprovider.Instance
-	workerNodes       []cloudprovider.Instance
-	machines          []*platformv1.Machine
+	err               error
 	tkeKubeConfigFile string
+	clusterNames      []string
 )
 
 var _ = BeforeSuite(func() {
@@ -58,21 +55,11 @@ var _ = BeforeSuite(func() {
 	restConf, err := t.GetKubeConfig()
 	Expect(err).To(BeNil())
 	tkeClient = tkeclientset.NewForConfigOrDie(restConf)
-	client = kubernetes.NewForConfigOrDie(restConf)
-
-	// Create cluster
-	masterNodes, err = provider.CreateInstances(1)
-	Expect(err).To(BeNil())
-	time.Sleep(30 * time.Second)
-	cls, err := createCluster(masterNodes)
-	Expect(err).To(BeNil())
-	clusterName = cls.Name
 })
 
 var _ = AfterSuite(func() {
-	// Delete cluster if it exist
-	if clusterName != "" {
-		Expect(deleteCluster(clusterName)).Should(Succeed())
+	for _, name := range clusterNames {
+		Expect(deleteCluster(name)).Should(Succeed())
 	}
 
 	t.Delete()
@@ -80,182 +67,212 @@ var _ = AfterSuite(func() {
 	if os.Getenv("NEED_DELETE") == "" {
 		return
 	}
-	var instanceIDs []*string
-	for _, one := range masterNodes {
-		instanceIDs = append(instanceIDs, &one.InstanceID)
-	}
-	for _, one := range workerNodes {
-		instanceIDs = append(instanceIDs, &one.InstanceID)
-	}
-	Expect(provider.DeleteInstances(instanceIDs)).Should(Succeed())
+	Expect(provider.DeleteAllInstances()).Should(Succeed())
 })
 
 var _ = Describe("Platform Test", func() {
 
-	It("Create Baremetal cluster", func() {
-		out, err := runCmd("kubectl get clusters --kubeconfig " + tkeKubeConfigFile + " | grep " + clusterName)
-		Expect(err).Should(BeNil())
-		Expect(out).Should(ContainSubstring("Running"))
-	})
+	Context("Baremetal cluster", func() {
+		var clsName string
 
-	Context("Node", func() {
 		BeforeEach(func() {
-			if len(machines) > 0 {
-				return
-			}
-
-			var err error
-			workerNodes, err = provider.CreateInstances(1)
-			Expect(err).To(BeNil())
-			time.Sleep(30 * time.Second)
-			for _, node := range workerNodes {
-				machine, err := addNode(clusterName, node)
+			// Create Baremetal cluster
+			if clsName == "" {
+				cls, err := createCluster(1)
 				Expect(err).To(BeNil())
-				machines = append(machines, machine)
+				clsName = cls.Name
 			}
 		})
 
-		It("Add node to cluster", func() {
-			for _, machine := range machines {
-				out, err := runCmd("kubectl get mc --kubeconfig " + tkeKubeConfigFile + " | grep " + machine.Name)
+		It("Create Baremetal cluster", func() {
+			out, err := runCmd("kubectl get clusters --kubeconfig " + tkeKubeConfigFile + " | grep " + clsName)
+			Expect(err).Should(BeNil())
+			Expect(out).Should(ContainSubstring("Running"))
+		})
+
+		Context("Node", func() {
+			var workerNodes []cloudprovider.Instance
+			var machines []*platformv1.Machine
+
+			BeforeEach(func() {
+				if len(machines) > 0 {
+					return
+				}
+
+				workerNodes, err = provider.CreateInstances(1)
+				Expect(err).To(BeNil())
+				time.Sleep(10 * time.Second)
+				for _, node := range workerNodes {
+					machine, err := addNode(clsName, node)
+					Expect(err).To(BeNil())
+					machines = append(machines, machine)
+				}
+			})
+
+			It("Add node to cluster", func() {
+				for _, machine := range machines {
+					out, err := runCmd("kubectl get mc --kubeconfig " + tkeKubeConfigFile + " | grep " + machine.Name)
+					Expect(err).Should(BeNil())
+					Expect(out).Should(ContainSubstring("Running"))
+				}
+			})
+
+			It("Add tag to node", func() {
+				labelKey := "testLabelKey"
+				labelValue := machines[0].Spec.IP
+				machines[0].Labels = map[string]string{
+					labelKey: labelValue,
+				}
+
+				machine, err := tkeClient.PlatformV1().Machines().Update(context.Background(), machines[0], metav1.UpdateOptions{})
 				Expect(err).Should(BeNil())
+
+				out, err := runCmd("kubectl get mc --show-labels --kubeconfig " + tkeKubeConfigFile + " | grep " + machine.Name)
+				Expect(err).Should(BeNil())
+				Expect(out).Should(ContainSubstring(labelKey + "=" + labelValue))
+			})
+
+			It("Delete node", func() {
+				for _, machine := range machines {
+					Expect(deleteNode(machine.Name)).Should(Succeed())
+				}
+				for _, machine := range machines {
+					out, _ := runCmd("kubectl get mc --kubeconfig " + tkeKubeConfigFile)
+					Expect(out).ShouldNot(ContainSubstring(machine.Name))
+				}
+			})
+		})
+
+		Context("Addon", func() {
+			It("TappController", func() {
+				tapp := &platformv1.TappController{
+					Spec: platformv1.TappControllerSpec{
+						ClusterName: clsName,
+					},
+				}
+				tapp, err := tkeClient.PlatformV1().TappControllers().Create(context.Background(), tapp, metav1.CreateOptions{})
+				Expect(err).Should(BeNil())
+
+				Eventually(func() error {
+					addon, err := tkeClient.PlatformV1().TappControllers().Get(context.Background(), tapp.Name, metav1.GetOptions{})
+					if err != nil {
+						return err
+					}
+					if addon.Status.Phase != "Running" {
+						return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
+					}
+					return nil
+				}, 10*time.Minute, 10*time.Second).Should(Succeed())
+
+				out, _ := runCmd("kubectl describe tc " + tapp.Name + " -n kube-system --kubeconfig " + tkeKubeConfigFile + " | grep Phase")
 				Expect(out).Should(ContainSubstring("Running"))
-			}
+			})
+
+			It("IPAM", func() {
+				ipam := &platformv1.IPAM{
+					Spec: platformv1.IPAMSpec{
+						ClusterName: clsName,
+					},
+				}
+				ipam, err := tkeClient.PlatformV1().IPAMs().Create(context.Background(), ipam, metav1.CreateOptions{})
+				Expect(err).Should(BeNil())
+
+				Eventually(func() error {
+					addon, err := tkeClient.PlatformV1().IPAMs().Get(context.Background(), ipam.Name, metav1.GetOptions{})
+					if err != nil {
+						return err
+					}
+					if addon.Status.Phase != "Running" {
+						return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
+					}
+					return nil
+				}, 10*time.Minute, 10*time.Second).Should(Succeed())
+
+				out, _ := runCmd("kubectl describe ipam " + ipam.Name + " -n kube-system --kubeconfig " + tkeKubeConfigFile + " | grep Phase")
+				Expect(out).Should(ContainSubstring("Running"))
+			})
+
+			It("CronHPA", func() {
+				cronHPA := &platformv1.CronHPA{
+					Spec: platformv1.CronHPASpec{
+						ClusterName: clsName,
+					},
+				}
+				cronHPA, err := tkeClient.PlatformV1().CronHPAs().Create(context.Background(), cronHPA, metav1.CreateOptions{})
+				Expect(err).Should(BeNil())
+
+				Eventually(func() error {
+					addon, err := tkeClient.PlatformV1().CronHPAs().Get(context.Background(), cronHPA.Name, metav1.GetOptions{})
+					if err != nil {
+						return err
+					}
+					if addon.Status.Phase != "Running" {
+						return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
+					}
+					return nil
+				}, 10*time.Minute, 10*time.Second).Should(Succeed())
+
+				out, _ := runCmd("kubectl describe cronhpa " + cronHPA.Name + " -n kube-system --kubeconfig " + tkeKubeConfigFile + " | grep Phase")
+				Expect(out).Should(ContainSubstring("Running"))
+			})
 		})
 
-		It("Add tag to node", func() {
-			labelKey := "testLabelKey"
-			labelValue := machines[0].Spec.IP
-			machines[0].Labels = map[string]string{
-				labelKey: labelValue,
-			}
+		It("Delete Baremetal cluster", func() {
+			Expect(deleteCluster(clsName)).Should(Succeed())
 
-			machine, err := tkeClient.PlatformV1().Machines().Update(context.Background(), machines[0], metav1.UpdateOptions{})
-			Expect(err).Should(BeNil())
-
-			out, err := runCmd("kubectl get mc --show-labels --kubeconfig " + tkeKubeConfigFile + " | grep " + machine.Name)
-			Expect(err).Should(BeNil())
-			Expect(out).Should(ContainSubstring(labelKey + "=" + labelValue))
-		})
-
-		It("Delete node", func() {
-			for _, machine := range machines {
-				Expect(deleteNode(machine.Name)).Should(Succeed())
-			}
-			for _, machine := range machines {
-				out, _ := runCmd("kubectl get mc --kubeconfig " + tkeKubeConfigFile)
-				Expect(out).ShouldNot(ContainSubstring(machine.Name))
-			}
-		})
-	})
-
-	Context("Addon", func() {
-		It("TappController", func() {
-			tapp := &platformv1.TappController{
-				Spec: platformv1.TappControllerSpec{
-					ClusterName: clusterName,
-				},
-			}
-			tapp, err := tkeClient.PlatformV1().TappControllers().Create(context.Background(), tapp, metav1.CreateOptions{})
-			Expect(err).Should(BeNil())
-
-			Eventually(func() error {
-				addon, err := tkeClient.PlatformV1().TappControllers().Get(context.Background(), tapp.Name, metav1.GetOptions{})
-				if err != nil {
-					return err
-				}
-				if addon.Status.Phase != "Running" {
-					return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
-				}
-				return nil
-			}, 10*time.Minute, 10*time.Second).Should(Succeed())
-
-			out, _ := runCmd("kubectl describe tc " + tapp.Name + " -n kube-system --kubeconfig " + tkeKubeConfigFile + " | grep Phase")
-			Expect(out).Should(ContainSubstring("Running"))
-		})
-
-		It("IPAM", func() {
-			ipam := &platformv1.IPAM{
-				Spec: platformv1.IPAMSpec{
-					ClusterName: clusterName,
-				},
-			}
-			ipam, err := tkeClient.PlatformV1().IPAMs().Create(context.Background(), ipam, metav1.CreateOptions{})
-			Expect(err).Should(BeNil())
-
-			Eventually(func() error {
-				addon, err := tkeClient.PlatformV1().IPAMs().Get(context.Background(), ipam.Name, metav1.GetOptions{})
-				if err != nil {
-					return err
-				}
-				if addon.Status.Phase != "Running" {
-					return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
-				}
-				return nil
-			}, 10*time.Minute, 10*time.Second).Should(Succeed())
-
-			out, _ := runCmd("kubectl describe ipam " + ipam.Name + " -n kube-system --kubeconfig " + tkeKubeConfigFile + " | grep Phase")
-			Expect(out).Should(ContainSubstring("Running"))
-		})
-
-		It("CronHPA", func() {
-			cronHPA := &platformv1.CronHPA{
-				Spec: platformv1.CronHPASpec{
-					ClusterName: clusterName,
-				},
-			}
-			cronHPA, err := tkeClient.PlatformV1().CronHPAs().Create(context.Background(), cronHPA, metav1.CreateOptions{})
-			Expect(err).Should(BeNil())
-
-			Eventually(func() error {
-				addon, err := tkeClient.PlatformV1().CronHPAs().Get(context.Background(), cronHPA.Name, metav1.GetOptions{})
-				if err != nil {
-					return err
-				}
-				if addon.Status.Phase != "Running" {
-					return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
-				}
-				return nil
-			}, 10*time.Minute, 10*time.Second).Should(Succeed())
-
-			out, _ := runCmd("kubectl describe cronhpa " + cronHPA.Name + " -n kube-system --kubeconfig " + tkeKubeConfigFile + " | grep Phase")
-			Expect(out).Should(ContainSubstring("Running"))
-		})
-
-		It("Prometheus", func() {
-			prometheus := &platformv1.Prometheus{
-				Spec: platformv1.PrometheusSpec{
-					ClusterName: clusterName,
-				},
-			}
-			prometheus, err := tkeClient.PlatformV1().Prometheuses().Create(context.Background(), prometheus, metav1.CreateOptions{})
-			Expect(err).Should(BeNil())
-
-			Eventually(func() error {
-				addon, err := tkeClient.PlatformV1().Prometheuses().Get(context.Background(), prometheus.Name, metav1.GetOptions{})
-				if err != nil {
-					return err
-				}
-				if addon.Status.Phase != "Running" {
-					return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
-				}
-				return nil
-			}, 20*time.Minute, 10*time.Second).Should(Succeed())
-
-			out, _ := runCmd("kubectl describe prom " + prometheus.Name + " -n kube-system --kubeconfig " + tkeKubeConfigFile + " | grep Phase")
-			Expect(out).Should(ContainSubstring("Running"))
+			out, _ := runCmd("kubectl get clusters --kubeconfig " + tkeKubeConfigFile)
+			Expect(out).ShouldNot(ContainSubstring(clsName))
 		})
 	})
 
-	It("Delete cluster", func() {
-		Expect(deleteCluster(clusterName)).Should(Succeed())
+	Context("Imported cluster", func() {
+		var cluster *platformv1.Cluster
+		var credential platformv1.ClusterCredential
 
-		out, _ := runCmd("kubectl get clusters --kubeconfig " + tkeKubeConfigFile)
-		Expect(out).ShouldNot(ContainSubstring(clusterName))
+		BeforeEach(func() {
+			if cluster == nil {
+				// Prepare a cluster to be imported
+				cluster, err = createCluster(1)
+				Expect(err).To(BeNil())
+
+				// Get the credential of cluster
+				credentials, err := tkeClient.PlatformV1().ClusterCredentials().List(context.Background(), metav1.ListOptions{
+					FieldSelector: "clusterName=" + cluster.Name,
+				})
+				Expect(credentials.Items).Should(HaveLen(1))
+				Expect(err).Should(BeNil())
+				credential = credentials.Items[0]
+
+				// Delete cluster from the global cluster to be imported
+				out, _ := runCmd("kubectl delete cluster " + cluster.Name + " --kubeconfig " + tkeKubeConfigFile)
+				Expect(out).Should(ContainSubstring("deleted"))
+			}
+		})
+
+		It("Import cluster", func() {
+			// Import cluster
+			importedCluster, err := importCluster(cluster.Spec.Machines[0].IP, 6443, credential.CACert, credential.Token)
+			Expect(err).Should(BeNil())
+			Expect(importedCluster.Name).ShouldNot(Equal(cluster.Name))
+			Expect(importedCluster.Status.Phase).Should(Equal(platformv1.ClusterRunning))
+			Expect(importedCluster.Spec.Type).Should(Equal("Imported"))
+
+			out, err := runCmd("kubectl get clusters --kubeconfig " + tkeKubeConfigFile + " | grep " + importedCluster.Name)
+			Expect(out).Should(ContainSubstring("Running"))
+		})
 	})
 })
 
-func createCluster(masterNodes []cloudprovider.Instance) (cluster *platformv1.Cluster, err error) {
+func createCluster(masterNodeNum int64) (cluster *platformv1.Cluster, err error) {
+	masterNodes, err := provider.CreateInstances(masterNodeNum)
+	if err != nil {
+		return nil, err
+	}
+	time.Sleep(10 * time.Second)
+	return createCluster_(masterNodes)
+}
+
+func createCluster_(masterNodes []cloudprovider.Instance) (cluster *platformv1.Cluster, err error) {
 	klog.Info("Create cluster")
 	cluster = &platformv1.Cluster{
 		Spec: platformv1.ClusterSpec{
@@ -278,11 +295,61 @@ func createCluster(masterNodes []cloudprovider.Instance) (cluster *platformv1.Cl
 		klog.Error(err)
 		return
 	}
-	clusterName := cluster.Name
-	klog.Info("Cluster name: ", clusterName)
 
+	klog.Info("Cluster name: ", cluster.Name)
+	clusterNames = append(clusterNames, cluster.Name)
+	return waitClusterToBeRunning(cluster.Name)
+}
+
+func importCluster(host string, port int32, caCert []byte, token *string) (cluster *platformv1.Cluster, err error) {
+	credential := &platformv1.ClusterCredential{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "clustercredential",
+		},
+		CACert: caCert,
+		Token:  token,
+	}
+	credential, err = tkeClient.PlatformV1().ClusterCredentials().Create(context.Background(), credential, metav1.CreateOptions{})
+	if err != nil {
+		return
+	}
+
+	cluster = &platformv1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "cls",
+		},
+		Spec: platformv1.ClusterSpec{
+			//DisplayName: baremetalClusterName,
+			Type: "Imported",
+			ClusterCredentialRef: &corev1.LocalObjectReference{
+				Name: credential.Name,
+			},
+		},
+		Status: platformv1.ClusterStatus{
+			Addresses: []platformv1.ClusterAddress{
+				{
+					Host: host,
+					Path: "",
+					Port: port,
+					Type: platformv1.AddressAdvertise,
+				},
+			},
+		},
+	}
+	cluster, err = tkeClient.PlatformV1().Clusters().Create(context.Background(), cluster, metav1.CreateOptions{})
+	if err != nil {
+		klog.Error(err)
+		return
+	}
+
+	klog.Info("Cluster name: ", cluster.Name)
+	clusterNames = append(clusterNames, cluster.Name)
+	return waitClusterToBeRunning(cluster.Name)
+}
+
+func waitClusterToBeRunning(clusterName string) (cluster *platformv1.Cluster, err error) {
 	klog.Info("Wait cluster status to be running")
-	err = wait.Poll(10*time.Second, 10*time.Minute, func() (bool, error) {
+	err = wait.Poll(5*time.Second, 10*time.Minute, func() (bool, error) {
 		cluster, err = tkeClient.PlatformV1().Clusters().Get(context.Background(), clusterName, metav1.GetOptions{})
 		if err != nil {
 			klog.Error(err)
@@ -375,5 +442,6 @@ func runCmd(cmd string) (string, error) {
 	klog.Info("Run cmd: ", cmd)
 	command := exec.Command("bash", "-c", cmd)
 	out, err := command.CombinedOutput()
+	klog.Info("Cmd result: ", string(out))
 	return string(out), err
 }
