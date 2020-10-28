@@ -73,10 +73,10 @@ var _ = Describe("bootstrap", func() {
 		if os.Getenv("NEED_DELETE") == "" {
 			return
 		}
-		var instanceIDs []*string
+		var instanceIDs []string
 		for i, one := range nodes {
 			fmt.Printf("delete instance %d %s\n", i, one.InternalIP)
-			instanceIDs = append(instanceIDs, &nodes[i].InstanceID)
+			instanceIDs = append(instanceIDs, nodes[i].InstanceID)
 		}
 		err := provider.DeleteInstances(instanceIDs)
 		Expect(err).To(BeNil())
