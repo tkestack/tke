@@ -14,6 +14,7 @@ import { CreateResource } from '../../models';
 import { router } from '../../router';
 import { RootProps } from '../ClusterApp';
 import { ClusterSubpageHeaderPanel } from './ClusterSubpageHeaderPanel';
+import { KubeconfigFileParse } from './KubeconfigFileParse';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -130,6 +131,9 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
                 onChange={value => actions.clusterCreation.updateClusterCreationState({ name: value })}
                 onBlur={actions.validate.clusterCreation.validateClusterName}
               />
+            </FormPanel.Item>
+            <FormPanel.Item label="KubeConfig File">
+              <KubeconfigFileParse />
             </FormPanel.Item>
             <FormPanel.Item label="API Server">
               <InputField
