@@ -36,7 +36,7 @@ type RegistryConfiguration struct {
 	// +optional
 	DomainSuffix string `json:"domainSuffix,omitempty"`
 	HarborEnabled bool  `json:"harborEnabled,omitempty"`
-	HarborCAFile string  `json:"string,omitempty"`
+	HarborCAFile string  `json:"harborCAFile,omitempty"`
 }
 
 type Storage struct {
