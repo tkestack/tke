@@ -21,6 +21,8 @@ package tke
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/klog"
 	"net"
 	"net/url"
 	"os"
@@ -70,6 +72,7 @@ func (t *TKE) Create() {
 
 func (t *TKE) Delete() {
 	t.ClearTmpDir()
+	klog.Info("Delete namespace: ", t.Namespace)
 	gracePeriodSeconds := int64(0)
 	deleteOptions := metav1.DeleteOptions{
 		GracePeriodSeconds: &gracePeriodSeconds,
@@ -77,6 +80,15 @@ func (t *TKE) Delete() {
 	client := testclient.GetClientSet()
 	err := client.CoreV1().Namespaces().Delete(context.Background(), t.Namespace, deleteOptions)
 	gomega.Expect(err).To(gomega.BeNil())
+	klog.Info("Wait for namespace to be deleted")
+	gomega.Eventually(func() bool {
+		_, err = client.CoreV1().Namespaces().Get(context.Background(), t.Namespace, metav1.GetOptions{})
+		if errors.IsNotFound(err) {
+			klog.Info("Namespace was deleted")
+			return true
+		}
+		return false
+	}, 5*time.Minute, 5*time.Second).Should(gomega.BeTrue())
 }
 
 func (t *TKE) initialize(ctx context.Context) error {

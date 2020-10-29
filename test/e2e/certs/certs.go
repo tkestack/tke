@@ -57,6 +57,7 @@ func (c *TkeCert) InitTmpDir(namespace string) {
 }
 
 func (c *TkeCert) ClearTmpDir() {
+	klog.Info("Clear temp dir: ", c.tmpDir)
 	os.RemoveAll(c.tmpDir)
 }
 
