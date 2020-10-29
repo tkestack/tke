@@ -20,6 +20,7 @@ package tke
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog"
@@ -47,6 +48,8 @@ import (
 
 func tkeHostName() string {
 	restconf := testclient.GetRESTConfig()
+	r, _ := json.Marshal(restconf)
+	klog.Info(string(r))
 	host := restconf.Host
 	u, _ := url.Parse(host)
 	return u.Hostname()
