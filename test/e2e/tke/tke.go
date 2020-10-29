@@ -21,7 +21,6 @@ package tke
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog"
 	"net"
 	"net/url"
@@ -78,17 +77,16 @@ func (t *TKE) Delete() {
 		GracePeriodSeconds: &gracePeriodSeconds,
 	}
 	client := testclient.GetClientSet()
+
 	err := client.CoreV1().Namespaces().Delete(context.Background(), t.Namespace, deleteOptions)
 	gomega.Expect(err).To(gomega.BeNil())
-	klog.Info("Wait for namespace to be deleted")
-	gomega.Eventually(func() bool {
-		_, err = client.CoreV1().Namespaces().Get(context.Background(), t.Namespace, metav1.GetOptions{})
-		if errors.IsNotFound(err) {
-			klog.Info("Namespace was deleted")
-			return true
-		}
-		return false
-	}, 5*time.Minute, 5*time.Second).Should(gomega.BeTrue())
+
+	// Workaround for below issue:
+	// Operation cannot be fulfilled on namespaces \"platform\": The system is ensuring all content is removed from
+	// this namespace.  Upon completion, this namespace will automatically be purged by the system.
+	ns, _ := client.CoreV1().Namespaces().Get(context.Background(), t.Namespace, metav1.GetOptions{})
+	ns.Spec.Finalizers = []corev1.FinalizerName{} // remove all finalizers
+	ns, _ = client.CoreV1().Namespaces().Update(context.Background(), ns, metav1.UpdateOptions{})
 }
 
 func (t *TKE) initialize(ctx context.Context) error {
