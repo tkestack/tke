@@ -21,7 +21,6 @@ package client
 import (
 	"encoding/base64"
 	"fmt"
-	"k8s.io/klog"
 	"log"
 	"os"
 	"os/exec"
@@ -85,7 +84,6 @@ func GetRESTConfig() *rest.Config {
 	if data == "" {
 		panic(fmt.Sprintf("%s not set", kubeconfigEnv))
 	}
-	klog.Info(data)
 	kubeconfig, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		panic(err)

@@ -47,7 +47,6 @@ import (
 
 func tkeHostName() string {
 	restconf := testclient.GetRESTConfig()
-	klog.Info(*restconf)
 	host := restconf.Host
 	u, _ := url.Parse(host)
 	return u.Hostname()
