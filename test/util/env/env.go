@@ -21,6 +21,7 @@ package env
 import (
 	"os"
 	"path"
+	"tkestack.io/tke/pkg/spec"
 
 	"github.com/joho/godotenv"
 )
@@ -40,6 +41,7 @@ func init() {
 const (
 	VERSION            = "VERSION"
 	PROVIDERRESVERSION = "PROVIDERRESVERSION"
+	K8SVERSION         = "K8SVERSION"
 )
 
 func ImageVersion() string {
@@ -48,4 +50,12 @@ func ImageVersion() string {
 
 func ProviderResImageVersion() string {
 	return os.Getenv(PROVIDERRESVERSION)
+}
+
+func K8sVersion() string {
+	v := os.Getenv(K8SVERSION)
+	if v == "" {
+		v = spec.K8sVersions[0]
+	}
+	return v
 }

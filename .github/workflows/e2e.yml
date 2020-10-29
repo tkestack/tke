@@ -10,6 +10,7 @@ on:
       - master
 env:
   VERSION: ${{ github.sha }}
+  K8SVERSION: 1.18.3
   PROVIDERRESVERSION: v1.18.3-1
 jobs:
   image:

@@ -29,6 +29,7 @@ import (
 	"tkestack.io/tke/pkg/platform/apiserver/cluster"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/test/e2e/tke"
+	"tkestack.io/tke/test/util/env"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -37,7 +38,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1 "tkestack.io/tke/api/platform/v1"
-	"tkestack.io/tke/test/util"
 	"tkestack.io/tke/test/util/cloudprovider"
 	"tkestack.io/tke/test/util/cloudprovider/tencent"
 )
@@ -87,9 +87,7 @@ var _ = Describe("Platform Test", func() {
 		})
 
 		It("Create Baremetal cluster", func() {
-			out, err := util.RunCmd("kubectl get clusters --kubeconfig " + tkeKubeConfigFile + " | grep " + cls.Name)
-			Expect(err).Should(BeNil())
-			Expect(out).Should(ContainSubstring("Running"))
+			// Cluster create operation has been executed in BeforeEach, this empty 'It' indicates a independent case
 		})
 
 		Context("Node", func() {
@@ -108,9 +106,7 @@ var _ = Describe("Platform Test", func() {
 			})
 
 			It("Add node to cluster", func() {
-				out, err := util.RunCmd("kubectl get mc --kubeconfig " + tkeKubeConfigFile + " | grep " + machine.Name)
-				Expect(err).Should(BeNil())
-				Expect(out).Should(ContainSubstring("Running"))
+				// Adding node operation has been executed in BeforeEach, this empty 'It' indicates a independent case
 			})
 
 			It("Add label to node", func() {
@@ -130,10 +126,6 @@ var _ = Describe("Platform Test", func() {
 				}, 5*time.Second, time.Second).Should(Succeed())
 				machine, _ = tkeClient.PlatformV1().Machines().Get(context.Background(), machine.Name, metav1.GetOptions{})
 				Expect(machine.Labels).Should(HaveKeyWithValue(labelKey, labelValue))
-
-				out, err := util.RunCmd("kubectl get mc --show-labels --kubeconfig " + tkeKubeConfigFile + " | grep " + machine.Name)
-				Expect(err).Should(BeNil())
-				Expect(out).Should(ContainSubstring(labelKey + "=" + labelValue))
 			})
 
 			It("Unschedulable node", func() {
@@ -146,14 +138,10 @@ var _ = Describe("Platform Test", func() {
 				// Unschedule node
 				node := updateNode(client, workerNodeIP, true)
 				Expect(node.Spec.Unschedulable).Should(BeTrue())
-				out, _ := util.RunCmdOnNode(workerNode, "kubectl get no "+workerNodeIP+" -o yaml | grep unschedulable")
-				Expect(out).Should(ContainSubstring("true"))
 
 				// Cancel unschedule node
 				node = updateNode(client, workerNodeIP, false)
 				Expect(node.Spec.Unschedulable).Should(BeFalse())
-				out, _ = util.RunCmdOnNode(workerNode, "kubectl get no "+workerNodeIP+" -o yaml | grep unschedulable")
-				Expect(out).Should(BeEmpty())
 			})
 
 			It("Drain node", func() {
@@ -171,15 +159,10 @@ var _ = Describe("Platform Test", func() {
 
 				node, _ = client.CoreV1().Nodes().Get(context.Background(), workerNodeIP, metav1.GetOptions{})
 				Expect(node.Spec.Unschedulable).Should(BeTrue())
-
-				out, _ := util.RunCmdOnNode(workerNode, "kubectl get no "+workerNodeIP+" -o yaml | grep unschedulable")
-				Expect(out).Should(ContainSubstring("true"))
 			})
 
 			It("Delete node", func() {
 				Expect(deleteNode(machine.Name)).Should(Succeed())
-				out, _ := util.RunCmd("kubectl get mc --kubeconfig " + tkeKubeConfigFile)
-				Expect(out).ShouldNot(ContainSubstring(machine.Name))
 			})
 		})
 
@@ -203,9 +186,6 @@ var _ = Describe("Platform Test", func() {
 					}
 					return nil
 				}, 10*time.Minute, 10*time.Second).Should(Succeed())
-
-				out, _ := util.RunCmd("kubectl describe tc " + tapp.Name + " -n kube-system --kubeconfig " + tkeKubeConfigFile + " | grep Phase")
-				Expect(out).Should(ContainSubstring("Running"))
 			})
 
 			It("IPAM", func() {
@@ -227,9 +207,6 @@ var _ = Describe("Platform Test", func() {
 					}
 					return nil
 				}, 10*time.Minute, 10*time.Second).Should(Succeed())
-
-				out, _ := util.RunCmd("kubectl describe ipam " + ipam.Name + " -n kube-system --kubeconfig " + tkeKubeConfigFile + " | grep Phase")
-				Expect(out).Should(ContainSubstring("Running"))
 			})
 
 			It("CronHPA", func() {
@@ -251,17 +228,11 @@ var _ = Describe("Platform Test", func() {
 					}
 					return nil
 				}, 10*time.Minute, 10*time.Second).Should(Succeed())
-
-				out, _ := util.RunCmd("kubectl describe cronhpa " + cronHPA.Name + " -n kube-system --kubeconfig " + tkeKubeConfigFile + " | grep Phase")
-				Expect(out).Should(ContainSubstring("Running"))
 			})
 		})
 
 		It("Delete Baremetal cluster", func() {
 			Expect(deleteCluster(cls.Name)).Should(Succeed())
-
-			out, _ := util.RunCmd("kubectl get clusters --kubeconfig " + tkeKubeConfigFile)
-			Expect(out).ShouldNot(ContainSubstring(cls.Name))
 		})
 	})
 
@@ -280,22 +251,17 @@ var _ = Describe("Platform Test", func() {
 				Expect(err).Should(BeNil())
 
 				// Delete cluster from the global cluster to be imported
-				out, _ := util.RunCmd("kubectl delete cluster " + cls.Name + " --kubeconfig " + tkeKubeConfigFile)
-				Expect(out).Should(ContainSubstring("deleted"))
+				Expect(deleteCluster(cls.Name)).Should(Succeed())
 			}
 		})
 
-		FIt("Import cluster", func() {
+		It("Import cluster", func() {
 			// Import cluster
 			importedCluster, err := importCluster(cls.Spec.Machines[0].IP, 6443, credential.CACert, credential.Token)
 			Expect(err).Should(BeNil())
 			Expect(importedCluster.Name).ShouldNot(Equal(cls.Name))
 			Expect(importedCluster.Status.Phase).Should(Equal(platformv1.ClusterRunning))
 			Expect(importedCluster.Spec.Type).Should(Equal("Imported"))
-
-			out, _ := util.RunCmd("kubectl get clusters --kubeconfig " + tkeKubeConfigFile + " | grep " + importedCluster.Name)
-			Expect(out).Should(ContainSubstring("Running"))
-			Expect(out).Should(ContainSubstring("Imported"))
 		})
 	})
 })
@@ -315,7 +281,7 @@ func createClusterWithMasterNodes(masterNodes []cloudprovider.Instance) (cluster
 		Spec: platformv1.ClusterSpec{
 			Type:          "Baremetal",
 			Features:      platformv1.ClusterFeature{EnableMasterSchedule: true},
-			Version:       "1.18.3",
+			Version:       env.K8sVersion(),
 			ClusterCIDR:   "10.244.0.0/16",
 			NetworkDevice: "eth0",
 		}}
