@@ -6,7 +6,7 @@
 
 ## Abstract
 
-项目平均3个月发布一次大版本，1个月发布一次bug fix版本，平均每天3-5次代码PR。由于缺少完善的自动化测试机制，很难保证发布的版本的质量。
+项目平均3个月发布一次大版本，1个月发布一次bug fix版本，平均每天3-5次代码PR。需要提供完善的自动化测试机制，以保证发布的版本的质量。
 
 ## Motivation
 
@@ -14,7 +14,50 @@
 
 ## Main proposal
 
-### Smoke Test
+### 如何在本地执行自动化测试
+
+首先需要安装tkestack - [安装步骤](https://tkestack.github.io/docs/zh/%E4%BA%A7%E5%93%81%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97/%E5%AE%89%E8%A3%85%E6%AD%A5%E9%AA%A4.html) （由于tkestack集群访问为内网访问，故以下操作均在tkestack global集群节点上操作）
+1. 下载tkestack代码`git clone https://github.com/tkestack/tke.git`
+2. 创建配置文件`vi $HOME/tke.env`，内容如下所示
+3. 跳转至测试文件目录，如：`<代码根目录>/tke/test/e2e/platform`
+4. 执行`go test -v --timeout 40m` （[more go test flags](https://golang.org/cmd/go/#hdr-Testing_flags) ）
+
+```
+    # tke.env配置文件 
+    
+    # tke-platform-api和tke-platform-controller的镜像版本
+    VERSION: xxxxxx
+    # 用例执行中创建节点的登录密码
+    PASSWORD: xxxxxx
+    # 对tkestack global集群的kubeconfig进行base64编码结果
+    KUBECONFIG: xxxxxx
+    # provider-res的镜像版本
+    PROVIDERRESVERSION: v1.18.3-1
+    # 用例执行结束后是否要删除CVM
+    NEED_DELETE: true
+    # 创建CVM的账号对应的secret_id
+    SECRET_ID: xxxxxx
+    # 创建CVM的账号对应的secret_key
+    SECRET_KEY: xxxxxx
+    # 创建的CVM所在区域
+    REGION: ap-xxxxxx
+    # 创建CVM所需的一些参数，注意：Zone需要和已有配置REGION一致；subnetId需要和global集群节点同一子网；Password需要和已有配置PASSWORD相同
+    CREATE_INSTANCES_PARAM: {"Placement":{"Zone":"ap-xxxxxx-1"},"ImageId":"img-xxxxxx","InstanceChargeType":"POSTPAID_BY_HOUR","InstanceType":"xxxxxx","SystemDisk":{"DiskType":"CLOUD_PREMIUM"},"VirtualPrivateCloud":{"VpcId":"vpc-xxxxxx","SubnetId":"subnet-xxxxxx"},"InternetAccessible":{"InternetMaxBandwidthOut":1,"PublicIpAssigned":true},"InstanceName":"platform","LoginSettings":{"Password":"xxxxxx"}}
+```
+
+### 如何进行失败用例分析
+
+- Actions下提供详细的自动化用例执行日志
+- 登录执行机通过`kubectl`进行分析（需要执行机登录信息及`KUBECONFIG`配置，仅部分人有权限操作）
+- 本地调试（需要本地搭建环境，参考[本地执行自动化测试](#如何在本地执行自动化测试)）
+
+### 常见问题
+
+- 如何过滤用例：`go test -run <regexp>`
+- 用例执行完如何保留CVM：配置`NEED_DELETE`设置为空
+- 如何手动删除CVM：登录到腾讯云控制台，搜索`CREATE_INSTANCES_PARAM`中配置`InstanceName`的值，删除
+
+## Smoke Test
 
 每次pr或commit时执行，检查关键功能是否正确，执行时间控制在30分钟内。
 
@@ -123,8 +166,13 @@
 1. 检查各个addon组件返回正确信息
 2. 通过Kubectl 检查K8s集群下所有 pod 工作正常
 
-### Release Test
+## Release Test
 
 每晚定时在release build后执行，验证通过tke-installer安装部署集群及更多组件功能，时间控制在4小时内。
 
 TBD
+
+
+[reference]: https://tkestack.github.io/docs/zh/%E4%BA%A7%E5%93%81%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97/%E5%AE%89%E8%A3%85%E6%AD%A5%E9%AA%A4.html)]）
+
+[安装步骤]: https://tkestack.github.io/docs/zh/%E4%BA%A7%E5%93%81%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97/%E5%AE%89%E8%A3%85%E6%AD%A5%E9%AA%A4.html
