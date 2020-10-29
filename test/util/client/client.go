@@ -84,6 +84,7 @@ func GetRESTConfig() *rest.Config {
 	if data == "" {
 		panic(fmt.Sprintf("%s not set", kubeconfigEnv))
 	}
+	fmt.Sprintf("Kubeconfig: %s", data)
 	kubeconfig, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
 		panic(err)
