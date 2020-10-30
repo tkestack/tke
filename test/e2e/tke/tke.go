@@ -83,8 +83,7 @@ func (t *TKE) Delete() {
 	// this namespace.  Upon completion, this namespace will automatically be purged by the system.
 	ns, _ := client.CoreV1().Namespaces().Get(context.Background(), t.Namespace, metav1.GetOptions{})
 	ns.Spec.Finalizers = []corev1.FinalizerName{} // remove all finalizers
-	ns, err := client.CoreV1().Namespaces().Update(context.Background(), ns, metav1.UpdateOptions{})
-	klog.Info(ns.Finalizers)
+	_, err := client.CoreV1().Namespaces().Update(context.Background(), ns, metav1.UpdateOptions{})
 	if err != nil {
 		klog.Error(err)
 	}
