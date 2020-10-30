@@ -2,9 +2,40 @@ import React from 'react';
 import { Upload } from '@tea/component';
 import * as yaml from 'js-yaml';
 
-export function KubeconfigFileParse() {
+export interface KubeConfig {
+  apiVersion: string;
+  clusters: Array<{
+    cluster: {
+      'certificate-authority-data': string;
+      server: string;
+    };
+    name: string;
+  }>;
+  'current-context': string;
+  kind: string;
+  preferences: {};
+  users: Array<{
+    name: string;
+    user: {
+      token: string;
+    };
+  }>;
+}
+
+export interface KubeconfigFileParseProps {
+  onSuccess: (targetConfig: { apiServer: string; certFile: string; token: string }) => any;
+  onFaild?: () => any;
+}
+
+export function KubeconfigFileParse({ onSuccess, onFaild }: KubeconfigFileParseProps) {
   function beforeUpload(file: File) {
-    fileParse(file);
+    fileParse(file)
+      .then((rsp: KubeConfig) => {
+        onSuccess(yamlToConfig(rsp));
+      })
+      .catch(error => {
+        onFaild && onFaild();
+      });
 
     return false;
   }
@@ -14,17 +45,44 @@ export function KubeconfigFileParse() {
       const reader = new FileReader();
       reader.onload = ({ target }) => {
         if (target.readyState === 2) {
-          const rsp = yaml.load(target.result as string);
+          let rsp;
+          try {
+            rsp = yaml.load(target.result as string);
+          } catch (error) {
+            return reject(error);
+          }
 
-          console.log(rsp);
-          resolve(rsp);
+          if (rsp.kind !== 'Config') {
+            return reject(new Error('这不是一个kubeconfig文件'));
+          }
+
+          return resolve(rsp);
         } else {
-          reject(new Error());
+          return reject(new Error('文件解析失败'));
         }
       };
 
       reader.readAsText(file);
     });
+  }
+
+  function yamlToConfig({
+    clusters: [
+      {
+        cluster: { server, 'certificate-authority-data': certFile }
+      }
+    ],
+    users: [
+      {
+        user: { token }
+      }
+    ]
+  }: KubeConfig) {
+    return {
+      apiServer: server,
+      certFile,
+      token
+    };
   }
 
   return (
