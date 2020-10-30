@@ -112,6 +112,11 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
         action.perform();
       }
     };
+    function parseKubeconfigSuccess({ apiServer, certFile, token }) {
+      console.log(apiServer, certFile, token);
+      actions.clusterCreation.updateClusterCreationState({ apiServer, certFile, token });
+    }
+
     const failed = workflow.operationState === OperationState.Done && !isSuccessWorkflow(workflow);
     return (
       <ContentView>
@@ -133,7 +138,7 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
               />
             </FormPanel.Item>
             <FormPanel.Item label="KubeConfig File">
-              <KubeconfigFileParse />
+              <KubeconfigFileParse onSuccess={parseKubeconfigSuccess} />
             </FormPanel.Item>
             <FormPanel.Item label="API Server">
               <InputField
