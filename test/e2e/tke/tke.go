@@ -84,9 +84,11 @@ func (t *TKE) Delete() {
 	ns, _ := client.CoreV1().Namespaces().Get(context.Background(), t.Namespace, metav1.GetOptions{})
 	ns.Spec.Finalizers = []corev1.FinalizerName{} // remove all finalizers
 	ns, err := client.CoreV1().Namespaces().Update(context.Background(), ns, metav1.UpdateOptions{})
+	klog.Info(ns.Finalizers)
 	if err != nil {
 		klog.Error(err)
 	}
+	time.Sleep(5 * time.Second)
 
 	err = client.CoreV1().Namespaces().Delete(context.Background(), t.Namespace, deleteOptions)
 	gomega.Expect(err).To(gomega.BeNil())
