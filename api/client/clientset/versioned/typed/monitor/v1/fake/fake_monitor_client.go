@@ -30,6 +30,10 @@ type FakeMonitorV1 struct {
 	*testing.Fake
 }
 
+func (c *FakeMonitorV1) ClusterOverviews() v1.ClusterOverviewInterface {
+	return &FakeClusterOverviews{c}
+}
+
 func (c *FakeMonitorV1) ConfigMaps() v1.ConfigMapInterface {
 	return &FakeConfigMaps{c}
 }

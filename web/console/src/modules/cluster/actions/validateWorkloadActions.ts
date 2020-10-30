@@ -189,7 +189,7 @@ export const validateWorkloadActions = {
   /** 校验标签是否正确 */
   _validateWorkloadLabelKey(name: string, labels: WorkloadLabel[]) {
     // label 支持 [A-Z0-9a-z]开头和结尾，中间还可以有 -_.
-    let reg = /^([A-Za-z0-9][-A-Za-z0-9_\.]*)?[A-Za-z0-9]$/,
+    let reg = /^[A-Za-z0-9][-A-Za-z0-9_\./]*?[A-Za-z0-9]$/,
       status = 0,
       message = '';
 

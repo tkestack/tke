@@ -76,7 +76,7 @@ func Install(s ssh.Interface, version string) (err error) {
 		return err
 	}
 
-	cmd = fmt.Sprintf("kubectl completion bash > /etc/bash_completion.d/kubectl")
+	cmd = "kubectl completion bash > /etc/bash_completion.d/kubectl"
 	_, err = s.CombinedOutput(cmd)
 	if err != nil {
 		return err

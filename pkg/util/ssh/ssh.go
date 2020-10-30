@@ -28,6 +28,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/pkg/sftp"
@@ -65,7 +66,7 @@ type Config struct {
 }
 
 func (c *Config) addr() string {
-	return fmt.Sprintf("%s:%d", c.Host, c.Port)
+	return net.JoinHostPort(c.Host, fmt.Sprintf("%d", c.Port))
 }
 
 func New(c *Config) (*SSH, error) {
@@ -173,12 +174,37 @@ func (s *SSH) CopyFile(src, dst string) error {
 	return s.WriteFile(file, dst)
 }
 
+func (s *SSH) CopyDir(src, dst string) error {
+	files, er := ioutil.ReadDir(src)
+	if er != nil {
+		return er
+	}
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		} else {
+			s.CopyFile(filepath.Join(src, file.Name()), filepath.Join(dst, file.Name()))
+		}
+	}
+	return nil
+}
+
 func (s *SSH) WriteFile(src io.Reader, dst string) error {
-	data, err := ioutil.ReadAll(src)
+	tmpfile, err := ioutil.TempFile("", "*.tmp")
 	if err != nil {
 		return err
 	}
-	needWriteFile, err := s.needWriteFile(data, dst)
+	defer os.Remove(tmpfile.Name())
+
+	if _, err := io.Copy(tmpfile, src); err != nil {
+		return err
+	}
+
+	if _, err := tmpfile.Seek(0, os.SEEK_SET); err != nil {
+		return err
+	}
+
+	needWriteFile, err := s.needWriteFile(tmpfile, dst)
 	if err != nil {
 		return err
 	}
@@ -187,7 +213,11 @@ func (s *SSH) WriteFile(src io.Reader, dst string) error {
 		return nil
 	}
 
-	return s.writeFile(bytes.NewBuffer(data), dst)
+	if _, err := tmpfile.Seek(0, os.SEEK_SET); err != nil {
+		return err
+	}
+
+	return s.writeFile(tmpfile, dst)
 }
 
 func (s *SSH) ReadFile(filename string) ([]byte, error) {
@@ -242,12 +272,15 @@ func (s *SSH) writeFile(src io.Reader, dst string) error {
 	return err
 }
 
-func (s *SSH) needWriteFile(data []byte, dst string) (bool, error) {
-	srcHash := md5.Sum(data)
+func (s *SSH) needWriteFile(src io.Reader, dst string) (bool, error) {
+	srcHash := md5.New()
+	if _, err := io.Copy(srcHash, src); err != nil {
+		return false, err
+	}
 
 	hashFile := tmpDir + dst + ".md5"
 	buffer := new(bytes.Buffer)
-	buffer.WriteString(fmt.Sprintf("%x %s\n", srcHash, dst))
+	buffer.WriteString(fmt.Sprintf("%x %s\n", srcHash.Sum(nil), dst))
 	err := s.writeFile(buffer, hashFile)
 	if err != nil {
 		return false, err

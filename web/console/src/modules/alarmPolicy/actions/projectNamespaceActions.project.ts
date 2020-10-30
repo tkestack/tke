@@ -13,6 +13,7 @@ import * as WebAPI from '../WebAPI';
 import { alarmPolicyActions } from './alarmPolicyActions';
 import { clusterActions } from './clusterActions';
 import { namespaceActions } from './namespaceActions';
+import { fetchPrometheuses } from '../../cluster/WebAPI';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {
@@ -41,7 +42,7 @@ const fetchProjectNamespaceActions = generateFetcherActionCreator({
         status: { version: item.clusterVersion }
       };
     });
-    let ps = await WebAPI.fetchPrometheuses();
+    let ps = await fetchPrometheuses();
     let clusterHasPs = {};
     for (let p of ps.records) {
       clusterHasPs[p.spec.clusterName] = true;

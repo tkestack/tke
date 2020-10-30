@@ -65,7 +65,7 @@ export class HelmHeadPanel extends React.Component<RootProps, {}> {
         text: `${item.metadata.name}(${item.spec.displayName ? item.spec.displayName : '未命名'})`
       }));
       let namespaceOptions = namespaceList.data.records.map((p, index) => ({
-        text: p.name,
+        text: p.displayName,
         value: p.name
       }));
       clusterContent = (

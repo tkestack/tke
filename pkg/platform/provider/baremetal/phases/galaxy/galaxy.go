@@ -50,9 +50,10 @@ const (
 
 // Option for coredns
 type Option struct {
-	Version   string
-	NodeCIDR  string
-	NetDevice string
+	Version     string
+	NodeCIDR    string
+	NetDevice   string
+	BackendType string
 }
 
 // Install to install the galaxy workload
@@ -78,7 +79,7 @@ func Install(ctx context.Context, clientset kubernetes.Interface, option *Option
 		if !errors.IsNotFound(err) {
 			return err
 		}
-		cm, err := configMapFlannel(option.NodeCIDR)
+		cm, err := configMapFlannel(option.NodeCIDR, option.BackendType)
 		if err != nil {
 			return err
 		}
@@ -148,8 +149,10 @@ func cleanFlannelInterfaces() error {
 	return err
 }
 
-func configMapFlannel(clusterCIDR string) (*corev1.ConfigMap, error) {
-	reader := strings.NewReader(strings.Replace(FlannelCM, "{{ .Network }}", clusterCIDR, 1))
+func configMapFlannel(clusterCIDR, backendType string) (*corev1.ConfigMap, error) {
+	flannelCM := strings.Replace(FlannelCM, "{{ .Network }}", clusterCIDR, 1)
+	flannelCM = strings.Replace(flannelCM, "{{ .Type }}", backendType, 1)
+	reader := strings.NewReader(flannelCM)
 	decoder := yaml.NewYAMLOrJSONDecoder(reader, 4096)
 	payload := &corev1.ConfigMap{}
 	err := decoder.Decode(payload)

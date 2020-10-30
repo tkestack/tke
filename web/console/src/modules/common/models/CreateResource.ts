@@ -9,7 +9,7 @@ export interface CreateResource extends Identifiable {
   /** 用户当前选择的命名空间 */
   namespace?: string;
 
-  isSpetialNamespace?: boolean;
+  isSpecialNamespace?: boolean;
 
   /** yaml的数据 */
   yamlData?: string;
@@ -36,6 +36,9 @@ export interface CreateResource extends Identifiable {
   mergeType?: string;
 
   meshId?: string;
+
+  /** 集群版本 */
+  clusterVersion?: string;
 }
 
 export const MergeType = {

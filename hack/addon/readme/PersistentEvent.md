@@ -1,8 +1,20 @@
-## PersistentEvent说明
+# PersistentEvent
 
-### 组件介绍
+## PersistentEvent 介绍
 
-Kubernetes Events 包括了 Kuberntes 集群的运行和各类资源的调度情况，对维护人员日常观察资源的变更以及定位问题均有帮助。TKE 支持为您的所有集群配置事件持久化功能，开启本功能后，会将您的集群事件实时导出到配置的存储端。TKE 还支持使用腾讯云提供的 PAAS 服务或开源软件对事件流水进行检索。
+Kubernetes Events 包括了 Kuberntes 集群的运行和各类资源的调度情况，对维护人员日常观察资源的变更以及定位问题均有帮助。TKEStack 支持为您的所有集群配置事件持久化功能，开启本功能后，会将您的集群事件实时导出到 ElasticSearch 的指定索引。
+
+### PersistentEvent 使用场景
+
+Kubernetes 事件是集群内部资源生命周期、资源调度、异常告警等情况产生的记录，可以通过事件深入了解集群内部发生的事情，例如调度程序做出的决策或者某些pod从节点中被逐出的原因。
+
+kubernetes 默认仅提供保留一个小时的 kubernetes 事件到集群的 ETCD 里。 PersistentEvent 提供了将 Kubernetes 事件持久化存储的前置功能，允许您通过PersistentEvent 将集群内事件导出到您自有的存储端。
+
+### PersistentEvent 限制条件
+
+1. **注意：当前只支持版本号为5的 ElasticSearch，且未开启 ElasticSearch 集群的用户登录认证**
+2. 安装 PersistentEvent 将占用集群0.2核 CPU,100MB 内存的资源
+3. 仅在1.8版本以上的 kubernetes 集群支持
 
 ### 部署在集群内kubernetes对象
 
@@ -12,51 +24,33 @@ Kubernetes Events 包括了 Kuberntes 集群的运行和各类资源的调度情
 | ----------------- | --- | ---------- | ------------- |
 |tke-persistent-event|deployment|0.2核CPU,100MB内存|kube-system|
 
-## PersistentEvent使用场景
+## PersistentEvent 使用方法
 
-Kubernetes事件是集群内部资源生命周期、资源调度、异常告警等情况产生的记录，可以通过事件深入了解集群内部发生的事情，例如调度程序做出的决策或者某些pod从节点中被逐出的原因。
+### 在 扩展组件 里使用
 
-kubernetes默认仅提供保留一个小时的kubernetes事件。 PersistentEvent 提供了将Kubernetes 事件持久化存储的前置功能，允许您通过PersistentEvent 将集群内事件导出到您自有的存储端。
+  1. 登录 TKEStack
 
-## PersistentEvent限制条件
+  2. 切换至【平台管理】控制台，选择 【扩展组件】，选择需要安装事件持久化组件的集群，安装 PersistentEvent 组件，注意安装 PersistentEvent 时需要在页面下方指定 ElasticSearch 的地址和索引
 
-1. 安装PersistentEvent 将占用集群0.2核CPU,100MB内存的资源。
+     > 注意：当前只支持版本号为5，且未开启用户登录认证的 ES 集群
 
-2. 仅在1.8版本以上的kubernetes集群支持。
+### 在 运维中心 里使用
 
-## PersistentEvent使用方法
+  1. 登录 TKEStack
 
-### 安装并设置存储端
+  2. 切换至【平台管理】控制台，选择 【运维中心】->【事件持久化】，查看事件持久化列表
 
-1. 登录[容器服务控制台](https://console.qcloud.com/tke2)。
+  3. 单击列表最右侧【设置】按钮，如下图所示：
+     ![事件持久化设置](../../../docs/images/事件持久化设置.png)
 
-2. 在左侧导航栏中，单击【扩展组件】，进入扩展组件管理页面。
+  4. 在“设置事件持久化”页面填写持久化信息
 
-3. 选择需要安装的PersistentEvent集群，点击【新建】，如图：
+     + **事件持久化存储：** 是否进行持久化存储
 
-![](https://main.qcloudimg.com/raw/2c1d974b5b5437ad823b83eae565ec95.png)
+       > 注意：当前只支持版本号为5，且未开启用户登录认证的 ES 集群
 
-4. 配置事件持久化存储端。
+     + **Elasticsearch地址：** ES 地址，如：http://190.0.0.1:200
 
-### 更新存储端
+     + **索引：** ES索引，最长60个字符，只能包含小写字母、数字及分隔符("-"、"_"、"+")，且必须以小写字母开头
 
-1. 登录[容器服务控制台](https://console.qcloud.com/tke2)。
-
-2. 在左侧导航栏中，单击【扩展组件】，进入扩展组件管理页面。
-
-3. 选择需要更新的PersistentEvent集群，选择PersistentEvent点击【更新配置】，如图：
-
-4. 配置事件持久化存储端。
-
-### 在CLS控制台检索事件
-
-1. 登录[日志服务控制台](hhttps://console.qcloud.com/cls)。
-
-2. 在左侧导航栏中，单击【日志集管理】，选择PersistentEvent配置的日志集，打开日志检索功能。
-
-![](https://main.qcloudimg.com/raw/e5509745ffa52df39272a7c97197a8d8.png)
-
-3. 选择该日志集，点击检索事件，如图：
-
-![](https://main.qcloudimg.com/raw/2707f519c5f682671909e0315878b575.png)
-
+  5. 单击【完成】按钮

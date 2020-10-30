@@ -27,6 +27,7 @@ import (
 
 	"tkestack.io/tke/pkg/spec"
 
+	"github.com/docker/distribution/reference"
 	pkgerrors "github.com/pkg/errors"
 )
 
@@ -67,6 +68,12 @@ func (d *Docker) getCmdOutput(cmdString string) ([]byte, error) {
 	}
 	cmd := exec.Command("sh", "-c", cmdString)
 	return cmd.Output()
+}
+
+// Healthz check docker daemon healthz status.
+func (d *Docker) Healthz() bool {
+	_, err := d.getCmdOutput("docker ps")
+	return err == nil
 }
 
 // GetImages returns docker images which match given image prefix.
@@ -154,14 +161,20 @@ func (d *Docker) GetNameArchTag(image string) (name string, arch string, tag str
 // SplitImageNameAndTag returns the name & tag of the given image.
 // If the tag is <none>, return err.
 func (d *Docker) SplitImageNameAndTag(image string) (name string, tag string, err error) {
-	nameAndTag := strings.Split(image, ":")
-	if len(nameAndTag) != 2 {
+	imageRef, err := reference.Parse(image)
+	if err != nil {
 		return "", "", fmt.Errorf("fail to get name and tag for image: %v", image)
 	}
-	if nameAndTag[1] == "<none>" {
-		return "", "", fmt.Errorf("image %s is invalid", image)
+
+	switch v := imageRef.(type) {
+	case reference.NamedTagged:
+		if v.Tag() == "<none>" {
+			return "", "", fmt.Errorf("image %s is invalid", image)
+		}
+		return v.Name(), v.Tag(), nil
+	default:
+		return "", "", fmt.Errorf("image: %v does not have a name and tag", image)
 	}
-	return nameAndTag[0], nameAndTag[1], nil
 }
 
 // SplitNameAndArch returns the real name & arch of the given name.
@@ -217,12 +230,14 @@ func (d *Docker) RemoveImage(image string) error {
 
 // RemoveContainers forces to remove one or more running containers.
 func (d *Docker) RemoveContainers(containers ...string) error {
-	// Force the removal of containers. Do not return error.
-	cmdString := fmt.Sprintf("docker rm -f %s 2> /dev/null || true", strings.Join(containers, " "))
-	err := d.runCmd(cmdString)
-	if err != nil {
-		return pkgerrors.Wrap(err, "docker rm error")
+	for _, one := range containers {
+		cmdString := fmt.Sprintf("docker inspect %s >/dev/null 2>&1 && docker rm -f %s || true", one, one)
+		err := d.runCmd(cmdString)
+		if err != nil {
+			return pkgerrors.Wrap(err, "docker rm error")
+		}
 	}
+
 	return nil
 }
 

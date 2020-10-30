@@ -108,7 +108,7 @@ export class Step2 extends React.Component<RootProps> {
                         <p>
                           <Text theme={'label'} reset>
                             <p>
-                              VIP绑定Master集群的80（tke控制台）、443（tke控制台）、6443（kube-apiserver端口）端口，
+                              VIP绑定Master集群的80（tke控制台）、443（tke控制台）、6443（kube-apiserver端口）、31138（tke-auth-api端口）端口，
                             </p>
                             <p>同时确保该VIP有至少两个LB后端（Master节点），以避免LB单后端不可用风险</p>
                           </Text>

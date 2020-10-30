@@ -17,10 +17,10 @@ import { PolicyActionPanel } from './PolicyActionPanel';
 import { PolicyTablePanel } from './PolicyTablePanel';
 import { isValid } from '@tencent/ff-validator';
 
-const mapDispatchToProps = (dispatch) =>
+const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect((state) => state, mapDispatchToProps)
+@connect(state => state, mapDispatchToProps)
 export class BaseInfoPanel extends React.Component<RootProps> {
   render() {
     let { actions, groupEditor, route, groupValidator } = this.props;
@@ -31,7 +31,7 @@ export class BaseInfoPanel extends React.Component<RootProps> {
 
     /** 提交 */
     const perform = () => {
-      actions.group.detail.validator.validate(null, async (r) => {
+      actions.group.detail.validator.validate(null, async r => {
         if (isValid(r)) {
           let group: Group = Object.assign({}, groupEditor);
           action.start([group]);
@@ -52,9 +52,9 @@ export class BaseInfoPanel extends React.Component<RootProps> {
     const failed = workflow.operationState === OperationState.Done && !isSuccessWorkflow(workflow);
 
     const tabs = [
-      { id: 'users', label: '关联用户' },
-      // { id: 'roles', label: '已关联角色' },
-      { id: 'policies', label: '已关联策略' },
+      { id: 'users', label: t('关联用户') },
+      // { id: 'roles', label: t('已关联角色') },
+      { id: 'policies', label: t('已关联策略') }
     ];
 
     return (
@@ -64,7 +64,7 @@ export class BaseInfoPanel extends React.Component<RootProps> {
             title={t('基本信息')}
             subtitle={
               <React.Fragment>
-                <Button type="link" onClick={(e) => actions.group.detail.updateEditorState({ v_editing: true })}>
+                <Button type="link" onClick={e => actions.group.detail.updateEditorState({ v_editing: true })}>
                   {t('编辑')}
                 </Button>
               </React.Fragment>
@@ -85,10 +85,10 @@ export class BaseInfoPanel extends React.Component<RootProps> {
                   input={{
                     placeholder: t('请输入用户组名称，不超过60个字符'),
                     value: groupEditor.spec.displayName,
-                    onChange: (value) =>
+                    onChange: value =>
                       actions.group.detail.updateEditorState({
-                        spec: Object.assign({}, groupEditor.spec, { displayName: value }),
-                      }),
+                        spec: Object.assign({}, groupEditor.spec, { displayName: value })
+                      })
                   }}
                 />
               )}
@@ -103,10 +103,10 @@ export class BaseInfoPanel extends React.Component<RootProps> {
                   input={{
                     placeholder: t('请输入用户组描述，不超过255个字符'),
                     value: groupEditor.spec.description,
-                    onChange: (value) =>
+                    onChange: value =>
                       actions.group.detail.updateEditorState({
-                        spec: Object.assign({}, groupEditor.spec, { description: value }),
-                      }),
+                        spec: Object.assign({}, groupEditor.spec, { description: value })
+                      })
                   }}
                 />
               )}
@@ -119,7 +119,7 @@ export class BaseInfoPanel extends React.Component<RootProps> {
                     className="m"
                     type="primary"
                     disabled={workflow.operationState === OperationState.Performing}
-                    onClick={(e) => {
+                    onClick={e => {
                       e.preventDefault();
                       perform();
                     }}
@@ -128,7 +128,7 @@ export class BaseInfoPanel extends React.Component<RootProps> {
                   </Button>
                   <Button
                     type="weak"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.preventDefault();
                       cancel();
                     }}

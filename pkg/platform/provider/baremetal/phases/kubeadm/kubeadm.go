@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -150,7 +151,7 @@ func RenewCerts(s ssh.Interface) error {
 		return fmt.Errorf("fixKubeadmBug1753(https://github.com/kubernetes/kubeadm/issues/1753) error: %w", err)
 	}
 
-	cmd := fmt.Sprintf("kubeadm alpha certs renew all --config=%s", constants.KubeadmConfigFileName)
+	cmd := "kubeadm alpha certs renew all"
 	_, err = s.CombinedOutput(cmd)
 	if err != nil {
 		return err
@@ -266,7 +267,7 @@ const (
 type UpgradeOption struct {
 	MachineName   string
 	BootstrapNode bool
-	NodeName      string
+	MachineIP     string
 	NodeRole      NodeRole
 	Version       string
 	MaxUnready    *intstr.IntOrString
@@ -284,7 +285,13 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 			return upgraded, fmt.Errorf("must wait for all master nodes to be upgraded, then upgrading worker nodes")
 		}
 	}
-	needUpgrade, err := needUpgradeNode(client, option.NodeName, option.Version)
+
+	node, err := apiclient.GetNodeByMachineIP(context.TODO(), client, option.MachineIP)
+	if err != nil {
+		return upgraded, err
+	}
+
+	needUpgrade, err := needUpgradeNode(client, node.Name, option.Version)
 	if err != nil {
 		return upgraded, err
 	}
@@ -293,12 +300,12 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 	}
 
 	// Step 1: drain node
-	err = drainNodeCarefully(s, client, option.NodeName, option.MaxUnready)
+	err = drainNodeCarefully(s, client, node.Name, option.MaxUnready)
 	if err != nil {
 		return upgraded, err
 	}
 	// ensure uncordon node
-	defer uncordonNode(s, option.NodeName)
+	defer uncordonNode(s, node.Name)
 
 	// Step 2: install kubeadm
 	err = Install(s, option.Version)
@@ -308,7 +315,7 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 
 	// Step 3: do upgrade
 	if option.NodeRole == NodeRoleMaster {
-		needUpgrade, err := needUpgradeControlPlane(client, option.NodeName, option.Version)
+		needUpgrade, err := needUpgradeControlPlane(client, node.Name, option.Version)
 		if err != nil {
 			return upgraded, err
 		}
@@ -333,11 +340,15 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 
 	// Step 5: wait for node information to be updated
 	err = wait.PollImmediate(10*time.Second, 5*time.Minute, func() (bool, error) {
-		node, err := client.CoreV1().Nodes().Get(context.TODO(), option.NodeName, metav1.GetOptions{})
+		node, err := client.CoreV1().Nodes().Get(context.TODO(), node.Name, metav1.GetOptions{})
 		if err != nil {
 			return false, nil
 		}
-		if strings.HasSuffix(node.Status.NodeInfo.KubeletVersion, option.Version) {
+		same, err := sameVersion(node.Status.NodeInfo.KubeletVersion, option.Version)
+		if err != nil {
+			return false, nil
+		}
+		if same {
 			return true, err
 		}
 		return false, nil
@@ -408,11 +419,12 @@ func needUpgradeNode(client kubernetes.Interface, nodeName string, version strin
 	if err != nil {
 		return false, err
 	}
-	if strings.HasSuffix(node.Status.NodeInfo.KubeletVersion, version) {
-		return false, nil
-	}
 
-	return true, nil
+	same, err := sameVersion(node.Status.NodeInfo.KubeletVersion, version)
+	if err != nil {
+		return false, err
+	}
+	return !same, nil
 }
 
 // checkMasterNodesVersion check all master nodes version.
@@ -424,7 +436,11 @@ func checkMasterNodesVersion(client kubernetes.Interface, version string) (bool,
 		return false, err
 	}
 	for _, node := range nodes.Items {
-		if !strings.HasSuffix(node.Status.NodeInfo.KubeletVersion, version) {
+		same, err := sameVersion(node.Status.NodeInfo.KubeletVersion, version)
+		if err != nil {
+			return false, err
+		}
+		if !same {
 			return false, fmt.Errorf("master node(%s) current version is %s, required version is %s", node.Name, node.Status.NodeInfo.KubeletVersion, version)
 		}
 	}
@@ -518,12 +534,17 @@ func MarkNextUpgradeWorkerNode(client kubernetes.Interface, platformClient platf
 	// Get next upgraded machine by lowest name.
 	var nextMachineName string
 	for _, machine := range machines.Items {
-		node, err := client.CoreV1().Nodes().Get(context.TODO(), machine.Spec.IP, metav1.GetOptions{})
+		node, err := apiclient.GetNodeByMachineIP(context.TODO(), client, machine.Spec.IP)
+		if err != nil {
+			return err
+		}
+
+		same, err := sameVersion(node.Status.NodeInfo.KubeletVersion, version)
 		if err != nil {
 			return err
 		}
 		// Skip upgraded node.
-		if strings.HasSuffix(node.Status.NodeInfo.KubeletVersion, version) {
+		if same {
 			continue
 		}
 
@@ -547,4 +568,22 @@ func MarkNextUpgradeWorkerNode(client kubernetes.Interface, platformClient platf
 	}
 
 	return nil
+}
+
+func sameVersion(ver1, ver2 string) (bool, error) {
+	semVer1, err := semver.NewVersion(ver1)
+	if err != nil {
+		return false, err
+	}
+	semVer2, err := semver.NewVersion(ver2)
+	if err != nil {
+		return false, err
+	}
+
+	if semVer1.Major() == semVer2.Major() &&
+		semVer1.Minor() == semVer2.Minor() &&
+		semVer1.Patch() == semVer2.Patch() {
+		return true, nil
+	}
+	return false, nil
 }

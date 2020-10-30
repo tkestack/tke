@@ -141,25 +141,13 @@ message LogFileContentSpec {
   optional string filepath = 7;
 }
 
-// LogFileDownload
-message LogFileDownload {
-  optional LogFileDownloadSpec spec = 2;
-}
+// LogFileProxyOptions is the query options to a kube-apiserver proxy call for LogFile requests.
+message LogFileProxyOptions {
+  optional string namespace = 1;
 
-message LogFileDownloadSpec {
-  optional string clusterId = 1;
-
-  optional string namespace = 2;
+  optional string pod = 2;
 
   optional string container = 3;
-
-  optional string pod = 4;
-
-  optional int32 start = 5;
-
-  optional int32 length = 6;
-
-  optional string filepath = 7;
 }
 
 // LogFileTree

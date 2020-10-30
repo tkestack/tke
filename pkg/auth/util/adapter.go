@@ -21,24 +21,32 @@ package util
 import (
 	"context"
 	"fmt"
-
-	"k8s.io/apimachinery/pkg/labels"
+	authv1client "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
+	authv1lister "tkestack.io/tke/api/client/listers/auth/v1"
 	"tkestack.io/tke/pkg/util/log"
-
-	"k8s.io/apimachinery/pkg/fields"
-	authv1 "tkestack.io/tke/api/auth/v1"
 
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	authv1client "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
-	authv1lister "tkestack.io/tke/api/client/listers/auth/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
+	authv1 "tkestack.io/tke/api/auth/v1"
 )
 
 const (
 	DefaultDomain = "*"
+	DefaultAll    = "*"
+
+	// GRule represents user groups to which users belongs or the associated Policies
+	GRule = "g"
+	// PRule represents RBAC rules
+	PRule = "p"
+
+	// PRuleFieldNumber represents the maximum number of valid value fields in the Rule object: V0, V1, V2, V3, V4
+	PRuleFieldNumber = 5
+	// GRuleFieldNumber represents the maximum number of valid value fields in the Rule object: V0, V1, V2
+	GRuleFieldNumber = 3
 )
 
 // RestAdapter is the policy storage adapter for Casbin. With this library, Casbin can load policy
@@ -80,26 +88,16 @@ func (a *RestAdapter) LoadPolicy(model model.Model) error {
 func (a *RestAdapter) loadPolicy(rule *authv1.Rule, model model.Model) {
 	casRule := rule.Spec
 	lineText := casRule.PType
-	if casRule.V0 != "" {
+	if casRule.PType == PRule {
 		lineText += ", " + casRule.V0
-	}
-	if casRule.V1 != "" {
 		lineText += ", " + casRule.V1
-	}
-	if casRule.V2 != "" {
 		lineText += ", " + casRule.V2
-	}
-	if casRule.V3 != "" {
 		lineText += ", " + casRule.V3
-	}
-	if casRule.V4 != "" {
 		lineText += ", " + casRule.V4
-	}
-	if casRule.V5 != "" {
-		lineText += ", " + casRule.V5
-	}
-	if casRule.V6 != "" {
-		lineText += ", " + casRule.V6
+	} else {
+		lineText += ", " + casRule.V0
+		lineText += ", " + casRule.V1
+		lineText += ", " + casRule.V2
 	}
 
 	persist.LoadPolicyLine(lineText, model)
@@ -115,13 +113,13 @@ func (a *RestAdapter) SavePolicy(model model.Model) error {
 
 	var rules []authv1.Rule
 
-	for ptype, ast := range model["p"] {
+	for ptype, ast := range model[PRule] {
 		for _, line := range ast.Policy {
 			rules = append(rules, ConvertRule(ptype, line))
 		}
 	}
 
-	for ptype, ast := range model["g"] {
+	for ptype, ast := range model[GRule] {
 		for _, line := range ast.Policy {
 			rules = append(rules, ConvertRule(ptype, line))
 		}

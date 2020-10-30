@@ -18,6 +18,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/spf13/pflag"
 	"sort"
 	"strings"
 
@@ -44,6 +45,8 @@ var (
 )
 
 func main() {
+	archsFlag := pflag.StringSliceP("archs", "a", spec.Archs, "Only list images for specified archs")
+	pflag.Parse()
 	unsupportMultiArchImages := []func() []string{
 		cronhpa.List,
 		helm.List,
@@ -69,7 +72,7 @@ func main() {
 			if IsUnsupportMultiArch(one) {
 				result = append(result, one)
 			} else {
-				for _, arch := range spec.Archs {
+				for _, arch := range *archsFlag {
 					result = append(result, strings.ReplaceAll(one, ":", "-"+arch+":"))
 				}
 			}

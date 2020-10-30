@@ -1,0 +1,55 @@
+# disk mount
+
+# set  switch facts
+- name: set data_disk_init_swith facts
+  set_fact: data_disk_init_swith = "{{ data_disk_init_swith }}"
+  tags: data_disk_init
+
+# check data disk whethere is raw device
+- name: check data disk whethere is raw device
+  shell: if [ `lsblk  | grep {{ data_disk_name }} | wc -l` -eq 1 ]; then echo "True";else echo "False";fi
+  register: data_disk_raw_device
+  when: data_disk_init_swith == 'true'
+  tags: data_disk_init
+
+# create partition for mount
+- name: create partition
+  shell: echo -e "{{ partition_cmd }}" |  fdisk "{{ disk_device_name }}"
+  when: data_disk_init_swith == 'true' and data_disk_raw_device.stdout == "True"
+  tags: data_disk_init
+
+# create vg 
+- name: create vg
+  lvg:
+    vg: "{{ vg_name }}"
+    pvs: "{{ disk_device_name }}1"
+    pesize: 8
+  when: data_disk_init_swith == 'true' and data_disk_raw_device.stdout == "True"
+  tags: data_disk_init
+
+# create lvm
+- name: create lvm
+  lvol:
+    vg: "{{ vg_name }}"
+    lv: "{{ lv_name }}"
+    size: 100%FREE
+  when: data_disk_init_swith == 'true' and data_disk_raw_device.stdout == "True"
+  tags: data_disk_init
+
+# create file system
+- name: create file system
+  filesystem:
+    fstype: "{{ filesystem }}" 
+    dev: "/dev/mapper/{{ vg_name }}-{{ lv_name }}"
+  when: data_disk_init_swith == 'true' and data_disk_raw_device.stdout == "True"
+  tags: data_disk_init
+
+# mount the create filesystem
+- name: mount the create filesystem
+  mount:
+    path: "{{ check_path }}"
+    src: "/dev/mapper/{{ vg_name }}-{{ lv_name }}"
+    fstype: "{{ filesystem }}"
+    state: mounted
+  when: data_disk_init_swith == 'true' and data_disk_raw_device.stdout == "True"
+  tags: data_disk_init

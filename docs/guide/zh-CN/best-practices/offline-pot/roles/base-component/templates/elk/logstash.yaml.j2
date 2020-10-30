@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  namespace: pot
+spec:
+  selector:
+    matchLabels:
+      app: logstash
+  replicas: {{ logstash_replicas }}
+  template:
+    metadata:
+      labels:
+        app: logstash
+    spec:
+      containers:
+      - name: logstash
+        image: '{{ registry_domain }}/library/logstash:20200325114005'
+        env:
+        - name: CONFIG_NAME
+          value: logstash-main
+        - name: KAFKA_TOPIC
+          value: {{ app_env_flag }}
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: 'kafka-headless:9092'
+        - name: ELASTICSEARCH_HOSTS
+          value: '"https:\/\/elasticsearch-master-headless:9200"'
+        - name: ELASTICSEARCH_USER
+          value: {{ es_uname }}
+        - name: ELASTICSEARCH_PASSWORD
+          value: {{ es_pwd }}
+        - name: ELASTICSEARCH_SSL
+          value: 'true'
+        - name: ELASTICSEARCH_CERT
+          value: '\/usr\/share\/logstash\/certs\/elastic-certificates.p12'
+        - name: ELASTICSEARCH_CERT_PASSWORD
+          value: ""
+        resources:
+          limits: 
+            memory: {{ logstash_mem_limit }}
+          requests:
+            memory: {{ logstash_mem_req }}
+        volumeMounts:
+          - mountPath: /usr/share/logstash/certs
+            name: elastic-certificates
+      volumes:
+      - name: elastic-certificates
+        secret:
+          secretName: elastic-certificates  

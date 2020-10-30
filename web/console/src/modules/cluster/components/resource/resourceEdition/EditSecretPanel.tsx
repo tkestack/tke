@@ -282,7 +282,7 @@ export class EditSecretPanel extends React.Component<RootProps, EditSecretPanelS
       itemNameRender: namespace => {
         return (
           <div>
-            <span title={namespace.name}>{namespace.name}</span>
+            <span title={namespace.displayName}>{namespace.displayName}</span>
           </div>
         );
       },

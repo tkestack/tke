@@ -1,0 +1,13 @@
+#####################################################################
+# repositories
+###
+### default values to set for args along with dedicated keys that can
+### be set by contributers, cli args take precedence over these
+#####################################################################
+
+repositories:
+# The artifactory repository is a cache of the official charts located at gs://kubernetes-charts
+  - name: stable
+    url: https://kubernetes-charts.storage.googleapis.com
+#  - name: myapp 
+#    url: https://artifactory.contino.io/artifactory/myappa-helm

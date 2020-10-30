@@ -141,20 +141,13 @@ type LogFileContentSpec struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// LogFileDownload
-type LogFileDownload struct {
+// LogFileProxyOptions is the query options to a kube-apiserver proxy call for LogFile requests.
+type LogFileProxyOptions struct {
 	metav1.TypeMeta `json:",inline"`
-	Spec            LogFileDownloadSpec `json:"spec" protobuf:"bytes,2,opt,name=spec"`
-}
 
-type LogFileDownloadSpec struct {
-	ClusterId string `json:"clusterId,omitempty" protobuf:"bytes,1,opt,name=clusterId"`
-	Namespace string `json:"namespace,omitempty" protobuf:"bytes,2,opt,name=namespace"`
+	Namespace string `json:"namespace,omitempty" protobuf:"bytes,1,opt,name=namespace"`
+	Pod       string `json:"pod,omitempty" protobuf:"bytes,2,opt,name=pod"`
 	Container string `json:"container,omitempty" protobuf:"bytes,3,opt,name=container"`
-	Pod       string `json:"pod,omitempty" protobuf:"bytes,4,opt,name=pod"`
-	Start     int32  `json:"start,omitempty" protobuf:"varint,5,opt,name=start"`
-	Length    int32  `json:"length,omitempty" protobuf:"varint,6,opt,name=length"`
-	Filepath  string `json:"filepath,omitempty" protobuf:"bytes,7,opt,name=filepath"`
 }
 
 // +genclient

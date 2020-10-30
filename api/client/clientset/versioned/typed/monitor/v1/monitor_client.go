@@ -28,6 +28,7 @@ import (
 
 type MonitorV1Interface interface {
 	RESTClient() rest.Interface
+	ClusterOverviewsGetter
 	ConfigMapsGetter
 	MetricsGetter
 	PrometheusesGetter
@@ -36,6 +37,10 @@ type MonitorV1Interface interface {
 // MonitorV1Client is used to interact with features provided by the monitor.tkestack.io group.
 type MonitorV1Client struct {
 	restClient rest.Interface
+}
+
+func (c *MonitorV1Client) ClusterOverviews() ClusterOverviewInterface {
+	return newClusterOverviews(c)
 }
 
 func (c *MonitorV1Client) ConfigMaps() ConfigMapInterface {

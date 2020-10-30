@@ -1,0 +1,18 @@
+image:
+  repository: {{ registry_domain }}/{{ kafka_manager_image_name }}
+  tag: {{ kafka_manager_image_tag }}
+  pullPolicy: IfNotPresent
+zkHosts: kafka-zookeeper:2181
+basicAuth:
+  enabled: true
+  username: {{ kafka_manager_username }}
+  password: {{ kafka_manager_pwd }}
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  path: /
+  hosts:
+    - kafka-mgr.tke.com
+  tls: []

@@ -28,6 +28,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
+	businessversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/api/monitor"
@@ -63,6 +64,7 @@ type Config struct {
 	StorageFactory                 *serverstorage.DefaultStorageFactory
 	PrivilegedUsername             string
 	PlatformClient                 platformversionedclient.PlatformV1Interface
+	BusinessClient                 businessversionedclient.BusinessV1Interface
 	MonitorConfig                  *monitorconfig.MonitorConfiguration
 }
 
@@ -168,12 +170,30 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
+	// client config for business apiserver
+	businessAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.BusinessAPIClient)
+	if err != nil {
+		return nil, err
+	}
+	if !ok && opts.BusinessAPIClient.Required {
+		return nil, fmt.Errorf("failed to initialize client config of business API server")
+	}
+	var businessClientV1 businessversionedclient.BusinessV1Interface
+	if ok {
+		businessClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(businessAPIServerClientConfig, "tke-monitor-api"))
+		if err != nil {
+			return nil, err
+		}
+		businessClientV1 = businessClient.BusinessV1()
+	}
+
 	return &Config{
 		ServerName:                     serverName,
 		GenericAPIServerConfig:         genericAPIServerConfig,
 		VersionedSharedInformerFactory: versionedInformers,
 		StorageFactory:                 storageFactory,
 		PlatformClient:                 platformClient.PlatformV1(),
+		BusinessClient:                 businessClientV1,
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
 		MonitorConfig:                  monitorConfig,
 	}, nil

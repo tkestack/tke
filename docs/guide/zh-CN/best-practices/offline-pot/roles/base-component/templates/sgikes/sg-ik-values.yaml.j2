@@ -1,0 +1,237 @@
+# Currently tested with Kubernetes 1.10 on Minkube
+common:
+  # Elasticsearch cluster name, maps to cluster.name
+  cluster_name: "searchguard"
+
+  # 
+  repository: "{{ registry_domain }}/{{ sg_ik_repository }}"
+
+  # Init container 
+  busyboxversion: "{{ sg_ik_busyboxversion }}"
+
+  # Elasticsearch and Kibana version
+  # See whats available: https://hub.docker.com/r/floragunncom/sg-elasticsearch/tags
+  elkversion: "{{ sg_ik_elkversion }}"
+
+  # Search Guard plugin version
+  # Helm charts since beta4 needs minimum 25.0 release to work properly
+  sgversion: "{{ sg_ik_sgversion }}"
+
+  # Search Guard Kibana plugin version
+  # See whats available: https://hub.docker.com/r/floragunncom/sg-kibana/tags
+  sgkibanaversion: "{{ sg_ik_sgkibanaversion }}"
+
+  # If true then install also all free and basic x-pack features
+  # If false then only the "oss" version of Elasticsearch and Kibana gets installed 
+  xpack_basic: false
+
+  # DN of the admin certificate
+  # See https://docs.search-guard.com/latest/sgadmin#configuring-the-admin-certificate
+  admin_dn:
+    - "CN=sgadmin,OU=Ops,O=Example Com\\, Inc.,DC=example,DC=com"
+
+  # Search Guard needs to securely and reliably identify internal communication between 
+  # Elasticsearch nodes (inter-node traffic). This communication happens for example if 
+  # one node receives a GET request on the HTTP layer, but needs to forward it to another 
+  # node that holds the actual data.
+  # See https://docs.search-guard.com/latest/tls-in-production#node-certificates
+  nodes_dn:
+    - "CN=*-esnode,OU=Ops,O=Example Com\\, Inc.,DC=example,DC=com"
+
+  # Enable or disable Search Guard enterprise modules
+  # If you run Search Guard in production you need to obtain a license
+  #  when set to 'true'
+  sg_enterprise_modules_enabled: false
+  
+  # Run automatically sgadmin whenever neccessary 
+  update_sgconfig_on_change: true
+
+  # Restart podsautomatically when their configuration was changed
+  restart_pods_on_config_change: true
+  
+  # Search Guard can be run do not fail on forbidden mode. 
+  # With this mode enabled Search Guard filters all indices from a query a user does not have access to. 
+  # Thus not security exception is raised.
+  # See https://docs.search-guard.com/latest/kibana-plugin-installation#configuring-elasticsearch-enable-do-not-fail-on-forbidden
+  do_not_fail_on_forbidden: false
+
+  # Defines the service type for all elasticsearch outward-facing (non-discovery) services.
+  # This does not apply to Kibana.
+  # WARNING: Setting this to 'LoadBalancer' will probably expose elasticsearch to the outside/internet
+  serviceType: ClusterIP
+  #serviceType: NodePort
+  #serviceType: LoadBalancer
+
+  # Any extra or specific configuration that is needed can be added here.
+  # Will be added to all elasticsearch.yml files on all nodes
+  config:   
+    #http:
+    #  compression: false
+    #  cors:
+    #    enabled: false
+    #    allow-origin: "*"
+    #index.codec: best_compression
+  
+  # Configure additional users (maps to sg_internal_users.yml)
+  #users:
+  #  user1:
+  #    hash: ${envbc.SG_USER1_PWD}
+  #    backend_roles:
+  #      - beatsreader
+
+  # Configure additional rolemappings (maps to sg_roles_mapping.yml)
+  #rolesmapping:
+  #  sg_read_beats:
+  #    backend_roles:
+  #      - beatsreader
+
+  # Configure additional role (maps to sg_roles.yml)
+  #roles:
+  #  sg_read_beats:
+  #    cluster_permissions:
+  #      - SGS_CLUSTER_COMPOSITE_OPS_RO
+  #    index_permissions:
+  #      - index_patterns:
+  #          - "*beat*"
+  #        allowed_actions:
+  #          - SGS_READ
+
+  # If you want any plugins installed, give them here as a list. They will be
+  # passed to elasticsearch-plugin install -b {line here}
+  # Do not add the searchguard plugin here, because its already installed in the main image
+  plugins:
+    - analysis-icu
+
+# Client/ingest nodes can execute pre-processing pipelines, composed of
+# one or more ingest processors. Depending on the type of operations performed
+# by the ingest processors and the required resources, it may make sense to
+# have dedicated ingest nodes, that will only perform this specific task.
+client:
+  # For production we recommend at least 2 replicas
+  replicas: 1
+  # 'hard' means that pods will only be scheduled if there are enough nodes for them and that they will never end up on the same node. 
+  # 'soft' will do this "best effort"
+  # For production we recommend setting this to 'hard'
+  antiAffinity: "soft"
+  # For production we recommend to set this to at least 4g and adjust the memory limits and requests accordingly
+  heapSize: {{ sg_ik_heapSize }}
+  # More info on what this setting does is in the config map. Only change this
+  # if you set the cpu limit to over 1 full cpu.
+  processors: 1
+  labels: {}
+  annotations: {}
+  resources:
+    limits:
+      cpu: {{ sg_ik_cpu_limit }}
+      memory: {{ sg_ik_mem_limit }}
+    requests:
+      cpu: {{ sg_ik_cpu_req }}
+      memory: {{ sg_ik_mem_req }}
+
+# Data nodes hold the shards that contain the documents you have indexed. Data
+# nodes handle data related operations like CRUD, search, and aggregations.
+# These operations are I/O-, memory-, and CPU-intensive. It is important to
+# monitor these resources and to add more data nodes if they are overloaded.
+#
+# The main benefit of having dedicated data nodes is the separation of the
+# master and data roles.
+data:
+  # For production we recommend at least 2 replicas
+  replicas: 3
+  # 'hard' means that pods will only be scheduled if there are enough nodes for them and that they will never end up on the same node. 
+  # 'soft' will do this "best effort"
+  # For production we recommend setting this to 'hard'
+  antiAffinity: "soft"
+  storage: {{ data_size }}
+  storageClass: "local-storage"
+  # For production we recommend to set this to at least 8g and adjust the memory limits and requests accordingly
+  heapSize: {{ sg_ik_heapSize }}
+  # More info on what this setting does is in the config map. Only change this
+  # if you set the cpu limit to over 1 full cpu.
+  processors: 1
+  labels: {}
+  annotations: {}
+  resources:
+    limits:
+      cpu: {{ sg_ik_cpu_limit }}
+      memory: {{ sg_ik_mem_limit }}
+    requests:
+      cpu: {{ sg_ik_cpu_req }}
+      memory: {{ sg_ik_mem_req }}
+
+# The master node is responsible for lightweight cluster-wide actions such as
+# creating or deleting an index, tracking which nodes are part of the
+# cluster, and deciding which shards to allocate to which nodes. It is
+# important for cluster health to have a stable master node.
+master:
+  # For production we recommend at least 3 replicas. Number must be odd.
+  replicas: 3
+  # 'hard' means that pods will only be scheduled if there are enough nodes for them and that they will never end up on the same node. 
+  # 'soft' will do this "best effort"
+  # For production we recommend setting this to 'hard'
+  antiAffinity: "soft"
+  storage: {{ master_data_size }}
+  storageClass: "local-storage"
+  # For production we recommend to set this to at least 2g and adjust the memory limits and requests accordingly
+  heapSize: {{ sg_ik_heapSize }} 
+  # More info on what this setting does is in the config map. Only change this
+  # if you set the cpu limit to over 1 full cpu.
+  processors: 1
+  labels: {}
+  annotations: {}
+  resources:
+    limits:
+      cpu: {{ sg_ik_cpu_limit }}
+      memory: {{ sg_ik_mem_limit }}
+    requests:
+      cpu: {{ sg_ik_cpu_req }}
+      memory: {{ sg_ik_mem_req }}
+
+kibana:
+  # Incoming port of the service
+  httpPort: 5601
+  replicas: 1
+  # 'hard' means that pods will only be scheduled if there are enough nodes for them and that they will never end up on the same node. 
+  # 'soft' will do this "best effort"
+  # For production we recommend setting this to 'hard'
+  antiAffinity: "soft"
+  # Defines the service type for all Kibana outward-facing (non-discovery) services.
+  # WARNING: Setting this to 'LoadBalancer' will probably expose Kibana to the outside/internet
+  serviceType: ClusterIP
+  #serviceType: NodePort
+  #serviceType: LoadBalancer
+  # Additional config which will be appended to kibana.yml
+  config:
+    elasticsearch.requestHeadersWhitelist: ["sgtenant","authorization"]
+    # The authentication type, on of: 'basicauth', 'jwt', 'openid', 'saml', 'proxy', 'kerberos'
+    searchguard.auth.type: basicauth
+    # Disallow login for service users
+    searchguard.basicauth.forbidden_usernames: ["kibanaserver"]
+  labels: {}
+  annotations: {}
+  resources:
+    limits:
+      cpu: {{ sg_ik_kibana_cpu_limit }}
+      memory: {{ sg_ik_kibana_mem_limit }}
+    requests:
+      cpu: {{ sg_ik_kibana_cpu_req }}
+      memory: {{ sg_ik_kibana_mem_req }}
+
+# Incoming port of the service
+service:
+  httpPort: 9200
+  transportPort: 9300
+
+ingress:
+  ingressClass: {{ sg_ik_ingress_class }} 
+  kibanaHost: {{ sg_ik_kibana_domain }}
+
+# Kubernetes Role-based access control
+# https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+rbac:
+  create: true
+
+# Kubelet image pull policy
+# https://kubernetes.io/docs/concepts/containers/images/
+#pullPolicy: Always
+pullPolicy: IfNotPresent

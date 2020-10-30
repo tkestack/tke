@@ -21,10 +21,12 @@ package validation
 import (
 	"fmt"
 	"net"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/platform"
 
+	netutils "k8s.io/utils/net"
 	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	"tkestack.io/tke/pkg/platform/types"
@@ -54,7 +56,7 @@ func ValidatClusterSpec(spec *platform.ClusterSpec, fldPath *field.Path, phase p
 	allErrs = append(allErrs, ValidateCIDRs(spec, fldPath)...)
 	allErrs = append(allErrs, ValidateClusterProperty(spec, fldPath.Child("properties"))...)
 	allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
-	allErrs = append(allErrs, ValidateClusterFeature(&spec.Features, fldPath.Child("features"))...)
+	allErrs = append(allErrs, ValidateClusterFeature(spec, fldPath.Child("features"))...)
 
 	return allErrs
 }
@@ -72,33 +74,61 @@ func ValidateClusterSpecVersion(version string, fldPath *field.Path, phase platf
 // ValidateCIDRs validates clusterCIDR and serviceCIDR.
 func ValidateCIDRs(spec *platform.ClusterSpec, specPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+	var clusterCIDR, serviceCIDR *net.IPNet
+
+	checkFunc := func(path *field.Path, cidr string) {
+		cidrs := strings.Split(cidr, ",")
+		dualStackEnabled := spec.Features.IPv6DualStack
+		switch {
+		// if DualStack only valid one cidr or two cidrs with one of each IP family
+		case dualStackEnabled && len(cidrs) > 2:
+			allErrs = append(allErrs, field.Invalid(path, cidr, "only one CIDR allowed or a valid DualStack CIDR (e.g. 10.100.0.0/16,fde4:8dba:82e1::/48)"))
+		// if DualStack and two cidrs validate if there is at least one of each IP family
+		case dualStackEnabled && len(cidrs) == 2:
+			isDual, err := netutils.IsDualStackCIDRStrings(cidrs)
+			if err != nil || !isDual {
+				allErrs = append(allErrs, field.Invalid(path, cidr, "must be a valid DualStack CIDR (e.g. 10.100.0.0/16,fde4:8dba:82e1::/48)"))
+			}
+		// if not DualStack only one CIDR allowed
+		case !dualStackEnabled && len(cidrs) > 1:
+			allErrs = append(allErrs, field.Invalid(path, cidr, "only one CIDR allowed (e.g. 10.100.0.0/16 or fde4:8dba:82e1::/48)"))
+		// if we are here means that len(cidrs) == 1, we need to validate it
+		default:
+			_, cidrX, err := net.ParseCIDR(cidr)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(path, cidr, "must be a valid CIDR block (e.g. 10.100.0.0/16 or fde4:8dba:82e1::/48)"))
+			}
+			if path == specPath.Child("clusterCIDR") {
+				clusterCIDR = cidrX
+			} else {
+				serviceCIDR = cidrX
+			}
+		}
+	}
 
 	fldPath := specPath.Child("clusterCIDR")
 	cidr := spec.ClusterCIDR
-	var clusterCIDR *net.IPNet
 	if len(cidr) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath, ""))
+		allErrs = append(allErrs, field.Invalid(fldPath, cidr, "ClusterCIDR is empty string"))
 	} else {
-		var err error
-		_, clusterCIDR, err = net.ParseCIDR(cidr)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath, cidr, err.Error()))
-		}
+		checkFunc(fldPath, cidr)
 	}
 
 	fldPath = specPath.Child("serviceCIDR")
 	if spec.ServiceCIDR != nil {
-		cidr := *spec.ServiceCIDR
-		_, serviceCIDR, err := net.ParseCIDR(cidr)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath, cidr, err.Error()))
+		cidr = *spec.ServiceCIDR
+		if len(cidr) == 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath, cidr, "ServiceCIDR is empty string"))
 		} else {
-			if err := validation.IsSubNetOverlapped(clusterCIDR, serviceCIDR); err != nil {
-				allErrs = append(allErrs, field.Invalid(fldPath, cidr, err.Error()))
-			}
-			if _, err := ipallocator.GetIndexedIP(serviceCIDR, 10); err != nil {
-				allErrs = append(allErrs, field.Invalid(fldPath, cidr,
-					"must contains at least 10 ips, because kubeadm need the 10th ip"))
+			checkFunc(fldPath, cidr)
+			if clusterCIDR != nil && serviceCIDR != nil {
+				if err := validation.IsSubNetOverlapped(clusterCIDR, serviceCIDR); err != nil {
+					allErrs = append(allErrs, field.Invalid(fldPath, cidr, err.Error()))
+				}
+				if _, err := ipallocator.GetIndexedIP(serviceCIDR, 10); err != nil {
+					allErrs = append(allErrs, field.Invalid(fldPath, cidr,
+						"must contains at least 10 ips, because kubeadm need the 10th ip"))
+				}
 			}
 		}
 	}
@@ -160,10 +190,14 @@ func ValidateClusterMachines(machines []platform.ClusterMachine, fldPath *field.
 	return allErrs
 }
 
-func ValidateClusterFeature(feature *platform.ClusterFeature, fldPath *field.Path) field.ErrorList {
+func ValidateClusterFeature(spec *platform.ClusterSpec, fldPath *field.Path) field.ErrorList {
+	features := spec.Features
 	allErrs := field.ErrorList{}
-	if feature.CSIOperator != nil {
-		allErrs = append(allErrs, ValidateCSIOperator(feature.CSIOperator, fldPath.Child("csiOperator"))...)
+	if features.CSIOperator != nil {
+		allErrs = append(allErrs, ValidateCSIOperator(features.CSIOperator, fldPath.Child("csiOperator"))...)
+	}
+	if features.IPVS != nil {
+		allErrs = append(allErrs, ValidateIPVS(spec, features.IPVS, fldPath.Child("ipvs"))...)
 	}
 
 	return allErrs
@@ -171,4 +205,14 @@ func ValidateClusterFeature(feature *platform.ClusterFeature, fldPath *field.Pat
 
 func ValidateCSIOperator(csioperator *platform.CSIOperatorFeature, fldPath *field.Path) field.ErrorList {
 	return utilvalidation.ValidateEnum(csioperator.Version, fldPath.Child("version"), csioperatorimage.Versions())
+}
+
+func ValidateIPVS(spec *platform.ClusterSpec, ipvs *bool, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if *ipvs {
+		if spec.ServiceCIDR == nil {
+			allErrs = append(allErrs, field.Invalid(fldPath, ipvs, "ClusterCIDR is not allowed empty string when enable ipvs"))
+		}
+	}
+	return allErrs
 }

@@ -495,6 +495,194 @@
     },
     {
         "metadata": {
+            "creationTimestamp": null
+        },
+        "spec": {
+            "displayName": "AppFullAccess",
+            "tenantID": "default",
+            "category": "app",
+            "type": "default",
+            "scope": "",
+            "username": "",
+            "description": "该策略允许您管理平台租户应用编排资源",
+            "statement": {
+                "actions": [
+                    "*App*"
+                ],
+                "resources": [
+                    "*"
+                ],
+                "effect": "allow"
+            }
+        },
+        "status": {
+            "phase": "",
+            "users": null,
+            "groups": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "pol-{tenantID}-registry-basic",
+            "creationTimestamp": null
+        },
+        "spec": {
+            "displayName": "RegistryBasic",
+            "tenantID": "default",
+            "category": "common",
+            "type": "default",
+            "scope": "",
+            "username": "",
+            "description": "平台预设策略，允许创建、查看仓库，允许查看chart",
+            "statement": {
+                "actions": [
+                    "createChartgroup",
+                    "listChartgroups",
+                    "listCharts"
+                ],
+                "resources": [
+                    "*"
+                ],
+                "effect": "allow"
+            }
+        },
+        "status": {
+            "phase": "",
+            "users": null,
+            "groups": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "pol-{tenantID}-chartgroup-pull-fake",
+            "creationTimestamp": null
+        },
+        "spec": {
+            "displayName": "ChartGroupPullFake",
+            "tenantID": "default",
+            "category": "common",
+            "type": "default",
+            "scope": "",
+            "username": "",
+            "description": "平台预设策略，允许拉取仓库",
+            "statement": {
+                "actions": [
+                    "getChartgroup",
+                    "getChartgroupStatus",
+                    "listChartgroups"
+                ],
+                "resources": [
+                    "-"
+                ],
+                "effect": "allow"
+            }
+        },
+        "status": {
+            "phase": "",
+            "users": null,
+            "groups": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "pol-{tenantID}-chartgroup-full-fake",
+            "creationTimestamp": null
+        },
+        "spec": {
+            "displayName": "ChartGroupFullFake",
+            "tenantID": "default",
+            "category": "common",
+            "type": "default",
+            "scope": "",
+            "username": "",
+            "description": "平台预设策略，允许创建、修改、删除仓库",
+            "statement": {
+                "actions": [
+                    "*Chartgroup*"
+                ],
+                "resources": [
+                    "-"
+                ],
+                "effect": "allow"
+            }
+        },
+        "status": {
+            "phase": "",
+            "users": null,
+            "groups": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "pol-{tenantID}-chart-pull-fake",
+            "creationTimestamp": null
+        },
+        "spec": {
+            "displayName": "ChartPullFake",
+            "tenantID": "default",
+            "category": "common",
+            "type": "default",
+            "scope": "",
+            "username": "",
+            "description": "平台预设策略，允许拉取chart",
+            "statement": {
+                "actions": [
+                    "getChart",
+                    "getChartStatus",
+                    "listCharts",
+                    "listChartVersion"
+                ],
+                "resources": [
+                    "-"
+                ],
+                "effect": "allow"
+            }
+        },
+        "status": {
+            "phase": "",
+            "users": null,
+            "groups": null
+        }
+    },
+    {
+        "metadata": {
+            "name": "pol-{tenantID}-chart-full-fake",
+            "creationTimestamp": null
+        },
+        "spec": {
+            "displayName": "ChartFullFake",
+            "tenantID": "default",
+            "category": "common",
+            "type": "default",
+            "scope": "",
+            "username": "",
+            "description": "平台预设策略，允许拉取、推送、删除chart",
+            "statement": {
+                "actions": [
+                    "createChart",
+                    "deleteChart",
+                    "deleteChartVersion",
+                    "getChart",
+                    "getChartStatus",
+                    "listCharts",
+                    "listChartVersion",
+                    "updateChart",
+                    "updateChartStatus"
+                ],
+                "resources": [
+                    "-"
+                ],
+                "effect": "allow"
+            }
+        },
+        "status": {
+            "phase": "",
+            "users": null,
+            "groups": null
+        }
+    },
+    {
+        "metadata": {
             "name": "pol-{tenantID}-project-owner",
             "creationTimestamp": null
         },
@@ -508,6 +696,7 @@
             "description": "预设业务角色，允许管理业务和业务下的所有功能和资源",
             "statement": {
                 "actions": [
+                    "*App*",
                     "*Channel*",
                     "*Message*",
                     "*Messagerequest*",
@@ -524,6 +713,8 @@
                     "*configmap*",
                     "*controllerrevision*",
                     "*cronjob*",
+                    "*Cronhpa*",
+                    "*Cronhpas*",
                     "*daemonset*",
                     "*deployment*",
                     "*endpoint*",
@@ -579,9 +770,10 @@
                     "listRegistrynamespaces",
                     "listPrometheuses",
                     "listUsers",
+                    "listUserProjects",
                     "listPolicies",
                     "listClusters",
-                    "listLogcollectors",
+                    "listLogcollector*",
                     "create",
                     "get",
                     "list",
@@ -615,11 +807,12 @@
             "description": "预设业务角色，允许访问和管理所在业务下的所有功能和资源",
             "statement": {
                 "actions": [
+                    "*App*",
                     "*Channel*",
+                    "*Cronhpa*",
+                    "*Cronhpas*",
                     "*Message*",
                     "*Messagerequest*",
-                    "*Receiver*",
-                    "*Template*",
                     "createAlarmpolicy",
                     "createApply",
                     "createBinding",
@@ -669,7 +862,6 @@
                     "createTemplate",
                     "createVolumeattachment",
                     "deleteAlarmpolicy",
-                    "deleteChannel",
                     "deleteChart",
                     "deleteChartgroup",
                     "deleteConfigmap",
@@ -696,8 +888,6 @@
                     "deletePodsecuritypolicy",
                     "deletePodtemplate",
                     "deletePvcr",
-                    "deleteReceiver",
-                    "deleteReceivergroup",
                     "deleteRegistry",
                     "deleteRegistrynamespace",
                     "deleteReplicaset",
@@ -708,7 +898,6 @@
                     "deleteStatefulset",
                     "deleteStorageclass",
                     "deleteTapp",
-                    "deleteTemplate",
                     "deleteVolumeattachment",
                     "getAddon",
                     "getAlarmpolicy",
@@ -786,6 +975,7 @@
                     "listAlarmpolicies",
                     "listChannels",
                     "listChartgroups",
+                    "listChartVersion",
                     "listCharts",
                     "listClusters",
                     "listConfigmaps",
@@ -814,7 +1004,7 @@
                     "listLbcfbackendrecords",
                     "listLbcflbs",
                     "listLimitranges",
-                    "listLogcollectors",
+                    "listLogcollector*",
                     "listMessagerequests",
                     "listMessages",
                     "listMetrics",
@@ -867,10 +1057,9 @@
                     "listTapps",
                     "listTemplates",
                     "listUsers",
+                    "listUserProjects",
                     "listVolumeattachments",
                     "updateAlarmpolicy",
-                    "updateChannel",
-                    "updateChannelStatus",
                     "updateChart",
                     "updateChartStatus",
                     "updateChartgroup",
@@ -912,8 +1101,6 @@
                     "updatePodsecuritypolicy",
                     "updatePodtemplate",
                     "updatePvcr",
-                    "updateReceiver",
-                    "updateReceivergroup",
                     "updateRegistry",
                     "updateRegistrynamespace",
                     "updateRegistrynamespaceStatus",
@@ -933,7 +1120,6 @@
                     "updateStatefulsetStatus",
                     "updateStorageclass",
                     "updateTapp",
-                    "updateTemplate",
                     "updateVolumeattachment",
                     "create",
                     "get",
@@ -968,13 +1154,11 @@
             "description": "预设业务角色，仅能够查看业务下资源",
             "statement": {
                 "actions": [
-                    "*Channel*",
                     "*Message*",
                     "*Messagerequest*",
-                    "*Receiver*",
-                    "*Template*",
                     "getAddon",
                     "getAlarmpolicy",
+                    "getApp",
                     "getChannel",
                     "getChannelStatus",
                     "getChart",
@@ -983,6 +1167,7 @@
                     "getChartgroupStatus",
                     "getConfigmap",
                     "getControllerrevision",
+                    "getCronhpa",
                     "getCronjob",
                     "getCronjobStatus",
                     "getDaemonset",
@@ -1047,12 +1232,17 @@
                     "getVolumeattachment",
                     "listAddons",
                     "listAlarmpolicies",
+                    "listAppHistories",
+                    "listAppResources",
+                    "listApps",
                     "listChannels",
                     "listChartgroups",
+                    "listChartVersion",
                     "listCharts",
                     "listClusters",
                     "listConfigmaps",
                     "listControllerrevisions",
+                    "listCronhpas",
                     "listCronjobEvents",
                     "listCronjobs",
                     "listDaemonsetEvents",
@@ -1077,7 +1267,7 @@
                     "listLbcfbackendrecords",
                     "listLbcflbs",
                     "listLimitranges",
-                    "listLogcollectors",
+                    "listLogcollector*",
                     "listMessagerequests",
                     "listMessages",
                     "listMetrics",
@@ -1130,6 +1320,7 @@
                     "listTapps",
                     "listTemplates",
                     "listUsers",
+                    "listUserProjects",
                     "listVolumeattachments",
                     "get",
                     "list"
@@ -1800,6 +1991,7 @@
                     "listAlarmpolicies",
                     "listChannels",
                     "listChartgroups",
+                    "listChartVersion",
                     "listCharts",
                     "listConfigmaps",
                     "listControllerrevisions",

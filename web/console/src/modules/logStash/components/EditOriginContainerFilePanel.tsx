@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { FormPanel } from '@tencent/ff-component';
 import { bindActionCreators, FetchState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Icon, Text } from '@tencent/tea-component';
+import { Icon, Text, Form } from '@tencent/tea-component';
 
 import { InputField, LinkButton, SelectList } from '../../common/components';
 import { cloneDeep } from '../../common/utils/cloneDeep';
@@ -14,13 +14,20 @@ import { logModeList, ResourceListMapForPodLog } from '../constants/Config';
 import { router } from '../router';
 import { RootProps } from './LogStashApp';
 
+export interface PropTypes extends RootProps {
+  isEdit?: boolean; // 是否是编辑模式
+}
+
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
     dispatch
   });
 
-@connect(state => state, mapDispatchToProps)
-export class EditOriginContainerFilePanel extends React.Component<RootProps, {}> {
+@connect(
+  state => state,
+  mapDispatchToProps
+)
+export class EditOriginContainerFilePanel extends React.Component<PropTypes, {}> {
   render() {
     let { actions, logStashEdit, route, clusterList, logSelection, namespaceList } = this.props,
       {
@@ -55,22 +62,39 @@ export class EditOriginContainerFilePanel extends React.Component<RootProps, {}>
               })}
               style={{ display: 'inline-block' }}
             >
-              <SelectList
-                recordData={namespaceList}
-                className="tc-15-select "
-                valueField="namespace"
-                textField="namespace"
-                onSelect={value => {
-                  actions.editLogStash.selectContainerFileNamespace(value);
-                }}
-                name="Namespace"
-                value={containerFileNamespace}
-                disabled={ifCanUpdateContainerFile || namespaceList.data.recordCount === 0}
-                style={{
-                  width: '180px',
-                  marginRight: '5px'
-                }}
-              />
+              {this.props.isEdit ? (
+                <Form.Text
+                  style={{
+                    // width: '10px',
+                    marginRight: '5px'
+                  }}
+                >
+                  {containerFileNamespace}
+                </Form.Text>
+              ) : (
+                <SelectList
+                  recordData={namespaceList}
+                  className="tc-15-select "
+                  valueField="namespaceValue"
+                  textField="namespace"
+                  onSelect={value => {
+                    actions.editLogStash.selectContainerFileNamespace(value);
+                    actions.namespace.selectNamespace(value);
+                    // 兼容业务侧的处理
+                    if (window.location.href.includes('tkestack-project')) {
+                      let namespaceFound = namespaceList.data.records.find(item => item.namespaceValue === value);
+                      actions.cluster.selectClusterFromEditNamespace(namespaceFound.cluster);
+                    }
+                  }}
+                  name="Namespace"
+                  value={containerFileNamespace}
+                  disabled={ifCanUpdateContainerFile || namespaceList.data.recordCount === 0}
+                  style={{
+                    width: '180px',
+                    marginRight: '5px'
+                  }}
+                />
+              )}
             </div>
 
             <div

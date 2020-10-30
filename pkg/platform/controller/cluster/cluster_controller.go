@@ -25,6 +25,8 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/util/rand"
+
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,16 +44,20 @@ import (
 	"tkestack.io/tke/pkg/platform/controller/cluster/deletion"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 	"tkestack.io/tke/pkg/util/strategicpatch"
 )
 
-const (
-	conditionTypeHealthCheck = "HealthCheck"
-	failedHealthCheckReason  = "FailedHealthCheck"
+type ContextKey int
 
-	resyncInternal = 1 * time.Minute
+const (
+	KeyLister                ContextKey = iota
+	conditionTypeHealthCheck            = "HealthCheck"
+	failedHealthCheckReason             = "FailedHealthCheck"
+
+	resyncInternal = 5 * time.Minute
 )
 
 // Controller is responsible for performing actions dependent upon a cluster phase.
@@ -71,6 +77,9 @@ func NewController(
 	clusterInformer platformv1informer.ClusterInformer,
 	resyncPeriod time.Duration,
 	finalizerToken platformv1.FinalizerName) *Controller {
+
+	rand.Seed(time.Now().Unix())
+
 	c := &Controller{
 		queue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "cluster"),
 
@@ -126,6 +135,14 @@ func (c *Controller) enqueue(obj *platformv1.Cluster) {
 
 func (c *Controller) needsUpdate(old *platformv1.Cluster, new *platformv1.Cluster) bool {
 	if !reflect.DeepEqual(old.Spec, new.Spec) {
+		return true
+	}
+
+	if !reflect.DeepEqual(old.ObjectMeta.Annotations, new.ObjectMeta.Annotations) {
+		return true
+	}
+
+	if !reflect.DeepEqual(old.ObjectMeta.Labels, new.ObjectMeta.Labels) {
 		return true
 	}
 
@@ -225,13 +242,15 @@ func (c *Controller) syncCluster(key string) error {
 		return err
 	}
 
-	return c.reconcile(ctx, key, cluster)
+	valueCtx := context.WithValue(ctx, KeyLister, &c.lister)
+	return c.reconcile(valueCtx, key, cluster)
 }
 
 func (c *Controller) reconcile(ctx context.Context, key string, cluster *platformv1.Cluster) error {
 	var err error
 
 	c.ensureSyncCredentialClusterName(ctx, cluster)
+	c.ensureSyncClusterMachineNodeLabel(ctx, cluster)
 
 	switch cluster.Status.Phase {
 	case platformv1.ClusterInitializing:
@@ -303,14 +322,21 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 	clusterWrapper = c.checkHealth(ctx, clusterWrapper)
 	if err != nil {
 		// Update status, ignore failure
-		_, _ = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+		if clusterWrapper.IsCredentialChanged {
+			_, _ = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+		}
+
 		_, _ = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 		return err
 	}
-	clusterWrapper.ClusterCredential, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
-	if err != nil {
-		return err
+
+	if clusterWrapper.IsCredentialChanged {
+		clusterWrapper.ClusterCredential, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
 	}
+
 	clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 	if err != nil {
 		return err
@@ -330,7 +356,12 @@ func (c *Controller) ensureCreateClusterCredential(ctx context.Context, cluster 
 	credential := &platformv1.ClusterCredential{
 		TenantID:    cluster.Spec.TenantID,
 		ClusterName: cluster.Name,
+		ObjectMeta: metav1.ObjectMeta{
+			OwnerReferences: []metav1.OwnerReference{
+				*metav1.NewControllerRef(cluster, platformv1.SchemeGroupVersion.WithKind("Cluster"))},
+		},
 	}
+
 	credential, err = c.platformClient.ClusterCredentials().Create(ctx, credential, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
@@ -382,10 +413,16 @@ func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) 
 		return cluster
 	}
 
+	pseudo := time.Now().Add(time.Minute * time.Duration(rand.Intn(5)))
+
+	log.Infof("next heart beat time. now:%s pesudo:%s cls:%s", time.Now(), pseudo, cluster.Name)
+
 	healthCheckCondition := platformv1.ClusterCondition{
-		Type:   conditionTypeHealthCheck,
-		Status: platformv1.ConditionFalse,
+		Type:          conditionTypeHealthCheck,
+		Status:        platformv1.ConditionFalse,
+		LastProbeTime: metav1.NewTime(pseudo),
 	}
+
 	client, err := cluster.Clientset()
 	if err != nil {
 		cluster.Status.Phase = platformv1.ClusterFailed
@@ -414,4 +451,53 @@ func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) 
 		"phase", cluster.Status.Phase)
 
 	return cluster
+}
+
+func (c *Controller) ensureSyncClusterMachineNodeLabel(ctx context.Context, cluster *platformv1.Cluster) {
+
+	clusterWrapper, err := typesv1.GetCluster(ctx, c.platformClient, cluster)
+	if err != nil {
+		log.FromContext(ctx).Error(err, "sync ClusterMachine node label error")
+		return
+	}
+
+	client, err := clusterWrapper.Clientset()
+	if err != nil {
+		log.FromContext(ctx).Error(err, "sync ClusterMachine node label error")
+		return
+	}
+
+	for _, machine := range cluster.Spec.Machines {
+		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			node, err := client.CoreV1().Nodes().Get(ctx, machine.IP, metav1.GetOptions{})
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					return nil
+				}
+				return err
+			}
+
+			labels := node.GetLabels()
+			_, ok := labels[string(apiclient.LabelMachineIPV4)]
+			if ok {
+				return nil
+			}
+
+			oldNode := node.DeepCopy()
+			labels[string(apiclient.LabelMachineIPV4)] = machine.IP
+			node.SetLabels(labels)
+
+			patchBytes, err := strategicpatch.GetPatchBytes(oldNode, node)
+			if err != nil {
+				return fmt.Errorf("GetPatchBytes for node error: %w", err)
+			}
+
+			_, err = client.CoreV1().Nodes().Patch(ctx, node.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
+			return err
+		})
+
+		if err != nil {
+			log.FromContext(ctx).Error(err, "sync ClusterMachine node label error")
+		}
+	}
 }

@@ -31,6 +31,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	utilsnet "k8s.io/utils/net"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
@@ -185,6 +186,12 @@ func ValidateMachineWithCluster(ctx context.Context, ip string, fldPath *field.P
 	for _, machine := range cluster.Spec.Machines {
 		if machine.IP == ip {
 			allErrs = append(allErrs, field.Duplicate(fldPath, ip))
+		}
+	}
+	cidrs := strings.Split(cluster.Spec.ClusterCIDR, ",")
+	for _, cidr := range cidrs {
+		if utilsnet.IsIPv6CIDRString(cidr) {
+			return allErrs
 		}
 	}
 

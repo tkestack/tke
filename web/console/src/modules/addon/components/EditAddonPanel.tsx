@@ -2,24 +2,24 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import { FormPanel } from '@tencent/ff-component';
-import {
-    bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid
-} from '@tencent/ff-redux';
+import { bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
-import {
-    Alert, Button, Card, Col, Icon, Radio, Row, Table, TableColumn, Text
-} from '@tencent/tea-component';
+import { Alert, Button, Card, Col, Icon, Radio, Row, Table, TableColumn, Text } from '@tencent/tea-component';
 import { radioable, scrollable, stylize } from '@tencent/tea-component/lib/table/addons';
 
 import { resourceConfig } from '../../../../config';
 import {
-    CreateResource, getWorkflowError, initValidator, Markdown, Resource, ResourceInfo, Validation
+  CreateResource,
+  getWorkflowError,
+  initValidator,
+  Markdown,
+  Resource,
+  ResourceInfo,
+  Validation
 } from '../../common';
 import { allActions } from '../actions';
 import { validatorActions } from '../actions/validatorActions';
-import {
-    AddonNameEnum, AddonNameMap, AddonNameMapToGenerateName, ResourceNameMap
-} from '../constants/Config';
+import { AddonNameEnum, AddonNameMap, AddonNameMapToGenerateName, ResourceNameMap } from '../constants/Config';
 import { Addon, AddonEditPeJsonYaml, AddonEditUniversalJsonYaml, EsInfo, PeEdit } from '../models';
 import { router } from '../router';
 import { RootProps } from './AddonApp';
@@ -270,7 +270,9 @@ export class EditAddonPanel extends React.Component<RootProps, EdtiAddonPanelSta
 
     //暂时去除不支持的e
 
-    finalAddonList = addon.filter(item => item.type !== 'EniIpamd' && item.type !== 'GameApp');
+    finalAddonList = addon.filter(
+      item => item.type !== 'EniIpamd' && item.type !== 'GameApp' && item.type !== 'Prometheus'
+    );
 
     return (
       <Row gap={0}>

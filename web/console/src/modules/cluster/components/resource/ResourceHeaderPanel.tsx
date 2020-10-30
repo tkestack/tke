@@ -79,7 +79,7 @@ export class ResourceHeaderPanel extends React.Component<RootProps, ResourceHead
           </React.Fragment>
         }
         right={
-          mode === 'list' && (
+          mode === 'list' && urlParams.resourceName !== 'hpa' && urlParams.resourceName !== 'cronhpa' && (
             <Button
               type="primary"
               onClick={() => {
@@ -97,7 +97,6 @@ export class ResourceHeaderPanel extends React.Component<RootProps, ResourceHead
   /** 生成面包屑导航 /集群/集群ID(集群名)/... */
   private _reduceBreadCrumbs(breads: any[]) {
     let { route, cluster } = this.props;
-
     let content: JSX.Element;
     content = (
       <ol className={'breadcrumb'}>

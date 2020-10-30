@@ -278,6 +278,7 @@ var map_ClusterSpec = map[string]string{
 	"clusterCredentialRef": "ClusterCredentialRef for isolate sensitive information. If not specified, cluster controller will create one; If specified, provider must make sure is valid.",
 	"etcd":                 "Etcd holds configuration for etcd.",
 	"upgrade":              "Upgrade control upgrade process.",
+	"hostnameAsNodename":   "If true will use hostname as nodename, if false will use machine IP as nodename.",
 }
 
 func (ClusterSpec) SwaggerDoc() map[string]string {
@@ -750,6 +751,7 @@ var map_PrometheusSpec = map[string]string{
 	"resources":           "Resources is the resource request and limit for prometheus",
 	"runOnMaster":         "RunOnMaster indicates whether to add master Affinity for all monitor components or not",
 	"alertRepeatInterval": "AlertRepeatInterval indicates repeat interval of alerts",
+	"withNPD":             "WithNPD indicates whether to deploy node-problem-detector or not",
 }
 
 func (PrometheusSpec) SwaggerDoc() map[string]string {

@@ -400,15 +400,15 @@ export const validateActions = {
     };
   },
 
-  _validateIssueUrl(issueUrl: string, authType?: string) {
+  _validateIssuerUrl(issuerUrl: string, authType?: string) {
     let status = 0,
       message = '';
 
-    //验证IssueUrl
+    //验证IssuerUrl
     if (authType === 'oidc') {
-      if (!issueUrl) {
+      if (!issuerUrl) {
         status = 2;
-        message = 'IssueUrl不能为空';
+        message = 'IssuerUrl不能为空';
       } else {
         status = 1;
         message = '';
@@ -421,10 +421,10 @@ export const validateActions = {
     return { status, message };
   },
 
-  validateIssueUrl(issueUrl?: string, authType?: string) {
+  validateIssuerUrl(issuerUrl?: string, authType?: string) {
     return dispatch => {
-      const v_issueURL = validateActions._validateIssueUrl(issueUrl, authType);
-      dispatch(installerActions.updateEdit({ v_issueURL }));
+      const v_issuerURL = validateActions._validateIssuerUrl(issuerUrl, authType);
+      dispatch(installerActions.updateEdit({ v_issuerURL }));
     };
   },
 
@@ -486,7 +486,7 @@ export const validateActions = {
 
   _validateStep4(editState: EditState) {
     let result =
-      validateActions._validateIssueUrl(editState.issueURL, editState.authType).status === 1 &&
+      validateActions._validateIssuerUrl(editState.issuerURL, editState.authType).status === 1 &&
       validateActions._validateClientID(editState.clientID, editState.authType).status === 1 &&
       validateActions._validateCaCert(editState.caCert, editState.authType).status === 1;
 
@@ -495,11 +495,11 @@ export const validateActions = {
 
   validateStep4(editState: EditState) {
     return dispatch => {
-      const v_issueURL = validateActions._validateIssueUrl(editState.issueURL, editState.authType),
+      const v_issuerURL = validateActions._validateIssuerUrl(editState.issuerURL, editState.authType),
         v_clientID = validateActions._validateClientID(editState.clientID, editState.authType),
         v_caCert = validateActions._validateCaCert(editState.caCert, editState.authType);
 
-      dispatch(installerActions.updateEdit({ v_issueURL, v_clientID, v_caCert }));
+      dispatch(installerActions.updateEdit({ v_issuerURL, v_clientID, v_caCert }));
     };
   },
 
@@ -701,14 +701,8 @@ export const validateActions = {
     if (editState.openAudit) {
       result =
         validateActions._validateESUrl(editState.auditEsUrl, 'es').status === 1 &&
-        validateActions._validateESUsername(
-          editState.auditEsUsername,
-          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
-        ).status === 1 &&
-        validateActions._validateESPassword(
-          editState.auditEsPassword,
-          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
-        ).status === 1;
+        validateActions._validateESUsername(editState.auditEsUsername, 'es').status === 1 &&
+        validateActions._validateESPassword(editState.auditEsPassword, 'es').status === 1;
     }
 
     return result;
@@ -717,14 +711,8 @@ export const validateActions = {
   validateStep6(editState: EditState) {
     return dispatch => {
       const v_auditEsUrl = validateActions._validateESUrl(editState.auditEsUrl, 'es'),
-        v_auditEsUsername = validateActions._validateESUsername(
-          editState.auditEsUsername,
-          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
-        ),
-        v_auditEsPassword = validateActions._validateESPassword(
-          editState.auditEsPassword,
-          editState.auditEsUsername || editState.auditEsPassword ? 'es' : null
-        );
+        v_auditEsUsername = validateActions._validateESUsername(editState.auditEsUsername, 'es'),
+        v_auditEsPassword = validateActions._validateESPassword(editState.auditEsPassword, 'es');
 
       dispatch(
         installerActions.updateEdit({
@@ -770,8 +758,8 @@ export const validateActions = {
     //验证ES用户名
     if (monitorType === 'es') {
       if (!esUsername) {
-        status = 2;
-        message = 'ES用户名不能为空';
+        status = 1;
+        message = '';
       } else {
         status = 1;
         message = '';
@@ -797,8 +785,8 @@ export const validateActions = {
     //验证ES密码
     if (monitorType === 'es') {
       if (!esPassword) {
-        status = 2;
-        message = 'ES密码不能为空';
+        status = 1;
+        message = '';
       } else {
         status = 1;
         message = '';

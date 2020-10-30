@@ -1,8 +1,8 @@
-## Volume-Decorator说明
+# Volume-Decorator说明
 
-### 组件介绍 
+## 组件介绍 
 
-是为Kubernetes volume(PVC)维护更多运行时信息的控制器，例如应用程序身份，实际使用情况等。
+是为 Kubernetes volume(PVC) 维护更多运行时信息的控制器，例如应用程序身份，实际使用情况等。
 
 ### Volume-Decorator特点
 

@@ -26,6 +26,8 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/util/ssh"
 	"tkestack.io/tke/pkg/util/template"
+
+	installerconstants "tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 )
 
 const (
@@ -40,8 +42,8 @@ clusters:
 users:
   - name: admin-cert
     user:
-      client-certificate: {{.AdminCertFile}}
-      client-key: {{.AdminKeyFile}}
+      client-certificate: {{.WebhookCertFile}}
+      client-key: {{.WebhookKeyFile}}
 current-context: tke
 contexts:
 - context:
@@ -53,13 +55,14 @@ contexts:
 
 type Option struct {
 	AuthzWebhookEndpoint string
+	IsGlobalCluster      bool
 }
 
 func Install(s ssh.Interface, option *Option) error {
 	authzWebhookConfig, err := template.ParseString(authzWebhookConfig, map[string]interface{}{
 		"AuthzEndpoint": option.AuthzWebhookEndpoint,
-		"AdminCertFile": constants.AdminCertFile,
-		"AdminKeyFile":  constants.AdminKeyFile,
+		"WebhookCertFile": constants.WebhookCertFile,
+		"WebhookKeyFile":  constants.WebhookKeyFile,
 	})
 	if err != nil {
 		return errors.Wrap(err, "parse authzWebhookConfig error")
@@ -69,15 +72,23 @@ func Install(s ssh.Interface, option *Option) error {
 	if err != nil {
 		return err
 	}
-
-	adminCertData, _ := ioutil.ReadFile(constants.AppAdminCertFile)
-	err = s.WriteFile(bytes.NewReader(adminCertData), constants.AdminCertFile)
+	basePath := constants.AppCertDir
+	if option.IsGlobalCluster {
+		basePath = installerconstants.DataDir
+	}
+	webhookCertData, err := ioutil.ReadFile(basePath + constants.WebhookCertName)
 	if err != nil {
 		return err
 	}
-
-	adminKeyData, _ := ioutil.ReadFile(constants.AppAdminKeyFile)
-	err = s.WriteFile(bytes.NewReader(adminKeyData), constants.AdminKeyFile)
+	err = s.WriteFile(bytes.NewReader(webhookCertData), constants.WebhookCertFile)
+	if err != nil {
+		return err
+	}
+	webhookKeyData, err := ioutil.ReadFile(basePath + constants.WebhookKeyName)
+	if err != nil {
+		return err
+	}
+	err = s.WriteFile(bytes.NewReader(webhookKeyData), constants.WebhookKeyFile)
 	if err != nil {
 		return err
 	}

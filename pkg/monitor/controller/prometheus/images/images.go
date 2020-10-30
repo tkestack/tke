@@ -40,6 +40,8 @@ type Components struct {
 	PrometheusOperatorService        containerregistry.Image
 	PrometheusConfigReloaderWorkload containerregistry.Image
 	PrometheusBeatWorkLoad           containerregistry.Image
+	NodeProblemDetector              containerregistry.Image
+	PrometheusAdapter                containerregistry.Image
 }
 
 func (c Components) Get(name string) *containerregistry.Image {
@@ -63,6 +65,8 @@ var versionMap = map[string]Components{
 		PrometheusOperatorService:        containerregistry.Image{Name: "prometheus-operator", Tag: "v0.31.1"},
 		PrometheusConfigReloaderWorkload: containerregistry.Image{Name: "prometheus-config-reloader", Tag: "v0.31.1"},
 		PrometheusBeatWorkLoad:           containerregistry.Image{Name: "prometheusbeat", Tag: "6.4.1"},
+		NodeProblemDetector:              containerregistry.Image{Name: "node-problem-detector", Tag: "v0.8.2"},
+		PrometheusAdapter:                containerregistry.Image{Name: "k8s-prometheus-adapter", Tag: "4c67353"},
 	},
 }
 

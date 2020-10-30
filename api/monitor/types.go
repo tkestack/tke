@@ -78,6 +78,8 @@ type PrometheusSpec struct {
 	RunOnMaster bool
 	// +optional
 	AlertRepeatInterval string
+	// +optional
+	WithNPD bool
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.
@@ -132,6 +134,14 @@ const (
 	AddonPhaseUnknown AddonPhase = "Unknown"
 )
 
+type OverviewProjectStatus int32
+
+const (
+	OverviewProjectStatusNotFound OverviewProjectStatus = 0
+	OverviewProjectStatusError    OverviewProjectStatus = -1
+	OverviewProjectStatusDisable  OverviewProjectStatus = -2
+)
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:onlyVerbs=create
@@ -183,6 +193,69 @@ type MetricQueryCondition struct {
 	Key   string
 	Expr  string
 	Value string
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:onlyVerbs=create
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterOverview defines the structure for clusters' overview data request and result.
+type ClusterOverview struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ObjectMeta
+	// +optional
+	Result *ClusterOverviewResult
+}
+
+type ClusterOverviewResult struct {
+	ClusterCount     int32
+	ClusterAbnormal  int32
+	ProjectCount     int32
+	ProjectAbnormal  int32
+	NodeCount        int32
+	NodeAbnormal     int32
+	WorkloadCount    int32
+	WorkloadAbnormal int32
+	CPUCapacity      float64
+	CPUAllocatable   float64
+	MemCapacity      int64
+	MemAllocatable   int64
+	PodCount         int32
+	Clusters         []*ClusterStatistic
+}
+
+type ClusterStatistic struct {
+	ClusterID                string
+	ClusterDisplayName       string
+	TenantID                 string
+	ClusterPhase             string
+	NodeCount                int32
+	NodeAbnormal             int32
+	WorkloadCount            int32
+	WorkloadAbnormal         int32
+	HasMetricServer          bool
+	CPUUsed                  float64
+	CPURequest               float64
+	CPULimit                 float64
+	CPUCapacity              float64
+	CPUAllocatable           float64
+	CPURequestRate           string
+	CPUAllocatableRate       string
+	CPUUsage                 string
+	MemUsed                  int64
+	MemRequest               int64
+	MemLimit                 int64
+	MemCapacity              int64
+	MemAllocatable           int64
+	MemRequestRate           string
+	MemAllocatableRate       string
+	MemUsage                 string
+	PodCount                 int32
+	SchedulerHealthy         bool
+	ControllerManagerHealthy bool
+	EtcdHealthy              bool
 }
 
 // +genclient

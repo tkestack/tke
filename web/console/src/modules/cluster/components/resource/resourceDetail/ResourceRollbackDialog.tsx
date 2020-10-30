@@ -16,7 +16,7 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class ResourceRollbackDialog extends React.Component<RootProps, {}> {
   render() {
-    let { actions, route, subRoot, region } = this.props,
+    let { actions, route, subRoot, region, clusterVersion } = this.props,
       { resourceInfo, resourceDetailState } = subRoot,
       { rollbackResourceFlow, rsSelection } = resourceDetailState;
 
@@ -40,7 +40,8 @@ export class ResourceRollbackDialog extends React.Component<RootProps, {}> {
       namespace: reduceNs(route.queries['np']),
       clusterId: route.queries['clusterId'],
       resourceIns,
-      jsonData: JSON.stringify(jsonData)
+      jsonData: JSON.stringify(jsonData),
+      clusterVersion
     };
 
     return (

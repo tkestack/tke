@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -69,6 +70,14 @@ func GetCluster(ctx context.Context, platformClient internalversion.PlatformInte
 			return nil, fmt.Errorf("get cluster's credential error: %w", err)
 		}
 		result.ClusterCredential = clusterCredential
+	} else if platformClient != nil {
+		clusterCredentials, err := platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fmt.Sprintf("clusterName=%s", cluster.Name)})
+		if err != nil {
+			return nil, fmt.Errorf("get cluster's credential error: %w", err)
+		}
+		if clusterCredentials != nil && clusterCredentials.Items != nil && len(clusterCredentials.Items) > 0 {
+			result.ClusterCredential = &clusterCredentials.Items[0]
+		}
 	}
 
 	return result, nil
@@ -162,7 +171,7 @@ func (c *Cluster) RESTConfigForClientX509(config *rest.Config, clientCertData []
 func (c *Cluster) HostForBootstrap() (string, error) {
 	for _, one := range c.Status.Addresses {
 		if one.Type == platform.AddressReal {
-			return fmt.Sprintf("%s:%d", one.Host, one.Port), nil
+			return net.JoinHostPort(one.Host, fmt.Sprintf("%d", one.Port)), nil
 		}
 	}
 

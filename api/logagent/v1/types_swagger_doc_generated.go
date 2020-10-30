@@ -102,12 +102,12 @@ func (LogFileContent) SwaggerDoc() map[string]string {
 	return map_LogFileContent
 }
 
-var map_LogFileDownload = map[string]string{
-	"": "LogFileDownload",
+var map_LogFileProxyOptions = map[string]string{
+	"": "LogFileProxyOptions is the query options to a kube-apiserver proxy call for LogFile requests.",
 }
 
-func (LogFileDownload) SwaggerDoc() map[string]string {
-	return map_LogFileDownload
+func (LogFileProxyOptions) SwaggerDoc() map[string]string {
+	return map_LogFileProxyOptions
 }
 
 var map_LogFileTree = map[string]string{

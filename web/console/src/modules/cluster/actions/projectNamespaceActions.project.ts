@@ -94,6 +94,7 @@ const restActions = {
         payload: project
       });
       let { mode, type, resourceName } = urlParams;
+
       router.navigate(
         mode && type && resourceName ? urlParams : { mode: 'list', type: 'namespace', resourceName: 'np' },
         Object.assign({}, route.queries, {
@@ -101,7 +102,7 @@ const restActions = {
         })
       );
       setProjectName(project);
-      dispatch(projectNamespaceActions.applyFilter({ specificName: project }));
+      resourceName !== 'hpa' && dispatch(projectNamespaceActions.applyFilter({ specificName: project }));
     };
   },
 

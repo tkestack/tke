@@ -22,6 +22,13 @@ export const createICAction = {
         type: ActionType.IC_FetchK8SVersion,
         payload: response
       });
+
+      if (response.length) {
+        dispatch({
+          type: ActionType.IC_K8SVersion,
+          payload: response[0].value
+        });
+      }
     };
   },
 
@@ -64,6 +71,13 @@ export const createICAction = {
     return {
       type: ActionType.v_IC_Gpu,
       payload: gpu
+    };
+  },
+
+  useMerticsServer: (merticsServer: boolean): ReduxAction<boolean> => {
+    return {
+      type: ActionType.v_IC_Mertics_server,
+      payload: merticsServer
     };
   },
 

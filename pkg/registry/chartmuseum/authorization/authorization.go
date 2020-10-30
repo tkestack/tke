@@ -19,13 +19,18 @@
 package authorization
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	restclient "k8s.io/client-go/rest"
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
+	registryv1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	authorizationutil "tkestack.io/tke/pkg/registry/util/authorization"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -34,6 +39,7 @@ type Options struct {
 	AdminUsername  string
 	ExternalScheme string
 	LoopbackConfig *restclient.Config
+	Authorizer     authorizer.Authorizer
 }
 
 // WithAuthorization creates an http handler that tries to authorized requests
@@ -43,12 +49,16 @@ func WithAuthorization(handler http.Handler, opts *Options) (http.Handler, error
 	if err != nil {
 		return nil, err
 	}
+	if opts.Authorizer == nil {
+		return nil, fmt.Errorf("chartmuseum authorizer is nil")
+	}
 
 	authorizationHandler := &authorization{
 		registryClient: registryClient,
 		nextHandler:    handler,
 		adminUsername:  opts.AdminUsername,
 		externalScheme: opts.ExternalScheme,
+		authorizer:     opts.Authorizer,
 	}
 	router := mux.NewRouter()
 	router.HandleFunc("/chart/{tenantID}/{chartGroup}/index.yaml", authorizationHandler.index).Methods(http.MethodGet)
@@ -70,13 +80,53 @@ type authorization struct {
 	nextHandler    http.Handler
 	adminUsername  string
 	externalScheme string
+	authorizer     authorizer.Authorizer
 }
 
 func (a *authorization) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	a.router.ServeHTTP(w, req)
+}
+
+func (a *authorization) isAdmin(w http.ResponseWriter, req *http.Request) bool {
 	username, tenantID := authentication.UsernameAndTenantID(req.Context())
 	if tenantID == "" && username != "" && username == a.adminUsername {
-		a.nextHandler.ServeHTTP(w, req)
-		return
+		return true
 	}
-	a.router.ServeHTTP(w, req)
+	return false
+}
+
+// AuthorizeForChart check if chart resource is authorized
+func AuthorizeForChart(w http.ResponseWriter, req *http.Request, authzer authorizer.Authorizer, verb string, cg registryv1.ChartGroup, chartName string) (passed bool, err error) {
+	switch verb {
+	case "get":
+		{
+			if cg.Spec.Visibility == registryv1.VisibilityPublic {
+				return true, nil
+			}
+			break
+		}
+	}
+	u, exist := genericapirequest.UserFrom(req.Context())
+	if !exist || u == nil {
+		return false, fmt.Errorf("empty user info, not authenticated")
+	}
+	return authorizationutil.AuthorizeForChart(req.Context(), u, authzer, verb, cg, chartName)
+}
+
+// AuthorizeForChartGroup check if chartgroup resource is authorized
+func AuthorizeForChartGroup(w http.ResponseWriter, req *http.Request, authzer authorizer.Authorizer, verb string, cg registryv1.ChartGroup) (passed bool, err error) {
+	switch verb {
+	case "get":
+		{
+			if cg.Spec.Visibility == registryv1.VisibilityPublic {
+				return true, nil
+			}
+			break
+		}
+	}
+	u, exist := genericapirequest.UserFrom(req.Context())
+	if !exist || u == nil {
+		return false, fmt.Errorf("empty user info, not authenticated")
+	}
+	return authorizationutil.AuthorizeForChartGroup(req.Context(), u, authzer, verb, cg)
 }

@@ -43,7 +43,7 @@ export class CreateChartPanel extends React.Component<RootProps, any> {
                     size: 'm',
                     placeholder: t('请输入 ChartGroup，不超过 63 个字符'),
                     value: this.props.chartCreation.name,
-                    onChange: value => this.props.actions.chart.inputChartName(value)
+                    onChange: value => this.props.actions.charts.inputChartName(value)
                   }}
                 />
                 <FormPanel.Item label={t('描述')}>
@@ -51,7 +51,7 @@ export class CreateChartPanel extends React.Component<RootProps, any> {
                     multiline
                     placeholder="请输入该 ChartGroup 的描述信息"
                     value={this.props.chartCreation.displayName}
-                    onChange={value => this.props.actions.chart.inputChartDesc(value)}
+                    onChange={value => this.props.actions.charts.inputChartDesc(value)}
                   />
                 </FormPanel.Item>
                 <FormPanel.Item label={t('权限类型')}>
@@ -61,7 +61,7 @@ export class CreateChartPanel extends React.Component<RootProps, any> {
                       { value: 'Private', text: t('私有') }
                     ]}
                     value={this.props.chartCreation.visibility}
-                    onChange={value => this.props.actions.chart.selectChartVisibility(value)}
+                    onChange={value => this.props.actions.charts.selectChartVisibility(value)}
                   />
                 </FormPanel.Item>
               </FormPanel>
@@ -71,8 +71,8 @@ export class CreateChartPanel extends React.Component<RootProps, any> {
                   disabled={this.props.chartCreation.v_name.status !== 1}
                   onClick={() => {
                     if (this.props.chartCreation.v_name.status === 1) {
-                      this.props.actions.chart.createChart.start([this.props.chartCreation]);
-                      this.props.actions.chart.createChart.perform();
+                      this.props.actions.charts.createChart.start([this.props.chartCreation]);
+                      this.props.actions.charts.createChart.perform();
                     }
                   }}
                 >
@@ -97,7 +97,7 @@ export class CreateChartPanel extends React.Component<RootProps, any> {
   private goBack() {
     let urlParams = router.resolve(this.props.route);
     router.navigate(Object.assign({}, urlParams, { sub: 'chart', mode: 'list' }), {});
-    this.props.actions.chart.clearEdition();
+    this.props.actions.charts.clearEdition();
   }
 
   private renderError() {

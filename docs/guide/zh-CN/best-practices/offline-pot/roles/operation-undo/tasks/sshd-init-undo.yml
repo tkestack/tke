@@ -1,0 +1,15 @@
+# recove sshd_config to init stat
+
+# get sshd_config backup file stat for undo
+- name: get sshd_config.bak stat
+  stat:
+    path: /etc/ssh/sshd_config.bak
+  register: sshd_config_recover
+  tags: sshd_config_recover
+
+# recover sshd_config
+- name: recover sshd_config
+  shell: \cp /etc/ssh/sshd_config.bak /etc/ssh/sshd_config
+  when: sshd_config_recover.stat.exists == True
+  notify: restart sshd
+  tags: sshd_config_recover

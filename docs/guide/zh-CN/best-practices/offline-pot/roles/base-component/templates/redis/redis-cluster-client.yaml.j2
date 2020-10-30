@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+  labels:
+    run: redis-cluster-client
+  name: redis-cluster-client
+  namespace: pot
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      run: redis-cluster-client
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        run: redis-cluster-client
+    spec:
+      containers:
+      - args:
+        - bash
+        env:
+        - name: REDIS_PASSWORD
+          value: {{ REDIS_PASS }}
+        image: {{ registry_domain }}/library/redis-cluster:{{ redis_cluster_client_img_tag }}
+        imagePullPolicy: IfNotPresent
+        name: redis-cluster-client
+        resources: {}
+        stdin: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        tty: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30

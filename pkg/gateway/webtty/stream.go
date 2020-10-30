@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/httpstream"
 	apimachinerycommand "k8s.io/apimachinery/pkg/util/remotecommand"
@@ -49,13 +50,14 @@ type streamExecutor struct {
 	protocols   []string
 	token       string
 	clusterName string
+	projectName string
 }
 
 // NewSPDYExecutorForTransports connects to the provided server using the given transport,
 // upgrades the response using the given upgrader to multiplexed bidirectional streams.
-func NewSPDYExecutorForTransports(transport http.RoundTripper, upgrader spdy.Upgrader, method string, url *url.URL, clusterName string, token string) (remotecommand.Executor, error) {
+func NewSPDYExecutorForTransports(transport http.RoundTripper, upgrader spdy.Upgrader, method string, url *url.URL, clusterName, projectName, token string) (remotecommand.Executor, error) {
 	return NewSPDYExecutorForProtocols(
-		transport, upgrader, method, url, clusterName, token,
+		transport, upgrader, method, url, clusterName, projectName, token,
 		apimachinerycommand.StreamProtocolV4Name,
 		apimachinerycommand.StreamProtocolV3Name,
 		apimachinerycommand.StreamProtocolV2Name,
@@ -66,7 +68,7 @@ func NewSPDYExecutorForTransports(transport http.RoundTripper, upgrader spdy.Upg
 // NewSPDYExecutorForProtocols connects to the provided server and upgrades the connection to
 // multiplexed bidirectional streams using only the provided protocols. Exposed for testing, most
 // callers should use NewSPDYExecutor or NewSPDYExecutorForTransports.
-func NewSPDYExecutorForProtocols(transport http.RoundTripper, upgrader spdy.Upgrader, method string, url *url.URL, clusterName string, token string, protocols ...string) (remotecommand.Executor, error) {
+func NewSPDYExecutorForProtocols(transport http.RoundTripper, upgrader spdy.Upgrader, method string, url *url.URL, clusterName, projectName, token string, protocols ...string) (remotecommand.Executor, error) {
 	return &streamExecutor{
 		upgrader:    upgrader,
 		transport:   transport,
@@ -75,6 +77,7 @@ func NewSPDYExecutorForProtocols(transport http.RoundTripper, upgrader spdy.Upgr
 		protocols:   protocols,
 		token:       token,
 		clusterName: clusterName,
+		projectName: projectName,
 	}, nil
 }
 
@@ -88,6 +91,10 @@ func (e *streamExecutor) Stream(options remotecommand.StreamOptions) error {
 
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", e.token))
 	req.Header.Add(filter.ClusterNameHeaderKey, e.clusterName)
+	project := strings.TrimSpace(e.projectName)
+	if len(project) > 0 {
+		req.Header.Add(filter.ProjectNameHeaderKey, project)
+	}
 
 	conn, protocol, err := spdy.Negotiate(
 		e.upgrader,

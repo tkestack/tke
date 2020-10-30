@@ -30,6 +30,105 @@ import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 // Package-wide variables from generator "generated".
 option go_package = "v1";
 
+// ClusterOverview defines the structure for querying clusters' overview data request and result.
+message ClusterOverview {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // +optional
+  optional ClusterOverviewResult result = 2;
+}
+
+message ClusterOverviewResult {
+  optional int32 clusterCount = 1;
+
+  optional int32 clusterAbnormal = 2;
+
+  optional int32 projectCount = 3;
+
+  optional int32 projectAbnormal = 4;
+
+  optional int32 nodeCount = 5;
+
+  optional int32 nodeAbnormal = 6;
+
+  optional int32 workloadCount = 7;
+
+  optional int32 workloadAbnormal = 8;
+
+  optional double cpuCapacity = 9;
+
+  optional double cpuAllocatable = 10;
+
+  optional int64 memCapacity = 11;
+
+  optional int64 memAllocatable = 12;
+
+  optional int32 podCount = 13;
+
+  repeated ClusterStatistic clusters = 14;
+}
+
+message ClusterStatistic {
+  optional string clusterID = 1;
+
+  optional string clusterDisplayName = 2;
+
+  optional string tenantID = 3;
+
+  optional string clusterPhase = 4;
+
+  optional int32 nodeCount = 5;
+
+  optional int32 nodeAbnormal = 6;
+
+  optional int32 workloadCount = 7;
+
+  optional int32 workloadAbnormal = 8;
+
+  optional bool hasMetricServer = 9;
+
+  optional double cpuUsed = 10;
+
+  optional double cpuRequest = 11;
+
+  optional double cpuLimit = 12;
+
+  optional double cpuCapacity = 13;
+
+  optional double cpuAllocatable = 14;
+
+  optional string cpuRequestRate = 15;
+
+  optional string cpuAllocatableRate = 16;
+
+  optional string cpuUsage = 17;
+
+  optional int64 memUsed = 18;
+
+  optional int64 memRequest = 19;
+
+  optional int64 memLimit = 20;
+
+  optional int64 memCapacity = 21;
+
+  optional int64 memAllocatable = 22;
+
+  optional string memRequestRate = 23;
+
+  optional string memAllocatableRate = 24;
+
+  optional string memUsage = 25;
+
+  optional int32 podCount = 26;
+
+  optional bool schedulerHealthy = 27;
+
+  optional bool controllerManagerHealthy = 28;
+
+  optional bool etcdHealthy = 29;
+}
+
 // ConfigMap holds configuration data for tke to consume.
 message ConfigMap {
   // +optional
@@ -174,6 +273,10 @@ message PrometheusSpec {
   // +optional
   // AlertRepeatInterval indicates repeat interval of alerts
   optional string alertRepeatInterval = 9;
+
+  // +optional
+  // WithNPD indicates whether to deploy node-problem-detector or not
+  optional bool withNPD = 10;
 }
 
 // PrometheusStatus is information about the current status of a Prometheus.

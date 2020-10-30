@@ -1,0 +1,138 @@
+# deploy kafka and remove kafka
+
+# set facts
+- name: set deploy_kafka facts
+  set_fact:
+    deploy_kafka: "{{ deploy_kafka }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: kafka_init
+
+# create save kafka yaml and helms dir
+- name: create save kafka yaml and helms dir
+  shell: (ls /data/tke-yamls/kafka || mkdir -p /data/tke-yamls/kafka) && \
+         (ls /data/helms || mkdir -p /data/helms)
+  when: inventory_hostname == groups['masters'][0] and deploy_kafka == true
+  tags: kafka_init
+
+# create  kafka and zk data dir
+- name: create  kafka and zk data dir
+  shell: for i in `echo "{{ groups['logs'] }}"`; do \
+           if [ "{{ inventory_hostname }}" == "{{ groups['logs'][0] }}" ]; then \
+             mkdir -p "{{ kafka_data }}/data-0" && mkdir -p "{{ kafka_data }}/zkdata-0"; \
+           elif [ "{{ inventory_hostname }}" == "{{ groups['logs'][1] }}" ]; then \
+             mkdir -p "{{ kafka_data }}/data-1" && mkdir -p "{{ kafka_data }}/zkdata-1"; \
+           elif [ "{{ inventory_hostname }}" == "{{ groups['logs'][2] }}" ]; then \
+             mkdir -p "{{ kafka_data }}/data-2" && mkdir -p "{{ kafka_data }}/zkdata-2"; \
+           fi; \
+         done
+  when: inventory_hostname in groups['logs']
+  tags: kafka_init
+
+# copy kafka helms file to master node
+- name: copy kafka helms file to master node
+  copy:
+    src: helms/wx-kafka
+    dest: /data/helms/
+  when: inventory_hostname == groups['masters'][0] and deploy_kafka == true
+  tags: kafka_init
+
+# copy kafka manager helms file to master node
+- name: copy kafka helms file to master node
+  copy:
+    src: helms/wx-kafka-manager
+    dest: /data/helms/
+  when: inventory_hostname == groups['masters'][0] and deploy_kafka == true
+  tags: kafka_init
+
+# generate kafka zk yaml
+- name: generate kafka zk  yaml
+  template:
+    src: "{{ item.split(':')[0] }}"
+    dest: "{{ item.split(':')[1] }}"
+  with_items:
+    - 'templates/common/local-storage.yaml.j2:/data/tke-yamls/kafka/local-storage.yaml'
+    - 'templates/kafka/kafka-local-pv.yaml.j2:/data/tke-yamls/kafka/kafka-local-pv.yaml'
+    - 'templates/kafka/zk-local-pv.yaml.j2:/data/tke-yamls/kafka/zk-local-pv.yaml'
+    - 'templates/kafka/kafka_zk.yaml.j2:/data/helms/wx-kafka/values/{{ app_env_flag }}.yaml'
+    - 'templates/kafka/kafka_manager.yaml.j2:/data/helms/wx-kafka-manager/values/{{ app_env_flag }}.yaml'
+  when: inventory_hostname == groups['masters'][0] and deploy_kafka == true
+  tags: kafka_init
+
+# create save deploy kafka script dir
+- name: create save deploy kafka script dir
+  shell: mkdir -p /data/offline-pot-scripts
+  when: inventory_hostname == groups['masters'][0] and deploy_kafka == true
+  tags: kafka_init
+
+# generate deploy kafka script
+- name: generate deploy kafka script
+  template:
+    src: templates/common/base-component-tools.sh.j2
+    dest: /data/offline-pot-scripts/base-component-tools.sh
+    mode: '0755'
+  when: inventory_hostname == groups['masters'][0] and deploy_kafka == true
+  tags: kafka_init
+
+# get deploy kafka script stat
+- name: get deploy kafka script stat
+  stat:
+    path: '/data/offline-pot-scripts/base-component-tools.sh'
+  register: kafka_dpl_script
+  when: inventory_hostname == groups['masters'][0]
+  tags: deploy_kafka
+
+# deploy kafka 
+- name: deploy kafka 
+  shell: sh /data/offline-pot-scripts/base-component-tools.sh dpl_kafka
+  when: inventory_hostname == groups['masters'][0] and kafka_dpl_script.stat.exists == True
+  tags: deploy_kafka
+
+# get remove kafka script stat
+- name: get remove kafka script stat
+  stat:
+    path: '/data/offline-pot-scripts/base-component-tools.sh'
+  register: kafka_del_script
+  when: inventory_hostname == groups['masters'][0]
+  tags: remove_kafka
+
+# remove kafka 
+- name: remove kafka
+  shell: sh /data/offline-pot-scripts/base-component-tools.sh del_kafka
+  when: inventory_hostname == groups['masters'][0] and kafka_del_script.stat.exists == True
+  tags: remove_kafka
+
+# remove kafka and zk data 
+- name: remove kafka and zk data
+  shell: if [ `ls "{{ kafka_data }}" | wc -l` -gt 0 ] && [ `kubectl get pvc | grep kafka | wc -l` -eq 0 ];then \ 
+            rm -rf "{{ kafka_data }}"; \ 
+         fi
+  when: inventory_hostname in groups['logs']
+  tags: remove_kafka
+
+# set deploy_kafka facts for health check
+- name: set deploy_kafka facts for health check
+  set_fact:
+    deploy_kafka: "{{ deploy_kafka }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: kafka_health_check
+
+# get kafka deploy status
+- name: get kafka deploy status
+  shell: if [ `kubectl get pods -n pot|grep kafka |grep '1/1'|wc -l` -gt 0 ]; then echo "true"; else echo "false";fi
+  register: kafka_dpl_status
+  when: inventory_hostname == groups['masters'][0] and deploy_kafka == true
+  tags: kafka_health_check
+
+# kafka deploy success
+- name: kafka deploy success
+  debug:
+    msg: "Info: kafka deploy success."
+  when: inventory_hostname == groups['masters'][0] and deploy_kafka == true and kafka_dpl_status.stdout == "true"
+  tags: kafka_health_check
+
+# kafka deploy failed
+- name: kafka deploy failed
+  debug:
+    msg: "Warning: kafka deploy failed, please check!"
+  when: inventory_hostname == groups['masters'][0] and deploy_kafka == true and kafka_dpl_status.stdout == "false"
+  tags: kafka_health_check

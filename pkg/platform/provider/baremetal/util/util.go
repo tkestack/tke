@@ -19,11 +19,16 @@
 package util
 
 import (
+	"bytes"
+	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/rand"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	tkev1 "tkestack.io/tke/api/platform/v1"
+	v1 "tkestack.io/tke/pkg/platform/types/v1"
 )
 
 func GetMasterEndpoint(addresses []tkev1.ClusterAddress) (string, error) {
@@ -50,4 +55,39 @@ func GetMasterEndpoint(addresses []tkev1.ClusterAddress) (string, error) {
 	}
 
 	return fmt.Sprintf("https://%s:%d", address.Host, address.Port), nil
+}
+
+func ExcuteCustomizedHook(ctx context.Context, c *v1.Cluster, htype platformv1.HookType, machines []platformv1.ClusterMachine) error {
+	hook := c.Spec.Features.Hooks[htype]
+	if hook == "" {
+		return nil
+	}
+	var buffer bytes.Buffer
+	if clusterHook := strings.Contains(string(htype), "Cluster"); clusterHook {
+		for k, v := range c.GetAnnotations() {
+			lineStr := fmt.Sprintf("%s=%s ", k, v)
+			buffer.WriteString(lineStr)
+		}
+		for k, v := range c.GetLabels() {
+			lineStr := fmt.Sprintf("%s=%s ", k, v)
+			buffer.WriteString(lineStr)
+		}
+	}
+
+	cmd := strings.Split(hook, " ")[0]
+	hook = fmt.Sprintf("%s %s", hook, buffer.String())
+
+	for _, machine := range machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		machineSSH.Execf("chmod +x %s", cmd)
+		_, stderr, exit, err := machineSSH.Exec(hook)
+		if err != nil || exit != 0 {
+			return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", hook, exit, stderr, err)
+		}
+	}
+	return nil
 }

@@ -22,15 +22,20 @@ const fetchNamespaceActions = generateFetcherActionCreator({
       filter: { clusterId }
     } = namespaceQuery;
     let namespaceList = [];
-    projectNamespaceList.data.records.forEach(item => {
-      namespaceList.push({
-        id: uuid(),
-        name: item.metadata.name,
-        clusterVersion: item.spec.clusterVersion,
-        clusterId: item.spec.clusterVersion,
-        clusterDisplayName: item.spec.clusterDisplayName
+    projectNamespaceList.data.records
+      .filter(item => item.status.phase === 'Available')
+      .forEach(item => {
+        namespaceList.push({
+          id: uuid(),
+          name: item.metadata.name,
+          displayName: `${item.spec.namespace}(${item.spec.clusterName})`,
+          clusterVersion: item.spec.clusterVersion,
+          clusterId: item.spec.clusterVersion,
+          clusterDisplayName: item.spec.clusterDisplayName,
+          namespace: item.spec.namespace,
+          clusterName: item.spec.clusterName
+        });
       });
-    });
 
     return { recordCount: namespaceList.length, records: namespaceList };
   },
@@ -71,7 +76,7 @@ const restActions = {
 
       dispatch({
         type: ActionType.SelectNamespace,
-        payload: namespace
+        payload: finder.metadata.name
       });
 
       // 这里进行路由的更新，如果不需要命名空间的话，路由就不需要有np的信息

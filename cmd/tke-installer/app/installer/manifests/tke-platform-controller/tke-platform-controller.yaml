@@ -52,6 +52,8 @@ spec:
               mountPath: /app/provider/baremetal/manifests/gpu-manager/
             - name: keepalived-manifests-volume
               mountPath: /app/provider/baremetal/manifests/keepalived/
+            - name: metrics-server-manifests-volume
+              mountPath: /app/provider/baremetal/manifests/metrics-server/
           ports:
             - containerPort: 9445
           livenessProbe:
@@ -98,6 +100,9 @@ spec:
         - name: keepalived-manifests-volume
           configMap:
             name: keepalived-manifests
+        - name: metrics-server-manifests-volume
+          configMap:
+            name: metrics-server-manifests
 ---
 kind: ConfigMap
 apiVersion: v1

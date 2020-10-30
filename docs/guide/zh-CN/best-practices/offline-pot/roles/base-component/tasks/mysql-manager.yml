@@ -1,0 +1,150 @@
+# deploy mysql and remove mysql
+
+# set facts
+- name: set deploy_mysql facts
+  set_fact: deploy_mysql = "{{ deploy_mysql }}"
+  tags: mysql_mgr_init
+
+# create save mysql manager dir
+- name: create mysql manager dir
+  shell: ls /data/mysql-pkg || mkdir -p /data/mysql-pkg
+  when: deploy_mysql == 'true' and inventory_hostname in groups['db']
+  tags: mysql_mgr_init
+
+# copy mysql install pkg to mysql master node
+- name: copy mysql install pkg to mysql master node
+  copy:
+    src: "{{ dpl_dir }}-tgz/wx_mysql.tgz"
+    dest: /data/mysql-pkg/wx_mysql.tgz
+  when: deploy_mysql == 'true' and inventory_hostname == groups['db'][0]
+  tags: mysql_mgr_init
+
+# unzip mysql install pkg
+- name: unzip mysql install pkg
+  shell: (ls /data/mysql-pkg/wx_mysql.tgz && cd /data/mysql-pkg/ && tar -zxf wx_mysql.tgz) || \
+         (echo 'not has wx_mysql.tgz!cloud not deploy' && exit 1)
+  when: deploy_mysql == 'true' and inventory_hostname == groups['db'][0]
+  tags: mysql_mgr_init
+
+# copy deploy mysql master script to mysql master node
+- name: copy deploy mysql master script to mysql master node
+  template:
+    src: templates/mysql/mysql_master_deploy.sh.j2
+    dest: /data/mysql-pkg/master_deploy.sh
+    mode: '0755'
+  when: deploy_mysql == 'true' and inventory_hostname == groups['db'][0]
+  tags: mysql_mgr_init
+
+# copy deploy mysql slave script to mysql master node
+- name: copy deploy mysql slave script to mysql master node
+  template:
+    src: templates/mysql/mysql_slave_deploy.sh.j2
+    dest: /data/mysql-pkg/slave_deploy.sh
+    mode: '0755'
+  when: deploy_mysql == 'true' and inventory_hostname == groups['db'][0]
+  tags: mysql_mgr_init
+
+# get deploy mysql master script stat
+- name: get deploy mysql master script stat
+  stat:
+    path: /data/mysql-pkg/master_deploy.sh
+  register: mysql_master_deploy_script
+  when: inventory_hostname == groups['db'][0]
+  tags: deploy_mysql
+
+# deploy mysql master
+- name: deploy mysql master
+  shell: cd /data/mysql-pkg/ && sh master_deploy.sh
+  when: inventory_hostname == groups['db'][0] and mysql_master_deploy_script.stat.exists == True
+  tags: deploy_mysql
+
+# check mysql slave install pkg
+- name: check mysql slave install pkg
+  stat:
+    path: /data/mysql-pkg/wx_mysql_slave.tgz
+  register: mysql_slave_pkg
+  when: inventory_hostname == groups['db'][0]
+  tags: deploy_mysql
+
+# get save mysql slave pkg dir stat
+- name: get save mysql slave pkg dir stat
+  stat:
+    path: /data/mysql-pkg
+  register: mysql_pkg_dir
+  when: inventory_hostname == groups['db'][1]
+  tags: deploy_mysql
+
+# copy mysql slave pkg to mysql slave node
+- name: copy mysql slave pkg to mysql slave node
+  shell: sshpass -p '{{ ansible_ssh_pass }}' scp -P {{ ansible_port }} -oStrictHostKeyChecking=no \
+         /data/mysql-pkg/wx_mysql_slave.tgz {{ ansible_ssh_user }}@{{ groups['db'][1] }}:/data/mysql-pkg/wx_mysql_slave.tgz
+  when: inventory_hostname == groups['db'][0] and mysql_slave_pkg.stat.exists == True
+  tags: deploy_mysql
+
+# unzip mysql slave install pkg
+- name: unzip mysql slave install pkg
+  shell: (ls /data/mysql-pkg/wx_mysql_slave.tgz && cd /data/mysql-pkg/ && tar -zxf wx_mysql_slave.tgz \
+         ) || (echo 'not has wx_mysql_slave.tgz pkg,cloud not deploy!' && exit 1)
+  when: inventory_hostname == groups['db'][1] and mysql_pkg_dir.stat.exists == True and mysql_pkg_dir.stat.isdir
+  tags: deploy_mysql 
+
+# get deploy mysql slave script stat
+- name: get deploy mysql slave script stat
+  stat:
+    path: /data/mysql-pkg/slave_deploy.sh
+  register: mysql_slave_deploy_script
+  when: inventory_hostname == groups['db'][1]
+  tags: deploy_mysql
+
+# deploy mysql slave
+- name: deploy mysql slave
+  shell: cd /data/mysql-pkg/ && sh slave_deploy.sh
+  when: inventory_hostname == groups['db'][1] and mysql_slave_deploy_script.stat.exists == True
+  tags: deploy_mysql
+
+# get mysql data dir stat
+- name: get mysql data dir stat
+  stat:
+    path: "{{ MYSQL_DATADIR }}"
+  register: mysql_data_dir
+  when: inventory_hostname in groups['db']
+  tags: remove_mysql
+
+# generate remove mysql script 
+- name: generate remove mysql script
+  template:
+    src: templates/mysql/remove_mysql.sh.j2
+    dest: /data/mysql-pkg/remove_mysql.sh
+    mode: '0755'
+  when: inventory_hostname in groups['db'] and mysql_data_dir.stat.exists == True and mysql_data_dir.stat.isdir
+  tags: remove_mysql
+
+# remove mysql
+- name: remove mysql
+  shell: cd /data/mysql-pkg/ && sh remove_mysql.sh && cd /data/ && rm -rf /data/mysql-pkg/
+  when: inventory_hostname in groups['db'] and mysql_data_dir.stat.exists == True and mysql_data_dir.stat.isdir
+  tags: remove_mysql
+
+# set facts
+- name: set deploy_mysql facts for health check
+  set_fact: deploy_mysql = "{{ deploy_mysql }}"
+  tags: mysql_health_check
+
+# get mysql port  listen status
+- name: get mysql port listen status
+  shell: if [ `ss -nat -l | grep "{{ MYSQL_PORT }}" | wc -l` -eq 1 ]; then echo "true"; else echo "false";fi
+  register: mysql_listen_status
+  when: inventory_hostname in groups['db'] and deploy_mysql == 'true'
+  tags: mysql_health_check
+
+- name: mysql not health
+  debug:
+    msg: "Warning: {{ inventory_hostname }}'s mysql not health, please check!!"
+  when: inventory_hostname in groups['db'] and deploy_mysql == 'true' and mysql_listen_status.stdout == "false"
+  tags: mysql_health_check
+
+- name: mysql health 
+  debug:
+    msg: "Info: {{ inventory_hostname }}'s mysql health."
+  when: inventory_hostname in groups['db'] and deploy_mysql == 'true' and mysql_listen_status.stdout == "true"
+  tags: mysql_health_check

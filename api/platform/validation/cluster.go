@@ -21,6 +21,8 @@ package validation
 import (
 	"fmt"
 	"os"
+	"path"
+	"path/filepath"
 	"strings"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
@@ -174,10 +176,11 @@ func ValidateFiles(files []platform.File, fldPath *field.Path) field.ErrorList {
 		s, err := os.Stat(file.Src)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath, file.Src, err.Error()))
-		} else {
-			if !s.Mode().IsRegular() {
-				allErrs = append(allErrs, field.Invalid(fldPath, file.Src, "must be a regular file"))
-			}
+			continue
+		}
+		if !s.Mode().IsRegular() && !s.Mode().IsDir() {
+			allErrs = append(allErrs, field.Invalid(fldPath, file.Src, fmt.Sprintf("must be a regular file or directory")))
+			continue
 		}
 	}
 
@@ -192,21 +195,42 @@ func ValidateHooks(hooks map[platform.HookType]string, fldPath *field.Path, file
 		return allErrs
 	}
 
-	hookFiles := make(map[string]bool, len(files))
+	hookMap := make(map[string]bool)
+	filesMap := make(map[string]string)
+
 	for _, f := range files {
-		hookFiles[f.Dst] = true
+		s, _ := os.Stat(f.Src)
+		if s.Mode().IsRegular() {
+			hookMap[f.Dst] = true
+		} else {
+			filesMap[filepath.Clean(f.Dst)] = f.Src
+		}
 	}
 
 	for k, v := range hooks {
+		exist1, exist2 := true, true
 		fldPath := fldPath.Key(string(k))
 		allErrs = append(allErrs, utilvalidation.ValidateEnum(k, fldPath,
 			[]interface{}{
 				platform.HookPreInstall,
 				platform.HookPostInstall,
+				platform.HookPreUpgrade,
+				platform.HookPostUpgrade,
+				platform.HookPreClusterInstall,
+				platform.HookPostClusterInstall,
+				platform.HookPreClusterDelete,
+				platform.HookPostClusterUpgrade,
 			})...)
 
 		cmd := strings.Split(v, " ")[0]
-		if _, ok := hookFiles[cmd]; !ok {
+		if _, ok := hookMap[cmd]; !ok {
+			exist1 = false
+		}
+		_, err := os.Stat(path.Join(filesMap[filepath.Dir(cmd)], filepath.Base(cmd)))
+		if err != nil {
+			exist2 = false
+		}
+		if !exist1 && !exist2 {
 			allErrs = append(allErrs, field.Invalid(fldPath, cmd, fmt.Sprintf("hook file is not exists in %s", filesFldPath.String())))
 		}
 	}

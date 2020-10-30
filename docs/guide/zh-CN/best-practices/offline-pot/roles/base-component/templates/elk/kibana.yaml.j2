@@ -1,0 +1,159 @@
+---
+
+elasticsearchURL: "" # "http://elasticsearch-master:9200"
+elasticsearchHosts: "https://elasticsearch-master:9200"
+
+replicas: 1
+
+# Extra environment variables to append to this nodeGroup
+# This will be appended to the current 'env:' key. You can use any of the kubernetes env
+# syntax here
+extraEnvs: []
+#  - name: MY_ENVIRONMENT_VAR
+#    value: the_value_goes_here
+
+# A list of secrets and their paths to mount inside the pod
+# This is useful for mounting certificates for security and for mounting
+# the X-Pack license
+elasticsearchHosts: "https://elasticsearch-master:9200"
+
+extraEnvs:
+  - name: 'ELASTICSEARCH_USERNAME'
+    valueFrom:
+      secretKeyRef:
+        name: elastic-credentials
+        key: username
+  - name: 'ELASTICSEARCH_PASSWORD'
+    valueFrom:
+      secretKeyRef:
+        name: elastic-credentials
+        key: password
+  - name: 'KEY_PASS_PHRASE'
+    valueFrom:
+      secretKeyRef:
+        name: elastic-credentials
+        key: keypassphrase
+  - name: 'KIBANA_ENCRYPTION_KEY'
+    valueFrom:
+      secretKeyRef:
+        name: elastic-credentials
+        key: encryptionkey
+
+
+image: "{{ registry_domain }}/library/kibana"
+imageTag: "7.4.1"
+imagePullPolicy: "IfNotPresent"
+
+# additionals labels
+labels: {}
+
+podAnnotations: {}
+  # iam.amazonaws.com/role: es-cluster
+
+resources:
+  requests:
+    cpu: {{ kibana_request_cpu }}
+    memory: {{ kibana_request_mem }}
+  limits:
+    cpu: {{ kibana_limit_cpu }}
+    memory: {{ kibana_limit_mem }}
+
+protocol: https
+
+serverHost: "0.0.0.0"
+
+healthCheckPath: "/app/kibana"
+
+# Allows you to add any config files in /usr/share/kibana/config/
+# such as kibana.yml
+kibanaConfig:
+  kibana.yml: |
+    server.ssl:
+      enabled: true
+      key: /usr/share/kibana/config/certs/kibana-key.pem
+      certificate: /usr/share/kibana/config/certs/kibna-cert.pem
+      keyPassphrase: ${KEY_PASS_PHRASE}
+    xpack.security.encryptionKey: ${KIBANA_ENCRYPTION_KEY}
+    elasticsearch.ssl:
+      certificateAuthorities: /usr/share/kibana/config/certs/kibna-cert.pem
+      verificationMode: none
+
+secretMounts:
+  - name: elastic-certificate-pem
+    secretName: elastic-certificate-pem
+    path: /usr/share/kibana/config/certs
+# If Pod Security Policy in use it may be required to specify security context as well as service account
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  # readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+serviceAccount: ""
+
+# This is the PriorityClass settings as defined in
+# https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/#priorityclass
+priorityClassName: ""
+
+httpPort: 5601
+
+# This is the max unavailable setting for the pod disruption budget
+# The default value of 1 will make sure that kubernetes won't allow more than 1
+# of your pods to be unavailable during maintenance
+maxUnavailable: 1
+
+updateStrategy:
+  type: "Recreate"
+
+service:
+  type: ClusterIP
+  port: 5601
+  nodePort: ""
+  annotations: {}
+    # cloud.google.com/load-balancer-type: "Internal"
+    # service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
+    # service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+    # service.beta.kubernetes.io/openstack-internal-load-balancer: "true"
+    # service.beta.kubernetes.io/cce-load-balancer-internal-vpc: "true"
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.org/ssl-services: kibana-kibana
+  path: /
+  hosts:
+    - kibana.tke.com
+  tls:
+  - secretName: kibana.tke.com
+    hosts:
+    - kibana.tke.com
+
+readinessProbe:
+  failureThreshold: 3
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  successThreshold: 3
+  timeoutSeconds: 5
+
+imagePullSecrets: []
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+nameOverride: ""
+fullnameOverride: ""
+
+lifecycle: {}
+  # preStop:
+  #   exec:
+  #     command: ["/bin/sh", "-c", "echo Hello from the postStart handler > /usr/share/message"]
+  # postStart:
+  #   exec:
+  #     command: ["/bin/sh", "-c", "echo Hello from the postStart handler > /usr/share/message"]

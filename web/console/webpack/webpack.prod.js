@@ -29,7 +29,8 @@ module.exports = {
   },
 
   module: {
-    rules: [{
+    rules: [
+      {
         test: /\.tsx?$/,
         use: [
           'happypack/loader?id=happyBabel',
@@ -55,25 +56,29 @@ module.exports = {
   plugins: [
     new HappyPack({
       id: 'happyTs',
-      loaders: [{
-        loader: 'ts-loader',
-        options: {
-          happyPackMode: true,
-          transpileOnly: true
+      loaders: [
+        {
+          loader: 'ts-loader',
+          options: {
+            happyPackMode: true,
+            transpileOnly: true
+          }
         }
-      }],
+      ],
       threadPool: happyThreadPool
     }),
 
     new HappyPack({
       id: 'happyESLint',
-      loaders: [{
-        loader: 'eslint-loader',
-        options: {
-          failOnWarning: true,
-          failOnError: true
+      loaders: [
+        {
+          loader: 'eslint-loader',
+          options: {
+            failOnWarning: true,
+            failOnError: true
+          }
         }
-      }],
+      ],
       threadPool: happyThreadPool
     }),
 
@@ -123,6 +128,7 @@ module.exports = {
       '@tencent/qcloud-redux-fetcher': path.resolve(__dirname, '../lib/ff-redux/libs/qcloud-redux-fetcher/'),
       '@tencent/qcloud-redux-query': path.resolve(__dirname, '../lib/ff-redux/libs/qcloud-redux-query/'),
       '@tencent/qcloud-redux-workflow': path.resolve(__dirname, '../lib/ff-redux/libs/qcloud-redux-workflow/'),
+      '@': path.resolve(__dirname, '../'),
       // react 和 react-dom 控制台通过全局变量提供，我们不打包
       react: path.resolve(__dirname, './alias/react.js'),
       'react-dom': path.resolve(__dirname, './alias/react-dom.js'),

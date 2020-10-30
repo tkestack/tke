@@ -68,8 +68,8 @@ export class Step9 extends React.Component<RootProps> {
           </Form.Item>
           {editState.authType === 'oidc' ? (
             <>
-              <Form.Item label="IssueUrl">
-                <Form.Text>{editState.issueURL}</Form.Text>
+              <Form.Item label="IssuerUrl">
+                <Form.Text>{editState.issuerURL}</Form.Text>
               </Form.Item>
               <Form.Item label="ClientID">
                 <Form.Text>{editState.clientID}</Form.Text>
@@ -89,9 +89,15 @@ export class Step9 extends React.Component<RootProps> {
             <Form.Text>{editState.repoType}</Form.Text>
           </Form.Item>
           {editState.repoType === 'tke' ? (
-            <Form.Item label="域名后缀">
-              <Form.Text>{editState.repoSuffix}</Form.Text>
-            </Form.Item>
+            <>
+              <Form.Item label="域名后缀">
+                <Form.Text>{editState.repoSuffix}</Form.Text>
+              </Form.Item>
+
+              <Form.Item label="是否安装应用商店">
+                <Form.Text>{editState.application ? '是' : '否'}</Form.Text>
+              </Form.Item>
+            </>
           ) : editState.repoType === 'thirdParty' ? (
             <React.Fragment>
               <Form.Item label="仓库地址">
@@ -124,9 +130,12 @@ export class Step9 extends React.Component<RootProps> {
           <Form.Item label="是否开启">
             <Form.Text>{editState.openAudit ? '是' : '否'}</Form.Text>
           </Form.Item>
-          <Form.Item label="ES地址">
-            <Form.Text>{editState.auditEsUrl}</Form.Text>
-          </Form.Item>
+          {editState.openAudit && (
+            <Form.Item label="ES地址">
+              <Form.Text>{editState.auditEsUrl}</Form.Text>
+            </Form.Item>
+          )}
+
           {(editState.auditEsUsername || editState.auditEsPassword) && (
             <>
               <Form.Item label="用户名">

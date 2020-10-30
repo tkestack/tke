@@ -65,8 +65,8 @@ export interface EditState extends Identifiable {
   authType?: string;
   tenantID?: string;
   v_tenantID?: Validation;
-  issueURL?: string;
-  v_issueURL?: Validation;
+  issuerURL?: string;
+  v_issuerURL?: Validation;
   clientID?: string;
   v_clientID?: Validation;
   caCert?: string;
@@ -86,6 +86,7 @@ export interface EditState extends Identifiable {
   v_repoPassword?: Validation;
   repoNamespace?: string;
   v_repoNamespace?: Validation;
+  application: boolean;
 
   //业务模块设置
   openBusiness?: boolean;

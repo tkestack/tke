@@ -83,7 +83,7 @@ func ClientSet(ctx context.Context, platformClient platforminternalclient.Platfo
 	}
 
 	config := &rest.Config{}
-	if cluster.AuthzWebhookEnable() {
+	if cluster.AuthzWebhookEnabled() {
 		clientCertData, clientKeyData, err := getOrCreateClientCert(ctx, clusterWrapper.ClusterCredential)
 		if err != nil {
 			return nil, err

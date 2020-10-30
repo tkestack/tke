@@ -26,6 +26,7 @@ import (
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 	authv1 "tkestack.io/tke/api/auth/v1"
 	businessv1 "tkestack.io/tke/api/business/v1"
 	logagentv1 "tkestack.io/tke/api/logagent/v1"
@@ -39,6 +40,7 @@ var Scheme = runtime.NewScheme()
 var Codecs = serializer.NewCodecFactory(Scheme)
 var ParameterCodec = runtime.NewParameterCodec(Scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
+	applicationv1.AddToScheme,
 	authv1.AddToScheme,
 	businessv1.AddToScheme,
 	logagentv1.AddToScheme,

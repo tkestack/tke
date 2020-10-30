@@ -25,7 +25,6 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
-	domainrolemanager "github.com/dovics/domain-role-manager"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	cacheddiscovery "k8s.io/client-go/discovery/cached"
@@ -142,7 +141,7 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		}
 	}
 
-	rm := domainrolemanager.NewRoleManager(10)
+	rm := util2.NewRoleManager(10)
 	enforcer.SetRoleManager(rm)
 	enforcer.StartAutoLoadPolicy(cfg.CasbinReloadInterval)
 

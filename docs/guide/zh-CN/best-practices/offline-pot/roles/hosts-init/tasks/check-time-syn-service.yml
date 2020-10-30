@@ -1,0 +1,59 @@
+# check hosts whether config time syn service(ntpd or chronyd).if not will be intall time syn service.
+
+# check whether config time syn 
+- name: check whether config time syn
+  shell: if ([ `cat /etc/ntp.conf | grep ^server | wc -l` -ne 0  ] || \
+         [ `cat /etc/chrony.conf | grep ^server | wc -l` -ne 0  ]); then \
+         echo "True"; else echo "False";fi
+  register: time_syn_state
+  ignore_errors: yes
+  tags: check_time_syn
+
+# install ntpd service
+- name: install ntpd service
+  shell: yum clean all && yum --disablerepo=\* --enablerepo=offline-yum install -y ntp
+  ignore_errors: yes
+  when: time_syn_state.stdout == "False" and ansible_distribution == 'CentOS'
+  tags: check_time_syn
+
+# start ntpd server just installer host
+- name: start ntpd service on installer host
+  systemd:
+    state: started
+    name: ntpd
+  when: time_syn_state.stdout == "False" and inventory_hostname in groups['installer']
+  tags: check_time_syn
+
+# enable ntpd server on installer host
+- name: enable ntpd server on installer host
+  systemd:
+    enabled: yes
+    name: ntpd
+    masked: no
+  when: time_syn_state.stdout == "False" and inventory_hostname in groups['installer']
+  tags: check_time_syn
+ 
+# set ntpd server config
+- name: set ntpd server config
+  template:
+    src: templates/ntp.conf.server.j2
+    dest: /etc/ntp.conf
+    mode: '0644'
+  notify: restart ntpd
+  when: time_syn_state.stdout == "False" and inventory_hostname in groups['installer']
+  tags: check_time_syn
+
+# set ntpd client config
+- name: set ntpd client config
+  template:
+    src: templates/ntp.conf.client.j2
+    dest: /etc/ntp.conf
+    mode: '0644'
+  when: time_syn_state.stdout == "False" and inventory_hostname not in groups['installer']
+  tags: check_time_syn
+
+# ntp client sync ntp server time
+- name: ntp client sync ntp server time
+  shell: ntpdate  "{{ groups['installer'][0] }}"
+  when: time_syn_state.stdout == "False" and inventory_hostname not in groups['installer']
+  tags: check_time_syn

@@ -1,0 +1,143 @@
+# business server deploy and remove
+
+# create save business yaml and helms dir
+- name: create save business yaml and helms dir
+  shell: (ls /data/tke-yamls/business || mkdir -p /data/tke-yamls/business) && \
+         (ls /data/helms/business || mkdir -p /data/helms/business)
+  when: inventory_hostname == groups['masters'][0]
+  tags: dpl_business
+
+# copy business helms file to master node
+- name: copy business helms file to master node
+  copy:
+    src: helms/
+    dest: /data/helms/business/
+  when: inventory_hostname == groups['masters'][0]
+  tags: dpl_business
+
+# create save deploy business script dir
+- name: create save deploy business script dir
+  shell: mkdir -p /data/offline-pot-scripts
+  when: inventory_hostname == groups['masters'][0]
+  tags: dpl_business
+
+# generate deploy business script
+- name: generate deploy business script
+  template:
+    src: templates/business-tools.sh.j2
+    dest: /data/offline-pot-scripts/business-tools.sh
+    mode: '0755'
+  when: inventory_hostname == groups['masters'][0]
+  tags: dpl_business
+
+# get deploy business script stat
+- name: get deploy business script stat
+  stat:
+    path: '/data/offline-pot-scripts/business-tools.sh'
+  register: business_dpl_script
+  when: inventory_hostname == groups['masters'][0]
+  tags: dpl_business
+
+# deploy business 
+- name: deploy business
+  shell: sh /data/offline-pot-scripts/business-tools.sh dpl_business
+  when: inventory_hostname == groups['masters'][0] and business_dpl_script.stat.exists == True
+  tags: dpl_business
+
+# set facts
+- name: set deploy_salt_minion facts for deploy
+  set_fact: deploy_salt_minion = "{{ deploy_salt_minion }}"
+  when: inventory_hostname in groups['salt']
+  tags: dpl_business
+
+# install salt-minion for cicd
+- name: install salt-minion  for cicd
+  shell: yum clean all && yum --disablerepo=\* --enablerepo=offline-yum install -y salt-minion
+  ignore_errors: yes
+  when: inventory_hostname in groups['salt'] and deploy_salt_minion == 'true'
+  tags: dpl_business
+
+# set facts
+- name: set deploy_salt_minion facts for deploy
+  set_fact: deploy_salt_minion = "{{ deploy_salt_minion }}"
+  when: inventory_hostname in groups['installer']
+  tags: dpl_business
+
+#  call exec config salt minion script
+- name: call exec config salt minion script
+  shell: if [ `docker ps | grep tke-installer | wc -l` -eq 1 ]; then \
+           sh {{ dpl_dir }}/offline-pot-cmd.sh -s cfg-salt-minion.sh ; \
+         else \
+           sh {{ dpl_dir }}/mgr-scripts/cfg-salt-minion.sh ; \
+         fi
+  when: inventory_hostname in groups['installer'] and deploy_salt_minion == 'true'
+  tags: dpl_business
+
+# set facts
+- name: set deploy_salt_minion facts for config
+  set_fact: deploy_salt_minion = "{{ deploy_salt_minion }}"
+  when: inventory_hostname in groups['salt']
+  tags: cfg_salt
+
+# config salt-minion
+- name: config salt-minion
+  template:
+    src: templates/minion.cfg.j2
+    dest: /etc/salt/minion
+  notify: restart salt-minion
+  when: inventory_hostname in groups['salt'] and deploy_salt_minion == 'true'
+  tags: cfg_salt
+
+# get remove business script stat
+- name: get remove business script stat
+  stat:
+    path: '/data/offline-pot-scripts/business-tools.sh'
+  register: business_del_script
+  when: inventory_hostname == groups['masters'][0]
+  tags: remove_business
+
+# remove business
+- name: remove business
+  shell: sh /data/offline-pot-scripts/business-tools.sh del_business
+  when: inventory_hostname == groups['masters'][0] and business_del_script.stat.exists == True
+  tags: remove_business
+
+# set facts 
+- name: set deploy_salt_minion facts for remove
+  set_fact: deploy_salt_minion = "{{ deploy_salt_minion }}"
+  when: inventory_hostname in groups['salt']
+  tags: remove_business
+
+# remove salt-minion 
+- name: remove salt-minion
+  shell: if [ -f "/etc/salt/minion" ]; then yum remove -y salt-minion ; rm -f /etc/salt/minion || echo 'not exist!'; fi
+  when: inventory_hostname in groups['salt'] and deploy_salt_minion == 'true'
+  tags: remove_business
+
+# set deploy_business facts for health check
+- name: set deploy_business facts for health check
+  set_fact:
+    deploy_business: "{{ deploy_business }}"
+  when: inventory_hostname == groups['masters'][0]
+  tags: busi_health_check
+
+# get business deploy status
+- name: get business deploy status
+  shell: if [ `kubectl get deploy | wc -l` -gt 0 ]; then echo "true"; else echo "false";fi
+  register: busi_dpl_status
+  when: inventory_hostname == groups['masters'][0] and deploy_business == true
+  tags: busi_health_check
+
+# business dpeloy success
+- name: business dpeloy success
+  debug:
+    msg: "Info: business deploy success."
+  when: inventory_hostname == groups['masters'][0] and deploy_business == true and busi_dpl_status.stdout == "true"
+  tags: busi_health_check
+
+# business deploy failed
+- name: business deploy failed
+  debug:
+    msg: "Warning: business deploy failed, please check!"
+  when: inventory_hostname == groups['masters'][0] and deploy_business == true and busi_dpl_status.stdout == "false"
+  tags: busi_health_check

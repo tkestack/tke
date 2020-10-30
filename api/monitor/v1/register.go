@@ -55,7 +55,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&PrometheusList{},
 
 		&ConfigMap{},
-		&ConfigMapList{})
+		&ConfigMapList{},
+
+		&ClusterOverview{})
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
 }

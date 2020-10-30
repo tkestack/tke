@@ -66,8 +66,8 @@ export const initEdit: EditState = {
   authType: 'tke',
   tenantID: '',
   v_tenantID: initValidation,
-  issueURL: '',
-  v_issueURL: initValidation,
+  issuerURL: '',
+  v_issuerURL: initValidation,
   clientID: '',
   v_clientID: initValidation,
   caCert: '',
@@ -87,6 +87,7 @@ export const initEdit: EditState = {
   v_repoPassword: initValidation,
   repoNamespace: '',
   v_repoNamespace: initValidation,
+  application: false,
 
   //业务模块设置
   openBusiness: true,

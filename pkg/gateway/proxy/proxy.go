@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	"k8s.io/apiserver/pkg/server/mux"
+	"tkestack.io/tke/api/application"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/api/business"
 	"tkestack.io/tke/api/logagent"
@@ -34,25 +35,31 @@ import (
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
 	"tkestack.io/tke/pkg/gateway/proxy/handler/frontproxy"
 	"tkestack.io/tke/pkg/gateway/proxy/handler/passthrough"
+	"tkestack.io/tke/pkg/gateway/proxy/handler/rewriteproxy"
 	platformapiserver "tkestack.io/tke/pkg/platform/apiserver"
 	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/distribution"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-const apiPrefix = "/apis"
+const (
+	apiPrefix      = "/apis"
+	openapiPrefix  = "/openapi"
+	openapiVersion = "v2"
+)
 
 type moduleName string
 
 const (
-	moduleNamePlatform moduleName = "platform"
-	moduleNameBusiness moduleName = "business"
-	moduleNameNotify   moduleName = "notify"
-	moduleNameRegistry moduleName = "registry"
-	moduleNameAuth     moduleName = "auth"
-	moduleNameMonitor  moduleName = "monitor"
-	moduleNameLogagent moduleName = "logagent"
-	moduleNameAudit    moduleName = "audit"
+	moduleNamePlatform    moduleName = "platform"
+	moduleNameBusiness    moduleName = "business"
+	moduleNameNotify      moduleName = "notify"
+	moduleNameRegistry    moduleName = "registry"
+	moduleNameAuth        moduleName = "auth"
+	moduleNameMonitor     moduleName = "monitor"
+	moduleNameLogagent    moduleName = "logagent"
+	moduleNameAudit       moduleName = "audit"
+	moduleNameApplication moduleName = "application"
 )
 
 type modulePath struct {
@@ -70,10 +77,6 @@ func componentPrefix() map[moduleName][]modulePath {
 			},
 		},
 		moduleNameNotify: {
-			modulePath{
-				prefix:    "/webhook/",
-				protected: false,
-			},
 			modulePath{
 				prefix:    fmt.Sprintf("%s/%s/", apiPrefix, notify.GroupName),
 				protected: true,
@@ -141,6 +144,12 @@ func componentPrefix() map[moduleName][]modulePath {
 				protected: true,
 			},
 		},
+		moduleNameApplication: {
+			modulePath{
+				prefix:    fmt.Sprintf("%s/%s/", apiPrefix, application.GroupName),
+				protected: true,
+			},
+		},
 	}
 	platformResourceConfig := platformapiserver.DefaultAPIResourceConfigSource()
 	if platformResourceConfig != nil {
@@ -177,9 +186,34 @@ func RegisterRoute(m *mux.PathRecorderMux, cfg *gatewayconfig.GatewayConfigurati
 			if err != nil {
 				return err
 			}
-			log.Info("Registered reverse proxy of front proxy mode for backend component", log.String("pathPrefix", pathPrefix.prefix), log.Bool("protected", pathPrefix.protected), log.String("address", proxyComponent.Address))
+			log.Info("Registered reverse proxy of passthrough mode for backend component", log.String("pathPrefix", pathPrefix.prefix), log.Bool("protected", pathPrefix.protected), log.String("address", proxyComponent.Address))
 			m.HandlePrefix(pathPrefix.prefix, handler)
 		}
+	}
+	pathOpenapi := openapiProxy(cfg)
+	for path, proxyComponent := range pathOpenapi {
+		if proxyComponent.Passthrough != nil {
+			handler, err := rewriteproxy.NewHandler(
+				proxyComponent.Address,
+				proxyComponent.Passthrough,
+				path.protected,
+				func(string) string { return fmt.Sprintf("%s/%s", openapiPrefix, openapiVersion) },
+			)
+			if err != nil {
+				return err
+			}
+			log.Info("Registered openapi proxy for backend component", log.String("path", path.prefix), log.Bool("protected", path.protected), log.String("address", proxyComponent.Address))
+			m.Handle(path.prefix, handler)
+		}
+	}
+	// proxy /webhook to tke-notify-api for alert
+	if cfg.Components.Notify != nil && cfg.Components.Notify.Passthrough != nil {
+		handler, err := passthrough.NewHandler(cfg.Components.Notify.Address, cfg.Components.Notify.Passthrough, false)
+		if err != nil {
+			return err
+		}
+		log.Info("Registered reverse proxy of passthrough mode for backend component", log.String("path", "/webhook"), log.Bool("protected", false), log.String("address", cfg.Components.Notify.Address))
+		m.Handle("/webhook", handler)
 	}
 	return nil
 }
@@ -235,7 +269,7 @@ func prefixProxy(cfg *gatewayconfig.GatewayConfiguration) map[modulePath]gateway
 			}
 		}
 	}
-
+	//log agent
 	if cfg.Components.LogAgent != nil {
 		if prefixes, ok := componentPrefixMap[moduleNameLogagent]; ok {
 			for _, prefix := range prefixes {
@@ -251,5 +285,56 @@ func prefixProxy(cfg *gatewayconfig.GatewayConfiguration) map[modulePath]gateway
 			}
 		}
 	}
+	// application
+	if cfg.Components.Application != nil {
+		if prefixes, ok := componentPrefixMap[moduleNameApplication]; ok {
+			for _, prefix := range prefixes {
+				pathPrefixProxyMap[prefix] = *cfg.Components.Application
+			}
+		}
+	}
 	return pathPrefixProxyMap
+}
+
+func openapiProxy(cfg *gatewayconfig.GatewayConfiguration) map[modulePath]gatewayconfig.Component {
+	newOpenapiPath := func(name moduleName) modulePath {
+		return modulePath{
+			prefix:    fmt.Sprintf("/tke-%s-api", name),
+			protected: false,
+		}
+	}
+	openapiProxyMap := make(map[modulePath]gatewayconfig.Component)
+	// platform
+	if cfg.Components.Platform != nil {
+		openapiProxyMap[newOpenapiPath(moduleNamePlatform)] = *cfg.Components.Platform
+	}
+	// business
+	if cfg.Components.Business != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameBusiness)] = *cfg.Components.Business
+	}
+	// notify
+	if cfg.Components.Notify != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameNotify)] = *cfg.Components.Notify
+	}
+	// monitor
+	if cfg.Components.Monitor != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameMonitor)] = *cfg.Components.Monitor
+	}
+	// auth
+	if cfg.Components.Auth != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameAuth)] = *cfg.Components.Auth
+	}
+	// registry
+	if cfg.Components.Registry != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameRegistry)] = *cfg.Components.Registry
+	}
+	// logagent
+	if cfg.Components.LogAgent != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameLogagent)] = *cfg.Components.LogAgent
+	}
+	// audit
+	if cfg.Components.Audit != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameAudit)] = *cfg.Components.Audit
+	}
+	return openapiProxyMap
 }

@@ -202,7 +202,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
 
     let namespaceOptions = namespaceList.data.records.map(item => ({
       value: item.name,
-      text: item.name
+      text: item.displayName
     }));
 
     let finalResourceTypeList = [];
@@ -972,7 +972,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
     containersInfo = containers.map(c => {
       let containerItem = {
         name: c.name,
-        image: c.registry + (c.tag ? ':' + c.tag : ''),
+        image: c.registry + ':' + (c.tag ? c.tag : 'latest'),
         imagePullPolicy: c.imagePullPolicy
       };
 

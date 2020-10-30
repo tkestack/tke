@@ -22,11 +22,14 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net"
 	"time"
 
 	"tkestack.io/tke/pkg/util/http"
+	utilhttp "tkestack.io/tke/pkg/util/http"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
@@ -147,10 +150,10 @@ func (in *Cluster) Host() (string, error) {
 		return "", errors.New("can't find valid address")
 	}
 
-	return fmt.Sprintf("%s:%d", address.Host, address.Port), nil
+	return net.JoinHostPort(address.Host, fmt.Sprintf("%d", address.Port)), nil
 }
 
-func (in *Cluster) AuthzWebhookEnable() bool {
+func (in *Cluster) AuthzWebhookEnabled() bool {
 	return in.Spec.Features.AuthzWebhookAddr != nil &&
 		(in.Spec.Features.AuthzWebhookAddr.Builtin != nil || in.Spec.Features.AuthzWebhookAddr.External != nil)
 }
@@ -167,4 +170,29 @@ func (in *Cluster) AuthzWebhookExternEndpoint() (string, bool) {
 	ip := in.Spec.Features.AuthzWebhookAddr.External.IP
 	port := int(in.Spec.Features.AuthzWebhookAddr.External.Port)
 	return http.MakeEndpoint("https", ip, port, "/auth/authz"), true
+}
+
+func (in *Cluster) AuthzWebhookBuiltinEndpoint() (string, bool) {
+	if in.Spec.Features.AuthzWebhookAddr == nil {
+		return "", false
+	}
+
+	if in.Spec.Features.AuthzWebhookAddr.Builtin == nil {
+		return "", false
+	}
+
+	endPointHost := in.Spec.Machines[0].IP
+
+	// use VIP in HA situation
+	if in.Spec.Features.HA != nil {
+		if in.Spec.Features.HA.TKEHA != nil {
+			endPointHost = in.Spec.Features.HA.TKEHA.VIP
+		}
+		if in.Spec.Features.HA.ThirdPartyHA != nil {
+			endPointHost = in.Spec.Features.HA.ThirdPartyHA.VIP
+		}
+	}
+
+	return utilhttp.MakeEndpoint("https", endPointHost,
+		constants.AuthzWebhookNodePort, "/auth/authz"), true
 }

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -o xtrace
+set -e
 
 pwd
 

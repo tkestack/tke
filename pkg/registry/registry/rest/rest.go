@@ -19,15 +19,20 @@
 package rest
 
 import (
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	restclient "k8s.io/client-go/rest"
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
+	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
+	businessversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
+	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/registry"
-	"tkestack.io/tke/api/registry/v1"
+	v1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/pkg/apiserver/storage"
+	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 	chartstorage "tkestack.io/tke/pkg/registry/registry/chart/storage"
 	chartgroupstorage "tkestack.io/tke/pkg/registry/registry/chartgroup/storage"
 	configmapstorage "tkestack.io/tke/pkg/registry/registry/configmap/storage"
@@ -39,7 +44,16 @@ import (
 // RestStorageProvider interface
 type StorageProvider struct {
 	LoopbackClientConfig *restclient.Config
+	ExternalScheme       string
+	ExternalHost         string
+	ExternalPort         int
+	ExternalCAFile       string
 	PrivilegedUsername   string
+	AuthClient           authversionedclient.AuthV1Interface
+	BusinessClient       businessversionedclient.BusinessV1Interface
+	PlatformClient       platformversionedclient.PlatformV1Interface
+	RegistryConfig       *registryconfig.RegistryConfiguration
+	Authorizer           authorizer.Authorizer
 }
 
 // Implement RESTStorageProvider
@@ -78,13 +92,23 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["repositories"] = repositoryREST.Repository
 		storageMap["repositories/status"] = repositoryREST.Status
 
-		chartGroupREST := chartgroupstorage.NewStorage(restOptionsGetter, registryClient, s.PrivilegedUsername)
-		storageMap["chartgroups"] = chartGroupREST.ChartGroup
-		storageMap["chartgroups/status"] = chartGroupREST.Status
+		chartGroupRESTStorage := chartgroupstorage.NewStorage(restOptionsGetter, registryClient, s.AuthClient, s.BusinessClient, s.PrivilegedUsername)
+		chartGroupREST := chartgroupstorage.NewREST(chartGroupRESTStorage.ChartGroup, registryClient, s.AuthClient)
+		storageMap["chartgroups"] = chartGroupREST
+		storageMap["chartgroups/status"] = chartGroupRESTStorage.Status
+		storageMap["chartgroups/finalize"] = chartGroupRESTStorage.Finalize
 
-		chartREST := chartstorage.NewStorage(restOptionsGetter, registryClient, s.PrivilegedUsername)
+		chartREST := chartstorage.NewStorage(restOptionsGetter, registryClient, s.AuthClient, s.BusinessClient, s.PrivilegedUsername)
+		chartVersionREST := chartstorage.NewVersionREST(chartREST.Chart, s.PlatformClient, registryClient, s.RegistryConfig,
+			s.ExternalScheme,
+			s.ExternalHost,
+			s.ExternalPort,
+			s.ExternalCAFile,
+			s.Authorizer)
 		storageMap["charts"] = chartREST.Chart
 		storageMap["charts/status"] = chartREST.Status
+		storageMap["charts/finalize"] = chartREST.Finalize
+		storageMap["charts/version"] = chartVersionREST
 	}
 
 	return storageMap

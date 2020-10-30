@@ -62,6 +62,19 @@ spec:
       nodeSelector:
         nvidia-device-enable: enable
       hostPID: true
+      initContainers:
+        - name: nvidia-uvm-enable
+          image: {{ .BusyboxImage }}
+          command: ["sh", "-c"," /sbin/modprobe nvidia-uvm 2>/dev/null && mknod -m 666 /dev/nvidia-uvm c `grep nvidia-uvm /proc/devices | awk '{print $1}'` 0 2>/dev/null || echo 0"]
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          volumeMounts:
+          - mountPath: /lib/modules
+            name: lib-modules
+            readOnly: true
+          - mountPath: /dev
+            name: dev
       containers:
         - name: gpu-manager
           image: {{ .GPUManagerImage }}
@@ -103,6 +116,14 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
       volumes:
+        - name: lib-modules
+          hostPath:
+            type: Directory
+            path: /lib/modules
+        - name: dev
+          hostPath:
+            type: Directory
+            path: /dev
         - name: device-plugin
           hostPath:
             type: Directory

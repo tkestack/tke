@@ -36,3 +36,16 @@ func init() {
 	}
 	godotenv.Load(path.Join(home, envFile), envFile) // for local dev
 }
+
+const (
+	VERSION            = "VERSION"
+	PROVIDERRESVERSION = "PROVIDERRESVERSION"
+)
+
+func ImageVersion() string {
+	return os.Getenv(VERSION)
+}
+
+func ProviderResImageVersion() string {
+	return os.Getenv(PROVIDERRESVERSION)
+}

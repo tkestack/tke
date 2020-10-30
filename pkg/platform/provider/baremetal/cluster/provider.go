@@ -69,6 +69,7 @@ func NewProvider() (*Provider, error) {
 
 		CreateHandlers: []clusterprovider.Handler{
 			p.EnsureCopyFiles,
+			p.EnsurePreClusterInstallHook,
 			p.EnsurePreInstallHook,
 
 			// configure system
@@ -76,7 +77,6 @@ func NewProvider() (*Provider, error) {
 			p.EnsureKernelModule,
 			p.EnsureSysctl,
 			p.EnsureDisableSwap,
-
 			p.EnsurePreflight, // wait basic setting done
 
 			p.EnsureClusterComplete,
@@ -91,6 +91,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureConntrackTools,
 			p.EnsureKubeadm,
 			p.EnsureKeepalivedInit,
+			p.EnsureThirdPartyHAInit,
 			p.EnsureAuthzWebhook,
 			p.EnsurePrepareForControlplane,
 
@@ -117,23 +118,30 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsurePatchAnnotation, // wait rest master ready
 			p.EnsureMarkControlPlane,
-			p.EnsureKeepalivedWithLB,
+			p.EnsureKeepalivedWithLBOption,
+			p.EnsureThirdPartyHA,
 			// deploy apps
 			p.EnsureNvidiaDevicePlugin,
 			p.EnsureGPUManager,
 			p.EnsureCSIOperator,
+			p.EnsureMetricsServer,
 
 			p.EnsureCleanup,
 			p.EnsureCreateClusterMark,
+			p.EnsureDisableOffloading, // will remove it when upgrade to k8s v1.18.5
 			p.EnsurePostInstallHook,
+			p.EnsurePostClusterInstallHook,
 		},
 		UpdateHandlers: []clusterprovider.Handler{
+			p.EnsurePreClusterUpgradeHook,
 			p.EnsureUpgradeControlPlaneNode,
 
 			p.EnsureRenewCerts,
 			p.EnsureAPIServerCert,
 			p.EnsureStoreCredential,
-			p.EnsureKeepalivedWithLB,
+			p.EnsureKeepalivedWithLBOption,
+			p.EnsureThirdPartyHA,
+			p.EnsurePostClusterUpgradeHook,
 		},
 		DeleteHandlers: []clusterprovider.Handler{
 			p.EnsureCleanClusterMark,
@@ -153,11 +161,12 @@ func NewProvider() (*Provider, error) {
 	if cfg.PlatformAPIClientConfig != "" {
 		restConfig, err := clientcmd.BuildConfigFromFlags("", cfg.PlatformAPIClientConfig)
 		if err != nil {
-			return nil, err
-		}
-		p.platformClient, err = platformv1client.NewForConfig(restConfig)
-		if err != nil {
-			return nil, err
+			log.Errorf("read PlatformAPIClientConfig error: %w", err)
+		} else {
+			p.platformClient, err = platformv1client.NewForConfig(restConfig)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -188,6 +197,20 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 	if cluster.Spec.Features.CSIOperator != nil {
 		if cluster.Spec.Features.CSIOperator.Version == "" {
 			cluster.Spec.Features.CSIOperator.Version = csioperatorimage.LatestVersion
+		}
+	}
+
+	if p.config.AuditEnabled() {
+		if !cluster.AuthzWebhookEnabled() {
+			cluster.Spec.Features.AuthzWebhookAddr = &platform.AuthzWebhookAddr{Builtin: &platform.
+				BuiltinAuthzWebhookAddr{}}
+		}
+	}
+
+	if p.config.BusinessEnabled() {
+		if !cluster.AuthzWebhookEnabled() {
+			cluster.Spec.Features.AuthzWebhookAddr = &platform.AuthzWebhookAddr{Builtin: &platform.
+				BuiltinAuthzWebhookAddr{}}
 		}
 	}
 

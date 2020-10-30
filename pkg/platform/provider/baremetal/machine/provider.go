@@ -63,9 +63,11 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsureClean,
 			p.EnsureRegistryHosts,
+
 			p.EnsureKernelModule,
 			p.EnsureSysctl,
 			p.EnsureDisableSwap,
+			p.EnsureManifestDir,
 
 			p.EnsurePreflight, // wait basic setting done
 
@@ -83,11 +85,13 @@ func NewProvider() (*Provider, error) {
 			p.EnsureKubeconfig,
 			p.EnsureMarkNode,
 			p.EnsureNodeReady,
-
+			p.EnsureDisableOffloading, // will remove it when upgrade to k8s v1.18.5
 			p.EnsurePostInstallHook,
 		},
 		UpdateHandlers: []machineprovider.Handler{
+			p.EnsurePreUpgradeHook,
 			p.EnsureUpgrade,
+			p.EnsurePostUpgradeHook,
 		},
 	}
 
