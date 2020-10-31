@@ -29,6 +29,7 @@ import (
 	"tkestack.io/tke/pkg/platform/apiserver/cluster"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/test/e2e/tke"
+	"tkestack.io/tke/test/util"
 	"tkestack.io/tke/test/util/env"
 
 	. "github.com/onsi/ginkgo"
@@ -42,8 +43,10 @@ import (
 	"tkestack.io/tke/test/util/cloudprovider/tencent"
 )
 
+const namespacePrefix = "platform-"
+
 var (
-	t                 = tke.TKE{Namespace: "platform"}
+	t                 = tke.TKE{Namespace: namespacePrefix + util.RandomStr(6)}
 	tkeClient         *tkeclientset.Clientset
 	provider          = tencent.NewTencentProvider()
 	err               error

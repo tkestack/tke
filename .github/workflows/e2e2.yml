@@ -1,0 +1,50 @@
+name: e2e
+
+on:
+  push:
+    branches:
+      - master
+
+  pull_request:
+    branches:
+      - master
+env:
+  VERSION: ${{ github.sha }}
+  K8SVERSION: 1.16.9
+  PROVIDERRESVERSION: v1.18.3-1
+jobs:
+  image:
+    name: build tke image
+    runs-on: self-hosted
+    steps:
+     - name: checkout
+       uses: actions/checkout@v2
+     - name: build and push platform image
+       if: contains(toJson(github.event.pull_request.labels.*.name), 'platform')
+       run: |
+         make push IMAGES="tke-platform-api tke-platform-controller" VERSION=${{ github.sha }}
+  platform:
+    name: platform test
+    needs: image
+    if: contains(toJson(github.event.pull_request.labels.*.name), 'platform')
+    runs-on: self-hosted
+    steps:
+    - name: printversion
+      env:
+        LABELNAME_CONTEXT: ${{ toJson(github.event.pull_request.labels.*.name) }}
+      run: |
+        echo "$LABELNAME_CONTEXT"
+    - name: e2e test
+      run: |
+        go test -timeout 40m -v tkestack.io/tke/test/e2e/platform
+  business:
+    name: business test
+    needs: image
+    if: contains(toJson(github.event.pull_request.labels.*.name), 'business')
+    runs-on: self-hosted
+    steps:
+      - name: printversion
+        env:
+          LABELNAME_CONTEXT: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          echo "$LABELNAME_CONTEXT"
