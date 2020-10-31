@@ -1,4 +1,4 @@
-name: e2e
+name: e2e-1.18.3
 
 on:
   push:
