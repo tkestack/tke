@@ -78,18 +78,7 @@ func (t *TKE) Delete() {
 	}
 	client := testclient.GetClientSet()
 
-	// Workaround for below issue:
-	// Operation cannot be fulfilled on namespaces \"platform\": The system is ensuring all content is removed from
-	// this namespace.  Upon completion, this namespace will automatically be purged by the system.
-	ns, _ := client.CoreV1().Namespaces().Get(context.Background(), t.Namespace, metav1.GetOptions{})
-	ns.Spec.Finalizers = []corev1.FinalizerName{} // remove all finalizers
-	_, err := client.CoreV1().Namespaces().Update(context.Background(), ns, metav1.UpdateOptions{})
-	if err != nil {
-		klog.Error(err)
-	}
-	time.Sleep(5 * time.Second)
-
-	err = client.CoreV1().Namespaces().Delete(context.Background(), t.Namespace, deleteOptions)
+	err := client.CoreV1().Namespaces().Delete(context.Background(), t.Namespace, deleteOptions)
 	gomega.Expect(err).To(gomega.BeNil())
 }
 
