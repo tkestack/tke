@@ -1,6 +1,6 @@
 # Galaxy
 
-Kubernetes 没有提供默认可用的容器网络，但 kubernetes 网络的设计文档要求容器网络的实现能做到下面的三点：
+Kubernetes 没有提供默认可用的容器网络，但 Kubernetes 网络的设计文档要求容器网络的实现能做到下面的三点：
 
 1. All containers can communicate with all other containers without NAT
 1. All nodes can communicate with all containers (and vice-versa) without NAT
@@ -11,7 +11,7 @@ Kubernetes 没有提供默认可用的容器网络，但 kubernetes 网络的设
 1. **Overlay Network**：即通用的虚拟化网络模型，不依赖于宿主机底层网络架构，可以适应任何的应用场景，方便快速体验。但是性能较差，因为在原有网络的基础上叠加了一层 Overlay 网络，封包解包或者 NAT ，对网络性能都是有一定损耗的。
 1. **Underlay Network**：即基于宿主机物理网络环境的模型，容器与现有网络可以直接互通，不需要经过封包解包或是 NAT，其性能最好。但是其普适性较差，且受宿主机网络架构的制约，比如 MAC 地址可能不够用。
 
-为满足复杂应用容器化的特殊需求，大幅拓展了容器应用的场景，TKEStack 利用 Galaxy 网络组件提供多种解决方案，支持 overlay 和 underlay 网络类型，支持高转发性能和高隔离性等场景应用。
+为满足复杂应用容器化的特殊需求，大幅拓展了容器应用的场景，TKEStack 利用 Galaxy 网络组件提供多种解决方案，支持 Overlay 和 Underlay 网络类型，支持高转发性能和高隔离性等场景应用。
 
 [Galaxy ](https://github.com/tkestack/galaxy)是一个Kubernetes网络项目，旨在为 POD 提供通用 Overlay 和高性能的 Underlay 网络。
 
