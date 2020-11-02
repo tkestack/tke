@@ -30,7 +30,7 @@
     * [访问管理](products/platform/accessmanagement.md)
       * [用户管理](products/platform/accessmanagement/user.md)
       * [策略管理](products/platform/accessmanagement/policy.md)
-    * [监控&告警](products/platform/monitor&alert)
+    * [监控 & 告警](products/platform/monitor&alert)
       * [告警设置](products/platform/monitor&alert/alertsetting.md)
       * [通知设置](products/platform/monitor&alert/notification.md)
       * [告警记录](products/platform/monitor&alert/alertmetrics.md)
@@ -107,7 +107,6 @@
 * [开发指引](../../devel)
   * [项目组件介绍](../../devel/components.md)
   * [开发手册](../../devel/development.md)
-  * [本地运行 TKEStack](../../devel/running-locally.md)
   * [贡献指南](../../../CONTRIBUTING.md)
 
 
