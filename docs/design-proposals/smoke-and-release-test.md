@@ -14,6 +14,9 @@
 
 ## Main proposal
 
+### 执行流程图
+![avatar](../images/smoke-test.png)
+
 ### 如何在本地执行自动化测试
 
 首先需要安装tkestack - [安装步骤](https://tkestack.github.io/docs/zh/%E4%BA%A7%E5%93%81%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97/%E5%AE%89%E8%A3%85%E6%AD%A5%E9%AA%A4.html) （由于tkestack集群访问为内网访问，故以下操作均在tkestack global集群节点上操作）
@@ -56,6 +59,7 @@
 - 如何过滤用例：`go test -run <regexp>`
 - 用例执行完如何保留CVM：配置`NEED_DELETE`设置为空
 - 如何手动删除CVM：登录到腾讯云控制台，搜索`CREATE_INSTANCES_PARAM`中配置`InstanceName`的值，删除
+- 是否支持k8s不同版本间并行执行：e2e workflow已支持，但需要有多个Runner作为前提
 
 ## Smoke Test
 
