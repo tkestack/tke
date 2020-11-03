@@ -40,16 +40,16 @@ func init() {
 }
 
 const (
-	VERSION                = "VERSION"
-	PROVIDERRESVERSION     = "PROVIDERRESVERSION"
-	K8SVERSION             = "K8SVERSION"
-	KUBECONFIG             = "KUBECONFIG"
-	SECRET_ID              = "SECRET_ID"
-	SECRET_KEY             = "SECRET_KEY"
-	REGION                 = "REGION"
-	CREATE_INSTANCES_PARAM = "CREATE_INSTANCES_PARAM"
-	PASSWORD               = "PASSWORD"
-	NEED_DELETE            = "NEED_DELETE"
+	VERSION              = "VERSION"
+	PROVIDERRESVERSION   = "PROVIDERRESVERSION"
+	K8SVERSION           = "K8SVERSION"
+	KUBECONFIG           = "KUBECONFIG"
+	SECRETID             = "SECRET_ID"
+	SECRETKEY            = "SECRET_KEY"
+	REGION               = "REGION"
+	CREATEINSTANCESPARAM = "CREATE_INSTANCES_PARAM"
+	PASSWORD             = "PASSWORD"
+	NEEDDELETE           = "NEED_DELETE"
 )
 
 func ImageVersion() string {
@@ -60,12 +60,12 @@ func Kubeconfig() string {
 	return os.Getenv(KUBECONFIG)
 }
 
-func SecretId() string {
-	return os.Getenv(SECRET_ID)
+func SecretID() string {
+	return os.Getenv(SECRETID)
 }
 
 func SecretKey() string {
-	return os.Getenv(SECRET_KEY)
+	return os.Getenv(SECRETKEY)
 }
 
 func Region() string {
@@ -77,11 +77,11 @@ func Password() string {
 }
 
 func CreateInstancesParam() string {
-	return os.Getenv(CREATE_INSTANCES_PARAM)
+	return os.Getenv(CREATEINSTANCESPARAM)
 }
 
 func NeedDelete() string {
-	return os.Getenv(NEED_DELETE)
+	return os.Getenv(NEEDDELETE)
 }
 
 func ProviderResImageVersion() string {

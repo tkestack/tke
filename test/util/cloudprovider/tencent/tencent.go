@@ -34,7 +34,7 @@ func NewTencentProvider() cloudprovider.Provider {
 	p := &provider{}
 
 	credential := common.NewCredential(
-		env.SecretId(),
+		env.SecretID(),
 		env.SecretKey(),
 	)
 	cpf := profile.NewClientProfile()
