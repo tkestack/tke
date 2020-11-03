@@ -3,13 +3,14 @@ import { FormPanel } from '@tencent/ff-component';
 import { Table, TableColumn, Button, Icon } from '@tea/component';
 import { RootProps } from '../../ClusterApp';
 import { FetchState } from '@tencent/ff-redux';
+import { router } from '../../../router';
 
 enum PlugType {
   Promethus,
   LogAgent
 }
 
-export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, clusterVersion }) => {
+export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, clusterVersion, route }) => {
   const targetCluster = cluster.selection;
   const { promethus = null, logAgent = null } = targetCluster ? cluster.selection.spec : {};
   const clusterId = targetCluster ? targetCluster.metadata.name : '';
@@ -49,9 +50,14 @@ export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, cl
       header: '操作',
       render({ action, type }) {
         return action ? (
-          <Button type="link" onClick={close(type)}>
-            关闭
-          </Button>
+          <>
+            <Button type="link" onClick={close(type)}>
+                关闭
+            </Button>
+            <Button type="link" onClick={() => router.navigate({ sub: 'config-promethus' }, { rid: route.queries['rid'] })}>
+                配置
+            </Button>
+          </>
         ) : (
           <Button type="link" onClick={open(type)}>
             开启

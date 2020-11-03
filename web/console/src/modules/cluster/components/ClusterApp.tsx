@@ -19,6 +19,7 @@ import { CreateICPanel } from './clusterManage/CreateICPanel';
 import { ModifyClusterNameDialog } from './clusterManage/ModifyClusterNameDialog';
 import { TcrRegistyDeployDialog } from './clusterManage/TcrRegistyDeployDialog';
 import { ResourceContainerPanel } from './resource/ResourceContainerPanel';
+import { ConfigPromethus } from './clusterManage/ConfigPromethus';
 
 export const store = configStore();
 
@@ -73,6 +74,8 @@ class ClusterApp extends React.Component<RootProps, {}> {
       return <CreateClusterPanel />;
     } else if (urlParam['sub'] === 'createIC') {
       return <CreateICPanel />;
+    } else if (urlParam['sub'] === 'config-promethus') {
+      return <ConfigPromethus />;
     }
   }
 }
