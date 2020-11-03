@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"k8s.io/klog"
 	"net"
 	"os"
 	"path/filepath"
@@ -56,6 +57,7 @@ func (c *TkeCert) InitTmpDir(namespace string) {
 }
 
 func (c *TkeCert) ClearTmpDir() {
+	klog.Info("Clear temp dir: ", c.tmpDir)
 	os.RemoveAll(c.tmpDir)
 }
 
@@ -150,14 +152,19 @@ func (c *TkeCert) WriteKubeConfig(host string, port int, namespace string) error
 		return err
 	}
 
+	klog.Info("Kubeconfig file path: ", c.GetKubeConfigFile())
 	return files.WriteFileWithDir(c.tmpDir, constants.KubeconfigFileBaseName, data, 0644)
 }
 
 func (c *TkeCert) GetKubeConfig() (*restclient.Config, error) {
-	kubeconfig, err := files.ReadFileWithDir(c.tmpDir, constants.KubeconfigFileBaseName)
+	kubeConfig, err := files.ReadFileWithDir(c.tmpDir, constants.KubeconfigFileBaseName)
 	if err != nil {
 		return nil, err
 	}
 
-	return clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+	return clientcmd.RESTConfigFromKubeConfig(kubeConfig)
+}
+
+func (c *TkeCert) GetKubeConfigFile() string {
+	return c.tmpDir + "/" + constants.KubeconfigFileBaseName
 }

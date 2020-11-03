@@ -25,6 +25,7 @@ import (
 	"os"
 	"os/exec"
 	"time"
+	"tkestack.io/tke/test/util/env"
 
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
@@ -36,31 +37,27 @@ import (
 	_ "tkestack.io/tke/test/util/env"
 )
 
-const (
-	kubeconfigEnv = "KUBECONFIG"
-)
-
 func LoadOrSetupTKE() (tkeclientset.Interface, error) {
-	data := os.Getenv(kubeconfigEnv)
+	data := env.Kubeconfig()
 	if data == "" {
 		t := time.Now()
-		log.Printf("env %s is not set, using tke-up", kubeconfigEnv)
+		log.Printf("env %s is not set, using tke-up", env.KUBECONFIG)
 		cmd := exec.Command("tke-up")
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			return nil, errors.Wrap(err, "run tke-up error")
 		}
 		log.Printf("tke-up is run sucessully [%s]", time.Since(t).String())
-		os.Setenv(kubeconfigEnv, string(output))
+		os.Setenv(env.KUBECONFIG, string(output))
 	}
 
 	return GetTKEClientFromEnv()
 }
 
 func GetTKEClientFromEnv() (tkeclientset.Interface, error) {
-	data := os.Getenv(kubeconfigEnv)
+	data := env.Kubeconfig()
 	if data == "" {
-		return nil, errors.Errorf("%s not set", kubeconfigEnv)
+		return nil, errors.Errorf("%s not set", env.KUBECONFIG)
 	}
 	kubeconfig, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
@@ -80,9 +77,9 @@ func GetTKEClient(kubeconfig []byte) (tkeclientset.Interface, error) {
 }
 
 func GetRESTConfig() *rest.Config {
-	data := os.Getenv(kubeconfigEnv)
+	data := env.Kubeconfig()
 	if data == "" {
-		panic(fmt.Sprintf("%s not set", kubeconfigEnv))
+		panic(fmt.Sprintf("%s not set", env.KUBECONFIG))
 	}
 	kubeconfig, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
