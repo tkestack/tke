@@ -52,6 +52,7 @@
         * [更多 ](products/business-control-pannel/application/workload/advancedsetup)
           * [工作负载的请求与限制](products/business-control-pannel/application/workload/advancedsetup/resource-limit.md)
           * [Pod 状态](products/business-control-pannel/application/workload/advancedsetup/podlife.md)
+          * [静态 Pod](products/business-control-pannel/application/workload/advancedsetup/staticpod.md)
       * [自动伸缩](products/business-control-pannel/application/autoscale)
         * [HPA](products/business-control-pannel/application/autoscale/HPA.md)
         * [CronHPA](../../../hack/addon/readme/CronHPA.md)
