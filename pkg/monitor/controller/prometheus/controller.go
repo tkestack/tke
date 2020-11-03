@@ -577,10 +577,9 @@ func (c *Controller) createPrometheusIfNeeded(ctx context.Context, key string, c
 		log.Info("Prometheus try checking after fail", log.String("prome", key))
 		if _, ok := c.checking.Load(key); !ok {
 			c.checking.Store(key, prometheus)
-			delayTime := time.Now().Add(2 * time.Minute)
 			go func() {
 				defer c.checking.Delete(key)
-				wait.PollImmediateUntil(60*time.Second, c.checkPrometheusStatus(ctx, prometheus, key, delayTime), c.stopCh)
+				wait.PollImmediateUntil(60*time.Second, c.checkPrometheusStatus(ctx, prometheus, key, time.Time{}), c.stopCh)
 			}()
 		}
 	}
@@ -2972,7 +2971,7 @@ func (c *Controller) checkPrometheusStatus(ctx context.Context, prometheus *v1.P
 		}
 
 		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", PrometheusService, PrometheusServicePort, `/-/healthy`, nil).DoRaw(ctx); err != nil {
-			if time.Now().After(initDelay) {
+			if !initDelay.IsZero() && time.Now().After(initDelay) {
 				prometheus = prometheus.DeepCopy()
 				prometheus.Status.Phase = v1.AddonPhaseFailed
 				prometheus.Status.Reason = "Prometheus is not healthy."
