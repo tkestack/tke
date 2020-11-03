@@ -21,6 +21,7 @@ package tke
 import (
 	"context"
 	"fmt"
+	"k8s.io/klog"
 	"net"
 	"net/url"
 	"os"
@@ -70,6 +71,7 @@ func (t *TKE) Create() {
 
 func (t *TKE) Delete() {
 	t.ClearTmpDir()
+	klog.Info("Delete namespace: ", t.Namespace)
 	gracePeriodSeconds := int64(0)
 	deleteOptions := metav1.DeleteOptions{
 		GracePeriodSeconds: &gracePeriodSeconds,

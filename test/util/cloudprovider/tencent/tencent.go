@@ -19,8 +19,9 @@
 package tencent
 
 import (
-	"os"
+	"k8s.io/klog"
 	"time"
+	"tkestack.io/tke/test/util/env"
 
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
@@ -33,30 +34,34 @@ func NewTencentProvider() cloudprovider.Provider {
 	p := &provider{}
 
 	credential := common.NewCredential(
-		os.Getenv("SECRET_ID"),
-		os.Getenv("SECRET_KEY"),
+		env.SecretID(),
+		env.SecretKey(),
 	)
 	cpf := profile.NewClientProfile()
-	p.cvmClient, _ = cvm.NewClient(credential, os.Getenv("REGION"), cpf)
+	p.cvmClient, _ = cvm.NewClient(credential, env.Region(), cpf)
 
 	return p
 }
 
 type provider struct {
-	cvmClient *cvm.Client
+	cvmClient   *cvm.Client
+	instanceIds []string
 }
 
 func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error) {
+	klog.Info("Create instances. Count: ", count)
 	result := make([]cloudprovider.Instance, count)
 
 	request := cvm.NewRunInstancesRequest()
-	err := request.FromJsonString(os.Getenv("CREATE_INSTANCES_PARAM"))
+	err := request.FromJsonString(env.CreateInstancesParam())
 	if err != nil {
+		klog.Error(err)
 		return nil, err
 	}
 	request.InstanceCount = &count
 	response, err := p.cvmClient.RunInstances(request)
 	if err != nil {
+		klog.Error(err)
 		return nil, err
 	}
 
@@ -65,6 +70,7 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 		describeInstancesRequest.InstanceIds = response.Response.InstanceIdSet
 		describeInstancesResponse, err := p.cvmClient.DescribeInstances(describeInstancesRequest)
 		if err != nil {
+			klog.Error(err)
 			return false, nil
 		}
 		for _, one := range describeInstancesResponse.Response.InstanceSet {
@@ -79,22 +85,36 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 				PublicIP:   *one.PublicIpAddresses[0],
 				Port:       22,
 				Username:   "root",
-				Password:   os.Getenv("PASSWORD"),
+				Password:   env.Password(),
 			}
 		}
 		return true, nil
 	})
 	if err != nil {
-		_ = p.DeleteInstances(response.Response.InstanceIdSet)
+		klog.Error(err)
+		_ = p.DeleteInstances(common.StringValues(response.Response.InstanceIdSet))
 		return nil, err
+	}
+
+	for _, ins := range result {
+		klog.Info("InstanceId: ", ins.InstanceID, ", PublicIP: ", ins.PublicIP, ", InternalIP: ", ins.InternalIP)
+		p.instanceIds = append(p.instanceIds, ins.InstanceID)
 	}
 
 	return result, nil
 }
 
-func (p *provider) DeleteInstances(instanceIDs []*string) error {
+func (p *provider) DeleteAllInstances() error {
+	return p.DeleteInstances(p.instanceIds)
+}
+
+func (p *provider) DeleteInstances(instanceIDs []string) error {
+	klog.Info("Delete instances: ", instanceIDs)
+	if len(instanceIDs) == 0 {
+		return nil
+	}
 	request := cvm.NewTerminateInstancesRequest()
-	request.InstanceIds = instanceIDs
+	request.InstanceIds = common.StringPtrs(instanceIDs)
 	_, err := p.cvmClient.TerminateInstances(request)
 	if err != nil {
 		return err

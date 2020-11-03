@@ -16,22 +16,20 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package cloudprovider
+package util
 
-type Provider interface {
-	// CreateInstances create count instances which wait they are running and return info for ssh
-	CreateInstances(count int64) ([]Instance, error)
-	// DeleteInstances delete instances
-	DeleteInstances(instanceIDs []string) error
-	// DeleteAllInstances delete all instances
-	DeleteAllInstances() error
-}
+import (
+	"math/rand"
+	"time"
+)
 
-type Instance struct {
-	InstanceID string
-	InternalIP string
-	PublicIP   string
-	Port       int32
-	Username   string
-	Password   string
+func RandomStr(length int) string {
+	str := "0123456789abcdefghijklmnopqrstuvwxyz"
+	bytes := []byte(str)
+	result := []byte{}
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	for i := 0; i < length; i++ {
+		result = append(result, bytes[r.Intn(len(bytes))])
+	}
+	return string(result)
 }

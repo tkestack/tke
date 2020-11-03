@@ -10,32 +10,58 @@ on:
       - master
 env:
   VERSION: ${{ github.sha }}
-  PROVIDERRESVERSION: v1.18.3-1
+  KUBECONFIG: ${{ secrets.KUBECONFIG }}
+  REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+  REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+  SECRET_ID: ${{ secrets.SECRET_ID }}
+  SECRET_KEY: ${{ secrets.SECRET_KEY }}
+  REGION: ${{ secrets.REGION }}
+  CREATE_INSTANCES_PARAM: ${{ secrets.CREATE_INSTANCES_PARAM }}
+  PASSWORD: ${{ secrets.PASSWORD }}
+  NEED_DELETE: ${{ secrets.NEED_DELETE }}
 jobs:
   image:
     name: build tke image
     runs-on: self-hosted
     steps:
-     - name: checkout
-       uses: actions/checkout@v2
-     - name: build and push platform image
-       if: contains(toJson(github.event.pull_request.labels.*.name), 'platform')
-       run: |
-         make push IMAGES="tke-platform-api tke-platform-controller" VERSION=${{ github.sha }}
-  platform:
-    name: platform test
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: build and push platform image
+        if: contains(toJson(github.event.pull_request.labels.*.name), 'platform')
+        run: |
+          make push IMAGES="tke-platform-api tke-platform-controller" VERSION=${{ github.sha }}
+  platform1:
+    name: platform test - 1.18.3
     needs: image
-    if: contains(toJson(github.event.pull_request.labels.*.name), 'platform')
+#    if: contains(toJson(github.event.pull_request.labels.*.name), 'platform')
     runs-on: self-hosted
+    env:
+      K8SVERSION: 1.18.3
     steps:
-    - name: printversion
-      env:
-        LABELNAME_CONTEXT: ${{ toJson(github.event.pull_request.labels.*.name) }}
-      run: |
-        echo "$LABELNAME_CONTEXT"
-    - name: e2e test
-      run: |
-        go test -timeout 40m -v tkestack.io/tke/test/e2e/cluster
+      - name: printversion
+        env:
+          LABELNAME_CONTEXT: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          echo "$LABELNAME_CONTEXT"
+      - name: e2e test
+        run: |
+          go test -timeout 40m -v tkestack.io/tke/test/e2e/platform
+  platform2:
+    name: platform test - 1.16.9
+    needs: image
+#    if: contains(toJson(github.event.pull_request.labels.*.name), 'platform')
+    runs-on: self-hosted
+    env:
+      K8SVERSION: 1.16.9
+    steps:
+      - name: printversion
+        env:
+          LABELNAME_CONTEXT: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          echo "$LABELNAME_CONTEXT"
+      - name: e2e test
+        run: |
+          go test -timeout 40m -v tkestack.io/tke/test/e2e/platform
   business:
     name: business test
     needs: image
