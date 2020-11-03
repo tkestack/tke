@@ -90,7 +90,7 @@ func Install(s ssh.Interface, version string) error {
 	return nil
 }
 
-func Init(s ssh.Interface, kubeadmConfig *InitConfig, phase string) error {
+func Init(s ssh.Interface, kubeadmConfig *InitConfig, phase string, preActions ...string) error {
 	configData, err := kubeadmConfig.Marshal()
 	if err != nil {
 		return err
@@ -107,7 +107,8 @@ func Init(s ssh.Interface, kubeadmConfig *InitConfig, phase string) error {
 	if err != nil {
 		return errors.Wrap(err, "parse initCmd error")
 	}
-	out, err := s.CombinedOutput(string(cmd))
+	actions := append(preActions, string(cmd))
+	out, err := s.CombinedOutput(strings.Join(actions, ";"))
 	if err != nil {
 		return fmt.Errorf("kubeadm.Init error: %w", err)
 	}
