@@ -31,6 +31,7 @@ import (
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/distribution"
+	"tkestack.io/tke/pkg/registry/harbor"
 	registryrest "tkestack.io/tke/pkg/registry/registry/rest"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -98,18 +99,28 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 	m := &APIServer{
 		GenericAPIServer: s,
 	}
-
-	distributionOpts := &distribution.Options{
-		RegistryConfig:       c.ExtraConfig.RegistryConfig,
-		ExternalScheme:       c.ExtraConfig.ExternalScheme,
-		LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
-		OIDCCAFile:           c.ExtraConfig.OIDCCAFile,
-		OIDCTokenReviewPath:  c.ExtraConfig.OIDCTokenReviewPath,
-		OIDCIssuerURL:        c.ExtraConfig.OIDCIssuerURL,
+	if c.ExtraConfig.RegistryConfig.HarborEnabled {
+		harborOpts := &harbor.Options{
+			RegistryConfig:       c.ExtraConfig.RegistryConfig,
+			ExternalHost: c.ExtraConfig.ExternalHost,
+		}
+		if err := harbor.RegisterRoute(s.Handler.NonGoRestfulMux, harborOpts); err != nil {
+			return nil, err
+		}
+	} else {
+		distributionOpts := &distribution.Options{
+			RegistryConfig:       c.ExtraConfig.RegistryConfig,
+			ExternalScheme:       c.ExtraConfig.ExternalScheme,
+			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
+			OIDCCAFile:           c.ExtraConfig.OIDCCAFile,
+			OIDCTokenReviewPath:  c.ExtraConfig.OIDCTokenReviewPath,
+			OIDCIssuerURL:        c.ExtraConfig.OIDCIssuerURL,
+		}
+		if err := distribution.RegisterRoute(s.Handler.NonGoRestfulMux, distributionOpts); err != nil {
+			return nil, err
+		}
 	}
-	if err := distribution.RegisterRoute(s.Handler.NonGoRestfulMux, distributionOpts); err != nil {
-		return nil, err
-	}
+	
 
 	chartmuseumOpts := &chartmuseum.Options{
 		RegistryConfig:       c.ExtraConfig.RegistryConfig,
