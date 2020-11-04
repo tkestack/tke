@@ -95,9 +95,21 @@ export const UserTablePanel = () => {
 
     if (user.spec.username.toLowerCase() === 'admin') {
       return (
-        <LinkButton tipDirection="right" errorTip="管理员不能被删除" disabled>
-          <Trans>删除</Trans>
-        </LinkButton>
+        <>
+          <LinkButton
+            tipDirection="left"
+            disabled={isDisable}
+            onClick={() => {
+                  setEditUser(user);
+                  pwdToggle();
+                }}
+            >
+            {t('修改密码')}
+          </LinkButton>
+          <LinkButton tipDirection="right" errorTip="管理员不能被删除" disabled>
+            <Trans>删除</Trans>
+          </LinkButton>
+        </>
       );
     }
     return (
