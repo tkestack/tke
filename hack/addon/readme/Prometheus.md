@@ -2,6 +2,28 @@
 
 ## Prometheus 介绍
 
+下图是 [Prometheus](https://prometheus.io) 官方提供的架构及其一些相关的生态系统组件：
+
+![架构](../../../docs/images/prometheus-architecture.png)
+
+- Prometheus Server：用于抓取指标、存储时间序列数据
+- Exporter：暴露指标让任务来抓
+- Pushgateway：push 的方式将指标数据推送到该网关
+- Alertmanager：处理报警的报警组件
+- PromQL：用于数据查询
+
+Prometheus 常用的获取监控数据的方法：
+
+* **/metrics 接口暴露**：`Prometheus` 的数据指标是通过一个公开的 HTTP(S) 数据接口获取到的，我们不需要单独安装监控的 Agent，只需要暴露一个 Metrics 接口，Prometheus 就会定期去拉取数据；对于一些普通的 HTTP 服务，我们完全可以直接重用这个服务，添加一个 `/metrics` 接口暴露给 Prometheus；而且获取到的指标数据格式是非常易懂的，不需要太高的学习成本。现在很多服务从一开始就内置了一个 `/metrics` 接口，比如 Kubernetes 的各个组件、Istio 服务网格都直接提供了数据指标接口。
+
+* **Exporter**：**有一些服务即使没有原生集成该接口，也完全可以使用一些 [Exporter](https://prometheus.io/docs/instrumenting/exporters/) 来获取到指标数据**，比如 mysqld_exporter、node_exporter，这些 Exporter 就有点类似于传统监控服务中的 Agent，作为一直服务存在，用来收集目标服务的指标数据然后直接暴露给 Prometheus。
+
+*  **kube-state-metrics**：Service 和 Pod 的监控都是应用内部的监控，需要应用本身提供一个 `/metrics` 接口，或者对应的 Exporter 来暴露对应的指标数据，但是在 Kubernetes 集群上 Pod、DaemonSet、Deployment、Job、CronJob 等各种资源对象的状态也需要监控，这也反映了使用这些资源部署的应用的状态。但通过查看前面从集群中拉取的指标(这些指标主要来自 APIServer 和 kubelet 中集成的 cAdvisor)，并没有具体的各种资源对象的状态指标。对于 Prometheus 来说，当然是需要引入新的 Exporter 来暴露这些指标，Kubernetes 提供了一个 [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics) 就是我们需要的。将 kube-state-metrics 部署到 Kubernetes 上之后，就会发现 Kubernetes 集群中的 Prometheus 会在 kubernetes-service-endpoints 这个 job 下自动服务发现 kube-state-metrics，并开始拉取  metrics，这是因为部署 kube-state-metrics 的 manifest 定义文件 kube-state-metrics-service.yaml 对 Service 的定义包含`prometheus.io/scrape: 'true'`这样的一个`annotation`，因此 kube-state-metrics 的 endpoint 可以被 Prometheus 自动服务发现。
+
+  关于 kube-state-metrics 暴露的所有监控指标可以参考 kube-state-metrics 的文档 [kube-state-metrics Documentation](https://github.com/kubernetes/kube-state-metrics/tree/master/Documentation)。
+
+### TKEStack 中的 Prometheus
+
 良好的监控环境为 TKEStack 高可靠性、高可用性和高性能提供重要保证。您可以方便为不同资源收集不同维度的监控数据，能方便掌握资源的使用状况，轻松定位故障。
 
 TKEStack 使用 Prometheus 为 Kubernetes 集群提供监控告警服务。旨在降低对容器平台监控告警方案的实现难度，为用户提供开箱即用的监控告警能力，同时提供灵活的扩展能力以满足用户在使用监控告警时的个性化需求。允许用户自定义对接 influxdb，ElasticSearch 等后端存储监控数据。针对在可用性和可扩展性方面，支持使用 thanos 架构提供可靠的细粒度监控和警报服务，构建具有高可用性和可扩展性的细粒度监控能力。

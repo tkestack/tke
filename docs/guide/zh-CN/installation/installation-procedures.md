@@ -152,7 +152,7 @@ arch=arm64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzho
     * **以 Linux/MacOS 为例**: 在`/etc/hosts`文件中加入以下两行域名解析
       
       * 【IP】 console.tke.com
-    * 【IP】 registry.tke.com
+      * 【IP】 registry.tke.com
       
       > 注意：这里域名的【IP】地址默认为**内网地址**，如果本地主机不在集群内网，域名的 IP 地址应该填该内网地址所对应的**外网地址**。
 
