@@ -14,7 +14,7 @@
 # WARRANTIES OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 
-NODE_SUPPORTED_VERSION = v12
+NODE_SUPPORTED_VERSION = 12
 NPM = npm
 
 .PHONY: web.build
@@ -23,11 +23,14 @@ web.build: web.verify web.build.console web.build.installer
 .PHONY: web.verify
 web.verify:
 	@echo "===========> Check Node.js version"
-ifneq ($(shell node -v | cut -f1 -d.), $(NODE_SUPPORTED_VERSION))
-	@echo "===========> Install Node.js v12"
-	curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
-	sudo apt-get install -y nodejs
-endif
+	$(eval NODE_CURRENT_VERSION := $(shell node -v | cut -f1 -d. | cut -f2 -dv ))
+	@if [ $(NODE_CURRENT_VERSION) -lt $(NODE_SUPPORTED_VERSION) ]; then \
+		echo "you need upgrade Node.js version to $(NODE_SUPPORTED_VERSION) or newer"; \
+		exit 1; \
+	fi
+
+
+
 
 .PHONY: web.build.console
 web.build.console: web.verify
