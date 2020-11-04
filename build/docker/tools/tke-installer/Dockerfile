@@ -21,6 +21,7 @@ RUN echo "hosts: files dns" >> /etc/nsswitch.conf
 WORKDIR /app
 
 ENV PATH="/app/bin:$PATH"
+ENV DOCKER_CLI_EXPERIMENTAL=enabled
 
 RUN apk add --no-cache \
     bash \
