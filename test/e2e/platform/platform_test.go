@@ -370,7 +370,7 @@ func waitClusterToBeRunning(clusterName string) (cluster *platformv1.Cluster, er
 }
 
 func addNode(clusterName string, workerNode cloudprovider.Instance) (machine *platformv1.Machine, err error) {
-	klog.Info("Add node. InstanceId: ", workerNode.InstanceID, ", PublicIP: ", workerNode.PublicIP, ", InternalIP: ", workerNode.InternalIP)
+	klog.Info("Add node. InstanceId: ", workerNode.InstanceID, ", InternalIP: ", workerNode.InternalIP)
 	machine = &platformv1.Machine{
 		Spec: platformv1.MachineSpec{
 			ClusterName: clusterName,

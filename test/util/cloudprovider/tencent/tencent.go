@@ -97,7 +97,7 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 	}
 
 	for _, ins := range result {
-		klog.Info("InstanceId: ", ins.InstanceID, ", PublicIP: ", ins.PublicIP, ", InternalIP: ", ins.InternalIP)
+		klog.Info("InstanceId: ", ins.InstanceID, ", InternalIP: ", ins.InternalIP)
 		p.instanceIds = append(p.instanceIds, ins.InstanceID)
 	}
 

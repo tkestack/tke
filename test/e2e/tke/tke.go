@@ -44,6 +44,8 @@ import (
 	"tkestack.io/tke/test/util/env"
 )
 
+const TIMEOUT = 10 * time.Minute
+
 func tkeHostName() string {
 	restconf := testclient.GetRESTConfig()
 	host := restconf.Host
@@ -156,7 +158,7 @@ func (t *TKE) createEtcd(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+	return wait.PollImmediate(5*time.Second, TIMEOUT, func() (bool, error) {
 		ok, err := apiclient.CheckPodReadyWithLabel(context.Background(), t.client, t.Namespace, "app=etcd")
 		if err != nil {
 			return false, nil
@@ -178,7 +180,7 @@ func (t *TKE) createPlatformAPI(ctx context.Context) error {
 		return err
 	}
 
-	return wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+	return wait.PollImmediate(5*time.Second, TIMEOUT, func() (bool, error) {
 		ok, err := apiclient.CheckPodReadyWithLabel(context.Background(), t.client, t.Namespace, "app=tke-platform-api")
 		if err != nil {
 			return false, nil
@@ -201,7 +203,7 @@ func (t *TKE) createPlatformController(ctx context.Context) error {
 		return err
 	}
 
-	return wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+	return wait.PollImmediate(5*time.Second, TIMEOUT, func() (bool, error) {
 		ok, err := apiclient.CheckPodReadyWithLabel(context.Background(), t.client, t.Namespace,
 			"app=tke-platform-controller")
 		if err != nil {

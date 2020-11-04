@@ -27,7 +27,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
       - name: build and push platform image
-        if: contains(toJson(github.event.pull_request.labels.*.name), 'platform')
+#        if: contains(toJson(github.event.pull_request.labels.*.name), 'platform')
         run: |
           make push IMAGES="tke-platform-api tke-platform-controller" VERSION=${{ github.sha }}
   platform1:
