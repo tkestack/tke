@@ -2335,22 +2335,6 @@ func createAppsDeploymentForPrometheusAdapter(components images.Components, prom
 				},
 				Spec: corev1.PodSpec{
 					ServiceAccountName: prometheusAdapterServiceAccount,
-					Affinity: &corev1.Affinity{
-						NodeAffinity: &corev1.NodeAffinity{
-							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-								NodeSelectorTerms: []corev1.NodeSelectorTerm{
-									{
-										MatchExpressions: []corev1.NodeSelectorRequirement{
-											{
-												Key:      "node-role.kubernetes.io/master",
-												Operator: corev1.NodeSelectorOpExists,
-											},
-										},
-									},
-								},
-							},
-						},
-					},
 					Containers: []corev1.Container{
 						{
 							Name:  prometheusAdapterWorkLoad,
@@ -2363,7 +2347,7 @@ func createAppsDeploymentForPrometheusAdapter(components images.Components, prom
 								"--v=3",
 								"--config=/etc/adapter/config.yaml",
 								"--cert-dir=/tmp",
-								"--requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt",
+								"--requestheader-client-ca-file=/etc/kubernetes/pki/requestheader-client-ca-file",
 								"--requestheader-allowed-names=front-proxy-client,admin",
 								"--requestheader-extra-headers-prefix=X-Remote-Extra-",
 								"--requestheader-group-headers=X-Remote-Group",
@@ -2384,7 +2368,7 @@ func createAppsDeploymentForPrometheusAdapter(components images.Components, prom
 								},
 								{
 									MountPath: "/etc/kubernetes/pki/",
-									Name:      "etc-kubernetes-pki",
+									Name:      "extension-apiserver-authentication",
 									ReadOnly:  true,
 								},
 							},
@@ -2392,10 +2376,12 @@ func createAppsDeploymentForPrometheusAdapter(components images.Components, prom
 					},
 					Volumes: []corev1.Volume{
 						{
-							Name: "etc-kubernetes-pki",
+							Name: "extension-apiserver-authentication",
 							VolumeSource: corev1.VolumeSource{
-								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/etc/kubernetes/pki/",
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{
+										Name: "extension-apiserver-authentication",
+									},
 								},
 							},
 						},
