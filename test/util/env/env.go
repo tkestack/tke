@@ -36,7 +36,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	godotenv.Overload(path.Join(home, envFile), envFile) // for local dev
+	godotenv.Load(path.Join(home, envFile), envFile) // for local dev
 }
 
 const (
