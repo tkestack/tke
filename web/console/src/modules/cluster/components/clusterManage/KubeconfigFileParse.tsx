@@ -1,5 +1,5 @@
-import React from 'react';
-import { Upload } from '@tea/component';
+import React, { useState } from 'react';
+import { Upload, Text } from '@tea/component';
 import * as yaml from 'js-yaml';
 
 export interface KubeConfig {
@@ -24,20 +24,27 @@ export interface KubeConfig {
 
 export interface KubeconfigFileParseProps {
   onSuccess: (targetConfig: { apiServer: string; certFile: string; token: string }) => any;
-  onFaild?: () => any;
 }
 
-export function KubeconfigFileParse({ onSuccess, onFaild }: KubeconfigFileParseProps) {
+export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
+  const [errorMessage, setErrorMessage] = useState('');
+
   function beforeUpload(file: File) {
+    setErrorMessage('');
     fileParse(file)
       .then((rsp: KubeConfig) => {
         onSuccess(yamlToConfig(rsp));
       })
       .catch(error => {
-        onFaild && onFaild();
+        onFiled(error);
       });
 
     return false;
+  }
+
+  function onFiled(error: Error) {
+    console.log(error);
+    setErrorMessage(error.message);
   }
 
   function fileParse(file: File) {
@@ -49,7 +56,7 @@ export function KubeconfigFileParse({ onSuccess, onFaild }: KubeconfigFileParseP
           try {
             rsp = yaml.load(target.result as string);
           } catch (error) {
-            return reject(error);
+            return reject(new Error('文件解析失败'));
           }
 
           if (rsp.kind !== 'Config') {
@@ -88,6 +95,12 @@ export function KubeconfigFileParse({ onSuccess, onFaild }: KubeconfigFileParseP
   return (
     <Upload beforeUpload={beforeUpload}>
       <a style={{ fontSize: '12px' }}>点击上传kubeconfig文件</a>
+      <br />
+      {errorMessage && (
+        <Text style={{ fontSize: '12px' }} theme="danger">
+          {errorMessage}
+        </Text>
+      )}
     </Upload>
   );
 }
