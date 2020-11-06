@@ -24,7 +24,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@types/js-yaml": "^3.12.5",
     "@vx/axis": "0.0.181",
     "@vx/brush": "0.0.179",
     "@vx/event": "0.0.179",
@@ -45,7 +44,7 @@
     "final-form": "^4.19.1",
     "immer": "^7.0.8",
     "js-base64": "^3.4.5",
-    "js-yaml": "^3.14.0",
+    "js-yaml": "^3.12.0",
     "jsencrypt": "^3.0.0-rc.1",
     "jwt-decode": "^2.2.0",
     "lodash": "^4.17.14",
