@@ -50,7 +50,7 @@ export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
   function fileParse(file: File) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = ({ target }: { target: FileReader }) => {
+      reader.onload = ({ target }: any) => {
         if (target.readyState === 2) {
           let rsp;
           try {
