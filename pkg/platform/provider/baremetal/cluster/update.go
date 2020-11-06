@@ -95,7 +95,7 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 				actualCertSANs = append(actualCertSANs, ip.String())
 			}
 			if reflect.DeepEqual(funk.IntersectString(actualCertSANs, exptectCertSANs), exptectCertSANs) {
-				return nil
+				continue
 			}
 			log.FromContext(ctx).Info("EnsureAPIServerCert",
 				"nodeName", s.Host,
@@ -104,11 +104,12 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 			)
 		}
 
+		var preActions []string
 		for _, file := range []string{constants.APIServerCertName, constants.APIServerKeyName} {
-			s.CombinedOutput(fmt.Sprintf("rm -f %s", file))
+			preActions = append(preActions, fmt.Sprintf("rm -f %s", file))
 		}
 
-		err = kubeadm.Init(s, kubeadmConfig, "certs apiserver")
+		err = kubeadm.Init(s, kubeadmConfig, "certs apiserver", preActions...)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}

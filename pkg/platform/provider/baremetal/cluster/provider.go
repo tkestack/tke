@@ -136,8 +136,8 @@ func NewProvider() (*Provider, error) {
 			p.EnsurePreClusterUpgradeHook,
 			p.EnsureUpgradeControlPlaneNode,
 
-			p.EnsureRenewCerts,
 			p.EnsureAPIServerCert,
+			p.EnsureRenewCerts,
 			p.EnsureStoreCredential,
 			p.EnsureKeepalivedWithLBOption,
 			p.EnsureThirdPartyHA,
