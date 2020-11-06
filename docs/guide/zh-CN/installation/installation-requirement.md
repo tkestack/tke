@@ -121,3 +121,5 @@
 | SELinux                         | 关闭。<br />Kubernetes 官方要求，否则 kubelet 挂载目录时可能报错 `Permission denied` | `setenforce 0` <br/>`sed -i "s/SELINUX=enforcing/SELINUX=disabled/g" /etc/selinux/config` |
 | 时区                            | 所有服务器时区必须统一，建议设置为 `Asia/Shanghai`           | `timedatectl set-timezone Asia/Shanghai`                     |
 | 时间同步                        | ETCD 集群各机器需要时间同步，可以利用 chrony 用于系统时间同步；所有服务器要求时间必须同步，误差不得超过 2 秒 | `yum install -y chronyd` <br/>`systemctl enable chronyd && systemctl start chronyd` |
+| 路由检查                        | 有些设备可能会默认配置一些路由，这些路由可能与 TKEStack 冲突，建议删除这些路由并做相关配置 | `ip link delete docker0`<br/>`ip link add name docker0 type bridge`<br/>`ip addr add dev docker0 172.17.0.1/16` |
+| docker 检查                     | 有些设备可能会默认安装 docker，该 docker 版本可能与 TKEStack 不一致，建议在安装 TKEStack 之前删除docker | `yum remove docker-ce containerd docker-ce-cli -y`           |
