@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -224,10 +225,14 @@ func (c *Controller) syncItem(key string) error {
 			log.String("chartGroupName", chartGroupName), log.Err(err))
 		return err
 	default:
+		cachedChartGroup := c.cache.getOrCreate(key)
+		if c.needCompatibleUpgrade(context.Background(), chartGroup) {
+			return c.compatibleUpgrade(context.Background(), key, cachedChartGroup, chartGroup)
+		}
+
 		if chartGroup.Status.Phase == registryv1.ChartGroupPending ||
 			chartGroup.Status.Phase == registryv1.ChartGroupAvailable {
-			cachedChartGroup := c.cache.getOrCreate(key)
-			err = c.processUpdate(context.Background(), cachedChartGroup, chartGroup, key)
+			err = c.processUpdate(context.Background(), key, cachedChartGroup, chartGroup)
 		} else if chartGroup.Status.Phase == registryv1.ChartGroupTerminating {
 			log.Info("ChartGroup has been terminated. Attempting to cleanup resources",
 				log.String("chartGroupName", chartGroupName))
@@ -267,7 +272,7 @@ func (c *Controller) processDelete(cachedChartGroup *cachedChartGroup, key strin
 	return nil
 }
 
-func (c *Controller) processUpdate(ctx context.Context, cachedChartGroup *cachedChartGroup, chartGroup *registryv1.ChartGroup, key string) error {
+func (c *Controller) processUpdate(ctx context.Context, key string, cachedChartGroup *cachedChartGroup, chartGroup *registryv1.ChartGroup) error {
 	if cachedChartGroup.state != nil {
 		// exist and the chartGroup name changed
 		if cachedChartGroup.state.UID != chartGroup.UID {
@@ -398,4 +403,63 @@ func (c *Controller) updateStatus(ctx context.Context, chartGroup *registryv1.Ch
 		chartGroup.Name, chartGroup.Status.Phase),
 		log.String("chartGroupName", chartGroup.Name), log.Err(err))
 	return nil, err
+}
+
+// If need to upgrade compatibly
+func (c *Controller) needCompatibleUpgrade(ctx context.Context, cg *registryv1.ChartGroup) bool {
+	switch cg.Spec.Type {
+	// lower case
+	case registryv1.RepoType(strings.ToLower(string(registryv1.RepoTypePersonal))),
+		registryv1.RepoType(strings.ToLower(string(registryv1.RepoTypeProject))),
+		registryv1.RepoType(strings.ToLower(string(registryv1.RepoTypeSystem))):
+		{
+			return true
+		}
+	}
+	return false
+}
+
+// If need to upgrade compatibly
+func (c *Controller) compatibleUpgrade(ctx context.Context, key string, cachedChartGroup *cachedChartGroup, cg *registryv1.ChartGroup) error {
+	newObj := cg.DeepCopy()
+	switch newObj.Spec.Type {
+	case registryv1.RepoType(strings.ToLower(string(registryv1.RepoTypePersonal))):
+		{
+			newObj.Spec.Creator = cg.Spec.Name
+			newObj.Spec.Type = registryv1.RepoTypeSelfBuilt
+			if cg.Spec.Visibility == registryv1.VisibilityPrivate {
+				newObj.Spec.Visibility = registryv1.VisibilityUser
+				newObj.Spec.Users = []string{cg.Spec.Name}
+			}
+			break
+		}
+	case registryv1.RepoType(strings.ToLower(string(registryv1.RepoTypeProject))):
+		{
+			newObj.Spec.Type = registryv1.RepoTypeSelfBuilt
+			if cg.Spec.Visibility == registryv1.VisibilityPrivate {
+				newObj.Spec.Visibility = registryv1.VisibilityProject
+			}
+			break
+		}
+	case registryv1.RepoType(strings.ToLower(string(registryv1.RepoTypeSystem))):
+		{
+			newObj.Spec.Type = registryv1.RepoTypeSystem
+			break
+		}
+	default:
+		return nil
+	}
+
+	updated, err := c.client.RegistryV1().ChartGroups().Update(ctx, newObj, metav1.UpdateOptions{})
+	if errors.IsNotFound(err) {
+		log.Info("Not persisting upgrade to chartGroup that no longer exists",
+			log.String("chartGroupName", cg.Name),
+			log.Err(err))
+		return nil
+	}
+
+	cachedChartGroup.state = updated
+	// Always update the cache upon success.
+	c.cache.set(key, cachedChartGroup)
+	return nil
 }

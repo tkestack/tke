@@ -178,6 +178,21 @@ type ChartGroupSpec struct {
 	Projects []string
 	// +optional
 	Finalizers []FinalizerName
+	// +optional
+	Users []string
+	// +optional
+	ImportedInfo ChartGroupImport
+	// +optional
+	Creator string
+}
+
+// ChartGroupImport is a description of an import chart group.
+type ChartGroupImport struct {
+	Addr string
+	// +optional
+	Username string
+	// +optional
+	Password string
 }
 
 // ChartGroupStatus represents information about the status of a chartgroup.
@@ -308,19 +323,37 @@ type RepoType string
 const (
 	// VisibilityPublic indicates the namespace or repo is public.
 	VisibilityPublic Visibility = "Public"
+	// VisibilityUser indicates the namespace or repo is user.
+	VisibilityUser Visibility = "User"
+	// VisibilityProject indicates the namespace or repo is project.
+	VisibilityProject Visibility = "Project"
+
 	// VisibilityPrivate indicates the namespace or repo is private.
+	// Deprecated!
 	VisibilityPrivate Visibility = "Private"
 
-	// RepoTypePersonal indicates the type of namespace or repo is personal.
-	RepoTypePersonal RepoType = "personal"
-	// RepoTypeProject indicates the type of namespace or repo is project.
-	RepoTypeProject RepoType = "project"
+	// RepoTypeSelfBuilt indicates the type of namespace or repo is selfbuilt.
+	RepoTypeSelfBuilt RepoType = "SelfBuilt"
+	// RepoTypeImported indicates the type of namespace or repo is imported.
+	RepoTypeImported RepoType = "Imported"
 	// RepoTypeSystem indicates the type of namespace or repo is system.
-	RepoTypeSystem RepoType = "system"
-	// RepoTypePublic indicates the type of namespace or repo is visibility public.
-	RepoTypePublic RepoType = "public"
-	// RepoTypeAll indicates all of namespace or repo.
-	RepoTypeAll RepoType = "all"
+	RepoTypeSystem RepoType = "System"
+
+	// RepoTypeProject indicates the type of namespace or repo is project.
+	// Deprecated!
+	RepoTypeProject RepoType = "project"
+	// RepoTypePersonal indicates the type of namespace or repo is personal.
+	// Deprecated!
+	RepoTypePersonal RepoType = "personal"
+
+	// ScopeTypeAll indicates all of namespace or repo is all.
+	ScopeTypeAll string = "all"
+	// ScopeTypePublic indicates all of namespace or repo is public.
+	ScopeTypePublic string = "public"
+	// ScopeTypeUser indicates all of namespace or repo is user.
+	ScopeTypeUser string = "user"
+	// ScopeTypeProject indicates all of namespace or repo is project.
+	ScopeTypeProject string = "project"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

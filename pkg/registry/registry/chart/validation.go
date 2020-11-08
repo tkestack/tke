@@ -71,7 +71,7 @@ func ValidateChart(ctx context.Context, chart *registry.Chart, registryClient *r
 		}
 	}
 
-	visibilities := sets.NewString(string(registry.VisibilityPrivate), string(registry.VisibilityPublic))
+	visibilities := sets.NewString(string(registry.VisibilityUser), string(registry.VisibilityProject), string(registry.VisibilityPublic))
 	if !visibilities.Has(string(chart.Spec.Visibility)) {
 		allErrs = append(allErrs, field.NotSupported(fldSpecPath.Child("visibility"), chart.Spec.Visibility, visibilities.List()))
 	}
