@@ -70,6 +70,8 @@ const (
 	OIDCCACertFile  = CertificatesDir + OIDCCACertName
 	WebhookCertFile = CertificatesDir + WebhookCertName
 	WebhookKeyFile  = CertificatesDir + WebhookKeyName
+	AdminCertFile   = CertificatesDir + AdminCertName
+	AdminKeyFile    = CertificatesDir + AdminKeyName
 
 	// CACertName defines certificate name
 	CACertName = CertificatesDir + "ca.crt"
