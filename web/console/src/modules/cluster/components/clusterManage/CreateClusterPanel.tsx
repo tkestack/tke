@@ -30,7 +30,18 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
 
   render() {
     let { actions, clusterCreationState, createClusterFlow, route } = this.props,
-      { v_apiServer, v_certFile, v_name, v_token, apiServer, certFile, name, token } = clusterCreationState;
+      {
+        v_apiServer,
+        v_certFile,
+        v_name,
+        v_token,
+        apiServer,
+        certFile,
+        name,
+        token,
+        clientCertificate,
+        clientKey
+      } = clusterCreationState;
     const workflow = createClusterFlow;
     const action = actions.workflow.createCluster;
     let clusterInfo: ResourceInfo = resourceConfig()['cluster'];
@@ -172,6 +183,24 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
                 validator={v_token}
                 onChange={value => actions.clusterCreation.updateClusterCreationState({ token: value })}
                 onBlur={actions.validate.clusterCreation.validateToken}
+              />
+            </FormPanel.Item>
+            <FormPanel.Item label="Client-Certificate">
+              <InputField
+                type="textarea"
+                value={clientCertificate}
+                placeholder={t('请输入Client-Certificate')}
+                tipMode="popup"
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ clientCertificate: value })}
+              />
+            </FormPanel.Item>
+            <FormPanel.Item label="Client-Key">
+              <InputField
+                type="textarea"
+                value={clientKey}
+                placeholder={t('请输入Client-Key')}
+                tipMode="popup"
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ clientKey: value })}
               />
             </FormPanel.Item>
 
