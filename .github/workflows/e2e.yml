@@ -19,7 +19,6 @@ env:
   CREATE_INSTANCES_PARAM: ${{ secrets.CREATE_INSTANCES_PARAM }}
   PASSWORD: ${{ secrets.PASSWORD }}
   NEED_DELETE: ${{ secrets.NEED_DELETE }}
-  COMMIT_MSG: ${{github.event.head_commit.message}},${{github.event.pull_request.title}},${{github.event.pull_request.body}}
 jobs:
   image:
     name: build tke image
@@ -35,7 +34,6 @@ jobs:
     name: platform test - 1.18.3
     needs: image
 #    if: contains(toJson(github.event.pull_request.labels.*.name), 'platform')
-    if: contains(env.COMMIT_MSG, 'installer') || contains(env.COMMIT_MSG, 'platform') || contains(env.COMMIT_MSG, 'cluster') || contains(env.COMMIT_MSG, 'gateway') || contains(env.COMMIT_MSG, 'addon') || contains(env.COMMIT_MSG, 'registry')
     runs-on: self-hosted
     env:
       K8SVERSION: 1.18.3
@@ -48,22 +46,22 @@ jobs:
       - name: e2e test
         run: |
           go test -timeout 40m -v tkestack.io/tke/test/e2e/platform
-#  platform2:
-#    name: platform test - 1.16.9
-#    needs: image
-##    if: contains(toJson(github.event.pull_request.labels.*.name), 'platform')
-#    runs-on: self-hosted
-#    env:
-#      K8SVERSION: 1.16.9
-#    steps:
-#      - name: printversion
-#        env:
-#          LABELNAME_CONTEXT: ${{ toJson(github.event.pull_request.labels.*.name) }}
-#        run: |
-#          echo "$LABELNAME_CONTEXT"
-#      - name: e2e test
-#        run: |
-#          go test -timeout 40m -v tkestack.io/tke/test/e2e/platform
+  platform2:
+    name: platform test - 1.16.9
+    needs: image
+#    if: contains(toJson(github.event.pull_request.labels.*.name), 'platform')
+    runs-on: self-hosted
+    env:
+      K8SVERSION: 1.16.9
+    steps:
+      - name: printversion
+        env:
+          LABELNAME_CONTEXT: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          echo "$LABELNAME_CONTEXT"
+      - name: e2e test
+        run: |
+          go test -timeout 40m -v tkestack.io/tke/test/e2e/platform
   business:
     name: business test
     needs: image
