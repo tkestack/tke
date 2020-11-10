@@ -20,4 +20,7 @@ type AuditStorage interface {
 	Save([]*types.Event) error
 	// list option values for field
 	FieldValues() map[string][]string
+
+	Start()
+	Stop()
 }

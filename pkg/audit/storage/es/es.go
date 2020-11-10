@@ -25,13 +25,6 @@ const defaultReverveDays = 7
 var fieldEnumCache = map[string][]string{}
 var lock sync.Mutex
 
-func init() {
-	fieldEnumCache["userName"] = []string{}
-	fieldEnumCache["clusterName"] = []string{}
-	fieldEnumCache["namespace"] = []string{}
-	fieldEnumCache["resource"] = []string{}
-}
-
 type es struct {
 	Addr        string
 	Indices     string
@@ -39,6 +32,7 @@ type es struct {
 	username    string
 	password    string
 	v7          bool
+	stop        chan struct{}
 }
 
 func NewStorage(conf *config.ElasticSearchStorage) (storage.AuditStorage, error) {
@@ -47,6 +41,7 @@ func NewStorage(conf *config.ElasticSearchStorage) (storage.AuditStorage, error)
 		Indices:     conf.Indices,
 		ReserveDays: conf.ReserveDays,
 		username:    conf.Username,
+		stop:        make(chan struct{}),
 	}
 	if conf.Password != "" {
 		password, err := base64.StdEncoding.DecodeString(conf.Password)
@@ -65,9 +60,22 @@ func NewStorage(conf *config.ElasticSearchStorage) (storage.AuditStorage, error)
 	if err != nil {
 		return nil, err
 	}
-	go wait.Forever(cli.cleanup, time.Hour)
-	go wait.Forever(cli.updateFieldEnumCache, time.Minute)
 	return cli, nil
+}
+
+func (s *es) Start() {
+	lock.Lock()
+	defer lock.Unlock()
+	fieldEnumCache["userName"] = []string{}
+	fieldEnumCache["clusterName"] = []string{}
+	fieldEnumCache["namespace"] = []string{}
+	fieldEnumCache["resource"] = []string{}
+	go wait.Until(s.cleanup, time.Hour, s.stop)
+	go wait.Until(s.updateFieldEnumCache, time.Minute, s.stop)
+}
+
+func (s *es) Stop() {
+	close(s.stop)
 }
 
 func (s *es) init() error {
@@ -88,7 +96,7 @@ func (s *es) detectVersion() error {
 		Version version `json:"version"`
 	}
 	vinfo := info{}
-	_, body, errs := gorequest.New().Get(s.Addr).SetBasicAuth(s.username, s.password).End()
+	_, body, errs := gorequest.New().Get(s.Addr).Timeout(time.Second*10).SetBasicAuth(s.username, s.password).End()
 	if len(errs) > 0 {
 		return fmt.Errorf("detect es version failed: %v", errs)
 	}

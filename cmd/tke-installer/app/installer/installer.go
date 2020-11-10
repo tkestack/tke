@@ -1645,6 +1645,7 @@ func (t *TKE) installTKEAudit(ctx context.Context) error {
 		options["ReserveDays"] = t.Para.Config.Audit.ElasticSearch.ReserveDays
 		options["Username"] = t.Para.Config.Audit.ElasticSearch.Username
 		options["Password"] = t.Para.Config.Audit.ElasticSearch.Password
+		options["Index"] = t.Para.Config.Audit.ElasticSearch.Index
 	}
 
 	if err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-audit-api/*.yaml", options); err != nil {

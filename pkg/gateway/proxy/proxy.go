@@ -145,11 +145,7 @@ func componentPrefix() map[moduleName][]modulePath {
 				protected: false,
 			},
 			modulePath{
-				prefix:    fmt.Sprintf("%s/%s/%s/events/list/", apiPrefix, auditapi.GroupName, auditapi.Version),
-				protected: true,
-			},
-			modulePath{
-				prefix:    fmt.Sprintf("%s/%s/%s/events/listFieldValues/", apiPrefix, auditapi.GroupName, auditapi.Version),
+				prefix:    fmt.Sprintf("%s/%s/%s/events/", apiPrefix, auditapi.GroupName, auditapi.Version),
 				protected: true,
 			},
 		},
