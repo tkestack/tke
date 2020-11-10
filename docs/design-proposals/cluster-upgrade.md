@@ -93,3 +93,35 @@ kubectl的升级则比较简单也不是很重要，甚至不升级影响也不�
 - EnsureKeepalivedWithLBOption   （检查内置HA是否需要安装）
 - EnsureThirdPartyHA             （检查第三方HA是否需要安装）
 - EnsurePostClusterUpgradeHook   （执行管理员自定义的升级后检脚本）
+
+### 前端约束
+
+#### 版本控制
+
+TKEStack可用k8s版本信息从`/api/v1/namespaces/kube-public/configmaps/cluster-info`中的data.k8sValidVersions获取，形式为string array。
+
+集群（`/apis/platform.tkestack.io/v1/clusters/{clusterName}`）只允许向比当前版本高的版本升级，比当前版本低的版本应当为灰不可选。
+
+#### 集群升级参数
+
+升级参数在集群对象（`/apis/platform.tkestack.io/v1/clusters/{clusterName}`）的spec.upgrade中。
+
+mode分为Auto和Manual两种。Auto会自动升级worker节点，Manual只会标记worker节点需要升级，等待用户手动修改节点状态后才会升级。
+
+strategy.maxUnready表示升级过程中允许不可用pod的最大比例，例如“50%”。前端应当提示：注意如果节点过少，而设置比例过低，没有足够多的节点承载pod的迁移会导致升级卡死。如果业务对pod可用比例较高，请考虑选择升级前不驱节点。
+
+strategy.drainNodeBeforeUpgrade表示升级前是否需要驱逐节点。前端应当提示：若选择升级前驱逐节点，该节点所有pod将在升级前被驱逐，此时节点如有pod使用emptyDir类卷会导致驱逐失败而影响升级流程。
+
+#### 升级触发
+
+集群升级是由修改集群对象（`/apis/platform.tkestack.io/v1/clusters/{clusterName}`）的spec.version的值触发的。
+
+Manual模式下worker节点的升级是修改machine对象(`/apis/platform.tkestack.io/v1/machines/{mchineName}`)的status.phase为"Upgrading"而触发的。
+
+注意某集群下列出的需要升级worker节点需要用到labelSelector和fieldSelector，`/apis/platform.tkestack.io/v1/machines?labelSelector=platform.tkestack.io/need-upgrade%3D&fieldSelector=spec.clusterName%3D{clusterName}`
+
+#### 不可升级状态
+
+集群只有在名下machine都不包含`platform.tkestack.io/need-upgrade` label时才可以升级，即`/apis/platform.tkestack.io/v1/machines?labelSelector=platform.tkestack.io/need-upgrade%3D&fieldSelector=spec.clusterName%3D{clusterName}`返回的items列表为空，否则应当提示该集群有worker节点需要先完成升级。
+
+worker节点需要machine有`platform.tkestack.io/need-upgrade` label时才允许手动触发升级，否则应当为灰提示无需升级。
