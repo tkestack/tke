@@ -40,22 +40,18 @@ TKEStack's backend is written in [Go](http://golang.org). If you don't have a Go
 | 1.0+     | 1.13.3      |
 
 > TKEStack uses [go modules](https://github.com/golang/go/wiki/Modules) to manage dependencies.
-
-Once you have set up your golang development environment, make sure the environment variables contains:
-
-```
-go env -w GOPRIVATE="tkestack.io,tkestack.com,helm.sh,go.etcd.io,k8s.io,go.uber.org"
-```
+> If you have problem of accessing some go package, please check [goproxy](https://goproxy.io/).
 
 ### Node.js
 
 TKEStack's frontend is written in [Typescript](https://www.typescriptlang.org/).
-To bundle TKEStack's frontend code, you need a Node.js and NPM execution environment, please [set one up](https://nodejs.org/en/download/package-manager/).
+To bundle TKEStack's frontend code, you need a Node.js and NPM execution environment, you can use [nvm](https://github.com/nvm-sh/nvm/) to install them.
 
 | TKEStack | requires Node.js | requires NPM |
 | -------- | ---------------- | ------------ |
 | 0.8-0.12 | 9.4+             | 5.6+         |
-| 1.0+     | 10.3+            | 6.1+         |
+| 1.0-1.3  | 10.3+            | 6.1+         |
+| 1.4+     | 12.5+            | 6.14+        |
 
 ## Clone source code
 
@@ -169,4 +165,26 @@ TKEStack manages docker images via manifests and manifest lists.
 Please make sure you enable experimental features in the Docker client.
 You can find more details in [docker manifest docs](https://docs.docker.com/engine/reference/commandline/manifest/).
 
-For more functions of other components, please see [here](components.md). To run tke system locally, please see [here](running-locally.md).
+> Generally, `make push` is used by CI, not developer. Make sure you know what you are doing when using it.
+
+For more functions of other components, please see [here](components.md).
+
+## Development example
+
+Before new feature development or bug fix, you should prepare a TKEStack environment. If you don't have one, please check [installation guide](https://github.com/tkestack/tke/tree/master/docs/guide/zh-CN/installation).
+
+After modifying the code, you might want to make sure the code will work as you wish, so you should replace the component(s) with yours. What you need to do is as follows:
+
+> Take tke-platform-controller as an example. 
+
+1. Build a container image. Run `make image IMAGES=tke-platform-controller` in tke directory, you wil get a image named `tkestack/tke-platform-controller-amd64:v1.4.0.xx.xxxx`.
+2. Retag the image for TKEStack registry. By default, you should run `docker tag tkestack/tke-platform-controller-amd64:v1.4.0.xx.xxxx registry.tke.com/library/tke-platform-controller:{unique version}`. If you changed the registry domain, please change `registry.tke.com` to the domain you set.
+![registry domain](../../docs/images/registry-domain.png)
+3. Save image as a archive file. Run `docker save -o tke-platform-controller.tar registry.tke.com/library/tke-platform-controller:{unique version}`
+4. Send archive file to the TKEStack host. Run `scp tke-platform-controller.tar root@{your TKEStack host}:/root/`.
+5. Load image on your TKEStack host. Login your TKEStack host through ssh, `ssh root@{your TKEStack host}`, and run `docker load -i tke-platform-controller.tar`.
+6. Login TKEStack registry. Run `docker login registry.tke.com` in your TKEStack host, if the registry domain is changed, please use your custom domain. The registry's username and password are your TKEStack username and password.
+![TKEStack username and password](../../docs/images/tkestack-user-pwd.png)
+7. Push image to registry. Run `docker push registry.tke.com/library/tke-platform-controller:{unique version}` in your TKEStack host.
+8. Replace component. Access TKEStack in web browser, and change tke-platform-controller's image.
+![TKEStack username and password](../../docs/images/replace-component.png)
