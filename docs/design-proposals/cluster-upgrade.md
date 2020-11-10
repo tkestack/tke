@@ -116,7 +116,7 @@ strategy.drainNodeBeforeUpgrade表示升级前是否需要驱逐节点。前端�
 
 集群升级是由修改集群对象（`/apis/platform.tkestack.io/v1/clusters/{clusterName}`）的spec.version的值触发的。
 
-Manual模式下worker节点的升级是修改machine对象(`/apis/platform.tkestack.io/v1/machines/{mchineName}`)的status.phase为"Upgrading"而触发的。
+Manual模式下worker节点的升级是修改machine对象(`/apis/platform.tkestack.io/v1/machines/{mchineName}`)的status.phase为"Upgrading"而触发的。用户可能在前端会一次勾选多个machine以声明升级多节点，前端需要逐个向后台发送，避免并发导致多节点同时升级影响用户业务。
 
 注意某集群下列出的需要升级worker节点需要用到labelSelector和fieldSelector，`/apis/platform.tkestack.io/v1/machines?labelSelector=platform.tkestack.io/need-upgrade%3D&fieldSelector=spec.clusterName%3D{clusterName}`
 
