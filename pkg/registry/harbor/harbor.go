@@ -20,6 +20,8 @@ package harbor
 
 import (
 	"k8s.io/apiserver/pkg/server/mux"
+
+	restclient "k8s.io/client-go/rest"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 
 	"tkestack.io/tke/pkg/registry/harbor/handler"
@@ -42,8 +44,9 @@ const AuthPrefix = "/service/"
 const ChartPrefix = "/chartrepo/"
 
 type Options struct {
-	RegistryConfig *registryconfig.RegistryConfiguration
-	ExternalHost   string
+	RegistryConfig       *registryconfig.RegistryConfiguration
+	ExternalHost         string
+	LoopbackClientConfig *restclient.Config
 }
 
 // IgnoredAuthPathPrefixes returns a list of path prefixes that does not need to
@@ -61,7 +64,7 @@ func RegisterRoute(m *mux.PathRecorderMux, opts *Options) error {
 
 	httpURL := "https://" + opts.RegistryConfig.DomainSuffix
 
-	harborHandler, err := handler.NewHandler(httpURL, opts.RegistryConfig.HarborCAFile, opts.ExternalHost)
+	harborHandler, err := handler.NewHandler(httpURL, opts.RegistryConfig.HarborCAFile, opts.ExternalHost, opts.LoopbackClientConfig, opts.RegistryConfig)
 	if err != nil {
 		return err
 	}
