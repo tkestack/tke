@@ -23,6 +23,7 @@ import (
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 
 	"tkestack.io/tke/pkg/registry/harbor/handler"
+	"tkestack.io/tke/pkg/registry/harbor/tenant"
 
 	// import filesystem driver to store images
 	_ "github.com/docker/distribution/registry/storage/driver/filesystem"
@@ -34,9 +35,11 @@ import (
 	_ "tkestack.io/tke/pkg/registry/distribution/auth/token"
 )
 
-// PathPrefix defines the path prefix for accessing the docker registry v2 server.
-const PathPrefix = "/v2/"
+// RegistryPrefix defines the path prefix for accessing the docker registry v2 server.
+// ChartPrefix defines the path prefix for accessing the helm chart server
+const RegistryPrefix = "/v2/"
 const AuthPrefix = "/service/"
+const ChartPrefix = "/chartrepo/"
 
 type Options struct {
 	RegistryConfig *registryconfig.RegistryConfiguration
@@ -47,21 +50,27 @@ type Options struct {
 // go through the built-in authentication and authorization middleware of apiserver.
 func IgnoreAuthPathPrefixes() []string {
 	return []string{
-		PathPrefix,
+		RegistryPrefix,
 		AuthPrefix,
+		ChartPrefix,
 	}
 }
 
 // RegisterRoute to register the docker distribution server path prefix to apiserver.
 func RegisterRoute(m *mux.PathRecorderMux, opts *Options) error {
 
-	handler, err := handler.NewHandler("https://"+opts.RegistryConfig.DomainSuffix, opts.RegistryConfig.HarborCAFile, opts.ExternalHost)
+	httpURL := "https://" + opts.RegistryConfig.DomainSuffix
+
+	harborHandler, err := handler.NewHandler(httpURL, opts.RegistryConfig.HarborCAFile, opts.ExternalHost)
 	if err != nil {
 		return err
 	}
 
-	m.HandlePrefix(PathPrefix, handler)
-	m.HandlePrefix(AuthPrefix, handler)
+	wrappedHandler := tenant.WithTenant(harborHandler, RegistryPrefix, AuthPrefix, ChartPrefix, opts.RegistryConfig.DomainSuffix, opts.RegistryConfig.DefaultTenant)
+
+	m.HandlePrefix(RegistryPrefix, wrappedHandler)
+	m.HandlePrefix(AuthPrefix, wrappedHandler)
+	m.HandlePrefix(ChartPrefix, wrappedHandler)
 
 	return nil
 }
