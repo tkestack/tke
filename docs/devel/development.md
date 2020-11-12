@@ -188,3 +188,12 @@ After modifying the code, you might want to make sure the code will work as you 
 7. Push image to registry. Run `docker push registry.tke.com/library/tke-platform-controller:{unique version}` in your TKEStack host.
 8. Replace component. Access TKEStack in web browser, and change tke-platform-controller's image.
 ![TKEStack username and password](../../docs/images/replace-component.png)
+
+For tke-installer development, verification processes are as follows:
+
+1. Build tke-installer binary. Run `VERSION={your tkestack version} make build BINS=tke-installer` in tke directory.
+2. Send binary to your installer-node host. Run `scp _output/linux/amd64/tke-installer root@{your installer-node host}:/root/`.
+3. Replace binary in container. Run `docker cp tke-installer tke-installer:/app/bin/` in installer-node host.
+4. Restart container. Run `docker restart tke-installer` in installer-node host.
+
+For web console development, please check [here](https://github.com/tkestack/tke/blob/master/web/console/README.md).
