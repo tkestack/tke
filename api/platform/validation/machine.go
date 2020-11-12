@@ -45,8 +45,8 @@ const MaxTimeOffset = 5 * 300
 // ValidateMachine validates a given machine.
 func ValidateMachine(ctx context.Context, machine *platform.Machine, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&machine.ObjectMeta, false, apimachineryvalidation.NameIsDNSLabel, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateMachineSpec(ctx, &machine.Spec, field.NewPath("spec"), platformClient)...)
-	allErrs = append(allErrs, ValidateMachineByProvider(machine)...)
+	// allErrs = append(allErrs, ValidateMachineSpec(ctx, &machine.Spec, field.NewPath("spec"), platformClient)...)
+	// allErrs = append(allErrs, ValidateMachineByProvider(machine)...)
 
 	return allErrs
 }
@@ -54,13 +54,13 @@ func ValidateMachine(ctx context.Context, machine *platform.Machine, platformCli
 // ValidateMachineUpdate tests if an update to a machine is valid.
 func ValidateMachineUpdate(ctx context.Context, machine *platform.Machine, oldMachine *platform.Machine) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&machine.ObjectMeta, &oldMachine.ObjectMeta, field.NewPath("metadata"))
-	fldPath := field.NewPath("spec")
-	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.Type, oldMachine.Spec.Type, fldPath.Child("type"))...)
-	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.ClusterName, oldMachine.Spec.ClusterName, fldPath.Child("clusterName"))...)
-	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.IP, oldMachine.Spec.IP, fldPath.Child("ip"))...)
-	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.Labels, oldMachine.Spec.Labels, fldPath.Child("labels"))...)
-	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.Taints, oldMachine.Spec.Taints, fldPath.Child("taints"))...)
-	allErrs = append(allErrs, ValidateSSH(fldPath, machine.Spec.IP, int(machine.Spec.Port), machine.Spec.Username, machine.Spec.Password, machine.Spec.PrivateKey, machine.Spec.PassPhrase)...)
+	// fldPath := field.NewPath("spec")
+	// allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.Type, oldMachine.Spec.Type, fldPath.Child("type"))...)
+	// allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.ClusterName, oldMachine.Spec.ClusterName, fldPath.Child("clusterName"))...)
+	// allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.IP, oldMachine.Spec.IP, fldPath.Child("ip"))...)
+	// allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.Labels, oldMachine.Spec.Labels, fldPath.Child("labels"))...)
+	// allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.Taints, oldMachine.Spec.Taints, fldPath.Child("taints"))...)
+	// allErrs = append(allErrs, ValidateSSH(fldPath, machine.Spec.IP, int(machine.Spec.Port), machine.Spec.Username, machine.Spec.Password, machine.Spec.PrivateKey, machine.Spec.PassPhrase)...)
 
 	return allErrs
 }
