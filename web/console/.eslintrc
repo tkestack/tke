@@ -47,5 +47,6 @@
     "react": {
       "version": "detect"
     }
-  }
+  },
+  "parser": "@typescript-eslint/parser"
 }

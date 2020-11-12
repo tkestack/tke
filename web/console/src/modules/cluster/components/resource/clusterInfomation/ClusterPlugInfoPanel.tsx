@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { FormPanel } from '@tencent/ff-component';
 import { Table, TableColumn, Button, Icon } from '@tea/component';
 import { RootProps } from '../../ClusterApp';
@@ -18,7 +18,7 @@ export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, cl
   const open = (type: PlugType) => () => {
     switch (type) {
       case PlugType.Promethus:
-        actions.cluster.enablePromethus(cluster.selection, clusterVersion);
+        router.navigate({ sub: 'config-promethus' }, { rid: route.queries['rid'], clusterId: route.queries.clusterId });
         break;
       case PlugType.LogAgent:
         actions.cluster.enableLogAgent(cluster.selection);
@@ -52,10 +52,7 @@ export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, cl
         return action ? (
           <>
             <Button type="link" onClick={close(type)}>
-                关闭
-            </Button>
-            <Button type="link" onClick={() => router.navigate({ sub: 'config-promethus' }, { rid: route.queries['rid'] })}>
-                配置
+              关闭
             </Button>
           </>
         ) : (
@@ -90,7 +87,7 @@ export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, cl
       {cluster.list.fetched !== true || cluster.list.fetchState === FetchState.Fetching ? (
         <Icon type="loading" />
       ) : (
-        <Table columns={columns} records={records} recordKey="plug" />
+        <Table columns={columns} records={records} recordKey="des" />
       )}
     </FormPanel>
   );

@@ -20,6 +20,7 @@ import { ModifyClusterNameDialog } from './clusterManage/ModifyClusterNameDialog
 import { TcrRegistyDeployDialog } from './clusterManage/TcrRegistyDeployDialog';
 import { ResourceContainerPanel } from './resource/ResourceContainerPanel';
 import { ConfigPromethus } from './clusterManage/ConfigPromethus';
+import { RecoilRoot } from 'recoil';
 
 export const store = configStore();
 
@@ -31,7 +32,9 @@ export class ClusterAppContainer extends React.Component<any, any> {
   render() {
     return (
       <Provider store={store}>
-        <ClusterApp />
+        <RecoilRoot>
+          <ClusterApp />
+        </RecoilRoot>
       </Provider>
     );
   }
@@ -75,7 +78,7 @@ class ClusterApp extends React.Component<RootProps, {}> {
     } else if (urlParam['sub'] === 'createIC') {
       return <CreateICPanel />;
     } else if (urlParam['sub'] === 'config-promethus') {
-      return <ConfigPromethus />;
+      return <ConfigPromethus {...this.props} />;
     }
   }
 }

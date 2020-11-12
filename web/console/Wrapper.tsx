@@ -12,6 +12,7 @@ import { isEmpty } from './src/modules/common/utils';
 import * as classnames from 'classnames';
 import { Button, Icon, Text, Bubble, NavMenu, List, ExternalLink } from '@tencent/tea-component';
 import { insertCSS } from '@tencent/ff-redux';
+import 'antd/dist/antd.css';
 
 insertCSS(
   'tkestack-nav-logo',
