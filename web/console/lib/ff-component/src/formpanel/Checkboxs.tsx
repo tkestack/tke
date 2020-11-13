@@ -9,11 +9,11 @@ import { FormPanel, FormPanelText, FormPanelValidatable, FormPanelValidatablePro
 
 interface FormPanelCheckboxsProps extends CheckboxGroupProps, FormPanelValidatableProps {
   model?: FFListModel;
-  displayField?: String | Function;
-  valueField?: String | Function;
+  displayField?: string | Function;
+  valueField?: string | Function;
   action?: FFListAction;
   filter?: any;
-  label?: String;
+  label?: string;
   loading?: boolean;
   disabledLoading?: boolean;
 
@@ -29,7 +29,7 @@ interface FormPanelCheckboxsProps extends CheckboxGroupProps, FormPanelValidatab
   rimless?: boolean;
 }
 
-function getFieldValue(record, field: String | Function) {
+function getFieldValue(record, field: string | Function) {
   if (typeof field === 'function') {
     return field(record);
   } else {
@@ -63,14 +63,11 @@ function FormPanelCheckboxs({
 
   let rOnChange = onChange;
 
-  if (filter) {
-    const values = Object.keys(filter).map(key => filter[key]);
-    React.useEffect(() => {
-      if (filter && action) {
-        action.applyFilter(filter);
-      }
-    }, values);
-  }
+  React.useEffect(() => {
+    if (filter && action) {
+      action.applyFilter(filter);
+    }
+  }, [action, filter]);
 
   if (model && valueField && displayField) {
     let options: SegmentOption[] = [];
@@ -89,7 +86,7 @@ function FormPanelCheckboxs({
     props.options = options;
     if (action && !rOnChange) {
       rOnChange = values => {
-        let selected = values.map(value =>
+        const selected = values.map(value =>
           model.list.data.records.find(record => getFieldValue(record, valueField) === value)
         );
         action.selects(selected);
@@ -139,7 +136,7 @@ function FormPanelCheckboxs({
     return <FormPanel.Text>{t('暂无数据')}</FormPanel.Text>;
   }
 
-  let validatableProps = {
+  const validatableProps = {
     validator,
     formvalidator,
     vkey,
@@ -148,7 +145,7 @@ function FormPanelCheckboxs({
     bubblePlacement
   };
 
-  let onChangeWrap =
+  const onChangeWrap =
     vactions && vkey
       ? (values: string[], context) => {
           rOnChange && rOnChange(values, context);

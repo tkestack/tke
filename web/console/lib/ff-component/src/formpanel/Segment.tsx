@@ -34,11 +34,11 @@ insertCSS(
 
 interface FormPanelSegmentProps extends Combine<StyledProps, ControlledProps<string>>, FormPanelValidatableProps {
   model?: FFListModel;
-  displayField?: String | Function;
-  valueField?: String | Function;
+  displayField?: string | Function;
+  valueField?: string | Function;
   action?: FFListAction;
   filter?: any;
-  label?: String;
+  label?: string;
   loading?: boolean;
   disabledLoading?: boolean;
   // showRefreshBtn?: boolean;
@@ -53,7 +53,7 @@ interface FormPanelSegmentProps extends Combine<StyledProps, ControlledProps<str
   rimless?: boolean;
 }
 
-function getFieldValue(record, field: String | Function) {
+function getFieldValue(record, field: string | Function) {
   if (typeof field === 'function') {
     return field(record);
   } else {
@@ -89,11 +89,8 @@ function FormPanelSegment({
 
   let rOnChange = onChange;
 
-  if (filter && model && action) {
-    const values = Object.keys(filter)
-      .map(key => filter[key])
-      .concat([model]);
-    React.useEffect(() => {
+  React.useEffect(() => {
+    if (filter && model && action) {
       let same = true;
       Object.keys(filter).forEach(key => {
         if (filter[key] !== model.query.filter[key]) {
@@ -109,8 +106,8 @@ function FormPanelSegment({
           action.applyFilter(filter);
         }
       }
-    }, values);
-  }
+    }
+  }, [filter, model, action]);
 
   if (model && valueField && displayField) {
     let options: SegmentOption[] = [];
@@ -129,7 +126,7 @@ function FormPanelSegment({
     props.options = options;
     if (action && !rOnChange) {
       rOnChange = value => {
-        let selected = model.list.data.records.find(record => getFieldValue(record, valueField) === value);
+        const selected = model.list.data.records.find(record => getFieldValue(record, valueField) === value);
         action.select(selected);
       };
     }
@@ -175,7 +172,7 @@ function FormPanelSegment({
     return <FormPanel.Text style={{ lineHeight: '30px', verticalAlign: 'middle' }}>{t('暂无数据')}</FormPanel.Text>;
   }
 
-  let validatableProps = {
+  const validatableProps = {
     validator,
     formvalidator,
     vkey,
@@ -184,7 +181,7 @@ function FormPanelSegment({
     bubblePlacement
   };
 
-  let onChangeWrap =
+  const onChangeWrap =
     vactions && vkey
       ? (value, context) => {
           rOnChange && rOnChange(value, context);
