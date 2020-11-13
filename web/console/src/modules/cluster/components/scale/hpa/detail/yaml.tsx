@@ -9,19 +9,21 @@ import { fetchHPAYaml } from '../../../../WebAPI/scale';
 import { insertCSS } from '@tencent/ff-redux/libs/qcloud-lib';
 import { UnControlled as CodeMirror } from 'react-codemirror2';
 import { cutNsStartClusterId } from '@helper';
+import { RecordSet } from '@tencent/ff-redux';
+import { Resource } from '@src/modules/common';
 /**
  * 全局样式
  */
 insertCSS(
-    'HPAYamlEditorPanel',
-    `
+  'HPAYamlEditorPanel',
+  `
        .CodeMirror { height:600px; overflow:auto; overflow-x:hidden; font-size:12px }
        .CodeMirror-code>div{ line-height: 20px }
      `
 );
 
 const Yaml = React.memo(() => {
-  const route = useSelector((state) => state.route);
+  const route = useSelector(state => state.route);
   const { clusterId, HPAName, namespaceValue } = route.queries;
 
   /*
@@ -43,7 +45,7 @@ const Yaml = React.memo(() => {
   /**
    * 获取yaml数据
    */
-  const [yamlData, setYamlData] = useState();
+  const [yamlData, setYamlData] = useState<RecordSet<string, any> | undefined>();
   useEffect(() => {
     async function getHPAYaml(namespace, clusterId, name) {
       const result = await fetchHPAYaml({ clusterId, name, namespace });
@@ -58,7 +60,7 @@ const Yaml = React.memo(() => {
   return (
     <CodeMirror
       className={'codeMirrorHeight'}
-      value={!isEmpty(yamlData) && yamlData.recordCount ? yamlData.records[0] : t('')}
+      value={yamlData?.recordCount ? yamlData.records[0] : t('')}
       options={codeOptions}
       onChange={(editor, data, value) => {
         // 配置项当中的value 不用props.config 是因为 更新之后，yaml的光标会默认跳转到末端

@@ -22,6 +22,11 @@
     "eslint": "eslint src --ext .ts,.tsx",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "npm run eslint"
+    }
+  },
   "license": "Apache-2.0",
   "dependencies": {
     "@ant-design/icons": "^4.2.2",
@@ -121,6 +126,7 @@
     "eslint-plugin-typescript": "0.14.0",
     "fork-ts-checker-webpack-plugin": "^0.5.2",
     "happypack": "^5.0.0",
+    "husky": "^4.3.0",
     "ifvisible.js": "^1.0.6",
     "marked": "^0.7.0",
     "prettier": "2.0.5",
