@@ -21,6 +21,7 @@
     "build": "npm run build_console && npm run build_project",
     "eslint": "eslint ./ --ext .ts,.tsx --quiet",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "pretsc-check": "npm run common_pre",
     "tsc-check": "tsc -p  tsconfig.json --noEmit"
   },
   "husky": {

@@ -13,7 +13,6 @@
     "@typescript-eslint/no-this-alias": 1,
     "prefer-spread": 1,
     "prefer-rest-params": 1,
-    "@typescript-eslint/triple-slash-reference": 1,
-    "import/first": 1
+    "@typescript-eslint/triple-slash-reference": 1
   }
 }
