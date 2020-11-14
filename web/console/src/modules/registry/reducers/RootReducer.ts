@@ -22,7 +22,8 @@ import {
   initUserInfoState,
   initChartEditorState,
   initRemovedChartVersionsState,
-  initAppCreationState
+  initAppCreationState,
+  initCommonUserAssociationState
 } from '../constants/initState';
 
 export const RootReducer = combineReducers({
@@ -166,5 +167,9 @@ export const RootReducer = combineReducers({
     '',
     (x: ProjectNamespace) => x.metadata.name,
     (x: ProjectNamespace) => x.spec.clusterName + '/' + x.spec.namespace
-  )
+  ),
+
+  /** 关联用户相关 */
+  userPlainList: createFFListReducer(ActionType.UserPlainList),
+  commonUserAssociation: reduceToPayload(ActionType.UpdateCommonUserAssociation, initCommonUserAssociationState)
 });

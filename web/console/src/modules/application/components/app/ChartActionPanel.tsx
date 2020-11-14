@@ -37,7 +37,7 @@ export class ChartActionPanel extends React.Component<RootProps, ChartActionStat
     let { scene, projectID } = this.state;
     let sceneOptions = [
       { value: 'all', text: t('所有模板') },
-      { value: 'personal', text: t('个人模板') },
+      { value: 'user', text: t('用户模板') },
       { value: 'project', text: t('业务模板') },
       { value: 'public', text: t('公共模板') }
     ];

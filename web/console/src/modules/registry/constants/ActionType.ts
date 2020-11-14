@@ -55,3 +55,7 @@ export const UpdateAppDryRunState = 'UpdateAppDryRunState';
 export const ClusterList = 'ClusterList';
 export const NamespaceList = 'NamespaceList';
 export const ProjectNamespaceList = 'ProjectNamespaceList';
+
+/** 关联用户相关 */
+export const UserPlainList = 'UserPlainList';
+export const UpdateCommonUserAssociation = 'UpdateCommonUserAssociation';

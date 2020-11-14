@@ -1,5 +1,7 @@
 import { detailActions } from './detailActions';
+import { associateActions } from './associateActions';
 
 export const userActions = {
-  detail: detailActions
+  detail: detailActions,
+  associate: associateActions
 };

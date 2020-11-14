@@ -6,7 +6,14 @@ import {
   isSuccessWorkflow,
   getWorkflowStatistics
 } from '@tencent/ff-redux';
-import { RootState, ChartGroupFilter, ChartGroupEditor, ChartGroup, ChartGroupDetailFilter } from '../../models';
+import {
+  RootState,
+  ChartGroupFilter,
+  ChartGroupEditor,
+  ChartGroup,
+  ChartGroupDetailFilter,
+  UserPlain
+} from '../../models';
 import * as ActionTypes from '../../constants/ActionType';
 import * as WebAPI from '../../WebAPI';
 import { initChartGroupEditorState } from '../../constants/initState';
@@ -70,6 +77,26 @@ const restActions = {
       dispatch({
         type: ActionTypes.UpdateChartGroupEditorState,
         payload: editor
+      });
+
+      // 拉取关联列表之后，更新关联用户面板WorkflowDialog会用到的CommonUserAssociation状态数据
+      let users: UserPlain[] = editor.spec.users
+        ? editor.spec.users.map(name => {
+            return {
+              id: name,
+              name: name,
+              displayName: name
+            };
+          })
+        : [];
+      dispatch({
+        type: ActionTypes.UpdateCommonUserAssociation,
+        payload: Object.assign({}, getState().commonUserAssociation, {
+          users: users,
+          originUsers: users,
+          addUsers: [],
+          removeUsers: []
+        })
       });
     };
   },

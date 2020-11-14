@@ -9,3 +9,4 @@ export * from './Project';
 export * from './Cluster';
 export * from './Namespace';
 export { RootState } from './RootState';
+export * from './CommonUser';

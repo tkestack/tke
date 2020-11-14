@@ -52,7 +52,7 @@ export class TablePanel extends React.Component<RootProps, ChartUsageGuideDialog
         render: (x: ChartGroup) => (
           <Text parent="div" overflow>
             {!isEditable(x) ? (
-              <span>{(x.spec.name || '-') + ' / ' + (x.spec.displayName || '-')}</span>
+              <span>{x.spec.name || '-'}</span>
             ) : (
               <a
                 href="javascript:;"
@@ -66,7 +66,7 @@ export class TablePanel extends React.Component<RootProps, ChartUsageGuideDialog
                   );
                 }}
               >
-                {(x.spec.name || '-') + ' / ' + (x.spec.displayName || '-')}
+                {x.spec.name || '-'}
               </a>
             )}
             {x.status['phase'] === 'Terminating' && <Icon type="loading" />}
@@ -85,30 +85,32 @@ export class TablePanel extends React.Component<RootProps, ChartUsageGuideDialog
           if (!x.spec.type) {
             return <Text parent="div">-</Text>;
           }
-          switch (x.spec.type.toLowerCase()) {
-            case 'personal':
-              return <Text parent="div">{t('个人')}</Text>;
-            case 'project':
-              return <Text parent="div">{t('业务')}</Text>;
-            case 'system':
-              return <Text parent="div">{t('系统')}</Text>;
+          switch (x.spec.type) {
+            case 'SelfBuilt':
+              return <Text parent="div">{t('自建')}</Text>;
+            case 'Imported':
+              return <Text parent="div">{t('导入')}</Text>;
+            case 'System':
+              return <Text parent="div">{t('平台')}</Text>;
             default:
               return <Text parent="div">-</Text>;
           }
         }
       },
       {
-        key: '权限',
-        header: t('类型'),
+        key: 'visibility',
+        header: t('权限范围'),
         render: (x: ChartGroup) => {
           if (!x.spec.visibility) {
             return <Text parent="div">-</Text>;
           }
-          switch (x.spec.visibility.toLowerCase()) {
-            case 'public':
-              return <Text parent="div">{t('公有')}</Text>;
-            case 'private':
-              return <Text parent="div">{t('私有')}</Text>;
+          switch (x.spec.visibility) {
+            case 'Public':
+              return <Text parent="div">{t('公共')}</Text>;
+            case 'User':
+              return <Text parent="div">{t('指定用户')}</Text>;
+            case 'Project':
+              return <Text parent="div">{t('指定业务')}</Text>;
             default:
               return <Text parent="div">-</Text>;
           }

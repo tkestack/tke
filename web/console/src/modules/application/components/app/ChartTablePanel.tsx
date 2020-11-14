@@ -64,13 +64,14 @@ export class ChartTablePanel extends React.Component<Props, ChartTableState> {
     filterList = filterList.slice((pageIndex - 1) * pageSize, pageIndex * pageSize);
 
     const typeMap = {
-      personal: '个人仓库',
-      project: '业务仓库',
-      system: '系统仓库'
+      SelfBuilt: '自建',
+      Imported: '导入',
+      System: '平台'
     };
     const visibilityMap = {
-      Public: '公有',
-      Private: '私有'
+      Public: '公共',
+      User: '指定用户',
+      Project: '指定业务'
     };
     return (
       <React.Fragment>
