@@ -7,7 +7,7 @@ export type FFListModel<T = any, TFilter = any, ExtendParamsT = any, TSFilter = 
   selection?: T;
   initValues?: string[] | number[];
   selections?: T[];
-  displayField?: String | Function;
-  valueField?: String | Function;
-  groupKeyField?: String | Function;
+  displayField?: string | Function;
+  valueField?: string | Function;
+  groupKeyField?: string | Function;
 };

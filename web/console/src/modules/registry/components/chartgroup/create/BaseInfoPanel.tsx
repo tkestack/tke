@@ -10,7 +10,7 @@ import { FormPanel } from '@tencent/ff-component';
 import { InputField, TipInfo, getWorkflowError } from '../../../../../modules/common';
 import { ChartGroup } from '../../../models';
 import { isValid } from '@tencent/ff-validator';
-// @ts-ignore
+
 const tips = seajs.require('tips');
 
 const mapDispatchToProps = dispatch =>
@@ -21,8 +21,8 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class BaseInfoPanel extends React.Component<RootProps, {}> {
   render() {
-    let { actions, route, chartGroupCreation, chartGroupValidator, projectList, userInfo } = this.props;
-    let action = actions.chartGroup.create.addChartGroupWorkflow;
+    const { actions, route, chartGroupCreation, chartGroupValidator, projectList, userInfo } = this.props;
+    const action = actions.chartGroup.create.addChartGroupWorkflow;
     const { chartGroupAddWorkflow } = this.props;
     const workflow = chartGroupAddWorkflow;
 
@@ -30,11 +30,11 @@ export class BaseInfoPanel extends React.Component<RootProps, {}> {
     const perform = () => {
       actions.chartGroup.create.validator.validate(null, async r => {
         if (isValid(r)) {
-          let chartGroup: ChartGroup = Object.assign({}, chartGroupCreation);
+          const chartGroup: ChartGroup = Object.assign({}, chartGroupCreation);
           action.start([chartGroup]);
           action.perform();
         } else {
-          let invalid = Object.keys(r).filter(v => {
+          const invalid = Object.keys(r).filter(v => {
             return r[v].status === 2;
           });
           invalid.length > 0 && tips.error(r[invalid[0]].message.toString(), 2000);
@@ -87,7 +87,7 @@ export class BaseInfoPanel extends React.Component<RootProps, {}> {
               { value: 'project', text: '业务' }
             ]}
             onChange={value => {
-              let obj = { type: value };
+              const obj = { type: value };
               if (value !== 'project') {
                 obj['projects'] = [];
               }

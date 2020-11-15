@@ -1,51 +1,18 @@
 {
-  "extends": ["eslint-config-alloy/react", "eslint-config-alloy/typescript"],
+  "parser": "@typescript-eslint/parser",
+  "extends": ["plugin:@typescript-eslint/recommended", "react-app"],
+  "plugins": ["@typescript-eslint", "react"],
   "rules": {
-    "@typescript-eslint/no-namespace": ["off"],
-    "indent": ["off"],
-    "no-script-url": ["off"],
-    "no-implicit-coercion": ["off"],
-    "complexity": ["error", 50],
-    "radix": ["off"],
-    "one-var": ["off"],
-    "guard-for-in": ["off"],
-    "no-undefined": ["off"],
-    "no-undef": ["off"],
-    "function-paren-newline": ["off"],
-    "prefer-object-spread": ["off"],
-    "implicit-arrow-linebreak": ["off"],
-    "react/jsx-fragments": ["off"],
-    "spaced-comment": ["off"],
-    "no-useless-catch": ["off"],
-    "require-atomic-updates": ["off"],
-    "@typescript-eslint/indent": ["off", 2],
-    "@typescript-eslint/explicit-member-accessibility": ["off"],
-    "@typescript-eslint/no-var-requires": ["off"],
-    "@typescript-eslint/no-inferrable-types": ["off"],
-    "@typescript-eslint/prefer-for-of": ["off"],
-    "@typescript-eslint/no-object-literal-type-assertion": ["off"],
-    "@typescript-eslint/no-this-alias": ["off"],
-    "@typescript-eslint/member-ordering": ["off"],
-    "react/jsx-pascal-case": ["off"],
-    "react/no-deprecated": ["off"],
-    "react/jsx-indent-props": ["error", 2],
-    "react/jsx-indent": ["error", 2],
-    "react/jsx-curly-newline": ["off"],
-    "react/static-property-placement": ["off"],
-    "react/jsx-curly-brace-presence": ["off"],
-    "react/sort-comp": ["off"]
-  },
-  "overrides": [
-    {
-      "files": ["**/*.ts", "**/*.tsx"],
-      "rules": {
-        "no-unused-vars": ["off"]
-      }
-    }
-  ],
-  "settings": {
-    "react": {
-      "version": "detect"
-    }
+    "no-restricted-globals": 1,
+    "@typescript-eslint/ban-types": 1,
+    "prefer-const": 1,
+    "@typescript-eslint/no-var-requires": 1,
+    "@typescript-eslint/no-inferrable-types": 1,
+    "@typescript-eslint/no-empty-function": 1,
+    "@typescript-eslint/no-empty-interface": 1,
+    "@typescript-eslint/no-this-alias": 1,
+    "prefer-spread": 1,
+    "prefer-rest-params": 1,
+    "@typescript-eslint/triple-slash-reference": 1
   }
 }

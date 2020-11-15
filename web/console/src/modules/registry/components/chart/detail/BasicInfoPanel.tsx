@@ -11,7 +11,7 @@ import { allActions } from '../../../actions';
 import { isValid } from '@tencent/ff-validator';
 import { Chart } from '../../../models';
 import { DeployPanel } from './DeployPanel';
-// @ts-ignore
+
 const tips = seajs.require('tips');
 
 const mapDispatchToProps = dispatch =>
@@ -31,8 +31,8 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
   }
 
   render() {
-    let { actions, chartEditor, chartInfo, appCreation, route, chartValidator } = this.props;
-    let action = actions.chart.detail.updateChartWorkflow;
+    const { actions, chartEditor, chartInfo, appCreation, route, chartValidator } = this.props;
+    const action = actions.chart.detail.updateChartWorkflow;
     const { chartUpdateWorkflow } = this.props;
     const workflow = chartUpdateWorkflow;
 
@@ -40,7 +40,7 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
     const perform = () => {
       actions.chart.detail.validator.validate(null, async r => {
         if (isValid(r)) {
-          let chart: Chart = Object.assign({}, chartEditor);
+          const chart: Chart = Object.assign({}, chartEditor);
           action.start([chart], {
             namespace: chartEditor.metadata.namespace,
             name: chartEditor.metadata.name,
@@ -48,7 +48,7 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
           });
           action.perform();
         } else {
-          let invalid = Object.keys(r).filter(v => {
+          const invalid = Object.keys(r).filter(v => {
             return r[v].status === 2;
           });
           invalid.length > 0 && tips.error(r[invalid[0]].message.toString(), 2000);
@@ -92,7 +92,7 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
                       onClick={e => {
                         e.preventDefault();
                         //设置选中的版本
-                        let chart = Object.assign({}, appCreation.spec.chart);
+                        const chart = Object.assign({}, appCreation.spec.chart);
                         chart.chartGroupName = chartEditor.spec.chartGroupName;
                         chart.chartName = chartEditor.spec.name;
                         chart.chartVersion = (chartEditor.selectedVersion && chartEditor.selectedVersion.version) || '';

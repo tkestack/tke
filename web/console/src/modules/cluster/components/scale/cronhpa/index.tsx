@@ -6,7 +6,7 @@ import { cutNsStartClusterId } from '@helper';
 import { router } from '@src/modules/cluster/router';
 import List from './list';
 import Detail from './detail';
-import Hpa from  './editor/hpa';
+import Hpa from './editor/hpa';
 import Yaml from './editor/yaml';
 import {
   fetchProjectNamespaceList,
@@ -15,6 +15,8 @@ import {
   fetchNamespaceList
 } from '@src/modules/cluster/WebAPI/scale';
 import { useNamespaces } from '@src/modules/cluster/components/scale/common/hooks';
+import { RecordSet } from '@tencent/ff-redux';
+import { Resource } from '@src/modules/common';
 
 /**
  * HPAPanel组件，带有scope的局部全局数据的组件
@@ -31,7 +33,7 @@ export const CronHpaPanel = React.memo(() => {
  * HPA组件
  */
 export const CronHpa = React.memo(() => {
-  const { route } = useSelector((state) => ({ route: state.route }));
+  const { route } = useSelector(state => ({ route: state.route }));
   const { projectName, clusterId, HPAName, namespaceValue: namespaceValueInURL, np } = route.queries;
   const { mode } = router.resolve(route);
   const hpaState = useContext(StateContext);
@@ -47,8 +49,8 @@ export const CronHpa = React.memo(() => {
    * 是否安装CronHpa组件
    * HPA列表数据获取
    */
-  const [isCronHpaInstalled, setIsCronHpaInstalled] = useState();
-  const [cronHpaRecords, setCronHpaRecords] = useState();
+  const [isCronHpaInstalled, setIsCronHpaInstalled] = useState<boolean | undefined>();
+  const [cronHpaRecords, setCronHpaRecords] = useState<RecordSet<Resource, any> | undefined>();
   const previousClusterId = usePrevious(clusterId);
   useEffect(() => {
     // 切换clusterId后，fetchAddons 和 fetchCronHpaRecords的请求是有先后顺序限制的，这样能分开在两个useEffect中吗？？？
@@ -96,11 +98,10 @@ export const CronHpa = React.memo(() => {
   useEffect(() => {
     if (!isEmpty(cronHpaRecords)) {
       cronHpaRecords.records.forEach(hpa => {
-            if (hpa.metadata.name === HPAName) {
-              setSelectedHpa(hpa);
-            }
-          }
-      );
+        if (hpa.metadata.name === HPAName) {
+          setSelectedHpa(hpa);
+        }
+      });
     }
   }, [cronHpaRecords]);
 
@@ -110,7 +111,14 @@ export const CronHpa = React.memo(() => {
   let content: React.ReactNode;
   switch (mode) {
     case 'list':
-      content = <List namespaces={namespaces} cronHpaData={cronHpaRecords} triggerRefresh={triggerRefresh} isCronHpaInstalled={isCronHpaInstalled} />;
+      content = (
+        <List
+          namespaces={namespaces}
+          cronHpaData={cronHpaRecords}
+          triggerRefresh={triggerRefresh}
+          isCronHpaInstalled={isCronHpaInstalled}
+        />
+      );
       break;
     case 'create':
     case 'modify-cronhpa':
@@ -125,9 +133,5 @@ export const CronHpa = React.memo(() => {
     default:
       content = '';
   }
-  return (
-    <>
-      {content}
-    </>
-  );
+  return <>{content}</>;
 });

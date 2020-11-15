@@ -14,10 +14,9 @@ const mapDispatchToProps = dispatch =>
 
 @connect(state => state, mapDispatchToProps)
 export class ActionPanel extends React.Component<RootProps, {}> {
-
   render() {
     const { actions, route, roleList } = this.props;
-    let urlParam = router.resolve(route);
+    const urlParam = router.resolve(route);
     const { sub } = urlParam;
 
     return (
@@ -25,10 +24,13 @@ export class ActionPanel extends React.Component<RootProps, {}> {
         <Table.ActionPanel>
           <Justify
             left={
-              <Button type="primary" onClick={e => {
-                e.preventDefault();
-                router.navigate({ module: 'role', sub: 'create' }, route.queries);
-              }}>
+              <Button
+                type="primary"
+                onClick={e => {
+                  e.preventDefault();
+                  router.navigate({ module: 'role', sub: 'create' }, route.queries);
+                }}
+              >
                 {t('新建')}
               </Button>
             }

@@ -1,4 +1,16 @@
 /**
+ * router for nmc
+ *
+ * 1. a state model
+ * 2. a reducer
+ * 3. an action creator
+ * 4. an decorator
+ */
+import * as React from 'react';
+import { appendFunction, ReduxConnectedProps, ReduxAction } from '@tencent/ff-redux';
+import { buildQueryString, parseQueryString } from './urlUtil';
+
+/**
  * 判断是否和路由跳转之前的一样
  * @param prevpath: string  之前的路由
  * @param currentpath: string 当前的路由
@@ -12,18 +24,6 @@ const isInSameModule = (prevpath: string, currentpath: string) => {
   return true;
 };
 
-/**
- * router for nmc
- *
- * 1. a state model
- * 2. a reducer
- * 3. an action creator
- * 4. an decorator
- */
-import * as React from 'react';
-import { appendFunction, ReduxConnectedProps, ReduxAction } from '@tencent/ff-redux';
-import { buildQueryString, parseQueryString } from './urlUtil';
-
 const nmcRouter = seajs.require('router');
 const pageManager = seajs.require('nmc/main/pagemanager');
 
@@ -35,7 +35,7 @@ function getFragment() {
 }
 
 function getQueryString() {
-  let str = nmcRouter.getFragment().split('?');
+  const str = nmcRouter.getFragment().split('?');
   return str[1] ? '?' + str[1] : '';
 }
 
@@ -129,19 +129,19 @@ function startAction(rule: string) {
     dispatch(navigateAction(fragment, params, queryString, queries));
 
     nmcRouter.use(rule, (...args: string[]) => {
-      let params = args.slice();
-      let fragment = getFragment();
+      const params = args.slice();
+      const fragment = getFragment();
 
       /* eslint-disable */
       typeof params[params.length - 1] === 'object' ? params.pop() : {}; // nmcRouter parse error
       /* eslint-enable */
 
-      let queryString = getQueryString();
-      let queries = parseQueryString(queryString);
+      const queryString = getQueryString();
+      const queries = parseQueryString(queryString);
 
       dispatch(navigateAction(fragment, params, queryString, queries));
 
-      let curStatus = getCurrentRouterStatus(fragment, params, queryString, queries);
+      const curStatus = getCurrentRouterStatus(fragment, params, queryString, queries);
       if (curStatus.flag) {
         // 更新导航状态
         const parts = fragment.split('/');
@@ -219,7 +219,7 @@ export class Router {
   }
 
   public resolve(state: RouteState) {
-    let resolved: any = {};
+    const resolved: any = {};
 
     const paramNames = this.paramNames.slice();
     const paramValues = state.params.slice();
@@ -239,8 +239,8 @@ export class Router {
     if (url) {
       nmcRouter.navigate(url);
     } else {
-      let nextLocationPath = this.buildFragment(params);
-      let prevLocationPath = location.pathname;
+      const nextLocationPath = this.buildFragment(params);
+      const prevLocationPath = location.pathname;
       if (isInSameModule(prevLocationPath, nextLocationPath)) {
         nmcRouter.navigate(nextLocationPath + buildQueryString(queries));
       }
@@ -259,8 +259,8 @@ export class Router {
     if (url) {
       nmcRouter.navigate(url);
     } else {
-      let nextLocationPath = this.buildFragment(params);
-      let prevLocationPath = location.pathname;
+      const nextLocationPath = this.buildFragment(params);
+      const prevLocationPath = location.pathname;
       if (isInSameModule(prevLocationPath, nextLocationPath)) {
         nmcRouter.navigate(nextLocationPath + buildQueryString(queries));
       }
