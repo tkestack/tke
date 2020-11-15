@@ -63,7 +63,6 @@ func filterUserChartGroups(ctx context.Context,
 		for _, cg := range cgList.Items {
 			if util.InStringSlice(cg.Spec.Users, username) {
 				allList = append(allList, cg)
-				break
 			}
 		}
 		cgList.Items = allList

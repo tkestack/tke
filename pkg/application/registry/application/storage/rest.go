@@ -21,7 +21,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"net/url"
 
 	"helm.sh/helm/v3/pkg/release"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -43,7 +42,7 @@ import (
 	helmutil "tkestack.io/tke/pkg/application/helm/util"
 	applicationstrategy "tkestack.io/tke/pkg/application/registry/application"
 	"tkestack.io/tke/pkg/application/util"
-	registryutil "tkestack.io/tke/pkg/registry/util"
+	"tkestack.io/tke/pkg/application/util/chartpath"
 	authorizationutil "tkestack.io/tke/pkg/registry/util/authorization"
 )
 
@@ -152,6 +151,16 @@ func (rs *REST) Create(ctx context.Context, obj runtime.Object, createValidation
 		return ret, nil
 	}
 
+	if rs.registryClient != nil {
+		chartGroup, err := rs.getChartGroup(ctx, app)
+		if err != nil {
+			return nil, err
+		}
+		app.Spec.Chart, err = chartpath.FullfillChartInfo(app.Spec.Chart, chartGroup)
+		if err != nil {
+			return nil, errors.NewInternalError(err)
+		}
+	}
 	return rs.application.Create(ctx, obj, createValidation, options)
 }
 
@@ -183,6 +192,7 @@ func (rs *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 		return nil, false, err
 	}
 	oldApp := oldObj.(*application.App)
+
 	obj, err := objInfo.UpdatedObject(ctx, oldApp)
 	if err != nil {
 		return nil, false, err
@@ -214,6 +224,17 @@ func (rs *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 	strategy := applicationstrategy.NewStrategy(rs.applicationClient)
 	if err := rest.BeforeUpdate(strategy, ctx, app, oldApp); err != nil {
 		return nil, false, err
+	}
+
+	if rs.registryClient != nil {
+		chartGroup, err := rs.getChartGroup(ctx, app)
+		if err != nil {
+			return nil, false, err
+		}
+		app.Spec.Chart, err = chartpath.FullfillChartInfo(app.Spec.Chart, chartGroup)
+		if err != nil {
+			return nil, false, errors.NewInternalError(err)
+		}
 	}
 
 	// if app.Status.RollbackRevision > 0 {
@@ -250,26 +271,14 @@ func (rs *REST) canVisitChart(ctx context.Context, app *application.App) error {
 		return nil
 	}
 
-	chartGroupList, err := rs.registryClient.ChartGroups().List(ctx, metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", app.Spec.Chart.TenantID, app.Spec.Chart.ChartGroupName),
-	})
+	chartGroup, err := rs.getChartGroup(ctx, app)
 	if err != nil {
-		return errors.NewInternalError(err)
+		return err
 	}
-	if len(chartGroupList.Items) == 0 {
-		return errors.NewNotFound(registryv1.Resource("chartgroups"), fmt.Sprintf("%s/%s", app.Spec.Chart.TenantID, app.Spec.Chart.ChartGroupName))
-	}
-	chartGroup := chartGroupList.Items[0]
-	chartList, err := rs.registryClient.Charts(chartGroup.ObjectMeta.Name).List(ctx, metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", app.Spec.Chart.TenantID, app.Spec.Chart.ChartName),
-	})
+	chart, err := rs.getChart(ctx, app, &chartGroup)
 	if err != nil {
-		return errors.NewInternalError(err)
+		return err
 	}
-	if len(chartList.Items) == 0 {
-		return errors.NewNotFound(registryv1.Resource("charts"), fmt.Sprintf("%s/%s/%s", app.Spec.Chart.TenantID, app.Spec.Chart.ChartGroupName, app.Spec.Chart.ChartName))
-	}
-	chart := chartList.Items[0]
 
 	u, exist := genericapirequest.UserFrom(ctx)
 	if !exist || u == nil {
@@ -285,26 +294,62 @@ func (rs *REST) canVisitChart(ctx context.Context, app *application.App) error {
 	return nil
 }
 
+func (rs *REST) getChartGroup(ctx context.Context, app *application.App) (registryv1.ChartGroup, error) {
+	if rs.registryClient == nil {
+		return registryv1.ChartGroup{}, nil
+	}
+
+	chartGroupList, err := rs.registryClient.ChartGroups().List(ctx, metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", app.Spec.Chart.TenantID, app.Spec.Chart.ChartGroupName),
+	})
+	if err != nil {
+		return registryv1.ChartGroup{}, errors.NewInternalError(err)
+	}
+	if len(chartGroupList.Items) == 0 {
+		return registryv1.ChartGroup{}, errors.NewNotFound(registryv1.Resource("chartgroups"), fmt.Sprintf("%s/%s", app.Spec.Chart.TenantID, app.Spec.Chart.ChartGroupName))
+	}
+	chartGroup := chartGroupList.Items[0]
+	return chartGroup, nil
+}
+
+func (rs *REST) getChart(ctx context.Context, app *application.App, cg *registryv1.ChartGroup) (registryv1.Chart, error) {
+	if rs.registryClient == nil {
+		return registryv1.Chart{}, nil
+	}
+
+	chartList, err := rs.registryClient.Charts(cg.ObjectMeta.Name).List(ctx, metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", app.Spec.Chart.TenantID, app.Spec.Chart.ChartName),
+	})
+	if err != nil {
+		return registryv1.Chart{}, errors.NewInternalError(err)
+	}
+	if len(chartList.Items) == 0 {
+		return registryv1.Chart{}, errors.NewNotFound(registryv1.Resource("charts"), fmt.Sprintf("%s/%s/%s", app.Spec.Chart.TenantID, app.Spec.Chart.ChartGroupName, app.Spec.Chart.ChartName))
+	}
+	chart := chartList.Items[0]
+	return chart, nil
+}
+
 func (rs *REST) dryRun(ctx context.Context, app *application.App) (*release.Release, error) {
+	chartGroup, err := rs.getChartGroup(ctx, app)
+	if err != nil {
+		return nil, err
+	}
+	appChart, err := chartpath.FullfillChartInfo(app.Spec.Chart, chartGroup)
+	if err != nil {
+		return nil, errors.NewInternalError(err)
+	}
+	chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(rs.repo, appChart)
+	if err != nil {
+		return nil, errors.NewInternalError(err)
+	}
+
 	client, err := util.NewHelmClient(ctx, rs.platformClient, app.Spec.TargetCluster, app.Namespace)
 	if err != nil {
 		return nil, errors.NewBadRequest(err.Error())
 	}
-	loc := &url.URL{
-		Scheme: rs.repo.Scheme,
-		Host:   registryutil.BuildTenantRegistryDomain(rs.repo.DomainSuffix, app.Spec.Chart.TenantID),
-		Path:   fmt.Sprintf("/chart/%s", app.Spec.Chart.ChartGroupName),
-	}
 	destfile, err := client.Pull(&helmaction.PullOptions{
-		ChartPathOptions: helmaction.ChartPathOptions{
-			CaFile:    rs.repo.CaFile,
-			Username:  rs.repo.Admin,
-			Password:  rs.repo.AdminPassword,
-			RepoURL:   loc.String(),
-			ChartRepo: app.Spec.Chart.TenantID + "/" + app.Spec.Chart.ChartGroupName,
-			Chart:     app.Spec.Chart.ChartName,
-			Version:   app.Spec.Chart.ChartVersion,
-		},
+		ChartPathOptions: chartPathBasicOptions,
 	})
 	if err != nil {
 		return nil, errors.NewBadRequest(err.Error())
@@ -316,22 +361,14 @@ func (rs *REST) dryRun(ctx context.Context, app *application.App) (*release.Rele
 		return nil, errors.NewBadRequest(err.Error())
 	}
 
+	chartPathBasicOptions.ExistedFile = destfile
 	rel, err := client.Install(&helmaction.InstallOptions{
 		Namespace:        app.Namespace,
 		ReleaseName:      app.Spec.Name,
 		DependencyUpdate: true,
 		DryRun:           true,
 		Values:           values,
-		ChartPathOptions: helmaction.ChartPathOptions{
-			CaFile:      rs.repo.CaFile,
-			Username:    rs.repo.Admin,
-			Password:    rs.repo.AdminPassword,
-			RepoURL:     loc.String(),
-			ChartRepo:   app.Spec.Chart.TenantID + "/" + app.Spec.Chart.ChartGroupName,
-			Chart:       app.Spec.Chart.ChartName,
-			Version:     app.Spec.Chart.ChartVersion,
-			ExistedFile: destfile,
-		},
+		ChartPathOptions: chartPathBasicOptions,
 	})
 	return rel, err
 }

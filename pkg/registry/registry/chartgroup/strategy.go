@@ -33,6 +33,7 @@ import (
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
 	"tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/log"
 	namesutil "tkestack.io/tke/pkg/util/names"
 )
@@ -97,6 +98,12 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	if chartGroup.Spec.Creator == "" &&
 		chartGroup.Spec.Type != registry.RepoTypeSystem {
 		chartGroup.Spec.Creator = username
+	}
+	if chartGroup.Spec.Type == registry.RepoTypeSelfBuilt &&
+		chartGroup.Spec.Visibility == registry.VisibilityUser {
+		if !util.InStringSlice(chartGroup.Spec.Users, username) {
+			chartGroup.Spec.Users = append(chartGroup.Spec.Users, username)
+		}
 	}
 }
 
