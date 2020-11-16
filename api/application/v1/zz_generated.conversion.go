@@ -354,6 +354,7 @@ func autoConvert_v1_AppSpec_To_application_AppSpec(in *AppSpec, out *application
 		return err
 	}
 	out.Finalizers = *(*[]application.FinalizerName)(unsafe.Pointer(&in.Finalizers))
+	out.DryRun = in.DryRun
 	return nil
 }
 
@@ -374,6 +375,7 @@ func autoConvert_application_AppSpec_To_v1_AppSpec(in *application.AppSpec, out 
 		return err
 	}
 	out.Finalizers = *(*[]FinalizerName)(unsafe.Pointer(&in.Finalizers))
+	out.DryRun = in.DryRun
 	return nil
 }
 
@@ -392,6 +394,7 @@ func autoConvert_v1_AppStatus_To_application_AppStatus(in *AppStatus, out *appli
 	out.LastTransitionTime = in.LastTransitionTime
 	out.Reason = in.Reason
 	out.Message = in.Message
+	out.Manifest = in.Manifest
 	return nil
 }
 
@@ -410,6 +413,7 @@ func autoConvert_application_AppStatus_To_v1_AppStatus(in *application.AppStatus
 	out.LastTransitionTime = in.LastTransitionTime
 	out.Reason = in.Reason
 	out.Message = in.Message
+	out.Manifest = in.Manifest
 	return nil
 }
 
@@ -521,6 +525,7 @@ func autoConvert_v1_History_To_application_History(in *History, out *application
 	out.Chart = in.Chart
 	out.AppVersion = in.AppVersion
 	out.Description = in.Description
+	out.Manifest = in.Manifest
 	return nil
 }
 
@@ -536,6 +541,7 @@ func autoConvert_application_History_To_v1_History(in *application.History, out 
 	out.Chart = in.Chart
 	out.AppVersion = in.AppVersion
 	out.Description = in.Description
+	out.Manifest = in.Manifest
 	return nil
 }
 

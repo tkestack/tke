@@ -39,6 +39,7 @@ import (
 	platformapiserver "tkestack.io/tke/pkg/platform/apiserver"
 	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/distribution"
+	"tkestack.io/tke/pkg/registry/harbor"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -77,10 +78,6 @@ func componentPrefix() map[moduleName][]modulePath {
 			},
 		},
 		moduleNameNotify: {
-			modulePath{
-				prefix:    "/webhook/",
-				protected: false,
-			},
 			modulePath{
 				prefix:    fmt.Sprintf("%s/%s/", apiPrefix, notify.GroupName),
 				protected: true,
@@ -121,6 +118,18 @@ func componentPrefix() map[moduleName][]modulePath {
 			},
 			modulePath{
 				prefix:    chartmuseum.PathPrefix,
+				protected: false,
+			},
+			modulePath{
+				prefix:    harbor.RegistryPrefix,
+				protected: false,
+			},
+			modulePath{
+				prefix:    harbor.AuthPrefix,
+				protected: false,
+			},
+			modulePath{
+				prefix:    harbor.ChartPrefix,
 				protected: false,
 			},
 			modulePath{
@@ -209,6 +218,15 @@ func RegisterRoute(m *mux.PathRecorderMux, cfg *gatewayconfig.GatewayConfigurati
 			log.Info("Registered openapi proxy for backend component", log.String("path", path.prefix), log.Bool("protected", path.protected), log.String("address", proxyComponent.Address))
 			m.Handle(path.prefix, handler)
 		}
+	}
+	// proxy /webhook to tke-notify-api for alert
+	if cfg.Components.Notify != nil && cfg.Components.Notify.Passthrough != nil {
+		handler, err := passthrough.NewHandler(cfg.Components.Notify.Address, cfg.Components.Notify.Passthrough, false)
+		if err != nil {
+			return err
+		}
+		log.Info("Registered reverse proxy of passthrough mode for backend component", log.String("path", "/webhook"), log.Bool("protected", false), log.String("address", cfg.Components.Notify.Address))
+		m.Handle("/webhook", handler)
 	}
 	return nil
 }

@@ -44,6 +44,7 @@ export interface RootState {
   appList?: FFListModel<App, AppFilter>;
   appCreation?: AppCreation;
   appEditor?: AppEditor;
+  appDryRun?: App;
   appValidator?: ValidatorModel;
   appAddWorkflow?: WorkflowState<App, any>;
   appUpdateWorkflow?: WorkflowState<App, any>;

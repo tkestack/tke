@@ -17,14 +17,14 @@ import { PasswordModifyDialog } from '@src/modules/uam/components/user/list/Pass
 const { useState, useEffect } = React;
 
 export const UserTablePanel = () => {
-  const state = useSelector((state) => state);
+  const state = useSelector(state => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
   const { userList } = state;
 
   const { isShowing, toggle } = useModal(false);
   const { isShowing: pwdIsShowing, toggle: pwdToggle } = useModal(false);
-  const [editUser, setEditUser] = useState();
+  const [editUser, setEditUser] = useState<User | undefined>();
 
   useEffect(() => {
     actions.policy.associate.policyList.applyFilter({ resource: 'platform', resourceID: '' });
@@ -38,7 +38,7 @@ export const UserTablePanel = () => {
         <Text parent="div" overflow>
           <a
             href="javascript:;"
-            onClick={(e) => {
+            onClick={e => {
               router.navigate(
                 { module: 'user', sub: 'normal', action: 'detail' },
                 { username: user.spec.username, name: user.metadata.name }
@@ -53,22 +53,22 @@ export const UserTablePanel = () => {
             </React.Fragment>
           )}
         </Text>
-      ),
+      )
     },
     {
       key: 'phone',
       header: t('关联手机'),
-      render: (user) => <Text>{user.spec.phoneNumber || '-'}</Text>,
+      render: user => <Text>{user.spec.phoneNumber || '-'}</Text>
     },
     {
       key: 'email',
       header: t('关联邮箱'),
-      render: (user) => <Text>{user.spec.email || '-'}</Text>,
+      render: user => <Text>{user.spec.email || '-'}</Text>
     },
     {
       key: 'policies',
       header: t('角色'),
-      render: (user) => {
+      render: user => {
         const extra = user.spec.extra;
         const content = extra && extra.policies ? Object.values(JSON.parse(extra.policies)).join(',') : '-';
         return (
@@ -84,9 +84,9 @@ export const UserTablePanel = () => {
             />
           </Text>
         );
-      },
+      }
     },
-    { key: 'operation', header: t('操作'), render: (user) => _renderOperationCell(user) },
+    { key: 'operation', header: t('操作'), render: user => _renderOperationCell(user) }
   ];
 
   /** 渲染操作按钮 */
@@ -95,9 +95,21 @@ export const UserTablePanel = () => {
 
     if (user.spec.username.toLowerCase() === 'admin') {
       return (
-        <LinkButton tipDirection="right" errorTip="管理员不能被删除" disabled>
-          <Trans>删除</Trans>
-        </LinkButton>
+        <>
+          <LinkButton
+            tipDirection="left"
+            disabled={isDisable}
+            onClick={() => {
+                  setEditUser(user);
+                  pwdToggle();
+                }}
+            >
+            {t('修改密码')}
+          </LinkButton>
+          <LinkButton tipDirection="right" errorTip="管理员不能被删除" disabled>
+            <Trans>删除</Trans>
+          </LinkButton>
+        </>
       );
     }
     return (
@@ -131,7 +143,7 @@ export const UserTablePanel = () => {
       message: t('确认删除当前所选用户？'),
       description: t('删除后，用户{{username}}的所有配置将会被清空，且无法恢复', { username: user.spec.username }),
       okText: t('删除'),
-      cancelText: t('取消'),
+      cancelText: t('取消')
     });
     if (yes) {
       actions.user.removeUser.start([user.metadata.name]);
@@ -148,11 +160,11 @@ export const UserTablePanel = () => {
   return (
     <>
       <TablePanel
-        recordKey={(record) => {
+        recordKey={record => {
           return record.metadata.name;
         }}
         columns={columns}
-        rowDisabled={(record) => record.status && record.status.phase === 'Deleting'}
+        rowDisabled={record => record.status && record.status.phase === 'Deleting'}
         model={userList}
         action={actions.user}
         emptyTips={emptyTips}

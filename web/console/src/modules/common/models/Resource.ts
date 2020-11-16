@@ -21,6 +21,10 @@ export interface Resource extends Identifiable {
     [props: string]: any;
   };
 
+  value?: any;
+
+  text?: any;
+
   /** other */
   [props: string]: any;
 }

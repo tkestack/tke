@@ -153,10 +153,12 @@ export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps
     // 避免重复点击，进行重复的操作
     if (urlParams['resourceName'] !== subSidebarPath) {
       // 初始化resource fetcher的相关配置信息，因为多个resource用的是同一个fetcher
-      actions.resource.reset();
+      if (subSidebarPath !== 'hpa' && subSidebarPath !== 'cronhpa') {
+        actions.resource.reset();
+      }
 
       // 进行resourceName的变更 并且 请求数据，node 详情页需要node的相关信息
-      if (!TellIsNotNeedFetchResource(subSidebarPath)) {
+      if (!TellIsNotNeedFetchResource(subSidebarPath) && subSidebarPath !== 'hpa' && subSidebarPath !== 'cronhpa') {
         // 路由的跳转
         router.navigate(
           Object.assign({}, urlParams, { type: sidebarPath, resourceName: subSidebarPath }),

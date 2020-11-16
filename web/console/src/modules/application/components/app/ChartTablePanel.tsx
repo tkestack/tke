@@ -118,25 +118,44 @@ export class ChartTablePanel extends React.Component<Props, ChartTableState> {
                     <Card.Body
                       title={
                         <div style={{ cursor: 'pointer' }} onClick={e => {}}>
-                          {chart.spec.chartGroupName +
-                            ' / ' +
-                            chart.spec.name +
-                            '(' +
-                            (cgMap[chart.spec.chartGroupName]
-                              ? typeMap[cgMap[chart.spec.chartGroupName].spec.type]
-                              : '-') +
-                            ')'}
+                          <Justify
+                            className={`app-tke-fe-apply__card-hd`}
+                            left={
+                              <MediaObject
+                                media={
+                                  <img
+                                    style={{ height: '48px' }}
+                                    src={
+                                      chart.lastVersion && chart.lastVersion.icon
+                                        ? chart.lastVersion.icon
+                                        : '/static/image/chart-icon-48x48.png'
+                                    }
+                                    alt=""
+                                  />
+                                }
+                                align="middle"
+                              >
+                                {''}
+                              </MediaObject>
+                            }
+                          />
+                          {chart.spec.chartGroupName + ' / ' + chart.spec.name}
                         </div>
                       }
                       subtitle={
                         <React.Fragment>
-                          <Tag key={chart.lastVersion ? chart.lastVersion.version : 'empty'}>
-                            {chart.lastVersion ? chart.lastVersion.version : t('空')}
-                          </Tag>
-                          <Tag key={'visibility'}>
+                          <Tag style={{ marginLeft: '-5px' }} theme="primary" key={'visibility'}>
                             {cgMap[chart.spec.chartGroupName]
                               ? visibilityMap[cgMap[chart.spec.chartGroupName].spec.visibility]
                               : '-'}
+                          </Tag>
+                          <Tag theme="primary" key={'type'}>
+                            {cgMap[chart.spec.chartGroupName]
+                              ? typeMap[cgMap[chart.spec.chartGroupName].spec.type]
+                              : '-'}
+                          </Tag>
+                          <Tag theme="primary" key={chart.lastVersion ? chart.lastVersion.version : 'version'}>
+                            {chart.lastVersion ? chart.lastVersion.version : t('空')}
                           </Tag>
                         </React.Fragment>
                       }

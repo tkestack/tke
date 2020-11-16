@@ -86,6 +86,19 @@ func Generate(dnsNames []string, ips []net.IP, dir string) error {
 		return err
 	}
 
+	webhookCert, webhookKey, err := generateWebhookCertKey(caCert, caKey)
+	if err != nil {
+		return err
+	}
+	err = files.WriteFileWithDir(dir, constants.WebhookCrtFileBaseName, pkiutil.EncodeCertPEM(webhookCert), 0644)
+	if err != nil {
+		return err
+	}
+	err = files.WriteFileWithDir(dir, constants.WebhookKeyFileBaseName, pkiutil.EncodePrivateKeyPEM(webhookKey), 0644)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -124,6 +137,21 @@ func generateAdminCertKey(caCert *x509.Certificate, caKey crypto.Signer) (*x509.
 	config := &certutil.Config{
 		CommonName:   "admin",
 		Organization: []string{"system:masters"},
+		AltNames:     certutil.AltNames{},
+		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+	cert, key, err := pkiutil.NewCertAndKey(caCert, caKey, config)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "unable to sign certificate")
+	}
+
+	return cert, key, nil
+}
+
+func generateWebhookCertKey(caCert *x509.Certificate, caKey crypto.Signer) (*x509.Certificate, *rsa.PrivateKey, error) {
+	config := &certutil.Config{
+		CommonName:   "webhook",
+		Organization: []string{"Tencent"},
 		AltNames:     certutil.AltNames{},
 		Usages:       []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 	}

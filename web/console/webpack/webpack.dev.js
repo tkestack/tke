@@ -73,8 +73,9 @@ module.exports = {
         {
           loader: 'eslint-loader',
           options: {
-            failOnWarning: true,
-            failOnError: true
+            failOnWarning: false,
+            failOnError: true,
+            quiet: true
           }
         }
       ],
@@ -98,7 +99,7 @@ module.exports = {
     }),
 
     new ForkTsCheckerWebpackPlugin({
-      async: false,
+      async: true,
       checkSyntacticErrors: true
     }),
 

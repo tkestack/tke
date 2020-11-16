@@ -4,17 +4,18 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { bindActionCreators, insertCSS, OperationState, isSuccessWorkflow } from '@tencent/ff-redux';
 import { allActions } from '../../../actions';
 import { RootProps } from '../AppContainer';
-import { Button, Bubble, Icon } from '@tencent/tea-component';
+import { Button, Bubble, Icon, StatusTip } from '@tencent/tea-component';
 import { router } from '../../../router';
 import { FormPanel } from '@tencent/ff-component';
 import { InputField, TipInfo, getWorkflowError } from '../../../../../modules/common';
-import { App, Chart } from '../../../models';
+import { App, AppCreation, Chart } from '../../../models';
 import { isValid } from '@tencent/ff-validator';
 import { ChartTablePanel } from '../ChartTablePanel';
 import { ChartActionPanel } from '../ChartActionPanel';
 import { ChartValueYamlDialog } from '../ChartValueYamlDialog';
+import { YamlDialog } from '../../../../common/components';
 import { NamespacePanel } from './NamespacePanel';
-// @ts-ignore
+
 const tips = seajs.require('tips');
 
 const mapDispatchToProps = dispatch =>
@@ -25,6 +26,7 @@ const mapDispatchToProps = dispatch =>
 interface AppCreateState {
   showValueSetting?: boolean;
   projectID?: string;
+  showDryRunManifest?: boolean;
 }
 
 @connect(state => state, mapDispatchToProps)
@@ -33,17 +35,18 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
     super(props, context);
     this.state = {
       showValueSetting: false,
-      projectID: ''
+      projectID: '',
+      showDryRunManifest: false
     };
   }
 
   render() {
-    let { actions, route, appCreation, appValidator, clusterList, namespaceList, chartList, chartInfo } = this.props;
-    let action = actions.app.create.addAppWorkflow;
+    const { actions, route, appCreation, appValidator, appDryRun, chartList, chartInfo } = this.props;
+    const action = actions.app.create.addAppWorkflow;
     const { appAddWorkflow } = this.props;
     const workflow = appAddWorkflow;
 
-    let valueDisable = chartInfo && chartInfo.object && (chartInfo.object.loading || chartInfo.object.error);
+    const valueDisable = chartInfo && chartInfo.object && (chartInfo.object.loading || chartInfo.object.error);
 
     const versionOptions = chartList.selection
       ? chartList.selection.status.versions.map(v => {
@@ -55,14 +58,17 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
       : [];
 
     /** 提交 */
-    const perform = () => {
+    const perform = (dryRun = false) => {
       actions.app.create.validator.validate(null, async r => {
         if (isValid(r)) {
-          let app: App = Object.assign({}, appCreation);
+          const app: AppCreation = Object.assign({}, appCreation);
+          app.spec.dryRun = dryRun;
+          this.setState({ showDryRunManifest: dryRun });
+
           action.start([app]);
           action.perform();
         } else {
-          let invalid = Object.keys(r).filter(v => {
+          const invalid = Object.keys(r).filter(v => {
             return r[v].status === 2;
           });
           invalid.length > 0 && tips.error(r[invalid[0]].message.toString(), 2000);
@@ -114,7 +120,7 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
           <ChartActionPanel />
           <ChartTablePanel
             onSelectChart={(chart: Chart, projectID: string) => {
-              let specChart = Object.assign({}, appCreation.spec.chart);
+              const specChart = Object.assign({}, appCreation.spec.chart);
               specChart.chartGroupName = chart.spec.chartGroupName;
               specChart.chartName = chart.spec.name;
               specChart.chartVersion = '';
@@ -137,7 +143,7 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
             displayField: 'text',
             options: versionOptions,
             onChange: value => {
-              let chart = Object.assign({}, appCreation.spec.chart);
+              const chart = Object.assign({}, appCreation.spec.chart);
               chart.chartVersion = value;
               actions.app.create.updateCreationState({
                 spec: Object.assign({}, appCreation.spec, { chart: chart })
@@ -160,7 +166,7 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
           vkey={'spec.values.rawValues'}
           errorTipsStyle={'Message'}
           label={t('参数')}
-          message={t('更新时如果选择不同版本的Helm Chart,参数设置将被覆盖')}
+          message={t('更新时如果选择不同版本的Helm Chart，参数设置将被覆盖')}
           text={true}
           textProps={{
             onEdit: () => {
@@ -186,7 +192,7 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
           )}
           <ChartValueYamlDialog
             onChange={value => {
-              let values = Object.assign({}, appCreation.spec.values);
+              const values = Object.assign({}, appCreation.spec.values);
               values.rawValues = value;
               actions.app.create.updateCreationState({
                 spec: Object.assign({}, appCreation.spec, { values: values })
@@ -200,6 +206,18 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
             yamlConfig={appCreation.spec.values.rawValues || ''}
             isShow={this.state.showValueSetting}
           />
+        </FormPanel.Item>
+        <FormPanel.Item label={t('拟运行')} message={t('返回模板渲染清单，不会真正执行安装')}>
+          <Button
+            style={{ paddingTop: '6px' }}
+            type="link"
+            onClick={e => {
+              e.preventDefault();
+              perform(true);
+            }}
+          >
+            {t('点击执行')}
+          </Button>
         </FormPanel.Item>
         <FormPanel.Footer>
           <React.Fragment>
@@ -228,6 +246,24 @@ export class BaseInfoPanel extends React.Component<RootProps, AppCreateState> {
             </TipInfo>
           </React.Fragment>
         </FormPanel.Footer>
+        <YamlDialog
+          title={
+            <span>
+              {t('清单')}
+              {workflow.operationState === OperationState.Performing && (
+                <StatusTip status="loading" loadingText=""></StatusTip>
+              )}
+            </span>
+          }
+          onClose={() => {
+            this.setState({
+              showDryRunManifest: false
+            });
+            actions.app.create.clearDryRunState();
+          }}
+          yamlConfig={appDryRun && appDryRun.status ? appDryRun.status.manifest : ''}
+          isShow={this.state.showDryRunManifest}
+        />
       </FormPanel>
     );
   }

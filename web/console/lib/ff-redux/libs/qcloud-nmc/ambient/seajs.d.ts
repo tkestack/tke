@@ -9,5 +9,5 @@ interface Window {
 }
 
 declare namespace seajs {
-  export var require: nmc.Require;
+  export const require: nmc.Require;
 }

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RootProps } from '../ChartApp';
 import { FormPanel } from '@tencent/ff-component';
-import { TipInfo, getWorkflowError, InputField } from '../../../../../modules/common';
+import { TipInfo, getWorkflowError, InputField, Markdown } from '../../../../../modules/common';
 import { Button, Tabs, TabPanel, Card, Bubble, Icon, ContentView, Drawer } from '@tea/component';
 import { dateFormat } from '../../../../../../helpers/dateUtil';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
@@ -11,7 +11,7 @@ import { allActions } from '../../../actions';
 import { isValid } from '@tencent/ff-validator';
 import { Chart } from '../../../models';
 import { DeployPanel } from './DeployPanel';
-// @ts-ignore
+
 const tips = seajs.require('tips');
 
 const mapDispatchToProps = dispatch =>
@@ -31,9 +31,8 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
   }
 
   render() {
-    let { actions, chartEditor, appCreation, route, chartValidator } = this.props;
-
-    let action = actions.chart.detail.updateChartWorkflow;
+    const { actions, chartEditor, chartInfo, appCreation, route, chartValidator } = this.props;
+    const action = actions.chart.detail.updateChartWorkflow;
     const { chartUpdateWorkflow } = this.props;
     const workflow = chartUpdateWorkflow;
 
@@ -41,7 +40,7 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
     const perform = () => {
       actions.chart.detail.validator.validate(null, async r => {
         if (isValid(r)) {
-          let chart: Chart = Object.assign({}, chartEditor);
+          const chart: Chart = Object.assign({}, chartEditor);
           action.start([chart], {
             namespace: chartEditor.metadata.namespace,
             name: chartEditor.metadata.name,
@@ -49,7 +48,7 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
           });
           action.perform();
         } else {
-          let invalid = Object.keys(r).filter(v => {
+          const invalid = Object.keys(r).filter(v => {
             return r[v].status === 2;
           });
           invalid.length > 0 && tips.error(r[invalid[0]].message.toString(), 2000);
@@ -93,7 +92,7 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
                       onClick={e => {
                         e.preventDefault();
                         //设置选中的版本
-                        let chart = Object.assign({}, appCreation.spec.chart);
+                        const chart = Object.assign({}, appCreation.spec.chart);
                         chart.chartGroupName = chartEditor.spec.chartGroupName;
                         chart.chartName = chartEditor.spec.name;
                         chart.chartVersion = (chartEditor.selectedVersion && chartEditor.selectedVersion.version) || '';
@@ -131,6 +130,21 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
               projectID: route.queries['prj']
             }}
           />
+          {chartInfo &&
+            chartInfo.object &&
+            chartInfo.object.data &&
+            chartInfo.object.data.spec &&
+            chartInfo.object.data.spec.readme &&
+            JSON.stringify(chartInfo.object.data.spec.readme) !== '{}' && (
+              <Card>
+                <Card.Body>
+                  <Markdown
+                    style={{ maxHeight: 700, overflow: 'auto' }}
+                    text={Object.values(chartInfo.object.data.spec.readme)[0] || t('空')}
+                  />
+                </Card.Body>
+              </Card>
+            )}
         </ContentView.Body>
       </ContentView>
     );

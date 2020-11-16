@@ -35969,8 +35969,14 @@ func schema_tke_api_application_v1_AppSpec(ref common.ReferenceCallback) common.
 							},
 						},
 					},
+					"dryRun": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 				},
-				Required: []string{"type", "tenantID", "name", "targetCluster"},
+				Required: []string{"type", "tenantID", "name", "targetCluster", "dryRun"},
 			},
 		},
 		Dependencies: []string{
@@ -36042,6 +36048,13 @@ func schema_tke_api_application_v1_AppStatus(ref common.ReferenceCallback) commo
 					"message": {
 						SchemaProps: spec.SchemaProps{
 							Description: "A human readable message indicating details about the transition.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"manifest": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Dryrun result.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -36279,6 +36292,12 @@ func schema_tke_api_application_v1_History(ref common.ReferenceCallback) common.
 						},
 					},
 					"description": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"manifest": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -45269,6 +45288,12 @@ func schema_tke_api_platform_v1_ClusterFeature(ref common.ReferenceCallback) com
 							Format: "",
 						},
 					},
+					"ipv6DualStack": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 				},
 			},
 		},
@@ -45706,6 +45731,20 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							Format:      "",
 						},
 					},
+					"networkArgs": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"tenantID", "type", "version"},
 			},
@@ -45843,6 +45882,36 @@ func schema_tke_api_platform_v1_ClusterStatus(ref common.ReferenceCallback) comm
 									},
 								},
 							},
+						},
+					},
+					"secondaryServiceCIDR": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"clusterCIDR": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"secondaryClusterCIDR": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"nodeCIDRMaskSizeIPv4": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+					"nodeCIDRMaskSizeIPv6": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
 						},
 					},
 				},

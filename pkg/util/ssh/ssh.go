@@ -66,7 +66,7 @@ type Config struct {
 }
 
 func (c *Config) addr() string {
-	return fmt.Sprintf("%s:%d", c.Host, c.Port)
+	return net.JoinHostPort(c.Host, fmt.Sprintf("%d", c.Port))
 }
 
 func New(c *Config) (*SSH, error) {

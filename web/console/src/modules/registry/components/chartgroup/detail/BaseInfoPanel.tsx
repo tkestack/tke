@@ -10,7 +10,7 @@ import { bindActionCreators, OperationState, isSuccessWorkflow } from '@tencent/
 import { allActions } from '../../../actions';
 import { isValid } from '@tencent/ff-validator';
 import { ChartGroup } from '../../../models';
-// @ts-ignore
+
 const tips = seajs.require('tips');
 
 const mapDispatchToProps = dispatch =>
@@ -19,9 +19,9 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class BaseInfoPanel extends React.Component<RootProps> {
   render() {
-    let { actions, chartGroupEditor, route, chartGroupValidator, projectList } = this.props;
+    const { actions, chartGroupEditor, route, chartGroupValidator, projectList } = this.props;
 
-    let action = actions.chartGroup.detail.updateChartGroupWorkflow;
+    const action = actions.chartGroup.detail.updateChartGroupWorkflow;
     const { chartGroupUpdateWorkflow } = this.props;
     const workflow = chartGroupUpdateWorkflow;
 
@@ -29,11 +29,11 @@ export class BaseInfoPanel extends React.Component<RootProps> {
     const perform = () => {
       actions.chartGroup.detail.validator.validate(null, async r => {
         if (isValid(r)) {
-          let chartGroup: ChartGroup = Object.assign({}, chartGroupEditor);
+          const chartGroup: ChartGroup = Object.assign({}, chartGroupEditor);
           action.start([chartGroup]);
           action.perform();
         } else {
-          let invalid = Object.keys(r).filter(v => {
+          const invalid = Object.keys(r).filter(v => {
             return r[v].status === 2;
           });
           invalid.length > 0 && tips.error(r[invalid[0]].message.toString(), 2000);
@@ -61,7 +61,7 @@ export class BaseInfoPanel extends React.Component<RootProps> {
       Public: '公有',
       Private: '私有'
     };
-    let projects = [];
+    const projects = [];
     if (chartGroupEditor.spec.type === 'project') {
       projectList.list.data.records.forEach(i => {
         if (chartGroupEditor.spec.projects.indexOf(i.metadata.name) > -1) {

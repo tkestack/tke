@@ -15,6 +15,7 @@ export interface ProjectNamespace extends Identifiable {
   spec?: {
     clusterName?: string;
     namespace?: string;
+    clusterDisplayName?: string;
   };
 }
 

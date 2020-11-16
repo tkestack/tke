@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Bubble, Button, Justify, SearchBox, Select, Table, Text } from '@tencent/tea-component';
+import { Bubble, Button, Justify, SearchBox, Select, Table, Text, Tooltip } from '@tencent/tea-component';
 
 import { dateFormatter, downloadCsv } from '../../../../helpers';
 import { SelectList } from '../../../../src/modules/common';
@@ -82,10 +82,7 @@ export const isCanCreateLogStash = (
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class LogStashActionPanel extends React.Component<RootProps, any> {
   state = {
     isBusiness: window.location.href.includes('tkestack-project'),
@@ -101,7 +98,7 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
       isOpenLogStash,
       isDaemonsetNormal,
       route,
-      namespaceList: namespaceRecords,
+      namespaceList,
       namespaceSelection
     } = this.props;
     let { isBusiness } = this.state;
@@ -119,40 +116,47 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
     );
     let ifFetchLogList = logAgentName || includes(canFetchLogList, isDaemonsetNormal.phase);
     let handleNamespaceSwitched = namespaceSelection => {
-      let namespaceFound = namespaceRecords.data.records.find(item => item.namespace === namespaceSelection);
+      let namespaceFound = namespaceList.data.records.find(item => item.namespace === namespaceSelection);
       actions.cluster.selectClusterFromNamespace(namespaceFound.cluster);
     };
-    let namespaces = [];
-    let namespaceList = [];
-    let groups = {};
-    if (!isBusiness) {
-      namespaces = namespaceRecords.data.records.map(item => ({
-        name: item.name,
-      }));
-      namespaceList = namespaces.map(({ name }) => ({
-        // value: fullName,
-        value: name,
-        text: name
-      }));
-    } else {
-      namespaces = namespaceRecords.data.records.map(item => ({
-        name: item.namespace,
-        fullName: item.namespaceValue,
-        clusterName: item.cluster.metadata.name,
-        clusterDisplayName: item.cluster.spec.displayName
-      }));
-      namespaceList = namespaces.map(({ name, clusterName, fullName }) => ({
-        value: fullName,
-        groupKey: clusterName,
-        text: name
-      }));
-      groups = namespaces.reduce((accu, item, index, arr) => {
-        let { clusterName, clusterDisplayName } = item;
-        if (!accu[clusterName]) {
-          accu[clusterName] = clusterDisplayName;
-        }
-        return accu;
+
+    let selectProps = {};
+
+    if (isBusiness) {
+      const groups = namespaceList.data.records.reduce((gr, { cluster }) => {
+        const value = `${cluster.spec.displayName}(${cluster.metadata.name})`;
+        return { ...gr, [cluster.metadata.name]: <Tooltip title={value}>{value}</Tooltip> };
       }, {});
+
+      let options = namespaceList.data.recordCount
+        ? namespaceList.data.records.map(item => {
+            const text = `${item.cluster.spec.displayName}-${item.namespace}`;
+
+            return {
+              value: item.namespaceValue,
+              text: <Tooltip title={text}>{text}</Tooltip>,
+              groupKey: item.cluster.metadata.name,
+              realText: text
+            };
+          })
+        : [{ value: '', text: t('无可用命名空间'), disabled: true }];
+
+      selectProps = {
+        groups,
+        options,
+        filter: (inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)
+      };
+    } else {
+      let options = namespaceList.data.recordCount
+        ? namespaceList.data.records.map((item, index) => ({
+            value: item.name,
+            text: item.name
+          }))
+        : [{ value: '', text: t('无可用命名空间'), disabled: true }];
+
+      selectProps = {
+        options
+      };
     }
 
     return (
@@ -175,15 +179,14 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
                 </Text>
 
                 <Select
-                  searchable
-                  boxSizeSync
-                  // groups={isPlatform ? undefined : groups}
-                  size="m"
+                  {...selectProps}
                   type="simulate"
+                  searchable
                   appearence="button"
-                  options={namespaceList}
-                  groups={groups}
+                  size="s"
+                  style={{ width: '130px', marginRight: '5px' }}
                   value={namespaceSelection}
+                  placeholder={namespaceList.data.recordCount ? t('请选择命名空间') : t('无可用命名空间')}
                   onChange={this.handleNamespaceChanged}
                 />
               </div>

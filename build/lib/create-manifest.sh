@@ -40,7 +40,7 @@ for platform in ${PLATFORMS}; do
   arch=${platform#*_}
   variant=""
   if [ ${arch} == "arm64" ]; then
-    variant="--variant unknown"
+    variant="--variant v8"
   fi
 
   docker manifest create --amend ${DES_REGISTRY}:${VERSION} \

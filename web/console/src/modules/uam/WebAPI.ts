@@ -35,23 +35,22 @@ import { resourceConfig } from '../../../config';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { METHODS } from 'http';
 
-// @ts-ignore
 const tips = seajs.require('tips');
 
 class RequestResult {
   data: any;
   error: any;
 }
-const SEND = async (url: string, method: string, bodyData: any, tipErr: boolean = true) => {
+const SEND = async (url: string, method: string, bodyData: any, tipErr = true) => {
   // 构建参数
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: method,
     url,
     data: bodyData
   };
-  let resp = new RequestResult();
+  const resp = new RequestResult();
   try {
-    let response = await reduceNetworkRequest(params);
+    const response = await reduceNetworkRequest(params);
     if (response.code !== 0) {
       if (tipErr === true) {
         tips.error(response.message, 2000);
@@ -76,26 +75,26 @@ const SEND = async (url: string, method: string, bodyData: any, tipErr: boolean 
   }
 };
 
-const GET = async (url: string, tipErr: boolean = true) => {
-  let response = await SEND(url, Method.get, null, tipErr);
+const GET = async (url: string, tipErr = true) => {
+  const response = await SEND(url, Method.get, null, tipErr);
   return response;
 };
-const DELETE = async (url: string, tipErr: boolean = true) => {
-  let response = await SEND(url, Method.delete, null, tipErr);
+const DELETE = async (url: string, tipErr = true) => {
+  const response = await SEND(url, Method.delete, null, tipErr);
   return response;
 };
-const POST = async (url: string, bodyData: any, tipErr: boolean = true) => {
-  let response = await SEND(url, Method.post, JSON.stringify(bodyData), tipErr);
-  return response;
-};
-
-const PUT = async (url: string, bodyData: any, tipErr: boolean = true) => {
-  let response = await SEND(url, Method.put, JSON.stringify(bodyData), tipErr);
+const POST = async (url: string, bodyData: any, tipErr = true) => {
+  const response = await SEND(url, Method.post, JSON.stringify(bodyData), tipErr);
   return response;
 };
 
-const PATCH = async (url: string, bodyData: any, tipErr: boolean = true) => {
-  let response = await SEND(url, Method.patch, JSON.stringify(bodyData), tipErr);
+const PUT = async (url: string, bodyData: any, tipErr = true) => {
+  const response = await SEND(url, Method.put, JSON.stringify(bodyData), tipErr);
+  return response;
+};
+
+const PATCH = async (url: string, bodyData: any, tipErr = true) => {
+  const response = await SEND(url, Method.patch, JSON.stringify(bodyData), tipErr);
   return response;
 };
 
@@ -106,19 +105,18 @@ const PATCH = async (url: string, bodyData: any, tipErr: boolean = true) => {
 export async function fetchUserList(query: QueryState<UserFilter>) {
   let users: User[] = [];
   const { search, filter } = query;
-  let { isPolicyUser = false } = filter;
-  const queryObj = !search ?
-    {
-      fieldSelector: {
-        policy: true
+  const { isPolicyUser = false } = filter;
+  const queryObj = !search
+    ? {
+        fieldSelector: {
+          policy: true
+        }
       }
-    }
-    :
-    {
-      fieldSelector: {
-        keyword: search || ''
-      }
-    };
+    : {
+        fieldSelector: {
+          keyword: search || ''
+        }
+      };
 
   try {
     const resourceInfo: ResourceInfo = isPolicyUser ? resourceConfig()['user'] : resourceConfig()['localidentity'];
@@ -274,7 +272,7 @@ export async function fetchStrategyList(query: QueryState<StrategyFilter>) {
     fieldSelector: {
       [key]: 'project',
       keyword: search || ''
-    },
+    }
     // continue: undefined,
     // limit: paging.pageSize
   };
@@ -448,23 +446,23 @@ export async function fetchCategoryList() {
  * 获取平台策略
  */
 export async function getPlatformCategories() {
-  let categories: Category[] = [];
+  const categories: Category[] = [];
   try {
     const resourceInfo: ResourceInfo = resourceConfig()['category'];
     const url = reduceK8sRestfulPath({ resourceInfo });
     console.log('getPlatformCategories url is: ', resourceInfo, url);
-  //   const response = await reduceNetworkRequest({
-  //     method: 'GET',
-  //     url
-  //     // url: '/api/v1/categories/'
-  //   });
-  //   if (response.code === 0) {
-  //     if (response.data.items) {
-  //       categories = response.data.items;
-  //     } else {
-  //       categories = [];
-  //     }
-  //   }
+    //   const response = await reduceNetworkRequest({
+    //     method: 'GET',
+    //     url
+    //     // url: '/api/v1/categories/'
+    //   });
+    //   if (response.code === 0) {
+    //     if (response.data.items) {
+    //       categories = response.data.items;
+    //     } else {
+    //       categories = [];
+    //     }
+    //   }
   } catch (error) {
     tips.error(error.response.data.message, 2000);
   }
@@ -474,9 +472,8 @@ export async function getPlatformCategories() {
   // };
   //
   // return result;
-    return;
+  return;
 }
-
 
 /**
  * 增加策略关联的用户
@@ -585,8 +582,8 @@ export async function fetchRoleList(query: QueryState<RoleFilter>) {
   const resourceInfo: ResourceInfo = resourceConfig()['role'];
   const url = reduceK8sRestfulPath({ resourceInfo });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await GET(url + queryString);
-  let roles: Role[] = !rr.error && rr.data.items ? rr.data.items : [];
+  const rr: RequestResult = await GET(url + queryString);
+  const roles: Role[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<Role> = {
     recordCount: roles.length,
     records: roles
@@ -601,7 +598,7 @@ export async function fetchRoleList(query: QueryState<RoleFilter>) {
 export async function fetchRole(filter: RoleInfoFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()['role'];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.name });
-  let rr: RequestResult = await GET(url);
+  const rr: RequestResult = await GET(url);
   return rr.data;
 }
 
@@ -612,7 +609,7 @@ export async function fetchRole(filter: RoleInfoFilter) {
 export async function addRole([roleInfo]) {
   const resourceInfo: ResourceInfo = resourceConfig()['role'];
   const url = reduceK8sRestfulPath({ resourceInfo });
-  let rr: RequestResult = await POST(url, roleInfo);
+  const rr: RequestResult = await POST(url, roleInfo);
   return operationResult(rr.data, rr.error);
 }
 
@@ -623,7 +620,7 @@ export async function addRole([roleInfo]) {
 export async function updateRole([roleInfo]) {
   const resourceInfo: ResourceInfo = resourceConfig()['role'];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: roleInfo.metadata.name });
-  let rr: RequestResult = await PUT(url, roleInfo);
+  const rr: RequestResult = await PUT(url, roleInfo);
   return operationResult(rr.data, rr.error);
 }
 
@@ -637,7 +634,7 @@ export async function deleteRole([role]: Role[]) {
   // let rr: RequestResult = await DELETE(url);
   // return operationResult(rr.data, rr.error);
   try {
-    let resourceInfo: ResourceInfo = resourceConfig()['role'];
+    const resourceInfo: ResourceInfo = resourceConfig()['role'];
     const url = reduceK8sRestfulPath({ resourceInfo, specificName: role.metadata.name });
     const response = await reduceNetworkRequest({
       method: 'DELETE',
@@ -670,8 +667,8 @@ export async function fetchRolePlainList(query: QueryState<RoleFilter>) {
   const resourceInfo: ResourceInfo = resourceConfig()['role'];
   const url = reduceK8sRestfulPath({ resourceInfo });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await GET(url + queryString);
-  let items: RolePlain[] =
+  const rr: RequestResult = await GET(url + queryString);
+  const items: RolePlain[] =
     !rr.error && rr.data.items
       ? rr.data.items.map(i => {
           return {
@@ -700,8 +697,8 @@ export async function fetchRoleAssociatedList(query: QueryState<RoleFilter>) {
   const resourceInfo: ResourceInfo = resourceConfig()[filter.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.resourceID, extraResource: 'roles' });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await GET(url + queryString);
-  let items: RolePlain[] =
+  const rr: RequestResult = await GET(url + queryString);
+  const items: RolePlain[] =
     !rr.error && rr.data.items
       ? rr.data.items.map(i => {
           return {
@@ -727,7 +724,7 @@ export async function fetchRoleAssociatedList(query: QueryState<RoleFilter>) {
 export async function associateRole([role]: RoleAssociation[], params: RoleFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'binding' });
-  let rr: RequestResult = await POST(url, { roles: role.addRoles });
+  const rr: RequestResult = await POST(url, { roles: role.addRoles });
   return operationResult(rr.data, rr.error);
 }
 
@@ -739,7 +736,7 @@ export async function associateRole([role]: RoleAssociation[], params: RoleFilte
 export async function disassociateRole([role]: RoleAssociation[], params: RoleFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'unbinding' });
-  let rr: RequestResult = await POST(url, { roles: role.removeRoles });
+  const rr: RequestResult = await POST(url, { roles: role.removeRoles });
   return operationResult(rr.data, rr.error);
 }
 
@@ -760,8 +757,8 @@ export async function fetchGroupList(query: QueryState<GroupFilter>) {
   const resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
   const url = reduceK8sRestfulPath({ resourceInfo });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await GET(url + queryString);
-  let groups: Group[] = !rr.error && rr.data.items ? rr.data.items : [];
+  const rr: RequestResult = await GET(url + queryString);
+  const groups: Group[] = !rr.error && rr.data.items ? rr.data.items : [];
   const result: RecordSet<Group> = {
     recordCount: groups.length,
     records: groups
@@ -776,7 +773,7 @@ export async function fetchGroupList(query: QueryState<GroupFilter>) {
 export async function fetchGroup(filter: GroupInfoFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.name });
-  let rr: RequestResult = await GET(url);
+  const rr: RequestResult = await GET(url);
   return rr.data;
 }
 
@@ -787,7 +784,7 @@ export async function fetchGroup(filter: GroupInfoFilter) {
 export async function addGroup([groupInfo]) {
   const resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
   const url = reduceK8sRestfulPath({ resourceInfo });
-  let rr: RequestResult = await POST(url, groupInfo);
+  const rr: RequestResult = await POST(url, groupInfo);
   return operationResult(rr.data, rr.error);
 }
 
@@ -798,7 +795,7 @@ export async function addGroup([groupInfo]) {
 export async function updateGroup([groupInfo]) {
   const resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: groupInfo.metadata.name });
-  let rr: RequestResult = await PUT(url, groupInfo);
+  const rr: RequestResult = await PUT(url, groupInfo);
   return operationResult(rr.data, rr.error);
 }
 
@@ -812,7 +809,7 @@ export async function deleteGroup([group]: Group[]) {
   // let rr: RequestResult = await DELETE(url);
   // return operationResult(rr.data, rr.error);
   try {
-    let resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
+    const resourceInfo: ResourceInfo = resourceConfig()['localgroup'];
     const url = reduceK8sRestfulPath({ resourceInfo, specificName: group.metadata.name });
     const response = await reduceNetworkRequest({
       method: 'DELETE',
@@ -843,8 +840,8 @@ export async function fetchGroupPlainList(query: QueryState<GroupFilter>) {
   const resourceInfo: ResourceInfo = resourceConfig()['group'];
   const url = reduceK8sRestfulPath({ resourceInfo });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await GET(url + queryString);
-  let items: GroupPlain[] =
+  const rr: RequestResult = await GET(url + queryString);
+  const items: GroupPlain[] =
     !rr.error && rr.data.items
       ? rr.data.items.map(i => {
           return {
@@ -873,8 +870,8 @@ export async function fetchGroupAssociatedList(query: QueryState<GroupFilter>) {
   const resourceInfo: ResourceInfo = resourceConfig()[filter.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.resourceID, extraResource: 'groups' });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await GET(url + queryString);
-  let items: GroupPlain[] =
+  const rr: RequestResult = await GET(url + queryString);
+  const items: GroupPlain[] =
     !rr.error && rr.data.items
       ? rr.data.items.map(i => {
           return {
@@ -900,7 +897,7 @@ export async function fetchGroupAssociatedList(query: QueryState<GroupFilter>) {
 export async function associateGroup([group]: GroupAssociation[], params: GroupFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'binding' });
-  let rr: RequestResult = await POST(url, { groups: group.addGroups });
+  const rr: RequestResult = await POST(url, { groups: group.addGroups });
   return operationResult(rr.data, rr.error);
 }
 
@@ -912,7 +909,7 @@ export async function associateGroup([group]: GroupAssociation[], params: GroupF
 export async function disassociateGroup([group]: GroupAssociation[], params: GroupFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'unbinding' });
-  let rr: RequestResult = await POST(url, { groups: group.removeGroups });
+  const rr: RequestResult = await POST(url, { groups: group.removeGroups });
   return operationResult(rr.data, rr.error);
 }
 
@@ -929,8 +926,8 @@ export async function fetchCommonUserList(query: QueryState<CommonUserFilter>) {
   const resourceInfo: ResourceInfo = resourceConfig()['user'];
   const url = reduceK8sRestfulPath({ resourceInfo });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await GET(url + queryString);
-  let users: UserPlain[] =
+  const rr: RequestResult = await GET(url + queryString);
+  const users: UserPlain[] =
     !rr.error && rr.data.items
       ? rr.data.items.map(i => {
           /** localgroup对应localidentity，role对应user，localidentity的spec.username等同于user的spec.name */
@@ -959,8 +956,8 @@ export async function fetchCommonUserAssociatedList(query: QueryState<CommonUser
   const resourceInfo: ResourceInfo = resourceConfig()[filter.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.resourceID, extraResource: 'users' });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await GET(url + queryString);
-  let users: UserPlain[] =
+  const rr: RequestResult = await GET(url + queryString);
+  const users: UserPlain[] =
     !rr.error && rr.data.items
       ? rr.data.items.map(i => {
           /** localgroup对应localidentity，role对应user，localidentity的spec.username等同于user的spec.name */
@@ -986,7 +983,7 @@ export async function fetchCommonUserAssociatedList(query: QueryState<CommonUser
 export async function commonAssociateUser([user]: CommonUserAssociation[], params: CommonUserFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'binding' });
-  let rr: RequestResult = await POST(url, { users: user.addUsers });
+  const rr: RequestResult = await POST(url, { users: user.addUsers });
   return operationResult(rr.data, rr.error);
 }
 
@@ -998,7 +995,7 @@ export async function commonAssociateUser([user]: CommonUserAssociation[], param
 export async function commonDisassociateUser([user]: CommonUserAssociation[], params: CommonUserFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'unbinding' });
-  let rr: RequestResult = await POST(url, { users: user.removeUsers });
+  const rr: RequestResult = await POST(url, { users: user.removeUsers });
   return operationResult(rr.data, rr.error);
 }
 
@@ -1009,7 +1006,7 @@ export async function commonDisassociateUser([user]: CommonUserAssociation[], pa
 export async function fetchPolicy(filter: PolicyInfoFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()['policy'];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.name });
-  let rr: RequestResult = await GET(url);
+  const rr: RequestResult = await GET(url);
   return rr.data;
 }
 
@@ -1031,8 +1028,8 @@ export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
 
   const resourceInfo: ResourceInfo = resourceConfig()['policy'];
   const url = reduceK8sRestfulPath({ resourceInfo });
-  let rr: RequestResult = await GET(url + queryString);
-  let items: PolicyPlain[] =
+  const rr: RequestResult = await GET(url + queryString);
+  const items: PolicyPlain[] =
     !rr.error && rr.data.items
       ? rr.data.items.map(i => {
           return {
@@ -1063,8 +1060,8 @@ export async function fetchPolicyAssociatedList(query: QueryState<PolicyFilter>)
   const resourceInfo: ResourceInfo = resourceConfig()[filter.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: filter.resourceID, extraResource: 'policies' });
   const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
-  let rr: RequestResult = await GET(url + queryString);
-  let items: PolicyPlain[] =
+  const rr: RequestResult = await GET(url + queryString);
+  const items: PolicyPlain[] =
     !rr.error && rr.data.items
       ? rr.data.items.map(i => {
           return {
@@ -1091,7 +1088,7 @@ export async function fetchPolicyAssociatedList(query: QueryState<PolicyFilter>)
 export async function associatePolicy([policy]: PolicyAssociation[], params: PolicyFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'policybinding' });
-  let rr: RequestResult = await POST(url, {
+  const rr: RequestResult = await POST(url, {
     policies: policy.addPolicies.map(p => {
       return p.name;
     })
@@ -1107,7 +1104,7 @@ export async function associatePolicy([policy]: PolicyAssociation[], params: Pol
 export async function disassociatePolicy([policy]: PolicyAssociation[], params: PolicyFilter) {
   const resourceInfo: ResourceInfo = resourceConfig()[params.resource];
   const url = reduceK8sRestfulPath({ resourceInfo, specificName: params.resourceID, extraResource: 'policyunbinding' });
-  let rr: RequestResult = await POST(url, {
+  const rr: RequestResult = await POST(url, {
     policies: policy.removePolicies.map(p => {
       return p.name;
     })

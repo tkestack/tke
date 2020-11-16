@@ -144,6 +144,7 @@ export class TablePanel extends React.Component<RootProps, ChartUsageGuideDialog
           showDialog={this.state.showChartUsageGuideDialog}
           chartGroupName={this.state.chartGroupName}
           registryUrl={this.state.registryUrl}
+          username={userInfo ? userInfo.name : 'tkestack'}
           onClose={() => {
             this.setState({
               showChartUsageGuideDialog: false

@@ -162,20 +162,13 @@ spec:
     spec:
       priorityClassName: system-cluster-critical
       serviceAccountName: metrics-server
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: node-role.kubernetes.io/master
-                    operator: Exists
       containers:
       - name: metrics-server
         image: {{ .MetricsServerImage }}
         command:
         - /metrics-server
         - --metric-resolution=30s
-        - --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt
+        - --requestheader-client-ca-file=/etc/kubernetes/pki/requestheader-client-ca-file
         - --requestheader-allowed-names=front-proxy-client
         - --requestheader-extra-headers-prefix=X-Remote-Extra-
         - --requestheader-group-headers=X-Remote-Group
@@ -187,7 +180,7 @@ spec:
           name: https
           protocol: TCP
         volumeMounts:
-        - name: etc-kubernetes-pki
+        - name: extension-apiserver-authentication
           mountPath: /etc/kubernetes/pki/
           readOnly: true
       - name: metrics-server-nanny
@@ -232,9 +225,9 @@ spec:
         - name: metrics-server-config-volume
           configMap:
             name: metrics-server-config
-        - name: etc-kubernetes-pki
-          hostPath:
-            path: /etc/kubernetes/pki/
+        - configMap:
+            name: extension-apiserver-authentication
+          name: extension-apiserver-authentication
       tolerations:
         - key: "CriticalAddonsOnly"
           operator: "Exists"

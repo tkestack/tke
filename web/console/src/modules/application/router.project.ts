@@ -12,5 +12,6 @@ export const router = new Router('/tkestack-project/app(/:sub)(/:mode)(/:tab)', 
   cluster: '',
   namespace: '',
   app: '',
+  appName: '',
   projectId: ''
 });

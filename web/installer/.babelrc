@@ -1,39 +1,14 @@
 {
-  "presets": ["react"],
-  "plugins": ["transform-es3-member-expression-literals", "transform-es3-property-literals"],
-  "env": {
-    "development": {
-      "presets": [
-        [
-          "env",
-          {
-            "loose": true,
-            "modules": "commonjs",
-            "exclude": [
-              "babel-plugin-transform-async-to-generator",
-              "babel-plugin-transform-regenerator",
-              "babel-plugin-transform-es2015-spread"
-            ]
-          }
-        ]
-      ],
-      "plugins": [
-        [
-          "react-transform",
-          {
-            "transforms": [
-              {
-                "transform": "react-transform-hmr",
-                "imports": ["react"],
-                "locals": ["module"]
-              }
-            ]
-          }
-        ]
-      ]
-    },
-    "production": {
-      "presets": ["es2015"]
-    }
-  }
+  "presets": [
+    "@babel/preset-react",
+    [
+      "@babel/preset-env",
+      {
+        "modules": "commonjs"
+      }
+    ]
+  ],
+  "plugins": [
+    "@babel/plugin-transform-runtime"
+  ]
 }

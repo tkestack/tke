@@ -76,13 +76,31 @@ export async function fetchPrometheuses() {
     method: Method.get,
     url
   };
+
+  // 兼容新的monitor版本peomethus
+  const monitorParams: RequestParams = {
+    method: Method.get,
+    url: '/apis/monitor.tkestack.io/v1/prometheuses'
+  };
+
   let records = [];
   try {
-    let response = await reduceNetworkRequest(params);
+    let [response, monitorResponse] = await Promise.all([
+      reduceNetworkRequest(params),
+      reduceNetworkRequest(monitorParams)
+    ]);
     if (response.code === 0) {
       records = response.data.items.map(item => {
         return Object.assign({}, item, { id: uuid() });
       });
+    }
+
+    if (monitorResponse.code === 0) {
+      records = records.concat(
+        monitorResponse.data.items.map(item => {
+          return Object.assign({}, item, { id: uuid() });
+        })
+      );
     }
   } catch (error) {
     // 这里是搜索的时候，如果搜索不到的话，会报404的错误，只有在 resourceNotFound的时候，不把错误抛出去
@@ -257,6 +275,7 @@ export async function modifyClusterName(clusters: CreateResource[]) {
 export async function fetchCreateICK8sVersion() {
   return [
     { text: '1.16.9', value: '1.16.9' },
+    { text: '1.17.13', value: '1.17.13' },
     { text: '1.18.3', value: '1.18.3' }
   ];
 }

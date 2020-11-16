@@ -20,6 +20,7 @@ package util
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	htmlTemplate "html/template"
@@ -64,7 +65,14 @@ func Request(options Option) ([]byte, error) {
 		req.Header.Add(k, v)
 	}
 	var resp *http.Response
-	c := http.Client{}
+	c := http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
 	resp, err = c.Do(req)
 	if err != nil {
 		return nil, err

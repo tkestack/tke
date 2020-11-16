@@ -21,6 +21,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -45,6 +46,7 @@ import (
 	"tkestack.io/tke/pkg/gateway/config/configfiles"
 	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/distribution"
+	"tkestack.io/tke/pkg/registry/harbor"
 	utilfs "tkestack.io/tke/pkg/util/filesystem"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/transport"
@@ -93,6 +95,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, distribution.IgnoredAuthPathPrefixes()...)
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, chartmuseum.IgnoredAuthPathPrefixes()...)
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, authapiserver.IgnoreAuthPathPrefixes()...)
+	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, harbor.IgnoreAuthPathPrefixes()...)
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, audit.IgnoredAuthPathPrefixes()...)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes, nil)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes, nil)
@@ -123,7 +126,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		oidcAuthenticator *oidc.Authenticator
 	)
 
-	externalAddress := fmt.Sprintf("%s:%d", opts.Generic.ExternalHost, opts.Generic.ExternalPort)
+	externalAddress := net.JoinHostPort(opts.Generic.ExternalHost, fmt.Sprintf("%d", opts.Generic.ExternalPort))
 	oauthConfig, oidcHTTPClient, err = setupOIDC(opts.OIDC, externalAddress)
 	if err != nil {
 		return nil, err

@@ -123,6 +123,14 @@ data:
     tls_cert_file = "/app/certs/server.crt"
     tls_private_key_file = "/app/certs/server.key"
 
+    [features]
+      [features.repo]
+        scheme = "https"
+        domain_suffix = "{{ .RegistryDomainSuffix }}"
+        admin = "{{ .RegistryAdminUsername }}"
+        admin_password = "{{ .RegistryAdminPassword }}"
+        cafile = "/app/certs/ca.crt"
+
     [etcd]
     servers = [
       "https://etcd:2379"

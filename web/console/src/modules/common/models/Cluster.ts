@@ -1,4 +1,5 @@
 import { Identifiable } from '@tencent/ff-redux';
+import { Resource } from './Resource';
 
 export interface ClusterFilter {
   /** 具体名称 */
@@ -48,6 +49,12 @@ interface ClusterSpec {
 
   /** 是否安装了prometheus */
   hasPrometheus?: boolean;
+
+  /** promethus详情 */
+  promethus?: Resource;
+
+  /** logagent详情 */
+  logAgent?: Resource;
 
   properties?: any;
 
@@ -100,6 +107,8 @@ interface ClusterAddress {
 
   /** 端口名 */
   port: number;
+
+  path?: string;
 
   /** 集群的类型 */
   type: string;

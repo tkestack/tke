@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net"
 	"path"
 	"time"
 
@@ -62,7 +63,7 @@ func (in *Cluster) Host() (string, error) {
 	if address == nil {
 		return "", errors.New("can't find valid address")
 	}
-	result := fmt.Sprintf("%s:%d", address.Host, address.Port)
+	result := net.JoinHostPort(address.Host, fmt.Sprintf("%d", address.Port))
 	if address.Path != "" {
 		result = path.Join(result, path.Clean(address.Path))
 		result = fmt.Sprintf("https://%s", result)

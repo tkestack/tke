@@ -35,6 +35,8 @@ type RegistryConfiguration struct {
 	DefaultTenant string
 	// +optional
 	DomainSuffix string
+	HarborEnabled bool
+	HarborCAFile string
 }
 
 type Storage struct {
@@ -44,6 +46,8 @@ type Storage struct {
 	InMemory *InMemoryStorage
 	// +optional
 	S3 *S3Storage
+	// +optional
+	Delete *Delete
 }
 
 type FileSystemStorage struct {
@@ -98,6 +102,11 @@ type S3Storage struct {
 	UserAgent *string
 	// +optional
 	ObjectACL *string
+}
+
+// Delete cloud enable the deletion of image blobs and manifests by digest.
+type Delete struct {
+	Enabled bool
 }
 
 type Security struct {

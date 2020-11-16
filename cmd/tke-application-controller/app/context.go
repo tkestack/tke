@@ -32,7 +32,7 @@ import (
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/cmd/tke-application-controller/app/config"
-	appconfig "tkestack.io/tke/pkg/application/controller/app/config"
+	appconfig "tkestack.io/tke/pkg/application/config"
 	"tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/controller/util"
 )
@@ -121,7 +121,7 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		ResyncPeriod:            controller.ResyncPeriod(&cfg.Component),
 		ControllerStartInterval: cfg.Component.ControllerStartInterval,
 
-		Repo:           cfg.Repo,
+		Repo:           cfg.RepoConfiguration,
 		PlatformClient: platformClient.PlatformV1(),
 	}
 

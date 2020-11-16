@@ -89,9 +89,15 @@ export class Step9 extends React.Component<RootProps> {
             <Form.Text>{editState.repoType}</Form.Text>
           </Form.Item>
           {editState.repoType === 'tke' ? (
-            <Form.Item label="域名后缀">
-              <Form.Text>{editState.repoSuffix}</Form.Text>
-            </Form.Item>
+            <>
+              <Form.Item label="域名后缀">
+                <Form.Text>{editState.repoSuffix}</Form.Text>
+              </Form.Item>
+
+              <Form.Item label="是否安装应用商店">
+                <Form.Text>{editState.application ? '是' : '否'}</Form.Text>
+              </Form.Item>
+            </>
           ) : editState.repoType === 'thirdParty' ? (
             <React.Fragment>
               <Form.Item label="仓库地址">

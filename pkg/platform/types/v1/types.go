@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"net"
 	"path"
 	"time"
 
@@ -41,7 +42,8 @@ const (
 
 type Cluster struct {
 	*platformv1.Cluster
-	ClusterCredential *platformv1.ClusterCredential
+	ClusterCredential   *platformv1.ClusterCredential
+	IsCredentialChanged bool
 }
 
 func GetClusterByName(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, name string) (*Cluster, error) {
@@ -55,6 +57,7 @@ func GetClusterByName(ctx context.Context, platformClient platformversionedclien
 func GetCluster(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster) (*Cluster, error) {
 	result := new(Cluster)
 	result.Cluster = cluster
+	result.IsCredentialChanged = false
 	if cluster.Spec.ClusterCredentialRef != nil {
 		clusterCredential, err := platformClient.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
 		if err != nil {
@@ -188,7 +191,7 @@ func (c *Cluster) Host() (string, error) {
 	if address == nil {
 		return "", errors.New("can't find valid address")
 	}
-	result := fmt.Sprintf("%s:%d", address.Host, address.Port)
+	result := net.JoinHostPort(address.Host, fmt.Sprintf("%d", address.Port))
 	if address.Path != "" {
 		result = path.Join(result, path.Clean(address.Path))
 		result = fmt.Sprintf("https://%s", result)
@@ -200,7 +203,7 @@ func (c *Cluster) Host() (string, error) {
 func (c *Cluster) HostForBootstrap() (string, error) {
 	for _, one := range c.Status.Addresses {
 		if one.Type == platformv1.AddressReal {
-			return fmt.Sprintf("%s:%d", one.Host, one.Port), nil
+			return net.JoinHostPort(one.Host, fmt.Sprintf("%d", one.Port)), nil
 		}
 	}
 

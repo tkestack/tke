@@ -35,6 +35,8 @@ type RegistryConfiguration struct {
 	DefaultTenant string `json:"defaultTenant"`
 	// +optional
 	DomainSuffix string `json:"domainSuffix,omitempty"`
+	HarborEnabled bool  `json:"harborEnabled,omitempty"`
+	HarborCAFile string  `json:"harborCAFile,omitempty"`
 }
 
 type Storage struct {
@@ -44,6 +46,8 @@ type Storage struct {
 	InMemory *InMemoryStorage `json:"inMemory,omitempty"`
 	// +optional
 	S3 *S3Storage `json:"s3,omitempty"`
+	// +optional
+	Delete *Delete `json:"delete,omitempty"`
 }
 
 type FileSystemStorage struct {
@@ -98,6 +102,11 @@ type S3Storage struct {
 	UserAgent *string `json:"userAgent,omitempty"`
 	// +optional
 	ObjectACL *string `json:"objectACL,omitempty"`
+}
+
+// Delete cloud enable the deletion of image blobs and manifests by digest.
+type Delete struct {
+	Enabled bool `json:"enabled"`
 }
 
 type Security struct {

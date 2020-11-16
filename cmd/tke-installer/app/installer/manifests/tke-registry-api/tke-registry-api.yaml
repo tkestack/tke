@@ -186,6 +186,8 @@ data:
     storage:
       fileSystem:
         rootDirectory: /storage
+      delete:
+        enabled: true
     security:
       tokenPrivateKeyFile: /etc/registry/private_key.pem
       tokenPublicKeyFile: /etc/registry/public_key.crt
@@ -194,6 +196,15 @@ data:
       httpSecret: "{{ .AdminPassword }}"
     defaultTenant: default
     domainSuffix: "{{ .DomainSuffix }}"
+
+{{- if .HarborEnabled }}
+    harborEnabled: true
+{{- end}}
+
+{{- if .HarborCAFile }}
+    harborCAFile: /app/certs/harbor-ca.crt
+{{- end}}
+
 
   tke-auth-webhook.yaml: |
     apiVersion: v1

@@ -22,12 +22,13 @@ import (
 	"bytes"
 	"io/ioutil"
 
-	"github.com/pkg/errors"
+	installerconstants "tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	utilfile "tkestack.io/tke/pkg/util/file"
 	"tkestack.io/tke/pkg/util/ssh"
 	"tkestack.io/tke/pkg/util/template"
 
-	installerconstants "tkestack.io/tke/cmd/tke-installer/app/installer/constants"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -42,8 +43,8 @@ clusters:
 users:
   - name: admin-cert
     user:
-      client-certificate: {{.AdminCertFile}}
-      client-key: {{.AdminKeyFile}}
+      client-certificate: {{.WebhookCertFile}}
+      client-key: {{.WebhookKeyFile}}
 current-context: tke
 contexts:
 - context:
@@ -58,11 +59,36 @@ type Option struct {
 	IsGlobalCluster      bool
 }
 
+// WebhookCertAndKeyExist checks whether the certificate and private key exist,
+// for compatibility with old version clusters' webhook certificates and private keys which version are before 1.5,
+// and we will completely replace webhook certificates and private keys' file name in 1.6 or future release.
+func WebhookCertAndKeyExist(basePath string) bool {
+	return utilfile.Exists(basePath+constants.WebhookCertName) &&
+		utilfile.Exists(basePath+constants.WebhookCertName)
+}
+
 func Install(s ssh.Interface, option *Option) error {
+	var webhookCertFile = constants.WebhookCertFile
+	var webhookKeyFile = constants.WebhookKeyFile
+	var webhookCertName = constants.WebhookCertName
+	var webhookKeyName = constants.WebhookKeyName
+
+	basePath := constants.AppCertDir
+	if option.IsGlobalCluster {
+		basePath = installerconstants.DataDir
+	}
+	// For compatibility with old version clusters' webhook certificates and private keys.
+	if !WebhookCertAndKeyExist(basePath) {
+		webhookCertFile = constants.AdminCertFile
+		webhookKeyFile = constants.AdminKeyFile
+		webhookCertName = constants.AdminCertName
+		webhookKeyName = constants.AdminKeyName
+	}
+
 	authzWebhookConfig, err := template.ParseString(authzWebhookConfig, map[string]interface{}{
-		"AuthzEndpoint": option.AuthzWebhookEndpoint,
-		"AdminCertFile": constants.AdminCertFile,
-		"AdminKeyFile":  constants.AdminKeyFile,
+		"AuthzEndpoint":   option.AuthzWebhookEndpoint,
+		"WebhookCertFile": webhookCertFile,
+		"WebhookKeyFile":  webhookKeyFile,
 	})
 	if err != nil {
 		return errors.Wrap(err, "parse authzWebhookConfig error")
@@ -72,23 +98,19 @@ func Install(s ssh.Interface, option *Option) error {
 	if err != nil {
 		return err
 	}
-	basePath := constants.AppCertDir
-	if option.IsGlobalCluster {
-		basePath = installerconstants.DataDir
-	}
-	adminCertData, err := ioutil.ReadFile(basePath + constants.AdminCertName)
+	webhookCertData, err := ioutil.ReadFile(basePath + webhookCertName)
 	if err != nil {
 		return err
 	}
-	err = s.WriteFile(bytes.NewReader(adminCertData), constants.AdminCertFile)
+	err = s.WriteFile(bytes.NewReader(webhookCertData), webhookCertFile)
 	if err != nil {
 		return err
 	}
-	adminKeyData, err := ioutil.ReadFile(basePath + constants.AdminkeyName)
+	webhookKeyData, err := ioutil.ReadFile(basePath + webhookKeyName)
 	if err != nil {
 		return err
 	}
-	err = s.WriteFile(bytes.NewReader(adminKeyData), constants.AdminKeyFile)
+	err = s.WriteFile(bytes.NewReader(webhookKeyData), webhookKeyFile)
 	if err != nil {
 		return err
 	}

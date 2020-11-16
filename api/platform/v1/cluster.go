@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net"
 	"time"
 
 	"tkestack.io/tke/pkg/util/http"
@@ -149,7 +150,7 @@ func (in *Cluster) Host() (string, error) {
 		return "", errors.New("can't find valid address")
 	}
 
-	return fmt.Sprintf("%s:%d", address.Host, address.Port), nil
+	return net.JoinHostPort(address.Host, fmt.Sprintf("%d", address.Port)), nil
 }
 
 func (in *Cluster) AuthzWebhookEnabled() bool {
@@ -180,6 +181,18 @@ func (in *Cluster) AuthzWebhookBuiltinEndpoint() (string, bool) {
 		return "", false
 	}
 
-	return utilhttp.MakeEndpoint("https", in.Spec.Machines[0].IP,
+	endPointHost := in.Spec.Machines[0].IP
+
+	// use VIP in HA situation
+	if in.Spec.Features.HA != nil {
+		if in.Spec.Features.HA.TKEHA != nil {
+			endPointHost = in.Spec.Features.HA.TKEHA.VIP
+		}
+		if in.Spec.Features.HA.ThirdPartyHA != nil {
+			endPointHost = in.Spec.Features.HA.ThirdPartyHA.VIP
+		}
+	}
+
+	return utilhttp.MakeEndpoint("https", endPointHost,
 		constants.AuthzWebhookNodePort, "/auth/authz"), true
 }

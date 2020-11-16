@@ -1,7 +1,6 @@
 import { Method, reduceNetworkRequest } from '.';
 import { RequestParams } from '../src/modules/common/models';
 
-// @ts-ignore
 const tips = seajs.require('tips');
 
 export class RequestArgs {
@@ -20,14 +19,14 @@ export class RequestResult {
 
 export const SEND = async (args: RequestArgs) => {
   // 构建参数
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: args.method,
     url: args.url,
     data: args.bodyData
   };
-  let resp = new RequestResult();
+  const resp = new RequestResult();
   try {
-    let response = await reduceNetworkRequest(params, args.clusterId, args.projectId, args.keyword);
+    const response = await reduceNetworkRequest(params, args.clusterId, args.projectId, args.keyword);
     if (response.code !== 0) {
       tips.error(response.message, 2000);
       resp.data = args.bodyData;
@@ -51,30 +50,30 @@ export const SEND = async (args: RequestArgs) => {
 export const GET = async (args: RequestArgs) => {
   args.method = Method.get;
   args.bodyData = null;
-  let response = await SEND(args);
+  const response = await SEND(args);
   return response;
 };
 export const DELETE = async (args: RequestArgs) => {
   args.method = Method.delete;
   args.bodyData = null;
-  let response = await SEND(args);
+  const response = await SEND(args);
   return response;
 };
 export const POST = async (args: RequestArgs) => {
   args.method = Method.post;
   args.bodyData = JSON.stringify(args.bodyData);
-  let response = await SEND(args);
+  const response = await SEND(args);
   return response;
 };
 export const PUT = async (args: RequestArgs) => {
   args.method = Method.put;
   args.bodyData = JSON.stringify(args.bodyData);
-  let response = await SEND(args);
+  const response = await SEND(args);
   return response;
 };
 export const PATCH = async (args: RequestArgs) => {
   args.method = Method.patch;
   args.bodyData = JSON.stringify(args.bodyData);
-  let response = await SEND(args);
+  const response = await SEND(args);
   return response;
 };

@@ -23,6 +23,7 @@ import (
 
 	"github.com/imdario/mergo"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	utilsnet "k8s.io/utils/net"
 	kubeadmv1beta2 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeadm/v1beta2"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -37,13 +38,22 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubead
 
 	nodeRegistration := kubeadmv1beta2.NodeRegistrationOptions{}
 	kubeletExtraArgs := p.getKubeletExtraArgs(c)
-	// add label to get node by machine ip.
-	kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s=%s", apiclient.LabelMachineIP, machineIP)
-	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
-
-	if !c.Spec.HostnameAsNodename {
-		nodeRegistration.Name = machineIP
+	if !utilsnet.IsIPv6String(c.Spec.Machines[0].IP) {
+		kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s=%s", apiclient.LabelMachineIPV4, machineIP)
+	} else {
+		kubeletExtraArgs["node-labels"] = apiclient.GetNodeIPV6Label(machineIP)
 	}
+
+	// add node ip for single stack ipv6 clusters.
+	if _, ok := kubeletExtraArgs["node-ip"]; !ok {
+		kubeletExtraArgs["node-ip"] = machineIP
+	}
+	if _, ok := kubeletExtraArgs["hostname-override"]; !ok {
+		if !c.Spec.HostnameAsNodename {
+			nodeRegistration.Name = machineIP
+		}
+	}
+	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
 
 	return &kubeadmv1beta2.JoinConfiguration{
 		NodeRegistration: nodeRegistration,

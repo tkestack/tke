@@ -118,6 +118,8 @@ message AppSpec {
 
   // +optional
   repeated string finalizers = 7;
+
+  optional bool dryRun = 8;
 }
 
 // AppStatus represents information about the status of a bootstrap.
@@ -162,6 +164,10 @@ message AppStatus {
   // A human readable message indicating details about the transition.
   // +optional
   optional string message = 9;
+
+  // Dryrun result.
+  // +optional
+  optional string manifest = 10;
 }
 
 // AppValues string the values for this app.
@@ -228,6 +234,8 @@ message History {
   optional string appVersion = 5;
 
   optional string description = 6;
+
+  optional string manifest = 7;
 }
 
 // ResourceValues masks the value so protobuf can generate

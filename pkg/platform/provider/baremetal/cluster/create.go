@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 	"time"
 
@@ -41,6 +42,7 @@ import (
 	"k8s.io/client-go/rest"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+	utilsnet "k8s.io/utils/net"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
@@ -286,24 +288,54 @@ func (p *Provider) EnsureClusterComplete(ctx context.Context, cluster *v1.Cluste
 
 func completeNetworking(cluster *v1.Cluster) error {
 	var (
+		clusterCIDR      = cluster.Spec.ClusterCIDR
 		serviceCIDR      string
 		nodeCIDRMaskSize int32
 		err              error
 	)
 
+	// dual stack case
+	if cluster.Spec.Features.IPv6DualStack {
+		clusterCidrs := strings.Split(serviceCIDR, ",")
+		serviceCidrs := strings.Split(clusterCIDR, ",")
+		for _, cidr := range clusterCidrs {
+			if maskSize, isIPv6 := CalcNodeCidrSize(cidr); isIPv6 {
+				cluster.Status.NodeCIDRMaskSizeIPv6 = maskSize
+				cluster.Status.SecondaryClusterCIDR = cidr
+			} else {
+				cluster.Status.NodeCIDRMaskSizeIPv4 = maskSize
+				cluster.Status.ClusterCIDR = cidr
+			}
+		}
+		for _, cidr := range serviceCidrs {
+			if utilsnet.IsIPv6CIDRString(cidr) {
+				cluster.Status.SecondaryServiceCIDR = cidr
+			} else {
+				cluster.Status.ServiceCIDR = cidr
+			}
+		}
+		return nil
+	}
+	// single stack case incldue ipv4 and ipv6
 	if cluster.Spec.ServiceCIDR != nil {
 		serviceCIDR = *cluster.Spec.ServiceCIDR
-		nodeCIDRMaskSize, err = GetNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxNodePodNum)
-		if err != nil {
-			return errors.Wrap(err, "GetNodeCIDRMaskSize error")
+		if utilsnet.IsIPv6CIDRString(clusterCIDR) {
+			nodeCIDRMaskSize, _ = CalcNodeCidrSize(clusterCIDR)
+		} else {
+			nodeCIDRMaskSize, err = GetNodeCIDRMaskSize(clusterCIDR, *cluster.Spec.Properties.MaxNodePodNum)
+			if err != nil {
+				return errors.Wrap(err, "GetNodeCIDRMaskSize error")
+			}
 		}
 	} else {
-		serviceCIDR, nodeCIDRMaskSize, err = GetServiceCIDRAndNodeCIDRMaskSize(cluster.Spec.ClusterCIDR, *cluster.Spec.Properties.MaxClusterServiceNum, *cluster.Spec.Properties.MaxNodePodNum)
+		serviceCIDR, nodeCIDRMaskSize, err = GetServiceCIDRAndNodeCIDRMaskSize(clusterCIDR, *cluster.Spec.Properties.MaxClusterServiceNum, *cluster.Spec.Properties.MaxNodePodNum)
 		if err != nil {
 			return errors.Wrap(err, "GetServiceCIDRAndNodeCIDRMaskSize error")
 		}
 	}
+
 	cluster.Status.ServiceCIDR = serviceCIDR
+	cluster.Status.ClusterCIDR = clusterCIDR
 	cluster.Status.NodeCIDRMaskSize = nodeCIDRMaskSize
 
 	return nil
@@ -663,7 +695,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 			return errors.Wrap(err, machine.IP)
 		}
 
-		err = machineSSH.WriteFile(bytes.NewReader(schedulerPolicyConfig), constants.KuberentesSchedulerPolicyConfigFile)
+		err = machineSSH.WriteFile(bytes.NewReader(schedulerPolicyConfig), constants.KubernetesSchedulerPolicyConfigFile)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -681,7 +713,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
 				}
-				err = machineSSH.WriteFile(bytes.NewReader(auditWebhookConfig), constants.KuberentesAuditWebhookConfigFile)
+				err = machineSSH.WriteFile(bytes.NewReader(auditWebhookConfig), constants.KubernetesAuditWebhookConfigFile)
 				if err != nil {
 					return errors.Wrap(err, machine.IP)
 				}
@@ -698,8 +730,11 @@ func (p *Provider) EnsureKubeadmInitPhaseKubeletStart(ctx context.Context, c *v1
 		return err
 	}
 	phase := "kubelet-start"
-	if !c.Spec.HostnameAsNodename {
-		phase += fmt.Sprintf(" --node-name=%s", c.Spec.Machines[0].IP)
+	kubeletExtraArgs := p.getKubeletExtraArgs(c)
+	if _, ok := kubeletExtraArgs["hostname-override"]; !ok {
+		if !c.Spec.HostnameAsNodename {
+			phase += fmt.Sprintf(" --node-name=%s", c.Spec.Machines[0].IP)
+		}
 	}
 	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), phase)
 }
@@ -773,10 +808,19 @@ func (p *Provider) EnsureGalaxy(ctx context.Context, c *v1.Cluster) error {
 	if err != nil {
 		return err
 	}
+	backendType := "vxlan"
+	clusterSpec := c.Cluster.Spec
+	if clusterSpec.NetworkArgs != nil {
+		backendTypeArg, ok := clusterSpec.NetworkArgs["backendType"]
+		if ok {
+			backendType = backendTypeArg
+		}
+	}
 	return galaxy.Install(ctx, clientset, &galaxy.Option{
-		Version:   galaxyimages.LatestVersion,
-		NodeCIDR:  c.Cluster.Spec.ClusterCIDR,
-		NetDevice: c.Cluster.Spec.NetworkDevice,
+		Version:     galaxyimages.LatestVersion,
+		NodeCIDR:    clusterSpec.ClusterCIDR,
+		NetDevice:   clusterSpec.NetworkDevice,
+		BackendType: backendType,
 	})
 }
 
@@ -870,37 +914,61 @@ func (p *Provider) EnsureStoreCredential(ctx context.Context, c *v1.Cluster) err
 	if err != nil {
 		return err
 	}
-	c.ClusterCredential.CACert = data
+
+	if !reflect.DeepEqual(c.ClusterCredential.CACert, data) {
+		c.ClusterCredential.CACert = data
+		c.IsCredentialChanged = true
+	}
 
 	data, err = machineSSH.ReadFile(constants.CAKeyName)
 	if err != nil {
 		return err
 	}
-	c.ClusterCredential.CAKey = data
+
+	if !reflect.DeepEqual(c.ClusterCredential.CAKey, data) {
+		c.ClusterCredential.CAKey = data
+		c.IsCredentialChanged = true
+	}
 
 	data, err = machineSSH.ReadFile(constants.EtcdCACertName)
 	if err != nil {
 		return err
 	}
-	c.ClusterCredential.ETCDCACert = data
+
+	if !reflect.DeepEqual(c.ClusterCredential.ETCDCACert, data) {
+		c.ClusterCredential.ETCDCACert = data
+		c.IsCredentialChanged = true
+	}
 
 	data, err = machineSSH.ReadFile(constants.EtcdCAKeyName)
 	if err != nil {
 		return err
 	}
-	c.ClusterCredential.ETCDCAKey = data
+
+	if !reflect.DeepEqual(c.ClusterCredential.ETCDCAKey, data) {
+		c.ClusterCredential.ETCDCAKey = data
+		c.IsCredentialChanged = true
+	}
 
 	data, err = machineSSH.ReadFile(constants.APIServerEtcdClientCertName)
 	if err != nil {
 		return err
 	}
-	c.ClusterCredential.ETCDAPIClientCert = data
+
+	if !reflect.DeepEqual(c.ClusterCredential.ETCDAPIClientCert, data) {
+		c.ClusterCredential.ETCDAPIClientCert = data
+		c.IsCredentialChanged = true
+	}
 
 	data, err = machineSSH.ReadFile(constants.APIServerEtcdClientKeyName)
 	if err != nil {
 		return err
 	}
-	c.ClusterCredential.ETCDAPIClientKey = data
+
+	if !reflect.DeepEqual(c.ClusterCredential.ETCDAPIClientKey, data) {
+		c.ClusterCredential.ETCDAPIClientKey = data
+		c.IsCredentialChanged = true
+	}
 
 	return nil
 }

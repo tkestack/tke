@@ -43,6 +43,7 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
+	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
@@ -314,6 +315,31 @@ func BuildExternalExtensionClientSet(ctx context.Context, cluster *platformv1.Cl
 	return BuildExternalExtensionClientSetNoStatus(ctx, cluster, client)
 }
 
+// BuildKubeAggregatorClientSetNoStatus creates the kube-aggregator clientset of kubernetes by given
+// cluster object and returns it.
+func BuildKubeAggregatorClientSetNoStatus(ctx context.Context, cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (*kubeaggregatorclientset.Clientset, error) {
+	credential, err := GetClusterCredentialV1(ctx, client, cluster)
+	if err != nil {
+		return nil, err
+	}
+	restConfig, err := GetExternalRestConfig(cluster, credential)
+	if err != nil {
+		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
+		return nil, err
+	}
+	return kubeaggregatorclientset.NewForConfig(restConfig)
+}
+
+// BuildKubeAggregatorClientSet creates the kube-aggregator clientset of kubernetes by given cluster
+// object and returns it.
+func BuildKubeAggregatorClientSet(ctx context.Context, cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (*kubeaggregatorclientset.Clientset, error) {
+	if cluster.Status.Locked != nil && *cluster.Status.Locked {
+		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
+	}
+
+	return BuildKubeAggregatorClientSetNoStatus(ctx, cluster, client)
+}
+
 // BuildExternalMonitoringClientSetNoStatus creates the monitoring clientset of prometheus operator by given
 // cluster object and returns it.
 func BuildExternalMonitoringClientSetNoStatus(ctx context.Context, cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (monitoringclient.Interface, error) {
@@ -433,7 +459,7 @@ func ClusterHost(cluster *platform.Cluster) (string, error) {
 		return "", err
 	}
 
-	result := fmt.Sprintf("%s:%d", address.Host, address.Port)
+	result := net.JoinHostPort(address.Host, fmt.Sprintf("%d", address.Port))
 	if address.Path != "" {
 		result = path.Join(result, address.Path)
 	}

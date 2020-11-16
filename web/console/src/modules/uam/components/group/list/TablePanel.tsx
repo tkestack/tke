@@ -19,14 +19,14 @@ const { useState, useEffect } = React;
 //   });
 //
 // @connect((state) => state, mapDispatchToProps)
-export const TablePanel = (props) => {
-  const state = useSelector((state) => state);
+export const TablePanel = props => {
+  const state = useSelector(state => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
   const { groupList, route } = state;
 
   const { isShowing, toggle } = useModal(false);
-  const [editUserGroup, setEditUserGroup] = useState();
+  const [editUserGroup, setEditUserGroup] = useState<Group | undefined>();
 
   useEffect(() => {
     actions.policy.associate.policyList.applyFilter({ resource: 'platform', resourceID: '' });
@@ -40,7 +40,7 @@ export const TablePanel = (props) => {
         <Text parent="div" overflow>
           <a
             href="javascript:;"
-            onClick={(e) => {
+            onClick={e => {
               router.navigate({ module: 'user', sub: 'group', action: 'detail' }, { groupName: item.metadata.name });
             }}
           >
@@ -48,17 +48,17 @@ export const TablePanel = (props) => {
           </a>
           {item.status['phase'] === 'Terminating' && <Icon type="loading" />}
         </Text>
-      ),
+      )
     },
     {
       key: 'description',
       header: t('描述'),
-      render: (item) => <Text parent="div">{item.spec.description || '-'}</Text>,
+      render: item => <Text parent="div">{item.spec.description || '-'}</Text>
     },
     {
       key: 'policies',
       header: t('角色'),
-      render: (item) => {
+      render: item => {
         const content = Object.values(JSON.parse(item.spec.extra.policies)).join(',');
         return (
           <Text>
@@ -73,21 +73,21 @@ export const TablePanel = (props) => {
             />
           </Text>
         );
-      },
+      }
     },
-    { key: 'operation', header: t('操作'), render: (group) => _renderOperationCell(group) },
+    { key: 'operation', header: t('操作'), render: group => _renderOperationCell(group) }
   ];
 
   return (
     <React.Fragment>
       <CTablePanel
-        recordKey={(record) => {
+        recordKey={record => {
           return record.metadata.name;
         }}
         columns={columns}
         model={groupList}
         action={actions.group.list}
-        rowDisabled={(record) => record.status['phase'] === 'Terminating'}
+        rowDisabled={record => record.status['phase'] === 'Terminating'}
         emptyTips={emptyTips}
         isNeedPagination={true}
         bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
@@ -110,7 +110,7 @@ export const TablePanel = (props) => {
         <LinkButton
           tipDirection="right"
           disabled={group.status['phase'] === 'Terminating'}
-          onClick={(e) => {
+          onClick={e => {
             /** 设置用户关联场景 */
             let filter: CommonUserFilter = {
               resource: 'localgroup',
@@ -118,7 +118,7 @@ export const TablePanel = (props) => {
               /** 关联/解关联回调函数 */
               callback: () => {
                 actions.group.list.fetch();
-              },
+              }
             };
             actions.commonUser.associate.setupUserFilter(filter);
             /** 拉取关联用户列表，拉取后自动更新commonUserAssociation */
@@ -143,7 +143,7 @@ export const TablePanel = (props) => {
     const yes = await Modal.confirm({
       message: t('确认删除当前所选用户组') + ` - ${group.spec.displayName}？`,
       okText: t('删除'),
-      cancelText: t('取消'),
+      cancelText: t('取消')
     });
     if (yes) {
       actions.group.list.removeGroupWorkflow.start([group]);

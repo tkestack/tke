@@ -615,14 +615,10 @@ func (t *TKE) setConfigDefault(config *types.Config) {
 
 	config.Logagent = new(types.Logagent)
 
-	//TODO: remove default installation
-	config.Application = new(types.Application)
 	if config.Application != nil {
-		if config.Application.RegistryDomain == "" {
-			config.Application.RegistryDomain = "registry.tke.com"
-		}
-		config.Application.RegistryUsername = config.Basic.Username
-		config.Application.RegistryPassword = config.Basic.Password
+		config.Application.RegistryDomain = config.Registry.Domain()
+		config.Application.RegistryUsername = config.Registry.Username()
+		config.Application.RegistryPassword = config.Registry.Password()
 	}
 }
 
@@ -970,7 +966,7 @@ func (t *TKE) do() {
 			start := time.Now()
 			err := t.steps[t.Step].Func(ctx)
 			if err != nil {
-				t.progress.Status = types.StatusFailed
+				t.progress.Status = types.StatusRetrying
 				t.log.Errorf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
 				return false, nil
 			}
@@ -978,7 +974,7 @@ func (t *TKE) do() {
 
 			t.Step++
 			t.backup()
-
+			t.progress.Status = types.StatusDoing
 			return true, nil
 		})
 	}
@@ -1284,6 +1280,14 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	webhookCrt, err := ioutil.ReadFile(constants.WebhookCrtFile)
+	if err != nil {
+		return err
+	}
+	webhookKey, err := ioutil.ReadFile(constants.WebhookKeyFile)
+	if err != nil {
+		return err
+	}
 
 	if t.Cluster.Spec.Etcd.External != nil {
 		return fmt.Errorf("external etcd specified, but ca key is not provided yet")
@@ -1311,11 +1315,17 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 			"server.key":         string(serverKey),
 			"admin.crt":          string(adminCrt),
 			"admin.key":          string(adminKey),
+			"webhook.crt":        string(webhookCrt),
+			"webhook.key":        string(webhookKey),
 		},
 	}
 
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		cm.Data["oidc-ca.crt"] = string(t.Para.Config.Auth.OIDCAuth.CACert)
+	}
+
+	if t.Para.Config.Registry.TKERegistry.HarborCAFile != "" {
+		cm.Data["harbor-ca.crt"] = t.Para.Config.Registry.TKERegistry.HarborCAFile
 	}
 
 	cm.Data["password.csv"] = fmt.Sprintf("%s,admin,1,administrator", ksuid.New().String())
@@ -1332,7 +1342,19 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 }
 
 func (t *TKE) authzWebhookBuiltinEndpoint() string {
-	return utilhttp.MakeEndpoint("https", t.Para.Cluster.Spec.Machines[0].IP,
+	endPointHost := t.Para.Cluster.Spec.Machines[0].IP
+
+	// use VIP in HA situation
+	if t.Para.Cluster.Spec.Features.HA != nil {
+		if t.Para.Cluster.Spec.Features.HA.TKEHA != nil {
+			endPointHost = t.Para.Cluster.Spec.Features.HA.TKEHA.VIP
+		}
+		if t.Para.Cluster.Spec.Features.HA.ThirdPartyHA != nil {
+			endPointHost = t.Para.Cluster.Spec.Features.HA.ThirdPartyHA.VIP
+		}
+	}
+
+	return utilhttp.MakeEndpoint("https", endPointHost,
 		constants.AuthzWebhookNodePort, "/auth/authz")
 }
 
@@ -1425,31 +1447,17 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 }
 
 func (t *TKE) prepareImages(ctx context.Context) error {
-	pod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "tke-gateway",
-			Namespace: t.namespace,
-		},
-		Spec: corev1.PodSpec{
-			NodeSelector: map[string]string{
-				"node-role.kubernetes.io/master": "",
-			},
-			Containers: []corev1.Container{
-				{
-					Name:  "tke-gateway",
-					Image: images.Get().TKEGateway.FullName(),
-				},
-			},
-		},
+	for _, machine := range t.Cluster.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+		cmdString := fmt.Sprintf("docker pull %s", images.Get().TKEGateway.FullName())
+		_, err = machineSSH.CombinedOutput(cmdString)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
 	}
-	ctx, cancel := context.WithTimeout(ctx, time.Minute)
-	defer cancel()
-
-	err := apiclient.PullImageWithPod(ctx, t.globalClient, pod)
-	if err != nil {
-		return fmt.Errorf("prepare image error: %w", err)
-	}
-
 	return nil
 }
 
@@ -1972,6 +1980,8 @@ func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 		"EnableBusiness": t.businessEnabled(),
 		"DomainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
 		"EnableAudit":    t.auditEnabled(),
+		"HarborEnabled":  t.Para.Config.Registry.TKERegistry.HarborEnabled,
+		"HarborCAFile":   t.Para.Config.Registry.TKERegistry.HarborCAFile,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -2025,11 +2035,14 @@ func (t *TKE) installTKERegistryController(ctx context.Context) error {
 
 func (t *TKE) installTKEApplicationAPI(ctx context.Context) error {
 	options := map[string]interface{}{
-		"Replicas":       t.Config.Replicas,
-		"Image":          images.Get().TKEApplicationAPI.FullName(),
-		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
-		"EnableRegistry": t.Para.Config.Registry.TKERegistry != nil,
-		"EnableAudit":    t.auditEnabled(),
+		"Replicas":              t.Config.Replicas,
+		"Image":                 images.Get().TKEApplicationAPI.FullName(),
+		"EnableAuth":            t.Para.Config.Auth.TKEAuth != nil,
+		"EnableRegistry":        t.Para.Config.Registry.TKERegistry != nil,
+		"EnableAudit":           t.auditEnabled(),
+		"RegistryAdminUsername": t.Para.Config.Application.RegistryUsername,
+		"RegistryAdminPassword": string(t.Para.Config.Application.RegistryPassword),
+		"RegistryDomainSuffix":  t.Para.Config.Application.RegistryDomain,
 	}
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
@@ -2053,11 +2066,11 @@ func (t *TKE) installTKEApplicationAPI(ctx context.Context) error {
 func (t *TKE) installTKEApplicationController(ctx context.Context) error {
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-application-controller/*.yaml",
 		map[string]interface{}{
-			"Replicas":      t.Config.Replicas,
-			"Image":         images.Get().TKEApplicationController.FullName(),
-			"AdminUsername": t.Para.Config.Registry.TKERegistry.Username,
-			"AdminPassword": string(t.Para.Config.Registry.TKERegistry.Password),
-			"DomainSuffix":  t.Para.Config.Registry.TKERegistry.Domain,
+			"Replicas":              t.Config.Replicas,
+			"Image":                 images.Get().TKEApplicationController.FullName(),
+			"RegistryAdminUsername": t.Para.Config.Application.RegistryUsername,
+			"RegistryAdminPassword": string(t.Para.Config.Application.RegistryPassword),
+			"RegistryDomainSuffix":  t.Para.Config.Application.RegistryDomain,
 		})
 	if err != nil {
 		return err

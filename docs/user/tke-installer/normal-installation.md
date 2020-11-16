@@ -38,7 +38,7 @@ Please refer to [ installation requirements](docs/guide/zh-CN/installation/insta
 First Log in to your Linux host and install tke-installer via this command:
 
     # Choose installation package according to your installation node CPU architecture [amd64, arm64]
-    arch=amd64 version=v1.3.1 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-linux-$arch-$version.run{,.sha256} && sha256sum --check --status tke-installer-linux-$arch-$version.run.sha256 && chmod +x tke-installer-linux-$arch-$version.run && ./tke-installer-linux-$arch-$version.run
+    arch=amd64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-linux-$arch-$version.run{,.sha256} && sha256sum --check --status tke-installer-linux-$arch-$version.run.sha256 && chmod +x tke-installer-linux-$arch-$version.run && ./tke-installer-linux-$arch-$version.run
 
 > Note: this command can be found at [TKEStack Release](https://github.com/tkestack/tke/releases)
 >

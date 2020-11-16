@@ -20,11 +20,12 @@ package cluster
 
 import (
 	"fmt"
+	"net"
 
 	"github.com/imdario/mergo"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	utilsnet "k8s.io/utils/net"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	kubeadmv1beta2 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeadm/v1beta2"
 	kubeletv1beta1 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubelet/config/v1beta1"
@@ -55,13 +56,17 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubead
 
 	nodeRegistration := kubeadmv1beta2.NodeRegistrationOptions{}
 	kubeletExtraArgs := p.getKubeletExtraArgs(c)
-	// add label to get node by machine ip.
-	kubeletExtraArgs["node-labels"] = fields.OneTermEqualSelector(string(apiclient.LabelMachineIP), machineIP).String()
-	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
-
-	if !c.Spec.HostnameAsNodename {
-		nodeRegistration.Name = machineIP
+	if !utilsnet.IsIPv6String(c.Spec.Machines[0].IP) {
+		kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s=%s", apiclient.LabelMachineIPV4, machineIP)
+	} else {
+		kubeletExtraArgs["node-labels"] = apiclient.GetNodeIPV6Label(machineIP)
 	}
+	if _, ok := kubeletExtraArgs["hostname-override"]; !ok {
+		if !c.Spec.HostnameAsNodename {
+			nodeRegistration.Name = machineIP
+		}
+	}
+	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
 
 	return &kubeadmv1beta2.JoinConfiguration{
 		NodeRegistration: nodeRegistration,
@@ -84,13 +89,23 @@ func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfi
 
 	nodeRegistration := kubeadmv1beta2.NodeRegistrationOptions{}
 	kubeletExtraArgs := p.getKubeletExtraArgs(c)
-	// add label to get node by machine ip.
-	kubeletExtraArgs["node-labels"] = fields.OneTermEqualSelector(string(apiclient.LabelMachineIP), c.Spec.Machines[0].IP).String()
-	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
-
-	if !c.Spec.HostnameAsNodename {
-		nodeRegistration.Name = c.Spec.Machines[0].IP
+	machineIP := c.Spec.Machines[0].IP
+	if !utilsnet.IsIPv6String(c.Spec.Machines[0].IP) {
+		kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s=%s", apiclient.LabelMachineIPV4, machineIP)
+	} else {
+		kubeletExtraArgs["node-labels"] = apiclient.GetNodeIPV6Label(machineIP)
 	}
+
+	// add node ip for single stack ipv6 clusters.
+	if _, ok := kubeletExtraArgs["node-ip"]; !ok {
+		kubeletExtraArgs["node-ip"] = machineIP
+	}
+	if _, ok := kubeletExtraArgs["hostname-override"]; !ok {
+		if !c.Spec.HostnameAsNodename {
+			nodeRegistration.Name = machineIP
+		}
+	}
+	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
 
 	return &kubeadmv1beta2.InitConfiguration{
 		BootstrapTokens: []kubeadmv1beta2.BootstrapToken{
@@ -102,17 +117,17 @@ func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfi
 		},
 		NodeRegistration: nodeRegistration,
 		LocalAPIEndpoint: kubeadmv1beta2.APIEndpoint{
-			AdvertiseAddress: c.Spec.Machines[0].IP,
+			AdvertiseAddress: machineIP,
 		},
 		CertificateKey: *c.ClusterCredential.CertificateKey,
 	}
 }
 
 func (p *Provider) getClusterConfiguration(c *v1.Cluster) *kubeadmv1beta2.ClusterConfiguration {
-	controlPlaneEndpoint := fmt.Sprintf("%s:6443", c.Spec.Machines[0].IP)
+	controlPlaneEndpoint := net.JoinHostPort(c.Spec.Machines[0].IP, "6443")
 	addr := c.Address(platformv1.AddressAdvertise)
 	if addr != nil {
-		controlPlaneEndpoint = fmt.Sprintf("%s:%d", addr.Host, addr.Port)
+		controlPlaneEndpoint = net.JoinHostPort(addr.Host, fmt.Sprintf("%d", addr.Port))
 	}
 
 	kubernetesVolume := kubeadmv1beta2.HostPathMount{
@@ -151,6 +166,8 @@ func (p *Provider) getClusterConfiguration(c *v1.Cluster) *kubeadmv1beta2.Cluste
 		},
 		ImageRepository: p.config.Registry.Prefix,
 		ClusterName:     c.Name,
+		FeatureGates: map[string]bool{
+			"IPv6DualStack": c.Cluster.Spec.Features.IPv6DualStack},
 	}
 
 	utilruntime.Must(json.Merge(&config.Etcd, &c.Spec.Etcd))
@@ -168,8 +185,11 @@ func (p *Provider) getKubeProxyConfiguration(c *v1.Cluster) *kubeproxyv1alpha1.K
 		config.Mode = "ipvs"
 		config.ClusterCIDR = c.Spec.ClusterCIDR
 	}
-	config.MetricsBindAddress = "0.0.0.0"
 
+	config.MetricsBindAddress = "0.0.0.0"
+	if utilsnet.IsIPv6CIDRString(c.Spec.ClusterCIDR) {
+		config.BindAddress = "::"
+	}
 	return config
 }
 
@@ -193,7 +213,7 @@ func (p *Provider) getAPIServerExtraArgs(c *v1.Cluster) map[string]string {
 	}
 	if p.config.AuditEnabled() {
 		args["audit-policy-file"] = constants.KubernetesAuditPolicyConfigFile
-		args["audit-webhook-config-file"] = constants.KuberentesAuditWebhookConfigFile
+		args["audit-webhook-config-file"] = constants.KubernetesAuditWebhookConfigFile
 	}
 	if c.AuthzWebhookEnabled() {
 		args["authorization-webhook-config-file"] = constants.KubernetesAuthzWebhookConfigFile
@@ -211,10 +231,16 @@ func (p *Provider) getAPIServerExtraArgs(c *v1.Cluster) map[string]string {
 
 func (p *Provider) getControllerManagerExtraArgs(c *v1.Cluster) map[string]string {
 	args := map[string]string{
-		"allocate-node-cidrs":      "true",
-		"node-cidr-mask-size":      fmt.Sprintf("%v", c.Status.NodeCIDRMaskSize),
-		"cluster-cidr":             c.Spec.ClusterCIDR,
-		"service-cluster-ip-range": c.Status.ServiceCIDR,
+		"allocate-node-cidrs": "true",
+		"cluster-cidr":        c.Spec.ClusterCIDR,
+	}
+	if c.Spec.Features.IPv6DualStack {
+		args["node-cidr-mask-size-ipv4"] = fmt.Sprintf("%v", c.Status.NodeCIDRMaskSizeIPv4)
+		args["node-cidr-mask-size-ipv6"] = fmt.Sprintf("%v", c.Status.NodeCIDRMaskSizeIPv6)
+		args["service-cluster-ip-range"] = *c.Spec.ServiceCIDR
+	} else {
+		args["node-cidr-mask-size"] = fmt.Sprintf("%v", c.Status.NodeCIDRMaskSize)
+		args["service-cluster-ip-range"] = c.Status.ServiceCIDR
 	}
 	for k, v := range c.Spec.ControllerManagerExtraArgs {
 		args[k] = v
@@ -229,7 +255,7 @@ func (p *Provider) getControllerManagerExtraArgs(c *v1.Cluster) map[string]strin
 func (p *Provider) getSchedulerExtraArgs(c *v1.Cluster) map[string]string {
 	args := map[string]string{
 		"use-legacy-policy-config": "true",
-		"policy-config-file":       constants.KuberentesSchedulerPolicyConfigFile,
+		"policy-config-file":       constants.KubernetesSchedulerPolicyConfigFile,
 	}
 	for k, v := range c.Spec.SchedulerExtraArgs {
 		args[k] = v
