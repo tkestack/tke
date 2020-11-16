@@ -854,6 +854,13 @@ func (in *ClusterSpec) DeepCopyInto(out *ClusterSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.ScalingMachines != nil {
+		in, out := &in.ScalingMachines, &out.ScalingMachines
+		*out = make([]ClusterMachine, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.DockerExtraArgs != nil {
 		in, out := &in.DockerExtraArgs, &out.DockerExtraArgs
 		*out = make(map[string]string, len(*in))

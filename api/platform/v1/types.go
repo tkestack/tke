@@ -132,6 +132,8 @@ type ClusterSpec struct {
 	HostnameAsNodename bool `json:"hostnameAsNodename,omitempty" protobuf:"bytes,23,opt,name=hostnameAsNodename"`
 	// +optional
 	NetworkArgs map[string]string `json:"networkArgs,omitempty" protobuf:"bytes,24,name=networkArgs"`
+	// +optional
+	ScalingMachines []ClusterMachine `json:"scalingMachines,omitempty" protobuf:"bytes,25,rep,name=scalingMachines"`
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -221,6 +223,10 @@ const (
 	ClusterUpgrading ClusterPhase = "Upgrading"
 	// ClusterTerminating means the cluster is undergoing graceful termination.
 	ClusterTerminating ClusterPhase = "Terminating"
+	// ClusterUpscaling means the cluster is undergoing graceful up scaling.
+	ClusterUpscaling ClusterPhase = "Upscaling"
+	// ClusterDownscaling means the cluster is undergoing graceful down scaling.
+	ClusterDownscaling ClusterPhase = "Downscaling"
 )
 
 // ClusterCondition contains details for the current condition of this cluster.

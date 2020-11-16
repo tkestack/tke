@@ -518,6 +518,9 @@ message ClusterSpec {
 
   // +optional
   map<string, string> networkArgs = 24;
+
+  // +optional
+  repeated ClusterMachine scalingMachines = 25;
 }
 
 // ClusterStatus represents information about the status of a cluster.

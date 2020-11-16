@@ -1837,6 +1837,7 @@ func autoConvert_v1_ClusterSpec_To_platform_ClusterSpec(in *ClusterSpec, out *pl
 	}
 	out.HostnameAsNodename = in.HostnameAsNodename
 	out.NetworkArgs = *(*map[string]string)(unsafe.Pointer(&in.NetworkArgs))
+	out.ScalingMachines = *(*[]platform.ClusterMachine)(unsafe.Pointer(&in.ScalingMachines))
 	return nil
 }
 
@@ -1864,6 +1865,7 @@ func autoConvert_platform_ClusterSpec_To_v1_ClusterSpec(in *platform.ClusterSpec
 		return err
 	}
 	out.Machines = *(*[]ClusterMachine)(unsafe.Pointer(&in.Machines))
+	out.ScalingMachines = *(*[]ClusterMachine)(unsafe.Pointer(&in.ScalingMachines))
 	out.DockerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.DockerExtraArgs))
 	out.KubeletExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.KubeletExtraArgs))
 	out.APIServerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.APIServerExtraArgs))
