@@ -908,6 +908,13 @@ func (in *ClusterSpec) DeepCopyInto(out *ClusterSpec) {
 			(*out)[key] = val
 		}
 	}
+	if in.ScalingMachines != nil {
+		in, out := &in.ScalingMachines, &out.ScalingMachines
+		*out = make([]ClusterMachine, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	return
 }
 

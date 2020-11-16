@@ -98,7 +98,8 @@ type ClusterSpec struct {
 	Properties ClusterProperty
 	// +optional
 	Machines []ClusterMachine
-
+	// +optional
+	ScalingMachines []ClusterMachine
 	// +optional
 	DockerExtraArgs map[string]string
 	// +optional
@@ -216,6 +217,10 @@ const (
 	ClusterUpgrading ClusterPhase = "Upgrading"
 	// ClusterTerminating means the cluster is undergoing graceful termination.
 	ClusterTerminating ClusterPhase = "Terminating"
+	// ClusterUpscaling means the cluster is undergoing graceful up scaling.
+	ClusterUpscaling ClusterPhase = "Upscaling"
+	// ClusterDownscaling means the cluster is undergoing graceful down scaling.
+	ClusterDownscaling ClusterPhase = "Downscaling"
 )
 
 // ClusterCondition contains details for the current condition of this cluster.

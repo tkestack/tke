@@ -45745,6 +45745,18 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							},
 						},
 					},
+					"scalingMachines": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/platform/v1.ClusterMachine"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"tenantID", "type", "version"},
 			},

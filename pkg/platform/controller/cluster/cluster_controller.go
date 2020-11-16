@@ -137,6 +137,9 @@ func (c *Controller) needsUpdate(old *platformv1.Cluster, new *platformv1.Cluste
 	if !reflect.DeepEqual(old.Spec, new.Spec) {
 		return true
 	}
+	if !reflect.DeepEqual(old.ResourceVersion, new.ResourceVersion) {
+		return true
+	}
 
 	if old.Status.Phase == platformv1.ClusterRunning && new.Status.Phase == platformv1.ClusterTerminating {
 		return true
@@ -227,6 +230,7 @@ func (c *Controller) processNextWorkItem() bool {
 // concurrently with the same key.
 func (c *Controller) syncCluster(key string) error {
 	ctx := c.log.WithValues("cluster", key).WithContext(context.TODO())
+
 	startTime := time.Now()
 	defer func() {
 		log.FromContext(ctx).Info("Finished syncing cluster", "processTime", time.Since(startTime).String())
@@ -260,6 +264,10 @@ func (c *Controller) reconcile(ctx context.Context, key string, cluster *platfor
 	case platformv1.ClusterInitializing:
 		err = c.onCreate(ctx, cluster)
 	case platformv1.ClusterRunning, platformv1.ClusterFailed, platformv1.ClusterUpgrading:
+		err = c.onUpdate(ctx, cluster)
+	case platformv1.ClusterUpscaling:
+		err = c.onUpdate(ctx, cluster)
+	case platformv1.ClusterDownscaling:
 		err = c.onUpdate(ctx, cluster)
 	case platformv1.ClusterTerminating:
 		log.FromContext(ctx).Info("Cluster has been terminated. Attempting to cleanup resources")
@@ -448,7 +456,7 @@ func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) 
 		}
 	}
 
-	cluster.SetCondition(healthCheckCondition)
+	cluster.SetCondition(healthCheckCondition, false)
 
 	log.FromContext(ctx).Info("Update cluster health status",
 		"version", cluster.Status.Version,

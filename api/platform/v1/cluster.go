@@ -92,7 +92,14 @@ func (in *Cluster) GetCondition(conditionType string) *ClusterCondition {
 	return nil
 }
 
-func (in *Cluster) SetCondition(newCondition ClusterCondition) {
+func (in *Cluster) KeepHistory(keepHistory bool, condition ClusterCondition) bool {
+	if !keepHistory {
+		return false
+	}
+	return condition.Status == ConditionTrue
+}
+
+func (in *Cluster) SetCondition(newCondition ClusterCondition, keepHistory bool) {
 	var conditions []ClusterCondition
 
 	exist := false
@@ -101,7 +108,7 @@ func (in *Cluster) SetCondition(newCondition ClusterCondition) {
 		newCondition.LastProbeTime = metav1.Now()
 	}
 	for _, condition := range in.Status.Conditions {
-		if condition.Type == newCondition.Type {
+		if condition.Type == newCondition.Type && !in.KeepHistory(keepHistory, condition) {
 			exist = true
 			if newCondition.LastTransitionTime.IsZero() {
 				newCondition.LastTransitionTime = condition.LastTransitionTime
