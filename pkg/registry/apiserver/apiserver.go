@@ -103,6 +103,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		harborOpts := &harbor.Options{
 			RegistryConfig:       c.ExtraConfig.RegistryConfig,
 			ExternalHost: c.ExtraConfig.ExternalHost,
+			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
 		}
 		if err := harbor.RegisterRoute(s.Handler.NonGoRestfulMux, harborOpts); err != nil {
 			return nil, err

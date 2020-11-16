@@ -20,6 +20,8 @@ package storage
 
 import (
 	"context"
+	"fmt"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +33,8 @@ import (
 	registryapi "tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
+	harbor "tkestack.io/tke/pkg/registry/harbor/client"
+	harborHandler "tkestack.io/tke/pkg/registry/harbor/handler"
 	namespacestrategy "tkestack.io/tke/pkg/registry/registry/namespace"
 	registryutil "tkestack.io/tke/pkg/registry/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -43,7 +47,7 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against namespaces.
-func NewStorage(optsGetter genericregistry.RESTOptionsGetter, registryClient *registryinternalclient.RegistryClient, privilegedUsername string) *Storage {
+func NewStorage(optsGetter genericregistry.RESTOptionsGetter, registryClient *registryinternalclient.RegistryClient, privilegedUsername string, harborClient *harbor.APIClient) *Storage {
 	strategy := namespacestrategy.NewStrategy(registryClient)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &registryapi.Namespace{} },
@@ -71,7 +75,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, registryClient *re
 	statusStore.ExportStrategy = namespacestrategy.NewStatusStrategy(strategy)
 
 	return &Storage{
-		Namespace: &REST{store, privilegedUsername},
+		Namespace: &REST{store, privilegedUsername, harborClient},
 		Status:    &StatusREST{&statusStore},
 	}
 }
@@ -108,6 +112,7 @@ func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store,
 type REST struct {
 	*registry.Store
 	privilegedUsername string
+	harborClient       *harbor.APIClient
 }
 
 var _ rest.ShortNamesProvider = &REST{}
@@ -137,6 +142,37 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 	return ValidateGetObjectAndTenantID(ctx, r.Store, name, options)
 }
 
+func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+
+	if r.harborClient != nil {
+		o := obj.(*registryapi.Namespace)
+		_, tenantID := authentication.UsernameAndTenantID(ctx)
+
+		err := harborHandler.CreateProject(
+			ctx,
+			r.harborClient,
+			fmt.Sprintf("%s-image-%s", tenantID, o.Spec.Name),
+			o.Spec.Visibility == registryapi.VisibilityPublic,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	obj, err := r.Store.Create(ctx, obj, createValidation, options)
+	if err != nil {
+		if r.harborClient != nil {
+			o := obj.(*registryapi.Namespace)
+			_, tenantID := authentication.UsernameAndTenantID(ctx)
+			// cleanup harbor project
+			harborHandler.DeleteProject(ctx, r.harborClient, fmt.Sprintf("%s-image-%s", tenantID, o.Spec.Name))
+		}
+		return nil, err
+	}
+
+	return obj, nil
+}
+
 // Export an object.  Fields that are not user specified are stripped out
 // Returns the stripped object.
 func (r *REST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
@@ -156,9 +192,14 @@ func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObje
 
 // Delete enforces life-cycle rules for cluster termination
 func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	_, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, &metav1.GetOptions{})
+	obj, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
+	}
+	if r.harborClient != nil {
+		o := obj.(*registryapi.Namespace)
+		// delete harbor project
+		harborHandler.DeleteProject(ctx, r.harborClient, fmt.Sprintf("%s-image-%s", o.Spec.TenantID, o.Spec.Name))
 	}
 	return r.Store.Delete(ctx, name, deleteValidation, options)
 }
