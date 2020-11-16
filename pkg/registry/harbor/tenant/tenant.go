@@ -19,12 +19,14 @@
 package tenant
 
 import (
+	"context"
 	"fmt"
 	"github.com/docker/distribution/registry/api/v2"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strings"
 
+	"tkestack.io/tke/pkg/registry/harbor/handler"
 	utilregistryrequest "tkestack.io/tke/pkg/registry/util/request"
 )
 
@@ -49,7 +51,10 @@ type tenant struct {
 
 func (t *tenant) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	originalPath := r.URL.Path
+	ctx := r.Context()
 	tenant := utilregistryrequest.TenantID(r, t.domainSuffix, t.defaultTenant)
+	ctx = context.WithValue(ctx, handler.HarborContextKey("tenantID"), tenant)
+	r = r.WithContext(ctx)
 	if strings.HasPrefix(originalPath, t.registryPrefix) && !strings.HasPrefix(originalPath, fmt.Sprintf("/v2/%s/", CrossTenantNamespace)) {
 		var match mux.RouteMatch
 		if matched := t.router.Match(r, &match); matched {
@@ -63,7 +68,7 @@ func (t *tenant) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if strings.HasPrefix(originalPath, t.chartPrefix) {
 		r.URL.Path = strings.Replace(originalPath, t.chartPrefix, fmt.Sprintf("%s%s-chart-", t.chartPrefix, tenant), 1)
-	} else if strings.HasPrefix(originalPath, t.authPrefix) {
+	} else if strings.HasPrefix(originalPath, t.authPrefix) && !strings.Contains(r.URL.RawQuery, "repository%3A"+CrossTenantNamespace) {
 		r.URL.RawQuery = strings.Replace(r.URL.RawQuery, "repository%3A", "repository%3A"+tenant+"-image-", -1)
 	}
 	t.handler.ServeHTTP(w, r)

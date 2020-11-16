@@ -32,6 +32,7 @@ import (
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
 	"tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/registry/distribution/tenant"
+	"tkestack.io/tke/pkg/registry/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -142,123 +143,12 @@ func updateRepository(ctx context.Context, registryClient *registryinternalclien
 
 	switch action {
 	case "push":
-		return pushRepository(ctx, registryClient, &namespaceObject, repoObject, repoName, tag, digest)
+		return util.PushRepository(ctx, registryClient, &namespaceObject, repoObject, repoName, tag, digest)
 	case "pull":
-		return pullRepository(ctx, registryClient, &namespaceObject, repoObject, repoName, tag)
+		return util.PullRepository(ctx, registryClient, &namespaceObject, repoObject, repoName, tag)
 	}
 
 	return fmt.Errorf("unknown action in distribution notification event handler")
-}
-
-func pushRepository(ctx context.Context, registryClient *registryinternalclient.RegistryClient, namespace *registry.Namespace, repository *registry.Repository, repoName, tag, digest string) error {
-	needIncreaseRepoCount := false
-	if repository == nil {
-		needIncreaseRepoCount = true
-		if _, err := registryClient.Repositories(namespace.ObjectMeta.Name).Create(ctx, &registry.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: namespace.ObjectMeta.Name,
-			},
-			Spec: registry.RepositorySpec{
-				Name:          repoName,
-				TenantID:      namespace.Spec.TenantID,
-				NamespaceName: namespace.Spec.Name,
-				Visibility:    namespace.Spec.Visibility,
-			},
-			Status: registry.RepositoryStatus{
-				PullCount: 0,
-				Tags: []registry.RepositoryTag{
-					{
-						Name:        tag,
-						Digest:      digest,
-						TimeCreated: metav1.Now(),
-					},
-				},
-			},
-		}, metav1.CreateOptions{}); err != nil {
-			log.Error("Failed to create repository while received notification",
-				log.String("tenantID", namespace.Spec.TenantID),
-				log.String("namespace", namespace.Spec.Name),
-				log.String("repo", repoName),
-				log.String("tag", tag),
-				log.Err(err))
-			return err
-		}
-	} else {
-		existTag := false
-		if len(repository.Status.Tags) == 0 {
-			needIncreaseRepoCount = true
-		} else {
-			for k, v := range repository.Status.Tags {
-				if v.Name == tag {
-					existTag = true
-					repository.Status.Tags[k] = registry.RepositoryTag{
-						Name:        tag,
-						Digest:      digest,
-						TimeCreated: metav1.Now(),
-					}
-					if _, err := registryClient.Repositories(namespace.ObjectMeta.Name).UpdateStatus(ctx, repository, metav1.UpdateOptions{}); err != nil {
-						log.Error("Failed to update repository tag while received notification",
-							log.String("tenantID", namespace.Spec.TenantID),
-							log.String("namespace", namespace.Spec.Name),
-							log.String("repo", repoName),
-							log.String("tag", tag),
-							log.Err(err))
-						return err
-					}
-					break
-				}
-			}
-		}
-
-		if !existTag {
-			repository.Status.Tags = append(repository.Status.Tags, registry.RepositoryTag{
-				Name:        tag,
-				Digest:      digest,
-				TimeCreated: metav1.Now(),
-			})
-			if _, err := registryClient.Repositories(namespace.ObjectMeta.Name).UpdateStatus(ctx, repository, metav1.UpdateOptions{}); err != nil {
-				log.Error("Failed to create repository tag while received notification",
-					log.String("tenantID", namespace.Spec.TenantID),
-					log.String("namespace", namespace.Spec.Name),
-					log.String("repo", repoName),
-					log.String("tag", tag),
-					log.Err(err))
-				return err
-			}
-		}
-	}
-
-	if needIncreaseRepoCount {
-		// update namespace repo count
-		namespace.Status.RepoCount = namespace.Status.RepoCount + 1
-		if _, err := registryClient.Namespaces().UpdateStatus(ctx, namespace, metav1.UpdateOptions{}); err != nil {
-			log.Error("Failed to update namespace repo count while received notification",
-				log.String("tenantID", namespace.Spec.TenantID),
-				log.String("namespace", namespace.Spec.Name),
-				log.String("repo", repoName),
-				log.String("tag", tag),
-				log.Err(err))
-			return err
-		}
-	}
-	return nil
-}
-
-func pullRepository(ctx context.Context, registryClient *registryinternalclient.RegistryClient, namespace *registry.Namespace, repository *registry.Repository, repoName, tag string) error {
-	if repository == nil {
-		return fmt.Errorf("repository %s not exist", repoName)
-	}
-	repository.Status.PullCount = repository.Status.PullCount + 1
-	if _, err := registryClient.Repositories(namespace.ObjectMeta.Name).UpdateStatus(ctx, repository, metav1.UpdateOptions{}); err != nil {
-		log.Error("Failed to update repository pull count while received notification",
-			log.String("tenantID", namespace.Spec.TenantID),
-			log.String("namespace", namespace.Spec.Name),
-			log.String("repo", repoName),
-			log.String("tag", tag),
-			log.Err(err))
-		return err
-	}
-	return nil
 }
 
 func filterEvents(notification *Notification, re *regexp.Regexp) ([]*Event, error) {
