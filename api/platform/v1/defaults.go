@@ -28,12 +28,12 @@ func addDefaultingFuncs(scheme *runtime.Scheme) error {
 }
 
 func SetDefaults_ClusterSpec(obj *ClusterSpec) {
-	if obj.Upgrade.Mode == "" {
-		obj.Upgrade.Mode = UpgradeModeAuto
+	if obj.Features.Upgrade.Mode == "" {
+		obj.Features.Upgrade.Mode = UpgradeModeAuto
 	}
-	if obj.Upgrade.Strategy.MaxUnready == nil {
+	if obj.Features.Upgrade.Strategy.MaxUnready == nil {
 		maxUnready := intstr.FromInt(0)
-		obj.Upgrade.Strategy.MaxUnready = &maxUnready
+		obj.Features.Upgrade.Strategy.MaxUnready = &maxUnready
 	}
 }
 

@@ -666,6 +666,7 @@ func (in *ClusterFeature) DeepCopyInto(out *ClusterFeature) {
 		*out = new(AuthzWebhookAddr)
 		(*in).DeepCopyInto(*out)
 	}
+	out.Upgrade = in.Upgrade
 	return
 }
 
@@ -906,7 +907,6 @@ func (in *ClusterSpec) DeepCopyInto(out *ClusterSpec) {
 		*out = new(Etcd)
 		(*in).DeepCopyInto(*out)
 	}
-	out.Upgrade = in.Upgrade
 	if in.NetworkArgs != nil {
 		in, out := &in.NetworkArgs, &out.NetworkArgs
 		*out = make(map[string]string, len(*in))

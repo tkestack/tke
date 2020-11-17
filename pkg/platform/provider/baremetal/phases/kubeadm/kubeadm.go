@@ -43,6 +43,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubelet"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
+	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	platformapiclient "tkestack.io/tke/pkg/platform/util/apiclient"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
@@ -64,6 +65,7 @@ var (
 		"FileContent--proc-sys-net-bridge-bridge-nf-call-iptables",
 		"DirAvailable--etc-kubernetes-manifests",
 	}
+	unMigrataleComponents = []string{"tke-platform-api", "tke-platform-controller", "tke-registry-api", "tke-registry-controller", "influxdb"}
 )
 
 func Install(s ssh.Interface, version string) error {
@@ -266,17 +268,18 @@ const (
 )
 
 type UpgradeOption struct {
-	MachineName   string
-	BootstrapNode bool
-	MachineIP     string
-	NodeRole      NodeRole
-	Version       string
-	MaxUnready    *intstr.IntOrString
+	MachineName            string
+	BootstrapNode          bool
+	MachineIP              string
+	NodeRole               NodeRole
+	Version                string
+	MaxUnready             *intstr.IntOrString
+	DrainNodeBeforeUpgrade *bool
 }
 
 // UpgradeNode upgrades node by kubeadm.
 // Refer: https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
-func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient platformv1client.PlatformV1Interface, option UpgradeOption) (upgraded bool, err error) {
+func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient platformv1client.PlatformV1Interface, cluster *v1.Cluster, option UpgradeOption) (upgraded bool, err error) {
 	if option.NodeRole == NodeRoleWorker {
 		ok, err := checkMasterNodesVersion(client, option.Version)
 		if err != nil {
@@ -299,19 +302,31 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 	if !needUpgrade {
 		return upgraded, nil
 	}
-
-	// Step 1: drain node
-	err = drainNodeCarefully(s, client, node.Name, option.MaxUnready)
+	// check node kubelet version
+	sameMinor, err := checkKubeletVersion(client, node.Name, option.Version, false)
 	if err != nil {
-		return upgraded, err
+		return false, err
 	}
-	// ensure uncordon node
-	defer uncordonNode(s, node.Name)
 
-	// Step 2: install kubeadm
-	err = Install(s, option.Version)
-	if err != nil {
-		return upgraded, err
+	// Step 1: install kubeadm
+	// ignore patch version for patch version kubeadm may not exist in platform-controller
+	if !sameMinor {
+		err = Install(s, option.Version)
+		if err != nil {
+			return upgraded, err
+		}
+	}
+
+	// Step 2(option): drain node
+	if option.DrainNodeBeforeUpgrade != nil &&
+		*option.DrainNodeBeforeUpgrade &&
+		option.NodeRole != NodeRoleMaster {
+		// ensure uncordon node
+		defer uncordonNode(s, node.Name)
+		err = drainNodeCarefully(s, client, node.Name, option.MaxUnready, cluster.Name == "global")
+		if err != nil {
+			return upgraded, err
+		}
 	}
 
 	// Step 3: do upgrade
@@ -321,19 +336,31 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 			return upgraded, err
 		}
 		if needUpgrade {
-			err = upgradeBootstrapNode(s, client, option.Version)
-			if err != nil {
-				return upgraded, err
+			if cluster.Spec.Machines[0].IP == option.MachineIP {
+				err = upgradeBootstrapNode(s, client, option.Version)
+				if err != nil {
+					return upgraded, err
+				}
+			} else {
+				err = upgradeNode(s)
+				if err != nil {
+					return upgraded, err
+				}
 			}
-		}
-	} else {
-		err = upgradeNode(s)
-		if err != nil {
-			return upgraded, err
 		}
 	}
 
 	// Step 4: upgrade kubelet and kubectl
+	// ignore patch version for patch version kubelet may not exist in platform-controller
+	if sameMinor {
+		return true, nil
+	}
+	err = kubelet.ServiceOperate(s, kubelet.Stop)
+	// ensure kubelet service is active
+	err = kubelet.ServiceOperate(s, kubelet.Start)
+	if err != nil {
+		return upgraded, err
+	}
 	err = kubelet.Install(s, option.Version)
 	if err != nil {
 		return upgraded, err
@@ -341,16 +368,13 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 
 	// Step 5: wait for node information to be updated
 	err = wait.PollImmediate(10*time.Second, 5*time.Minute, func() (bool, error) {
-		node, err := client.CoreV1().Nodes().Get(context.TODO(), node.Name, metav1.GetOptions{})
-		if err != nil {
-			return false, nil
-		}
-		same, err := sameVersion(node.Status.NodeInfo.KubeletVersion, option.Version)
+		// ignore patch version for patch version kubelet may not exist in platform-controller
+		same, err := checkKubeletVersion(client, node.Name, option.Version, false)
 		if err != nil {
 			return false, nil
 		}
 		if same {
-			return true, err
+			return true, nil
 		}
 		return false, nil
 	})
@@ -359,6 +383,23 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 	}
 
 	return true, nil
+}
+
+func checkKubeletVersion(client kubernetes.Interface, nodeName, version string, ignorePatchVersion bool) (same bool, err error) {
+	node, err := client.CoreV1().Nodes().Get(context.TODO(), nodeName, metav1.GetOptions{})
+	if err != nil {
+		return false, err
+	}
+
+	sameVersion(node.Status.NodeInfo.KubeletVersion, version, ignorePatchVersion)
+
+	if err != nil {
+		return false, err
+	}
+	if same {
+		return true, nil
+	}
+	return false, nil
 }
 
 func upgradeBootstrapNode(s ssh.Interface, client kubernetes.Interface, version string) error {
@@ -421,7 +462,7 @@ func needUpgradeNode(client kubernetes.Interface, nodeName string, version strin
 		return false, err
 	}
 
-	same, err := sameVersion(node.Status.NodeInfo.KubeletVersion, version)
+	same, err := sameVersion(node.Status.NodeInfo.KubeletVersion, version, false)
 	if err != nil {
 		return false, err
 	}
@@ -437,7 +478,7 @@ func checkMasterNodesVersion(client kubernetes.Interface, version string) (bool,
 		return false, err
 	}
 	for _, node := range nodes.Items {
-		same, err := sameVersion(node.Status.NodeInfo.KubeletVersion, version)
+		same, err := sameVersion(node.Status.NodeInfo.KubeletVersion, version, false)
 		if err != nil {
 			return false, err
 		}
@@ -450,8 +491,8 @@ func checkMasterNodesVersion(client kubernetes.Interface, version string) (bool,
 }
 
 // drainNodeCarefully drains node and ensure evicted pods are running in other node.
-func drainNodeCarefully(s ssh.Interface, client kubernetes.Interface, nodeName string, maxUnready *intstr.IntOrString) error {
-	err := drainNode(s, nodeName)
+func drainNodeCarefully(s ssh.Interface, client kubernetes.Interface, nodeName string, maxUnready *intstr.IntOrString, inGlobalCluster bool) error {
+	err := drainNode(s, nodeName, inGlobalCluster)
 	if err != nil {
 		_ = uncordonNode(s, nodeName) // drain node may cause error but cordon the node!
 		return err
@@ -498,8 +539,12 @@ func drainNodeCarefully(s ssh.Interface, client kubernetes.Interface, nodeName s
 }
 
 // drainNode drains node
-func drainNode(s ssh.Interface, nodeName string) error {
-	cmd := fmt.Sprintf("kubectl drain %s --ignore-daemonsets", nodeName)
+func drainNode(s ssh.Interface, nodeName string, inGlobalCluster bool) error {
+	cmd := fmt.Sprintf("kubectl drain %s --ignore-daemonsets --force --delete-local-data", nodeName)
+	// ensure key pod is alive in global cluster
+	if inGlobalCluster {
+		cmd += fmt.Sprintf(" --pod-selector 'app notin (%s)'", strings.Join(unMigrataleComponents, ","))
+	}
 	out, err := s.CombinedOutput(cmd)
 	if err != nil {
 		return err
@@ -522,8 +567,11 @@ func uncordonNode(s ssh.Interface, nodeName string) error {
 }
 
 // markNextUpgradeWorkerNode marks next wokrer node to be upgraded.
-func MarkNextUpgradeWorkerNode(client kubernetes.Interface, platformClient platformv1client.PlatformV1Interface, version string) error {
-	machines, err := platformClient.Machines().List(context.TODO(), metav1.ListOptions{})
+func MarkNextUpgradeWorkerNode(client kubernetes.Interface, platformClient platformv1client.PlatformV1Interface, version, clusterName string) error {
+	machines, err := platformClient.Machines().List(context.TODO(), metav1.ListOptions{
+		LabelSelector: fields.OneTermEqualSelector(constants.LabelNodeNeedUpgrade, "").String(),
+		FieldSelector: fields.OneTermEqualSelector(platformv1.MachineClusterField, clusterName).String(),
+	})
 	if err != nil {
 		return err
 	}
@@ -535,20 +583,6 @@ func MarkNextUpgradeWorkerNode(client kubernetes.Interface, platformClient platf
 	// Get next upgraded machine by lowest name.
 	var nextMachineName string
 	for _, machine := range machines.Items {
-		node, err := apiclient.GetNodeByMachineIP(context.TODO(), client, machine.Spec.IP)
-		if err != nil {
-			return err
-		}
-
-		same, err := sameVersion(node.Status.NodeInfo.KubeletVersion, version)
-		if err != nil {
-			return err
-		}
-		// Skip upgraded node.
-		if same {
-			continue
-		}
-
 		if nextMachineName == "" {
 			nextMachineName = machine.Name
 		} else if strings.Compare(machine.Name, nextMachineName) < 0 {
@@ -557,10 +591,6 @@ func MarkNextUpgradeWorkerNode(client kubernetes.Interface, platformClient platf
 	}
 	if nextMachineName != "" {
 		err = platformapiclient.PatchMachine(context.TODO(), platformClient, nextMachineName, func(machine *platformv1.Machine) {
-			if machine.Labels == nil {
-				machine.Labels = make(map[string]string)
-			}
-			machine.Labels[constants.LabelNodeNeedUpgrade] = ""
 			machine.Status.Phase = platformv1.MachineUpgrading
 		})
 		if err != nil {
@@ -571,7 +601,37 @@ func MarkNextUpgradeWorkerNode(client kubernetes.Interface, platformClient platf
 	return nil
 }
 
-func sameVersion(ver1, ver2 string) (bool, error) {
+func RemoveUpgradeLabel(platformClient platformv1client.PlatformV1Interface, machine *platformv1.Machine) error {
+	err := platformapiclient.PatchMachine(context.TODO(), platformClient, machine.Name, func(machine *platformv1.Machine) {
+		// Remove upgrade label
+		delete(machine.Labels, constants.LabelNodeNeedUpgrade)
+		machine.Status.Phase = platformv1.MachineRunning
+	})
+	return err
+}
+
+func AddNeedUpgradeLabel(platformClient platformv1client.PlatformV1Interface, clusterName string) error {
+	machines, err := platformClient.Machines().List(context.TODO(), metav1.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector(platformv1.MachineClusterField, clusterName).String(),
+	})
+	if err != nil {
+		return err
+	}
+	for _, machine := range machines.Items {
+		err = platformapiclient.PatchMachine(context.TODO(), platformClient, machine.Name, func(machine *platformv1.Machine) {
+			if machine.Labels == nil {
+				machine.Labels = make(map[string]string)
+			}
+			machine.Labels[constants.LabelNodeNeedUpgrade] = ""
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func sameVersion(ver1, ver2 string, ignorePatchVersion bool) (bool, error) {
 	semVer1, err := semver.NewVersion(ver1)
 	if err != nil {
 		return false, err
@@ -581,10 +641,11 @@ func sameVersion(ver1, ver2 string) (bool, error) {
 		return false, err
 	}
 
-	if semVer1.Major() == semVer2.Major() &&
-		semVer1.Minor() == semVer2.Minor() &&
-		semVer1.Patch() == semVer2.Patch() {
-		return true, nil
+	sameMinor := semVer1.Major() == semVer2.Major() && semVer1.Minor() == semVer2.Minor()
+
+	if ignorePatchVersion {
+		return sameMinor, nil
 	}
-	return false, nil
+
+	return sameMinor && semVer1.Patch() == semVer2.Patch(), nil
 }

@@ -228,6 +228,7 @@ func (ClusterCredentialList) SwaggerDoc() map[string]string {
 var map_ClusterFeature = map[string]string{
 	"":                 "ClusterFeature records the features that are enabled by the cluster.",
 	"authzWebhookAddr": "For kube-apiserver authorization webhook",
+	"upgrade":          "Upgrade control upgrade process.",
 }
 
 func (ClusterFeature) SwaggerDoc() map[string]string {
@@ -277,7 +278,6 @@ var map_ClusterSpec = map[string]string{
 	"dnsDomain":            "DNSDomain is the dns domain used by k8s services. Defaults to \"cluster.local\".",
 	"clusterCredentialRef": "ClusterCredentialRef for isolate sensitive information. If not specified, cluster controller will create one; If specified, provider must make sure is valid.",
 	"etcd":                 "Etcd holds configuration for etcd.",
-	"upgrade":              "Upgrade control upgrade process.",
 	"hostnameAsNodename":   "If true will use hostname as nodename, if false will use machine IP as nodename.",
 }
 
@@ -875,8 +875,9 @@ func (Upgrade) SwaggerDoc() map[string]string {
 }
 
 var map_UpgradeStrategy = map[string]string{
-	"":           "UpgradeStrategy used to control the upgrade process.",
-	"maxUnready": "The maximum number of pods that can be unready during the upgrade. 0% means all pods need to be ready after evition. 100% means ignore any pods unready which may be used in one worker node, use this carefully! default value is 0%.",
+	"":                       "UpgradeStrategy used to control the upgrade process.",
+	"maxUnready":             "The maximum number of pods that can be unready during the upgrade. 0% means all pods need to be ready after evition. 100% means ignore any pods unready which may be used in one worker node, use this carefully! default value is 0%.",
+	"drainNodeBeforeUpgrade": "Whether drain node before upgrade. Draining node before upgrade is recommended. But not all pod running as cows, a few running as pets. If your pod can not accept be expelled from current node, this value should be false.",
 }
 
 func (UpgradeStrategy) SwaggerDoc() map[string]string {

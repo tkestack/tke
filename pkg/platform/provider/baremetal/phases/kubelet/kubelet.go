@@ -30,6 +30,13 @@ import (
 	"tkestack.io/tke/pkg/util/template"
 )
 
+type ServiceOperation string
+
+var (
+	Start ServiceOperation = "start"
+	Stop  ServiceOperation = "stop"
+)
+
 func Install(s ssh.Interface, version string) (err error) {
 	dstFile, err := res.KubernetesNode.CopyToNode(s, version)
 	if err != nil {
@@ -82,5 +89,14 @@ func Install(s ssh.Interface, version string) (err error) {
 		return err
 	}
 
+	return nil
+}
+
+func ServiceOperate(s ssh.Interface, op ServiceOperation) (err error) {
+	cmd := fmt.Sprintf("systemctl %s kubelet", string(op))
+	_, err = s.CombinedOutput(cmd)
+	if err != nil {
+		return err
+	}
 	return nil
 }
