@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations under the License.
 
 IMAGE = provider-res
-VERSION = v1.18.3-1
+VERSION = v1.18.3-2
 REGISTRY_PREFIX ?= tkestack
 
 COMMON_SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
