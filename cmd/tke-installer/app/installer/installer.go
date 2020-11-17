@@ -46,6 +46,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	k8stypes "k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -205,6 +206,10 @@ func (t *TKE) initSteps() {
 		{
 			Name: "Create global cluster",
 			Func: t.createGlobalCluster,
+		},
+		{
+			Name: "Patch k8s version in cluster info",
+			Func: t.patchK8sValidVersions,
 		},
 		{
 			Name: "Write kubeconfig",
@@ -2418,4 +2423,22 @@ func (t *TKE) writeKubeconfig(ctx context.Context) error {
 	_ = ioutil.WriteFile(constants.KubeconfigFile, data, 0644)
 	_ = os.MkdirAll("/root/.kube", 0755)
 	return ioutil.WriteFile("/root/.kube/config", data, 0644)
+}
+
+func (t *TKE) patchK8sValidVersions(ctx context.Context) error {
+	versionsByte, err := json.Marshal(spec.K8sValidVersions)
+	if err != nil {
+		return err
+	}
+	patchData := map[string]interface{}{
+		"data": map[string]interface{}{
+			"k8sValidVersions": string(versionsByte),
+		},
+	}
+	patchByte, err := json.Marshal(patchData)
+	if err != nil {
+		return err
+	}
+	_, err = t.globalClient.CoreV1().ConfigMaps("kube-public").Patch(ctx, "cluster-info", k8stypes.MergePatchType, patchByte, metav1.PatchOptions{})
+	return err
 }
