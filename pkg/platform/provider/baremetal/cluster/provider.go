@@ -133,8 +133,8 @@ func NewProvider() (*Provider, error) {
 		UpdateHandlers: []clusterprovider.Handler{
 			p.EnsureUpgradeControlPlaneNode,
 
-			p.EnsureRenewCerts,
 			p.EnsureAPIServerCert,
+			p.EnsureRenewCerts,
 			p.EnsureStoreCredential,
 			p.EnsureKeepalivedWithLB,
 			p.EnsureThirdPartyHA,
