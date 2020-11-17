@@ -310,3 +310,35 @@ export async function fetchProjectNamespaceList(query: QueryState<ResourceFilter
 
   return result;
 }
+
+/**
+ * ES 检测连接
+ */
+export async function fetchEsDetection(query) {
+  let { scheme, host, port, user, password } = query;
+  let url = `/apis/logagent.tkestack.io/v1/logagents/es/esdetection`;
+
+  const payload = {
+    kind: 'LogEsDetection',
+    apiVersion: 'logagent.tkestack.io/v1',
+    scheme: scheme,
+    ip: host,
+    port: port,
+    user: user,
+    password: password
+  };
+
+  let params: RequestParams = {
+    method: Method.post,
+    url,
+    userDefinedHeader: {},
+    data: payload
+  };
+
+  try {
+    let response = await reduceNetworkRequest(params);
+    return response.code === 0 && response.data.code === '200';
+  } catch (e) {
+    return false;
+  }
+}

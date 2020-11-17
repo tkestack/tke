@@ -17,6 +17,7 @@ import { Resource } from '../models/Resource';
 import { editLogStashActions } from './editLogStashActions';
 import { podActions } from './podActions';
 import { resourceActions } from './resourceActions';
+import { Base64 } from 'js-base64';
 
 type GetState = () => RootState;
 
@@ -260,6 +261,8 @@ export const restActions = {
           outputOption = log.spec.output.elasticsearch_output;
           dispatch(editLogStashActions.inputEsAddress('http://' + outputOption.hosts[0]));
           dispatch(editLogStashActions.inputIndexName(outputOption.index));
+          dispatch(editLogStashActions.inputEsUsername(outputOption.user));
+          dispatch(editLogStashActions.inputEsPassword(Base64.decode(outputOption.password)));
         }
       }
     };

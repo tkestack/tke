@@ -871,6 +871,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/logagent/v1.LogAgentProxyOptions":                        schema_tke_api_logagent_v1_LogAgentProxyOptions(ref),
 		"tkestack.io/tke/api/logagent/v1.LogAgentSpec":                                schema_tke_api_logagent_v1_LogAgentSpec(ref),
 		"tkestack.io/tke/api/logagent/v1.LogAgentStatus":                              schema_tke_api_logagent_v1_LogAgentStatus(ref),
+		"tkestack.io/tke/api/logagent/v1.LogEsDetection":                              schema_tke_api_logagent_v1_LogEsDetection(ref),
 		"tkestack.io/tke/api/logagent/v1.LogFileContent":                              schema_tke_api_logagent_v1_LogFileContent(ref),
 		"tkestack.io/tke/api/logagent/v1.LogFileContentSpec":                          schema_tke_api_logagent_v1_LogFileContentSpec(ref),
 		"tkestack.io/tke/api/logagent/v1.LogFileProxyOptions":                         schema_tke_api_logagent_v1_LogFileProxyOptions(ref),
@@ -41662,6 +41663,63 @@ func schema_tke_api_logagent_v1_LogAgentStatus(ref common.ReferenceCallback) com
 	}
 }
 
+func schema_tke_api_logagent_v1_LogEsDetection(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LogEsDetection",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"scheme": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"ip": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"port": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"user": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"password": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_tke_api_logagent_v1_LogFileContent(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -48529,6 +48587,24 @@ func schema_tke_api_platform_v1_StorageBackEndES(ref common.ReferenceCallback) c
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
+						},
+					},
+					"user": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"password": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"reserveDays": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
 						},
 					},
 				},

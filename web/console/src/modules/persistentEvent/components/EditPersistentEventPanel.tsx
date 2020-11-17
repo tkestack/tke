@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Alert, Button, ContentView, Icon, Justify, Switch, Text } from '@tea/component';
+import { Alert, Button, Bubble, ContentView, Icon, Justify, Switch, Text } from '@tea/component';
 import { FormPanel } from '@tencent/ff-component';
 import {
     bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid
@@ -17,11 +17,55 @@ import { router } from '../router';
 import { RootProps } from './PersistentEventApp';
 import { PersistentEventDeleteDialog } from './PersistentEventDeleteDialog';
 
+import { Base64 } from 'js-base64';
+import * as WebAPI from '../../logStash/WebAPI';
+
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
 @connect(state => state, mapDispatchToProps)
-export class EditPersistentEventPanel extends React.Component<RootProps, {}> {
+export class EditPersistentEventPanel extends React.Component<RootProps, any> {
+  constructor(props) {
+    super(props);
+
+    this.esDetection = this.esDetection.bind(this);
+
+    /** checkESStatus
+     * 0: init
+     * 1: need es detection
+     * 2: start detecting
+     * 3: result success
+     * 4: result failure
+     */
+    this.state = {
+      checkESStatus: 0
+    };
+  }
+
+  async esDetection() {
+    this.changeESStatus(2);
+
+    let { peEdit } = this.props;
+    let { esAddress, esUsername, esPassword } = peEdit;
+    let [scheme, address] = esAddress.split('://');
+    let [host, port] = address.split(':');
+    let ret = await WebAPI.fetchEsDetection({
+      scheme: scheme,
+      host: host,
+      port: port,
+      user: esUsername,
+      password: esPassword
+    }) ? 3 : 4;
+
+    this.changeESStatus(ret);
+  }
+
+  changeESStatus(status) {
+    this.setState({
+      checkESStatus: status
+    });
+  }
+
   componentWillUnmount() {
     let { actions } = this.props;
     actions.editPE.clearPeEdit();
@@ -94,7 +138,7 @@ export class EditPersistentEventPanel extends React.Component<RootProps, {}> {
   private _renderEditContainer() {
     let { peEdit, actions, route, modifyPeFlow, peList, cluster } = this.props,
       urlParams = router.resolve(route),
-      { isOpen, v_esAddress, esAddress, indexName, v_indexName } = peEdit;
+      { isOpen, v_esAddress, esAddress, indexName, v_indexName, esUsername, esPassword } = peEdit;
 
     /** 当前的mode */
     let mode = urlParams['mode'];
@@ -115,6 +159,25 @@ export class EditPersistentEventPanel extends React.Component<RootProps, {}> {
     }
 
     let failed = modifyPeFlow.operationState === OperationState.Done && !isSuccessWorkflow(modifyPeFlow);
+
+    const checkESStatus = this.state.checkESStatus;
+    const esStatusMsg = {
+      2: {
+        color: 'primary',
+        text: '连接中...'
+      },
+      3: {
+        color: 'success',
+        text: '连接成功！点击下方【完成】以设置事件持久化'
+      },
+      4: {
+        color: 'warning',
+        text: '连接失败！请检查 ElasticSearch 相关配置，注意开启了用户验证的 ElasticSearch 需要输入用户名和密码'
+      }
+    };
+    const esStatusMsgColor = esStatusMsg[checkESStatus] ? esStatusMsg[checkESStatus].color : 'text';
+    const esStatusMsgText = esStatusMsg[checkESStatus] ? esStatusMsg[checkESStatus].text : '';
+    const esNotOK = checkESStatus === 1 || checkESStatus === 2 || checkESStatus === 4;
 
     return (
       <FormPanel>
@@ -143,7 +206,7 @@ export class EditPersistentEventPanel extends React.Component<RootProps, {}> {
           />
         </FormPanel.Item>
 
-        <FormPanel.Item label={t('Elasticsearch地址')} loading={isUpdateLoading}>
+        <FormPanel.Item required label={t('Elasticsearch地址')} loading={isUpdateLoading}>
           <InputField
             type="text"
             placeholder="eg: http://190.0.0.1:9200"
@@ -155,7 +218,7 @@ export class EditPersistentEventPanel extends React.Component<RootProps, {}> {
           />
         </FormPanel.Item>
 
-        <FormPanel.Item label={t('索引')} loading={isUpdateLoading}>
+        <FormPanel.Item required label={t('索引')} loading={isUpdateLoading}>
           <InputField
             type="text"
             placeholder="eg: fluentd"
@@ -168,15 +231,60 @@ export class EditPersistentEventPanel extends React.Component<RootProps, {}> {
           />
         </FormPanel.Item>
 
+        <FormPanel.Item label={t('用户名')} loading={isUpdateLoading}>
+          <InputField
+            type="text"
+            style={{
+              width: '300px'
+            }}
+            placeholder="仅需要用户验证的 Elasticsearch 需要填入用户名"
+            value={esUsername}
+            onChange={actions.editPE.inputEsUsername}
+          />
+        </FormPanel.Item>
+
+        <FormPanel.Item label={t('密码')} loading={isUpdateLoading}>
+          <InputField
+            type="password"
+            style={{
+              width: '300px'
+            }}
+            placeholder="仅需要用户验证的 Elasticsearch 需要填入密码"
+            value={esPassword}
+            onChange={actions.editPE.inputEsPassword}
+          />
+        </FormPanel.Item>
+
+        <FormPanel.Item message={<Text theme={esStatusMsgColor}>{esStatusMsgText}</Text>}>
+          <Justify
+            left={
+              <React.Fragment>
+                <Button
+                  disabled={!esAddress.length || !indexName.length}
+                  type="primary"
+                  style={{ marginRight: 20 }}
+                  onClick={() => {
+                    this.esDetection();
+                  }}
+                >
+                  检测连接
+                </Button>
+              </React.Fragment>
+            }
+          />
+        </FormPanel.Item>
+
         <FormPanel.Footer>
           <React.Fragment>
-            <Button
-              type="primary"
-              disabled={modifyPeFlow.operationState === OperationState.Performing || (!isOpen && !isClusterHasCreatePE)}
-              onClick={this._handleSubmit.bind(this)}
-            >
-              {failed ? t('重试') : t('完成')}
-            </Button>
+            <Bubble placement="top-start" content={!failed && esNotOK ? t('请检测连接 ElasticSearch，连接成功才能设置事件持久化') : null}>
+              <Button
+                type="primary"
+                disabled={modifyPeFlow.operationState === OperationState.Performing || (!isOpen && !isClusterHasCreatePE) || esNotOK}
+                onClick={this._handleSubmit.bind(this)}
+              >
+                {failed ? t('重试') : t('完成')}
+              </Button>
+            </Bubble>
             <Button
               type="weak"
               onClick={() => {
@@ -219,7 +327,7 @@ export class EditPersistentEventPanel extends React.Component<RootProps, {}> {
         actions.workflow.deletePeFlow.start([]);
       }
     } else {
-      let { esAddress, indexName } = peEdit,
+      let { esAddress, indexName, esUsername, esPassword } = peEdit,
         urlParams = router.resolve(route);
 
       let regionId = route.queries['rid'];
@@ -238,8 +346,10 @@ export class EditPersistentEventPanel extends React.Component<RootProps, {}> {
         let esInfo: EsInfo = {
           ip: ipAddress,
           port: +port,
-          scheme,
-          indexName
+          scheme: scheme,
+          indexName: indexName,
+          user: esUsername,
+          password: Base64.encode(esPassword)
         };
 
         let jsonData: PeEditJSONYaml;

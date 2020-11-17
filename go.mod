@@ -81,6 +81,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/square/go-jose.v2 v2.4.1
 	gopkg.in/yaml.v2 v2.2.8
+	gotest.tools v2.2.0+incompatible
 	helm.sh/chartmuseum v0.12.0
 	helm.sh/helm/v3 v3.2.1
 	k8s.io/api v0.18.2
