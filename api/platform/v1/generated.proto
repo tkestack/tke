@@ -376,6 +376,10 @@ message ClusterFeature {
 
   // +optional
   optional bool ipv6DualStack = 13;
+
+  // Upgrade control upgrade process.
+  // +optional
+  optional Upgrade upgrade = 22;
 }
 
 // ClusterList is the whole list of all clusters which owned by a tenant.
@@ -507,10 +511,6 @@ message ClusterSpec {
   // Etcd holds configuration for etcd.
   // +optional
   optional Etcd etcd = 21;
-
-  // Upgrade control upgrade process.
-  // +optional
-  optional Upgrade upgrade = 22;
 
   // If true will use hostname as nodename, if false will use machine IP as nodename.
   // +optional
@@ -1472,6 +1472,13 @@ message UpgradeStrategy {
   // default value is 0%.
   // +optional
   optional k8s.io.apimachinery.pkg.util.intstr.IntOrString maxUnready = 1;
+
+  // Whether drain node before upgrade.
+  // Draining node before upgrade is recommended.
+  // But not all pod running as cows, a few running as pets.
+  // If your pod can not accept be expelled from current node, this value should be false.
+  // +optional
+  optional bool drainNodeBeforeUpgrade = 2;
 }
 
 // VolumeDecorator is a controller to manage PVC information.

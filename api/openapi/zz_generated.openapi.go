@@ -45352,11 +45352,17 @@ func schema_tke_api_platform_v1_ClusterFeature(ref common.ReferenceCallback) com
 							Format: "",
 						},
 					},
+					"upgrade": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Upgrade control upgrade process.",
+							Ref:         ref("tkestack.io/tke/api/platform/v1.Upgrade"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/platform/v1.AuthzWebhookAddr", "tkestack.io/tke/api/platform/v1.CSIOperatorFeature", "tkestack.io/tke/api/platform/v1.File", "tkestack.io/tke/api/platform/v1.HA"},
+			"tkestack.io/tke/api/platform/v1.AuthzWebhookAddr", "tkestack.io/tke/api/platform/v1.CSIOperatorFeature", "tkestack.io/tke/api/platform/v1.File", "tkestack.io/tke/api/platform/v1.HA", "tkestack.io/tke/api/platform/v1.Upgrade"},
 	}
 }
 
@@ -45776,12 +45782,6 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							Ref:         ref("tkestack.io/tke/api/platform/v1.Etcd"),
 						},
 					},
-					"upgrade": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Upgrade control upgrade process.",
-							Ref:         ref("tkestack.io/tke/api/platform/v1.Upgrade"),
-						},
-					},
 					"hostnameAsNodename": {
 						SchemaProps: spec.SchemaProps{
 							Description: "If true will use hostname as nodename, if false will use machine IP as nodename.",
@@ -45820,7 +45820,7 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.LocalObjectReference", "tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty", "tkestack.io/tke/api/platform/v1.Etcd", "tkestack.io/tke/api/platform/v1.Upgrade"},
+			"k8s.io/api/core/v1.LocalObjectReference", "tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty", "tkestack.io/tke/api/platform/v1.Etcd"},
 	}
 }
 
@@ -48913,6 +48913,13 @@ func schema_tke_api_platform_v1_UpgradeStrategy(ref common.ReferenceCallback) co
 						SchemaProps: spec.SchemaProps{
 							Description: "The maximum number of pods that can be unready during the upgrade. 0% means all pods need to be ready after evition. 100% means ignore any pods unready which may be used in one worker node, use this carefully! default value is 0%.",
 							Ref:         ref("k8s.io/apimachinery/pkg/util/intstr.IntOrString"),
+						},
+					},
+					"drainNodeBeforeUpgrade": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether drain node before upgrade. Draining node before upgrade is recommended. But not all pod running as cows, a few running as pets. If your pod can not accept be expelled from current node, this value should be false.",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},

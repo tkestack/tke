@@ -173,6 +173,9 @@ func (p *DelegateProvider) OnCreate(ctx context.Context, machine *platformv1.Mac
 }
 
 func (p *DelegateProvider) OnUpdate(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	if machine.Status.Phase != platformv1.MachineUpgrading {
+		return nil
+	}
 	for _, handler := range p.UpdateHandlers {
 		ctx := log.FromContext(ctx).WithName("MachineProvider.OnUpdate").WithName(handler.Name()).WithContext(ctx)
 		log.FromContext(ctx).Info("Doing")

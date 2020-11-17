@@ -124,9 +124,6 @@ type ClusterSpec struct {
 	// Etcd holds configuration for etcd.
 	// +optional
 	Etcd *Etcd `json:"etcd,omitempty" protobuf:"bytes,21,opt,name=etcd"`
-	// Upgrade control upgrade process.
-	// +optional
-	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
 	// If true will use hostname as nodename, if false will use machine IP as nodename.
 	// +optional
 	HostnameAsNodename bool `json:"hostnameAsNodename,omitempty" protobuf:"bytes,23,opt,name=hostnameAsNodename"`
@@ -365,6 +362,9 @@ type ClusterFeature struct {
 	EnableMetricsServer bool `json:"enableMetricsServer,omitempty" protobuf:"bytes,12,opt,name=enableMetricsServer"`
 	// +optional
 	IPv6DualStack bool `json:"ipv6DualStack,omitempty" protobuf:"bytes,13,opt,name=ipv6DualStack"`
+	// Upgrade control upgrade process.
+	// +optional
+	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
 }
 
 type HA struct {
@@ -505,6 +505,12 @@ type UpgradeStrategy struct {
 	// default value is 0%.
 	// +optional
 	MaxUnready *intstr.IntOrString `json:"maxUnready,omitempty" protobuf:"bytes,1,opt,name=maxUnready"`
+	// Whether drain node before upgrade.
+	// Draining node before upgrade is recommended.
+	// But not all pod running as cows, a few running as pets.
+	// If your pod can not accept be expelled from current node, this value should be false.
+	// +optional
+	DrainNodeBeforeUpgrade *bool `json:"drainNodeBeforeUpgrade,omitempty" protobuf:"varint,2,opt,name=drainNodeBeforeUpgrade"`
 }
 
 // ResourceList is a set of (resource name, quantity) pairs.

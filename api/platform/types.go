@@ -120,9 +120,6 @@ type ClusterSpec struct {
 	// Etcd holds configuration for etcd.
 	// +optional
 	Etcd *Etcd
-	// Upgrade control upgrade process.
-	// +optional
-	Upgrade Upgrade
 	// If true will use hostname as nodename, if false will use machine IP as nodename.
 	// +optional
 	HostnameAsNodename bool
@@ -359,6 +356,9 @@ type ClusterFeature struct {
 	EnableMetricsServer bool
 	// +optional
 	IPv6DualStack bool
+	// Upgrade control upgrade process.
+	// +optional
+	Upgrade Upgrade
 }
 
 type HA struct {
@@ -491,6 +491,11 @@ type UpgradeStrategy struct {
 	// 100% means ignore any pods unready which may be used in one worker node, use this carefully!
 	// default value is 0%.
 	MaxUnready intstr.IntOrString
+	// Whether drain node before upgrade.
+	// Draining node before upgrade is recommended.
+	// But not all pod running as cows, a few running as pets.
+	// If your pod can not accept be expelled from current node, this value should be false.
+	DrainNodeBeforeUpgrade bool
 }
 
 // ResourceList is a set of (resource name, quantity) pairs.
