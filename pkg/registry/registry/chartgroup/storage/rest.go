@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -31,7 +32,12 @@ import (
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
 	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	"tkestack.io/tke/api/registry"
+	registryapi "tkestack.io/tke/api/registry"
+	"tkestack.io/tke/pkg/apiserver/authentication"
 	authutil "tkestack.io/tke/pkg/auth/util"
+	harbor "tkestack.io/tke/pkg/registry/harbor/client"
+	harborHandler "tkestack.io/tke/pkg/registry/harbor/handler"
+	helm "tkestack.io/tke/pkg/registry/harbor/helmClient"
 	chartgroupstrategy "tkestack.io/tke/pkg/registry/registry/chartgroup"
 	genericutil "tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -42,6 +48,8 @@ type REST struct {
 	chartgroup     ChartGroupStorage
 	registryClient *registryinternalclient.RegistryClient
 	authClient     authversionedclient.AuthV1Interface
+	harborClient   *harbor.APIClient
+	helmClient     *helm.APIClient
 }
 
 type ChartGroupStorage interface {
@@ -63,11 +71,15 @@ func NewREST(
 	chartgroup ChartGroupStorage,
 	registryClient *registryinternalclient.RegistryClient,
 	authClient authversionedclient.AuthV1Interface,
+	harborClient *harbor.APIClient,
+	helmClient *helm.APIClient,
 ) *REST {
 	rest := &REST{
 		chartgroup:     chartgroup,
 		registryClient: registryClient,
 		authClient:     authClient,
+		harborClient:   harborClient,
+		helmClient:     helmClient,
 	}
 	return rest
 }
@@ -116,8 +128,27 @@ func (rs *REST) Export(ctx context.Context, name string, opts metav1.ExportOptio
 }
 
 func (rs *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	if rs.harborClient != nil {
+		o := obj.(*registryapi.ChartGroup)
+		_, tenantID := authentication.UsernameAndTenantID(ctx)
+
+		err := harborHandler.CreateProject(
+			ctx,
+			rs.harborClient,
+			fmt.Sprintf("%s-chart-%s", tenantID, o.Spec.Name),
+			o.Spec.Visibility == registryapi.VisibilityPublic,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
 	obj, err := rs.chartgroup.Create(ctx, obj, createValidation, options)
 	if err != nil {
+		if rs.harborClient != nil {
+			o := obj.(*registryapi.ChartGroup)
+			// cleanup harbor project
+			harborHandler.DeleteProject(ctx, rs.harborClient, nil, fmt.Sprintf("%s-chart-%s", o.Spec.TenantID, o.Spec.Name))
+		}
 		return nil, err
 	}
 	cg := obj.(*registry.ChartGroup)
@@ -134,6 +165,13 @@ func (rs *REST) Delete(ctx context.Context, id string, deleteValidation rest.Val
 	obj, _, err := rs.chartgroup.Delete(ctx, id, deleteValidation, options)
 	if err != nil {
 		return nil, false, err
+	}
+	if rs.harborClient != nil {
+		o := obj.(*registryapi.ChartGroup)
+		err := harborHandler.DeleteProject(ctx, rs.harborClient, rs.helmClient, fmt.Sprintf("%s-chart-%s", o.Spec.TenantID, o.Spec.Name))
+		if err != nil {
+			return nil, false, err
+		}
 	}
 	// delete policy binding
 	cg := obj.(*registry.ChartGroup)

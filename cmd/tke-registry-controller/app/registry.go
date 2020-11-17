@@ -19,6 +19,8 @@
 package app
 
 import (
+	"encoding/base64"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -31,7 +33,9 @@ import (
 	"tkestack.io/tke/pkg/registry/controller/chart"
 	"tkestack.io/tke/pkg/registry/controller/chartgroup"
 	"tkestack.io/tke/pkg/registry/controller/identityprovider"
+	helm "tkestack.io/tke/pkg/registry/harbor/helmClient"
 	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/transport"
 )
 
 const (
@@ -45,9 +49,32 @@ const (
 	concurrentIdentityProviderSyncs = 10
 )
 
+func newHelmClient(ctx ControllerContext) *helm.APIClient {
+	headers := make(map[string]string)
+	headers["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(
+		ctx.RegistryConfig.Security.AdminUsername+":"+ctx.RegistryConfig.Security.AdminPassword),
+	)
+	tr, _ := transport.NewOneWayTLSTransport(ctx.RegistryConfig.HarborCAFile, true)
+	helmCfg := &helm.Configuration{
+		BasePath:      fmt.Sprintf("https://%s/api", ctx.RegistryConfig.DomainSuffix),
+		DefaultHeader: headers,
+		UserAgent:     "Swagger-Codegen/1.0.0/go",
+		HTTPClient: &http.Client{
+			Transport: tr,
+		},
+	}
+	return helm.NewAPIClient(helmCfg)
+}
+
 func startChartGroupController(ctx ControllerContext) (http.Handler, bool, error) {
 	if !ctx.AvailableResources[schema.GroupVersionResource{Group: registryv1.GroupName, Version: "v1", Resource: "chartgroups"}] {
 		return nil, false, nil
+	}
+
+	var helmClient *helm.APIClient
+
+	if ctx.RegistryConfig.HarborEnabled {
+		helmClient = newHelmClient(ctx)
 	}
 
 	ctrl := chartgroup.NewController(
@@ -56,6 +83,7 @@ func startChartGroupController(ctx ControllerContext) (http.Handler, bool, error
 		ctx.InformerFactory.Registry().V1().ChartGroups(),
 		chartGroupSyncPeriod,
 		registryv1.ChartGroupFinalize,
+		helmClient,
 	)
 
 	go ctrl.Run(concurrentChartGroupSyncs, ctx.Stop)
@@ -79,12 +107,19 @@ func startChartController(ctx ControllerContext) (http.Handler, bool, error) {
 		return nil, false, err
 	}
 
+	var helmClient *helm.APIClient
+
+	if ctx.RegistryConfig.HarborEnabled {
+		helmClient = newHelmClient(ctx)
+	}
+
 	ctrl := chart.NewController(
 		ctx.ClientBuilder.ClientOrDie("chart-controller"),
 		ctx.InformerFactory.Registry().V1().Charts(),
 		chartSyncPeriod,
 		registryv1.ChartFinalize,
 		multiTenantServer,
+		helmClient,
 	)
 
 	go ctrl.Run(concurrentChartSyncs, ctx.Stop)

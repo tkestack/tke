@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	harbor "tkestack.io/tke/pkg/registry/harbor/client"
+	helm "tkestack.io/tke/pkg/registry/harbor/helmClient"
 	"tkestack.io/tke/pkg/util/log"
 
 	"github.com/antihax/optional"
@@ -27,7 +28,7 @@ func CreateProject(ctx context.Context, client *harbor.APIClient, projectName st
 
 }
 
-func DeleteProject(ctx context.Context, client *harbor.APIClient, projectName string) (err error) {
+func DeleteProject(ctx context.Context, client *harbor.APIClient, helmClient *helm.APIClient, projectName string) (err error) {
 
 	opts := harbor.ProjectApiListProjectsOpts{
 		Name: optional.NewString(projectName),
@@ -61,6 +62,17 @@ func DeleteProject(ctx context.Context, client *harbor.APIClient, projectName st
 	for _, repo := range repos {
 		DeleteRepo(ctx, client, projectName, strings.Replace(repo.Name, projectName+"/", "", 1))
 	}
+	// delete chart before delete project
+	if helmClient != nil {
+		charts, _, err := helmClient.ChartRepositoryApi.ChartrepoRepoChartsGet(ctx, projectName)
+		if err != nil {
+			log.Error("Failed to list harbor charts", log.Err(err))
+			return err
+		}
+		for _, chart := range charts {
+			DeleteChart(ctx, helmClient, projectName, chart.Name)
+		}
+	}
 
 	_, err = client.ProjectApi.DeleteProject(ctx, int64(projectID), nil)
 	if err != nil {
@@ -73,13 +85,19 @@ func DeleteProject(ctx context.Context, client *harbor.APIClient, projectName st
 }
 
 func DeleteRepo(ctx context.Context, client *harbor.APIClient, projectName, repoName string) (err error) {
-
 	_, err = client.RepositoryApi.DeleteRepository(ctx, projectName, repoName, nil)
 	if err != nil {
 		log.Error("Failed to delete harbor repo", log.Err(err))
 		return err
 	}
-
 	return nil
+}
 
+func DeleteChart(ctx context.Context, client *helm.APIClient, projectName, chartName string) (err error) {
+	_, err = client.ChartRepositoryApi.ChartrepoRepoChartsNameDelete(ctx, projectName, chartName)
+	if err != nil {
+		log.Error("Failed to delete harbor chart", log.Err(err))
+		return err
+	}
+	return nil
 }

@@ -125,6 +125,10 @@ func componentPrefix() map[moduleName][]modulePath {
 				protected: false,
 			},
 			modulePath{
+				prefix:    harbor.ChartAPIPrefix,
+				protected: false,
+			},
+			modulePath{
 				prefix:    harbor.AuthPrefix,
 				protected: false,
 			},
