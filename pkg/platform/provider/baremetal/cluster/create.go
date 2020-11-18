@@ -680,11 +680,6 @@ func (p *Provider) EnsureThirdPartyHAInit(ctx context.Context, c *v1.Cluster) er
 	return nil
 }
 func (p *Provider) EnsureAuthzWebhook(ctx context.Context, c *v1.Cluster) error {
-	// todo: a bug here that can't copy webhook related file from platform to node
-	// such as webhook.crt/webhook.key/tke-authz-webhook.yaml
-	if c.Status.Phase == platformv1.ClusterUpscaling {
-		return nil
-	}
 	machines := map[bool][]platformv1.ClusterMachine{
 		true:  c.Spec.ScalingMachines,
 		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
@@ -692,6 +687,7 @@ func (p *Provider) EnsureAuthzWebhook(ctx context.Context, c *v1.Cluster) error 
 		return nil
 	}
 	isGlobalCluster := (c.Cluster.Name == "global")
+	isClusterUpscaling := (c.Status.Phase == platformv1.ClusterUpscaling)
 	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
@@ -705,7 +701,11 @@ func (p *Provider) EnsureAuthzWebhook(ctx context.Context, c *v1.Cluster) error 
 				authzEndpoint = p.config.AuthzWebhook.Endpoint
 			}
 		}
-		option := authzwebhook.Option{AuthzWebhookEndpoint: authzEndpoint, IsGlobalCluster: isGlobalCluster}
+		option := authzwebhook.Option{
+			AuthzWebhookEndpoint: authzEndpoint,
+			IsGlobalCluster:      isGlobalCluster,
+			IsClusterUpscaling:   isClusterUpscaling,
+		}
 		err = authzwebhook.Install(machineSSH, &option)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
