@@ -25,34 +25,42 @@ const fetchOptions: FetchOptions = {
 const fetchPodActions = generateFetcherActionCreator({
   actionType: ActionType.FetchPodList,
   fetcher: async (getState: GetState, fetchOptions, dispatch) => {
-    let { subRoot, route, clusterVersion } = getState(),
+    // fetch之前先清空之前的轮训
+    dispatch(resourcePodActions.clearPollEvent());
+    const { subRoot, route, clusterVersion, namespaceSelection } = getState(),
       urlParams = router.resolve(route),
       { resourceDetailState, resourceInfo } = subRoot,
       { podQuery, podFilterInNode } = resourceDetailState;
 
-    let isInNodeManager = IsInNodeManageDetail(urlParams['type']);
-    let isClearData = fetchOptions && fetchOptions.noCache ? true : false;
-    let response: RecordSet<any>;
+    const isInNodeManager = IsInNodeManageDetail(urlParams['type']);
+    const isClearData = fetchOptions && fetchOptions.noCache ? true : false;
+
     /**
      * workload里面拉取pods，因为workload集成了子资源，所以直接拉取workload的pods资源，即调用fetchExtraResourceList
      * 但，node详情里面，需要通过fieldSelector当中的
      */
+
+    // pods的apiVersion的配置
+    const podVersionInfo = apiVersion[ResourceConfigVersionMap(clusterVersion)]['pods'];
+    const { podName, phase, namespace, ip } = podFilterInNode;
+    // pods的resourceInfo的配置
+    const podResourceInfo: ResourceInfo = {
+      basicEntry: podVersionInfo.basicEntry,
+      version: podVersionInfo.version,
+      group: podVersionInfo.group,
+      namespaces: '',
+      requestType: {
+        list: 'pods'
+      }
+    };
+
+    let k8sQueryObj = {};
+
     if (isInNodeManager) {
-      // pods的apiVersion的配置
-      let podVersionInfo = apiVersion[ResourceConfigVersionMap(clusterVersion)]['pods'];
-      let { podName, phase, namespace } = podFilterInNode;
       // pods的resourceInfo的配置
-      let podResourceInfo: ResourceInfo = {
-        basicEntry: podVersionInfo.basicEntry,
-        version: podVersionInfo.version,
-        group: podVersionInfo.group,
-        namespaces: '',
-        requestType: {
-          list: 'pods'
-        }
-      };
+
       // 过滤条件
-      let k8sQueryObj = {
+      k8sQueryObj = {
         fieldSelector: {
           'spec.nodeName': route.queries['resourceIns'] ? route.queries['resourceIns'] : undefined,
           'metadata.namespace': namespace ? namespace : undefined,
@@ -60,21 +68,37 @@ const fetchPodActions = generateFetcherActionCreator({
           'status.phase': phase ? phase : undefined
         }
       };
-      k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
-      response = await WebAPI.fetchResourceList(podQuery, {
-        resourceInfo: podResourceInfo,
-        isClearData,
-        k8sQueryObj,
-        isNeedSpecific: false
-      });
     } else {
-      // 这里是workload里面的拉取pod列表的逻辑
-      response = await WebAPI.fetchExtraResourceList(podQuery, resourceInfo, isClearData, 'pods');
+      podResourceInfo.namespaces = 'namespaces';
+      k8sQueryObj = {
+        labelSelector: {
+          'k8s-app': resourceDetailState?.resourceDetailInfo?.selection?.metadata?.labels?.['k8s-app']
+        },
+        fieldSelector: {
+          'metadata.name': podName ? podName : undefined,
+          'status.phase': phase ? phase : undefined,
+          'status.podIP': ip
+        }
+      };
     }
+
+    k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
+    let { records, continueToken } = await WebAPI.fetchResourceList(podQuery, {
+      resourceInfo: podResourceInfo,
+      isClearData,
+      k8sQueryObj,
+      isNeedSpecific: false,
+      isContinue: true
+    });
     // 原因为 Evicted的pod没有必要再进行展示，直接进行过滤
-    response.records = response.records.filter(item => item.status.reason !== 'Evicted');
-    response.recordCount = response.records.length;
-    return response;
+    records = records.filter(item => item.status.reason !== 'Evicted');
+
+    dispatch(resourcePodActions.changeContinueToken(continueToken));
+
+    return {
+      records,
+      recordCount: records.length
+    };
   },
   finish: async (dispatch, getState: GetState) => {
     let { route, subRoot } = getState(),
@@ -82,12 +106,12 @@ const fetchPodActions = generateFetcherActionCreator({
       { podList, logOption } = subRoot.resourceDetailState,
       { podName } = logOption;
 
-    let isInNodeManager = IsInNodeManageDetail(urlParams['type']);
+    const isInNodeManager = IsInNodeManageDetail(urlParams['type']);
 
     // 这里去初始化containerList的列表
-    let containerList = [];
-    for (let pod of podList.data.records) {
-      for (let container of pod.spec.containers) {
+    const containerList = [];
+    for (const pod of podList.data.records) {
+      for (const container of pod.spec.containers) {
         container.id = reduceContainerId(pod.status.containerStatuses, container.name);
         containerList.push(container);
       }
@@ -112,7 +136,7 @@ const fetchPodActions = generateFetcherActionCreator({
      * 拉取完之后，需要去触发一下 详情-日志页面 的选择，自动选择第一个pod，同时，得判断已经选择过podName的话，不需要继续选择
      */
     if (!isInNodeManager && podList.data.recordCount && podName === '') {
-      let podName = podList.data.records[0].metadata.name;
+      const podName = podList.data.records[0].metadata.name;
       dispatch(resourcePodLogActions.selectPod(podName));
     }
   }
@@ -150,8 +174,8 @@ const restActions = {
   },
   updateTappGrayUpdate: (index_out, index_in, imageName, imageTag) => {
     return async (dispatch, getState: GetState) => {
-      let { editTappGrayUpdate } = getState().subRoot.resourceDetailState;
-      let target: TappGrayUpdateEditItem[] = cloneDeep(editTappGrayUpdate);
+      const { editTappGrayUpdate } = getState().subRoot.resourceDetailState;
+      const target: TappGrayUpdateEditItem[] = cloneDeep(editTappGrayUpdate);
       target[index_out].containers[index_in].imageName = imageName;
       target[index_out].containers[index_in].imageTag = imageTag;
 
@@ -164,7 +188,7 @@ const restActions = {
   /** 是否展示 登录弹框 */
   toggleLoginDialog: () => {
     return async (dispatch, getState: GetState) => {
-      let { isShowLoginDialog } = getState().subRoot.resourceDetailState;
+      const { isShowLoginDialog } = getState().subRoot.resourceDetailState;
       dispatch({
         type: ActionType.IsShowLoginDialog,
         payload: !isShowLoginDialog
@@ -196,7 +220,7 @@ const restActions = {
   /** 选择pod的筛选项 */
   updatePodFilterInNode: (podFilter: PodFilterInNode) => {
     return async (dispatch, getState: GetState) => {
-      let { podQuery } = getState().subRoot.resourceDetailState;
+      const { podQuery } = getState().subRoot.resourceDetailState;
 
       dispatch({
         type: ActionType.PodFilterInNode,

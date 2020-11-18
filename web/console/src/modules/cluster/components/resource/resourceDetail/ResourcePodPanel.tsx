@@ -21,11 +21,12 @@ import { Pod, PodContainer, ResourceFilter } from '../../../models';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { IsInNodeManageDetail } from './ResourceDetail';
+import { PodTabel } from './ResourcePodTable';
 
 /** 获取containerId，去掉前缀 docker:// */
 export function reduceContainerId(containerStatus: any[], containerName: string) {
   if (containerStatus) {
-    let finder = containerStatus.find(c => c.name === containerName);
+    const finder = containerStatus.find(c => c.name === containerName);
     return finder.containerID ? finder.containerID.replace('docker://', '') : '-';
   }
 }
@@ -33,7 +34,7 @@ export function reduceContainerId(containerStatus: any[], containerName: string)
 /** 处理cpu request的值 */
 export const ReduceRequest = (type: 'cpu' | 'memory', requests: { cpu: string; memory: string }) => {
   let finalRequest = 0;
-  let requestValue: string = !isEmpty(requests) && requests[type] ? requests[type].toLowerCase() : '0';
+  const requestValue: string = !isEmpty(requests) && requests[type] ? requests[type].toLowerCase() : '0';
   if (type === 'cpu') {
     // cpu 以 核作为单位
     if (requestValue.includes('m')) {
@@ -56,7 +57,7 @@ export const ReduceRequest = (type: 'cpu' | 'memory', requests: { cpu: string; m
 
 /** 判断当前的pod列表是否需要进行轮询，用于列表的轮询 */
 export const IsPodShowLoadingIcon = (item: Pod) => {
-  let isNeedShowLoading: boolean = false;
+  let isNeedShowLoading = false;
   if (item.status.phase !== 'Running' && item.status.phase !== 'Succeeded') {
     isNeedShowLoading = true;
   } else if (item.status.conditions && item.status.phase !== 'Succeeded') {
@@ -91,15 +92,15 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
   componentDidMount() {
     let { actions, route, subRoot } = this.props,
       urlParams = router.resolve(route);
-    let { type, resourceName } = urlParams;
-    let isInNodeManage = IsInNodeManageDetail(type);
+    const { type, resourceName } = urlParams;
+    const isInNodeManage = IsInNodeManageDetail(type);
 
     /**
      * 拉取pod列表，之所以在这里进行拉取，是因为查看日志的地方，需要有pod列表的信息
      * 如果在节点详情页里面，默认传入default，进行pods列表的拉取，拉取default命名空间下的pod列表
      */
     if ((type === 'resource' || isInNodeManage) && resourceName !== 'cronjob') {
-      let { rid, clusterId } = route.queries;
+      const { rid, clusterId } = route.queries;
       let filter: ResourceFilter = {
         regionId: +rid,
         clusterId
@@ -117,7 +118,7 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
   }
 
   componentWillUnmount() {
-    let { actions } = this.props;
+    const { actions } = this.props;
     actions.resourceDetail.pod.clearPollEvent();
   }
 
@@ -127,16 +128,16 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
 
   /** 展示pod列表的 */
   _renderTablePanel() {
-    let { actions, subRoot, route } = this.props,
+    const { actions, subRoot, route } = this.props,
       urlParams = router.resolve(route),
       { resourceDetailState } = subRoot,
       { podQuery, podSelection, podList } = resourceDetailState;
 
     // 根据type 来确定 pod列表需要展示什么信息，node详情下的pod 需要展示更多的信息
-    let isInNodeManage = IsInNodeManageDetail(urlParams['type']);
+    const isInNodeManage = IsInNodeManageDetail(urlParams['type']);
     const columns: TableColumn<Pod>[] = this._reduceColumns(isInNodeManage, urlParams);
 
-    let addons = [
+    const addons = [
       stylize({
         className: 'docker-table',
         bodyClassName: 'tc-15-table-panel tc-15-table-fixed-body'
@@ -175,23 +176,25 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
       })
     );
 
-    return (
-      <GridTable
-        columns={execColumnWidth(columns)}
-        emptyTips={<div>{t('Pod列表为空')}</div>}
-        listModel={{
-          list: podList,
-          query: podQuery
-        }}
-        actionOptions={actions.resourceDetail.pod}
-        addons={addons}
-      />
-    );
+    // return (
+    //   <GridTable
+    //     columns={execColumnWidth(columns)}
+    //     emptyTips={<div>{t('Pod列表为空')}</div>}
+    //     listModel={{
+    //       list: podList,
+    //       query: podQuery
+    //     }}
+    //     actionOptions={actions.resourceDetail.pod}
+    //     addons={addons}
+    //   />
+    // );
+
+    return <PodTabel columns={execColumnWidth(columns)} addons={addons} {...this.props} />;
   }
 
   /** 列表需要展示的项 */
-  private _reduceColumns(isInNodeManage: boolean = false, urlParams) {
-    let columns: TableColumn<Pod>[] = [
+  private _reduceColumns(isInNodeManage = false, urlParams) {
+    const columns: TableColumn<Pod>[] = [
       {
         key: 'name',
         header: t('实例名称'),
@@ -270,7 +273,7 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
     ];
 
     if (isInNodeManage) {
-      let nodeColumns: TableColumn<Pod>[] = [
+      const nodeColumns: TableColumn<Pod>[] = [
         {
           key: 'cpuRequest',
           header: 'CPU Request',
@@ -323,13 +326,13 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
   private _renderOwnerWorkload(ownerReferences: any, urlParams, namespace: string) {
     let { route, actions, subRoot } = this.props,
       { podQuery } = subRoot.resourceDetailState;
-    let ownerInfo = ownerReferences ? ownerReferences[0] : undefined;
-    let workloadType = ownerInfo ? (ownerInfo['kind'] === 'ReplicaSet' ? 'Deployment' : ownerInfo['kind']) : '-';
+    const ownerInfo = ownerReferences ? ownerReferences[0] : undefined;
+    const workloadType = ownerInfo ? (ownerInfo['kind'] === 'ReplicaSet' ? 'Deployment' : ownerInfo['kind']) : '-';
     let workloadName;
     // 如果workloadType 是 deployment的话，需要把 最后一个 - 后面的内容去除
     if (workloadType === 'Deployment') {
-      let name: string = ownerInfo['name'];
-      let splitName = name.split('-');
+      const name: string = ownerInfo['name'];
+      const splitName = name.split('-');
       workloadName = splitName.slice(0, splitName.length - 1).join('-');
     } else {
       workloadName = ownerInfo ? ownerInfo['name'] : '-';
@@ -434,7 +437,7 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
       isConditionOK = true;
 
     // 是否存在conditions的状态，就算是running状态下，也需要进行判断condition
-    let isHasCondition: boolean = pod.status.conditions ? true : false;
+    const isHasCondition: boolean = pod.status.conditions ? true : false;
     // Succeeded状态下，不需要判断condition，因为已经执行完了
     if (isHasCondition && isStatusOK && pod.status.phase !== 'Succeeded') {
       pod.status.conditions.forEach(item => {
@@ -487,11 +490,11 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
 
   /** 展示操作选项 */
   private _renderOperationCell(pod: Pod) {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { deletePodFlow } = subRoot.resourceDetailState;
 
     const renderDeleteButton = () => {
-      let isDeleting = deletePodFlow.operationState === OperationState.Performing,
+      const isDeleting = deletePodFlow.operationState === OperationState.Performing,
         loginDisabled = isDeleting || (pod.status.phase !== 'Running' && pod.status.phase !== 'Succeeded');
 
       return (
@@ -522,31 +525,31 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
 
   /** 处理远程登录的按钮 */
   private _toggleRemoteLoginDialog(pod: Pod) {
-    let { actions } = this.props;
+    const { actions } = this.props;
     actions.resourceDetail.pod.podSelect([pod]);
     actions.resourceDetail.pod.toggleLoginDialog();
   }
 
   /** 展示创建的时间 */
   private _getCreateTime(createTime: string) {
-    let time = dateFormatter(new Date(createTime), 'YYYY-MM-DD HH:mm:ss');
-    let [first, second] = time.split(' ');
+    const time = dateFormatter(new Date(createTime), 'YYYY-MM-DD HH:mm:ss');
+    const [first, second] = time.split(' ');
 
     return <Text>{`${first} ${second}`}</Text>;
   }
 
   /** 运行时间 */
   private _getDays(startTime: string) {
-    let content: string = '';
+    let content = '';
 
-    let create = Date.parse(startTime);
-    let now = Date.now();
+    const create = Date.parse(startTime);
+    const now = Date.now();
     if (!startTime) {
       content = '-';
     } else if (now < create) {
       content = '0d 0h';
     } else {
-      let days = Math.floor((now - create) / (1000 * 3600 * 24)) + 'd',
+      const days = Math.floor((now - create) / (1000 * 3600 * 24)) + 'd',
         hours = (Math.floor((now - create) / (1000 * 3600)) % 24) + 'h';
       content = days + ' ' + hours;
     }
@@ -610,7 +613,7 @@ interface ResourcePodContainerTableProps {
 
 class ResourcePodContainerTable extends React.Component<ResourcePodContainerTableProps, {}> {
   render() {
-    let { containers, containerStatus = [], isInNodeManage = false } = this.props;
+    const { containers, containerStatus = [], isInNodeManage = false } = this.props;
 
     let basicColgroup: JSX.Element;
 
@@ -721,77 +724,77 @@ class ResourcePodContainerTable extends React.Component<ResourcePodContainerTabl
                   </td>
                 </tr>
               ) : (
-                  containers.map((container, index) => (
-                    <tr key={index}>
+                containers.map((container, index) => (
+                  <tr key={index}>
+                    <td>
+                      <Text parent="div" overflow>
+                        {container.name}
+                      </Text>
+                    </td>
+
+                    <td>
+                      <div>
+                        <span id={'cId' + container.id} className="text-overflow m-width" style={{ maxWidth: '74%' }}>
+                          {containerStatus.length ? reduceContainerId(containerStatus, container.name) : '-'}
+                        </span>
+                        <Clip target={'#cId' + container.id} className="hover-icon" />
+                      </div>
+                    </td>
+
+                    <td>
+                      <Bubble placement="bottom" style={{ width: '100%' }} content={container.image || null}>
+                        <Text parent="div" overflow>
+                          {container.image}
+                        </Text>
+                      </Bubble>
+                    </td>
+
+                    {/* start 这里只有在node详情里面的container列表才需要展示 */}
+                    {isInNodeManage && (
                       <td>
                         <Text parent="div" overflow>
-                          {container.name}
+                          {this._renderCPUAndMemory(t('核'), ReduceRequest('cpu', container.resources.requests))}
                         </Text>
                       </td>
-
+                    )}
+                    {isInNodeManage && (
                       <td>
-                        <div>
-                          <span id={'cId' + container.id} className="text-overflow m-width" style={{ maxWidth: '74%' }}>
-                            {containerStatus.length ? reduceContainerId(containerStatus, container.name) : '-'}
-                          </span>
-                          <Clip target={'#cId' + container.id} className="hover-icon" />
-                        </div>
+                        <Text parent="div" overflow>
+                          {this._renderCPUAndMemory(t('核'), ReduceRequest('cpu', container.resources.limits))}
+                        </Text>
                       </td>
-
+                    )}
+                    {isInNodeManage && (
                       <td>
-                        <Bubble placement="bottom" style={{ width: '100%' }} content={container.image || null}>
-                          <Text parent="div" overflow>
-                            {container.image}
-                          </Text>
-                        </Bubble>
+                        <Text parent="div" overflow>
+                          {this._renderCPUAndMemory('M', ReduceRequest('memory', container.resources.requests))}
+                        </Text>
                       </td>
+                    )}
+                    {isInNodeManage && (
+                      <td>
+                        <Text parent="div" overflow>
+                          {this._renderCPUAndMemory('M', ReduceRequest('memory', container.resources.limits))}
+                        </Text>
+                      </td>
+                    )}
+                    {isInNodeManage && (
+                      <td>
+                        <Text parent="div" overflow>
+                          {t('{{count}} 次', {
+                            count: containerStatus
+                              ? 0
+                              : containerStatus.find(item => item.name === container.name).restartCount
+                          })}
+                        </Text>
+                      </td>
+                    )}
+                    {/* end 这里只有在node详情里面的container列表才需要展示 */}
 
-                      {/* start 这里只有在node详情里面的container列表才需要展示 */}
-                      {isInNodeManage && (
-                        <td>
-                          <Text parent="div" overflow>
-                            {this._renderCPUAndMemory(t('核'), ReduceRequest('cpu', container.resources.requests))}
-                          </Text>
-                        </td>
-                      )}
-                      {isInNodeManage && (
-                        <td>
-                          <Text parent="div" overflow>
-                            {this._renderCPUAndMemory(t('核'), ReduceRequest('cpu', container.resources.limits))}
-                          </Text>
-                        </td>
-                      )}
-                      {isInNodeManage && (
-                        <td>
-                          <Text parent="div" overflow>
-                            {this._renderCPUAndMemory('M', ReduceRequest('memory', container.resources.requests))}
-                          </Text>
-                        </td>
-                      )}
-                      {isInNodeManage && (
-                        <td>
-                          <Text parent="div" overflow>
-                            {this._renderCPUAndMemory('M', ReduceRequest('memory', container.resources.limits))}
-                          </Text>
-                        </td>
-                      )}
-                      {isInNodeManage && (
-                        <td>
-                          <Text parent="div" overflow>
-                            {t('{{count}} 次', {
-                              count: containerStatus
-                                ? 0
-                                : containerStatus.find(item => item.name === container.name).restartCount
-                            })}
-                          </Text>
-                        </td>
-                      )}
-                      {/* end 这里只有在node详情里面的container列表才需要展示 */}
-
-                      <td>{this._reduceContainerStatus(container)}</td>
-                    </tr>
-                  ))
-                )}
+                    <td>{this._reduceContainerStatus(container)}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -806,9 +809,9 @@ class ResourcePodContainerTable extends React.Component<ResourcePodContainerTabl
 
   // 展示容器的状态
   private _reduceContainerStatus(con: PodContainer) {
-    let { containerStatus = [] } = this.props;
-    let finder = containerStatus.find(c => c.name === con.name);
-    let statusKey = finder && Object.keys(finder.state)[0];
+    const { containerStatus = [] } = this.props;
+    const finder = containerStatus.find(c => c.name === con.name);
+    const statusKey = finder && Object.keys(finder.state)[0];
 
     let content: JSX.Element;
 
