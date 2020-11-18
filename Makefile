@@ -134,12 +134,8 @@ lint:
 test:
 	@$(MAKE) go.test
 
-.PHONY: release.provider
-release.provider:
-	cd build/docker/tools/provider-res && make all
-
 .PHONY: release.build
-release.build: release.provider
+release.build:
 	make push.multiarch
 
 ## release: Release tke
