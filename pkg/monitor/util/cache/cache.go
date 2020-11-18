@@ -156,7 +156,12 @@ func (c *cacher) getClusters() {
 					return
 				}
 				workloadCounter := c.getWorkloadCounter(clusterID, clientSet)
-				resourceCounter := &util.ResourceCounter{}
+				resourceCounter := &util.ResourceCounter{
+					CPUCapacityMap:    map[string]map[string]float64{},
+					CPUAllocatableMap: map[string]map[string]float64{},
+					MemCapacityMap:    map[string]map[string]int64{},
+					MemAllocatableMap: map[string]map[string]int64{},
+				}
 				c.getNodes(clusterID, clientSet, resourceCounter)
 				c.getPods(clusterID, clientSet, resourceCounter)
 				if metricServerClientSet, err := c.getMetricServerClientSet(context.Background(), &cls); err == nil && metricServerClientSet != nil {
@@ -359,6 +364,15 @@ func isReady(node *corev1.Node) bool {
 	return false
 }
 
+func IsScheduled(pod *corev1.Pod) bool {
+	for _, condition := range pod.Status.Conditions {
+		if condition.Type == corev1.PodScheduled && condition.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
+
 func isHealthy(component *corev1.ComponentStatus) bool {
 	for _, one := range component.Conditions {
 		if one.Type == corev1.ComponentHealthy && one.Status == corev1.ConditionTrue {
@@ -405,6 +419,24 @@ func (c *cacher) getNodeMetrics(clusterID string, clientSet *metricsv.Clientset,
 }
 
 func (c *cacher) getNodes(clusterID string, clientSet *kubernetes.Clientset, counter *util.ResourceCounter) {
+	cpuCapacityMap := map[string]float64{}
+	cpuAllocatableMap := map[string]float64{}
+	memCapacityMap := map[string]int64{}
+	memAllocatableMap := map[string]int64{}
+	if val, ok := counter.CPUCapacityMap[clusterID]; ok && val != nil {
+		cpuCapacityMap = val
+	}
+	if val, ok := counter.CPUAllocatableMap[clusterID]; ok && val != nil {
+		cpuAllocatableMap = val
+	}
+	if val, ok := counter.MemCapacityMap[clusterID]; ok && val != nil {
+		memCapacityMap = val
+	}
+	if val, ok := counter.MemAllocatableMap[clusterID]; ok && val != nil {
+		memAllocatableMap = val
+	}
+	var cpuAllocatableInc, cpuCapacityInc float64
+	var memAllocatableInc, memCapacityInc int64
 	if nodes, err := clientSet.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{}); err == nil {
 		counter.NodeTotal = len(nodes.Items)
 		for i, node := range nodes.Items {
@@ -412,33 +444,102 @@ func (c *cacher) getNodes(clusterID string, clientSet *kubernetes.Clientset, cou
 				counter.NodeAbnormal++
 			}
 			if node.Status.Allocatable != nil && node.Status.Allocatable.Cpu() != nil {
-				counter.CPUAllocatable += float64(node.Status.Allocatable.Cpu().MilliValue()) / float64(1000)
+				cpuAllocatableInc = float64(node.Status.Allocatable.Cpu().MilliValue()) / float64(1000)
+				counter.CPUAllocatable += cpuAllocatableInc
+				cpuAllocatableMap[node.GetName()] = cpuAllocatableInc
 			}
 			if node.Status.Capacity != nil && node.Status.Capacity.Cpu() != nil {
-				counter.CPUCapacity += float64(node.Status.Capacity.Cpu().MilliValue()) / float64(1000)
+				cpuCapacityInc = float64(node.Status.Capacity.Cpu().MilliValue()) / float64(1000)
+				counter.CPUCapacity += cpuCapacityInc
+				cpuCapacityMap[node.GetName()] = cpuCapacityInc
 			}
 			if node.Status.Allocatable != nil && node.Status.Allocatable.Memory() != nil {
-				counter.MemAllocatable += node.Status.Allocatable.Memory().Value()
+				memAllocatableInc = node.Status.Allocatable.Memory().Value()
+				counter.MemAllocatable += memAllocatableInc
+				memAllocatableMap[node.GetName()] = memAllocatableInc
 			}
 			if node.Status.Capacity != nil && node.Status.Capacity.Memory() != nil {
-				counter.MemCapacity += node.Status.Allocatable.Memory().Value()
+				memCapacityInc = node.Status.Allocatable.Memory().Value()
+				counter.MemCapacity += memCapacityInc
+				memCapacityMap[node.GetName()] = memCapacityInc
 			}
 		}
 	} else if !errors.IsNotFound(err) {
 		log.Error("Query nodes  failed", log.Any("clusterID", clusterID), log.Err(err))
 	}
+	counter.CPUCapacityMap[clusterID] = cpuCapacityMap
+	counter.CPUAllocatableMap[clusterID] = cpuAllocatableMap
+	counter.MemCapacityMap[clusterID] = memCapacityMap
+	counter.MemAllocatableMap[clusterID] = memAllocatableMap
 }
 
 func (c *cacher) getPods(clusterID string, clientSet *kubernetes.Clientset, counter *util.ResourceCounter) {
 	if pods, err := clientSet.CoreV1().Pods(AllNamespaces).List(context.Background(), metav1.ListOptions{}); err == nil {
 		counter.PodCount = len(pods.Items)
+		nodePodMap := make(map[string][]corev1.Pod)
 		for _, pod := range pods.Items {
-			for _, ctn := range pod.Spec.Containers {
-				counter.CPURequest += float64(ctn.Resources.Requests.Cpu().MilliValue()) / float64(1000)
-				counter.CPULimit += float64(ctn.Resources.Limits.Cpu().Value()) / float64(1000)
-				counter.MemRequest += ctn.Resources.Requests.Memory().Value()
-				counter.MemLimit += ctn.Resources.Limits.Memory().Value()
+			if !IsScheduled(&pod) {
+				continue
 			}
+			podNode := pod.Spec.NodeName
+			if _, ok := nodePodMap[podNode]; !ok {
+				nodePodMap[podNode] = make([]corev1.Pod, 0)
+			}
+			nodePodMap[podNode] = append(nodePodMap[podNode], pod)
+		}
+		for nodeName := range nodePodMap {
+			pods := nodePodMap[nodeName]
+			nodeCPURequest := float64(0)
+			nodeCPULimit := float64(0)
+			nodeMemRequest := int64(0)
+			nodeMemLimit := int64(0)
+			for _, pod := range pods {
+				for _, ctn := range pod.Spec.Containers {
+					cpuRequestInc := float64(ctn.Resources.Requests.Cpu().MilliValue()) / float64(1000)
+					memRequestInc := ctn.Resources.Requests.Memory().Value()
+					cpuLimitInc := float64(ctn.Resources.Limits.Cpu().Value()) / float64(1000)
+					memLimitInc := ctn.Resources.Limits.Memory().Value()
+
+					if cpuRequestInc == float64(0) && cpuLimitInc > float64(0) {
+						cpuRequestInc = cpuLimitInc
+					} else if cpuRequestInc > float64(0) && cpuLimitInc == float64(0) {
+						if outer, ok := counter.CPUAllocatableMap[clusterID]; ok && outer != nil {
+							if inner, ok := outer[nodeName]; ok && inner > float64(0) {
+								cpuLimitInc = inner
+							}
+						}
+					}
+
+					if memRequestInc == int64(0) && memLimitInc > int64(0) {
+						memRequestInc = memLimitInc
+					} else if memRequestInc > int64(0) && memLimitInc == int64(0) {
+						if outer, ok := counter.MemAllocatableMap[clusterID]; ok && outer != nil {
+							if inner, ok := outer[nodeName]; ok && inner > int64(0) {
+								memLimitInc = inner
+							}
+						}
+					}
+
+					nodeCPURequest += cpuRequestInc
+					nodeCPULimit += cpuLimitInc
+					nodeMemRequest += memRequestInc
+					nodeMemLimit += memLimitInc
+				}
+			}
+			if outer, ok := counter.CPUAllocatableMap[clusterID]; ok && outer != nil {
+				if inner, ok := outer[nodeName]; ok && inner > float64(0) && inner < nodeCPULimit {
+					nodeCPULimit = inner
+				}
+			}
+			if outer, ok := counter.MemAllocatableMap[clusterID]; ok && outer != nil {
+				if inner, ok := outer[nodeName]; ok && inner > int64(0) && inner < nodeMemLimit {
+					nodeMemLimit = inner
+				}
+			}
+			counter.CPURequest += nodeCPURequest
+			counter.CPULimit += nodeCPULimit
+			counter.MemRequest += nodeMemRequest
+			counter.MemLimit += nodeMemLimit
 		}
 	} else if !errors.IsNotFound(err) {
 		log.Error("Query nodes  failed", log.Any("clusterID", clusterID), log.Err(err))
