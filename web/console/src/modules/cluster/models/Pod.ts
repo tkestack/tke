@@ -86,4 +86,6 @@ export interface PodFilterInNode {
 
   /** pod的状态值 */
   phase?: string;
+
+  ip?: string;
 }
