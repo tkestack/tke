@@ -300,7 +300,9 @@ export async function createImportClsutter(resource: CreateResource[], regionId:
         generateName: 'clustercredential'
       },
       caCert: clusterData.status.credential.caCert,
-      token: clusterData.status.credential.token ? clusterData.status.credential.token : undefined
+      token: clusterData.status.credential.token ? clusterData.status.credential.token : undefined,
+      clientKey: clusterData.status.credential.clientKey || undefined,
+      clientCert: clusterData.status.credential.clientCert || undefined
     };
     // 构建参数
     let clustercredentialParams: RequestParams = {
