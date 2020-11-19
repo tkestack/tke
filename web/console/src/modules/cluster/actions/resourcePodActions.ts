@@ -71,9 +71,7 @@ const fetchPodActions = generateFetcherActionCreator({
     } else {
       podResourceInfo.namespaces = 'namespaces';
       k8sQueryObj = {
-        labelSelector: {
-          'k8s-app': resourceDetailState?.resourceDetailInfo?.selection?.metadata?.labels?.['k8s-app']
-        },
+        labelSelector: resourceDetailState?.resourceDetailInfo?.selection?.metadata?.labels || undefined,
         fieldSelector: {
           'metadata.name': podName ? podName : undefined,
           'status.phase': phase ? phase : undefined,
