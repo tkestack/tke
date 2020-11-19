@@ -13,6 +13,8 @@ import * as classnames from 'classnames';
 import { Button, Icon, Text, Bubble, NavMenu, List, ExternalLink } from '@tencent/tea-component';
 import { insertCSS } from '@tencent/ff-redux';
 import 'antd/dist/antd.css';
+import zhCN from 'antd/lib/locale/zh_CN';
+import { ConfigProvider } from 'antd';
 
 insertCSS(
   'tkestack-nav-logo',
@@ -566,7 +568,9 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
       );
     }
     return (
-      <PlatformContext.Provider value={{ type: this.props.platformType }}>{finalContent}</PlatformContext.Provider>
+      <PlatformContext.Provider value={{ type: this.props.platformType }}>
+        <ConfigProvider locale={zhCN}>{finalContent}</ConfigProvider>
+      </PlatformContext.Provider>
     );
   }
 
