@@ -1329,7 +1329,7 @@ func (t *TKE) prepareCertificates(ctx context.Context) error {
 		cm.Data["oidc-ca.crt"] = string(t.Para.Config.Auth.OIDCAuth.CACert)
 	}
 
-	if t.Para.Config.Registry.TKERegistry.HarborCAFile != "" {
+	if t.Para.Config.Registry.TKERegistry != nil && t.Para.Config.Registry.TKERegistry.HarborCAFile != "" {
 		cm.Data["harbor-ca.crt"] = t.Para.Config.Registry.TKERegistry.HarborCAFile
 	}
 
