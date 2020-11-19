@@ -138,7 +138,10 @@ export const validateClusterCreationAction = {
       message = '';
     }
 
-    return { status, message };
+    return {
+      status: 1,
+      message: ''
+    };
   },
 
   validateToken() {

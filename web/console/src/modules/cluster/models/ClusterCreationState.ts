@@ -22,6 +22,6 @@ export interface ClusterCreationState extends Identifiable {
 
   currentStep?: number;
 
-  clientCertificate?: string;
+  clientCert?: string;
   clientKey?: string;
 }

@@ -39,7 +39,7 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
         certFile,
         name,
         token,
-        clientCertificate,
+        clientCert,
         clientKey
       } = clusterCreationState;
     const workflow = createClusterFlow;
@@ -103,7 +103,9 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
               }
             ],
             credential: {
-              caCert: certIsBase64 ? clusterCreationState.certFile : window.btoa(clusterCreationState.certFile)
+              caCert: certIsBase64 ? clusterCreationState.certFile : window.btoa(clusterCreationState.certFile),
+              clientCert: clusterCreationState.clientCert || undefined,
+              clientKey: clusterCreationState.clientKey || undefined
             }
           }
         };
@@ -123,9 +125,9 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
         action.perform();
       }
     };
-    function parseKubeconfigSuccess({ apiServer, certFile, token }) {
+    function parseKubeconfigSuccess({ apiServer, certFile, token, clientCert, clientKey }) {
       console.log(apiServer, certFile, token);
-      actions.clusterCreation.updateClusterCreationState({ apiServer, certFile, token });
+      actions.clusterCreation.updateClusterCreationState({ apiServer, certFile, token, clientCert, clientKey });
     }
 
     const failed = workflow.operationState === OperationState.Done && !isSuccessWorkflow(workflow);
@@ -188,10 +190,10 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
             <FormPanel.Item label="Client-Certificate">
               <InputField
                 type="textarea"
-                value={clientCertificate}
+                value={clientCert}
                 placeholder={t('请输入Client-Certificate')}
                 tipMode="popup"
-                onChange={value => actions.clusterCreation.updateClusterCreationState({ clientCertificate: value })}
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ clientCert: value })}
               />
             </FormPanel.Item>
             <FormPanel.Item label="Client-Key">
