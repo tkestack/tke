@@ -17,13 +17,21 @@ export interface KubeConfig {
   users: Array<{
     name: string;
     user: {
-      token: string;
+      token?: string;
+      'client-certificate-data'?: string;
+      'client-key-data'?: string;
     };
   }>;
 }
 
 export interface KubeconfigFileParseProps {
-  onSuccess: (targetConfig: { apiServer: string; certFile: string; token: string }) => any;
+  onSuccess: (targetConfig: {
+    apiServer: string;
+    certFile: string;
+    token: string;
+    clientCert: string;
+    clientKey: string;
+  }) => any;
 }
 
 export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
@@ -33,6 +41,7 @@ export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
     setErrorMessage('');
     fileParse(file)
       .then((rsp: KubeConfig) => {
+        console.log(rsp);
         onSuccess(yamlToConfig(rsp));
       })
       .catch(error => {
@@ -81,14 +90,16 @@ export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
     ],
     users: [
       {
-        user: { token }
+        user: { token, 'client-certificate-data': clientCert, 'client-key-data': clientKey }
       }
     ]
   }: KubeConfig) {
     return {
       apiServer: server,
       certFile,
-      token
+      token,
+      clientCert,
+      clientKey
     };
   }
 
