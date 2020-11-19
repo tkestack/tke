@@ -31,9 +31,14 @@ import (
 // BuildChartPathBasicOptions will judge chartgroup type and return well-structured ChartPathOptions
 func BuildChartPathBasicOptions(repo config.RepoConfiguration, cg v1.ChartGroup) (opt helmaction.ChartPathOptions, err error) {
 	if cg.Spec.Type == v1.RepoTypeImported {
+		password, err := util.VerifyDecodedPassword(cg.Spec.ImportedInfo.Password)
+		if err != nil {
+			return opt, err
+		}
+
 		opt.RepoURL = cg.Spec.ImportedInfo.Addr
 		opt.Username = cg.Spec.ImportedInfo.Username
-		opt.Password = cg.Spec.ImportedInfo.Password
+		opt.Password = password
 	} else {
 		loc := &url.URL{
 			Scheme: repo.Scheme,
@@ -44,7 +49,6 @@ func BuildChartPathBasicOptions(repo config.RepoConfiguration, cg v1.ChartGroup)
 		opt.RepoURL = loc.String()
 		opt.Username = repo.Admin
 		opt.Password = repo.AdminPassword
-
 	}
 	opt.ChartRepo = cg.Spec.TenantID + "/" + cg.Spec.Name
 	opt.Chart = ""

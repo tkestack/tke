@@ -21,14 +21,6 @@ import (
 	"tkestack.io/tke/pkg/util"
 )
 
-func isAdmin(ctx context.Context, businessClient businessversionedclient.BusinessV1Interface, privilegedUsername string) (bool, error) {
-	admin := authentication.IsAdministrator(ctx, privilegedUsername)
-	if admin {
-		return true, nil
-	}
-	return isPlatformAdmin(ctx, businessClient)
-}
-
 //TODO: fix here, use util-function to judge isPlatformAdmin
 func isPlatformAdmin(ctx context.Context, businessClient businessversionedclient.BusinessV1Interface) (bool, error) {
 	// if we don't use business component, we are all admin

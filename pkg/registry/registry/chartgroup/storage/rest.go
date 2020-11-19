@@ -226,7 +226,7 @@ func (rs *REST) createOrUpdatePolicyBinding(ctx context.Context, cg *registry.Ch
 			domain := authutil.DefaultDomain
 
 			if isValidUsername {
-				users := []authv1.Subject{authv1.Subject{ID: username, Name: username}}
+				users := []authv1.Subject{{ID: username, Name: username}}
 
 				// owner policy
 				policyID := authutil.ChartGroupFullPolicyID(cg.Spec.TenantID)

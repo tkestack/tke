@@ -94,9 +94,12 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 
 		chartGroupRESTStorage := chartgroupstorage.NewStorage(restOptionsGetter, registryClient, s.AuthClient, s.BusinessClient, s.PrivilegedUsername)
 		chartGroupREST := chartgroupstorage.NewREST(chartGroupRESTStorage.ChartGroup, registryClient, s.AuthClient)
+		repoUpdateREST := chartgroupstorage.NewRepoUpdateREST(chartGroupRESTStorage.ChartGroup, registryClient,
+			s.Authorizer)
 		storageMap["chartgroups"] = chartGroupREST
 		storageMap["chartgroups/status"] = chartGroupRESTStorage.Status
 		storageMap["chartgroups/finalize"] = chartGroupRESTStorage.Finalize
+		storageMap["chartgroups/repoupdating"] = repoUpdateREST
 
 		chartREST := chartstorage.NewStorage(restOptionsGetter, registryClient, s.AuthClient, s.BusinessClient, s.PrivilegedUsername)
 		chartVersionREST := chartstorage.NewVersionREST(chartREST.Chart, s.PlatformClient, registryClient, s.RegistryConfig,

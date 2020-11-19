@@ -45,9 +45,14 @@ func FullfillChartInfo(appChart v1.Chart, cg registryv1.ChartGroup) (v1.Chart, e
 // BuildChartPathBasicOptions will judge chartgroup type and return well-structured ChartPathOptions
 func BuildChartPathBasicOptions(repo config.RepoConfiguration, appChart v1.Chart) (opt helmaction.ChartPathOptions, err error) {
 	if appChart.ImportedRepo {
+		password, err := registryutil.VerifyDecodedPassword(appChart.RepoPassword)
+		if err != nil {
+			return opt, err
+		}
+
 		opt.RepoURL = appChart.RepoURL
 		opt.Username = appChart.RepoUsername
-		opt.Password = appChart.RepoPassword
+		opt.Password = password
 	} else {
 		loc := &url.URL{
 			Scheme: repo.Scheme,

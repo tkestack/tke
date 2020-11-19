@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
 	"tkestack.io/tke/api/registry"
+	"tkestack.io/tke/pkg/registry/util"
 )
 
 // ValidateChartGroupName is a ValidateNameFunc for names that must be a DNS
@@ -56,6 +57,10 @@ func ValidateChartGroup(ctx context.Context, chartGroup *registry.ChartGroup, re
 		}
 	}
 
+	if _, err := util.VerifyDecodedPassword(chartGroup.Spec.ImportedInfo.Password); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldSpecPath.Child("importedInfo"), chartGroup.Spec.ImportedInfo.Password, err.Error()))
+	}
+
 	visibilities := sets.NewString(string(registry.VisibilityUser), string(registry.VisibilityProject), string(registry.VisibilityPublic))
 	if !visibilities.Has(string(chartGroup.Spec.Visibility)) {
 		allErrs = append(allErrs, field.NotSupported(fldSpecPath.Child("visibility"), chartGroup.Spec.Visibility, visibilities.List()))
@@ -79,6 +84,10 @@ func ValidateChartGroupUpdate(ctx context.Context, chartGroup *registry.ChartGro
 
 	if chartGroup.Spec.Name != old.Spec.Name {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "name"), chartGroup.Spec.Name, "disallowed change the name"))
+	}
+
+	if _, err := util.VerifyDecodedPassword(chartGroup.Spec.ImportedInfo.Password); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "importedInfo"), chartGroup.Spec.ImportedInfo.Password, err.Error()))
 	}
 
 	// if chartGroup.Spec.Type != old.Spec.Type {
