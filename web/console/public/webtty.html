@@ -42,9 +42,11 @@
 </head>
 
 <body>
+  <div id="terminal-tips" style="font-size:24px; color: #0efdff; text-align: center"></div>
   <div id="terminal"></div>
   <script>
     const termElem = document.getElementById('terminal');
+    const tipsElem = document.getElementById('terminal-tips');
     termElem.oncontextmenu = () => false;
 
     const term = new Terminal({
@@ -63,43 +65,59 @@
 
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const sock = new WebSocket(proto + '//' + window.location.host + '/webtty' + window.location.search);
-    sock.onopen = function(event) {
-      var msg = {type: "resize", rows: term.rows, cols: term.cols};
+    sock.onopen = function (event) {
+      setTips("Connected")
+      var msg = { type: "resize", rows: term.rows, cols: term.cols };
       sock.send(JSON.stringify(msg));
-      msg = {type: "input", input: Base64.encode("export TERM=xterm && clear \r")};
+      msg = { type: "input", input: Base64.encode("export TERM=xterm && clear \r") };
       sock.send(JSON.stringify(msg));
+      if (!termElem.hidden) {
+        termElem.hidden = true
+      }
     }
-    sock.onclose = function(event) {
+    sock.onclose = function (event) {
       if (event.wasClean) {
-		console.log("[close] Connection closed cleanly, code: " + event.code + ", reason: " + event.reason);
-	  } else {
-	    console.log("[close] Connection died");
-		term.write("\r");
-	  }
-	  term.write("Connection Reset By Peer! Try Refresh");
+        console.log("[close] Connection closed cleanly, code: " + event.code + ", reason: " + event.reason);
+      } else {
+        console.log("[close] Connection died");
+        term.write("\r");
+      }
+      term.write("Connection Reset By Peer! Try Refresh");
     }
-    sock.onmessage = function(event) {
+    sock.onmessage = function (event) {
       term.write(Base64.decode(event.data));
     }
-    sock.onerror = function(event) {
+    sock.onerror = function (event) {
       console.log('[error] Connection error');
-	  term.write("error: " + event.message);
-	  term.destroy();
+      term.write("error: " + event.message);
+      term.destroy();
     }
 
-    window.addEventListener("resize", function() {
+    window.addEventListener("resize", function () {
       fitAddon.fit();
-      var msg = {type: "resize", rows: term.rows, cols: term.cols};
+      var msg = { type: "resize", rows: term.rows, cols: term.cols };
       sock.send(JSON.stringify(msg));
     })
 
     term.onData(input => {
-      var msg = {type: "input", input: Base64.encode(input)};
+      var msg = { type: "input", input: Base64.encode(input) };
       sock.send(JSON.stringify(msg));
     });
 
     term.onTitleChange(evt => { document.title = evt; });
+
+    function setTips(content) {
+      if (typeof content === "undefined") {
+        return
+      }
+      console.log("setTips:" + content)
+      tipsElem.innerText = content
+    }
+
+    setTips("Connecting...")
+
   </script>
 </body>
 
 </html>
+
