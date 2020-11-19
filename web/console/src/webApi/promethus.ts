@@ -35,7 +35,17 @@ export const enablePromethus = (params: EnablePromethusParams): Promise<EnablePr
       withNPD: false,
       ...{
         ...params,
-        alertRepeatInterval: params.alertRepeatInterval + 'm'
+        alertRepeatInterval: params.alertRepeatInterval + 'm',
+        resources: {
+          limits: {
+            cpu: params.resources.limits.cpu,
+            memory: params.resources.limits.memory + 'Mi'
+          },
+          requests: {
+            cpu: params.resources.requests.cpu,
+            memory: params.resources.requests.memory + 'Mi'
+          }
+        }
       }
     }
   });
