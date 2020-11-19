@@ -300,7 +300,7 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 		return upgraded, err
 	}
 	if !needUpgrade {
-		return upgraded, nil
+		return true, nil
 	}
 	// check node kubelet version
 	sameMinor, err := checkKubeletVersion(client, node.Name, option.Version, false)
