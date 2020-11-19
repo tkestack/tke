@@ -13,6 +13,12 @@ export interface ChartGroup extends Identifiable {
     description?: string;
     type: string;
     projects?: string[];
+    users?: string[];
+    importedInfo?: {
+      addr: string;
+      username?: string;
+      password?: string;
+    };
   };
   status?: {
     chartCount?: number;

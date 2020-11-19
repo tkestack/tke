@@ -54,8 +54,24 @@ const removeChartGroupWorkflow = generateWorkflowActionCreator<ChartGroup, Chart
   }
 });
 
+/**
+ * 同步仓库
+ */
+const repoUpdateChartGroupWorkflow = generateWorkflowActionCreator<ChartGroup, ChartGroupFilter>({
+  actionType: ActionTypes.RepoUpdateChartGroup,
+  workflowStateLocator: (state: RootState) => state.chartGroupRepoUpdateWorkflow,
+  operationExecutor: WebAPI.repoUpdateChartGroup,
+  after: {
+    [OperationTrigger.Done]: (dispatch: Redux.Dispatch, getState: GetState) => {
+      /** 结束工作流 */
+      dispatch(listActions.repoUpdateChartGroupWorkflow.reset());
+    }
+  }
+});
+
 const restActions = {
   removeChartGroupWorkflow,
+  repoUpdateChartGroupWorkflow,
 
   /** 轮询操作 */
   poll: (filter: ChartGroupFilter) => {

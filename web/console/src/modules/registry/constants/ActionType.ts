@@ -28,6 +28,7 @@ export const ChartGroupList = 'ChartGroupList';
 export const AddChartGroup = 'AddChartGroup';
 export const UpdateChartGroup = 'UpdateChartGroup';
 export const RemoveChartGroup = 'RemoveChartGroup';
+export const RepoUpdateChartGroup = 'RepoUpdateChartGroup';
 export const UpdateChartGroupCreationState = 'UpdateChartGroupCreationState';
 export const UpdateChartGroupEditorState = 'UpdateChartGroupEditorState';
 export const UpdateChartGroupFilter = 'UpdateChartGroupFilter';

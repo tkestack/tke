@@ -40,6 +40,9 @@ export class BaseInfoPanel extends React.Component<RootProps> {
       actions.chartGroup.detail.validator.validate(null, async r => {
         if (isValid(r)) {
           let chartGroup: ChartGroup = Object.assign({}, chartGroupEditor);
+          if (chartGroup.spec.importedInfo && chartGroup.spec.importedInfo.password) {
+            chartGroup.spec.importedInfo.password = btoa(chartGroup.spec.importedInfo.password);
+          }
           action.start([chartGroup]);
           action.perform();
         } else {

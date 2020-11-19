@@ -105,6 +105,9 @@ export const RootReducer = combineReducers({
   chartGroupRemoveWorkflow: generateWorkflowReducer({
     actionType: ActionType.RemoveChartGroup
   }),
+  chartGroupRepoUpdateWorkflow: generateWorkflowReducer({
+    actionType: ActionType.RepoUpdateChartGroup
+  }),
   projectList: createFFListReducer(
     ActionType.ProjectList,
     '',

@@ -573,6 +573,23 @@ export async function deleteChartGroup([chartGroup]: ChartGroup[]) {
 }
 
 /**
+ * 同步仓库
+ * @param group
+ */
+export async function repoUpdateChartGroup([chartGroup]: ChartGroup[]) {
+  let resourceInfo: ResourceInfo = resourceConfig()['chartgroup'];
+  const url = reduceK8sRestfulPath({
+    resourceInfo,
+    extraResource: 'repoupdating',
+    specificName: chartGroup.metadata.name
+  });
+  let rr: RequestResult = await POST({
+    url
+  });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
  * 有权限的业务列表
  * @param query
  */

@@ -33,6 +33,9 @@ export class BaseInfoPanel extends React.Component<RootProps, {}> {
       actions.chartGroup.create.validator.validate(null, async r => {
         if (isValid(r)) {
           let chartGroup: ChartGroup = Object.assign({}, chartGroupCreation);
+          if (chartGroup.spec.importedInfo && chartGroup.spec.importedInfo.password) {
+            chartGroup.spec.importedInfo.password = btoa(chartGroup.spec.importedInfo.password);
+          }
           action.start([chartGroup]);
           action.perform();
         } else {
@@ -192,7 +195,7 @@ export class BaseInfoPanel extends React.Component<RootProps, {}> {
                 value: chartGroupCreation.spec.importedInfo.password,
                 onChange: value => {
                   let info = Object.assign({}, chartGroupCreation.spec.importedInfo);
-                  info.password = value;
+                  info.password = value ? btoa(value) : value;
                   actions.chartGroup.create.updateCreationState({
                     spec: Object.assign({}, chartGroupCreation.spec, { importedInfo: info })
                   });

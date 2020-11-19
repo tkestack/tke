@@ -107,6 +107,7 @@ export interface RootState {
   chartGroupAddWorkflow?: WorkflowState<ChartGroup, any>;
   chartGroupUpdateWorkflow?: WorkflowState<ChartGroup, any>;
   chartGroupRemoveWorkflow?: WorkflowState<ChartGroup, any>;
+  chartGroupRepoUpdateWorkflow?: WorkflowState<ChartGroup, any>;
   projectList?: FFListModel<Project, ProjectFilter>;
   userInfo?: UserInfo;
 

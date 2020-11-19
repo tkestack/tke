@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { TablePanel as CTablePanel } from '@tencent/ff-component';
 import { LinkButton, emptyTips } from '../../../../common/components';
 import { TableColumn, Text, Modal, Icon } from '@tea/component';
-import { bindActionCreators } from '@tencent/ff-redux';
+import { bindActionCreators, OperationState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { router } from '../../../router';
 import { allActions } from '../../../actions';
@@ -34,15 +34,12 @@ export class TablePanel extends React.Component<RootProps, ChartUsageGuideDialog
   }
 
   render() {
-    let { actions, chartGroupList, route, userInfo } = this.props;
-    const isEditable = (x: ChartGroup): boolean => {
-      // if (x.spec.type === 'system') {
-      //   return false;
-      // }
-      // if (x.spec.type === 'personal' && userInfo) {
-      //   return x.spec.name === userInfo.name;
-      // }
-      return true;
+    let { actions, chartGroupList, chartGroupRepoUpdateWorkflow, userInfo } = this.props;
+    const isImported = (x: ChartGroup): boolean => {
+      if (x.spec.type === 'Imported') {
+        return true;
+      }
+      return false;
     };
 
     const columns: TableColumn<ChartGroup>[] = [
@@ -51,25 +48,26 @@ export class TablePanel extends React.Component<RootProps, ChartUsageGuideDialog
         header: t('仓库名'),
         render: (x: ChartGroup) => (
           <Text parent="div" overflow>
-            {!isEditable(x) ? (
-              <span>{x.spec.name || '-'}</span>
-            ) : (
-              <a
-                href="javascript:;"
-                onClick={e => {
-                  router.navigate(
-                    { sub: 'chartgroup', mode: 'detail' },
-                    {
-                      cg: x.metadata.name,
-                      prj: x.spec.projects && x.spec.projects.length > 0 ? x.spec.projects[0] : ''
-                    }
-                  );
-                }}
-              >
-                {x.spec.name || '-'}
-              </a>
-            )}
+            <a
+              href="javascript:;"
+              onClick={e => {
+                router.navigate(
+                  { sub: 'chartgroup', mode: 'detail' },
+                  {
+                    name: x.spec.name,
+                    cg: x.metadata.name,
+                    prj: x.spec.projects && x.spec.projects.length > 0 ? x.spec.projects[0] : ''
+                  }
+                );
+              }}
+            >
+              {x.spec.name || '-'}
+            </a>
             {x.status['phase'] === 'Terminating' && <Icon type="loading" />}
+            {chartGroupRepoUpdateWorkflow.operationState === OperationState.Performing &&
+              chartGroupRepoUpdateWorkflow.targets &&
+              chartGroupRepoUpdateWorkflow.targets.length > 0 &&
+              chartGroupRepoUpdateWorkflow.targets[0].metadata.name === x.metadata.name && <Icon type="loading" />}
           </Text>
         )
       },
@@ -125,7 +123,7 @@ export class TablePanel extends React.Component<RootProps, ChartUsageGuideDialog
           </Text>
         )
       },
-      { key: 'operation', header: t('操作'), render: x => this._renderOperationCell(x, isEditable(x)) }
+      { key: 'operation', header: t('操作'), render: x => this._renderOperationCell(x, isImported(x)) }
     ];
 
     return (
@@ -158,26 +156,31 @@ export class TablePanel extends React.Component<RootProps, ChartUsageGuideDialog
   }
 
   /** 渲染操作按钮 */
-  _renderOperationCell = (chartGroup: ChartGroup, deletable: boolean) => {
+  _renderOperationCell = (chartGroup: ChartGroup, imported: boolean) => {
     let { actions, dockerRegistryUrl } = this.props;
     return (
       <React.Fragment>
-        <LinkButton
-          onClick={() => {
-            this.setState({
-              showChartUsageGuideDialog: true,
-              chartGroupName: chartGroup.spec.name,
-              registryUrl: dockerRegistryUrl.data
-            });
-          }}
-        >
-          <Trans>上传指引</Trans>
-        </LinkButton>
-        {deletable && (
-          <LinkButton onClick={() => this._removeChartGroup(chartGroup)}>
-            <Trans>删除</Trans>
+        {!imported && (
+          <LinkButton
+            onClick={() => {
+              this.setState({
+                showChartUsageGuideDialog: true,
+                chartGroupName: chartGroup.spec.name,
+                registryUrl: dockerRegistryUrl.data
+              });
+            }}
+          >
+            <Trans>上传指引</Trans>
           </LinkButton>
         )}
+        {imported && (
+          <LinkButton onClick={() => this._updateChartGroup(chartGroup)}>
+            <Trans>同步仓库</Trans>
+          </LinkButton>
+        )}
+        <LinkButton onClick={() => this._removeChartGroup(chartGroup)}>
+          <Trans>删除</Trans>
+        </LinkButton>
       </React.Fragment>
     );
   };
@@ -195,6 +198,20 @@ export class TablePanel extends React.Component<RootProps, ChartUsageGuideDialog
         repoType: 'all'
       });
       actions.chartGroup.list.removeChartGroupWorkflow.perform();
+    }
+  };
+
+  _updateChartGroup = async (chartGroup: ChartGroup) => {
+    let { actions } = this.props;
+    const yes = await Modal.confirm({
+      message: t('确定同步仓库：') + `${chartGroup.spec.displayName}？`,
+      description: <p className="text-danger">{t('同步该仓库后，将会更新所有chart的版本信息。')}</p>,
+      okText: t('同步'),
+      cancelText: t('取消')
+    });
+    if (yes) {
+      actions.chartGroup.list.repoUpdateChartGroupWorkflow.start([chartGroup]);
+      actions.chartGroup.list.repoUpdateChartGroupWorkflow.perform();
     }
   };
 }
