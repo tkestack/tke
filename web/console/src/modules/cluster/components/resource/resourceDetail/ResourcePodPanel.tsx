@@ -89,34 +89,6 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
     };
   }
 
-  componentDidMount() {
-    let { actions, route, subRoot } = this.props,
-      urlParams = router.resolve(route);
-    const { type, resourceName } = urlParams;
-    const isInNodeManage = IsInNodeManageDetail(type);
-
-    /**
-     * 拉取pod列表，之所以在这里进行拉取，是因为查看日志的地方，需要有pod列表的信息
-     * 如果在节点详情页里面，默认传入default，进行pods列表的拉取，拉取default命名空间下的pod列表
-     */
-    if ((type === 'resource' || isInNodeManage) && resourceName !== 'cronjob') {
-      const { rid, clusterId } = route.queries;
-      let filter: ResourceFilter = {
-        regionId: +rid,
-        clusterId
-      };
-
-      if (!isInNodeManage) {
-        filter = Object.assign(filter, {
-          namespace: route.queries['np'],
-          specificName: route.queries['resourceIns']
-        });
-      }
-      // 进行pod列表的轮询拉取
-      actions.resourceDetail.pod.poll(filter);
-    }
-  }
-
   componentWillUnmount() {
     const { actions } = this.props;
     actions.resourceDetail.pod.clearPollEvent();
@@ -175,19 +147,6 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
         gapCell: 1
       })
     );
-
-    // return (
-    //   <GridTable
-    //     columns={execColumnWidth(columns)}
-    //     emptyTips={<div>{t('Pod列表为空')}</div>}
-    //     listModel={{
-    //       list: podList,
-    //       query: podQuery
-    //     }}
-    //     actionOptions={actions.resourceDetail.pod}
-    //     addons={addons}
-    //   />
-    // );
 
     return <PodTabel columns={execColumnWidth(columns)} addons={addons} {...this.props} />;
   }
