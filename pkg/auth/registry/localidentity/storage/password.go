@@ -20,25 +20,29 @@ package storage
 
 import (
 	"context"
+	"fmt"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	"tkestack.io/tke/api/auth"
+	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/auth/registry/localidentity"
+	"tkestack.io/tke/pkg/auth/util"
+	"tkestack.io/tke/pkg/util/log"
+
+	"github.com/casbin/casbin/v2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
-
-	"tkestack.io/tke/api/auth"
-	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
-	"tkestack.io/tke/pkg/auth/registry/localidentity"
-	"tkestack.io/tke/pkg/util/log"
 )
 
 // PasswordREST implements the REST endpoint.
 type PasswordREST struct {
 	localIdentityStore *registry.Store
 	authClient         authinternalclient.AuthInterface
+	enforcer           *casbin.SyncedEnforcer
 }
 
 var _ = rest.Creater(&PasswordREST{})
@@ -51,18 +55,26 @@ func (r *PasswordREST) New() runtime.Object {
 
 // Create used to update password of the local identity.
 func (r *PasswordREST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	username, tenantID := authentication.UsernameAndTenantID(ctx)
+	isPlatformAdmin, err := util.IsPlatformAdmin(ctx, username, tenantID, r.authClient, r.enforcer)
+	if err != nil {
+		return nil, err
+	}
+
 	requestInfo, ok := request.RequestInfoFrom(ctx)
 	if !ok {
-		return nil, errors.NewBadRequest("unable to get request info from context")
+		return nil, apierrors.NewBadRequest("unable to get request info from context")
 	}
 
 	userID := requestInfo.Name
-
 	localIdentityObj, err := r.localIdentityStore.Get(ctx, userID, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 	localIdentity := localIdentityObj.(*auth.LocalIdentity)
+	if !isPlatformAdmin && (localIdentity.Spec.Username != username || localIdentity.Spec.TenantID != tenantID) {
+		return nil, fmt.Errorf("you are not a administrator, and you are not allowd to change other users' password")
+	}
 
 	passwordReq := obj.(*auth.PasswordReq)
 

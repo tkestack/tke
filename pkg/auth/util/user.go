@@ -42,8 +42,8 @@ const (
 	PoliciesKey      = "policies"
 	administratorKey = "administrator"
 
-	platformPolicyPattern      = "pol-%s-platform"
-	administratorPolicyPattern = "pol-%s-administrator"
+	PlatformPolicyPattern      = "pol-%s-platform"
+	AdministratorPolicyPattern = "pol-%s-administrator"
 )
 
 func GetLocalIdentity(ctx context.Context, authClient authinternalclient.AuthInterface, tenantID, username string) (auth.LocalIdentity, error) {
@@ -228,8 +228,8 @@ func SetAdministrator(ctx context.Context, enforcer *casbin.SyncedEnforcer, auth
 		return
 	}
 	for _, r := range roles {
-		if r == fmt.Sprintf(platformPolicyPattern, localIdentity.Spec.TenantID) ||
-			r == fmt.Sprintf(administratorPolicyPattern, localIdentity.Spec.TenantID) {
+		if r == fmt.Sprintf(PlatformPolicyPattern, localIdentity.Spec.TenantID) ||
+			r == fmt.Sprintf(AdministratorPolicyPattern, localIdentity.Spec.TenantID) {
 			localIdentity.Spec.Extra[administratorKey] = "true"
 			return
 		}
