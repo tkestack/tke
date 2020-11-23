@@ -71,7 +71,7 @@ export class UpdateNodeTaintDialog extends React.Component<RootProps, {}> {
     const failed = workflow.operationState === OperationState.Done && !isSuccessWorkflow(workflow);
 
     return (
-      <Modal visible={true} caption={t('编辑节点Taint')} onClose={cancel} size={700} disableEscape={true}>
+      <Modal visible={true} caption={t('编辑节点Taint')} onClose={cancel} size={800} disableEscape={true}>
         <Modal.Body>
           <FormPanel isNeedCard={false}>
             <FormPanel.Item
@@ -109,7 +109,7 @@ export class UpdateNodeTaintDialog extends React.Component<RootProps, {}> {
     );
   }
   private _renderTaintList() {
-    let { actions, subRoot } = this.props,
+    let { actions, subRoot, route } = this.props,
       { taints } = subRoot.computerState.taintEdition;
     return taints.map((taint, index) => {
       return (
@@ -150,13 +150,14 @@ export class UpdateNodeTaintDialog extends React.Component<RootProps, {}> {
           <Bubble content={taint.disabled ? t('默认标签不可以编辑') : null} style={{ display: 'inline-block' }}>
             <FormPanel.Select
               value={taint.effect}
-              style={{ width: '114px' }}
               options={taintEffectOptions}
               disabled={taint.disabled}
               onChange={value => actions.computer.updateTaint({ effect: value }, taint.id + '')}
             />
           </Bubble>
-          <Button onClick={() => actions.computer.deleteTaint(taint.id + '')} icon="close" />
+          {!(route.queries['clusterId'] === 'global' && taint.disabled) && (
+            <Button onClick={() => actions.computer.deleteTaint(taint.id + '')} icon="close" />
+          )}
         </div>
       );
     });
