@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Space, Button, Form, Select, Checkbox, InputNumber, Typography } from 'antd';
 import { AntdLayout } from '@src/modules/common/layouts';
 import { getK8sValidVersions } from '@src/webApi/cluster';
-import { useMutation } from 'react-query';
+import compareVersion from 'compare-versions';
 
 export function ClusterUpdate() {
   const ItemStyle = () => ({
@@ -11,7 +11,16 @@ export function ClusterUpdate() {
 
   console.log(React.version);
 
-  useMutation(() => getK8sValidVersions());
+  const [k8sValidVersions, setK8sValidVersions] = useState([]);
+
+  useEffect(() => {
+    async function fetchK8sValidVersions() {
+      const { k8sValidVersions } = await getK8sValidVersions();
+      setK8sValidVersions(k8sValidVersions);
+    }
+
+    fetchK8sValidVersions();
+  }, []);
 
   return (
     <AntdLayout
@@ -34,7 +43,11 @@ export function ClusterUpdate() {
           label="升级目标版本"
           extra="注意：master升级支持一个此版本升级到下一个次版本，或者同样次版本的补丁版。"
         >
-          <Select style={ItemStyle()}></Select>
+          <Select style={ItemStyle()}>
+            {k8sValidVersions.map(v => (
+              <Select.Option value={v}>{v}</Select.Option>
+            ))}
+          </Select>
         </Form.Item>
 
         <Form.Item
