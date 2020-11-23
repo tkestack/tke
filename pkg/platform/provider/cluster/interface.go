@@ -97,9 +97,11 @@ type DelegateProvider struct {
 	PreCreateFunc   func(cluster *types.Cluster) error
 	AfterCreateFunc func(cluster *types.Cluster) error
 
-	CreateHandlers []Handler
-	DeleteHandlers []Handler
-	UpdateHandlers []Handler
+	CreateHandlers    []Handler
+	DeleteHandlers    []Handler
+	UpdateHandlers    []Handler
+	ScaleUpHandlers   []Handler
+	ScaleDownHandlers []Handler
 }
 
 func (p *DelegateProvider) Name() string {
@@ -144,8 +146,22 @@ func (p *DelegateProvider) AfterCreate(cluster *types.Cluster) error {
 	return nil
 }
 
+func (p *DelegateProvider) getUpdateReason(c *v1.Cluster) (reason string) {
+	if c.Status.Phase == platformv1.ClusterUpgrading {
+		return fmt.Sprintf("%s to kubernetes %s", platformv1.ClusterUpgrading, c.Spec.Version)
+	}
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		var ips []string
+		for _, machine := range c.Spec.ScalingMachines {
+			ips = append(ips, machine.IP)
+		}
+		return fmt.Sprintf("%s on machine %s", platformv1.ClusterUpscaling, strings.Join(ips, ","))
+	}
+	return ""
+}
+
 func (p *DelegateProvider) OnCreate(ctx context.Context, cluster *v1.Cluster) error {
-	condition, err := p.getCreateCurrentCondition(cluster)
+	condition, err := p.getCurrentCondition(cluster, platformv1.ClusterInitializing, p.CreateHandlers)
 	if err != nil {
 		return err
 	}
@@ -157,9 +173,9 @@ func (p *DelegateProvider) OnCreate(ctx context.Context, cluster *v1.Cluster) er
 			Status:  platformv1.ConditionTrue,
 			Reason:  ReasonSkip,
 			Message: "Skip current condition",
-		})
+		}, false)
 	} else {
-		handler := p.getCreateHandler(condition.Type)
+		handler := p.getHandler(condition.Type, p.CreateHandlers)
 		if handler == nil {
 			return fmt.Errorf("can't get handler by %s", condition.Type)
 		}
@@ -174,17 +190,17 @@ func (p *DelegateProvider) OnCreate(ctx context.Context, cluster *v1.Cluster) er
 				Status:  platformv1.ConditionFalse,
 				Message: err.Error(),
 				Reason:  ReasonFailedInit,
-			})
+			}, false)
 			return nil
 		}
 
 		cluster.SetCondition(platformv1.ClusterCondition{
 			Type:   condition.Type,
 			Status: platformv1.ConditionTrue,
-		})
+		}, false)
 	}
 
-	nextConditionType := p.getNextConditionType(condition.Type)
+	nextConditionType := p.getNextConditionType(condition.Type, p.CreateHandlers)
 	if nextConditionType == ConditionTypeDone {
 		cluster.Status.Phase = platformv1.ClusterRunning
 		if err := p.OnRunning(ctx, cluster); err != nil {
@@ -196,31 +212,84 @@ func (p *DelegateProvider) OnCreate(ctx context.Context, cluster *v1.Cluster) er
 			Status:  platformv1.ConditionUnknown,
 			Message: "waiting execute",
 			Reason:  ReasonWaiting,
-		})
+		}, false)
 	}
 
 	return nil
 }
 
 func (p *DelegateProvider) OnUpdate(ctx context.Context, cluster *v1.Cluster) error {
-	for _, handler := range p.UpdateHandlers {
+	handlers := []Handler{}
+	phase := cluster.Status.Phase
+	var condition *platformv1.ClusterCondition
+	var err error
+	if phase == platformv1.ClusterUpgrading {
+		handlers = p.UpdateHandlers
+		condition, err = p.getCurrentCondition(cluster, phase, handlers)
+	}
+	if phase == platformv1.ClusterUpscaling {
+		handlers = p.CreateHandlers
+		condition, err = p.getCurrentCondition(cluster, phase, handlers)
+	}
+	if phase == platformv1.ClusterDownscaling {
+		handlers = p.ScaleDownHandlers
+		condition, err = p.getCurrentCondition(cluster, phase, handlers)
+	}
+	if err != nil {
+		return err
+	}
+	if condition == nil {
+		return nil
+	}
+	if cluster.Spec.Features.SkipConditions != nil &&
+		funk.ContainsString(cluster.Spec.Features.SkipConditions, condition.Type) {
+		cluster.SetCondition(platformv1.ClusterCondition{
+			Type:    condition.Type,
+			Status:  platformv1.ConditionTrue,
+			Reason:  ReasonSkip,
+			Message: "Skip current condition",
+		}, true)
+	} else {
+		handler := p.getHandler(condition.Type, handlers)
+		if handler == nil {
+			return fmt.Errorf("can't get handler by %s", condition.Type)
+		}
 		ctx := log.FromContext(ctx).WithName("ClusterProvider.OnUpdate").WithName(handler.Name()).WithContext(ctx)
 		log.FromContext(ctx).Info("Doing")
-		log.Infof("update cluster doing %s cluster:%s", handler.Name(), cluster.Name)
 		startTime := time.Now()
-		err := handler(ctx, cluster)
-		log.Infof("update cluster done %s cluster:%s, cost:%s err:%s", handler.Name(), cluster.Name,
-			time.Since(startTime).String(), err)
+		err = handler(ctx, cluster)
 		log.FromContext(ctx).Info("Done", "error", err, "cost", time.Since(startTime).String())
 		if err != nil {
-			cluster.Status.Reason = ReasonFailedUpdate
-			cluster.Status.Message = fmt.Sprintf("%s error: %v", handler.Name(), err)
-			return err
+			cluster.SetCondition(platformv1.ClusterCondition{
+				Type:    condition.Type,
+				Status:  platformv1.ConditionFalse,
+				Message: err.Error(),
+				Reason:  ReasonFailedUpdate,
+			}, true)
+			return nil
 		}
 
+		cluster.SetCondition(platformv1.ClusterCondition{
+			Type:   condition.Type,
+			Status: platformv1.ConditionTrue,
+			Reason: p.getUpdateReason(cluster),
+		}, true)
 	}
-	cluster.Status.Reason = ""
-	cluster.Status.Message = ""
+
+	nextConditionType := p.getNextConditionType(condition.Type, handlers)
+	if nextConditionType == ConditionTypeDone {
+		cluster.Status.Phase = platformv1.ClusterRunning
+		if err := p.OnRunning(ctx, cluster); err != nil {
+			return fmt.Errorf("%s.OnRunning error: %w", p.Name(), err)
+		}
+	} else {
+		cluster.SetCondition(platformv1.ClusterCondition{
+			Type:    nextConditionType,
+			Status:  platformv1.ConditionUnknown,
+			Message: "waiting execute",
+			Reason:  ReasonWaiting,
+		}, true)
+	}
 
 	return nil
 }
@@ -245,29 +314,30 @@ func (p *DelegateProvider) OnDelete(ctx context.Context, cluster *v1.Cluster) er
 }
 
 func (p *DelegateProvider) OnRunning(ctx context.Context, cluster *v1.Cluster) error {
+	cluster.Spec.ScalingMachines = nil
 	return nil
 }
 
-func (p *DelegateProvider) getNextConditionType(conditionType string) string {
+func (p *DelegateProvider) getNextConditionType(conditionType string, handlers []Handler) string {
 	var (
 		i       int
 		handler Handler
 	)
-	for i, handler = range p.CreateHandlers {
+	for i, handler = range handlers {
 		if handler.Name() == conditionType {
 			break
 		}
 	}
-	if i == len(p.CreateHandlers)-1 {
+	if i == len(handlers)-1 {
 		return ConditionTypeDone
 	}
-	next := p.CreateHandlers[i+1]
+	next := handlers[i+1]
 
 	return next.Name()
 }
 
-func (p *DelegateProvider) getCreateHandler(conditionType string) Handler {
-	for _, handler := range p.CreateHandlers {
+func (p *DelegateProvider) getHandler(conditionType string, handlers []Handler) Handler {
+	for _, handler := range handlers {
 		if conditionType == handler.Name() {
 			return handler
 		}
@@ -276,17 +346,17 @@ func (p *DelegateProvider) getCreateHandler(conditionType string) Handler {
 	return nil
 }
 
-func (p *DelegateProvider) getCreateCurrentCondition(c *v1.Cluster) (*platformv1.ClusterCondition, error) {
-	if c.Status.Phase == platformv1.ClusterRunning {
-		return nil, errors.New("cluster phase is running now")
+func (p *DelegateProvider) getCurrentCondition(c *v1.Cluster, phase platformv1.ClusterPhase, handlers []Handler) (*platformv1.ClusterCondition, error) {
+	if c.Status.Phase != phase {
+		return nil, fmt.Errorf("cluster phase is %s now", phase)
 	}
-	if len(p.CreateHandlers) == 0 {
-		return nil, errors.New("no create handlers")
+	if len(handlers) == 0 {
+		return nil, fmt.Errorf("no handlers")
 	}
 
 	if len(c.Status.Conditions) == 0 {
 		return &platformv1.ClusterCondition{
-			Type:    p.CreateHandlers[0].Name(),
+			Type:    handlers[0].Name(),
 			Status:  platformv1.ConditionUnknown,
 			Message: "waiting process",
 			Reason:  ReasonWaiting,
@@ -299,5 +369,14 @@ func (p *DelegateProvider) getCreateCurrentCondition(c *v1.Cluster) (*platformv1
 		}
 	}
 
+	if c.Status.Phase == platformv1.ClusterUpgrading || c.Status.Phase == platformv1.ClusterUpscaling ||
+		c.Status.Phase == platformv1.ClusterDownscaling {
+		return &platformv1.ClusterCondition{
+			Type:    handlers[0].Name(),
+			Status:  platformv1.ConditionUnknown,
+			Message: "waiting process",
+			Reason:  ReasonWaiting,
+		}, nil
+	}
 	return nil, errors.New("no condition need process")
 }

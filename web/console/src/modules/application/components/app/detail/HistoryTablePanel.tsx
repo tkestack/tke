@@ -10,7 +10,7 @@ import { History } from '../../../models';
 import { RootProps } from '../AppContainer';
 import { selectable } from '@tea/component/table/addons/selectable';
 import { dateFormat } from '../../../../../../helpers/dateUtil';
-// @ts-ignore
+
 const tips = seajs.require('tips');
 const jsDiff = require('diff');
 
@@ -57,7 +57,7 @@ export class HistoryTablePanel extends React.Component<RootProps, State> {
   }
 
   render() {
-    let { actions, historyList, route } = this.props;
+    const { actions, historyList, route } = this.props;
     const columns: TableColumn<History>[] = [
       {
         key: 'name',
@@ -198,7 +198,7 @@ export class HistoryTablePanel extends React.Component<RootProps, State> {
   };
 
   _rollbackApp = async (app: History) => {
-    let { actions } = this.props;
+    const { actions } = this.props;
     const yes = await Modal.confirm({
       message:
         t('确定回滚应用：') +

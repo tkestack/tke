@@ -5,22 +5,18 @@ import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { isEmpty } from '@src/modules/common/utils';
-import {
-  Layout,
-  Card,
-  Button,
-  Affix
-} from '@tencent/tea-component';
+import { Layout, Card, Button, Affix } from '@tencent/tea-component';
 import { fetchCronHpaYaml, modifyCronHpaYaml } from '@src/modules/cluster/WebAPI/scale';
 import { UnControlled as CodeMirror } from 'react-codemirror2';
 import { cutNsStartClusterId } from '@helper';
+import { RecordSet } from '@tencent/ff-redux';
 
 const { Body, Content } = Layout;
 
-const Yaml = React.memo((props) => {
-  const route = useSelector((state) => state.route);
+const Yaml = React.memo(props => {
+  const route = useSelector(state => state.route);
   const { clusterId, HPAName, namespaceValue } = route.queries;
-  const [newYamlData, setNewYamlData] = useState();
+  const [newYamlData, setNewYamlData] = useState<string | undefined>();
 
   /*
    * 编辑器参数
@@ -57,7 +53,7 @@ const Yaml = React.memo((props) => {
   /**
    * 获取yaml数据
    */
-  const [yamlData, setYamlData] = useState();
+  const [yamlData, setYamlData] = useState<RecordSet<string, any> | undefined>();
   useEffect(() => {
     async function getHPAYaml(namespace, clusterId, name) {
       const result = await fetchCronHpaYaml({ clusterId, name, namespace });
@@ -74,41 +70,45 @@ const Yaml = React.memo((props) => {
     <Layout>
       <Body>
         <Content>
-          <Content.Header
-            showBackButton
-            onBackButtonClick={() => history.back()}
-            title={t('更新YAML')}
-          />
+          <Content.Header showBackButton onBackButtonClick={() => history.back()} title={t('更新YAML')} />
           <Content.Body>
             <CodeMirror
               className={'codeMirrorHeight'}
               value={!isEmpty(yamlData) && yamlData.recordCount ? yamlData.records[0] : t('')}
               options={codeOptions}
               onChange={(editor, data, value) => {
-                    // 配置项当中的value 不用props.config 是因为 更新之后，yaml的光标会默认跳转到末端
-                    setNewYamlData(value);
-                    // console.log('hpa codemirror...', value);
-                    // !readOnly && handleInputForEditor(value);
-                  }}
+                // 配置项当中的value 不用props.config 是因为 更新之后，yaml的光标会默认跳转到末端
+                setNewYamlData(value);
+                // console.log('hpa codemirror...', value);
+                // !readOnly && handleInputForEditor(value);
+              }}
             />
           </Content.Body>
         </Content>
         <Affix ref={bottomAffixRef} offsetBottom={0} style={{ zIndex: 5 }}>
           <Card>
             <Card.Body style={{ borderTop: '1px solid #ddd' }}>
-              <Button type="primary" onClick={async () => {
-                  await modifyCronHpaYaml({ clusterId, name: HPAName, namespace: cutNsStartClusterId({ namespace: namespaceValue, clusterId }), yamlData: newYamlData });
+              <Button
+                type="primary"
+                onClick={async () => {
+                  await modifyCronHpaYaml({
+                    clusterId,
+                    name: HPAName,
+                    namespace: cutNsStartClusterId({ namespace: namespaceValue, clusterId }),
+                    yamlData: newYamlData
+                  });
                   history.back();
-                }}>
+                }}
+              >
                 <Trans>保存</Trans>
               </Button>
               <Button
                 style={{ marginLeft: '10px' }}
-                onClick={(e) => {
-                    e.preventDefault();
-                    history.back();
-                  }}
-                >
+                onClick={e => {
+                  e.preventDefault();
+                  history.back();
+                }}
+              >
                 <Trans>取消</Trans>
               </Button>
               {/*</Form.Action>*/}

@@ -19,7 +19,7 @@ export const UserTablePanel = () => {
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
   const { isShowing, toggle } = useModal(false);
-  const [editUser, setEditUser] = useState();
+  const [editUser, setEditUser] = useState<User | undefined>();
   const { userList, route, platformType, userManagedProjects, projectDetail } = state;
 
   let enableOp =

@@ -79,8 +79,11 @@ const (
 )
 
 func (p *Provider) EnsureCopyFiles(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
 	for _, file := range c.Spec.Features.Files {
-		for _, machine := range c.Spec.Machines {
+		for _, machine := range machines {
 			machineSSH, err := machine.SSH()
 			if err != nil {
 				return err
@@ -109,13 +112,17 @@ func (p *Provider) EnsureCopyFiles(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsurePreClusterInstallHook(ctx context.Context, c *v1.Cluster) error {
-
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPreClusterInstall, c.Spec.Machines[:1])
 }
 
 func (p *Provider) EnsurePreInstallHook(ctx context.Context, c *v1.Cluster) error {
-
-	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPreInstall, c.Spec.Machines)
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPreInstall, machines)
 }
 
 func (p *Provider) EnsurePostInstallHook(ctx context.Context, c *v1.Cluster) error {
@@ -129,7 +136,10 @@ func (p *Provider) EnsurePostClusterInstallHook(ctx context.Context, c *v1.Clust
 }
 
 func (p *Provider) EnsurePreflight(ctx context.Context, c *v1.Cluster) error {
-	for _, machine := range c.Spec.Machines {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -148,14 +158,16 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, c *v1.Cluster) error
 	if !p.config.Registry.NeedSetHosts() {
 		return nil
 	}
-
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
 	domains := []string{
 		p.config.Registry.Domain,
 	}
 	if c.Spec.TenantID != "" {
 		domains = append(domains, c.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
-	for _, machine := range c.Spec.Machines {
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -175,7 +187,10 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, c *v1.Cluster) error
 
 func (p *Provider) EnsureKernelModule(ctx context.Context, c *v1.Cluster) error {
 	var data bytes.Buffer
-	for _, machine := range c.Spec.Machines {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+	for _, machine := range machines {
 		modules := []string{"iptable_nat", "ip_vs", "ip_vs_rr", "ip_vs_wrr", "ip_vs_sh"}
 
 		s, err := machine.SSH()
@@ -237,7 +252,10 @@ func (p *Provider) EnsureSysctl(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureDisableSwap(ctx context.Context, c *v1.Cluster) error {
-	for _, machine := range c.Spec.Machines {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -271,6 +289,9 @@ func (p *Provider) EnsureDisableOffloading(ctx context.Context, c *v1.Cluster) e
 // 因为validate那里没法更新对象（不能存储）
 // PreCrete，在api中错误只能panic，响应不会有报错提示，所以只能挪到这里处理
 func (p *Provider) EnsureClusterComplete(ctx context.Context, cluster *v1.Cluster) error {
+	if cluster.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	funcs := []func(cluster *v1.Cluster) error{
 		completeNetworking,
 		completeDNS,
@@ -438,7 +459,10 @@ func (p *Provider) EnsureKubeconfig(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureNvidiaDriver(ctx context.Context, c *v1.Cluster) error {
-	for _, machine := range c.Spec.Machines {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+	for _, machine := range machines {
 		if !gpu.IsEnable(machine.Labels) {
 			continue
 		}
@@ -457,7 +481,10 @@ func (p *Provider) EnsureNvidiaDriver(ctx context.Context, c *v1.Cluster) error 
 }
 
 func (p *Provider) EnsureNvidiaContainerRuntime(ctx context.Context, c *v1.Cluster) error {
-	for _, machine := range c.Spec.Machines {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+	for _, machine := range machines {
 		if !gpu.IsEnable(machine.Labels) {
 			continue
 		}
@@ -476,6 +503,9 @@ func (p *Provider) EnsureNvidiaContainerRuntime(ctx context.Context, c *v1.Clust
 }
 
 func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
 	insecureRegistries := fmt.Sprintf(`"%s"`, p.config.Registry.Domain)
 	if p.config.Registry.NeedSetHosts() && c.Spec.TenantID != "" {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, c.Spec.TenantID+"."+p.config.Registry.Domain)
@@ -487,7 +517,7 @@ func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 		RegistryDomain:     p.config.Registry.Domain,
 		ExtraArgs:          extraArgs,
 	}
-	for _, machine := range c.Spec.Machines {
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -504,8 +534,11 @@ func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureKubernetesImages(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
 	option := &image.Option{Version: c.Spec.Version, RegistryDomain: p.config.Registry.Domain}
-	for _, machine := range c.Spec.Machines {
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -520,7 +553,10 @@ func (p *Provider) EnsureKubernetesImages(ctx context.Context, c *v1.Cluster) er
 }
 
 func (p *Provider) EnsureConntrackTools(ctx context.Context, c *v1.Cluster) error {
-	for _, machine := range c.Spec.Machines {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -536,7 +572,10 @@ func (p *Provider) EnsureConntrackTools(ctx context.Context, c *v1.Cluster) erro
 }
 
 func (p *Provider) EnsureKubeadm(ctx context.Context, c *v1.Cluster) error {
-	for _, machine := range c.Spec.Machines {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -554,6 +593,9 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, c *v1.Cluster) error {
 // EnsureKeepalivedInit make sure all master node has cleaning iptable table so in kubeadm join time apiserver may not join it self.
 // keepalived only installs in master node 0 before kubeadm init phase to prevet from vip failover in kubeadm join(etcd phase)
 func (p *Provider) EnsureKeepalivedInit(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
 	if c.Spec.Features.HA == nil || c.Spec.Features.HA.TKEHA == nil {
 		return nil
 	}
@@ -563,7 +605,7 @@ func (p *Provider) EnsureKeepalivedInit(ctx context.Context, c *v1.Cluster) erro
 		return err
 	}
 
-	for _, machine := range c.Spec.Machines {
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -571,7 +613,9 @@ func (p *Provider) EnsureKeepalivedInit(ctx context.Context, c *v1.Cluster) erro
 
 		keepalived.ClearLoadBalance(machineSSH, c.Spec.Features.HA.TKEHA.VIP, kubernetesSvcIP)
 	}
-
+	if c.Status.Phase == platformv1.ClusterRunning {
+		return nil
+	}
 	option := &keepalived.Option{
 		IP:              c.Spec.Machines[0].IP,
 		VIP:             c.Spec.Features.HA.TKEHA.VIP,
@@ -594,11 +638,14 @@ func (p *Provider) EnsureKeepalivedInit(ctx context.Context, c *v1.Cluster) erro
 }
 
 func (p *Provider) EnsureThirdPartyHAInit(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
 	if c.Spec.Features.HA == nil || c.Spec.Features.HA.ThirdPartyHA == nil {
 		return nil
 	}
 
-	for _, machine := range c.Spec.Machines {
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -611,7 +658,9 @@ func (p *Provider) EnsureThirdPartyHAInit(ctx context.Context, c *v1.Cluster) er
 
 		thirdpartyha.Clear(machineSSH, &option)
 	}
-
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
@@ -631,11 +680,15 @@ func (p *Provider) EnsureThirdPartyHAInit(ctx context.Context, c *v1.Cluster) er
 	return nil
 }
 func (p *Provider) EnsureAuthzWebhook(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
 	if !c.AuthzWebhookEnabled() {
 		return nil
 	}
 	isGlobalCluster := (c.Cluster.Name == "global")
-	for _, machine := range c.Spec.Machines {
+	isClusterUpscaling := (c.Status.Phase == platformv1.ClusterUpscaling)
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -648,7 +701,11 @@ func (p *Provider) EnsureAuthzWebhook(ctx context.Context, c *v1.Cluster) error 
 				authzEndpoint = p.config.AuthzWebhook.Endpoint
 			}
 		}
-		option := authzwebhook.Option{AuthzWebhookEndpoint: authzEndpoint, IsGlobalCluster: isGlobalCluster}
+		option := authzwebhook.Option{
+			AuthzWebhookEndpoint: authzEndpoint,
+			IsGlobalCluster:      isGlobalCluster,
+			IsClusterUpscaling:   isClusterUpscaling,
+		}
 		err = authzwebhook.Install(machineSSH, &option)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
@@ -659,6 +716,9 @@ func (p *Provider) EnsureAuthzWebhook(ctx context.Context, c *v1.Cluster) error 
 }
 
 func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
 	oidcCa, _ := ioutil.ReadFile(constants.OIDCConfigFile)
 	auditPolicyData, _ := ioutil.ReadFile(constants.AuditPolicyConfigFile)
 	GPUQuotaAdmissionHost := c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion]
@@ -683,7 +743,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 	if err != nil {
 		return errors.Wrap(err, "parse auditWebhookConfig error")
 	}
-	for _, machine := range c.Spec.Machines {
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -725,6 +785,9 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseKubeletStart(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
@@ -740,6 +803,9 @@ func (p *Provider) EnsureKubeadmInitPhaseKubeletStart(ctx context.Context, c *v1
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseCerts(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
@@ -748,6 +814,9 @@ func (p *Provider) EnsureKubeadmInitPhaseCerts(ctx context.Context, c *v1.Cluste
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseKubeConfig(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
@@ -756,6 +825,9 @@ func (p *Provider) EnsureKubeadmInitPhaseKubeConfig(ctx context.Context, c *v1.C
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseControlPlane(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
@@ -764,6 +836,9 @@ func (p *Provider) EnsureKubeadmInitPhaseControlPlane(ctx context.Context, c *v1
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseETCD(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
@@ -772,6 +847,9 @@ func (p *Provider) EnsureKubeadmInitPhaseETCD(ctx context.Context, c *v1.Cluster
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseUploadConfig(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
@@ -788,6 +866,9 @@ func (p *Provider) EnsureKubeadmInitPhaseUploadCerts(ctx context.Context, c *v1.
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseBootstrapToken(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
@@ -796,6 +877,9 @@ func (p *Provider) EnsureKubeadmInitPhaseBootstrapToken(ctx context.Context, c *
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseAddon(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
@@ -804,6 +888,9 @@ func (p *Provider) EnsureKubeadmInitPhaseAddon(ctx context.Context, c *v1.Cluste
 }
 
 func (p *Provider) EnsureGalaxy(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	clientset, err := c.ClientsetForBootstrap()
 	if err != nil {
 		return err
@@ -825,7 +912,11 @@ func (p *Provider) EnsureGalaxy(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureJoinPhasePreflight(ctx context.Context, c *v1.Cluster) error {
-	for _, machine := range c.Spec.Machines[1:] {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines[1:]}[len(c.Spec.ScalingMachines) > 0]
+
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -841,7 +932,10 @@ func (p *Provider) EnsureJoinPhasePreflight(ctx context.Context, c *v1.Cluster) 
 }
 
 func (p *Provider) EnsureJoinPhaseControlPlanePrepare(ctx context.Context, c *v1.Cluster) error {
-	for _, machine := range c.Spec.Machines[1:] {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines[1:]}[len(c.Spec.ScalingMachines) > 0]
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -857,7 +951,10 @@ func (p *Provider) EnsureJoinPhaseControlPlanePrepare(ctx context.Context, c *v1
 }
 
 func (p *Provider) EnsureJoinPhaseKubeletStart(ctx context.Context, c *v1.Cluster) error {
-	for _, machine := range c.Spec.Machines[1:] {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines[1:]}[len(c.Spec.ScalingMachines) > 0]
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -873,7 +970,10 @@ func (p *Provider) EnsureJoinPhaseKubeletStart(ctx context.Context, c *v1.Cluste
 }
 
 func (p *Provider) EnsureJoinPhaseControlPlaneJoinETCD(ctx context.Context, c *v1.Cluster) error {
-	for _, machine := range c.Spec.Machines[1:] {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines[1:]}[len(c.Spec.ScalingMachines) > 0]
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -889,7 +989,10 @@ func (p *Provider) EnsureJoinPhaseControlPlaneJoinETCD(ctx context.Context, c *v
 }
 
 func (p *Provider) EnsureJoinPhaseControlPlaneJoinUpdateStatus(ctx context.Context, c *v1.Cluster) error {
-	for _, machine := range c.Spec.Machines[1:] {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines[1:]}[len(c.Spec.ScalingMachines) > 0]
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -905,6 +1008,9 @@ func (p *Provider) EnsureJoinPhaseControlPlaneJoinUpdateStatus(ctx context.Conte
 }
 
 func (p *Provider) EnsureStoreCredential(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
@@ -974,13 +1080,16 @@ func (p *Provider) EnsureStoreCredential(ctx context.Context, c *v1.Cluster) err
 }
 
 func (p *Provider) EnsurePatchAnnotation(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines[1:]}[len(c.Spec.ScalingMachines) > 0]
 	fileData := map[string]string{
 		constants.EtcdPodManifestFile:                  `  annotations:\n    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "https"\n    prometheus.io/port: "2379"`,
 		constants.KubeAPIServerPodManifestFile:         `  annotations:\n    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "https"\n    prometheus.io/port: "6443"`,
 		constants.KubeControllerManagerPodManifestFile: `  annotations:\n    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "http"\n    prometheus.io/port: "10252"`,
 		constants.KubeSchedulerPodManifestFile:         `  annotations:\n    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "http"\n    prometheus.io/port: "10251"`,
 	}
-	for _, machine := range c.Spec.Machines {
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -999,7 +1108,10 @@ func (p *Provider) EnsurePatchAnnotation(ctx context.Context, c *v1.Cluster) err
 }
 
 func (p *Provider) EnsureKubelet(ctx context.Context, c *v1.Cluster) error {
-	for _, machine := range c.Spec.Machines {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -1015,8 +1127,11 @@ func (p *Provider) EnsureKubelet(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureCNIPlugins(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
 	option := &cniplugins.Option{}
-	for _, machine := range c.Spec.Machines {
+	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
@@ -1032,6 +1147,9 @@ func (p *Provider) EnsureCNIPlugins(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseWaitControlPlane(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	return wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
 		clientset, err := c.ClientsetForBootstrap()
 		if err != nil {
@@ -1051,12 +1169,16 @@ func (p *Provider) EnsureKubeadmInitPhaseWaitControlPlane(ctx context.Context, c
 }
 
 func (p *Provider) EnsureMarkControlPlane(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+
 	clientset, err := c.ClientsetForBootstrap()
 	if err != nil {
 		return err
 	}
 
-	for _, machine := range c.Spec.Machines {
+	for _, machine := range machines {
 		if machine.Labels == nil {
 			machine.Labels = make(map[string]string)
 		}
@@ -1085,6 +1207,10 @@ func (p *Provider) EnsureMarkControlPlane(ctx context.Context, c *v1.Cluster) er
 }
 
 func (p *Provider) EnsureNvidiaDevicePlugin(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
+
 	if c.Cluster.Spec.Features.GPUType == nil {
 		return nil
 	}
@@ -1105,6 +1231,10 @@ func (p *Provider) EnsureNvidiaDevicePlugin(ctx context.Context, c *v1.Cluster) 
 }
 
 func (p *Provider) EnsureGPUManager(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
+
 	if c.Cluster.Spec.Features.GPUType == nil {
 		return nil
 	}
@@ -1134,6 +1264,9 @@ func (p *Provider) EnsureGPUManager(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureMetricsServer(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
 	if !c.Cluster.Spec.Features.EnableMetricsServer {
 		return nil
 	}
@@ -1163,6 +1296,10 @@ func (p *Provider) EnsureMetricsServer(ctx context.Context, c *v1.Cluster) error
 }
 
 func (p *Provider) EnsureCSIOperator(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
+
 	if c.Cluster.Spec.Features.CSIOperator == nil {
 		return nil
 	}
@@ -1190,6 +1327,10 @@ func (p *Provider) EnsureCSIOperator(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureKeepalivedWithLBOption(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+
 	if c.Spec.Features.HA == nil || c.Spec.Features.HA.TKEHA == nil {
 		return nil
 	}
@@ -1200,7 +1341,7 @@ func (p *Provider) EnsureKeepalivedWithLBOption(ctx context.Context, c *v1.Clust
 		return err
 	}
 
-	for _, machine := range c.Spec.Machines {
+	for _, machine := range machines {
 		s, err := machine.SSH()
 		if err != nil {
 			return err
@@ -1226,11 +1367,15 @@ func (p *Provider) EnsureKeepalivedWithLBOption(ctx context.Context, c *v1.Clust
 }
 
 func (p *Provider) EnsureThirdPartyHA(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+
 	if c.Spec.Features.HA == nil || c.Spec.Features.HA.ThirdPartyHA == nil {
 		return nil
 	}
 
-	for _, machine := range c.Spec.Machines {
+	for _, machine := range machines {
 		s, err := machine.SSH()
 		if err != nil {
 			return err
@@ -1252,7 +1397,11 @@ func (p *Provider) EnsureThirdPartyHA(ctx context.Context, c *v1.Cluster) error 
 }
 
 func (p *Provider) EnsureCleanup(ctx context.Context, c *v1.Cluster) error {
-	for _, machine := range c.Spec.Machines {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+
+	for _, machine := range machines {
 		_, err := machine.SSH()
 		if err != nil {
 			return err

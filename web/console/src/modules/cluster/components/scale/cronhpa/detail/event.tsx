@@ -7,30 +7,24 @@ import * as classnames from 'classnames';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { isEmpty } from '@src/modules/common/utils';
 import { router } from '@src/modules/cluster/router';
-import {
-  Layout,
-  Text,
-  Table,
-  Bubble
-} from '@tencent/tea-component';
+import { Layout, Text, Table, Bubble } from '@tencent/tea-component';
 import { Clip } from '../../../../../common/components';
 import { dateFormat, dateFormatter } from '@helper';
 import { fetchEventList } from '@src/modules/cluster/WebAPI/scale';
+import { RecordSet } from '@tencent/ff-redux';
+import { Resource } from '@src/modules/common';
 
 const { autotip } = Table.addons;
 
-const Event = React.memo((props: {
-  selectedHpa: any;
-  refreshFlag: number;
-}) => {
-  const route = useSelector((state) => state.route);
+const Event = React.memo((props: { selectedHpa: any; refreshFlag: number }) => {
+  const route = useSelector(state => state.route);
   const { clusterId } = route.queries;
   const { selectedHpa, refreshFlag } = props;
 
   /**
    * 获取事件列表
    */
-  const [eventData, setEventData] = useState();
+  const [eventData, setEventData] = useState<RecordSet<Resource, any> | undefined>();
   useEffect(() => {
     async function getEventList(namespace, clusterId, name, uid) {
       const eventData = await fetchEventList({ type: 'cronhpa', namespace, clusterId, name, uid });
@@ -138,18 +132,20 @@ const Event = React.memo((props: {
     }
   ];
 
-  return !isEmpty(selectedHpa) && (
-    <Table
-      records={eventData ? eventData.records : []}
-      recordKey="id"
-      columns={columns}
-      addons={[
-        autotip({
-          // isLoading: loading,
-          emptyText: t('事件列表为空')
-        }),
-      ]}
-    />
+  return (
+    !isEmpty(selectedHpa) && (
+      <Table
+        records={eventData ? eventData.records : []}
+        recordKey="id"
+        columns={columns}
+        addons={[
+          autotip({
+            // isLoading: loading,
+            emptyText: t('事件列表为空')
+          })
+        ]}
+      />
+    )
   );
 });
 export default Event;

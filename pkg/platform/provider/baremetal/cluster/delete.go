@@ -21,13 +21,29 @@ package cluster
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	v1 "tkestack.io/tke/pkg/platform/types/v1"
 )
 
 func (p *Provider) EnsureCleanClusterMark(ctx context.Context, c *typesv1.Cluster) error {
 	if clientset, err := c.Clientset(); err == nil {
 		mark.Delete(ctx, clientset)
+	}
+	return nil
+}
+
+func (p *Provider) EnsureDownScaling(ctx context.Context, c *v1.Cluster) error {
+	for _, machine := range c.Spec.ScalingMachines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+		_, err = machineSSH.CombinedOutput(`kubeadm reset -f`)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
 	}
 	return nil
 }

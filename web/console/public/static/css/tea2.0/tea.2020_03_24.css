@@ -5126,7 +5126,9 @@ input[type=checkbox][disabled]:indeterminate {
   color: #e1504a;
   line-height: 1;
   position: absolute;
-  margin: 5px 0 0 3px
+  margin: 5px 0 0 3px;
+  top: 0;
+  right: -15px
 }
 
 .tea-form--fixed-layout .tea-form__label label {

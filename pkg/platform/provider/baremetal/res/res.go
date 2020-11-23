@@ -141,6 +141,10 @@ func (p *Package) NormalizeVersion(version string) (string, error) {
 		version = version[1:]
 	}
 
+	if p.Name == "kubeadm" || p.Name == "kubernetes-node" {
+		return version, nil
+	}
+
 	if funk.ContainsString(p.Versions, version) {
 		return version, nil
 	}

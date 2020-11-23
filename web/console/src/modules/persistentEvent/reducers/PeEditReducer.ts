@@ -16,7 +16,11 @@ const TempReducer = combineReducers({
 
   indexName: reduceToPayload(ActionType.IndexName, ''),
 
-  v_indexName: reduceToPayload(ActionType.V_IndexName, initValidator)
+  v_indexName: reduceToPayload(ActionType.V_IndexName, initValidator),
+
+  esUsername: reduceToPayload(ActionType.EsUsername, ''),
+
+  esPassword: reduceToPayload(ActionType.EsPassword, '')
 });
 
 export const PeEditReducer = (state, action) => {

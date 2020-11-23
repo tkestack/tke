@@ -12,6 +12,7 @@ replace (
 require (
 	github.com/AlekSi/pointer v1.1.0
 	github.com/Masterminds/semver v1.5.0
+	github.com/antihax/optional v0.0.0-20180407024304-ca021399b1a6
 	github.com/aws/aws-sdk-go v1.29.32
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/caddyserver/caddy v1.0.5
@@ -20,6 +21,7 @@ require (
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/coreos/prometheus-operator v0.38.1-0.20200506070354-4231c1d4b313
 	github.com/cyphar/filepath-securejoin v0.2.2
+	github.com/deckarep/golang-set v1.7.1
 	github.com/dexidp/dex v0.0.0-20200408064242-83d8853fd969
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.2-0.20200708230840-70e0022e42fd+incompatible
@@ -77,6 +79,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/square/go-jose.v2 v2.4.1
 	gopkg.in/yaml.v2 v2.2.8
+	gotest.tools v2.2.0+incompatible
 	helm.sh/chartmuseum v0.12.0
 	helm.sh/helm/v3 v3.2.1
 	k8s.io/api v0.18.2

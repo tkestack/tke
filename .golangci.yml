@@ -14,6 +14,7 @@ run:
     - pkg/gateway/apis/config/v1
     - pkg/registry/apis/config
     - pkg/registry/apis/config/v1
+    - pkg/registry/harbor/client
     - pkg/monitor/apis/config
     - pkg/monitor/apis/config/v1
 

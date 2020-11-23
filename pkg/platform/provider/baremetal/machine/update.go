@@ -57,13 +57,14 @@ func (p *Provider) EnsureUpgrade(ctx context.Context, machine *platformv1.Machin
 	}
 
 	option := kubeadm.UpgradeOption{
-		MachineName: machine.Name,
-		MachineIP:   machine.Spec.IP,
-		NodeRole:    kubeadm.NodeRoleWorker,
-		Version:     cluster.Spec.Version,
-		MaxUnready:  cluster.Spec.Upgrade.Strategy.MaxUnready,
+		MachineName:            machine.Name,
+		MachineIP:              machine.Spec.IP,
+		NodeRole:               kubeadm.NodeRoleWorker,
+		Version:                cluster.Spec.Version,
+		MaxUnready:             cluster.Spec.Features.Upgrade.Strategy.MaxUnready,
+		DrainNodeBeforeUpgrade: cluster.Spec.Features.Upgrade.Strategy.DrainNodeBeforeUpgrade,
 	}
-	upgraded, err := kubeadm.UpgradeNode(machineSSH, clientset, p.platformClient, option)
+	upgraded, err := kubeadm.UpgradeNode(machineSSH, clientset, p.platformClient, cluster, option)
 	if err != nil {
 		return err
 	}
@@ -71,14 +72,14 @@ func (p *Provider) EnsureUpgrade(ctx context.Context, machine *platformv1.Machin
 		return nil
 	}
 
-	// Remove upgrade label
-	delete(machine.Labels, constants.LabelNodeNeedUpgrade)
-
-	machine.Status.Phase = platformv1.MachineRunning
+	err = kubeadm.RemoveUpgradeLabel(p.platformClient, machine)
+	if err != nil {
+		return err
+	}
 
 	// Label next node when upgraded current nodes and upgrade mode is auto.
-	if cluster.Spec.Upgrade.Mode == platformv1.UpgradeModeAuto {
-		err = kubeadm.MarkNextUpgradeWorkerNode(clientset, p.platformClient, option.Version)
+	if cluster.Spec.Features.Upgrade.Mode == platformv1.UpgradeModeAuto {
+		err = kubeadm.MarkNextUpgradeWorkerNode(clientset, p.platformClient, option.Version, cluster.Name)
 		if err != nil {
 			return err
 		}

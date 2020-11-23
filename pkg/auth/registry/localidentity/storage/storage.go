@@ -94,7 +94,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 
 	return &Storage{
 		LocalIdentity: &REST{store, authClient, enforcer, privilegedUsername},
-		Password:      &PasswordREST{store, authClient},
+		Password:      &PasswordREST{store, authClient, enforcer},
 		Status:        &StatusREST{&statusStore},
 		Policy:        &PolicyREST{store, authClient, enforcer},
 		Role:          &RoleREST{store, authClient, enforcer},
@@ -326,9 +326,20 @@ func (r *REST) Export(ctx context.Context, name string, options metav1.ExportOpt
 func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	// We are explicitly setting forceAllowCreate to false in the call to the underlying storage because
 	// subresources should never allow create on update.
-	_, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, &metav1.GetOptions{})
+	obj, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
+	}
+
+	username, tenantID := authentication.UsernameAndTenantID(ctx)
+	isPlatformAdmin, err := util.IsPlatformAdmin(ctx, username, tenantID, r.authClient, r.enforcer)
+	if err != nil {
+		return nil, false, err
+	}
+
+	localIdentity := obj.(*auth.LocalIdentity)
+	if !isPlatformAdmin && (localIdentity.Spec.Username != username || localIdentity.Spec.TenantID != tenantID) {
+		return nil, false, fmt.Errorf("you are not a administrator, and you are not allowd to change other users")
 	}
 
 	return r.Store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)

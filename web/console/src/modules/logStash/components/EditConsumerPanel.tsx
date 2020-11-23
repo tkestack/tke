@@ -4,13 +4,18 @@ import { connect } from 'react-redux';
 import { FormPanel } from '@tencent/ff-component';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Segment, Text } from '@tencent/tea-component';
+import { Justify, Button, Segment, Text } from '@tencent/tea-component';
 import { SegmentOption } from '@tencent/tea-component/lib/segment/SegmentOption';
 
 import { InputField } from '../../common/components';
 import { allActions } from '../actions';
 import { clsRegionMap, consumerModeList } from '../constants/Config';
 import { RootProps } from './LogStashApp';
+import * as WebAPI from '../WebAPI';
+
+interface PropTypes extends RootProps {
+  onESStatusChange: (status: number) => void;
+}
 
 /** buttonBar的样式 */
 const ButtonBarStyle = { marginBottom: '5px' };
@@ -28,7 +33,49 @@ const mapDispatchToProps = dispatch =>
   });
 
 @connect(state => state, mapDispatchToProps)
-export class EditConsumerPanel extends React.Component<RootProps, any> {
+export class EditConsumerPanel extends React.Component<PropTypes, any> {
+  constructor(props) {
+    super(props);
+
+    this.esDetection = this.esDetection.bind(this);
+
+    /** checkESStatus
+     * 0: init
+     * 1: need es detection
+     * 2: start detecting
+     * 3: result success
+     * 4: result failure
+     */
+    this.state = {
+      checkESStatus: 0
+    };
+  }
+
+  async esDetection() {
+    this.changeESStatus(2);
+
+    let { logStashEdit } = this.props;
+    let { esAddress, esUsername, esPassword } = logStashEdit;
+    let [scheme, address] = esAddress.split('://');
+    let [host, port] = address.split(':');
+    let ret = await WebAPI.fetchEsDetection({
+      scheme: scheme,
+      host: host,
+      port: port,
+      user: esUsername,
+      password: esPassword
+    }) ? 3 : 4;
+
+    this.changeESStatus(ret);
+  }
+
+  changeESStatus(status) {
+    this.setState({
+      checkESStatus: status
+    });
+    this.props.onESStatusChange(status);
+  }
+
   render() {
     let { actions, logStashEdit } = this.props,
       { consumerMode } = logStashEdit;
@@ -61,7 +108,10 @@ export class EditConsumerPanel extends React.Component<RootProps, any> {
             <Segment
               options={afterConsumerModeList}
               value={selectedConsumerMode.value}
-              onChange={value => actions.editLogStash.changeConsumerMode(value)}
+              onChange={value => {
+                actions.editLogStash.changeConsumerMode(value);
+                this.changeESStatus(value === 'es' ? 1 : 0);
+              }}
             />
           </FormPanel.Item>
 
@@ -124,13 +174,34 @@ export class EditConsumerPanel extends React.Component<RootProps, any> {
   /** 渲染Elasticsearch */
   private _renderESOption() {
     let { actions, logStashEdit } = this.props,
-      { consumerMode, esAddress, v_esAddress, indexName, v_indexName } = logStashEdit;
+      { consumerMode, esAddress, v_esAddress, indexName, v_indexName, esUsername, esPassword } = logStashEdit;
+
+    const checkESStatus = this.state.checkESStatus;
+
+    const esStatusMsg = {
+      2: {
+        color: 'primary',
+        text: '连接中...'
+      },
+      3: {
+        color: 'success',
+        text: '连接成功！点击下方【完成】以设置事件持久化'
+      },
+      4: {
+        color: 'warning',
+        text: '连接失败！请检查 ElasticSearch 相关配置，注意开启了用户验证的 ElasticSearch 需要输入用户名和密码'
+      }
+    };
+
+    const esStatusMsgColor = esStatusMsg[checkESStatus] ? esStatusMsg[checkESStatus].color : 'text';
+    const esStatusMsgText = esStatusMsg[checkESStatus] ? esStatusMsg[checkESStatus].text : '';
 
     return consumerMode !== 'es' ? (
       <noscript />
     ) : (
       [
         <FormPanel.Item
+          required
           label={t('Elasticsearch地址')}
           key={0}
           validator={v_esAddress}
@@ -145,6 +216,7 @@ export class EditConsumerPanel extends React.Component<RootProps, any> {
         />,
 
         <FormPanel.Item
+          required
           label={t('索引')}
           key={1}
           validator={v_indexName}
@@ -157,7 +229,57 @@ export class EditConsumerPanel extends React.Component<RootProps, any> {
             },
             onBlur: actions.validate.validateIndexName
           }}
-        />
+        />,
+
+        <FormPanel.Item
+          label={t('用户名')}
+          key={2}
+          input={{
+            style: {
+              width: '300px'
+            },
+            placeholder: t('仅需要用户验证的 Elasticsearch 需要填入用户名'),
+            value: esUsername,
+            onChange: value => {
+              actions.editLogStash.inputEsUsername(value);
+            }
+          }}
+        />,
+
+        <FormPanel.Item
+          label={t('密码')}
+          key={3}
+          input={{
+            style: {
+              width: '300px'
+            },
+            type: 'password',
+            placeholder: t('仅需要用户验证的 Elasticsearch 需要填入密码'),
+            value: esPassword,
+            onChange: value => {
+              actions.editLogStash.inputEsPassword(value);
+            }
+          }}
+        />,
+
+        <FormPanel.Item key={4} message={<Text theme={esStatusMsgColor}>{esStatusMsgText}</Text>}>
+          <Justify
+            left={
+              <React.Fragment>
+                <Button
+                  disabled={!esAddress.length || !indexName.length}
+                  type="primary"
+                  style={{ marginRight: 20 }}
+                  onClick={() => {
+                    this.esDetection();
+                  }}
+                >
+                  检测连接
+                </Button>
+              </React.Fragment>
+            }
+          />
+        </FormPanel.Item>
       ]
     );
   }

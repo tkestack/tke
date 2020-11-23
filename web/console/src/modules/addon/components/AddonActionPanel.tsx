@@ -24,7 +24,7 @@ export class AddonActionPanel extends React.Component<RootProps, any> {
       openAddon.list.data.recordCount === 0 &&
       (openAddon.list.fetched !== true || openAddon.list.fetchState === FetchState.Fetching);
 
-    let errorTips: string = '';
+    let errorTips = '';
 
     if (cluster.selection && cluster.selection.status.phase !== 'Running') {
       isCanNotAdd = true;

@@ -14,7 +14,7 @@ import { ChartTablePanel } from '../ChartTablePanel';
 import { ChartActionPanel } from '../ChartActionPanel';
 import { ChartValueYamlDialog } from '../ChartValueYamlDialog';
 import { YamlDialog } from '../../../../common/components';
-// @ts-ignore
+
 const tips = seajs.require('tips');
 
 const mapDispatchToProps = dispatch =>
@@ -38,13 +38,13 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
   }
 
   render() {
-    let { actions, appEditor, appDryRun, appValidator, chartInfo, chartList } = this.props;
+    const { actions, appEditor, appDryRun, appValidator, chartInfo, chartList } = this.props;
 
-    let action = actions.app.detail.updateAppWorkflow;
+    const action = actions.app.detail.updateAppWorkflow;
     const { appUpdateWorkflow } = this.props;
     const workflow = appUpdateWorkflow;
 
-    let valueDisable = chartInfo && chartInfo.object && (chartInfo.object.loading || chartInfo.object.error);
+    const valueDisable = chartInfo && chartInfo.object && (chartInfo.object.loading || chartInfo.object.error);
 
     const initSelectedChart = chartList.list.data.records.find(c => {
       return (
@@ -64,17 +64,17 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
         })
       : [];
     /** 提交 */
-    const perform = (dryRun: boolean = false) => {
+    const perform = (dryRun = false) => {
       actions.app.detail.validator.validate(null, async r => {
         if (isValid(r)) {
-          let app: App = Object.assign({}, appEditor);
+          const app: App = Object.assign({}, appEditor);
           app.spec.dryRun = dryRun;
           this.setState({ showDryRunManifest: dryRun });
 
           action.start([app]);
           action.perform();
         } else {
-          let invalid = Object.keys(r).filter(v => {
+          const invalid = Object.keys(r).filter(v => {
             return r[v].status === 2;
           });
           invalid.length > 0 && tips.error(r[invalid[0]].message.toString(), 2000);
@@ -139,7 +139,7 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
                       <ChartTablePanel
                         SelectedChart={targetChart ? targetChart.metadata.name : ''}
                         onSelectChart={(chart: Chart, projectID: string) => {
-                          let specChart = Object.assign({}, appEditor.spec.chart);
+                          const specChart = Object.assign({}, appEditor.spec.chart);
                           specChart.chartGroupName = chart.spec.chartGroupName;
                           specChart.chartName = chart.spec.name;
                           specChart.chartVersion = '';
@@ -169,7 +169,7 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
                         displayField: 'text',
                         options: versionOptions,
                         onChange: value => {
-                          let chart = Object.assign({}, appEditor.spec.chart);
+                          const chart = Object.assign({}, appEditor.spec.chart);
                           chart.chartVersion = value;
                           actions.app.detail.updateEditorState({
                             spec: Object.assign({}, appEditor.spec, { chart: chart })
@@ -220,7 +220,7 @@ export class BasicInfoPanel extends React.Component<RootProps, AppCreateState> {
                   )}
                   <ChartValueYamlDialog
                     onChange={value => {
-                      let values = Object.assign({}, appEditor.spec.values);
+                      const values = Object.assign({}, appEditor.spec.values);
                       values.rawValues = value;
                       actions.app.detail.updateEditorState({
                         spec: Object.assign({}, appEditor.spec, { values: values })

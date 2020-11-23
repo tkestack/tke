@@ -11,6 +11,12 @@ export interface PeEdit {
   /** 索引名称 */
   indexName?: string;
   v_indexName?: Validation;
+
+  /** ES 认证用户名 */
+  esUsername?: string;
+
+  /** ES 认证密码 */
+  esPassword?: string;
 }
 
 /** 编辑事件持久化的时候，提交的jsonSchema */
@@ -66,4 +72,6 @@ export interface EsInfo {
   port: number;
   scheme: string;
   indexName: string;
+  user: string;
+  password: string;
 }

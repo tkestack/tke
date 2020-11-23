@@ -8,6 +8,7 @@ import { Input } from '@tencent/tea-component';
 
 import { allActions } from '../actions';
 import { RootProps } from './AddonApp';
+import { InputField } from '@src/modules/common';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -17,7 +18,7 @@ export class EditPersistentEventPanel extends React.Component<RootProps, any> {
   render() {
     let { editAddon, route, actions } = this.props,
       { peEdit } = editAddon,
-      { esAddress, indexName, v_esAddress, v_indexName } = peEdit;
+      { esAddress, indexName, v_esAddress, v_indexName, esUsername, esPassword } = peEdit;
 
     let { rid } = route.queries;
 
@@ -49,6 +50,34 @@ export class EditPersistentEventPanel extends React.Component<RootProps, any> {
             onBlur={actions.validator.validateIndexName}
           />
         </FormPanel.Item>
+
+        <FormPanel.Item label={t('用户名')}>
+          <Input
+            style={{
+              width: '300px'
+            }}
+            placeholder="仅需要用户验证的 Elasticsearch 需要填入用户名"
+            value={esUsername}
+            onChange={value => {
+              actions.editAddon.pe.inputEsUsername(value);
+            }}
+          />
+        </FormPanel.Item>
+
+        <FormPanel.Item label={t('密码')}>
+          <Input
+            type="password"
+            style={{
+              width: '300px'
+            }}
+            placeholder="仅需要用户验证的 Elasticsearch 需要填入密码"
+            value={esPassword}
+            onChange={value => {
+              actions.editAddon.pe.inputEsPassword(value);
+            }}
+          />
+        </FormPanel.Item>
+
       </React.Fragment>
     );
   }

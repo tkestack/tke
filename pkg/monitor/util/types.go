@@ -118,6 +118,10 @@ type ResourceCounter struct {
 	MemAllocatableRate float64
 	MemUsage           float64
 	PodCount           int
+	CPUCapacityMap     map[string]map[string]float64
+	CPUAllocatableMap  map[string]map[string]float64
+	MemCapacityMap     map[string]map[string]int64
+	MemAllocatableMap  map[string]map[string]int64
 }
 
 type ComponentHealth struct {

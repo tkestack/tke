@@ -163,7 +163,18 @@ type LogFileProxyOptions struct {
 	Container string `json:"container,omitempty"`
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
+// LogEsDetection
+type LogEsDetection struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Scheme   string `json:"scheme,omitempty"`
+	IP       string `json:"ip,omitempty"`
+	Port     string `json:"port,omitempty"`
+	User     string `json:"user,omitempty"`
+	Password string `json:"password,omitempty"`
+}
 
 // +genclient
 // +genclient:nonNamespaced

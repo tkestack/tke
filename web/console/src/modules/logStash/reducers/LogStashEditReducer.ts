@@ -55,6 +55,10 @@ const TempReducer = combineReducers({
 
   v_indexName: reduceToPayload(ActionType.V_IndexName, initValidator),
 
+  esUsername: reduceToPayload(ActionType.EsUsername, ''),
+
+  esPassword: reduceToPayload(ActionType.EsPassword, ''),
+
   resourceList: generateFetcherReducer<RecordSet<Resource>>({
     actionType: ActionType.FetchResourceList,
     initialData: {

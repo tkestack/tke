@@ -13,4 +13,6 @@ export const EsAddress = 'EsAddress';
 export const V_EsAddress = 'V_EsAddress';
 export const IndexName = 'IndexName';
 export const V_IndexName = 'V_IndexName';
+export const EsUsername = 'EsUsername';
+export const EsPassword = 'EsPassword';
 /** ======================== end 事件持久化相关的 ======================= */

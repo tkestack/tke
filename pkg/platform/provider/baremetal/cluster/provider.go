@@ -143,6 +143,10 @@ func NewProvider() (*Provider, error) {
 			p.EnsureThirdPartyHA,
 			p.EnsurePostClusterUpgradeHook,
 		},
+		ScaleUpHandlers: []clusterprovider.Handler{},
+		ScaleDownHandlers: []clusterprovider.Handler{
+			p.EnsureDownScaling,
+		},
 		DeleteHandlers: []clusterprovider.Handler{
 			p.EnsureCleanClusterMark,
 		},
@@ -192,6 +196,7 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 	}
 	if cluster.Spec.NetworkDevice == "" {
 		cluster.Spec.NetworkDevice = "eth0"
+
 	}
 
 	if cluster.Spec.Features.CSIOperator != nil {
