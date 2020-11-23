@@ -41,7 +41,6 @@ export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
     setErrorMessage('');
     fileParse(file)
       .then((rsp: KubeConfig) => {
-        console.log(rsp);
         onSuccess(yamlToConfig(rsp));
       })
       .catch(error => {
@@ -85,12 +84,12 @@ export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
   function yamlToConfig({
     clusters: [
       {
-        cluster: { server, 'certificate-authority-data': certFile }
+        cluster: { server = '', 'certificate-authority-data': certFile = '' }
       }
     ],
     users: [
       {
-        user: { token, 'client-certificate-data': clientCert, 'client-key-data': clientKey }
+        user: { token = '', 'client-certificate-data': clientCert = '', 'client-key-data': clientKey = '' }
       }
     ]
   }: KubeConfig) {
