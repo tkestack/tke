@@ -14,6 +14,7 @@ import { CreateResource } from '../../models';
 import { router } from '../../router';
 import { RootProps } from '../ClusterApp';
 import { ClusterSubpageHeaderPanel } from './ClusterSubpageHeaderPanel';
+import { KubeconfigFileParse } from './KubeconfigFileParse';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -21,18 +22,29 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class CreateClusterPanel extends React.Component<RootProps, {}> {
   componentWillUnmount() {
-    let { actions } = this.props;
-    let action = actions.workflow.createCluster;
+    const { actions } = this.props;
+    const action = actions.workflow.createCluster;
     action.reset();
     actions.clusterCreation.clearClusterCreationState();
   }
 
   render() {
     let { actions, clusterCreationState, createClusterFlow, route } = this.props,
-      { v_apiServer, v_certFile, v_name, v_token, apiServer, certFile, name, token } = clusterCreationState;
+      {
+        v_apiServer,
+        v_certFile,
+        v_name,
+        v_token,
+        apiServer,
+        certFile,
+        name,
+        token,
+        clientCert,
+        clientKey
+      } = clusterCreationState;
     const workflow = createClusterFlow;
     const action = actions.workflow.createCluster;
-    let clusterInfo: ResourceInfo = resourceConfig()['cluster'];
+    const clusterInfo: ResourceInfo = resourceConfig()['cluster'];
     const cancel = () => {
       if (workflow.operationState === OperationState.Done) {
         action.reset();
@@ -48,13 +60,13 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
     const perform = () => {
       actions.validate.clusterCreation.validateclusterCreationState();
       if (validateClusterCreationAction._validateclusterCreationState(clusterCreationState)) {
-        let tempName = apiServer.substring(8);
-        let tempSplit = tempName.split(':');
+        const tempName = apiServer.substring(8);
+        const tempSplit = tempName.split(':');
         let host = tempSplit[0];
         let path = '',
           port = '';
         if (host.indexOf('/') !== -1) {
-          let index = host.indexOf('/');
+          const index = host.indexOf('/');
           path = host.substring(index);
           host = host.substring(0, index);
           port = '443';
@@ -66,12 +78,12 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
         }
         let certIsBase64;
         try {
-          let certOrigin = window.atob(clusterCreationState.certFile);
+          const certOrigin = window.atob(clusterCreationState.certFile);
           certIsBase64 = window.btoa(certOrigin) === clusterCreationState.certFile;
         } catch {
           certIsBase64 = false;
         }
-        let data = {
+        const data = {
           kind: 'Cluster',
           apiVersion: `${clusterInfo.group}/${clusterInfo.version}`,
           metadata: {
@@ -91,7 +103,9 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
               }
             ],
             credential: {
-              caCert: certIsBase64 ? clusterCreationState.certFile : window.btoa(clusterCreationState.certFile)
+              caCert: certIsBase64 ? clusterCreationState.certFile : window.btoa(clusterCreationState.certFile),
+              clientCert: clusterCreationState.clientCert || undefined,
+              clientKey: clusterCreationState.clientKey || undefined
             }
           }
         };
@@ -99,7 +113,7 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
           data.status.credential['token'] = clusterCreationState.token;
         }
 
-        let createClusterData: CreateResource[] = [
+        const createClusterData: CreateResource[] = [
           {
             id: uuid(),
             resourceInfo: clusterInfo,
@@ -111,6 +125,11 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
         action.perform();
       }
     };
+    function parseKubeconfigSuccess({ apiServer, certFile, token, clientCert, clientKey }) {
+      console.log(apiServer, certFile, token);
+      actions.clusterCreation.updateClusterCreationState({ apiServer, certFile, token, clientCert, clientKey });
+    }
+
     const failed = workflow.operationState === OperationState.Done && !isSuccessWorkflow(workflow);
     return (
       <ContentView>
@@ -130,6 +149,9 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
                 onChange={value => actions.clusterCreation.updateClusterCreationState({ name: value })}
                 onBlur={actions.validate.clusterCreation.validateClusterName}
               />
+            </FormPanel.Item>
+            <FormPanel.Item label="KubeConfig File">
+              <KubeconfigFileParse onSuccess={parseKubeconfigSuccess} />
             </FormPanel.Item>
             <FormPanel.Item label="API Server">
               <InputField
@@ -163,6 +185,24 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
                 validator={v_token}
                 onChange={value => actions.clusterCreation.updateClusterCreationState({ token: value })}
                 onBlur={actions.validate.clusterCreation.validateToken}
+              />
+            </FormPanel.Item>
+            <FormPanel.Item label="Client-Certificate">
+              <InputField
+                type="textarea"
+                value={clientCert}
+                placeholder={t('请输入Client-Certificate')}
+                tipMode="popup"
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ clientCert: value })}
+              />
+            </FormPanel.Item>
+            <FormPanel.Item label="Client-Key">
+              <InputField
+                type="textarea"
+                value={clientKey}
+                placeholder={t('请输入Client-Key')}
+                tipMode="popup"
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ clientKey: value })}
               />
             </FormPanel.Item>
 
