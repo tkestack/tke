@@ -71,7 +71,8 @@ const (
 )
 
 var (
-	TAppResource              = schema.GroupVersionResource{Group: TAppGroupName, Version: "v1", Resource: TAppResourceName}
+	TAppResource = schema.GroupVersionResource{Group: TAppGroupName,
+		Version: "v1", Resource: TAppResourceName}
 	UpdateComponentStatusFunc = map[Component]updateComponent{
 		Scheduler: func(componentStatus *corev1.ComponentStatus, health *util.ComponentHealth) {
 			health.Scheduler = isHealthy(componentStatus)
@@ -110,7 +111,7 @@ func (c *cacher) Reload() {
 	c.Lock()
 	defer c.Unlock()
 
-	c.getClusters()
+	c.getClusters(context.Background())
 	c.getProjects()
 
 	if c.firstLoad == FirstLoad {
@@ -118,10 +119,10 @@ func (c *cacher) Reload() {
 	}
 }
 
-func (c *cacher) getClusters() {
-	c.getDynamicClients()
+func (c *cacher) getClusters(ctx context.Context) {
+	c.getDynamicClients(ctx)
 
-	if clusters, err := c.platformClient.Clusters().List(context.Background(), metav1.ListOptions{}); err == nil {
+	if clusters, err := c.platformClient.Clusters().List(ctx, metav1.ListOptions{}); err == nil {
 		wg := sync.WaitGroup{}
 		wg.Add(len(clusters.Items))
 		syncMap := sync.Map{}
@@ -150,26 +151,28 @@ func (c *cacher) getClusters() {
 					})
 					return
 				}
-				clientSet, err := platformutil.BuildExternalClientSet(context.Background(), &cls, c.platformClient)
+				clientSet, err := platformutil.BuildExternalClientSet(ctx, &cls, c.platformClient)
 				if err != nil {
-					log.Error("create clientSet of cluster failed", log.Any("cluster", clusterID), log.Err(err))
+					log.Error("create clientSet of cluster failed",
+						log.Any("cluster", clusterID), log.Err(err))
 					return
 				}
-				workloadCounter := c.getWorkloadCounter(clusterID, clientSet)
+				workloadCounter := c.getWorkloadCounter(ctx, clusterID, clientSet)
 				resourceCounter := &util.ResourceCounter{
 					CPUCapacityMap:    map[string]map[string]float64{},
 					CPUAllocatableMap: map[string]map[string]float64{},
 					MemCapacityMap:    map[string]map[string]int64{},
 					MemAllocatableMap: map[string]map[string]int64{},
 				}
-				c.getNodes(clusterID, clientSet, resourceCounter)
-				c.getPods(clusterID, clientSet, resourceCounter)
-				if metricServerClientSet, err := c.getMetricServerClientSet(context.Background(), &cls); err == nil && metricServerClientSet != nil {
-					c.getNodeMetrics(clusterID, metricServerClientSet, resourceCounter)
+				c.getNodes(ctx, clusterID, clientSet, resourceCounter)
+				c.getPods(ctx, clusterID, clientSet, resourceCounter)
+				if metricServerClientSet, err := c.getMetricServerClientSet(ctx, &cls);
+					err == nil && metricServerClientSet != nil {
+					c.getNodeMetrics(ctx, clusterID, metricServerClientSet, resourceCounter)
 				}
 				calResourceRate(resourceCounter)
 				health := &util.ComponentHealth{}
-				c.getComponentStatuses(clusterID, clientSet, health)
+				c.getComponentStatuses(ctx, clusterID, clientSet, health)
 				syncMap.Store(clusterID, map[string]interface{}{
 					ClusterClientSet:   clientSet,
 					WorkloadCounter:    workloadCounter,
@@ -314,9 +317,10 @@ func NewCacher(platformClient platformversionedclient.PlatformV1Interface,
 	}
 }
 
-func (c *cacher) getTApps(cluster string) int {
+func (c *cacher) getTApps(ctx context.Context, cluster string) int {
 	count := 0
-	content, err := c.dynamicClients[cluster].Resource(TAppResource).Namespace(AllNamespaces).List(context.Background(), metav1.ListOptions{})
+	content, err := c.dynamicClients[cluster].Resource(TAppResource).
+		Namespace(AllNamespaces).List(ctx, metav1.ListOptions{})
 	if content == nil || (err != nil && !errors.IsNotFound(err)) {
 		log.Error("Query TApps failed", log.Any("cluster", cluster), log.Err(err))
 		return 0
@@ -325,9 +329,9 @@ func (c *cacher) getTApps(cluster string) int {
 	return count
 }
 
-func (c *cacher) getDeployments(clusterID string, clientSet *kubernetes.Clientset) int {
+func (c *cacher) getDeployments(ctx context.Context, clusterID string, clientSet *kubernetes.Clientset) int {
 	count := 0
-	if deployments, err := clientSet.AppsV1().Deployments(AllNamespaces).List(context.Background(), metav1.ListOptions{}); err == nil {
+	if deployments, err := clientSet.AppsV1().Deployments(AllNamespaces).List(ctx, metav1.ListOptions{}); err == nil {
 		count += len(deployments.Items)
 	} else if !errors.IsNotFound(err) {
 		log.Error("Query deployments of v1 failed", log.Any("clusterID", clusterID), log.Err(err))
@@ -335,9 +339,10 @@ func (c *cacher) getDeployments(clusterID string, clientSet *kubernetes.Clientse
 	return count
 }
 
-func (c *cacher) getStatefulSets(clusterID string, clientSet *kubernetes.Clientset) int {
+func (c *cacher) getStatefulSets(ctx context.Context, clusterID string, clientSet *kubernetes.Clientset) int {
 	count := 0
-	if statefulSets, err := clientSet.AppsV1().StatefulSets(AllNamespaces).List(context.Background(), metav1.ListOptions{}); err == nil {
+	if statefulSets, err := clientSet.AppsV1().StatefulSets(AllNamespaces).
+		List(ctx, metav1.ListOptions{}); err == nil {
 		count += len(statefulSets.Items)
 	} else if !errors.IsNotFound(err) {
 		log.Error("Query statefulSets of v1 failed", log.Any("clusterID", clusterID), log.Err(err))
@@ -345,9 +350,9 @@ func (c *cacher) getStatefulSets(clusterID string, clientSet *kubernetes.Clients
 	return count
 }
 
-func (c *cacher) getDaemonSets(clusterID string, clientSet *kubernetes.Clientset) int {
+func (c *cacher) getDaemonSets(ctx context.Context, clusterID string, clientSet *kubernetes.Clientset) int {
 	count := 0
-	if daemonSets, err := clientSet.AppsV1().DaemonSets(AllNamespaces).List(context.Background(), metav1.ListOptions{}); err == nil {
+	if daemonSets, err := clientSet.AppsV1().DaemonSets(AllNamespaces).List(ctx, metav1.ListOptions{}); err == nil {
 		count += len(daemonSets.Items)
 	} else if !errors.IsNotFound(err) {
 		log.Error("Query daemonSets of v1 failed", log.Any("clusterID", clusterID), log.Err(err))
@@ -382,8 +387,9 @@ func isHealthy(component *corev1.ComponentStatus) bool {
 	return false
 }
 
-func (c *cacher) getComponentStatuses(clusterID string, clientSet *kubernetes.Clientset, health *util.ComponentHealth) {
-	if componentStatuses, err := clientSet.CoreV1().ComponentStatuses().List(context.Background(), metav1.ListOptions{}); err == nil {
+func (c *cacher) getComponentStatuses(ctx context.Context, clusterID string, clientSet *kubernetes.Clientset,
+	health *util.ComponentHealth) {
+	if componentStatuses, err := clientSet.CoreV1().ComponentStatuses().List(ctx, metav1.ListOptions{}); err == nil {
 		for _, cs := range componentStatuses.Items {
 			csName := cs.GetName()
 			if _, ok := UpdateComponentStatusFunc[Component(csName)]; ok {
@@ -397,8 +403,9 @@ func (c *cacher) getComponentStatuses(clusterID string, clientSet *kubernetes.Cl
 	}
 }
 
-func (c *cacher) getNodeMetrics(clusterID string, clientSet *metricsv.Clientset, counter *util.ResourceCounter) {
-	if nodeMetrics, err := clientSet.MetricsV1beta1().NodeMetricses().List(context.Background(), metav1.ListOptions{}); err == nil {
+func (c *cacher) getNodeMetrics(ctx context.Context, clusterID string,
+	clientSet *metricsv.Clientset, counter *util.ResourceCounter) {
+	if nodeMetrics, err := clientSet.MetricsV1beta1().NodeMetricses().List(ctx, metav1.ListOptions{}); err == nil {
 		for _, nm := range nodeMetrics.Items {
 			if resourceCPU, ok := nm.Usage[corev1.ResourceCPU]; ok {
 				counter.CPUUsed += float64(resourceCPU.MilliValue()) / float64(1000)
@@ -418,7 +425,8 @@ func (c *cacher) getNodeMetrics(clusterID string, clientSet *metricsv.Clientset,
 	}
 }
 
-func (c *cacher) getNodes(clusterID string, clientSet *kubernetes.Clientset, counter *util.ResourceCounter) {
+func (c *cacher) getNodes(ctx context.Context, clusterID string,
+	clientSet *kubernetes.Clientset, counter *util.ResourceCounter) {
 	cpuCapacityMap := map[string]float64{}
 	cpuAllocatableMap := map[string]float64{}
 	memCapacityMap := map[string]int64{}
@@ -437,7 +445,7 @@ func (c *cacher) getNodes(clusterID string, clientSet *kubernetes.Clientset, cou
 	}
 	var cpuAllocatableInc, cpuCapacityInc float64
 	var memAllocatableInc, memCapacityInc int64
-	if nodes, err := clientSet.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{}); err == nil {
+	if nodes, err := clientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{}); err == nil {
 		counter.NodeTotal = len(nodes.Items)
 		for i, node := range nodes.Items {
 			if !isReady(&nodes.Items[i]) {
@@ -473,8 +481,9 @@ func (c *cacher) getNodes(clusterID string, clientSet *kubernetes.Clientset, cou
 	counter.MemAllocatableMap[clusterID] = memAllocatableMap
 }
 
-func (c *cacher) getPods(clusterID string, clientSet *kubernetes.Clientset, counter *util.ResourceCounter) {
-	if pods, err := clientSet.CoreV1().Pods(AllNamespaces).List(context.Background(), metav1.ListOptions{}); err == nil {
+func (c *cacher) getPods(ctx context.Context, clusterID string,
+	clientSet *kubernetes.Clientset, counter *util.ResourceCounter) {
+	if pods, err := clientSet.CoreV1().Pods(AllNamespaces).List(ctx, metav1.ListOptions{}); err == nil {
 		counter.PodCount = len(pods.Items)
 		nodePodMap := make(map[string][]corev1.Pod)
 		for _, pod := range pods.Items {
@@ -546,25 +555,26 @@ func (c *cacher) getPods(clusterID string, clientSet *kubernetes.Clientset, coun
 	}
 }
 
-func (c *cacher) getWorkloadCounter(clusterID string, clientSet *kubernetes.Clientset) *util.WorkloadCounter {
+func (c *cacher) getWorkloadCounter(ctx context.Context, clusterID string,
+	clientSet *kubernetes.Clientset) *util.WorkloadCounter {
 	counter := &util.WorkloadCounter{}
-	counter.Deployment = c.getDeployments(clusterID, clientSet)
-	counter.DaemonSet = c.getDaemonSets(clusterID, clientSet)
-	counter.StatefulSet = c.getStatefulSets(clusterID, clientSet)
-	counter.TApp = c.getTApps(clusterID)
+	counter.Deployment = c.getDeployments(ctx, clusterID, clientSet)
+	counter.DaemonSet = c.getDaemonSets(ctx, clusterID, clientSet)
+	counter.StatefulSet = c.getStatefulSets(ctx, clusterID, clientSet)
+	counter.TApp = c.getTApps(ctx, clusterID)
 	log.Debugf("finish reloading cluster: %s's workload: %+v", clusterID, counter)
 	return counter
 }
 
-func (c *cacher) getDynamicClients() {
+func (c *cacher) getDynamicClients(ctx context.Context) {
 	var err error
 	var clusters *platformv1.ClusterList
 	var clusterCredentials *platformv1.ClusterCredentialList
-	clusters, err = c.platformClient.Clusters().List(context.Background(), metav1.ListOptions{})
+	clusters, err = c.platformClient.Clusters().List(ctx, metav1.ListOptions{})
 	if err != nil || clusters == nil {
 		return
 	}
-	clusterCredentials, err = c.platformClient.ClusterCredentials().List(context.Background(), metav1.ListOptions{})
+	clusterCredentials, err = c.platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{})
 	if err != nil || clusterCredentials == nil {
 		return
 	}
@@ -575,7 +585,8 @@ func (c *cacher) getDynamicClients() {
 		clusterID := cc.ClusterName
 		c.credentials[clusterID] = &clusterCredentials.Items[i]
 		if _, ok := c.clusters[clusterID]; ok {
-			dynamicClient, err := platformutil.BuildExternalDynamicClientSet(c.clusters[clusterID], c.credentials[clusterID])
+			dynamicClient, err := platformutil.
+				BuildExternalDynamicClientSet(c.clusters[clusterID], c.credentials[clusterID])
 			if err == nil {
 				c.dynamicClients[clusterID] = dynamicClient
 			}
