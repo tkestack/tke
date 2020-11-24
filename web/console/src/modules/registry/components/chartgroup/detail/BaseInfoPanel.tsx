@@ -34,13 +34,25 @@ export class BaseInfoPanel extends React.Component<RootProps> {
     const { chartGroupUpdateWorkflow } = this.props;
     const workflow = chartGroupUpdateWorkflow;
 
+    const isBase64 = str => {
+      if (str === '' || str.trim() === '') {
+        return false;
+      }
+      try {
+        return btoa(atob(str)) === str;
+      } catch (error) {
+        return false;
+      }
+    };
     /** 提交 */
     const perform = () => {
       actions.chartGroup.detail.validator.validate(null, async r => {
         if (isValid(r)) {
           let chartGroup: ChartGroup = Object.assign({}, chartGroupEditor);
           if (chartGroup.spec.importedInfo && chartGroup.spec.importedInfo.password) {
-            chartGroup.spec.importedInfo.password = btoa(chartGroup.spec.importedInfo.password);
+            if (!isBase64(chartGroup.spec.importedInfo.password)) {
+              chartGroup.spec.importedInfo.password = btoa(chartGroup.spec.importedInfo.password);
+            }
           }
           action.start([chartGroup]);
           action.perform();
