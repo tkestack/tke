@@ -146,7 +146,7 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
                   actions.dialog.updateDialogState(DialogNameEnum.clusterStatusDialog);
                 }}
               >
-                查看创建详情
+                查看详情
               </Button>
             )}
           </React.Fragment>
@@ -368,7 +368,33 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
         >
           <List type="option">
             <List.Item>
-              <LinkButton onClick={() => router.navigate({ sub: 'update' }, routeQueries)}>升级Master</LinkButton>
+              <LinkButton
+                disabled={!cluster.spec.updateInfo.master.isNeed || cluster.status.phase !== 'Running'}
+                errorTip={cluster.spec.updateInfo.master.message}
+                onClick={() => {
+                  router.navigate(
+                    { sub: 'cluster-update' },
+                    { ...routeQueries, clusterVersion: cluster?.status?.version }
+                  );
+                }}
+              >
+                升级Master
+              </LinkButton>
+            </List.Item>
+
+            <List.Item>
+              <LinkButton
+                disabled={!cluster.spec.updateInfo.worker.isNeed || cluster.status.phase !== 'Running'}
+                errorTip={cluster.spec.updateInfo.worker.message}
+                onClick={() => {
+                  router.navigate(
+                    { sub: 'worker-update' },
+                    { ...routeQueries, clusterVersion: cluster?.status?.version }
+                  );
+                }}
+              >
+                升级Worker
+              </LinkButton>
             </List.Item>
           </List>
         </Dropdown>

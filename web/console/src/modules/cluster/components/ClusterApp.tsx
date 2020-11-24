@@ -22,6 +22,7 @@ import { ResourceContainerPanel } from './resource/ResourceContainerPanel';
 import { ConfigPromethus } from './clusterManage/ConfigPromethus';
 import { RecoilRoot } from 'recoil';
 import { ClusterUpdate } from './clusterManage/ClusterUpdate';
+import { WorkerUpdate } from './clusterManage/WorkerUpdate';
 
 export const store = configStore();
 
@@ -80,8 +81,10 @@ class ClusterApp extends React.Component<RootProps, {}> {
       return <CreateICPanel />;
     } else if (urlParam['sub'] === 'config-promethus') {
       return <ConfigPromethus {...this.props} />;
-    } else if (urlParam['sub'] === 'update') {
-      return <ClusterUpdate />;
+    } else if (urlParam['sub'] === 'cluster-update') {
+      return <ClusterUpdate {...this.props}/>;
+    } else if (urlParam['sub'] === 'worker-update') {
+      return <WorkerUpdate {...this.props}/>;
     }
   }
 }
