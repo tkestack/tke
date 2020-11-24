@@ -24,14 +24,10 @@ import (
 	"strings"
 	"sync"
 
-	"k8s.io/apiserver/pkg/endpoints/request"
-
-	"tkestack.io/tke/pkg/platform/types"
-	"tkestack.io/tke/pkg/util/log"
-	"tkestack.io/tke/pkg/util/pkiutil"
-
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	restclient "k8s.io/client-go/rest"
@@ -39,6 +35,9 @@ import (
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
+	"tkestack.io/tke/pkg/platform/types"
+	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/pkiutil"
 )
 
 type clientX509Pool struct {
@@ -83,26 +82,37 @@ func ClientSet(ctx context.Context, platformClient platforminternalclient.Platfo
 	}
 
 	config := &rest.Config{}
-	if cluster.AuthzWebhookEnabled() {
-		clientCertData, clientKeyData, err := getOrCreateClientCert(ctx, clusterWrapper.ClusterCredential)
-		if err != nil {
-			return nil, err
-		}
-		config, err = clusterWrapper.RESTConfigForClientX509(config, clientCertData, clientKeyData)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		config, err = clusterWrapper.RESTConfig(config)
-		if err != nil {
-			return nil, err
-		}
+	//if cluster.AuthzWebhookEnabled() {
+	//	clientCertData, clientKeyData, err := getOrCreateClientCert(ctx, clusterWrapper.ClusterCredential)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	config, err = clusterWrapper.RESTConfigForClientX509(config, clientCertData, clientKeyData)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//} else {
+	//	config, err = clusterWrapper.RESTConfig(config)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//}
+
+	//转发给api-server的请求，都需要使用当前用户的证书去访问，如果没有证书，则生成证书
+	clientCertData, clientKeyData, err := getOrCreateClientCert(ctx, clusterWrapper)
+	if err != nil {
+		return nil, err
+	}
+	config, err = clusterWrapper.RESTConfigForClientX509(config, clientCertData, clientKeyData)
+	if err != nil {
+		return nil, err
 	}
 
 	return kubernetes.NewForConfig(config)
 }
 
-func getOrCreateClientCert(ctx context.Context, credential *platform.ClusterCredential) ([]byte, []byte, error) {
+func getOrCreateClientCert(ctx context.Context, clusterWrapper *types.Cluster) ([]byte, []byte, error) {
+	credential := clusterWrapper.ClusterCredential
 	groups := authentication.Groups(ctx)
 	username, tenantID := authentication.UsernameAndTenantID(ctx)
 	if tenantID != "" {
@@ -113,20 +123,38 @@ func getOrCreateClientCert(ctx context.Context, credential *platform.ClusterCred
 	if ok {
 		groups = append(groups, fmt.Sprintf("namespace:%s", ns))
 	}
-
-	cache, ok := pool.sm.Load(makeClientKey(username, groups))
-	if ok {
-		return cache.(*clientX509Cache).clientCertData, cache.(*clientX509Cache).clientKeyData, nil
+	uid := authentication.GetUID(ctx)
+	clusterName := filter.ClusterFrom(ctx)
+	if clusterName == "" {
+		return nil, nil, errors.NewBadRequest("clusterName is required")
 	}
-
-	clientCertData, clientKeyData, err := pkiutil.GenerateClientCertAndKey(username, groups, credential.CACert,
-		credential.CAKey)
-	if err != nil {
-		return nil, nil, err
+	var clientCertData, clientKeyData []byte
+	client, _ := clusterWrapper.Clientset()
+	cache, err := client.CoreV1().ConfigMaps("kube-system").Get(ctx, clusterName+"-"+uid, metav1.GetOptions{})
+	if err != nil || cache == nil {
+		clientCertData, clientKeyData, err := pkiutil.GenerateClientCertAndKey(username, groups, credential.CACert,
+			credential.CAKey)
+		if err != nil {
+			return nil, nil, err
+		}
+		confMap := &v1.ConfigMap{
+			TypeMeta: metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: clusterName + "-" + uid,
+			},
+			Data: map[string]string{
+				"CommonName": username,
+			},
+			BinaryData: map[string][]byte{
+				"clientCertData": clientCertData,
+				"clientKeyData":  clientKeyData,
+			},
+		}
+		client.CoreV1().ConfigMaps("kube-system").Create(ctx, confMap, metav1.CreateOptions{})
+	} else {
+		clientCertData = cache.BinaryData["clientCertData"]
+		clientKeyData = cache.BinaryData["clientKeyData"]
 	}
-
-	pool.sm.Store(makeClientKey(username, groups), &clientX509Cache{clientCertData: clientCertData,
-		clientKeyData: clientKeyData})
 
 	log.Debugf("generateClientCert success. username:%s groups:%v\n clientCertData:\n %s clientKeyData:\n %s",
 		username, groups, clientCertData, clientKeyData)
