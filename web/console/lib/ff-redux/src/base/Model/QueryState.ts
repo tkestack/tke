@@ -9,4 +9,6 @@ export interface QueryState<TFilter, TSFilter = any> {
   searchFilter?: TSFilter;
   sort?: SortQuery;
   continueToken?: string;
+  pageMapContinueToken?: Record<number, string>;
+  recordCount?: number;
 }

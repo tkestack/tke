@@ -30,7 +30,12 @@ const defaultInitialState: QueryState<any> = {
   keyword: '',
   search: '',
   filter: {},
-  sort: {}
+  sort: {},
+  continueToken: '',
+  pageMapContinueToken: {
+    1: ''
+  },
+  recordCount: Infinity
 };
 
 export function generateQueryReducer<TFilter>({
@@ -43,20 +48,35 @@ export function generateQueryReducer<TFilter>({
   const prefix = actionType as string;
   initialState = merge({}, defaultInitialState, initialState);
 
-  function resetPaging(paging: PagingQuery): PagingQuery {
-    return { pageIndex: 1, pageSize: paging.pageSize };
-  }
-
   function reducer(state: QueryState<TFilter> = initialState, action: ReduxAction<any>) {
-    let { paging, keyword, search, filter, sort } = state;
+    let { paging, keyword, search, filter, sort, continueToken, pageMapContinueToken, recordCount } = state;
+
+    function resetPaging(newPaging = paging) {
+      paging = { pageIndex: 1, pageSize: newPaging.pageSize };
+      resetContinue();
+      recordCount = Infinity;
+    }
+
+    function resetContinue() {
+      continueToken = '';
+      pageMapContinueToken = {
+        1: ''
+      };
+    }
 
     switch (action.type) {
       case prefix + ActionTypesEnum.ChangePaging:
-        paging = action.payload;
+        if (action.payload.pageSize !== paging.pageSize) {
+          resetPaging(action.payload);
+        } else {
+          paging = action.payload;
+          continueToken = pageMapContinueToken[paging.pageIndex];
+        }
+
         break;
 
       case prefix + ActionTypesEnum.RestPaging:
-        paging = { pageIndex: 1, pageSize: paging.pageSize };
+        resetPaging();
         break;
 
       case prefix + ActionTypesEnum.ChangeKeyword:
@@ -66,12 +86,15 @@ export function generateQueryReducer<TFilter>({
       case prefix + ActionTypesEnum.PerformSearch:
         search = action.payload;
         keyword = search;
-        paging = resetPaging(paging);
+        resetPaging();
         break;
 
       case prefix + ActionTypesEnum.ApplyFilter:
-        filter = extend({}, filter, action.payload);
-        paging = resetPaging(paging);
+        if (JSON.stringify(filter) !== JSON.stringify(action.payload)) {
+          filter = extend({}, filter, action.payload);
+          resetPaging();
+        }
+
         break;
 
       case prefix + ActionTypesEnum.ApplyPolling:
@@ -82,6 +105,18 @@ export function generateQueryReducer<TFilter>({
         sort = action.payload;
         break;
 
+      case prefix + ActionTypesEnum.ChangeContinueToken:
+        if (!action.payload) {
+          recordCount = paging.pageIndex * paging.pageSize;
+        } else {
+          pageMapContinueToken = {
+            ...pageMapContinueToken,
+            [paging.pageIndex + 1]: action.payload
+          };
+        }
+
+        break;
+
       case prefix + ActionTypesEnum.Reset:
         return initialState;
 
@@ -89,7 +124,7 @@ export function generateQueryReducer<TFilter>({
         return state;
     }
 
-    return { paging, keyword, search, filter, sort };
+    return { paging, keyword, search, filter, sort, continueToken, pageMapContinueToken, recordCount };
   }
 
   return reducer;
@@ -103,6 +138,7 @@ export interface QueryActionCreator<TFilter> {
   applyFilter(nextFilter: TFilter): any;
   applyPolling(nextFilter: TFilter): any;
   sortBy(by: string, desc?: boolean): any;
+  changeContinueToken(nextContinueToken: string): any;
   reset(): any;
 }
 
@@ -137,6 +173,13 @@ export function generateQueryActionCreator<TFilter>({
     return {
       type: prefix + ActionTypesEnum.ChangeKeyword,
       payload: nextKeyword
+    };
+  }
+
+  function changeContinueToken(nextContinueToken: string): ReduxAction<string> {
+    return {
+      type: prefix + ActionTypesEnum.ChangeContinueToken,
+      payload: nextContinueToken
     };
   }
 
@@ -182,13 +225,20 @@ export function generateQueryActionCreator<TFilter>({
     changeKeyword,
     performSearch,
     sortBy,
+    changeContinueToken,
     reset
   };
 
   if (bindFetcher || bindFetchers) {
-    const wrap = (creator: Function) => (...args: any[]) => (dispatch: Dispatch, getState: () => any) => {
+    const wrap = (creator: Function, noFetch = false) => (...args: any[]) => (
+      dispatch: Dispatch,
+      getState: () => any
+    ) => {
       const queryAction: ReduxAction<any> = creator.apply(null, args);
       dispatch(queryAction);
+
+      if (noFetch) return;
+
       if (bindFetcher) {
         dispatch(bindFetcher.fetch());
       }
@@ -212,6 +262,7 @@ export function generateQueryActionCreator<TFilter>({
       applyFilter: wrap(creator.applyFilter),
       applyPolling: wrap(creator.applyPolling),
       performSearch: wrap(creator.performSearch),
+      changeContinueToken: wrap(creator.changeContinueToken, true),
       sortBy: wrap(creator.sortBy),
       reset
     };
