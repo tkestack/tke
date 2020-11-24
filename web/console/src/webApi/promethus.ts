@@ -24,7 +24,7 @@ export interface EnablePromethusResponse {
 }
 
 export const enablePromethus = (params: EnablePromethusParams): Promise<EnablePromethusResponse> => {
-  return Request.post('monitor.tkestack.io/v1/prometheuses', {
+  return Request.post('/apis/monitor.tkestack.io/v1/prometheuses', {
     apiVersion: 'monitor.tkestack.io/v1',
     kind: 'Prometheus',
     metadata: {
@@ -52,4 +52,4 @@ export const enablePromethus = (params: EnablePromethusParams): Promise<EnablePr
 };
 
 export const closePromethus = (promethusId: string) =>
-  Request.delete(`monitor.tkestack.io/v1/prometheuses/${promethusId}`);
+  Request.delete(`/apis/monitor.tkestack.io/v1/prometheuses/${promethusId}`);
