@@ -134,7 +134,6 @@ func (c *cacher) getClusters(ctx context.Context) {
 		defer c.Unlock()
 	}
 	curClusterSet, curClusterCredentialSet, curDynamicClientSet := c.getDynamicClients(ctx)
-	log.Infof("curDynamicClientSet: %+v", curDynamicClientSet)
 	curClusterAbnormal := 0
 	curClusterStatisticSet := make(util.ClusterStatisticSet)
 	curClusterClientSets := make(util.ClusterClientSets)
@@ -176,15 +175,18 @@ func (c *cacher) getClusters(ctx context.Context) {
 				}
 				workloadCounter := c.getWorkloadCounter(ctx, dynamicClientSets, clusterID, clientSet)
 				resourceCounter := &util.ResourceCounter{
-					CPUCapacityMap:    map[string]map[string]float64{},
-					CPUAllocatableMap: map[string]map[string]float64{},
-					MemCapacityMap:    map[string]map[string]int64{},
-					MemAllocatableMap: map[string]map[string]int64{},
+					CPUCapacityMap:            map[string]map[string]float64{},
+					CPUAllocatableMap:         map[string]map[string]float64{},
+					CPUNotReadyCapacityMap:    map[string]map[string]float64{},
+					CPUNotReadyAllocatableMap: map[string]map[string]float64{},
+					MemCapacityMap:            map[string]map[string]int64{},
+					MemAllocatableMap:         map[string]map[string]int64{},
+					MemNotReadyCapacityMap:    map[string]map[string]int64{},
+					MemNotReadyAllocatableMap: map[string]map[string]int64{},
 				}
 				c.getNodes(ctx, clusterID, clientSet, resourceCounter)
 				c.getPods(ctx, clusterID, clientSet, resourceCounter)
-				if metricServerClientSet, err := c.getMetricServerClientSet(ctx, &cls);
-					err == nil && metricServerClientSet != nil {
+				if metricServerClientSet, err := c.getMetricServerClientSet(ctx, &cls); err == nil && metricServerClientSet != nil {
 					c.getNodeMetrics(ctx, clusterID, metricServerClientSet, resourceCounter)
 				}
 				calResourceRate(resourceCounter)
@@ -232,6 +234,8 @@ func (c *cacher) getClusters(ctx context.Context) {
 					CPULimit:                 resourceCounter.CPULimit,
 					CPUAllocatable:           resourceCounter.CPUAllocatable,
 					CPUCapacity:              resourceCounter.CPUCapacity,
+					CPUNotReadyAllocatable:   resourceCounter.CPUNotReadyAllocatable,
+					CPUNotReadyCapacity:      resourceCounter.CPUNotReadyCapacity,
 					CPURequestRate:           transPercent(resourceCounter.CPURequestRate),
 					CPUAllocatableRate:       transPercent(resourceCounter.CPUAllocatableRate),
 					CPUUsage:                 transPercent(resourceCounter.CPUUsage),
@@ -240,6 +244,8 @@ func (c *cacher) getClusters(ctx context.Context) {
 					MemLimit:                 resourceCounter.MemLimit,
 					MemAllocatable:           resourceCounter.MemAllocatable,
 					MemCapacity:              resourceCounter.MemCapacity,
+					MemNotReadyAllocatable:   resourceCounter.MemNotReadyAllocatable,
+					MemNotReadyCapacity:      resourceCounter.MemNotReadyCapacity,
 					MemRequestRate:           transPercent(resourceCounter.MemRequestRate),
 					MemAllocatableRate:       transPercent(resourceCounter.MemAllocatableRate),
 					MemUsage:                 transPercent(resourceCounter.MemUsage),
@@ -312,8 +318,12 @@ func (c *cacher) GetClusterOverviewResult(clusters []*platformv1.Cluster) *monit
 			result.WorkloadAbnormal += clusterStatistic.WorkloadAbnormal
 			result.CPUCapacity += clusterStatistic.CPUCapacity
 			result.CPUAllocatable += clusterStatistic.CPUAllocatable
+			result.CPUNotReadyCapacity += clusterStatistic.CPUNotReadyCapacity
+			result.CPUNotReadyAllocatable += clusterStatistic.CPUNotReadyAllocatable
 			result.MemCapacity += clusterStatistic.MemCapacity
 			result.MemAllocatable += clusterStatistic.MemAllocatable
+			result.MemNotReadyCapacity += clusterStatistic.MemNotReadyCapacity
+			result.MemNotReadyAllocatable += clusterStatistic.MemNotReadyAllocatable
 			result.PodCount += clusterStatistic.PodCount
 			clusterStatistics = append(clusterStatistics, clusterStatistic)
 		}
@@ -448,13 +458,23 @@ func (c *cacher) getNodes(ctx context.Context, clusterID string,
 	clientSet *kubernetes.Clientset, counter *util.ResourceCounter) {
 	cpuCapacityMap := map[string]float64{}
 	cpuAllocatableMap := map[string]float64{}
+	cpuNotReadyCapacityMap := map[string]float64{}
+	cpuNotReadyAllocatableMap := map[string]float64{}
 	memCapacityMap := map[string]int64{}
 	memAllocatableMap := map[string]int64{}
+	memNotReadyCapacityMap := map[string]int64{}
+	memNotReadyAllocatableMap := map[string]int64{}
 	if val, ok := counter.CPUCapacityMap[clusterID]; ok && val != nil {
 		cpuCapacityMap = val
 	}
 	if val, ok := counter.CPUAllocatableMap[clusterID]; ok && val != nil {
 		cpuAllocatableMap = val
+	}
+	if val, ok := counter.CPUNotReadyCapacityMap[clusterID]; ok && val != nil {
+		cpuNotReadyCapacityMap = val
+	}
+	if val, ok := counter.CPUNotReadyAllocatableMap[clusterID]; ok && val != nil {
+		cpuNotReadyAllocatableMap = val
 	}
 	if val, ok := counter.MemCapacityMap[clusterID]; ok && val != nil {
 		memCapacityMap = val
@@ -462,13 +482,39 @@ func (c *cacher) getNodes(ctx context.Context, clusterID string,
 	if val, ok := counter.MemAllocatableMap[clusterID]; ok && val != nil {
 		memAllocatableMap = val
 	}
-	var cpuAllocatableInc, cpuCapacityInc float64
-	var memAllocatableInc, memCapacityInc int64
+	if val, ok := counter.MemNotReadyCapacityMap[clusterID]; ok && val != nil {
+		memNotReadyCapacityMap = val
+	}
+	if val, ok := counter.MemNotReadyAllocatableMap[clusterID]; ok && val != nil {
+		memNotReadyAllocatableMap = val
+	}
+	var cpuAllocatableInc, cpuCapacityInc, cpuNotReadyAllocatableInc, cpuNotReadyCapacityInc float64
+	var memAllocatableInc, memCapacityInc, memNotReadyAllocatableInc, memNotReadyCapacityInc int64
 	if nodes, err := clientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{}); err == nil {
 		counter.NodeTotal = len(nodes.Items)
 		for i, node := range nodes.Items {
 			if !isReady(&nodes.Items[i]) {
 				counter.NodeAbnormal++
+				if node.Status.Allocatable != nil && node.Status.Allocatable.Cpu() != nil {
+					cpuNotReadyAllocatableInc = float64(node.Status.Allocatable.Cpu().MilliValue()) / float64(1000)
+					counter.CPUNotReadyAllocatable += cpuNotReadyAllocatableInc
+					cpuNotReadyAllocatableMap[node.GetName()] = cpuNotReadyAllocatableInc
+				}
+				if node.Status.Capacity != nil && node.Status.Capacity.Cpu() != nil {
+					cpuNotReadyCapacityInc = float64(node.Status.Capacity.Cpu().MilliValue()) / float64(1000)
+					counter.CPUNotReadyCapacity += cpuNotReadyCapacityInc
+					cpuNotReadyCapacityMap[node.GetName()] = cpuNotReadyCapacityInc
+				}
+				if node.Status.Allocatable != nil && node.Status.Allocatable.Memory() != nil {
+					memNotReadyAllocatableInc = node.Status.Allocatable.Memory().Value()
+					counter.MemNotReadyAllocatable += memNotReadyAllocatableInc
+					memNotReadyAllocatableMap[node.GetName()] = memNotReadyAllocatableInc
+				}
+				if node.Status.Capacity != nil && node.Status.Capacity.Memory() != nil {
+					memNotReadyCapacityInc = node.Status.Allocatable.Memory().Value()
+					counter.MemNotReadyCapacity += memNotReadyCapacityInc
+					memNotReadyCapacityMap[node.GetName()] = memNotReadyCapacityInc
+				}
 			}
 			if node.Status.Allocatable != nil && node.Status.Allocatable.Cpu() != nil {
 				cpuAllocatableInc = float64(node.Status.Allocatable.Cpu().MilliValue()) / float64(1000)
@@ -496,8 +542,12 @@ func (c *cacher) getNodes(ctx context.Context, clusterID string,
 	}
 	counter.CPUCapacityMap[clusterID] = cpuCapacityMap
 	counter.CPUAllocatableMap[clusterID] = cpuAllocatableMap
+	counter.CPUNotReadyCapacityMap[clusterID] = cpuNotReadyCapacityMap
+	counter.CPUNotReadyAllocatableMap[clusterID] = cpuNotReadyAllocatableMap
 	counter.MemCapacityMap[clusterID] = memCapacityMap
 	counter.MemAllocatableMap[clusterID] = memAllocatableMap
+	counter.MemNotReadyCapacityMap[clusterID] = memNotReadyCapacityMap
+	counter.MemNotReadyAllocatableMap[clusterID] = memNotReadyAllocatableMap
 }
 
 func (c *cacher) getPods(ctx context.Context, clusterID string,
@@ -615,7 +665,6 @@ func (c *cacher) getDynamicClients(ctx context.Context) (util.ClusterSet,
 			}
 		}
 	}
-	log.Infof("resDynamicClientSet: %+v", resDynamicClientSet)
 	return resClusterSet, resClusterCredentialSet, resDynamicClientSet
 }
 

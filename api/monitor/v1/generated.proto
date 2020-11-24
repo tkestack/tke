@@ -60,13 +60,21 @@ message ClusterOverviewResult {
 
   optional double cpuAllocatable = 10;
 
-  optional int64 memCapacity = 11;
+  optional double cpuNotReadyCapacity = 11;
 
-  optional int64 memAllocatable = 12;
+  optional double cpuNotReadyAllocatable = 12;
 
-  optional int32 podCount = 13;
+  optional int64 memCapacity = 13;
 
-  repeated ClusterStatistic clusters = 14;
+  optional int64 memAllocatable = 14;
+
+  optional int64 memNotReadyCapacity = 15;
+
+  optional int64 memNotReadyAllocatable = 16;
+
+  optional int32 podCount = 17;
+
+  repeated ClusterStatistic clusters = 18;
 }
 
 message ClusterStatistic {
@@ -98,35 +106,43 @@ message ClusterStatistic {
 
   optional double cpuAllocatable = 14;
 
-  optional string cpuRequestRate = 15;
+  optional double cpuNotReadyCapacity = 15;
 
-  optional string cpuAllocatableRate = 16;
+  optional double cpuNotReadyAllocatable = 16;
 
-  optional string cpuUsage = 17;
+  optional string cpuRequestRate = 17;
 
-  optional int64 memUsed = 18;
+  optional string cpuAllocatableRate = 18;
 
-  optional int64 memRequest = 19;
+  optional string cpuUsage = 19;
 
-  optional int64 memLimit = 20;
+  optional int64 memUsed = 20;
 
-  optional int64 memCapacity = 21;
+  optional int64 memRequest = 21;
 
-  optional int64 memAllocatable = 22;
+  optional int64 memLimit = 22;
 
-  optional string memRequestRate = 23;
+  optional int64 memCapacity = 23;
 
-  optional string memAllocatableRate = 24;
+  optional int64 memAllocatable = 24;
 
-  optional string memUsage = 25;
+  optional int64 memNotReadyCapacity = 25;
 
-  optional int32 podCount = 26;
+  optional int64 memNotReadyAllocatable = 26;
 
-  optional bool schedulerHealthy = 27;
+  optional string memRequestRate = 27;
 
-  optional bool controllerManagerHealthy = 28;
+  optional string memAllocatableRate = 28;
 
-  optional bool etcdHealthy = 29;
+  optional string memUsage = 29;
+
+  optional int32 podCount = 30;
+
+  optional bool schedulerHealthy = 31;
+
+  optional bool controllerManagerHealthy = 32;
+
+  optional bool etcdHealthy = 33;
 }
 
 // ConfigMap holds configuration data for tke to consume.

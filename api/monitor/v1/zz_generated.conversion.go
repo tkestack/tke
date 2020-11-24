@@ -223,8 +223,12 @@ func autoConvert_v1_ClusterOverviewResult_To_monitor_ClusterOverviewResult(in *C
 	out.WorkloadAbnormal = in.WorkloadAbnormal
 	out.CPUCapacity = in.CPUCapacity
 	out.CPUAllocatable = in.CPUAllocatable
+	out.CPUNotReadyCapacity = in.CPUNotReadyCapacity
+	out.CPUNotReadyAllocatable = in.CPUNotReadyAllocatable
 	out.MemCapacity = in.MemCapacity
 	out.MemAllocatable = in.MemAllocatable
+	out.MemNotReadyCapacity = in.MemNotReadyCapacity
+	out.MemNotReadyAllocatable = in.MemNotReadyAllocatable
 	out.PodCount = in.PodCount
 	out.Clusters = *(*[]*monitor.ClusterStatistic)(unsafe.Pointer(&in.Clusters))
 	return nil
@@ -246,8 +250,12 @@ func autoConvert_monitor_ClusterOverviewResult_To_v1_ClusterOverviewResult(in *m
 	out.WorkloadAbnormal = in.WorkloadAbnormal
 	out.CPUCapacity = in.CPUCapacity
 	out.CPUAllocatable = in.CPUAllocatable
+	out.CPUNotReadyCapacity = in.CPUNotReadyCapacity
+	out.CPUNotReadyAllocatable = in.CPUNotReadyAllocatable
 	out.MemCapacity = in.MemCapacity
 	out.MemAllocatable = in.MemAllocatable
+	out.MemNotReadyCapacity = in.MemNotReadyCapacity
+	out.MemNotReadyAllocatable = in.MemNotReadyAllocatable
 	out.PodCount = in.PodCount
 	out.Clusters = *(*[]*ClusterStatistic)(unsafe.Pointer(&in.Clusters))
 	return nil
@@ -273,6 +281,8 @@ func autoConvert_v1_ClusterStatistic_To_monitor_ClusterStatistic(in *ClusterStat
 	out.CPULimit = in.CPULimit
 	out.CPUCapacity = in.CPUCapacity
 	out.CPUAllocatable = in.CPUAllocatable
+	out.CPUNotReadyCapacity = in.CPUNotReadyCapacity
+	out.CPUNotReadyAllocatable = in.CPUNotReadyAllocatable
 	out.CPURequestRate = in.CPURequestRate
 	out.CPUAllocatableRate = in.CPUAllocatableRate
 	out.CPUUsage = in.CPUUsage
@@ -281,6 +291,8 @@ func autoConvert_v1_ClusterStatistic_To_monitor_ClusterStatistic(in *ClusterStat
 	out.MemLimit = in.MemLimit
 	out.MemCapacity = in.MemCapacity
 	out.MemAllocatable = in.MemAllocatable
+	out.MemNotReadyCapacity = in.MemNotReadyCapacity
+	out.MemNotReadyAllocatable = in.MemNotReadyAllocatable
 	out.MemRequestRate = in.MemRequestRate
 	out.MemAllocatableRate = in.MemAllocatableRate
 	out.MemUsage = in.MemUsage
@@ -311,6 +323,8 @@ func autoConvert_monitor_ClusterStatistic_To_v1_ClusterStatistic(in *monitor.Clu
 	out.CPULimit = in.CPULimit
 	out.CPUCapacity = in.CPUCapacity
 	out.CPUAllocatable = in.CPUAllocatable
+	out.CPUNotReadyCapacity = in.CPUNotReadyCapacity
+	out.CPUNotReadyAllocatable = in.CPUNotReadyAllocatable
 	out.CPURequestRate = in.CPURequestRate
 	out.CPUAllocatableRate = in.CPUAllocatableRate
 	out.CPUUsage = in.CPUUsage
@@ -319,6 +333,8 @@ func autoConvert_monitor_ClusterStatistic_To_v1_ClusterStatistic(in *monitor.Clu
 	out.MemLimit = in.MemLimit
 	out.MemCapacity = in.MemCapacity
 	out.MemAllocatable = in.MemAllocatable
+	out.MemNotReadyCapacity = in.MemNotReadyCapacity
+	out.MemNotReadyAllocatable = in.MemNotReadyAllocatable
 	out.MemRequestRate = in.MemRequestRate
 	out.MemAllocatableRate = in.MemAllocatableRate
 	out.MemUsage = in.MemUsage
