@@ -128,7 +128,19 @@ func (h *repoUpdateProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Requ
 		responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), w)
 		return
 	}
+	err = h.syncChartGroup(req.Context(), entry)
+	if err != nil {
+		responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), w)
+		return
+	}
 	responsewriters.WriteRawJSON(http.StatusOK, "Success", w)
+}
+
+func (h *repoUpdateProxyHandler) syncChartGroup(ctx context.Context, entries map[string]repo.ChartVersions) error {
+	cg := h.chartGroup.DeepCopy()
+	cg.Status.ChartCount = int32(len(entries))
+	_, err := h.registryClient.ChartGroups().UpdateStatus(ctx, cg, metav1.UpdateOptions{})
+	return err
 }
 
 func (h *repoUpdateProxyHandler) syncChart(ctx context.Context, entries map[string]repo.ChartVersions) error {
