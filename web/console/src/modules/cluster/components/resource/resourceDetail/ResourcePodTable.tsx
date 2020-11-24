@@ -57,6 +57,7 @@ export function PodTabel({
           stateText={`第${paging.pageIndex}页`}
           pageIndexVisible={false}
           endJumpVisible={false}
+          pageSizeVisible={podList?.data?.recordCount <= paging.pageSize}
         />
       </Card.Body>
     </Card>
