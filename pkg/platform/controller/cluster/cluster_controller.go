@@ -137,9 +137,6 @@ func (c *Controller) needsUpdate(old *platformv1.Cluster, new *platformv1.Cluste
 	if !reflect.DeepEqual(old.Spec, new.Spec) {
 		return true
 	}
-	if !reflect.DeepEqual(old.ResourceVersion, new.ResourceVersion) {
-		return true
-	}
 
 	if old.Status.Phase == platformv1.ClusterRunning && new.Status.Phase == platformv1.ClusterTerminating {
 		return true
@@ -263,11 +260,11 @@ func (c *Controller) reconcile(ctx context.Context, key string, cluster *platfor
 	switch cluster.Status.Phase {
 	case platformv1.ClusterInitializing:
 		err = c.onCreate(ctx, cluster)
-	case platformv1.ClusterRunning, platformv1.ClusterFailed, platformv1.ClusterUpgrading:
+	case platformv1.ClusterRunning, platformv1.ClusterFailed:
 		err = c.onUpdate(ctx, cluster)
-	case platformv1.ClusterUpscaling:
+	case platformv1.ClusterUpgrading:
 		err = c.onUpdate(ctx, cluster)
-	case platformv1.ClusterDownscaling:
+	case platformv1.ClusterUpscaling, platformv1.ClusterDownscaling:
 		err = c.onUpdate(ctx, cluster)
 	case platformv1.ClusterTerminating:
 		log.FromContext(ctx).Info("Cluster has been terminated. Attempting to cleanup resources")
@@ -329,31 +326,52 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 	if err != nil {
 		return err
 	}
+	if clusterWrapper.Status.Phase == platformv1.ClusterRunning || clusterWrapper.Status.Phase == platformv1.ClusterFailed {
+		err = provider.OnUpdate(ctx, clusterWrapper)
+		clusterWrapper = c.checkHealth(ctx, clusterWrapper)
+		if err != nil {
+			// Update status, ignore failure
+			if clusterWrapper.IsCredentialChanged {
+				_, _ = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+			}
 
-	err = provider.OnUpdate(ctx, clusterWrapper)
-	clusterWrapper = c.checkHealth(ctx, clusterWrapper)
-	if err != nil {
-		// Update status, ignore failure
-		if clusterWrapper.IsCredentialChanged {
-			_, _ = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+			_, _ = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+			return err
 		}
-
-		_, _ = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
-		return err
-	}
-
-	if clusterWrapper.IsCredentialChanged {
-		clusterWrapper.ClusterCredential, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+		if clusterWrapper.IsCredentialChanged {
+			clusterWrapper.ClusterCredential, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+			if err != nil {
+				return err
+			}
+		}
+		clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
-	}
+	} else {
+		for clusterWrapper.Status.Phase != platformv1.ClusterRunning {
+			err = provider.OnUpdate(ctx, clusterWrapper)
+			if err != nil {
+				// Update status, ignore failure
+				if clusterWrapper.IsCredentialChanged {
+					_, _ = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+				}
 
-	clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
-	if err != nil {
-		return err
+				_, _ = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+				return err
+			}
+			if clusterWrapper.IsCredentialChanged {
+				clusterWrapper.ClusterCredential, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+				if err != nil {
+					return err
+				}
+			}
+			clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+			if err != nil {
+				return err
+			}
+		}
 	}
-
 	return nil
 }
 

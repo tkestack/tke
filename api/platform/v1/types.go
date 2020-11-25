@@ -130,7 +130,7 @@ type ClusterSpec struct {
 	// +optional
 	NetworkArgs map[string]string `json:"networkArgs,omitempty" protobuf:"bytes,24,name=networkArgs"`
 	// +optional
-	ScalingMachines []ClusterMachine `json:"scalingMachines,omitempty" protobuf:"bytes,25,rep,name=scalingMachines"`
+	ScalingMachines []ClusterMachine `json:"scalingMachines,omitempty" protobuf:"bytes,25,opt,name=scalingMachines"`
 }
 
 // ClusterStatus represents information about the status of a cluster.
