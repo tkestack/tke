@@ -50,16 +50,27 @@ export const checkClusterIsNeedUpdate = async ({
     }
   });
   if (items.length > 0) {
-    return {
-      master: {
-        isNeed: false,
-        message: '该集群有worker节点需要先完成升级'
-      },
+    const master = {
+      isNeed: false,
+      message: '该集群有worker节点需要先完成升级'
+    };
 
-      worker: {
-        isNeed: true,
-        message: ''
-      }
+    let worker = {
+      isNeed: true,
+      message: ''
+    };
+
+    if (items.findIndex(({ status }) => status?.phase === 'Upgrading') > -1) {
+      worker = {
+        isNeed: false,
+        message: '有节点正在升级中'
+      };
+    }
+
+    return {
+      master,
+
+      worker
     };
   }
 
@@ -166,10 +177,10 @@ export const updateWorkers = async ({
 };
 
 export const getNodes = async ({ clusterName, clusterVersion }: { clusterName: string; clusterVersion }) => {
-  const { items: machines } = await Request.get<any, { items: Array<any> }>('/apis/platform.tkestack.io/v1/machines', {
+  const machinesPromise = Request.get<any, { items: Array<any> }>('/apis/platform.tkestack.io/v1/machines', {
     params: {
       labelSelector: transObjToelector({
-        // 'platform.tkestack.io/need-upgrade': ''
+        'platform.tkestack.io/need-upgrade': ''
       }),
       fieldSelector: transObjToelector({
         'spec.clusterName': clusterName
@@ -177,20 +188,24 @@ export const getNodes = async ({ clusterName, clusterVersion }: { clusterName: s
     }
   });
 
-  const { items: nodes } = await Request.get<any, { items: Array<any> }>('/api/v1/nodes', {
+  const nodePromise = Request.get<any, { items: Array<any> }>('/api/v1/nodes', {
     headers: {
       'X-TKE-ClusterName': clusterName
     }
   });
 
-  return nodes.map(({ metadata, status }) => ({
-    key: metadata?.uid,
-    name: metadata?.name,
-    label: metadata?.labels,
-    kubeletVersion: status.nodeInfo.kubeletVersion,
-    clusterVersion,
-    machines: machines
-      .filter(m => metadata?.labels?.['platform.tkestack.io/machine-ip'] === m?.spec?.ip)
-      .map(m => m?.metada?.name)
-  }));
+  const [{ items: machines }, { items: nodes }] = await Promise.all([machinesPromise, nodePromise]);
+
+  return nodes
+    .map(({ metadata, status }) => ({
+      key: metadata?.uid,
+      name: metadata?.name,
+      label: metadata?.labels,
+      kubeletVersion: status.nodeInfo.kubeletVersion,
+      clusterVersion,
+      machines: machines
+        .filter(m => metadata?.labels?.['platform.tkestack.io/machine-ip'] === m?.spec?.ip)
+        .map(m => m?.metadata?.name)
+    }))
+    .filter(({ machines }) => machines.length > 0);
 };

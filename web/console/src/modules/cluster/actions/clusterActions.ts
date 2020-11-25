@@ -159,7 +159,10 @@ const FFModelClusterActions = createFFListActions<Cluster, ClusterFilter>({
           clusterInfo && dispatch(clusterActions.selectCluster([clusterInfo]));
         }
 
-        if (record.data.records.filter(item => item.status.phase !== 'Running').length === 0) {
+        if (
+          record.data.records.filter(item => item.status.phase !== 'Running' && item.status.phase !== 'Upgrading')
+            .length === 0
+        ) {
           dispatch(clusterActions.clearPolling());
         }
       } else {

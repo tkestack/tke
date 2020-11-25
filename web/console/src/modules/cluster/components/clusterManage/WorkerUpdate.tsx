@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Space, Button, Form, Select, Checkbox, InputNumber, Typography, Transfer, Table } from 'antd';
+import { Space, Button, Form, Select, Checkbox, InputNumber, Typography, Transfer, Table, Alert } from 'antd';
 import { AntdLayout } from '@src/modules/common/layouts';
 import { TransferProps } from 'antd/lib/transfer';
 import { difference } from 'lodash';
@@ -14,6 +14,7 @@ export function WorkerUpdate({ route }: RootProps) {
   const [nodes, setNodes] = useState([]);
   const [targetKeys, setTargatKeys] = useState([]);
   const [maxUnready, setMaxUnready] = useState(0);
+  const [isSubmitLoding, setIsSubmitLoding] = useState(false);
 
   const { clusterId, clusterVersion } = route.queries;
 
@@ -49,10 +50,11 @@ export function WorkerUpdate({ route }: RootProps) {
   ];
 
   async function submit() {
+    setIsSubmitLoding(true);
     const mchineNames = [
       ...new Set(
         nodes
-          .filter(key => targetKeys.includes(key))
+          .filter(({ key }) => targetKeys.includes(key))
           .map(({ machines }) => machines as string[])
           .reduce((all, current) => [...all, ...current], [])
       )
@@ -63,6 +65,12 @@ export function WorkerUpdate({ route }: RootProps) {
       maxUnready,
       clusterName: clusterId
     });
+    setIsSubmitLoding(false);
+    goback();
+  }
+
+  function goback() {
+    history.back();
   }
 
   return (
@@ -70,10 +78,14 @@ export function WorkerUpdate({ route }: RootProps) {
       title="升级Worker"
       footer={
         <Space>
-          <Button type="primary" onClick={submit}>
-            提交
+          <Button type="primary" onClick={submit} loading={isSubmitLoding}>
+            {isSubmitLoding ? '升级中' : '确定'}
           </Button>
-          <Button>取消</Button>
+          <Button disabled={isSubmitLoding} onClick={goback}>
+            取消
+          </Button>
+
+          {isSubmitLoding && <Alert message="worker节点正在升级中，请耐心等待，不要关闭页面!" type="warning" />}
         </Space>
       }
     >
@@ -84,6 +96,7 @@ export function WorkerUpdate({ route }: RootProps) {
 
         <Form.Item label="选择节点">
           <TableTransfer
+            titles={[`当前集群下有以下可升级节点`, `已选择${targetKeys.length}项`]}
             columns={transferColumns}
             dataSource={nodes}
             targetKeys={targetKeys}
