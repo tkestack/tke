@@ -36,8 +36,6 @@ func FullfillChartInfo(appChart v1.Chart, cg registryv1.ChartGroup) (v1.Chart, e
 		appChart.RepoURL = cg.Spec.ImportedInfo.Addr
 		appChart.RepoUsername = cg.Spec.ImportedInfo.Username
 		appChart.RepoPassword = cg.Spec.ImportedInfo.Password
-	} else {
-		appChart.ImportedRepo = false
 	}
 	return appChart, nil
 }
