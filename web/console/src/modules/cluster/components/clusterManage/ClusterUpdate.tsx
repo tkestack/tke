@@ -6,7 +6,7 @@ import { compare } from 'compare-versions';
 import { RootProps } from '../ClusterApp';
 import { updateCluster } from '@src/webApi/cluster';
 
-export function ClusterUpdate({ route }: RootProps) {
+export function ClusterUpdate({ route, actions }: RootProps) {
   const ItemStyle = () => ({
     width: 120
   });
@@ -26,6 +26,7 @@ export function ClusterUpdate({ route }: RootProps) {
 
   async function perform(values) {
     await updateCluster({ ...values, clusterName: clusterId });
+    actions.cluster.applyPolling();
     goBack();
   }
 
