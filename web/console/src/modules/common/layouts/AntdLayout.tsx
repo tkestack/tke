@@ -13,7 +13,7 @@ export interface AntdLayoutProps {
 
 export function AntdLayout({ title, footer, children, goBack = () => history.back() }: AntdLayoutProps) {
   return (
-    <Layout style={{ height: '100%' }}>
+    <Layout style={{ minHeight: '100%' }}>
       <PageHeader onBack={goBack} title={title} style={{ backgroundColor: '#fff' }} />
       <Content style={{ padding: '20px' }}>
         <Card style={{ maxWidth: '1360px', margin: '0 auto' }}>{children}</Card>
