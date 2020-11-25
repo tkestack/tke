@@ -318,7 +318,7 @@ export const AlarmPolicyMetrics = {
       enable: true,
       measurement: 'k8s_node',
       statisticsPeriod: 1,
-      metricName: 'k8s_node_mem_usage',
+      metricName: 'k8s_node_mem_usage_no_cache',
       evaluatorType: 'gt',
       evaluatorValue: '90',
       metricDisplayName: t('内存利用率'),
@@ -517,8 +517,8 @@ export const AlarmPolicyMetrics = {
 
 export const MetricNameMap = {};
 
-for (let key in AlarmPolicyMetrics) {
-  for (let metric of AlarmPolicyMetrics[key]) {
+for (const key in AlarmPolicyMetrics) {
+  for (const metric of AlarmPolicyMetrics[key]) {
     MetricNameMap[metric.metricName] = metric.metricDisplayName;
   }
 }
