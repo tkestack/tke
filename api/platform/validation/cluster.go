@@ -63,8 +63,8 @@ func ValidateClusterUpdate(cluster *types.Cluster, oldCluster *types.Cluster) fi
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.ControllerManagerExtraArgs, oldCluster.Spec.ControllerManagerExtraArgs, fldPath.Child("controllerManagerExtraArgs"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.SchedulerExtraArgs, oldCluster.Spec.SchedulerExtraArgs, fldPath.Child("schedulerExtraArgs"))...)
 
-	allErrs = append(allErrs, ValidateClusterScale(cluster.Cluster, oldCluster.Cluster, fldPath.Child("machines"))...)
 	allErrs = append(allErrs, ValidateCluster(cluster)...)
+	allErrs = append(allErrs, ValidateClusterScale(cluster.Cluster, oldCluster.Cluster, fldPath.Child("machines"))...)
 
 	return allErrs
 }
@@ -72,6 +72,15 @@ func ValidateClusterUpdate(cluster *types.Cluster, oldCluster *types.Cluster) fi
 // ValidateClusterScale tests if master scale up/down to a cluster is valid.
 func ValidateClusterScale(cluster *platform.Cluster, oldCluster *platform.Cluster, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+	ha := cluster.Spec.Features.HA
+	if ha == nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, "tkestack HA should enabled for master scale"))
+		return allErrs
+	}
+	if ha.TKEHA == nil && ha.ThirdPartyHA == nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, "tkestack HA should enabled for master scale"))
+		return allErrs
+	}
 	_, err := clusterutil.PrepareClusterScale(cluster, oldCluster)
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, err.Error()))

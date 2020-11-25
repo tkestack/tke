@@ -100,6 +100,7 @@ type DelegateProvider struct {
 	CreateHandlers    []Handler
 	DeleteHandlers    []Handler
 	UpdateHandlers    []Handler
+	UpgradeHandlers   []Handler
 	ScaleUpHandlers   []Handler
 	ScaleDownHandlers []Handler
 }
@@ -221,20 +222,20 @@ func (p *DelegateProvider) OnCreate(ctx context.Context, cluster *v1.Cluster) er
 func (p *DelegateProvider) OnUpdate(ctx context.Context, cluster *v1.Cluster) error {
 	handlers := []Handler{}
 	phase := cluster.Status.Phase
-	var condition *platformv1.ClusterCondition
-	var err error
-	if phase == platformv1.ClusterUpgrading {
+	if phase == platformv1.ClusterRunning || phase == platformv1.ClusterFailed {
 		handlers = p.UpdateHandlers
-		condition, err = p.getCurrentCondition(cluster, phase, handlers)
+		return p.houseKeeping(ctx, cluster, handlers)
+	}
+	if phase == platformv1.ClusterUpgrading {
+		handlers = p.UpgradeHandlers
 	}
 	if phase == platformv1.ClusterUpscaling {
 		handlers = p.CreateHandlers
-		condition, err = p.getCurrentCondition(cluster, phase, handlers)
 	}
 	if phase == platformv1.ClusterDownscaling {
 		handlers = p.ScaleDownHandlers
-		condition, err = p.getCurrentCondition(cluster, phase, handlers)
 	}
+	condition, err := p.getCurrentCondition(cluster, phase, handlers)
 	if err != nil {
 		return err
 	}
@@ -268,7 +269,6 @@ func (p *DelegateProvider) OnUpdate(ctx context.Context, cluster *v1.Cluster) er
 			}, true)
 			return nil
 		}
-
 		cluster.SetCondition(platformv1.ClusterCondition{
 			Type:   condition.Type,
 			Status: platformv1.ConditionTrue,
@@ -280,6 +280,8 @@ func (p *DelegateProvider) OnUpdate(ctx context.Context, cluster *v1.Cluster) er
 	if nextConditionType == ConditionTypeDone {
 		cluster.Status.Phase = platformv1.ClusterRunning
 		if err := p.OnRunning(ctx, cluster); err != nil {
+			cluster.Spec.ScalingMachines = nil
+			log.FromContext(ctx).Info("zzzzzzzzzzzzzzzzzzzzzzzz")
 			return fmt.Errorf("%s.OnRunning error: %w", p.Name(), err)
 		}
 	} else {
@@ -314,7 +316,6 @@ func (p *DelegateProvider) OnDelete(ctx context.Context, cluster *v1.Cluster) er
 }
 
 func (p *DelegateProvider) OnRunning(ctx context.Context, cluster *v1.Cluster) error {
-	cluster.Spec.ScalingMachines = nil
 	return nil
 }
 
@@ -346,6 +347,24 @@ func (p *DelegateProvider) getHandler(conditionType string, handlers []Handler) 
 	return nil
 }
 
+func (p *DelegateProvider) houseKeeping(ctx context.Context, cluster *v1.Cluster, handlers []Handler) error {
+	for _, handler := range p.UpdateHandlers {
+		ctx := log.FromContext(ctx).WithName("ClusterProvider.OnUpdate").WithName(handler.Name()).WithContext(ctx)
+		log.FromContext(ctx).Info("Doing")
+		startTime := time.Now()
+		err := handler(ctx, cluster)
+		log.FromContext(ctx).Info("Done", "error", err, "cost", time.Since(startTime).String())
+		if err != nil {
+			cluster.Status.Reason = ReasonFailedUpdate
+			cluster.Status.Message = fmt.Sprintf("%s error: %v", handler.Name(), err)
+			return err
+		}
+	}
+	cluster.Status.Reason = ""
+	cluster.Status.Message = ""
+	return nil
+}
+
 func (p *DelegateProvider) getCurrentCondition(c *v1.Cluster, phase platformv1.ClusterPhase, handlers []Handler) (*platformv1.ClusterCondition, error) {
 	if c.Status.Phase != phase {
 		return nil, fmt.Errorf("cluster phase is %s now", phase)
@@ -362,15 +381,15 @@ func (p *DelegateProvider) getCurrentCondition(c *v1.Cluster, phase platformv1.C
 			Reason:  ReasonWaiting,
 		}, nil
 	}
-
 	for _, condition := range c.Status.Conditions {
 		if condition.Status == platformv1.ConditionFalse || condition.Status == platformv1.ConditionUnknown {
 			return &condition, nil
 		}
 	}
-
-	if c.Status.Phase == platformv1.ClusterUpgrading || c.Status.Phase == platformv1.ClusterUpscaling ||
-		c.Status.Phase == platformv1.ClusterDownscaling {
+	if c.Status.Phase == platformv1.ClusterUpgrading ||
+		c.Status.Phase == platformv1.ClusterUpscaling ||
+		c.Status.Phase == platformv1.ClusterDownscaling ||
+		c.Status.Phase == platformv1.ClusterRunning {
 		return &platformv1.ClusterCondition{
 			Type:    handlers[0].Name(),
 			Status:  platformv1.ConditionUnknown,

@@ -21,10 +21,14 @@ package cluster
 import (
 	"context"
 
-	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 func (p *Provider) EnsureCleanClusterMark(ctx context.Context, c *typesv1.Cluster) error {
@@ -34,16 +38,41 @@ func (p *Provider) EnsureCleanClusterMark(ctx context.Context, c *typesv1.Cluste
 	return nil
 }
 
-func (p *Provider) EnsureDownScaling(ctx context.Context, c *v1.Cluster) error {
+func (p *Provider) EnsureRemoveETCDMember(ctx context.Context, c *v1.Cluster) error {
 	for _, machine := range c.Spec.ScalingMachines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
 		}
-		_, err = machineSSH.CombinedOutput(`kubeadm reset -f`)
+		err = kubeadm.Reset(machineSSH, "remove-etcd-member")
 		if err != nil {
-			return errors.Wrap(err, machine.IP)
+			return err
 		}
+	}
+	return nil
+}
+
+func (p *Provider) EnsureRemoveNode(ctx context.Context, c *v1.Cluster) error {
+	client, err := c.Clientset()
+	if err != nil {
+		return err
+	}
+	for _, machine := range c.Spec.ScalingMachines {
+		node, err := apiclient.GetNodeByMachineIP(ctx, client, machine.IP)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				return err
+			}
+			log.FromContext(ctx).Info("deleteNode done")
+			return nil
+		}
+		err = client.CoreV1().Nodes().Delete(context.Background(), node.Name, metav1.DeleteOptions{})
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				return err
+			}
+		}
+		log.FromContext(ctx).Info("deleteNode done")
 	}
 	return nil
 }
