@@ -12,12 +12,13 @@ const mapDispatchToProps = dispatch =>
 
 @connect(state => state, mapDispatchToProps)
 export class ChartGroupCreate extends React.Component<RootProps, {}> {
-
   componentWillUnmount() {
     let { actions } = this.props;
     actions.chartGroup.create.addChartGroupWorkflow.reset();
     actions.chartGroup.create.clearCreationState();
     actions.chartGroup.create.clearValidatorState();
+
+    actions.user.associate.clearUserAssociation();
   }
 
   componentDidMount() {
@@ -26,6 +27,8 @@ export class ChartGroupCreate extends React.Component<RootProps, {}> {
     actions.project.list.fetch();
     /** 拉取用户信息 */
     actions.user.detail.fetchUserInfo();
+    /** 拉取用户列表 */
+    actions.user.associate.userList.performSearch('');
   }
 
   render() {

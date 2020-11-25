@@ -35,14 +35,14 @@ func commonListAndMerge(ctx context.Context, options *metainternal.ListOptions, 
 	return allList, nil
 }
 
-// ListPersonalChartsFromStore list all charts that belongs to personal chartgroup
-func ListPersonalChartsFromStore(ctx context.Context,
+// ListUserChartsFromStore list all charts that belongs to personal chartgroup
+func ListUserChartsFromStore(ctx context.Context,
 	options *metainternal.ListOptions,
 	businessClient businessversionedclient.BusinessV1Interface,
 	registryClient *registryinternalclient.RegistryClient,
 	privilegedUsername string,
 	store *registry.Store) (runtime.Object, error) {
-	obj, err := ListPersonalChartGroups(ctx, options.DeepCopy(), businessClient, registryClient, privilegedUsername)
+	obj, err := ListUserChartGroups(ctx, options.DeepCopy(), businessClient, registryClient, privilegedUsername)
 	if err != nil {
 		return nil, err
 	}
@@ -63,25 +63,6 @@ func ListProjectChartsFromStore(ctx context.Context,
 	privilegedUsername string,
 	store *registry.Store) (runtime.Object, error) {
 	obj, err := ListProjectChartGroups(ctx, options.DeepCopy(), targetProjectID, businessClient, authClient, registryClient, privilegedUsername)
-	if err != nil {
-		return nil, err
-	}
-	chartGroupList := obj.(*registryapi.ChartGroupList)
-	if len(chartGroupList.Items) == 0 {
-		return &registryapi.ChartList{}, nil
-	}
-
-	return commonListAndMerge(ctx, options, store, chartGroupList)
-}
-
-// ListSystemChartsFromStore list all charts that belongs to system chartgroup
-func ListSystemChartsFromStore(ctx context.Context,
-	options *metainternal.ListOptions,
-	businessClient businessversionedclient.BusinessV1Interface,
-	registryClient *registryinternalclient.RegistryClient,
-	privilegedUsername string,
-	store *registry.Store) (runtime.Object, error) {
-	obj, err := ListSystemChartGroups(ctx, options.DeepCopy(), businessClient, registryClient, privilegedUsername)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +118,7 @@ func ListAllChartsFromStore(ctx context.Context,
 	registryClient *registryinternalclient.RegistryClient,
 	privilegedUsername string,
 	store *registry.Store) (runtime.Object, error) {
-	personal, err := ListPersonalChartsFromStore(ctx, options.DeepCopy(), businessClient, registryClient, privilegedUsername, store)
+	personal, err := ListUserChartsFromStore(ctx, options.DeepCopy(), businessClient, registryClient, privilegedUsername, store)
 	if err != nil {
 		return nil, err
 	}

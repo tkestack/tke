@@ -21,6 +21,7 @@ import { UserInfo } from './UserInfo';
 import { Project, ProjectFilter } from './Project';
 import { Cluster, ClusterFilter } from './Cluster';
 import { Namespace, NamespaceFilter, ProjectNamespace, ProjectNamespaceFilter } from './Namespace';
+import { UserPlain, CommonUserAssociation } from './CommonUser';
 import { AppCreation, App, AppFilter } from './App';
 import { RouteState } from '../../../../helpers';
 import { Validation, ValidatorModel } from '@tencent/ff-validator';
@@ -106,6 +107,7 @@ export interface RootState {
   chartGroupAddWorkflow?: WorkflowState<ChartGroup, any>;
   chartGroupUpdateWorkflow?: WorkflowState<ChartGroup, any>;
   chartGroupRemoveWorkflow?: WorkflowState<ChartGroup, any>;
+  chartGroupRepoUpdateWorkflow?: WorkflowState<ChartGroup, any>;
   projectList?: FFListModel<Project, ProjectFilter>;
   userInfo?: UserInfo;
 
@@ -132,4 +134,8 @@ export interface RootState {
   /** 命名空间 */
   namespaceList?: FFListModel<Namespace, NamespaceFilter>;
   projectNamespaceList?: FFListModel<ProjectNamespace, ProjectNamespaceFilter>;
+
+  /** 关联用户相关，单独设置，不赋予任何场景相关的命名 */
+  userPlainList?: FFListModel<UserPlain, void>;
+  commonUserAssociation?: CommonUserAssociation;
 }

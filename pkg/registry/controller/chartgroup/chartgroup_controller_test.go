@@ -166,7 +166,7 @@ func TestProcessUpdateChartGroup(t *testing.T) {
 				keyExpected := cg.GetObjectMeta().GetName()
 				cachedChartGroup := controller.cache.getOrCreate(keyExpected)
 
-				err := controller.processUpdate(context.Background(), cachedChartGroup, cg, keyExpected)
+				err := controller.processUpdate(context.Background(), keyExpected, cachedChartGroup, cg)
 				if err != nil {
 					t.Errorf("update chartGroup error, %v", err)
 				}
@@ -219,7 +219,7 @@ func TestProcessUpdateChartGroup(t *testing.T) {
 		if !exist {
 			t.Fatalf("update chartGroup error, cache should contain chartGroup: %s", tc.key)
 		}
-		obtErr := controller.processUpdate(context.Background(), cachedChartGroup, newCg, tc.key)
+		obtErr := controller.processUpdate(context.Background(), tc.key, cachedChartGroup, newCg)
 		if err := tc.expectedFn(newCg, obtErr); err != nil {
 			t.Errorf("%v processUpdate() %v", tc.testName, err)
 		}
@@ -265,7 +265,7 @@ func TestProcessCreateOrUpdateK8sError(t *testing.T) {
 
 			cachedChartGroup := controller.cache.getOrCreate(cg.Name)
 			cachedChartGroup.state = cg
-			if err := controller.processUpdate(context.Background(), cachedChartGroup, cg, cgName); !reflect.DeepEqual(err, tc.expectErr) {
+			if err := controller.processUpdate(context.Background(), cgName, cachedChartGroup, cg); !reflect.DeepEqual(err, tc.expectErr) {
 				t.Fatalf("processUpdate() = %v, want %v", err, tc.expectErr)
 			}
 			if tc.expectErr == nil {

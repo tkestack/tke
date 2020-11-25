@@ -75,6 +75,10 @@ type Chart struct {
 	ChartGroupName string
 	ChartName      string
 	ChartVersion   string
+	RepoURL        string
+	RepoUsername   string
+	RepoPassword   string
+	ImportedRepo   bool
 }
 
 // AppStatus represents information about the status of a bootstrap.

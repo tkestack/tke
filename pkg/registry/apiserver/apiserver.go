@@ -102,7 +102,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 	if c.ExtraConfig.RegistryConfig.HarborEnabled {
 		harborOpts := &harbor.Options{
 			RegistryConfig:       c.ExtraConfig.RegistryConfig,
-			ExternalHost: c.ExtraConfig.ExternalHost,
+			ExternalHost:         c.ExtraConfig.ExternalHost,
 			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
 		}
 		if err := harbor.RegisterRoute(s.Handler.NonGoRestfulMux, harborOpts); err != nil {
@@ -133,7 +133,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		if err := chartmuseum.RegisterRoute(s.Handler.NonGoRestfulMux, chartmuseumOpts); err != nil {
 			return nil, err
 		}
-	}	
+	}
 
 	// The order here is preserved in discovery.
 	restStorageProviders := []storage.RESTStorageProvider{

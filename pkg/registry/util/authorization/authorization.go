@@ -35,7 +35,7 @@ func ConvertTKEAttributesForChart(ctx context.Context, u user.Info, verb string,
 	attribs.User = u
 
 	// If ChartGroup belongs to project, set user extra group
-	if cg.Spec.Type == registryv1.RepoTypeProject && len(cg.Spec.Projects) > 0 {
+	if cg.Spec.Visibility == registryv1.VisibilityProject && len(cg.Spec.Projects) > 0 {
 		if userInfo, ok := u.(*user.DefaultInfo); ok {
 			userInfo.Groups = append(userInfo.Groups, filter.GroupWithProject(cg.Spec.Projects[0]))
 			attribs.User = userInfo
@@ -64,7 +64,7 @@ func ConvertTKEAttributesForChartGroup(ctx context.Context, u user.Info, verb st
 	attribs.User = u
 
 	// If ChartGroup belongs to project, set user extra group
-	if cg.Spec.Type == registryv1.RepoTypeProject && len(cg.Spec.Projects) > 0 {
+	if cg.Spec.Visibility == registryv1.VisibilityProject && len(cg.Spec.Projects) > 0 {
 		if userInfo, ok := u.(*user.DefaultInfo); ok {
 			userInfo.Groups = append(userInfo.Groups, filter.GroupWithProject(cg.Spec.Projects[0]))
 			attribs.User = userInfo

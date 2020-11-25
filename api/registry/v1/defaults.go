@@ -34,13 +34,13 @@ func SetDefaults_ConfigMap(obj *ConfigMap) {
 
 func SetDefaults_NamespaceSpec(obj *NamespaceSpec) {
 	if obj.Visibility == "" {
-		obj.Visibility = VisibilityPrivate
+		obj.Visibility = VisibilityPublic
 	}
 }
 
 func SetDefaults_RepositorySpec(obj *RepositorySpec) {
 	if obj.Visibility == "" {
-		obj.Visibility = VisibilityPrivate
+		obj.Visibility = VisibilityPublic
 	}
 }
 
@@ -52,10 +52,13 @@ func SetDefaults_RepositoryStatus(obj *RepositoryStatus) {
 
 func SetDefaults_ChartGroupSpec(obj *ChartGroupSpec) {
 	if obj.Visibility == "" {
-		obj.Visibility = VisibilityPrivate
+		obj.Visibility = VisibilityPublic
 	}
 	if obj.Type == "" {
-		obj.Type = RepoTypeProject
+		obj.Type = RepoTypeSelfBuilt
+	}
+	if obj.Users == nil {
+		obj.Users = make([]string, 0)
 	}
 	if obj.Projects == nil {
 		obj.Projects = make([]string, 0)
@@ -75,7 +78,7 @@ func SetDefaults_ChartGroupStatus(obj *ChartGroupStatus) {
 
 func SetDefaults_ChartSpec(obj *ChartSpec) {
 	if obj.Visibility == "" {
-		obj.Visibility = VisibilityPrivate
+		obj.Visibility = VisibilityPublic
 	}
 	if obj.Finalizers == nil || len(obj.Finalizers) == 0 {
 		obj.Finalizers = []FinalizerName{

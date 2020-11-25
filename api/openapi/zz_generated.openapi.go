@@ -1024,6 +1024,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.VolumeDecoratorStatus":                       schema_tke_api_platform_v1_VolumeDecoratorStatus(ref),
 		"tkestack.io/tke/api/registry/v1.Chart":                                       schema_tke_api_registry_v1_Chart(ref),
 		"tkestack.io/tke/api/registry/v1.ChartGroup":                                  schema_tke_api_registry_v1_ChartGroup(ref),
+		"tkestack.io/tke/api/registry/v1.ChartGroupImport":                            schema_tke_api_registry_v1_ChartGroupImport(ref),
 		"tkestack.io/tke/api/registry/v1.ChartGroupList":                              schema_tke_api_registry_v1_ChartGroupList(ref),
 		"tkestack.io/tke/api/registry/v1.ChartGroupSpec":                              schema_tke_api_registry_v1_ChartGroupSpec(ref),
 		"tkestack.io/tke/api/registry/v1.ChartGroupStatus":                            schema_tke_api_registry_v1_ChartGroupStatus(ref),
@@ -36137,8 +36138,32 @@ func schema_tke_api_application_v1_Chart(ref common.ReferenceCallback) common.Op
 							Format: "",
 						},
 					},
+					"repoURL": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"repoUsername": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"repoPassword": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"importedRepo": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 				},
-				Required: []string{"tenantID", "chartGroupName", "chartName", "chartVersion"},
+				Required: []string{"tenantID", "chartGroupName", "chartName", "chartVersion", "repoURL", "repoUsername", "repoPassword", "importedRepo"},
 			},
 		},
 	}
@@ -49240,6 +49265,38 @@ func schema_tke_api_registry_v1_ChartGroup(ref common.ReferenceCallback) common.
 	}
 }
 
+func schema_tke_api_registry_v1_ChartGroupImport(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ChartGroupImport is a description of an import chart group.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"addr": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"username": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"password": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"addr"},
+			},
+		},
+	}
+}
+
 func schema_tke_api_registry_v1_ChartGroupList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -49357,10 +49414,36 @@ func schema_tke_api_registry_v1_ChartGroupSpec(ref common.ReferenceCallback) com
 							},
 						},
 					},
+					"users": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"importedInfo": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/registry/v1.ChartGroupImport"),
+						},
+					},
+					"creator": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"name", "tenantID"},
 			},
 		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/registry/v1.ChartGroupImport"},
 	}
 }
 

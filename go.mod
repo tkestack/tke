@@ -36,7 +36,6 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.5 // indirect
 	github.com/google/gofuzz v1.1.0
-	github.com/gopherjs/gopherjs v0.0.0-20191106031601-ce3c9ade29de
 	github.com/gorilla/mux v1.7.3
 	github.com/gorilla/websocket v1.4.0
 	github.com/gosuri/uitable v0.0.4
@@ -75,7 +74,6 @@ require (
 	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	google.golang.org/grpc v1.26.0
-	gopkg.in/fatih/set.v0 v0.2.1
 	gopkg.in/go-playground/validator.v9 v9.29.1
 	gopkg.in/ldap.v2 v2.5.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0

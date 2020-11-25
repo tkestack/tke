@@ -17,7 +17,7 @@ export class HeaderPanel extends React.Component<RootProps, {}> {
 
   render() {
     let { route } = this.props;
-    let title = route.queries['cg'];
+    let title = route.queries['name'];
 
     return (
       <Justify

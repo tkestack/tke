@@ -2241,8 +2241,8 @@
             "creationTimestamp": null
         },
         "Spec": {
-            "displayName": "镜像仓库",
-            "description": "镜像仓库",
+            "displayName": "镜像仓库/应用商店",
+            "description": "镜像仓库/应用商店",
             "actions": [
                 {
                     "name": "createChart",
@@ -2251,6 +2251,10 @@
                 {
                     "name": "createChartgroup",
                     "description": "创建Chartgroup"
+                },
+                {
+                    "name": "createChartgroupRepoupdating",
+                    "description": "同步第三方Chartgroup"
                 },
                 {
                     "name": "createRegistry",

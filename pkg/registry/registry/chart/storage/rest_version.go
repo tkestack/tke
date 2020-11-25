@@ -42,10 +42,12 @@ import (
 	"tkestack.io/tke/api/registry"
 	registryv1 "tkestack.io/tke/api/registry/v1"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
-	"tkestack.io/tke/pkg/application/util"
+	applicationutil "tkestack.io/tke/pkg/application/util"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
-	registryutil "tkestack.io/tke/pkg/registry/util"
+	"tkestack.io/tke/pkg/registry/config"
+	"tkestack.io/tke/pkg/registry/util"
 	authorizationutil "tkestack.io/tke/pkg/registry/util/authorization"
+	"tkestack.io/tke/pkg/registry/util/chartpath"
 	"tkestack.io/tke/pkg/registry/util/sort"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -213,19 +215,15 @@ func (h *versionProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request
 
 // Get chart version info
 func (h *versionProxyHandler) ServeGetVersion(w http.ResponseWriter, req *http.Request) {
-	client, err := util.NewHelmClient(req.Context(), h.helmOption.platformClient, h.helmOption.cluster, h.helmOption.namespace)
+	client, err := applicationutil.NewHelmClient(req.Context(), h.helmOption.platformClient, h.helmOption.cluster, h.helmOption.namespace)
 	if err != nil {
 		responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), w)
 		return
 	}
+
 	host := h.externalHost
 	if h.externalPort > 0 {
 		host = host + ":" + strconv.Itoa(h.externalPort)
-	}
-	url := &url.URL{
-		Scheme: h.externalScheme,
-		Host:   registryutil.BuildTenantRegistryDomain(host, h.chart.Spec.TenantID),
-		Path:   fmt.Sprintf("/chart/%s", h.chart.Spec.ChartGroupName),
 	}
 	chartVersion := h.chartVersion
 	if chartVersion == "" {
@@ -235,15 +233,23 @@ func (h *versionProxyHandler) ServeGetVersion(w http.ResponseWriter, req *http.R
 		responsewriters.WriteRawJSON(http.StatusBadRequest, "version is required", w)
 		return
 	}
-	cpopt := helmaction.ChartPathOptions{
-		CaFile:    h.externalCAFile,
-		Username:  h.registryConfig.Security.AdminUsername,
-		Password:  h.registryConfig.Security.AdminPassword,
-		RepoURL:   url.String(),
-		ChartRepo: h.chart.Spec.TenantID + "/" + h.chart.Spec.ChartGroupName,
-		Chart:     h.chart.Spec.Name,
-		Version:   chartVersion,
+
+	var repo config.RepoConfiguration = config.RepoConfiguration{
+		Scheme:        h.externalScheme,
+		DomainSuffix:  host,
+		CaFile:        h.externalCAFile,
+		Admin:         h.registryConfig.Security.AdminUsername,
+		AdminPassword: h.registryConfig.Security.AdminPassword,
 	}
+	chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(repo, *h.chartGroup)
+	if err != nil {
+		responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), w)
+		return
+	}
+	chartPathBasicOptions.Chart = h.chart.Spec.Name
+	chartPathBasicOptions.Version = chartVersion
+
+	cpopt := chartPathBasicOptions
 	destfile, err := client.Pull(&helmaction.PullOptions{
 		ChartPathOptions: cpopt,
 	})
@@ -314,7 +320,7 @@ func (h *versionProxyHandler) ServeDeleteVersion(w http.ResponseWriter, req *htt
 	}
 	loc := &url.URL{
 		Scheme: h.externalScheme,
-		Host:   registryutil.BuildTenantRegistryDomain(host, h.chart.Spec.TenantID),
+		Host:   util.BuildTenantRegistryDomain(host, h.chart.Spec.TenantID),
 		Path:   fmt.Sprintf("/chart/api/%s/charts/%s/%s", h.chart.Spec.ChartGroupName, h.chart.Spec.Name, h.chartVersion),
 	}
 

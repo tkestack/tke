@@ -31,7 +31,6 @@ import (
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
 	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	"tkestack.io/tke/api/registry"
-	"tkestack.io/tke/pkg/apiserver/authentication"
 	authutil "tkestack.io/tke/pkg/auth/util"
 	chartgroupstrategy "tkestack.io/tke/pkg/registry/registry/chartgroup"
 	genericutil "tkestack.io/tke/pkg/util"
@@ -191,71 +190,59 @@ func (rs *REST) ConvertToTable(ctx context.Context, object runtime.Object, table
 
 // createOrUpdatePolicyBinding add policy binding
 func (rs *REST) createOrUpdatePolicyBinding(ctx context.Context, cg *registry.ChartGroup) error {
-	username, _ := authentication.UsernameAndTenantID(ctx)
+	username := cg.Spec.Creator
+	isValidUsername := validUsername(username)
 	pb := make([]*authv1.CustomPolicyBinding, 0)
-	users := []authv1.Subject{{ID: username, Name: username}}
 	defaultAll := []authv1.Subject{{ID: authutil.DefaultAll, Name: authutil.DefaultAll}}
-	switch cg.Spec.Type {
-	case registry.RepoTypePersonal:
+
+	switch cg.Spec.Visibility {
+	case registry.VisibilityUser:
 		{
 			domain := authutil.DefaultDomain
+
+			usernames := cg.Spec.Users[:]
+			if isValidUsername && !genericutil.InStringSlice(usernames, username) {
+				usernames = append(usernames, username)
+			}
+			users := make([]authv1.Subject, len(usernames))
+			for k, v := range usernames {
+				users[k] = authv1.Subject{ID: v, Name: v}
+			}
+
 			// owner policy
 			policyID := authutil.ChartGroupFullPolicyID(cg.Spec.TenantID)
 			pb = append(pb, buildCustomBinding(cg, policyID, policyID, domain, authutil.ChartGroupPolicyResources(cg.Name), users))
 
 			policyID = authutil.ChartFullPolicyID(cg.Spec.TenantID)
 			pb = append(pb, buildCustomBinding(cg, policyID, policyID, domain, authutil.ChartPolicyResources(cg.Name), users))
-
-			switch cg.Spec.Visibility {
-			case registry.VisibilityPublic:
-				{
-					// others policy
-					policyID = authutil.ChartGroupPullPolicyID(cg.Spec.TenantID)
-					pb = append(pb, buildCustomBinding(cg, policyID, policyID, domain, authutil.ChartGroupPolicyResources(cg.Name), defaultAll))
-
-					policyID = authutil.ChartPullPolicyID(cg.Spec.TenantID)
-					pb = append(pb, buildCustomBinding(cg, policyID, policyID, domain, authutil.ChartPolicyResources(cg.Name), defaultAll))
-					break
-				}
-			}
+			break
 		}
-	case registry.RepoTypeProject:
+	case registry.VisibilityProject:
 		{
-			for _, p := range cg.Spec.Projects {
-				p = strings.TrimSpace(p)
-				if p == "" {
-					continue
-				}
-				domain := p
-				switch cg.Spec.Visibility {
-				case registry.VisibilityPublic:
-					{
-						// others policy
-						policyID := authutil.ChartGroupPullPolicyID(cg.Spec.TenantID)
-						pb = append(pb, buildCustomBinding(cg, policyID, policyID, domain, authutil.ChartGroupPolicyResources(cg.Name), defaultAll))
-
-						policyID = authutil.ChartPullPolicyID(cg.Spec.TenantID)
-						pb = append(pb, buildCustomBinding(cg, policyID, policyID, domain, authutil.ChartPolicyResources(cg.Name), defaultAll))
-						break
-					}
-				}
-			}
+			break
 		}
-	case registry.RepoTypeSystem:
+	case registry.VisibilityPublic:
 		{
 			domain := authutil.DefaultDomain
-			switch cg.Spec.Visibility {
-			case registry.VisibilityPublic:
-				{
-					// others policy
-					policyID := authutil.ChartGroupPullPolicyID(cg.Spec.TenantID)
-					pb = append(pb, buildCustomBinding(cg, policyID, policyID, domain, authutil.ChartGroupPolicyResources(cg.Name), defaultAll))
 
-					policyID = authutil.ChartPullPolicyID(cg.Spec.TenantID)
-					pb = append(pb, buildCustomBinding(cg, policyID, policyID, domain, authutil.ChartPolicyResources(cg.Name), defaultAll))
-					break
-				}
+			if isValidUsername {
+				users := []authv1.Subject{{ID: username, Name: username}}
+
+				// owner policy
+				policyID := authutil.ChartGroupFullPolicyID(cg.Spec.TenantID)
+				pb = append(pb, buildCustomBinding(cg, policyID, policyID, domain, authutil.ChartGroupPolicyResources(cg.Name), users))
+
+				policyID = authutil.ChartFullPolicyID(cg.Spec.TenantID)
+				pb = append(pb, buildCustomBinding(cg, policyID, policyID, domain, authutil.ChartPolicyResources(cg.Name), users))
 			}
+
+			// others policy
+			policyID := authutil.ChartGroupPullPolicyID(cg.Spec.TenantID)
+			pb = append(pb, buildCustomBinding(cg, policyID, policyID, domain, authutil.ChartGroupPolicyResources(cg.Name), defaultAll))
+
+			policyID = authutil.ChartPullPolicyID(cg.Spec.TenantID)
+			pb = append(pb, buildCustomBinding(cg, policyID, policyID, domain, authutil.ChartPolicyResources(cg.Name), defaultAll))
+			break
 		}
 	}
 
@@ -334,6 +321,10 @@ func filterCustomPolicyBinding(name string, list []authv1.CustomPolicyBinding) *
 		}
 	}
 	return nil
+}
+
+func validUsername(name string) bool {
+	return strings.TrimSpace(name) != ""
 }
 
 // deletePolicyBinding remove policy binding
