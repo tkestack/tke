@@ -487,13 +487,13 @@ func (c *Controller) ensureSyncClusterMachineNodeLabel(ctx context.Context, clus
 
 	clusterWrapper, err := typesv1.GetCluster(ctx, c.platformClient, cluster)
 	if err != nil {
-		log.FromContext(ctx).Error(err, "sync ClusterMachine node label error")
+		log.FromContext(ctx).Error(err, "Get cluster error")
 		return
 	}
 
 	client, err := clusterWrapper.Clientset()
 	if err != nil {
-		log.FromContext(ctx).Error(err, "sync ClusterMachine node label error")
+		log.FromContext(ctx).Error(err, "get client set error")
 		return
 	}
 

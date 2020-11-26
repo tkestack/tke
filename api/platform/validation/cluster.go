@@ -71,14 +71,18 @@ func ValidateClusterUpdate(cluster *types.Cluster, oldCluster *types.Cluster) fi
 
 // ValidateClusterScale tests if master scale up/down to a cluster is valid.
 func ValidateClusterScale(cluster *platform.Cluster, oldCluster *platform.Cluster, fldPath *field.Path) field.ErrorList {
+
 	allErrs := field.ErrorList{}
+	if len(cluster.Spec.Machines) == len(oldCluster.Spec.Machines) {
+		return allErrs
+	}
 	ha := cluster.Spec.Features.HA
 	if ha == nil {
-		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, "tkestack HA should enabled for master scale"))
+		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, "HA configuration should enabled for master scale"))
 		return allErrs
 	}
 	if ha.TKEHA == nil && ha.ThirdPartyHA == nil {
-		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, "tkestack HA should enabled for master scale"))
+		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, "tkestack HA or third party HA should enabled for master scale"))
 		return allErrs
 	}
 	_, err := clusterutil.PrepareClusterScale(cluster, oldCluster)
