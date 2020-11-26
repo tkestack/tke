@@ -42055,6 +42055,18 @@ func schema_tke_api_monitor_v1_ClusterOverviewResult(ref common.ReferenceCallbac
 							Format: "double",
 						},
 					},
+					"cpuNotReadyCapacity": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"cpuNotReadyAllocatable": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
 					"memCapacity": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
@@ -42062,6 +42074,18 @@ func schema_tke_api_monitor_v1_ClusterOverviewResult(ref common.ReferenceCallbac
 						},
 					},
 					"memAllocatable": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"memNotReadyCapacity": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"memNotReadyAllocatable": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
 							Format: "int64",
@@ -42086,7 +42110,7 @@ func schema_tke_api_monitor_v1_ClusterOverviewResult(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"clusterCount", "clusterAbnormal", "projectCount", "projectAbnormal", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "cpuCapacity", "cpuAllocatable", "memCapacity", "memAllocatable", "podCount", "clusters"},
+				Required: []string{"clusterCount", "clusterAbnormal", "projectCount", "projectAbnormal", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "cpuCapacity", "cpuAllocatable", "cpuNotReadyCapacity", "cpuNotReadyAllocatable", "memCapacity", "memAllocatable", "memNotReadyCapacity", "memNotReadyAllocatable", "podCount", "clusters"},
 			},
 		},
 		Dependencies: []string{
@@ -42184,6 +42208,18 @@ func schema_tke_api_monitor_v1_ClusterStatistic(ref common.ReferenceCallback) co
 							Format: "double",
 						},
 					},
+					"cpuNotReadyCapacity": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"cpuNotReadyAllocatable": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
 					"cpuRequestRate": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -42232,6 +42268,18 @@ func schema_tke_api_monitor_v1_ClusterStatistic(ref common.ReferenceCallback) co
 							Format: "int64",
 						},
 					},
+					"memNotReadyCapacity": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"memNotReadyAllocatable": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
 					"memRequestRate": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -42275,7 +42323,7 @@ func schema_tke_api_monitor_v1_ClusterStatistic(ref common.ReferenceCallback) co
 						},
 					},
 				},
-				Required: []string{"clusterID", "clusterDisplayName", "tenantID", "clusterPhase", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "hasMetricServer", "cpuUsed", "cpuRequest", "cpuLimit", "cpuCapacity", "cpuAllocatable", "cpuRequestRate", "cpuAllocatableRate", "cpuUsage", "memUsed", "memRequest", "memLimit", "memCapacity", "memAllocatable", "memRequestRate", "memAllocatableRate", "memUsage", "podCount", "schedulerHealthy", "controllerManagerHealthy", "etcdHealthy"},
+				Required: []string{"clusterID", "clusterDisplayName", "tenantID", "clusterPhase", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "hasMetricServer", "cpuUsed", "cpuRequest", "cpuLimit", "cpuCapacity", "cpuAllocatable", "cpuNotReadyCapacity", "cpuNotReadyAllocatable", "cpuRequestRate", "cpuAllocatableRate", "cpuUsage", "memUsed", "memRequest", "memLimit", "memCapacity", "memAllocatable", "memNotReadyCapacity", "memNotReadyAllocatable", "memRequestRate", "memAllocatableRate", "memUsage", "podCount", "schedulerHealthy", "controllerManagerHealthy", "etcdHealthy"},
 			},
 		},
 	}
