@@ -29,7 +29,7 @@ export const validateClusterCreationAction = {
 
   validateClusterName() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { name } = getState().clusterCreationState;
+      const { name } = getState().clusterCreationState;
       const result = await validateClusterCreationAction._validateClusterName(name);
       dispatch(clusterCreationAction.updateClusterCreationState({ v_name: result }));
     };
@@ -47,13 +47,13 @@ export const validateClusterCreationAction = {
       status = 2;
       message = 'API Server地址不能为空';
     } else if (name.startsWith('https://')) {
-      let tempName = name.substring(8);
-      let tempSplit = tempName.split(':');
+      const tempName = name.substring(8);
+      const tempSplit = tempName.split(':');
       let host = tempSplit[0];
       let path = '',
         port = '';
       if (host.indexOf('/') !== -1) {
-        let index = host.indexOf('/');
+        const index = host.indexOf('/');
         path = host.substring(index);
         host = host.substring(0, index);
         port = '443';
@@ -93,7 +93,7 @@ export const validateClusterCreationAction = {
 
   validateApiServer() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { apiServer } = getState().clusterCreationState;
+      const { apiServer } = getState().clusterCreationState;
       const result = await validateClusterCreationAction._validateApiServer(apiServer);
 
       dispatch(clusterCreationAction.updateClusterCreationState({ v_apiServer: result }));
@@ -118,7 +118,7 @@ export const validateClusterCreationAction = {
 
   validateCertfile() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { certFile } = getState().clusterCreationState;
+      const { certFile } = getState().clusterCreationState;
       const result = await validateClusterCreationAction._validateCertfile(certFile);
 
       dispatch(clusterCreationAction.updateClusterCreationState({ v_certFile: result }));
@@ -138,19 +138,22 @@ export const validateClusterCreationAction = {
       message = '';
     }
 
-    return { status, message };
+    return {
+      status: 1,
+      message: ''
+    };
   },
 
   validateToken() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { token } = getState().clusterCreationState;
+      const { token } = getState().clusterCreationState;
       const result = await validateClusterCreationAction._validateToken(token);
       dispatch(clusterCreationAction.updateClusterCreationState({ v_token: result }));
     };
   },
   /** 校验clusterconnection的正确性 */
   _validateclusterCreationState(clusterCreationState: ClusterCreationState) {
-    let { name, apiServer, certFile, token } = clusterCreationState;
+    const { name, apiServer, certFile, token } = clusterCreationState;
 
     let result = true;
 

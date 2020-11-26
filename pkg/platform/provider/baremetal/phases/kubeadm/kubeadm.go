@@ -54,8 +54,9 @@ import (
 const (
 	kubeadmKubeletConf = "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
 
-	initCmd = `kubeadm init phase {{.Phase}} --config={{.Config}}`
-	joinCmd = `kubeadm join phase {{.Phase}} --config={{.Config}}`
+	initCmd  = `kubeadm init phase {{.Phase}} --config={{.Config}}`
+	joinCmd  = `kubeadm join phase {{.Phase}} --config={{.Config}}`
+	resetCmd = `kubeadm reset phase {{.Phase}}`
 )
 
 var (
@@ -142,6 +143,23 @@ func Join(s ssh.Interface, config *kubeadmv1beta2.JoinConfiguration, phase strin
 	out, err := s.CombinedOutput(string(cmd))
 	if err != nil {
 		return fmt.Errorf("kubeadm.Join error: %w", err)
+	}
+	log.Debug(string(out))
+
+	return nil
+}
+
+func Reset(s ssh.Interface, phase string) error {
+
+	cmd, err := template.ParseString(resetCmd, map[string]interface{}{
+		"Phase": phase,
+	})
+	if err != nil {
+		return errors.Wrap(err, "parse resetCmd error")
+	}
+	out, err := s.CombinedOutput(string(cmd))
+	if err != nil {
+		return fmt.Errorf("kubeadm.Reset error: %w", err)
 	}
 	log.Debug(string(out))
 

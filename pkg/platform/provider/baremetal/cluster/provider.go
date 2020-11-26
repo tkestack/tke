@@ -133,24 +133,26 @@ func NewProvider() (*Provider, error) {
 			p.EnsurePostClusterInstallHook,
 		},
 		UpdateHandlers: []clusterprovider.Handler{
-			p.EnsurePreClusterUpgradeHook,
-			p.EnsureUpgradeControlPlaneNode,
-
 			p.EnsureAPIServerCert,
 			p.EnsureRenewCerts,
 			p.EnsureStoreCredential,
 			p.EnsureKeepalivedWithLBOption,
 			p.EnsureThirdPartyHA,
+		},
+		UpgradeHandlers: []clusterprovider.Handler{
+			p.EnsurePreClusterUpgradeHook,
+			p.EnsureUpgradeControlPlaneNode,
 			p.EnsurePostClusterUpgradeHook,
 		},
-		ScaleUpHandlers: []clusterprovider.Handler{},
 		ScaleDownHandlers: []clusterprovider.Handler{
-			p.EnsureDownScaling,
+			p.EnsureRemoveETCDMember,
+			p.EnsureRemoveNode,
 		},
 		DeleteHandlers: []clusterprovider.Handler{
 			p.EnsureCleanClusterMark,
 		},
 	}
+	p.ScaleUpHandlers = p.CreateHandlers
 
 	cfg, err := config.New(constants.ConfigFile)
 	if err != nil {
