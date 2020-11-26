@@ -30,6 +30,7 @@ import (
 	businessversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
+	helm "tkestack.io/tke/pkg/registry/harbor/helmClient"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -44,12 +45,13 @@ type ChartGroupResourcesDeleterInterface interface {
 // registryClient and configure.
 func NewChartGroupResourcesDeleter(businessClient businessversionedclient.BusinessV1Interface,
 	registryClient v1clientset.RegistryV1Interface, finalizerToken registryv1.FinalizerName,
-	deleteChartGroupWhenDone bool) ChartGroupResourcesDeleterInterface {
+	deleteChartGroupWhenDone bool, helmClient *helm.APIClient) ChartGroupResourcesDeleterInterface {
 	d := &chartGroupResourcesDeleter{
 		registryClient:           registryClient,
 		businessClient:           businessClient,
 		finalizerToken:           finalizerToken,
 		deleteChartGroupWhenDone: deleteChartGroupWhenDone,
+		helmClient:               helmClient,
 	}
 	return d
 }
@@ -66,6 +68,7 @@ type chartGroupResourcesDeleter struct {
 	finalizerToken registryv1.FinalizerName
 	// Also delete the chartGroup when all resources in the chartGroup have been deleted.
 	deleteChartGroupWhenDone bool
+	helmClient               *helm.APIClient
 }
 
 // Delete deletes all resources in the given chartGroup.

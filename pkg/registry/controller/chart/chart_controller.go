@@ -39,6 +39,7 @@ import (
 	registryv1 "tkestack.io/tke/api/registry/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/registry/controller/chart/deletion"
+	helm "tkestack.io/tke/pkg/registry/harbor/helmClient"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -74,14 +75,14 @@ type Controller struct {
 func NewController(
 	client clientset.Interface, chartInformer registryv1informer.ChartInformer,
 	resyncPeriod time.Duration, finalizerToken registryv1.FinalizerName,
-	multiTenantServer *multitenant.MultiTenantServer) *Controller {
+	multiTenantServer *multitenant.MultiTenantServer, helmClient *helm.APIClient) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
 		client:                client,
 		cache:                 &chartCache{m: make(map[string]*cachedChart)},
 		health:                &chartHealth{charts: sets.NewString()},
 		queue:                 workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
-		chartResourcesDeleter: deletion.NewChartResourcesDeleter(client.RegistryV1(), multiTenantServer, finalizerToken, true),
+		chartResourcesDeleter: deletion.NewChartResourcesDeleter(client.RegistryV1(), multiTenantServer, finalizerToken, true, helmClient),
 	}
 
 	if client != nil &&

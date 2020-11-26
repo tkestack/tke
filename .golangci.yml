@@ -15,6 +15,7 @@ run:
     - pkg/registry/apis/config
     - pkg/registry/apis/config/v1
     - pkg/registry/harbor/client
+    - pkg/registry/harbor/helmClient
     - pkg/monitor/apis/config
     - pkg/monitor/apis/config/v1
 

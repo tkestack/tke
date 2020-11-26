@@ -41,6 +41,7 @@ import (
 	registryv1 "tkestack.io/tke/api/registry/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/registry/controller/chartgroup/deletion"
+	helm "tkestack.io/tke/pkg/registry/harbor/helmClient"
 	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
@@ -77,7 +78,7 @@ type Controller struct {
 // NewController creates a new Controller object.
 func NewController(businessClient businessversionedclient.BusinessV1Interface,
 	client clientset.Interface, chartGroupInformer registryv1informer.ChartGroupInformer,
-	resyncPeriod time.Duration, finalizerToken registryv1.FinalizerName) *Controller {
+	resyncPeriod time.Duration, finalizerToken registryv1.FinalizerName, helmClient *helm.APIClient) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
 		client:                     client,
@@ -85,7 +86,7 @@ func NewController(businessClient businessversionedclient.BusinessV1Interface,
 		cache:                      &chartGroupCache{m: make(map[string]*cachedChartGroup)},
 		health:                     &chartGroupHealth{chartGroups: sets.NewString()},
 		queue:                      workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
-		chartGroupResourcesDeleter: deletion.NewChartGroupResourcesDeleter(businessClient, client.RegistryV1(), finalizerToken, true),
+		chartGroupResourcesDeleter: deletion.NewChartGroupResourcesDeleter(businessClient, client.RegistryV1(), finalizerToken, true, helmClient),
 	}
 
 	if client != nil &&

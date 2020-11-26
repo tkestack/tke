@@ -189,19 +189,18 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 		return nil, false, err
 	}
 	o := obj.(*registryapi.Repository)
-	_, tenantID := authentication.UsernameAndTenantID(ctx)
 	if r.harborClient != nil {
 		err := harborHandler.DeleteRepo(
 			ctx,
 			r.harborClient,
-			fmt.Sprintf("%s-image-%s", tenantID, o.Spec.NamespaceName),
+			fmt.Sprintf("%s-image-%s", o.Spec.TenantID, o.Spec.NamespaceName),
 			o.Spec.Name,
 		)
 		if err != nil {
 			return nil, false, err
 		}
 	}
-	UpdateNamespaceRepoCount(ctx, r.registryClient, o.Spec.NamespaceName, tenantID)
+	UpdateNamespaceRepoCount(ctx, r.registryClient, o.Spec.NamespaceName, o.Spec.TenantID)
 	return r.Store.Delete(ctx, name, deleteValidation, options)
 }
 

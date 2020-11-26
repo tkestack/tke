@@ -26,14 +26,14 @@
 
 1，找到Harbor的ca证书，在tkestack的configmap/certs 添加 harbor-ca.crt文件
 
-2，修改tke-registry-api的configmap/tke-registry-api， 在文件 tke-registry-api.yaml 下添加下面2个新字段
+2，修改tke-registry-api和tke-registry-controller的configmap/tke-registry-api， 在文件 tke-registry-api.yaml 下添加下面2个新字段
 
 ```
 harborCAFile: "/app/certs/harbor-ca.crt"
 harborEnabled: true
 ```
 
-3，修改文件 tke-registry-api.yaml 下原来的字段
+3，修改文件 tke-registry-api和tke-registry-controller的configmap/tke-registry-api.yaml 下原来的字段
 
 ```
 domainSuffix: "core.harbor.tcnp.qqa.com"     // harbor的域名，注意需要在tke-registry-api的pod内可以解析
@@ -44,11 +44,11 @@ security:
 
 
 
-### 测试使用Harbor作为后端
+### 测试使用Harbor作为镜像后端
 
 1，在tkestack界面创建命名空间
 
-创建完成后，在Harbor会同时创建一个 项目，命名方式为 "`租户id`-image-`命名空间名字`"。
+创建完成后，在Harbor会同时创建一个项目，命名方式为 "`租户id`-image-`命名空间名字`"。
 
 例如default租户创建一个命名空间 test，则harbor会同时创建一个 default-image-test 的项目
 
@@ -69,6 +69,30 @@ security:
 4，在tke console 删除镜像的同时会把harbor对应的镜像删除
 
 5，在tke console 删除命名空间的时候，会把harbor对应的镜像和项目都删除
+
+
+
+### 测试使用Harbor作为Chart后端
+
+1，新建镜像仓库
+
+创建完成后，在Harbor会同时创建一个项目，命名方式为 "`租户id`-chart-`命名空间名字`"。
+
+2，设置helm repo
+
+和现在的指引基本上一致，但路径会需要从chart改为chartrepo，例如:
+
+> helm repo add --ca-file tke-ca.crt tke-admin http://registry.tke.com/chartrepo/admin --username admin --password xxxxxxxx
+
+此处用到的ca文件为tke域名的ca文件，但登录的用户名和密码需要为Harbor的用户名密码
+
+3，安装helm-push 插件并推送helm chart
+
+推送chart成功后，chart会被保存到Harbor，同时console中helm模板会新增一个chart模板
+
+4，在console删除模板版本或者通过删除cr的chart，Harbor中的chart会对应被删除
+
+5，在console删除模板仓库或者通过删除cr的chartGroup，Harbor中的项目会对应被删除，存储的Chart也会被删除
 
 
 

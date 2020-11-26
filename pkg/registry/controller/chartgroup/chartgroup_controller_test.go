@@ -70,7 +70,7 @@ func newController() (*Controller, *fake.Clientset, *fake.Clientset) {
 	informerFactory := versionedinformers.NewSharedInformerFactory(client, 10*time.Minute)
 	informer := informerFactory.Registry().V1().ChartGroups()
 
-	controller := NewController(businessClient.BusinessV1(), client, informer, 30*time.Second, v1.ChartGroupFinalize)
+	controller := NewController(businessClient.BusinessV1(), client, informer, 30*time.Second, v1.ChartGroupFinalize, nil)
 	client.ClearActions()         // ignore any client calls made in init()
 	businessClient.ClearActions() // ignore any client calls made in init()
 	return controller, client, businessClient

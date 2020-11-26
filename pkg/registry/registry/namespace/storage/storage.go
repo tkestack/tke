@@ -147,7 +147,6 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 	if r.harborClient != nil {
 		o := obj.(*registryapi.Namespace)
 		_, tenantID := authentication.UsernameAndTenantID(ctx)
-
 		err := harborHandler.CreateProject(
 			ctx,
 			r.harborClient,
@@ -165,7 +164,7 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 			o := obj.(*registryapi.Namespace)
 			_, tenantID := authentication.UsernameAndTenantID(ctx)
 			// cleanup harbor project
-			harborHandler.DeleteProject(ctx, r.harborClient, fmt.Sprintf("%s-image-%s", tenantID, o.Spec.Name))
+			harborHandler.DeleteProject(ctx, r.harborClient, nil, fmt.Sprintf("%s-image-%s", tenantID, o.Spec.Name))
 		}
 		return nil, err
 	}
@@ -199,7 +198,10 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	if r.harborClient != nil {
 		o := obj.(*registryapi.Namespace)
 		// delete harbor project
-		harborHandler.DeleteProject(ctx, r.harborClient, fmt.Sprintf("%s-image-%s", o.Spec.TenantID, o.Spec.Name))
+		err = harborHandler.DeleteProject(ctx, r.harborClient, nil, fmt.Sprintf("%s-image-%s", o.Spec.TenantID, o.Spec.Name))
+		if err != nil {
+			return nil, false, err
+		}
 	}
 	return r.Store.Delete(ctx, name, deleteValidation, options)
 }

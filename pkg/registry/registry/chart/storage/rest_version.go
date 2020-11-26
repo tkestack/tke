@@ -45,7 +45,9 @@ import (
 	applicationutil "tkestack.io/tke/pkg/application/util"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 	"tkestack.io/tke/pkg/registry/config"
-	"tkestack.io/tke/pkg/registry/util"
+	harborHandler "tkestack.io/tke/pkg/registry/harbor/handler"
+	helm "tkestack.io/tke/pkg/registry/harbor/helmClient"
+	registryutil "tkestack.io/tke/pkg/registry/util"
 	authorizationutil "tkestack.io/tke/pkg/registry/util/authorization"
 	"tkestack.io/tke/pkg/registry/util/chartpath"
 	"tkestack.io/tke/pkg/registry/util/sort"
@@ -63,6 +65,7 @@ type VersionREST struct {
 	externalPort   int
 	externalCAFile string
 	authorizer     authorizer.Authorizer
+	helmClient     *helm.APIClient
 }
 
 // NewVersionREST returns a wrapper around the underlying generic storage and performs
@@ -79,6 +82,7 @@ func NewVersionREST(
 	externalPort int,
 	externalCAFile string,
 	authorizer authorizer.Authorizer,
+	helmClient *helm.APIClient,
 ) *VersionREST {
 	rest := &VersionREST{
 		store:          store,
@@ -90,6 +94,7 @@ func NewVersionREST(
 		externalPort:   externalPort,
 		externalCAFile: externalCAFile,
 		authorizer:     authorizer,
+		helmClient:     helmClient,
 	}
 	return rest
 }
@@ -168,6 +173,8 @@ func (r *VersionREST) Connect(ctx context.Context, chartName string, opts runtim
 			namespace:      proxyOpts.Namespace,
 			platformClient: r.platformClient,
 		},
+		helmClient:     r.helmClient,
+		registryClient: r.registryClient,
 	}, nil
 }
 
@@ -185,7 +192,9 @@ type versionProxyHandler struct {
 	registryConfig *registryconfig.RegistryConfiguration
 	authorizer     authorizer.Authorizer
 
-	helmOption helmOption
+	helmOption     helmOption
+	helmClient     *helm.APIClient
+	registryClient *registryinternalclient.RegistryClient
 }
 
 type helmOption struct {
@@ -225,6 +234,7 @@ func (h *versionProxyHandler) ServeGetVersion(w http.ResponseWriter, req *http.R
 	if h.externalPort > 0 {
 		host = host + ":" + strconv.Itoa(h.externalPort)
 	}
+
 	chartVersion := h.chartVersion
 	if chartVersion == "" {
 		chartVersion = h.latestChartVersion
@@ -313,32 +323,59 @@ func (h *versionProxyHandler) ServeDeleteVersion(w http.ResponseWriter, req *htt
 	if err != nil {
 		responsewriters.WriteRawJSON(http.StatusUnauthorized, err.Error(), w)
 	}
+	if h.helmClient == nil {
+		host := h.externalHost
+		if h.externalPort > 0 {
+			host = host + ":" + strconv.Itoa(h.externalPort)
+		}
+		loc := &url.URL{
+			Scheme: h.externalScheme,
+			Host:   registryutil.BuildTenantRegistryDomain(host, h.chart.Spec.TenantID),
+			Path:   fmt.Sprintf("/chart/api/%s/charts/%s/%s", h.chart.Spec.ChartGroupName, h.chart.Spec.Name, h.chartVersion),
+		}
 
-	host := h.externalHost
-	if h.externalPort > 0 {
-		host = host + ":" + strconv.Itoa(h.externalPort)
+		// WithContext creates a shallow clone of the request with the new context.
+		newReq := req.WithContext(context.Background())
+		newReq.Header = netutil.CloneHeader(req.Header)
+		newReq.URL = loc
+		newReq.SetBasicAuth(h.registryConfig.Security.AdminUsername, h.registryConfig.Security.AdminPassword)
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
+		reverseProxy := httputil.NewSingleHostReverseProxy(&url.URL{Scheme: loc.Scheme, Host: loc.Host})
+		reverseProxy.Transport = transport
+		reverseProxy.FlushInterval = 100 * time.Millisecond
+		reverseProxy.ErrorLog = log.StdErrLogger()
+		reverseProxy.ServeHTTP(w, newReq)
+	} else {
+		err := harborHandler.DeleteChart(req.Context(), h.helmClient, fmt.Sprintf("%s-chart-%s", h.chart.Spec.TenantID, h.chart.Spec.ChartGroupName), h.chart.Spec.Name)
+		if err != nil {
+			return
+		}
+		i := -1
+		if len(h.chart.Status.Versions) > 0 {
+			for k, v := range h.chart.Status.Versions {
+				if v.Version == h.chartVersion {
+					i = k
+				}
+			}
+		}
+		if i == -1 {
+			return
+		}
+		h.chart.Status.Versions = append(h.chart.Status.Versions[:i], h.chart.Status.Versions[i+1:]...)
+		if _, err := h.registryClient.Charts(h.chart.ObjectMeta.Namespace).UpdateStatus(req.Context(), h.chart, metav1.UpdateOptions{}); err != nil {
+			log.Error("Failed to update repository versions while deleted",
+				log.String("tenantID", h.chart.Spec.TenantID),
+				log.String("chartGroupName", h.chart.Spec.ChartGroupName),
+				log.String("chartName", h.chart.Spec.Name),
+				log.Err(err))
+			return
+		}
+		return
 	}
-	loc := &url.URL{
-		Scheme: h.externalScheme,
-		Host:   util.BuildTenantRegistryDomain(host, h.chart.Spec.TenantID),
-		Path:   fmt.Sprintf("/chart/api/%s/charts/%s/%s", h.chart.Spec.ChartGroupName, h.chart.Spec.Name, h.chartVersion),
-	}
-
-	// WithContext creates a shallow clone of the request with the new context.
-	newReq := req.WithContext(context.Background())
-	newReq.Header = netutil.CloneHeader(req.Header)
-	newReq.URL = loc
-	newReq.SetBasicAuth(h.registryConfig.Security.AdminUsername, h.registryConfig.Security.AdminPassword)
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	}
-	reverseProxy := httputil.NewSingleHostReverseProxy(&url.URL{Scheme: loc.Scheme, Host: loc.Host})
-	reverseProxy.Transport = transport
-	reverseProxy.FlushInterval = 100 * time.Millisecond
-	reverseProxy.ErrorLog = log.StdErrLogger()
-	reverseProxy.ServeHTTP(w, newReq)
 }
 
 func (h *versionProxyHandler) check(w http.ResponseWriter, req *http.Request) error {

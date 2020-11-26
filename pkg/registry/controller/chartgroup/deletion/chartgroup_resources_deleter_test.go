@@ -168,7 +168,7 @@ func testSyncChartGroupThatIsTerminating(t *testing.T, versions *metav1.APIVersi
 			registryClient := fake.NewSimpleClientset(testInput.testChartGroup, testChart)
 			businessClient := fake.NewSimpleClientset(testBusinessChartGroup)
 
-			d := NewChartGroupResourcesDeleter(businessClient.BusinessV1(), registryClient.RegistryV1(), v1.ChartGroupFinalize, true)
+			d := NewChartGroupResourcesDeleter(businessClient.BusinessV1(), registryClient.RegistryV1(), v1.ChartGroupFinalize, true, nil)
 			if err := d.Delete(context.Background(), testInput.testChartGroup.Name); err != nil {
 				t.Errorf("when syncing chartGroup, got %q", err)
 			}
@@ -241,7 +241,7 @@ func TestSyncChartGroupThatIsAvailable(t *testing.T) {
 			Phase: v1.ChartGroupAvailable,
 		},
 	}
-	d := NewChartGroupResourcesDeleter(nil, registryClient.RegistryV1(), v1.ChartGroupFinalize, true)
+	d := NewChartGroupResourcesDeleter(nil, registryClient.RegistryV1(), v1.ChartGroupFinalize, true, nil)
 	err := d.Delete(context.Background(), testChartGroup.Name)
 	if err != nil {
 		t.Errorf("Unexpected error when synching namespace %v", err)

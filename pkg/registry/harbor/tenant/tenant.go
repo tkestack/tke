@@ -34,27 +34,36 @@ const CrossTenantNamespace = "library"
 
 // WithTenant adds an interceptor to the original http request handle and
 // converts the request for docker distribution to multi-tenant mode.
-func WithTenant(handler http.Handler, registryPrefix, authPrefix, chartPrefix, domainSuffix, defaultTenant string) http.Handler {
+func WithTenant(handler http.Handler, registryPrefix, authPrefix, chartPrefix, chartMeseumPrefix, chartAPIPrefix, domainSuffix, defaultTenant string) http.Handler {
 	router := v2.Router()
-	return &tenant{handler, router, registryPrefix, authPrefix, chartPrefix, domainSuffix, defaultTenant}
+	return &tenant{handler, router, registryPrefix, authPrefix, chartPrefix, chartMeseumPrefix, chartAPIPrefix, domainSuffix, defaultTenant}
 }
 
 type tenant struct {
-	handler        http.Handler
-	router         *mux.Router
-	registryPrefix string
-	authPrefix     string
-	chartPrefix    string
-	domainSuffix   string
-	defaultTenant  string
+	handler           http.Handler
+	router            *mux.Router
+	registryPrefix    string
+	authPrefix        string
+	chartPrefix       string
+	chartMeseumPrefix string
+	chartAPIPrefix    string
+	domainSuffix      string
+	defaultTenant     string
 }
 
 func (t *tenant) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	originalPath := r.URL.Path
+
 	ctx := r.Context()
 	tenant := utilregistryrequest.TenantID(r, t.domainSuffix, t.defaultTenant)
 	ctx = context.WithValue(ctx, handler.HarborContextKey("tenantID"), tenant)
 	r = r.WithContext(ctx)
+	// convert tke chartmeseum to harbor chart prefix
+	if strings.HasPrefix(r.URL.Path, fmt.Sprintf("%s%s", t.chartMeseumPrefix, "api/")) {
+		r.URL.Path = strings.Replace(r.URL.Path, t.chartMeseumPrefix, "/", 1)
+	} else if strings.HasPrefix(r.URL.Path, t.chartMeseumPrefix) {
+		r.URL.Path = strings.Replace(r.URL.Path, t.chartMeseumPrefix, t.chartPrefix, 1)
+	}
+	originalPath := r.URL.Path
 	if strings.HasPrefix(originalPath, t.registryPrefix) && !strings.HasPrefix(originalPath, fmt.Sprintf("/v2/%s/", CrossTenantNamespace)) {
 		var match mux.RouteMatch
 		if matched := t.router.Match(r, &match); matched {
@@ -68,6 +77,8 @@ func (t *tenant) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if strings.HasPrefix(originalPath, t.chartPrefix) {
 		r.URL.Path = strings.Replace(originalPath, t.chartPrefix, fmt.Sprintf("%s%s-chart-", t.chartPrefix, tenant), 1)
+	} else if strings.HasPrefix(originalPath, t.chartAPIPrefix) {
+		r.URL.Path = strings.Replace(originalPath, t.chartAPIPrefix, fmt.Sprintf("%s%s-chart-", t.chartAPIPrefix, tenant), 1)
 	} else if strings.HasPrefix(originalPath, t.authPrefix) && !strings.Contains(r.URL.RawQuery, "repository%3A"+CrossTenantNamespace) {
 		r.URL.RawQuery = strings.Replace(r.URL.RawQuery, "repository%3A", "repository%3A"+tenant+"-image-", -1)
 	}
