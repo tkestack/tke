@@ -1082,7 +1082,7 @@ func (p *Provider) EnsureStoreCredential(ctx context.Context, c *v1.Cluster) err
 func (p *Provider) EnsurePatchAnnotation(ctx context.Context, c *v1.Cluster) error {
 	machines := map[bool][]platformv1.ClusterMachine{
 		true:  c.Spec.ScalingMachines,
-		false: c.Spec.Machines[1:]}[len(c.Spec.ScalingMachines) > 0]
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
 	fileData := map[string]string{
 		constants.EtcdPodManifestFile:                  `  annotations:\n    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "https"\n    prometheus.io/port: "2379"`,
 		constants.KubeAPIServerPodManifestFile:         `  annotations:\n    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "https"\n    prometheus.io/port: "6443"`,
