@@ -130,26 +130,25 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	// client config for registry apiserver
-	registryAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.RegistryAPIClient)
-	if err != nil {
-		return nil, err
-	}
-	if !ok || registryAPIServerClientConfig == nil {
-		return nil, fmt.Errorf("failed to initialize client config of registry API server")
-	}
-	registryClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(registryAPIServerClientConfig, "tke-application-api"))
-	if err != nil {
-		return nil, err
-	}
-
 	cfg := &Config{
 		ServerName:                     serverName,
 		GenericAPIServerConfig:         genericAPIServerConfig,
 		VersionedSharedInformerFactory: versionedInformers,
 		StorageFactory:                 storageFactory,
 		PlatformClient:                 platformClient.PlatformV1(),
-		RegistryClient:                 registryClient.RegistryV1(),
+	}
+
+	// client config for registry apiserver
+	registryAPIServerClientConfig, ok, err := controllerconfig.BuildClientConfig(opts.RegistryAPIClient)
+	if err != nil {
+		return nil, err
+	}
+	if ok && registryAPIServerClientConfig != nil {
+		registryClient, err := versionedclientset.NewForConfig(rest.AddUserAgent(registryAPIServerClientConfig, "tke-application-api"))
+		if err != nil {
+			return nil, err
+		}
+		cfg.RegistryClient = registryClient.RegistryV1()
 	}
 
 	if err := (&opts.FeatureOptions.Repo).ApplyTo(&cfg.RepoConfiguration); err != nil {
