@@ -47,7 +47,7 @@
     # 创建的CVM所在区域
     REGION: ap-xxxxxx
     # 创建CVM所需的一些参数，注意：Zone需要和已有配置REGION一致；subnetId需要和global集群节点同一子网；Password需要和已有配置PASSWORD相同
-    CREATE_INSTANCES_PARAM: {"Placement":{"Zone":"ap-xxxxxx-1"},"ImageId":"img-xxxxxx","InstanceChargeType":"POSTPAID_BY_HOUR","InstanceType":"xxxxxx","SystemDisk":{"DiskType":"CLOUD_PREMIUM"},"VirtualPrivateCloud":{"VpcId":"vpc-xxxxxx","SubnetId":"subnet-xxxxxx"},"InternetAccessible":{"InternetMaxBandwidthOut":1,"PublicIpAssigned":true},"InstanceName":"platform","LoginSettings":{"Password":"xxxxxx"}}
+    CREATE_INSTANCES_PARAM: {"Placement":{"Zone":"ap-xxxxxx-1"},"ImageId":"img-xxxxxx","InstanceChargeType":"POSTPAID_BY_HOUR","InstanceType":"xxxxxx","SystemDisk":{"DiskType":"CLOUD_PREMIUM"},"VirtualPrivateCloud":{"VpcId":"vpc-xxxxxx","SubnetId":"subnet-xxxxxx"},"InternetAccessible":{"InternetMaxBandwidthOut":1,"PublicIpAssigned":true},"InstanceName":"platformtest","LoginSettings":{"Password":"xxxxxx"}}
     ```
 5. 跳转至测试文件目录，如：`<代码根目录>/tke/test/e2e/platform`
 6. 执行`go test -v --timeout 40m` （[more go test flags](https://golang.org/cmd/go/#hdr-Testing_flags) ）
@@ -62,7 +62,8 @@
 
 - 如何过滤用例：`go test -run <regexp>`
 - 用例执行完如何保留CVM：配置`NEED_DELETE`设置为空
-- 如何手动删除CVM：登录到腾讯云控制台，搜索`CREATE_INSTANCES_PARAM`中配置`InstanceName`的值，删除
+- 用例执行超时CVM是否会删除：不会，需要手动删除
+- 如何手动删除CVM：登录到腾讯云控制台，搜索`CREATE_INSTANCES_PARAM`中配置`InstanceName`的值(`platformtest`)进行过滤删除，也可以通过`所属项目`（`tkeci`）进行过滤删除
 - 是否支持k8s不同版本间并行执行：e2e workflow已支持，但需要有多个Runner作为前提
 
 ## Smoke Test
