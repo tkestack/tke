@@ -32,6 +32,12 @@ type Options struct {
 	Force                      *bool
 	SyncProjectsWithNamespaces *bool
 	Replicas                   *int
+	Upgrade                    *bool
+	Kubeconfig                 *string
+	RegistryUsername           *string
+	RegistryPassword           *string
+	RegistryDomain             *string
+	RegistryNamespace          *string
 }
 
 // NewOptions creates a new Options with a default config.
@@ -51,6 +57,12 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Force = fs.Bool("force", false, "force run as clean")
 	o.SyncProjectsWithNamespaces = fs.Bool("sync-projects-with-namespaces", false, "Enable creating/deleting the corresponding namespace when creating/deleting a project.")
 	o.Replicas = fs.Int("replicas", 2, "tke components replicas")
+	o.Upgrade = fs.Bool("upgrade", false, "upgrade")
+	o.Kubeconfig = fs.String("kubeconfig", "conf/kubeconfig", "specify kubeconfig for upgrade")
+	o.RegistryUsername = fs.String("username", "", "specify registry username for upgrade")
+	o.RegistryPassword = fs.String("password", "", "specify registry password for upgrade")
+	o.RegistryDomain = fs.String("domain", "", "specify registry domain for upgrade")
+	o.RegistryNamespace = fs.String("namespace", "", "specify registry namespace for upgrade")
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file

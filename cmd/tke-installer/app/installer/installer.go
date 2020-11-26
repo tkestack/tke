@@ -208,8 +208,8 @@ func (t *TKE) initSteps() {
 			Func: t.createGlobalCluster,
 		},
 		{
-			Name: "Patch k8s version in cluster info",
-			Func: t.patchK8sValidVersions,
+			Name: "Patch platform versions in cluster info",
+			Func: t.patchPlatformVersion,
 		},
 		{
 			Name: "Write kubeconfig",
@@ -409,6 +409,15 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
+	if t.Para.Config.Registry.ThirdPartyRegistry != nil {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Save third party registry info",
+				Func: t.saveThirdPartyRegistryInfo,
+			},
+		}...)
+	}
+
 	t.steps = append(t.steps, []types.Handler{
 		{
 			Name: "Execute post install hook",
@@ -466,6 +475,14 @@ func (t *TKE) runWithUI() error {
 
 	if t.isFromRestore {
 		go t.do()
+	}
+	if t.Config.Upgrade {
+		err := t.prepareForUpgrade(context.Background())
+		if err != nil {
+			return err
+		}
+		t.do()
+		return nil
 	}
 
 	log.Infof("Starting %s at http://%s", t.Config.ServerName, t.Config.ListenAddr)
@@ -953,15 +970,22 @@ func (t *TKE) do() {
 	start := time.Now()
 	ctx := t.log.WithContext(context.Background())
 
-	containerregistry.Init(t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace())
-	t.initSteps()
+	var taskType string
+	if t.Config.Upgrade {
+		taskType = "upgrade"
+		t.upgradeSteps()
+	} else {
+		taskType = "install"
+		containerregistry.Init(t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace())
+		t.initSteps()
+	}
 
 	if t.Step == 0 {
-		t.log.Info("===>starting install task")
+		t.log.Infof("===>starting %s task", taskType)
 		t.progress.Status = types.StatusDoing
 	}
 
-	if t.runAfterClusterReady() {
+	if !t.Config.Upgrade && t.runAfterClusterReady() {
 		t.initDataForDeployTKE()
 	}
 
@@ -1020,7 +1044,7 @@ func (t *TKE) do() {
 	}
 	t.progress.Servers = append(t.progress.Servers, t.servers...)
 
-	t.log.Infof("===>install task [Sucesss] [%fs]", time.Since(start).Seconds())
+	t.log.Infof("===>%s task [Sucesss] [%fs]", taskType, time.Since(start).Seconds())
 }
 
 func (t *TKE) runAfterClusterReady() bool {
@@ -2425,7 +2449,7 @@ func (t *TKE) writeKubeconfig(ctx context.Context) error {
 	return ioutil.WriteFile("/root/.kube/config", data, 0644)
 }
 
-func (t *TKE) patchK8sValidVersions(ctx context.Context) error {
+func (t *TKE) patchPlatformVersion(ctx context.Context) error {
 	versionsByte, err := json.Marshal(spec.K8sValidVersions)
 	if err != nil {
 		return err
@@ -2433,6 +2457,7 @@ func (t *TKE) patchK8sValidVersions(ctx context.Context) error {
 	patchData := map[string]interface{}{
 		"data": map[string]interface{}{
 			"k8sValidVersions": string(versionsByte),
+			"tkeVersion":       spec.TKEVersion,
 		},
 	}
 	patchByte, err := json.Marshal(patchData)
@@ -2441,4 +2466,23 @@ func (t *TKE) patchK8sValidVersions(ctx context.Context) error {
 	}
 	_, err = t.globalClient.CoreV1().ConfigMaps("kube-public").Patch(ctx, "cluster-info", k8stypes.MergePatchType, patchByte, metav1.PatchOptions{})
 	return err
+}
+
+func (t *TKE) saveThirdPartyRegistryInfo(ctx context.Context) error {
+	if t.Para.Config.Registry.ThirdPartyRegistry == nil {
+		return errors.New("No third party registry info")
+	}
+	thirdPartyRegistryByte, err := json.Marshal(*t.Para.Config.Registry.ThirdPartyRegistry)
+	if err != nil {
+		return err
+	}
+	thirdPartyRegistryCm := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      thirdPartyRegistryCmName,
+			Namespace: t.namespace,
+		},
+		Data: map[string]string{},
+	}
+	thirdPartyRegistryCm.Data[thirdPartyRegistryCmKey] = string(thirdPartyRegistryByte)
+	return apiclient.CreateOrUpdateConfigMap(ctx, t.globalClient, thirdPartyRegistryCm)
 }
