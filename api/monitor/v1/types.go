@@ -209,20 +209,24 @@ type ClusterOverview struct {
 }
 
 type ClusterOverviewResult struct {
-	ClusterCount     int32               `json:"clusterCount" protobuf:"bytes,1,opt,name=clusterCount"`
-	ClusterAbnormal  int32               `json:"clusterAbnormal" protobuf:"bytes,2,opt,name=clusterAbnormal"`
-	ProjectCount     int32               `json:"projectCount" protobuf:"bytes,3,opt,name=projectCount"`
-	ProjectAbnormal  int32               `json:"projectAbnormal" protobuf:"bytes,4,opt,name=projectAbnormal"`
-	NodeCount        int32               `json:"nodeCount" protobuf:"bytes,5,opt,name=nodeCount"`
-	NodeAbnormal     int32               `json:"nodeAbnormal" protobuf:"bytes,6,opt,name=nodeAbnormal"`
-	WorkloadCount    int32               `json:"workloadCount" protobuf:"bytes,7,opt,name=workloadCount"`
-	WorkloadAbnormal int32               `json:"workloadAbnormal" protobuf:"bytes,8,opt,name=workloadAbnormal"`
-	CPUCapacity      float64             `json:"cpuCapacity" protobuf:"bytes,9,opt,name=cpuCapacity"`
-	CPUAllocatable   float64             `json:"cpuAllocatable" protobuf:"bytes,10,opt,name=cpuAllocatable"`
-	MemCapacity      int64               `json:"memCapacity" protobuf:"bytes,11,opt,name=memCapacity"`
-	MemAllocatable   int64               `json:"memAllocatable" protobuf:"bytes,12,opt,name=memAllocatable"`
-	PodCount         int32               `json:"podCount" protobuf:"bytes,13,opt,name=podCount"`
-	Clusters         []*ClusterStatistic `json:"clusters" protobuf:"bytes,14,opt,name=clusters"`
+	ClusterCount           int32               `json:"clusterCount" protobuf:"bytes,1,opt,name=clusterCount"`
+	ClusterAbnormal        int32               `json:"clusterAbnormal" protobuf:"bytes,2,opt,name=clusterAbnormal"`
+	ProjectCount           int32               `json:"projectCount" protobuf:"bytes,3,opt,name=projectCount"`
+	ProjectAbnormal        int32               `json:"projectAbnormal" protobuf:"bytes,4,opt,name=projectAbnormal"`
+	NodeCount              int32               `json:"nodeCount" protobuf:"bytes,5,opt,name=nodeCount"`
+	NodeAbnormal           int32               `json:"nodeAbnormal" protobuf:"bytes,6,opt,name=nodeAbnormal"`
+	WorkloadCount          int32               `json:"workloadCount" protobuf:"bytes,7,opt,name=workloadCount"`
+	WorkloadAbnormal       int32               `json:"workloadAbnormal" protobuf:"bytes,8,opt,name=workloadAbnormal"`
+	CPUCapacity            float64             `json:"cpuCapacity" protobuf:"bytes,9,opt,name=cpuCapacity"`
+	CPUAllocatable         float64             `json:"cpuAllocatable" protobuf:"bytes,10,opt,name=cpuAllocatable"`
+	CPUNotReadyCapacity    float64             `json:"cpuNotReadyCapacity" protobuf:"bytes,11,opt,name=cpuNotReadyCapacity"`
+	CPUNotReadyAllocatable float64             `json:"cpuNotReadyAllocatable" protobuf:"bytes,12,opt,name=cpuNotReadyAllocatable"`
+	MemCapacity            int64               `json:"memCapacity" protobuf:"bytes,13,opt,name=memCapacity"`
+	MemAllocatable         int64               `json:"memAllocatable" protobuf:"bytes,14,opt,name=memAllocatable"`
+	MemNotReadyCapacity    int64               `json:"memNotReadyCapacity" protobuf:"bytes,15,opt,name=memNotReadyCapacity"`
+	MemNotReadyAllocatable int64               `json:"memNotReadyAllocatable" protobuf:"bytes,16,opt,name=memNotReadyAllocatable"`
+	PodCount               int32               `json:"podCount" protobuf:"bytes,17,opt,name=podCount"`
+	Clusters               []*ClusterStatistic `json:"clusters" protobuf:"bytes,18,opt,name=clusters"`
 }
 
 type ClusterStatistic struct {
@@ -240,21 +244,25 @@ type ClusterStatistic struct {
 	CPULimit                 float64 `json:"cpuLimit" protobuf:"bytes,12,opt,name=cpuLimit"`
 	CPUCapacity              float64 `json:"cpuCapacity" protobuf:"bytes,13,opt,name=cpuCapacity"`
 	CPUAllocatable           float64 `json:"cpuAllocatable" protobuf:"bytes,14,opt,name=cpuAllocatable"`
-	CPURequestRate           string  `json:"cpuRequestRate" protobuf:"bytes,15,opt,name=cpuRequestRate"`
-	CPUAllocatableRate       string  `json:"cpuAllocatableRate" protobuf:"bytes,16,opt,name=cpuAllocatableRate"`
-	CPUUsage                 string  `json:"cpuUsage" protobuf:"bytes,17,opt,name=cpuUsage"`
-	MemUsed                  int64   `json:"memUsed" protobuf:"bytes,18,opt,name=memUsed"`
-	MemRequest               int64   `json:"memRequest" protobuf:"bytes,19,opt,name=memRequest"`
-	MemLimit                 int64   `json:"memLimit" protobuf:"bytes,20,opt,name=memLimit"`
-	MemCapacity              int64   `json:"memCapacity" protobuf:"bytes,21,opt,name=memCapacity"`
-	MemAllocatable           int64   `json:"memAllocatable" protobuf:"bytes,22,opt,name=memAllocatable"`
-	MemRequestRate           string  `json:"memRequestRate" protobuf:"bytes,23,opt,name=memRequestRate"`
-	MemAllocatableRate       string  `json:"memAllocatableRate" protobuf:"bytes,24,opt,name=memAllocatableRate"`
-	MemUsage                 string  `json:"memUsage" protobuf:"bytes,25,opt,name=memUsage"`
-	PodCount                 int32   `json:"podCount" protobuf:"bytes,26,opt,name=podCount"`
-	SchedulerHealthy         bool    `json:"schedulerHealthy" protobuf:"bytes,27,opt,name=schedulerHealthy"`
-	ControllerManagerHealthy bool    `json:"controllerManagerHealthy" protobuf:"bytes,28,opt,name=controllerManagerHealthy"`
-	EtcdHealthy              bool    `json:"etcdHealthy" protobuf:"bytes,29,opt,name=etcdHealthy"`
+	CPUNotReadyCapacity      float64 `json:"cpuNotReadyCapacity" protobuf:"bytes,15,opt,name=cpuNotReadyCapacity"`
+	CPUNotReadyAllocatable   float64 `json:"cpuNotReadyAllocatable" protobuf:"bytes,16,opt,name=cpuNotReadyAllocatable"`
+	CPURequestRate           string  `json:"cpuRequestRate" protobuf:"bytes,17,opt,name=cpuRequestRate"`
+	CPUAllocatableRate       string  `json:"cpuAllocatableRate" protobuf:"bytes,18,opt,name=cpuAllocatableRate"`
+	CPUUsage                 string  `json:"cpuUsage" protobuf:"bytes,19,opt,name=cpuUsage"`
+	MemUsed                  int64   `json:"memUsed" protobuf:"bytes,20,opt,name=memUsed"`
+	MemRequest               int64   `json:"memRequest" protobuf:"bytes,21,opt,name=memRequest"`
+	MemLimit                 int64   `json:"memLimit" protobuf:"bytes,22,opt,name=memLimit"`
+	MemCapacity              int64   `json:"memCapacity" protobuf:"bytes,23,opt,name=memCapacity"`
+	MemAllocatable           int64   `json:"memAllocatable" protobuf:"bytes,24,opt,name=memAllocatable"`
+	MemNotReadyCapacity      int64   `json:"memNotReadyCapacity" protobuf:"bytes,25,opt,name=memNotReadyCapacity"`
+	MemNotReadyAllocatable   int64   `json:"memNotReadyAllocatable" protobuf:"bytes,26,opt,name=memNotReadyAllocatable"`
+	MemRequestRate           string  `json:"memRequestRate" protobuf:"bytes,27,opt,name=memRequestRate"`
+	MemAllocatableRate       string  `json:"memAllocatableRate" protobuf:"bytes,28,opt,name=memAllocatableRate"`
+	MemUsage                 string  `json:"memUsage" protobuf:"bytes,29,opt,name=memUsage"`
+	PodCount                 int32   `json:"podCount" protobuf:"bytes,30,opt,name=podCount"`
+	SchedulerHealthy         bool    `json:"schedulerHealthy" protobuf:"bytes,31,opt,name=schedulerHealthy"`
+	ControllerManagerHealthy bool    `json:"controllerManagerHealthy" protobuf:"bytes,32,opt,name=controllerManagerHealthy"`
+	EtcdHealthy              bool    `json:"etcdHealthy" protobuf:"bytes,33,opt,name=etcdHealthy"`
 }
 
 // +genclient

@@ -58,6 +58,12 @@ export interface LogStashEdit extends Identifiable {
   esAddress?: string;
   v_esAddress?: Validation;
 
+  /** es username */
+  esUsername?: string;
+
+  /** es password */
+  esPassword?: string;
+
   /** 索引名称 */
   indexName?: string;
   v_indexName?: Validation;
@@ -215,6 +221,8 @@ export interface ElasticsearchOutput {
   elasticsearch_output: {
     hosts: string[];
     index: string;
+    user: string;
+    password: string;
   };
   type: 'elasticsearch';
 }

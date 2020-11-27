@@ -44,80 +44,90 @@ func isPlatformAdmin(ctx context.Context, businessClient businessversionedclient
 	return isPlatformAdmin, nil
 }
 
-// ListPersonalChartGroups list all chartgroups that belongs to personal
-func prepareListPersonalChartGroups(ctx context.Context,
+// filterUserChartGroups filter all chartgroups that belongs to user
+func filterUserChartGroups(ctx context.Context,
+	options *metainternal.ListOptions,
+	username string,
+	cgList *registryapi.ChartGroupList,
+	isAdmin bool) (runtime.Object, error) {
+	if !isAdmin {
+		allList := []registryapi.ChartGroup{}
+		for _, cg := range cgList.Items {
+			if util.InStringSlice(cg.Spec.Users, username) {
+				allList = append(allList, cg)
+			}
+		}
+		cgList.Items = allList
+	}
+
+	return cgList, nil
+}
+
+// ListUserChartGroups list all chartgroups that belongs to personal
+func prepareListUserChartGroups(ctx context.Context,
 	options *metainternal.ListOptions,
 	businessClient businessversionedclient.BusinessV1Interface,
-	privilegedUsername string) (opt *metainternal.ListOptions, err error) {
+	privilegedUsername string) (opt *metainternal.ListOptions, isAdmin bool, err error) {
 	admin := authentication.IsAdministrator(ctx, privilegedUsername)
-	fieldSelector := fields.OneTermEqualSelector("spec.type", string(registryapi.RepoTypePersonal))
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
+	platformAdmin, err := isPlatformAdmin(ctx, businessClient)
+	if err != nil {
+		return nil, true, err
+	}
+
+	fieldSelector := fields.OneTermEqualSelector("spec.visibility", string(registryapi.VisibilityUser))
 	if admin {
 		// do nothing, super admin has no tenantID
 	} else {
-		username, tenantID := authentication.UsernameAndTenantID(ctx)
 		fieldSelector = fields.AndSelectors(fieldSelector, fields.OneTermEqualSelector("spec.tenantID", tenantID))
-
-		platformAdmin, err := isPlatformAdmin(ctx, businessClient)
-		if err != nil {
-			return options, err
-		}
-		if !platformAdmin {
-			fieldSelector = fields.AndSelectors(fieldSelector, fields.OneTermEqualSelector("spec.name", username))
-		}
 	}
 	options = apiserverutil.FullListOptionsFieldSelector(options, fieldSelector)
-	return options, nil
+	return options, admin || platformAdmin, nil
 }
 
-// ListPersonalChartGroupsFromStore list all chartgroups that belongs to personal
-func ListPersonalChartGroupsFromStore(ctx context.Context,
+// ListUserChartGroupsFromStore list all chartgroups that belongs to users
+func ListUserChartGroupsFromStore(ctx context.Context,
 	options *metainternal.ListOptions,
 	businessClient businessversionedclient.BusinessV1Interface,
 	privilegedUsername string,
 	store *registry.Store) (runtime.Object, error) {
-	options, err := prepareListPersonalChartGroups(ctx, options, businessClient, privilegedUsername)
+	options, isAdmin, err := prepareListUserChartGroups(ctx, options, businessClient, privilegedUsername)
 	if err != nil {
 		return nil, err
 	}
-	return store.List(ctx, options)
+	obj, err := store.List(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+	cgList := obj.(*registryapi.ChartGroupList)
+	if len(cgList.Items) == 0 {
+		return &registryapi.ChartGroupList{}, nil
+	}
+	username, _ := authentication.UsernameAndTenantID(ctx)
+	return filterUserChartGroups(ctx, options, username, cgList, isAdmin)
 }
 
-// ListPersonalChartGroups list all chartgroups that belongs to personal
-func ListPersonalChartGroups(ctx context.Context,
+// ListUserChartGroups list all chartgroups that belongs to users
+func ListUserChartGroups(ctx context.Context,
 	options *metainternal.ListOptions,
 	businessClient businessversionedclient.BusinessV1Interface,
 	registryClient *registryinternalclient.RegistryClient,
 	privilegedUsername string) (runtime.Object, error) {
-	options, err := prepareListPersonalChartGroups(ctx, options, businessClient, privilegedUsername)
+	options, isAdmin, err := prepareListUserChartGroups(ctx, options, businessClient, privilegedUsername)
 	if err != nil {
 		return nil, err
 	}
-	return registryClient.ChartGroups().List(ctx, metav1.ListOptions{
+	cgList, err := registryClient.ChartGroups().List(ctx, metav1.ListOptions{
 		FieldSelector: options.FieldSelector.String(),
 	})
-}
-
-// prepareListProjectChartGroups list all charts that belongs to project
-func prepareListProjectChartGroups(ctx context.Context,
-	options *metainternal.ListOptions,
-	businessClient businessversionedclient.BusinessV1Interface,
-	privilegedUsername string) (opt *metainternal.ListOptions, admin bool, platformAdmin bool, err error) {
-	admin = authentication.IsAdministrator(ctx, privilegedUsername)
-	_, tenantID := authentication.UsernameAndTenantID(ctx)
-	platformAdmin, err = isPlatformAdmin(ctx, businessClient)
 	if err != nil {
-		return nil, admin, platformAdmin, err
+		return nil, err
 	}
-
-	fieldSelector := fields.OneTermEqualSelector("spec.type", string(registryapi.RepoTypeProject))
-	if admin {
-		// do nothing, admin has no tenantID
-	} else {
-		fieldSelector = fields.AndSelectors(fieldSelector, fields.OneTermEqualSelector("spec.tenantID", tenantID))
+	if len(cgList.Items) == 0 {
+		return &registryapi.ChartGroupList{}, nil
 	}
-
-	options = apiserverutil.FullListOptionsFieldSelector(options, fieldSelector)
-	return options, admin, platformAdmin, nil
+	username, _ := authentication.UsernameAndTenantID(ctx)
+	return filterUserChartGroups(ctx, options, username, cgList, isAdmin)
 }
 
 // filterProjectChartGroups filter all charts that belongs to project
@@ -125,14 +135,13 @@ func filterProjectChartGroups(ctx context.Context,
 	options *metainternal.ListOptions,
 	targetProjectID string,
 	authClient authversionedclient.AuthV1Interface,
-	chartGroupList *registryapi.ChartGroupList,
-	filterFromProjectBelongs bool) (runtime.Object, error) {
-
+	cgList *registryapi.ChartGroupList,
+	isAdmin bool) (runtime.Object, error) {
 	targetPrj := func(prjs []string, prj string) bool {
 		return prj == "" || util.InStringSlice(prjs, prj)
 	}
 
-	if filterFromProjectBelongs && authClient != nil {
+	if !isAdmin && authClient != nil {
 		uid := authentication.GetUID(ctx)
 		_, tenantID := authentication.UsernameAndTenantID(ctx)
 		belongs := &authv1.ProjectBelongs{}
@@ -153,7 +162,7 @@ func filterProjectChartGroups(ctx context.Context,
 			pidMap[pid] = true
 		}
 		allList := []registryapi.ChartGroup{}
-		for _, cg := range chartGroupList.Items {
+		for _, cg := range cgList.Items {
 			if targetPrj(cg.Spec.Projects, targetProjectID) {
 				for _, pid := range cg.Spec.Projects {
 					if _, ok := pidMap[pid]; ok {
@@ -163,18 +172,41 @@ func filterProjectChartGroups(ctx context.Context,
 				}
 			}
 		}
-		chartGroupList.Items = allList
+		cgList.Items = allList
 	} else {
 		allList := []registryapi.ChartGroup{}
-		for _, cg := range chartGroupList.Items {
+		for _, cg := range cgList.Items {
 			if targetPrj(cg.Spec.Projects, targetProjectID) {
 				allList = append(allList, cg)
 			}
 		}
-		chartGroupList.Items = allList
+		cgList.Items = allList
 	}
 
-	return chartGroupList, nil
+	return cgList, nil
+}
+
+// prepareListProjectChartGroups list all charts that belongs to project
+func prepareListProjectChartGroups(ctx context.Context,
+	options *metainternal.ListOptions,
+	businessClient businessversionedclient.BusinessV1Interface,
+	privilegedUsername string) (opt *metainternal.ListOptions, isAdmin bool, err error) {
+	admin := authentication.IsAdministrator(ctx, privilegedUsername)
+	_, tenantID := authentication.UsernameAndTenantID(ctx)
+	platformAdmin, err := isPlatformAdmin(ctx, businessClient)
+	if err != nil {
+		return nil, true, err
+	}
+
+	fieldSelector := fields.OneTermEqualSelector("spec.visibility", string(registryapi.VisibilityProject))
+	if admin {
+		// do nothing, admin has no tenantID
+	} else {
+		fieldSelector = fields.AndSelectors(fieldSelector, fields.OneTermEqualSelector("spec.tenantID", tenantID))
+	}
+
+	options = apiserverutil.FullListOptionsFieldSelector(options, fieldSelector)
+	return options, admin || platformAdmin, nil
 }
 
 // ListProjectChartGroupsFromStore list all charts that belongs to project
@@ -185,7 +217,7 @@ func ListProjectChartGroupsFromStore(ctx context.Context,
 	authClient authversionedclient.AuthV1Interface,
 	privilegedUsername string,
 	store *registry.Store) (runtime.Object, error) {
-	options, admin, platformAdmin, err := prepareListProjectChartGroups(ctx, options, businessClient, privilegedUsername)
+	options, isAdmin, err := prepareListProjectChartGroups(ctx, options, businessClient, privilegedUsername)
 	if err != nil {
 		return nil, err
 	}
@@ -193,11 +225,11 @@ func ListProjectChartGroupsFromStore(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	chartGroupList := obj.(*registryapi.ChartGroupList)
-	if len(chartGroupList.Items) == 0 {
+	cgList := obj.(*registryapi.ChartGroupList)
+	if len(cgList.Items) == 0 {
 		return &registryapi.ChartGroupList{}, nil
 	}
-	return filterProjectChartGroups(ctx, options, targetProjectID, authClient, chartGroupList, (!admin && !platformAdmin))
+	return filterProjectChartGroups(ctx, options, targetProjectID, authClient, cgList, isAdmin)
 }
 
 // ListProjectChartGroups list all charts that belongs to project
@@ -208,66 +240,20 @@ func ListProjectChartGroups(ctx context.Context,
 	authClient authversionedclient.AuthV1Interface,
 	registryClient *registryinternalclient.RegistryClient,
 	privilegedUsername string) (runtime.Object, error) {
-	options, admin, platformAdmin, err := prepareListProjectChartGroups(ctx, options, businessClient, privilegedUsername)
+	options, isAdmin, err := prepareListProjectChartGroups(ctx, options, businessClient, privilegedUsername)
 	if err != nil {
 		return nil, err
 	}
-	chartGroupList, err := registryClient.ChartGroups().List(ctx, metav1.ListOptions{
+	cgList, err := registryClient.ChartGroups().List(ctx, metav1.ListOptions{
 		FieldSelector: options.FieldSelector.String(),
 	})
 	if err != nil {
 		return nil, err
 	}
-	if len(chartGroupList.Items) == 0 {
+	if len(cgList.Items) == 0 {
 		return &registryapi.ChartGroupList{}, nil
 	}
-	return filterProjectChartGroups(ctx, options, targetProjectID, authClient, chartGroupList, (!admin && !platformAdmin))
-}
-
-// prepareListSystemChartGroups list all charts that belongs to system
-func prepareListSystemChartGroups(ctx context.Context,
-	options *metainternal.ListOptions,
-	businessClient businessversionedclient.BusinessV1Interface,
-	privilegedUsername string) (opt *metainternal.ListOptions, err error) {
-	admin := authentication.IsAdministrator(ctx, privilegedUsername)
-
-	fieldSelector := fields.OneTermEqualSelector("spec.type", string(registryapi.RepoTypeSystem))
-	if admin {
-		// do nothing, admin has no tenantID
-	} else {
-		_, tenantID := authentication.UsernameAndTenantID(ctx)
-		fieldSelector = fields.AndSelectors(fieldSelector, fields.OneTermEqualSelector("spec.tenantID", tenantID))
-	}
-	options = apiserverutil.FullListOptionsFieldSelector(options, fieldSelector)
-	return options, nil
-}
-
-// ListSystemChartGroupsFromStore list all charts that belongs to system
-func ListSystemChartGroupsFromStore(ctx context.Context,
-	options *metainternal.ListOptions,
-	businessClient businessversionedclient.BusinessV1Interface,
-	privilegedUsername string,
-	store *registry.Store) (runtime.Object, error) {
-	options, err := prepareListSystemChartGroups(ctx, options, businessClient, privilegedUsername)
-	if err != nil {
-		return nil, err
-	}
-	return store.List(ctx, options)
-}
-
-// ListSystemChartGroups list all charts that belongs to system
-func ListSystemChartGroups(ctx context.Context,
-	options *metainternal.ListOptions,
-	businessClient businessversionedclient.BusinessV1Interface,
-	registryClient *registryinternalclient.RegistryClient,
-	privilegedUsername string) (runtime.Object, error) {
-	options, err := prepareListSystemChartGroups(ctx, options, businessClient, privilegedUsername)
-	if err != nil {
-		return nil, err
-	}
-	return registryClient.ChartGroups().List(ctx, metav1.ListOptions{
-		FieldSelector: options.FieldSelector.String(),
-	})
+	return filterProjectChartGroups(ctx, options, targetProjectID, authClient, cgList, isAdmin)
 }
 
 // ListPublicChartGroups list all charts that belongs to public
@@ -341,7 +327,7 @@ func ListAllChartGroupsFromStore(ctx context.Context,
 	authClient authversionedclient.AuthV1Interface,
 	privilegedUsername string,
 	store *registry.Store) (runtime.Object, error) {
-	personal, err := ListPersonalChartGroupsFromStore(ctx, options.DeepCopy(), businessClient, privilegedUsername, store)
+	personal, err := ListUserChartGroupsFromStore(ctx, options.DeepCopy(), businessClient, privilegedUsername, store)
 	if err != nil {
 		return nil, err
 	}
@@ -365,7 +351,7 @@ func ListAllChartGroups(ctx context.Context,
 	authClient authversionedclient.AuthV1Interface,
 	registryClient *registryinternalclient.RegistryClient,
 	privilegedUsername string) (runtime.Object, error) {
-	personal, err := ListPersonalChartGroups(ctx, options.DeepCopy(), businessClient, registryClient, privilegedUsername)
+	personal, err := ListUserChartGroups(ctx, options.DeepCopy(), businessClient, registryClient, privilegedUsername)
 	if err != nil {
 		return nil, err
 	}

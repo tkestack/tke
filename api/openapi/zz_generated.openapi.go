@@ -871,6 +871,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/logagent/v1.LogAgentProxyOptions":                        schema_tke_api_logagent_v1_LogAgentProxyOptions(ref),
 		"tkestack.io/tke/api/logagent/v1.LogAgentSpec":                                schema_tke_api_logagent_v1_LogAgentSpec(ref),
 		"tkestack.io/tke/api/logagent/v1.LogAgentStatus":                              schema_tke_api_logagent_v1_LogAgentStatus(ref),
+		"tkestack.io/tke/api/logagent/v1.LogEsDetection":                              schema_tke_api_logagent_v1_LogEsDetection(ref),
 		"tkestack.io/tke/api/logagent/v1.LogFileContent":                              schema_tke_api_logagent_v1_LogFileContent(ref),
 		"tkestack.io/tke/api/logagent/v1.LogFileContentSpec":                          schema_tke_api_logagent_v1_LogFileContentSpec(ref),
 		"tkestack.io/tke/api/logagent/v1.LogFileProxyOptions":                         schema_tke_api_logagent_v1_LogFileProxyOptions(ref),
@@ -1023,6 +1024,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.VolumeDecoratorStatus":                       schema_tke_api_platform_v1_VolumeDecoratorStatus(ref),
 		"tkestack.io/tke/api/registry/v1.Chart":                                       schema_tke_api_registry_v1_Chart(ref),
 		"tkestack.io/tke/api/registry/v1.ChartGroup":                                  schema_tke_api_registry_v1_ChartGroup(ref),
+		"tkestack.io/tke/api/registry/v1.ChartGroupImport":                            schema_tke_api_registry_v1_ChartGroupImport(ref),
 		"tkestack.io/tke/api/registry/v1.ChartGroupList":                              schema_tke_api_registry_v1_ChartGroupList(ref),
 		"tkestack.io/tke/api/registry/v1.ChartGroupSpec":                              schema_tke_api_registry_v1_ChartGroupSpec(ref),
 		"tkestack.io/tke/api/registry/v1.ChartGroupStatus":                            schema_tke_api_registry_v1_ChartGroupStatus(ref),
@@ -36136,8 +36138,32 @@ func schema_tke_api_application_v1_Chart(ref common.ReferenceCallback) common.Op
 							Format: "",
 						},
 					},
+					"repoURL": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"repoUsername": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"repoPassword": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"importedRepo": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 				},
-				Required: []string{"tenantID", "chartGroupName", "chartName", "chartVersion"},
+				Required: []string{"tenantID", "chartGroupName", "chartName", "chartVersion", "repoURL", "repoUsername", "repoPassword", "importedRepo"},
 			},
 		},
 	}
@@ -41662,6 +41688,63 @@ func schema_tke_api_logagent_v1_LogAgentStatus(ref common.ReferenceCallback) com
 	}
 }
 
+func schema_tke_api_logagent_v1_LogEsDetection(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "LogEsDetection",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"scheme": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"ip": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"port": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"user": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"password": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_tke_api_logagent_v1_LogFileContent(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -41972,6 +42055,18 @@ func schema_tke_api_monitor_v1_ClusterOverviewResult(ref common.ReferenceCallbac
 							Format: "double",
 						},
 					},
+					"cpuNotReadyCapacity": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"cpuNotReadyAllocatable": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
 					"memCapacity": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
@@ -41979,6 +42074,18 @@ func schema_tke_api_monitor_v1_ClusterOverviewResult(ref common.ReferenceCallbac
 						},
 					},
 					"memAllocatable": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"memNotReadyCapacity": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"memNotReadyAllocatable": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
 							Format: "int64",
@@ -42003,7 +42110,7 @@ func schema_tke_api_monitor_v1_ClusterOverviewResult(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"clusterCount", "clusterAbnormal", "projectCount", "projectAbnormal", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "cpuCapacity", "cpuAllocatable", "memCapacity", "memAllocatable", "podCount", "clusters"},
+				Required: []string{"clusterCount", "clusterAbnormal", "projectCount", "projectAbnormal", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "cpuCapacity", "cpuAllocatable", "cpuNotReadyCapacity", "cpuNotReadyAllocatable", "memCapacity", "memAllocatable", "memNotReadyCapacity", "memNotReadyAllocatable", "podCount", "clusters"},
 			},
 		},
 		Dependencies: []string{
@@ -42101,6 +42208,18 @@ func schema_tke_api_monitor_v1_ClusterStatistic(ref common.ReferenceCallback) co
 							Format: "double",
 						},
 					},
+					"cpuNotReadyCapacity": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
+					"cpuNotReadyAllocatable": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"number"},
+							Format: "double",
+						},
+					},
 					"cpuRequestRate": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -42149,6 +42268,18 @@ func schema_tke_api_monitor_v1_ClusterStatistic(ref common.ReferenceCallback) co
 							Format: "int64",
 						},
 					},
+					"memNotReadyCapacity": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"memNotReadyAllocatable": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
 					"memRequestRate": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -42192,7 +42323,7 @@ func schema_tke_api_monitor_v1_ClusterStatistic(ref common.ReferenceCallback) co
 						},
 					},
 				},
-				Required: []string{"clusterID", "clusterDisplayName", "tenantID", "clusterPhase", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "hasMetricServer", "cpuUsed", "cpuRequest", "cpuLimit", "cpuCapacity", "cpuAllocatable", "cpuRequestRate", "cpuAllocatableRate", "cpuUsage", "memUsed", "memRequest", "memLimit", "memCapacity", "memAllocatable", "memRequestRate", "memAllocatableRate", "memUsage", "podCount", "schedulerHealthy", "controllerManagerHealthy", "etcdHealthy"},
+				Required: []string{"clusterID", "clusterDisplayName", "tenantID", "clusterPhase", "nodeCount", "nodeAbnormal", "workloadCount", "workloadAbnormal", "hasMetricServer", "cpuUsed", "cpuRequest", "cpuLimit", "cpuCapacity", "cpuAllocatable", "cpuNotReadyCapacity", "cpuNotReadyAllocatable", "cpuRequestRate", "cpuAllocatableRate", "cpuUsage", "memUsed", "memRequest", "memLimit", "memCapacity", "memAllocatable", "memNotReadyCapacity", "memNotReadyAllocatable", "memRequestRate", "memAllocatableRate", "memUsage", "podCount", "schedulerHealthy", "controllerManagerHealthy", "etcdHealthy"},
 			},
 		},
 	}
@@ -45294,11 +45425,17 @@ func schema_tke_api_platform_v1_ClusterFeature(ref common.ReferenceCallback) com
 							Format: "",
 						},
 					},
+					"upgrade": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Upgrade control upgrade process.",
+							Ref:         ref("tkestack.io/tke/api/platform/v1.Upgrade"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"tkestack.io/tke/api/platform/v1.AuthzWebhookAddr", "tkestack.io/tke/api/platform/v1.CSIOperatorFeature", "tkestack.io/tke/api/platform/v1.File", "tkestack.io/tke/api/platform/v1.HA"},
+			"tkestack.io/tke/api/platform/v1.AuthzWebhookAddr", "tkestack.io/tke/api/platform/v1.CSIOperatorFeature", "tkestack.io/tke/api/platform/v1.File", "tkestack.io/tke/api/platform/v1.HA", "tkestack.io/tke/api/platform/v1.Upgrade"},
 	}
 }
 
@@ -45718,12 +45855,6 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							Ref:         ref("tkestack.io/tke/api/platform/v1.Etcd"),
 						},
 					},
-					"upgrade": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Upgrade control upgrade process.",
-							Ref:         ref("tkestack.io/tke/api/platform/v1.Upgrade"),
-						},
-					},
 					"hostnameAsNodename": {
 						SchemaProps: spec.SchemaProps{
 							Description: "If true will use hostname as nodename, if false will use machine IP as nodename.",
@@ -45745,12 +45876,24 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							},
 						},
 					},
+					"scalingMachines": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/platform/v1.ClusterMachine"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"tenantID", "type", "version"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.LocalObjectReference", "tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty", "tkestack.io/tke/api/platform/v1.Etcd", "tkestack.io/tke/api/platform/v1.Upgrade"},
+			"k8s.io/api/core/v1.LocalObjectReference", "tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty", "tkestack.io/tke/api/platform/v1.Etcd"},
 	}
 }
 
@@ -48519,6 +48662,24 @@ func schema_tke_api_platform_v1_StorageBackEndES(ref common.ReferenceCallback) c
 							Format: "",
 						},
 					},
+					"user": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"password": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"reserveDays": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
 				},
 			},
 		},
@@ -48825,6 +48986,13 @@ func schema_tke_api_platform_v1_UpgradeStrategy(ref common.ReferenceCallback) co
 						SchemaProps: spec.SchemaProps{
 							Description: "The maximum number of pods that can be unready during the upgrade. 0% means all pods need to be ready after evition. 100% means ignore any pods unready which may be used in one worker node, use this carefully! default value is 0%.",
 							Ref:         ref("k8s.io/apimachinery/pkg/util/intstr.IntOrString"),
+						},
+					},
+					"drainNodeBeforeUpgrade": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether drain node before upgrade. Draining node before upgrade is recommended. But not all pod running as cows, a few running as pets. If your pod can not accept be expelled from current node, this value should be false.",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},
@@ -49145,6 +49313,38 @@ func schema_tke_api_registry_v1_ChartGroup(ref common.ReferenceCallback) common.
 	}
 }
 
+func schema_tke_api_registry_v1_ChartGroupImport(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ChartGroupImport is a description of an import chart group.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"addr": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"username": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"password": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"addr"},
+			},
+		},
+	}
+}
+
 func schema_tke_api_registry_v1_ChartGroupList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -49262,10 +49462,36 @@ func schema_tke_api_registry_v1_ChartGroupSpec(ref common.ReferenceCallback) com
 							},
 						},
 					},
+					"users": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"importedInfo": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/registry/v1.ChartGroupImport"),
+						},
+					},
+					"creator": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"name", "tenantID"},
 			},
 		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/registry/v1.ChartGroupImport"},
 	}
 }
 

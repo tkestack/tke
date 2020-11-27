@@ -20,9 +20,12 @@ package harbor
 
 import (
 	"k8s.io/apiserver/pkg/server/mux"
+
+	restclient "k8s.io/client-go/rest"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
 
 	"tkestack.io/tke/pkg/registry/harbor/handler"
+	"tkestack.io/tke/pkg/registry/harbor/tenant"
 
 	// import filesystem driver to store images
 	_ "github.com/docker/distribution/registry/storage/driver/filesystem"
@@ -34,34 +37,48 @@ import (
 	_ "tkestack.io/tke/pkg/registry/distribution/auth/token"
 )
 
-// PathPrefix defines the path prefix for accessing the docker registry v2 server.
-const PathPrefix = "/v2/"
+// RegistryPrefix defines the path prefix for accessing the docker registry v2 server.
+// ChartPrefix defines the path prefix for accessing the helm chart server
+const RegistryPrefix = "/v2/"
 const AuthPrefix = "/service/"
+const ChartAPIPrefix = "/api/chartrepo/"
+const ChartPrefix = "/chartrepo/"
+const CompatibleChartPrefix = "/chart/"
 
 type Options struct {
-	RegistryConfig *registryconfig.RegistryConfiguration
-	ExternalHost   string
+	RegistryConfig       *registryconfig.RegistryConfiguration
+	ExternalHost         string
+	LoopbackClientConfig *restclient.Config
 }
 
 // IgnoredAuthPathPrefixes returns a list of path prefixes that does not need to
 // go through the built-in authentication and authorization middleware of apiserver.
 func IgnoreAuthPathPrefixes() []string {
 	return []string{
-		PathPrefix,
+		RegistryPrefix,
 		AuthPrefix,
+		ChartPrefix,
+		ChartAPIPrefix,
 	}
 }
 
 // RegisterRoute to register the docker distribution server path prefix to apiserver.
 func RegisterRoute(m *mux.PathRecorderMux, opts *Options) error {
 
-	handler, err := handler.NewHandler("https://"+opts.RegistryConfig.DomainSuffix, opts.RegistryConfig.HarborCAFile, opts.ExternalHost)
+	httpURL := "https://" + opts.RegistryConfig.DomainSuffix
+
+	harborHandler, err := handler.NewHandler(httpURL, opts.RegistryConfig.HarborCAFile, opts.LoopbackClientConfig, opts.RegistryConfig)
 	if err != nil {
 		return err
 	}
 
-	m.HandlePrefix(PathPrefix, handler)
-	m.HandlePrefix(AuthPrefix, handler)
+	wrappedHandler := tenant.WithTenant(harborHandler, RegistryPrefix, AuthPrefix, ChartPrefix, CompatibleChartPrefix, ChartAPIPrefix, opts.RegistryConfig.DomainSuffix, opts.RegistryConfig.DefaultTenant)
+
+	m.HandlePrefix(RegistryPrefix, wrappedHandler)
+	m.HandlePrefix(AuthPrefix, wrappedHandler)
+	m.HandlePrefix(ChartPrefix, wrappedHandler)
+	m.HandlePrefix(ChartAPIPrefix, wrappedHandler)
+	m.HandlePrefix(CompatibleChartPrefix, wrappedHandler)
 
 	return nil
 }

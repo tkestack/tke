@@ -17,13 +17,13 @@ type GetState = () => RootState;
 const FFModelClusterActions = createFFListActions<Cluster, ClusterFilter>({
   actionName: FFReduxActionName.CLUSTER,
   fetcher: async (query, getState: GetState) => {
-    let response = await WebAPI.fetchClusterList(query, query.filter.regionId);
-    let ps = await WebAPI.fetchPrometheuses();
-    let clusterHasPs = {};
-    for (let p of ps.records) {
+    const response = await WebAPI.fetchClusterList(query, query.filter.regionId);
+    const ps = await WebAPI.fetchPrometheuses();
+    const clusterHasPs = {};
+    for (const p of ps.records) {
       clusterHasPs[p.spec.clusterName] = true;
     }
-    for (let record of response.records) {
+    for (const record of response.records) {
       record.spec.hasPrometheus = clusterHasPs[record.metadata.name];
     }
     return response;
@@ -32,21 +32,23 @@ const FFModelClusterActions = createFFListActions<Cluster, ClusterFilter>({
     return getState().cluster;
   },
   onFinish: (record, dispatch, getState: GetState) => {
-    let { cluster, route } = getState();
+    const { cluster, route } = getState();
 
     if (cluster.list.data.recordCount) {
-      let routeClusterId = route.queries['clusterId'];
-      let finder = routeClusterId ? cluster.list.data.records.find(c => c.metadata.name === routeClusterId) : undefined;
-      let defaultCluster = finder ? finder : cluster.list.data.records[0];
+      const routeClusterId = route.queries['clusterId'];
+      const finder = routeClusterId
+        ? cluster.list.data.records.find(c => c.metadata.name === routeClusterId)
+        : undefined;
+      const defaultCluster = finder ? finder : cluster.list.data.records[0];
       dispatch(clusterActions.selectCluster(defaultCluster));
     }
   }
 });
 
 const restActions = {
-  selectCluster(cluster: Cluster, isNeedInitClusterVersion: boolean = false) {
+  selectCluster(cluster: Cluster, isNeedInitClusterVersion = false) {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { regionSelection, route } = getState(),
+      const { regionSelection, route } = getState(),
         urlParams = router.resolve(route);
       if (cluster) {
         dispatch(FFModelClusterActions.select(cluster));
@@ -80,7 +82,7 @@ const restActions = {
   /** 初始化集群的版本 */
   initClusterVersion: (clusterVersion: string) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let k8sVersion = clusterVersion.split('.').slice(0, 2).join('.');
+      const k8sVersion = clusterVersion.split('.').slice(0, 2).join('.');
       dispatch({
         type: ActionType.InitClusterVersion,
         payload: k8sVersion
@@ -90,9 +92,9 @@ const restActions = {
   /** 获取当前集群开启的Addon */
   fetchClusterAddon: (clusterId, regionId) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { clusterVersion } = getState();
-      let clusterInfo: ResourceInfo = resourceConfig(clusterVersion).cluster;
-      let response = await WebAPI.fetchExtraResourceList(
+      const { clusterVersion } = getState();
+      const clusterInfo: ResourceInfo = resourceConfig(clusterVersion).cluster;
+      const response = await WebAPI.fetchExtraResourceList(
         {
           filter: {
             regionId: regionId,
@@ -103,7 +105,7 @@ const restActions = {
         false,
         'addons'
       );
-      let addons: AddonStatus = {};
+      const addons: AddonStatus = {};
       response.records.forEach(item => {
         addons[item.spec.type] = {
           status: item.status.phase,

@@ -55,6 +55,17 @@ message ChartGroup {
   optional ChartGroupStatus status = 3;
 }
 
+// ChartGroupImport is a description of an import chart group.
+message ChartGroupImport {
+  optional string addr = 1;
+
+  // +optional
+  optional string username = 2;
+
+  // +optional
+  optional string password = 3;
+}
+
 // ChartGroupList is the whole list of all chart groups which owned by a tenant.
 message ChartGroupList {
   // +optional
@@ -87,6 +98,15 @@ message ChartGroupSpec {
 
   // +optional
   repeated string finalizers = 8;
+
+  // +optional
+  repeated string users = 9;
+
+  // +optional
+  optional ChartGroupImport importedInfo = 10;
+
+  // +optional
+  optional string creator = 11;
 }
 
 // ChartGroupStatus represents information about the status of a chart group.

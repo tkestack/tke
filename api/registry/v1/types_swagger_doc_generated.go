@@ -47,6 +47,14 @@ func (ChartGroup) SwaggerDoc() map[string]string {
 	return map_ChartGroup
 }
 
+var map_ChartGroupImport = map[string]string{
+	"": "ChartGroupImport is a description of an import chart group.",
+}
+
+func (ChartGroupImport) SwaggerDoc() map[string]string {
+	return map_ChartGroupImport
+}
+
 var map_ChartGroupList = map[string]string{
 	"":      "ChartGroupList is the whole list of all chart groups which owned by a tenant.",
 	"items": "List of chart groups",

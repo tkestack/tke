@@ -667,6 +667,7 @@ func (in *ClusterFeature) DeepCopyInto(out *ClusterFeature) {
 		*out = new(AuthzWebhookAddr)
 		(*in).DeepCopyInto(*out)
 	}
+	in.Upgrade.DeepCopyInto(&out.Upgrade)
 	return
 }
 
@@ -900,12 +901,18 @@ func (in *ClusterSpec) DeepCopyInto(out *ClusterSpec) {
 		*out = new(Etcd)
 		(*in).DeepCopyInto(*out)
 	}
-	in.Upgrade.DeepCopyInto(&out.Upgrade)
 	if in.NetworkArgs != nil {
 		in, out := &in.NetworkArgs, &out.NetworkArgs
 		*out = make(map[string]string, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
+		}
+	}
+	if in.ScalingMachines != nil {
+		in, out := &in.ScalingMachines, &out.ScalingMachines
+		*out = make([]ClusterMachine, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 	return
@@ -2600,6 +2607,11 @@ func (in *UpgradeStrategy) DeepCopyInto(out *UpgradeStrategy) {
 	if in.MaxUnready != nil {
 		in, out := &in.MaxUnready, &out.MaxUnready
 		*out = new(intstr.IntOrString)
+		**out = **in
+	}
+	if in.DrainNodeBeforeUpgrade != nil {
+		in, out := &in.DrainNodeBeforeUpgrade, &out.DrainNodeBeforeUpgrade
+		*out = new(bool)
 		**out = **in
 	}
 	return

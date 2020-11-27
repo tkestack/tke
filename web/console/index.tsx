@@ -1,7 +1,4 @@
-import { i18n } from '@tea/app';
-import { translation } from '@i18n/translation';
-// 国际化工具的初始化
-i18n.init({ translation });
+import './i18n';
 import * as React from 'react';
 import { Entry, insertCSS } from '@tencent/ff-redux';
 import { Cluster } from './src/modules/cluster';
@@ -92,7 +89,7 @@ class ForbiddentDialog extends React.Component<any, ForbiddentDialogState> {
   }
 
   render() {
-    let { isShow, message } = this.state.forbiddentConfig;
+    const { isShow, message } = this.state.forbiddentConfig;
     return (
       <TipDialog
         isShow={isShow}
@@ -269,7 +266,7 @@ Entry.register({
           <ForbiddentDialog />
           <Application />
         </Wrapper>
-      ),
+      )
     },
 
     /**

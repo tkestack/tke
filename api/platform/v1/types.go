@@ -124,14 +124,13 @@ type ClusterSpec struct {
 	// Etcd holds configuration for etcd.
 	// +optional
 	Etcd *Etcd `json:"etcd,omitempty" protobuf:"bytes,21,opt,name=etcd"`
-	// Upgrade control upgrade process.
-	// +optional
-	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
 	// If true will use hostname as nodename, if false will use machine IP as nodename.
 	// +optional
 	HostnameAsNodename bool `json:"hostnameAsNodename,omitempty" protobuf:"bytes,23,opt,name=hostnameAsNodename"`
 	// +optional
 	NetworkArgs map[string]string `json:"networkArgs,omitempty" protobuf:"bytes,24,name=networkArgs"`
+	// +optional
+	ScalingMachines []ClusterMachine `json:"scalingMachines,omitempty" protobuf:"bytes,25,opt,name=scalingMachines"`
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -221,6 +220,10 @@ const (
 	ClusterUpgrading ClusterPhase = "Upgrading"
 	// ClusterTerminating means the cluster is undergoing graceful termination.
 	ClusterTerminating ClusterPhase = "Terminating"
+	// ClusterUpscaling means the cluster is undergoing graceful up scaling.
+	ClusterUpscaling ClusterPhase = "Upscaling"
+	// ClusterDownscaling means the cluster is undergoing graceful down scaling.
+	ClusterDownscaling ClusterPhase = "Downscaling"
 )
 
 // ClusterCondition contains details for the current condition of this cluster.
@@ -359,6 +362,9 @@ type ClusterFeature struct {
 	EnableMetricsServer bool `json:"enableMetricsServer,omitempty" protobuf:"bytes,12,opt,name=enableMetricsServer"`
 	// +optional
 	IPv6DualStack bool `json:"ipv6DualStack,omitempty" protobuf:"bytes,13,opt,name=ipv6DualStack"`
+	// Upgrade control upgrade process.
+	// +optional
+	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
 }
 
 type HA struct {
@@ -499,6 +505,12 @@ type UpgradeStrategy struct {
 	// default value is 0%.
 	// +optional
 	MaxUnready *intstr.IntOrString `json:"maxUnready,omitempty" protobuf:"bytes,1,opt,name=maxUnready"`
+	// Whether drain node before upgrade.
+	// Draining node before upgrade is recommended.
+	// But not all pod running as cows, a few running as pets.
+	// If your pod can not accept be expelled from current node, this value should be false.
+	// +optional
+	DrainNodeBeforeUpgrade *bool `json:"drainNodeBeforeUpgrade,omitempty" protobuf:"varint,2,opt,name=drainNodeBeforeUpgrade"`
 }
 
 // ResourceList is a set of (resource name, quantity) pairs.
@@ -762,10 +774,13 @@ type StorageBackEndCLS struct {
 // StorageBackEndES records the attributes required when the backend storage
 // type is ElasticSearch.
 type StorageBackEndES struct {
-	IP        string `json:"ip,omitempty" protobuf:"bytes,1,opt,name=ip"`
-	Port      int32  `json:"port,omitempty" protobuf:"varint,2,opt,name=port"`
-	Scheme    string `json:"scheme,omitempty" protobuf:"bytes,3,opt,name=scheme"`
-	IndexName string `json:"indexName,omitempty" protobuf:"bytes,4,opt,name=indexName"`
+	IP          string `json:"ip,omitempty" protobuf:"bytes,1,opt,name=ip"`
+	Port        int32  `json:"port,omitempty" protobuf:"varint,2,opt,name=port"`
+	Scheme      string `json:"scheme,omitempty" protobuf:"bytes,3,opt,name=scheme"`
+	IndexName   string `json:"indexName,omitempty" protobuf:"bytes,4,opt,name=indexName"`
+	User        string `json:"user,omitempty" protobuf:"bytes,5,opt,name=user"`
+	Password    string `json:"password,omitempty" protobuf:"bytes,6,opt,name=password"`
+	ReserveDays int32  `json:"reserveDays,omitempty" protobuf:"varint,7,opt,name=reserveDays"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

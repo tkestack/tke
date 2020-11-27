@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"helm.sh/chartmuseum/pkg/chartmuseum/server/multitenant"
@@ -38,6 +39,7 @@ import (
 	registryv1 "tkestack.io/tke/api/registry/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/registry/controller/chart/deletion"
+	helm "tkestack.io/tke/pkg/registry/harbor/helmClient"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -73,14 +75,14 @@ type Controller struct {
 func NewController(
 	client clientset.Interface, chartInformer registryv1informer.ChartInformer,
 	resyncPeriod time.Duration, finalizerToken registryv1.FinalizerName,
-	multiTenantServer *multitenant.MultiTenantServer) *Controller {
+	multiTenantServer *multitenant.MultiTenantServer, helmClient *helm.APIClient) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
 		client:                client,
 		cache:                 &chartCache{m: make(map[string]*cachedChart)},
 		health:                &chartHealth{charts: sets.NewString()},
 		queue:                 workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
-		chartResourcesDeleter: deletion.NewChartResourcesDeleter(client.RegistryV1(), multiTenantServer, finalizerToken, true),
+		chartResourcesDeleter: deletion.NewChartResourcesDeleter(client.RegistryV1(), multiTenantServer, finalizerToken, true, helmClient),
 	}
 
 	if client != nil &&
@@ -222,9 +224,13 @@ func (c *Controller) syncItem(key string) error {
 			log.String("chartName", chartName), log.Err(err))
 		return err
 	default:
+		cachedChart := c.cache.getOrCreate(key)
+		if c.needCompatibleUpgrade(context.Background(), chart) {
+			return c.compatibleUpgrade(context.Background(), key, cachedChart, chart)
+		}
+
 		if chart.Status.Phase == registryv1.ChartPending ||
 			chart.Status.Phase == registryv1.ChartAvailable {
-			cachedChart := c.cache.getOrCreate(key)
 			err = c.processUpdate(context.Background(), cachedChart, chart, key)
 		} else if chart.Status.Phase == registryv1.ChartTerminating {
 			log.Info("Chart has been terminated. Attempting to cleanup resources",
@@ -335,22 +341,11 @@ func (c *Controller) updateStatus(ctx context.Context, chart *registryv1.Chart, 
 }
 
 func (c *Controller) updateChartGroup(ctx context.Context, chart *registryv1.Chart) error {
-	chartGroupList, err := c.client.RegistryV1().ChartGroups().List(ctx, metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", chart.Spec.TenantID, chart.Spec.ChartGroupName),
-	})
+	rcg, err := c.findChartGroup(ctx, chart)
 	if err != nil {
-		log.Error("Failed to list chart group by tenantID and name",
-			log.String("tenantID", chart.Spec.TenantID),
-			log.String("name", chart.Spec.ChartGroupName),
-			log.Err(err))
 		return err
 	}
-	if len(chartGroupList.Items) == 0 {
-		// Chart group must first be created via console
-		return fmt.Errorf("chartgroup %s/%s not found", chart.Spec.TenantID, chart.Spec.ChartGroupName)
-	}
 
-	rcg := chartGroupList.Items[0].DeepCopy()
 	rcg.Status.ChartCount = rcg.Status.ChartCount - 1
 	if _, err := c.client.RegistryV1().ChartGroups().UpdateStatus(ctx, rcg, metav1.UpdateOptions{}); err != nil {
 		log.Error("Failed to update chartgroup while chart deleted",
@@ -360,4 +355,76 @@ func (c *Controller) updateChartGroup(ctx context.Context, chart *registryv1.Cha
 		return err
 	}
 	return nil
+}
+
+// If need to upgrade compatibly
+func (c *Controller) needCompatibleUpgrade(ctx context.Context, chart *registryv1.Chart) bool {
+	switch chart.Spec.Visibility {
+	case registryv1.VisibilityPrivate:
+		{
+			return true
+		}
+	}
+	return false
+}
+
+// If need to upgrade compatibly
+func (c *Controller) compatibleUpgrade(ctx context.Context, key string, cachedChart *cachedChart, chart *registryv1.Chart) error {
+	cg, err := c.findChartGroup(ctx, chart)
+	if err != nil {
+		return err
+	}
+
+	newObj := chart.DeepCopy()
+	switch cg.Spec.Type {
+	case registryv1.RepoType(strings.ToLower(string(registryv1.RepoTypePersonal))):
+		{
+			if cg.Spec.Visibility == registryv1.VisibilityPrivate {
+				newObj.Spec.Visibility = registryv1.VisibilityUser
+			}
+			break
+		}
+	case registryv1.RepoType(strings.ToLower(string(registryv1.RepoTypeProject))):
+		{
+			if cg.Spec.Visibility == registryv1.VisibilityPrivate {
+				newObj.Spec.Visibility = registryv1.VisibilityProject
+			}
+			break
+		}
+	default:
+		return nil
+	}
+
+	updated, err := c.client.RegistryV1().Charts(newObj.Namespace).Update(ctx, newObj, metav1.UpdateOptions{})
+	if errors.IsNotFound(err) {
+		log.Info("Not persisting upgrade to chart that no longer exists",
+			log.String("chartGroupName", chart.Spec.ChartGroupName),
+			log.String("chartName", chart.Name),
+			log.Err(err))
+		return nil
+	}
+
+	cachedChart.state = updated
+	// Always update the cache upon success.
+	c.cache.set(key, cachedChart)
+	return nil
+}
+
+func (c *Controller) findChartGroup(ctx context.Context, chart *registryv1.Chart) (*registryv1.ChartGroup, error) {
+	chartGroupList, err := c.client.RegistryV1().ChartGroups().List(ctx, metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", chart.Spec.TenantID, chart.Spec.ChartGroupName),
+	})
+	if err != nil {
+		log.Error("Failed to list chart group by tenantID and name",
+			log.String("tenantID", chart.Spec.TenantID),
+			log.String("name", chart.Spec.ChartGroupName),
+			log.Err(err))
+		return nil, err
+	}
+	if len(chartGroupList.Items) == 0 {
+		// Chart group must first be created via console
+		return nil, fmt.Errorf("chartgroup %s/%s not found", chart.Spec.TenantID, chart.Spec.ChartGroupName)
+	}
+
+	return chartGroupList.Items[0].DeepCopy(), nil
 }

@@ -56,5 +56,7 @@ export interface EsInfo {
   port: number;
   scheme: string;
   indexName: string;
+  user: string;
+  password: string;
 }
 /** ====================== persistentEvent创建相关的yaml ===================== */

@@ -17,6 +17,8 @@ export class ChartGroupDetail extends React.Component<RootProps, {}> {
     actions.chartGroup.detail.updateChartGroupWorkflow.reset();
     actions.chartGroup.detail.clearEditorState();
     actions.chartGroup.detail.clearValidatorState();
+
+    actions.user.associate.clearUserAssociation();
   }
 
   componentDidMount() {
@@ -28,6 +30,8 @@ export class ChartGroupDetail extends React.Component<RootProps, {}> {
     actions.project.list.fetch();
     /** 拉取用户信息 */
     actions.user.detail.fetchUserInfo();
+    /** 拉取用户列表 */
+    actions.user.associate.userList.performSearch('');
   }
 
   render() {

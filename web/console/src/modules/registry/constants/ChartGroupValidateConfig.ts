@@ -19,20 +19,31 @@ export const ChartGroupValidateSchema: ValidateSchema = {
         {
           type: RuleTypeEnum.regExp,
           limit: /^([A-Za-z0-9][-A-Za-z0-9_\.]*)?[A-Za-z0-9]$/
-        },
+        }
+      ]
+    },
+    {
+      vKey: 'spec.visibility',
+      label: t('权限范围'),
+      rules: [RuleTypeEnum.isRequire]
+    },
+    {
+      vKey: 'spec.importedInfo.addr',
+      label: t('第三方仓库地址'),
+      rules: [
         {
           type: RuleTypeEnum.custom,
           customFunc: (value, store, extraStore): Validation => {
-            let name = extraStore[0] ? extraStore[0].name : '';
+            let type = extraStore[0] ? extraStore[0].type : '';
             let status = ValidatorStatusEnum.Init,
               message = '';
-            if (store.spec.type === 'personal') {
-              if (value === name) {
+            if (store.spec.type === 'Imported') {
+              if (value !== '') {
                 status = ValidatorStatusEnum.Success;
                 message = t('');
               } else {
                 status = ValidatorStatusEnum.Failed;
-                message = t('仓库类型为个人时，仓库名称需要是登录账号名');
+                message = t('仓库类型为导入时，仓库地址不能为空');
               }
             }
             return {
@@ -43,17 +54,6 @@ export const ChartGroupValidateSchema: ValidateSchema = {
         }
       ]
     },
-    // {
-    //   vKey: 'spec.displayName',
-    //   label: t('仓库别名'),
-    //   rules: [
-    //     RuleTypeEnum.isRequire,
-    //     {
-    //       type: RuleTypeEnum.maxLength,
-    //       limit: 60
-    //     }
-    //   ]
-    // },
     {
       vKey: 'spec.description',
       label: t('描述'),
@@ -63,16 +63,6 @@ export const ChartGroupValidateSchema: ValidateSchema = {
           limit: 255
         }
       ]
-    },
-    {
-      vKey: 'spec.type',
-      label: t('仓库类型'),
-      rules: [RuleTypeEnum.isRequire]
-    },
-    {
-      vKey: 'spec.visibility',
-      label: t('仓库权限'),
-      rules: [RuleTypeEnum.isRequire]
     }
   ]
 };

@@ -213,7 +213,7 @@ func (poc PortOpenCheck) Name() string {
 func (poc PortOpenCheck) Check() (warnings, errorList []error) {
 
 	errorList = []error{}
-	stdout, _, exit, err := poc.Exec(fmt.Sprintf("ss -tl | grep ':%d'", poc.port))
+	stdout, _, exit, err := poc.Exec(fmt.Sprintf("ss -ntl | grep -w ':%d'", poc.port))
 	if err != nil {
 		errorList = append(errorList, err)
 		return

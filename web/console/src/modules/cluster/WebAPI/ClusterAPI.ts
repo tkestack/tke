@@ -19,23 +19,23 @@ import { deleteResourceIns } from './K8sResourceAPI';
  * 集群列表的查询
  * @param query 集群列表查询的一些过滤条件
  */
-export async function fetchClusterList(query: QueryState<ClusterFilter>, regionId: number = 1) {
-  let { search } = query;
+export async function fetchClusterList(query: QueryState<ClusterFilter>, regionId = 1) {
+  const { search } = query;
   let clusters: Cluster[] = [];
 
-  let clusterResourceInfo: ResourceInfo = resourceConfig()['cluster'];
+  const clusterResourceInfo: ResourceInfo = resourceConfig()['cluster'];
   let url = reduceK8sRestfulPath({ resourceInfo: clusterResourceInfo });
 
   if (search) {
     url += '/' + search;
   }
 
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.get,
     url
   };
   try {
-    let response = await reduceNetworkRequest(params);
+    const response = await reduceNetworkRequest(params);
 
     if (response.code === 0) {
       if (response.data.items) {
@@ -68,11 +68,11 @@ export async function fetchClusterList(query: QueryState<ClusterFilter>, regionI
 }
 
 export async function fetchPrometheuses() {
-  let resourceInfo: ResourceInfo = resourceConfig().prometheus;
-  let url = reduceK8sRestfulPath({
+  const resourceInfo: ResourceInfo = resourceConfig().prometheus;
+  const url = reduceK8sRestfulPath({
     resourceInfo
   });
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.get,
     url
   };
@@ -85,7 +85,7 @@ export async function fetchPrometheuses() {
 
   let records = [];
   try {
-    let [response, monitorResponse] = await Promise.all([
+    const [response, monitorResponse] = await Promise.all([
       reduceNetworkRequest(params),
       reduceNetworkRequest(monitorParams)
     ]);
@@ -121,7 +121,7 @@ export async function fetchPrometheuses() {
  */
 export async function createIC(clusters: CreateIC[]) {
   try {
-    let {
+    const {
       name,
       k8sVersion,
       cidr,
@@ -137,16 +137,16 @@ export async function createIC(clusters: CreateIC[]) {
       merticsServer
     } = clusters[0];
 
-    let resourceInfo = resourceConfig()['cluster'];
-    let url = reduceK8sRestfulPath({ resourceInfo });
+    const resourceInfo = resourceConfig()['cluster'];
+    const url = reduceK8sRestfulPath({ resourceInfo });
     // 获取具体的请求方法，create为POST，modify为PUT
-    let method = 'POST';
+    const method = 'POST';
 
-    let machines = [];
+    const machines = [];
 
     computerList.forEach(computer => {
       computer.ipList.split(';').forEach(ip => {
-        let labels = {};
+        const labels = {};
         computer.labels.forEach(kv => {
           labels[kv.key] = kv.value;
         });
@@ -220,12 +220,12 @@ export async function createIC(clusters: CreateIC[]) {
 
     jsonData = JSON.parse(JSON.stringify(jsonData));
     // 构建参数
-    let params: RequestParams = {
+    const params: RequestParams = {
       method,
       url,
       data: JSON.stringify(jsonData)
     };
-    let response = await reduceNetworkRequest(params);
+    const response = await reduceNetworkRequest(params);
     if (response.code === 0) {
       return operationResult(clusters);
     } else {
@@ -243,11 +243,11 @@ export async function createIC(clusters: CreateIC[]) {
  */
 export async function modifyClusterName(clusters: CreateResource[]) {
   try {
-    let { jsonData, resourceInfo, clusterId } = clusters[0];
+    const { jsonData, resourceInfo, clusterId } = clusters[0];
 
-    let url = reduceK8sRestfulPath({ resourceInfo, specificName: clusterId, clusterId: clusterId });
+    const url = reduceK8sRestfulPath({ resourceInfo, specificName: clusterId, clusterId: clusterId });
     // 构建参数
-    let params: RequestParams = {
+    const params: RequestParams = {
       method: Method.patch,
       url,
       userDefinedHeader: {
@@ -256,7 +256,7 @@ export async function modifyClusterName(clusters: CreateResource[]) {
       data: jsonData
     };
 
-    let response = await reduceNetworkRequest(params);
+    const response = await reduceNetworkRequest(params);
     if (response.code === 0) {
       return operationResult(clusters);
     } else {
@@ -275,6 +275,7 @@ export async function modifyClusterName(clusters: CreateResource[]) {
 export async function fetchCreateICK8sVersion() {
   return [
     { text: '1.16.9', value: '1.16.9' },
+    { text: '1.17.13', value: '1.17.13' },
     { text: '1.18.3', value: '1.18.3' }
   ];
 }
@@ -286,32 +287,34 @@ export async function fetchCreateICK8sVersion() {
  */
 export async function createImportClsutter(resource: CreateResource[], regionId: number) {
   try {
-    let { mode, resourceIns, clusterId, resourceInfo, namespace, jsonData } = resource[0];
+    const { mode, resourceIns, clusterId, resourceInfo, namespace, jsonData } = resource[0];
 
-    let clustercredentialResourceInfo = resourceConfig().clustercredential;
-    let clusterUrl = reduceK8sRestfulPath({ resourceInfo, clusterId }),
+    const clustercredentialResourceInfo = resourceConfig().clustercredential;
+    const clusterUrl = reduceK8sRestfulPath({ resourceInfo, clusterId }),
       clustercredentialUrl = reduceK8sRestfulPath({ resourceInfo: clustercredentialResourceInfo, clusterId });
-    let method = requestMethodForAction(mode);
+    const method = requestMethodForAction(mode);
 
     let clusterData = JSON.parse(jsonData);
 
-    let clustercredentialData = {
+    const clustercredentialData = {
       metadata: {
         generateName: 'clustercredential'
       },
       caCert: clusterData.status.credential.caCert,
-      token: clusterData.status.credential.token ? clusterData.status.credential.token : undefined
+      token: clusterData.status.credential.token ? clusterData.status.credential.token : undefined,
+      clientKey: clusterData.status.credential.clientKey || undefined,
+      clientCert: clusterData.status.credential.clientCert || undefined
     };
     // 构建参数
-    let clustercredentialParams: RequestParams = {
+    const clustercredentialParams: RequestParams = {
       method,
       url: clustercredentialUrl,
       data: clustercredentialData
     };
 
-    let clustercredentialResponce = await reduceNetworkRequest(clustercredentialParams, clusterId);
+    const clustercredentialResponce = await reduceNetworkRequest(clustercredentialParams, clusterId);
     if (clustercredentialResponce.code === 0) {
-      let clusterParams: RequestParams = {
+      const clusterParams: RequestParams = {
         method,
         url: clusterUrl,
         data: clusterData
@@ -320,7 +323,7 @@ export async function createImportClsutter(resource: CreateResource[], regionId:
       clusterData.status.credential = undefined;
       clusterData = JSON.parse(JSON.stringify(clusterData));
       try {
-        let clusterResponce = await reduceNetworkRequest(clusterParams, clusterId);
+        const clusterResponce = await reduceNetworkRequest(clusterParams, clusterId);
         if (clusterResponce.code === 0) {
           return operationResult(resource);
         } else {

@@ -188,6 +188,14 @@ message Chart {
   optional string chartName = 3;
 
   optional string chartVersion = 4;
+
+  optional string repoURL = 5;
+
+  optional string repoUsername = 6;
+
+  optional string repoPassword = 7;
+
+  optional bool importedRepo = 8;
 }
 
 // ConfigMap holds configuration data for tke to consume.

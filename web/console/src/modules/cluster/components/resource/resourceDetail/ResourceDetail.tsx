@@ -43,13 +43,13 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class ResourceDetail extends React.Component<RootProps, {}> {
   componentWillUnmount() {
-    let { actions } = this.props;
+    const { actions } = this.props;
     // 清除detail里面的所有内容
     actions.resourceDetail.clearDetail();
   }
 
   componentWillMount() {
-    let {
+    const {
       actions,
       clusterVersion,
       subRoot: {
@@ -57,7 +57,7 @@ export class ResourceDetail extends React.Component<RootProps, {}> {
       },
       route
     } = this.props;
-    let { rid, np, clusterId, resourceIns } = route.queries;
+    const { rid, np, clusterId, resourceIns } = route.queries;
 
     // 进入即进行资源详情的拉取，前提是当前resourceDetailInfo没有拉取过，且clusterVersion为''
     !resourceDetailInfo.selection &&
@@ -71,16 +71,16 @@ export class ResourceDetail extends React.Component<RootProps, {}> {
   }
 
   render() {
-    let { subRoot, actions, route } = this.props,
+    const { subRoot, actions, route } = this.props,
       urlParams = router.resolve(route),
       { resourceInfo } = subRoot;
 
-    let tabs = !isEmpty(resourceInfo) ? resourceInfo.detailField.tabList : [];
+    const tabs = !isEmpty(resourceInfo) ? resourceInfo.detailField.tabList : [];
 
     // 默认选中第一个
     let selected = tabs[0];
     if (urlParams['tab']) {
-      let finder = tabs.find(x => x.id === urlParams['tab']);
+      const finder = tabs.find(x => x.id === urlParams['tab']);
       if (finder) {
         selected = finder;
       }
@@ -142,7 +142,6 @@ export class ResourceDetail extends React.Component<RootProps, {}> {
             <ResourceGrayUpgradeDialog />
           </ContentView.Body>
         </ContentView>
-        <MainBodyLayout />
       </div>
     );
   }

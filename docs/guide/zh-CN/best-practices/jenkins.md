@@ -1,6 +1,25 @@
 # 基于 Jenkins 的 CI/CD
 
-提到基于`Kubernete`的`CI/CD`，可以使用的工具有很多，比如`Jenkins`、`Gitlab CI`已经新兴的`drone`之类的，这里大家最为熟悉的`Jenkins`来做`CI/CD`的工具。
+持续构建与发布是日常工作中必不可少的一个步骤，目前大多公司都采用 [Jenkins](https://www.jenkins.io/zh/) 集群来搭建符合需求的 CI/CD 流程，然而传统的 Jenkins Slave 一主多从方式会存在一些痛点，比如：
+
+- 主 Master 发生单点故障时，整个流程都不可用了
+- 每个 Slave 的配置环境不一样，来完成不同语言的编译打包等操作，但是这些差异化的配置导致管理起来非常不方便，维护起来也是比较费劲
+- 资源分配不均衡，有的 Slave 要运行的 job 出现排队等待，而有的 Slave 处于空闲状态
+- 资源有浪费，每台 Slave 可能是物理机或者虚拟机，当 Slave 处于空闲状态时，也不会完全释放掉资源。
+
+正因为上面的这些种种痛点，渴望一种更高效更可靠的方式来完成这个 CI/CD 流程，而 Docker 虚拟化容器技术能很好的解决这个痛点，又特别是在 Kubernetes 集群环境下面能够更好来解决上面的问题，下图是基于 Kubernetes 搭建 Jenkins 集群的简单示意图： 
+
+![k8s-jenkins](../../../images/k8s-jenkins-slave.png)
+
+从图上可以看到 Jenkins Master 和 Jenkins Slave 以 Pod 形式运行在 Kubernetes 集群的 Node 上，Master 运行在其中一个节点，并且将其配置数据存储到一个 Volume 上去，Slave 运行在各个节点上，并且它不是一直处于运行状态，它会按照需求动态的创建并自动删除。
+
+这种方式的工作流程大致为：当 Jenkins Master 接受到 Build 请求时，会根据配置的 Label 动态创建一个运行在 Pod 中的 Jenkins Slave 并注册到 Master 上，当运行完 Job 后，这个 Slave 会被注销并且这个 Pod 也会自动删除，恢复到最初状态。
+
+使用这种方式带来的好处：
+
+- **服务高可用**：当 Jenkins Master 出现故障时，Kubernetes 会自动创建一个新的 Jenkins Master 容器，并且将 Volume 分配给新创建的容器，保证数据不丢失，从而达到集群服务高可用。
+- **动态伸缩**：合理使用资源，每次运行 Job 时，会自动创建一个 Jenkins Slave，Job 完成后，Slave 自动注销并删除容器，资源自动释放，而且 Kubernetes 会根据每个资源的使用情况，动态分配 Slave 到空闲的节点上创建，降低出现因某节点资源利用率高，还排队等待在该节点的情况。
+- **扩展性好**：当 Kubernetes 集群的资源严重不足而导致 Job 排队等待时，可以很容易的添加一个 Kubernetes Node 到集群中，从而实现扩展。
 
 ## 安装 Jenkins Master
 
@@ -268,26 +287,7 @@ $ cat /data/k8s/jenkins2/secrets/initialAdminPassword
 
 安装完成后添加管理员帐号即可进入到 jenkins 主界面： ![jenkins home](../../../images/setup-jenkins-home.png)
 
-## 优点
 
-持续构建与发布是日常工作中必不可少的一个步骤，目前大多公司都采用 Jenkins 集群来搭建符合需求的 CI/CD 流程，然而传统的 Jenkins Slave 一主多从方式会存在一些痛点，比如：
-
-- 主 Master 发生单点故障时，整个流程都不可用了
-- 每个 Slave 的配置环境不一样，来完成不同语言的编译打包等操作，但是这些差异化的配置导致管理起来非常不方便，维护起来也是比较费劲
-- 资源分配不均衡，有的 Slave 要运行的 job 出现排队等待，而有的 Slave 处于空闲状态
-- 资源有浪费，每台 Slave 可能是物理机或者虚拟机，当 Slave 处于空闲状态时，也不会完全释放掉资源。
-
-正因为上面的这些种种痛点，渴望一种更高效更可靠的方式来完成这个 CI/CD 流程，而 Docker 虚拟化容器技术能很好的解决这个痛点，又特别是在 Kubernetes 集群环境下面能够更好来解决上面的问题，下图是基于 Kubernetes 搭建 Jenkins 集群的简单示意图： ![k8s-jenkins](../../../images/k8s-jenkins-slave.png)
-
-从图上可以看到 Jenkins Master 和 Jenkins Slave 以 Pod 形式运行在 Kubernetes 集群的 Node 上，Master 运行在其中一个节点，并且将其配置数据存储到一个 Volume 上去，Slave 运行在各个节点上，并且它不是一直处于运行状态，它会按照需求动态的创建并自动删除。
-
-这种方式的工作流程大致为：当 Jenkins Master 接受到 Build 请求时，会根据配置的 Label 动态创建一个运行在 Pod 中的 Jenkins Slave 并注册到 Master 上，当运行完 Job 后，这个 Slave 会被注销并且这个 Pod 也会自动删除，恢复到最初状态。
-
-使用这种方式带来的好处：
-
-- **服务高可用**：当 Jenkins Master 出现故障时，Kubernetes 会自动创建一个新的 Jenkins Master 容器，并且将 Volume 分配给新创建的容器，保证数据不丢失，从而达到集群服务高可用。
-- **动态伸缩**：合理使用资源，每次运行 Job 时，会自动创建一个 Jenkins Slave，Job 完成后，Slave 自动注销并删除容器，资源自动释放，而且 Kubernetes 会根据每个资源的使用情况，动态分配 Slave 到空闲的节点上创建，降低出现因某节点资源利用率高，还排队等待在该节点的情况。
-- **扩展性好**：当 Kubernetes 集群的资源严重不足而导致 Job 排队等待时，可以很容易的添加一个 Kubernetes Node 到集群中，从而实现扩展。
 
 ## 配置 Jenkins Slave
 
@@ -340,11 +340,17 @@ $ cat /data/k8s/jenkins2/secrets/initialAdminPassword
 
 Kubernetes 插件的配置工作完成了，接下来添加一个 Job 任务，看是否能够在 Slave Pod 中执行，任务执行完成后看 Pod 是否会被销毁。
 
-在 Jenkins 首页点击 **新建item**，创建一个测试的任务，输入任务名称，然后选择 Freestyle project 类型的任务： ![jenkins demo](../../../images/jenkins-demo1.png)
+在 Jenkins 首页点击 **新建item**，创建一个测试的任务，输入任务名称，然后选择 Freestyle project 类型的任务：
 
-注意在下面的 Label Expression 这里要填入**haimaxy-jnlp**，就是前面配置的 Slave Pod 中的 Label，这两个地方必须保持一致 ![config](../../../images/jenkins-demo1-config.jpeg)
+ ![jenkins demo](../../../images/jenkins-demo1.png)
 
-然后往下拉，在 Build 区域选择**Execute shell** ![Build](../../../images/jenkins-demo1-config2.jpeg)
+注意在下面的 Label Expression 这里要填入**haimaxy-jnlp**，就是前面配置的 Slave Pod 中的 Label，这两个地方必须保持一致 
+
+![config](../../../images/jenkins-demo1-config.jpeg)
+
+然后往下拉，在 Build 区域选择**Execute shell** 
+
+![Build](../../../images/jenkins-demo1-config2.jpeg)
 
 然后输入测试命令
 
@@ -357,7 +363,9 @@ echo "=============kubectl============="
 kubectl get pods
 ```
 
-最后点击保存 ![command](../../../images/jenkins-demo1-config3.jpeg)
+最后点击保存：
+
+![command](../../../images/jenkins-demo1-config3.jpeg)
 
 现在直接在页面点击做成的 Build now 触发构建即可，然后观察 Kubernetes 集群中 Pod 的变化：
 
@@ -398,7 +406,7 @@ Jenkins Pipeline 核心概念：
 
 创建 Jenkins Pipline：
 
-- Pipeline 脚本是由 Groovy 语言实现的，可以不用理解
+- Pipeline 脚本是由 [Groovy](http://www.groovy-lang.org) 语言实现的
 - Pipeline 支持两种语法：Declarative(声明式)和 Scripted Pipeline(脚本式)语法
 - Pipeline 也有两种创建方法：可以直接在 Jenkins 的 Web UI 界面中输入脚本；也可以通过创建一个 Jenkinsfile 脚本文件放入项目源码库中
 - 一般推荐在 Jenkins 中直接从源代码控制(SCMD)中直接载入 Jenkinsfile Pipeline 这种方法
@@ -797,4 +805,4 @@ BRANCH_NAME:
 
 更改上面的 jenkins-demo 这个任务，点击 Configure -> 最下方的 Pipeline 区域 -> 将之前的 Pipeline Script 更改成 Pipeline Script from SCM，然后根据实际情况填写上对应的仓库配置，要注意 Jenkinsfile 脚本路径：
 
-![pipeline demo7](../../../../../../../Typora/images/pipeline-demo7.png)最后点击保存，现在随便更改下源码，比如把 Jenkinsfile 中第一步更改成 Prepare，然后提交代码。
+![pipeline demo7](../../../../../../../Typora/images/pipeline-demo7.png)

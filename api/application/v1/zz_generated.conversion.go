@@ -451,6 +451,10 @@ func autoConvert_v1_Chart_To_application_Chart(in *Chart, out *application.Chart
 	out.ChartGroupName = in.ChartGroupName
 	out.ChartName = in.ChartName
 	out.ChartVersion = in.ChartVersion
+	out.RepoURL = in.RepoURL
+	out.RepoUsername = in.RepoUsername
+	out.RepoPassword = in.RepoPassword
+	out.ImportedRepo = in.ImportedRepo
 	return nil
 }
 
@@ -464,6 +468,10 @@ func autoConvert_application_Chart_To_v1_Chart(in *application.Chart, out *Chart
 	out.ChartGroupName = in.ChartGroupName
 	out.ChartName = in.ChartName
 	out.ChartVersion = in.ChartVersion
+	out.RepoURL = in.RepoURL
+	out.RepoUsername = in.RepoUsername
+	out.RepoPassword = in.RepoPassword
+	out.ImportedRepo = in.ImportedRepo
 	return nil
 }
 

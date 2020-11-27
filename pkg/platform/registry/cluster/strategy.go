@@ -34,6 +34,7 @@ import (
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/api/platform/validation"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	clusterutil "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/platform/types"
 	"tkestack.io/tke/pkg/util"
@@ -73,6 +74,14 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	}
 	if cluster.Spec.Version != oldCluster.Spec.Version && cluster.Spec.Version != cluster.Status.Version {
 		cluster.Status.Phase = platform.ClusterUpgrading
+	}
+	if len(cluster.Spec.Machines) > len(oldCluster.Spec.Machines) {
+		cluster.Status.Phase = platform.ClusterUpscaling
+		cluster.Spec.ScalingMachines, _ = clusterutil.PrepareClusterScale(cluster, oldCluster)
+	}
+	if len(cluster.Spec.Machines) < len(oldCluster.Spec.Machines) {
+		cluster.Status.Phase = platform.ClusterDownscaling
+		cluster.Spec.ScalingMachines, _ = clusterutil.PrepareClusterScale(cluster, oldCluster)
 	}
 }
 
@@ -179,7 +188,6 @@ func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) 
 	if err != nil {
 		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
 	}
-
 	return validation.ValidateClusterUpdate(clusterWrapper, oldClusterWrapper)
 }
 

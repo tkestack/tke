@@ -13,6 +13,12 @@ export interface ChartGroup extends Identifiable {
     description?: string;
     type: string;
     projects?: string[];
+    users?: string[];
+    importedInfo?: {
+      addr: string;
+      username?: string;
+      password?: string;
+    };
   };
   status?: {
     chartCount?: number;
@@ -38,6 +44,12 @@ export interface ChartGroupCreation extends Identifiable {
     description?: string;
     type: string;
     projects?: string[];
+    users?: string[];
+    importedInfo?: {
+      addr: string;
+      username?: string;
+      password?: string;
+    };
   };
 }
 
@@ -53,6 +65,12 @@ export interface ChartGroupEditor extends Identifiable {
     description?: string;
     type: string;
     projects?: string[];
+    users?: string[];
+    importedInfo?: {
+      addr: string;
+      username?: string;
+      password?: string;
+    };
   };
 
   /** 是否正在编辑 */

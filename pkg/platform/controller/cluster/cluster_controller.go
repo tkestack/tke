@@ -227,6 +227,7 @@ func (c *Controller) processNextWorkItem() bool {
 // concurrently with the same key.
 func (c *Controller) syncCluster(key string) error {
 	ctx := c.log.WithValues("cluster", key).WithContext(context.TODO())
+
 	startTime := time.Now()
 	defer func() {
 		log.FromContext(ctx).Info("Finished syncing cluster", "processTime", time.Since(startTime).String())
@@ -259,7 +260,11 @@ func (c *Controller) reconcile(ctx context.Context, key string, cluster *platfor
 	switch cluster.Status.Phase {
 	case platformv1.ClusterInitializing:
 		err = c.onCreate(ctx, cluster)
-	case platformv1.ClusterRunning, platformv1.ClusterFailed, platformv1.ClusterUpgrading:
+	case platformv1.ClusterRunning, platformv1.ClusterFailed:
+		err = c.onUpdate(ctx, cluster)
+	case platformv1.ClusterUpgrading:
+		err = c.onUpdate(ctx, cluster)
+	case platformv1.ClusterUpscaling, platformv1.ClusterDownscaling:
 		err = c.onUpdate(ctx, cluster)
 	case platformv1.ClusterTerminating:
 		log.FromContext(ctx).Info("Cluster has been terminated. Attempting to cleanup resources")
@@ -321,31 +326,52 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 	if err != nil {
 		return err
 	}
+	if clusterWrapper.Status.Phase == platformv1.ClusterRunning || clusterWrapper.Status.Phase == platformv1.ClusterFailed {
+		err = provider.OnUpdate(ctx, clusterWrapper)
+		clusterWrapper = c.checkHealth(ctx, clusterWrapper)
+		if err != nil {
+			// Update status, ignore failure
+			if clusterWrapper.IsCredentialChanged {
+				_, _ = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+			}
 
-	err = provider.OnUpdate(ctx, clusterWrapper)
-	clusterWrapper = c.checkHealth(ctx, clusterWrapper)
-	if err != nil {
-		// Update status, ignore failure
-		if clusterWrapper.IsCredentialChanged {
-			_, _ = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+			_, _ = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+			return err
 		}
-
-		_, _ = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
-		return err
-	}
-
-	if clusterWrapper.IsCredentialChanged {
-		clusterWrapper.ClusterCredential, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+		if clusterWrapper.IsCredentialChanged {
+			clusterWrapper.ClusterCredential, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+			if err != nil {
+				return err
+			}
+		}
+		clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
-	}
+	} else {
+		for clusterWrapper.Status.Phase != platformv1.ClusterRunning {
+			err = provider.OnUpdate(ctx, clusterWrapper)
+			if err != nil {
+				// Update status, ignore failure
+				if clusterWrapper.IsCredentialChanged {
+					_, _ = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+				}
 
-	clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
-	if err != nil {
-		return err
+				_, _ = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+				return err
+			}
+			if clusterWrapper.IsCredentialChanged {
+				clusterWrapper.ClusterCredential, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
+				if err != nil {
+					return err
+				}
+			}
+			clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+			if err != nil {
+				return err
+			}
+		}
 	}
-
 	return nil
 }
 
@@ -448,7 +474,7 @@ func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) 
 		}
 	}
 
-	cluster.SetCondition(healthCheckCondition)
+	cluster.SetCondition(healthCheckCondition, false)
 
 	log.FromContext(ctx).Info("Update cluster health status",
 		"version", cluster.Status.Version,
@@ -461,13 +487,13 @@ func (c *Controller) ensureSyncClusterMachineNodeLabel(ctx context.Context, clus
 
 	clusterWrapper, err := typesv1.GetCluster(ctx, c.platformClient, cluster)
 	if err != nil {
-		log.FromContext(ctx).Error(err, "sync ClusterMachine node label error")
+		log.FromContext(ctx).Error(err, "Get cluster error")
 		return
 	}
 
 	client, err := clusterWrapper.Clientset()
 	if err != nil {
-		log.FromContext(ctx).Error(err, "sync ClusterMachine node label error")
+		log.FromContext(ctx).Error(err, "get client set error")
 		return
 	}
 

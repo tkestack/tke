@@ -138,7 +138,7 @@ export class LogStashDetailPanel extends React.Component<RootProps, {}> {
   }
 
   _renderEsInfo() {
-    const { esAddress, indexName } = this.props.logStashEdit;
+    const { esAddress, indexName, esUsername, esPassword } = this.props.logStashEdit;
     return (
       <React.Fragment>
         <FormPanel.Item text label={t('类型')}>
@@ -149,6 +149,12 @@ export class LogStashDetailPanel extends React.Component<RootProps, {}> {
         </FormPanel.Item>
         <FormPanel.Item text label={t('索引')}>
           {indexName}
+        </FormPanel.Item>
+        <FormPanel.Item text label={t('用户名')}>
+          {esUsername}
+        </FormPanel.Item>
+        <FormPanel.Item text label={t('密码')}>
+          {esPassword}
         </FormPanel.Item>
       </React.Fragment>
     );
