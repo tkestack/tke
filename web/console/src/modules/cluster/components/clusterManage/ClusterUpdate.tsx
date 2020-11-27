@@ -13,9 +13,9 @@ export function ClusterUpdate({ route, actions }: RootProps) {
 
   const defaultUpgradeConfig = {
     version: null,
-    drainNodeBeforeUpgrade: false,
-    maxUnready: 0,
-    autoMode: false
+    drainNodeBeforeUpgrade: true,
+    maxUnready: 20,
+    autoMode: true
   };
 
   const { clusterId, clusterVersion } = route.queries;

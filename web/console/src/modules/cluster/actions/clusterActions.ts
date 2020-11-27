@@ -160,8 +160,9 @@ const FFModelClusterActions = createFFListActions<Cluster, ClusterFilter>({
         }
 
         if (
-          record.data.records.filter(item => item.status.phase !== 'Running' && item.status.phase !== 'Upgrading')
-            .length === 0
+          record.data.records.filter(
+            item => item.status.phase !== 'Running' || item.spec.updateInfo.worker.message === '有节点正在升级中'
+          ).length === 0
         ) {
           dispatch(clusterActions.clearPolling());
         }

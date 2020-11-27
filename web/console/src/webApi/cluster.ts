@@ -3,7 +3,7 @@ import { compare } from 'compare-versions';
 
 function transObjToelector(obj: { [key: string]: string | number }) {
   return Object.entries(obj)
-    .map(([key, value]) => `${key}=${value}`)
+    .map(([key, value]) => `${key}${value && '='}${value}`)
     .join(',');
 }
 
@@ -133,47 +133,51 @@ export const updateCluster = ({
   });
 };
 
-async function loopCheckMachineStatus(mchineName: string) {
-  const rsp = await Request.get<any, any>(`/apis/platform.tkestack.io/v1/machines/${mchineName}`);
-  if (rsp?.status?.phase === 'Running') return;
-  await sleep(5000);
-  return await loopCheckMachineStatus(mchineName);
-}
-
-export const updateSingleWorker = async ({ mchineName }: { mchineName: string }) => {
+export const updateSingleWorker = async (mchineName: string) => {
   await Request.patch(`/apis/platform.tkestack.io/v1/machines/${mchineName}`, {
     status: {
       phase: 'Upgrading'
     }
   });
+};
 
-  return await loopCheckMachineStatus(mchineName);
+export const addUpgradeLabelToMachine = async (mchineName: string) => {
+  await Request.patch(`/apis/platform.tkestack.io/v1/machines/${mchineName}`, {
+    metadata: {
+      labels: {
+        'platform.tkestack.io/need-upgrade': 'willUpgrade'
+      }
+    }
+  });
 };
 
 export const updateWorkers = async ({
   mchineNames,
   maxUnready,
+  drainNodeBeforeUpgrade,
   clusterName
 }: {
   mchineNames: Array<string>;
   maxUnready: number;
   clusterName: string;
+  drainNodeBeforeUpgrade: boolean;
 }) => {
   await Request.patch(`/apis/platform.tkestack.io/v1/clusters/${clusterName}`, {
     spec: {
       features: {
         upgrade: {
           strategy: {
-            maxUnready: maxUnready + '%'
+            maxUnready: maxUnready + '%',
+            drainNodeBeforeUpgrade
           }
         }
       }
     }
   });
 
-  for (const mchineName of mchineNames) {
-    await updateSingleWorker({ mchineName });
-  }
+  await Promise.all(mchineNames.map(n => addUpgradeLabelToMachine(n)));
+
+  await updateSingleWorker(mchineNames[0]);
 };
 
 export const getNodes = async ({ clusterName, clusterVersion }: { clusterName: string; clusterVersion }) => {
