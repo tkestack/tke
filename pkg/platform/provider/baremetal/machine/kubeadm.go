@@ -26,16 +26,21 @@ import (
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 )
 
-func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, nodeName string) *kubeadmv1beta2.JoinConfiguration {
+func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubeadmv1beta2.JoinConfiguration {
 	apiServerEndpoint, err := c.Host()
 	if err != nil {
 		panic(err)
 	}
 
+	kubeletExtraArgs := p.getKubeletExtraArgs(c)
+	if _, ok := kubeletExtraArgs["node-ip"]; !ok {
+		kubeletExtraArgs["node-ip"] = machineIP
+	}
+
 	return &kubeadmv1beta2.JoinConfiguration{
 		NodeRegistration: kubeadmv1beta2.NodeRegistrationOptions{
-			Name:             nodeName,
-			KubeletExtraArgs: p.getKubeletExtraArgs(c),
+			Name:             machineIP,
+			KubeletExtraArgs: kubeletExtraArgs,
 		},
 		Discovery: kubeadmv1beta2.Discovery{
 			BootstrapToken: &kubeadmv1beta2.BootstrapTokenDiscovery{
