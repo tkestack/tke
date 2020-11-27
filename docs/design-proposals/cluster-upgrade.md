@@ -16,18 +16,6 @@
 次要版本：k8s版本号的格式vx.y.z中的y为次要版本，例如v1.18.3的次要版本是18
 补丁版本：k8s版本号的格式vx.y.z中的z为补丁版本
 
-## Competitive product analysis
-
-rancher从2.3版本开始解耦了rancher服务器版本的升级和k8s集群的升级，实现了无需升级rancher版本就可以将k8s集群升级到rancher支持的版本。
-
-支持的k8s版本维护在Tools > Drivers下，可以通过Refresh Kubernetes Metadata以更新rancher最新支持的k8s版本列表。其中每个k8s次版本同一时间rancher只维护支持一个补丁版本，笔者写此文章时rancher支持的版本有v1.15.12、v1.16.12、v.17.12和v1.18.9。
-
-升级集群只需要对集群进行修改，下拉列表选择中选择rancher当前支持的k8s版本。只允许从低版本升级到高版本，不允许从高版本降级到低版本。
-
-升级中所需要的一些k8s组件rancher全部打包到rancher/hyperkube镜像中，包含kubelet、kube-proxy等，升级前会在各节点上拉取对应版本的镜像。
-
-rancher升级集群方案的不足之处是对离线升级支持不是很理想。如果用户的环境无法连接外网，rancher/hyperkube镜像可能需要离线下载好传送各个节点上并加载镜像，在节点很多的情况下操作很繁琐。同时还需要自己搭建并维护一个用户环境可以访问到的Cluser Driver服务器，增加了用户的使用成本。
-
 ## Challenge
 
 ### 升级集群时所需要的组件如何导入
@@ -104,7 +92,7 @@ TKEStack可用k8s版本信息从`/api/v1/namespaces/kube-public/configmaps/clust
 
 #### 集群升级参数
 
-升级参数在集群对象（`/apis/platform.tkestack.io/v1/clusters/{clusterName}`）的spec.upgrade中。
+升级参数在集群对象（`/apis/platform.tkestack.io/v1/clusters/{clusterName}`）的spec.features.upgrade中。
 
 mode分为Auto和Manual两种。Auto会自动升级worker节点，Manual只会标记worker节点需要升级，等待用户手动修改节点状态后才会升级。
 
@@ -116,12 +104,12 @@ strategy.drainNodeBeforeUpgrade表示升级前是否需要驱逐节点。前端�
 
 集群升级是由修改集群对象（`/apis/platform.tkestack.io/v1/clusters/{clusterName}`）的spec.version的值触发的。
 
-Manual模式下worker节点的升级是修改machine对象(`/apis/platform.tkestack.io/v1/machines/{mchineName}`)的status.phase为"Upgrading"而触发的。用户可能在前端会一次勾选多个machine以声明升级多节点，前端需要逐个向后台发送，避免并发导致多节点同时升级影响用户业务。
+Manual模式下worker节点的升级是修改machine对象(`/apis/platform.tkestack.io/v1/machines/{mchineName}`)的status.phase为"Upgrading"而触发的。用户可能在前端会一次勾选多个machine以声明升级多节点，前端需将用户选择的machine的`platform.tkestack.io/need-upgrade` label值修改为`willUpgrade`以标记用户选择，之后前端再修改首个machine的status.phase为"Upgrading"触发升级，后续后端会对`platform.tkestack.io/need-upgrade` label值为`willUpgrade`的machine自动升级。
 
-注意某集群下列出的需要升级worker节点需要用到labelSelector和fieldSelector，`/apis/platform.tkestack.io/v1/machines?labelSelector=platform.tkestack.io/need-upgrade%3D&fieldSelector=spec.clusterName%3D{clusterName}`
+注意某集群下列出的需要升级worker节点对应的machine需要用到labelSelector和fieldSelector，`/apis/platform.tkestack.io/v1/machines?labelSelector=platform.tkestack.io/need-upgrade&fieldSelector=spec.clusterName%3D{clusterName}`
 
 #### 不可升级状态
 
-集群只有在名下machine都不包含`platform.tkestack.io/need-upgrade` label时才可以升级，即`/apis/platform.tkestack.io/v1/machines?labelSelector=platform.tkestack.io/need-upgrade%3D&fieldSelector=spec.clusterName%3D{clusterName}`返回的items列表为空，否则应当提示该集群有worker节点需要先完成升级。
+集群只有在名下machine都不包含`platform.tkestack.io/need-upgrade` label时才可以升级，即`/apis/platform.tkestack.io/v1/machines?labelSelector=platform.tkestack.io/need-upgrade&fieldSelector=spec.clusterName%3D{clusterName}`返回的items列表为空，否则应当提示该集群有worker节点需要先完成升级。
 
 worker节点需要machine有`platform.tkestack.io/need-upgrade` label时才允许手动触发升级，否则应当为灰提示无需升级。
