@@ -77,12 +77,9 @@ func (p *Provider) EnsureUpgrade(ctx context.Context, machine *platformv1.Machin
 		return err
 	}
 
-	// Label next node when upgraded current nodes and upgrade mode is auto.
-	if cluster.Spec.Features.Upgrade.Mode == platformv1.UpgradeModeAuto {
-		err = kubeadm.MarkNextUpgradeWorkerNode(clientset, p.platformClient, option.Version, cluster.Name)
-		if err != nil {
-			return err
-		}
+	err = kubeadm.MarkNextUpgradeWorkerNode(clientset, p.platformClient, option.Version, cluster.Name)
+	if err != nil {
+		return err
 	}
 
 	return nil
