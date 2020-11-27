@@ -82,6 +82,16 @@ kubectl的升级则比较简单也不是很重要，甚至不升级影响也不�
 - EnsureThirdPartyHA             （检查第三方HA是否需要安装）
 - EnsurePostClusterUpgradeHook   （执行管理员自定义的升级后检脚本）
 
+### 使用tke-installer准备升级物料
+
+1. 将新版的tke-installer下载到global集群某个节点本地；
+2. 复制节点上的kubeconfig到/opt/tke-installer/conf/kubeconfig；
+3. 运行升级命令`./tke-installer-XXXX.run --upgrade。
+
+升级脚本会将包内镜像push到平台registry，并自动替换tke-platform-api和tke-platform-controller版本。
+
+用户在使用--upgrade的同时，也可以通过添加--username、--password、--domain和--namespace等flag使用用户指定的registry用户名、密码、域名地址和命名空间。
+
 ### 前端约束
 
 #### 版本控制
