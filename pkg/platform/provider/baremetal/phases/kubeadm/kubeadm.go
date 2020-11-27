@@ -57,6 +57,9 @@ const (
 	initCmd  = `kubeadm init phase {{.Phase}} --config={{.Config}}`
 	joinCmd  = `kubeadm join phase {{.Phase}} --config={{.Config}}`
 	resetCmd = `kubeadm reset phase {{.Phase}}`
+	// WillUpgrade is value of label platform.tkestack.io/need-upgrade
+	// machines with this value will upgrade it's node automatically one by one
+	WillUpgrade = "willUpgrade"
 )
 
 var (
@@ -587,7 +590,7 @@ func uncordonNode(s ssh.Interface, nodeName string) error {
 // markNextUpgradeWorkerNode marks next wokrer node to be upgraded.
 func MarkNextUpgradeWorkerNode(client kubernetes.Interface, platformClient platformv1client.PlatformV1Interface, version, clusterName string) error {
 	machines, err := platformClient.Machines().List(context.TODO(), metav1.ListOptions{
-		LabelSelector: fields.OneTermEqualSelector(constants.LabelNodeNeedUpgrade, "").String(),
+		LabelSelector: fields.OneTermEqualSelector(constants.LabelNodeNeedUpgrade, WillUpgrade).String(),
 		FieldSelector: fields.OneTermEqualSelector(platformv1.MachineClusterField, clusterName).String(),
 	})
 	if err != nil {
@@ -628,7 +631,7 @@ func RemoveUpgradeLabel(platformClient platformv1client.PlatformV1Interface, mac
 	return err
 }
 
-func AddNeedUpgradeLabel(platformClient platformv1client.PlatformV1Interface, clusterName string) error {
+func AddNeedUpgradeLabel(platformClient platformv1client.PlatformV1Interface, clusterName, labelValue string) error {
 	machines, err := platformClient.Machines().List(context.TODO(), metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector(platformv1.MachineClusterField, clusterName).String(),
 	})
@@ -640,7 +643,7 @@ func AddNeedUpgradeLabel(platformClient platformv1client.PlatformV1Interface, cl
 			if machine.Labels == nil {
 				machine.Labels = make(map[string]string)
 			}
-			machine.Labels[constants.LabelNodeNeedUpgrade] = ""
+			machine.Labels[constants.LabelNodeNeedUpgrade] = labelValue
 		})
 		if err != nil {
 			return err

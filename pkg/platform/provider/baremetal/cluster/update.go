@@ -29,6 +29,8 @@ import (
 	"github.com/thoas/go-funk"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 	certutil "k8s.io/client-go/util/cert"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
@@ -141,8 +143,12 @@ func (p *Provider) EnsurePreClusterUpgradeHook(ctx context.Context, c *v1.Cluste
 
 func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Cluster) error {
 	// check all machines are upgraded before upgrade cluster
+	requirement, err := labels.NewRequirement(constants.LabelNodeNeedUpgrade, selection.Exists, []string{})
+	if err != nil {
+		return err
+	}
 	machines, err := p.platformClient.Machines().List(context.TODO(), metav1.ListOptions{
-		LabelSelector: fields.OneTermEqualSelector(constants.LabelNodeNeedUpgrade, "").String(),
+		LabelSelector: requirement.String(),
 		FieldSelector: fields.OneTermEqualSelector(platformv1.MachineClusterField, c.Name).String(),
 	})
 	if err != nil {
@@ -180,15 +186,17 @@ func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Clus
 		}
 
 		if i == len(c.Spec.Machines)-1 && upgraded {
-			if err := kubeadm.AddNeedUpgradeLabel(p.platformClient, c.Name); err != nil {
+			var labelValue string
+			if c.Spec.Features.Upgrade.Mode == platformv1.UpgradeModeAuto {
+				// set willUpgrade value to all worker node when upgraded all master nodes and upgrade mode is auto.
+				labelValue = kubeadm.WillUpgrade
+			}
+			if err := kubeadm.AddNeedUpgradeLabel(p.platformClient, c.Name, labelValue); err != nil {
 				return err
 			}
-			// Label next node when upgraded all master nodes and upgrade mode is auto.
-			if c.Spec.Features.Upgrade.Mode == platformv1.UpgradeModeAuto {
-				err = kubeadm.MarkNextUpgradeWorkerNode(client, p.platformClient, option.Version, c.Name)
-				if err != nil {
-					return err
-				}
+			err = kubeadm.MarkNextUpgradeWorkerNode(client, p.platformClient, option.Version, c.Name)
+			if err != nil {
+				return err
 			}
 		}
 	}
