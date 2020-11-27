@@ -29,28 +29,26 @@ interface FormPanelFooterProps {
   cardRef?: React.RefAttributes<HTMLDivElement>['ref'];
 }
 function FormPanelFooter({ children, width, cardRef }: FormPanelFooterProps) {
-  let [marginLeft, setMarginLeft] = React.useState(-20);
-  let [footWidth, setFootWidth] = React.useState(1224);
+  const [marginLeft, setMarginLeft] = React.useState(-20);
+  const [footWidth, setFootWidth] = React.useState(1224);
 
-  let cardEl = cardRef || (React.createRef() as any);
-
-  if (cardEl) {
-    React.useEffect(() => {
-      let refreshWidth = () => {
-        if (cardEl && cardEl.current) {
-          setFootWidth(cardEl.current.offsetWidth - 136);
-        }
-      };
-      window.addEventListener('resize', refreshWidth);
-      refreshWidth();
-      return () => {
-        window.removeEventListener('resize', refreshWidth);
-      };
-    });
-  }
+  const cardEl = cardRef || (React.createRef() as any);
 
   React.useEffect(() => {
-    let refreshMarginLeft = () => {
+    const refreshWidth = () => {
+      if (cardEl && cardEl.current) {
+        setFootWidth(cardEl.current.offsetWidth - 136);
+      }
+    };
+    window.addEventListener('resize', refreshWidth);
+    refreshWidth();
+    return () => {
+      window.removeEventListener('resize', refreshWidth);
+    };
+  }, [cardEl]);
+
+  React.useEffect(() => {
+    const refreshMarginLeft = () => {
       setMarginLeft(-20 - window.scrollX);
     };
     window.addEventListener('scroll', refreshMarginLeft);

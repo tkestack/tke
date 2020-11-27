@@ -33,6 +33,7 @@ import (
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
 	"tkestack.io/tke/api/registry"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/log"
 	namesutil "tkestack.io/tke/pkg/util/names"
 )
@@ -83,7 +84,7 @@ func (Strategy) Export(context.Context, runtime.Object, bool) error {
 // PrepareForCreate is invoked on create before validation to normalize
 // the object.
 func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
-	_, tenantID := authentication.UsernameAndTenantID(ctx)
+	username, tenantID := authentication.UsernameAndTenantID(ctx)
 	chartGroup, _ := obj.(*registry.ChartGroup)
 	if len(tenantID) != 0 {
 		chartGroup.Spec.TenantID = tenantID
@@ -92,6 +93,17 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	chartGroup.ObjectMeta.Name = ""
 	chartGroup.Spec.Finalizers = []registry.FinalizerName{
 		registry.ChartGroupFinalize,
+	}
+
+	if chartGroup.Spec.Creator == "" &&
+		chartGroup.Spec.Type != registry.RepoTypeSystem {
+		chartGroup.Spec.Creator = username
+	}
+	if chartGroup.Spec.Type == registry.RepoTypeSelfBuilt &&
+		chartGroup.Spec.Visibility == registry.VisibilityUser {
+		if !util.InStringSlice(chartGroup.Spec.Users, username) {
+			chartGroup.Spec.Users = append(chartGroup.Spec.Users, username)
+		}
 	}
 }
 

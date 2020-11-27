@@ -5,10 +5,16 @@ export const initChartGroupCreationState = {
   spec: {
     name: '',
     displayName: '',
-    visibility: '',
+    visibility: 'Public',
     description: '',
-    type: '',
-    projects: []
+    type: 'SelfBuilt',
+    projects: [],
+    users: [],
+    importedInfo: {
+      addr: '',
+      username: '',
+      password: ''
+    }
   }
 };
 
@@ -24,7 +30,13 @@ export const initChartGroupEditorState = {
     visibility: '',
     description: '',
     type: '',
-    projects: []
+    projects: [],
+    users: [],
+    importedInfo: {
+      addr: '',
+      username: '',
+      password: ''
+    }
   },
 
   v_editing: false
@@ -90,4 +102,15 @@ export const initAppCreationState = {
       values: ['']
     }
   }
+};
+
+export const initCommonUserAssociationState = {
+  /** 最新数据 */
+  users: [],
+  /** 原始数据 */
+  originUsers: [],
+  /** 新增数据 */
+  addUsers: [],
+  /** 删除数据 */
+  removeUsers: []
 };

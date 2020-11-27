@@ -98,26 +98,38 @@ func (w *WorkloadCounter) Total() int {
 }
 
 type ResourceCounter struct {
-	NodeTotal          int
-	NodeAbnormal       int
-	HasMetricServer    bool
-	CPUUsed            float64
-	CPURequest         float64
-	CPULimit           float64
-	CPUCapacity        float64
-	CPUAllocatable     float64
-	CPURequestRate     float64
-	CPUAllocatableRate float64
-	CPUUsage           float64
-	MemUsed            int64
-	MemRequest         int64
-	MemLimit           int64
-	MemCapacity        int64
-	MemAllocatable     int64
-	MemRequestRate     float64
-	MemAllocatableRate float64
-	MemUsage           float64
-	PodCount           int
+	NodeTotal                 int
+	NodeAbnormal              int
+	HasMetricServer           bool
+	CPUUsed                   float64
+	CPURequest                float64
+	CPULimit                  float64
+	CPUCapacity               float64
+	CPUAllocatable            float64
+	CPUNotReadyCapacity       float64
+	CPUNotReadyAllocatable    float64
+	CPURequestRate            float64
+	CPUAllocatableRate        float64
+	CPUUsage                  float64
+	MemUsed                   int64
+	MemRequest                int64
+	MemLimit                  int64
+	MemCapacity               int64
+	MemAllocatable            int64
+	MemNotReadyCapacity       int64
+	MemNotReadyAllocatable    int64
+	MemRequestRate            float64
+	MemAllocatableRate        float64
+	MemUsage                  float64
+	PodCount                  int
+	CPUCapacityMap            map[string]map[string]float64
+	CPUAllocatableMap         map[string]map[string]float64
+	CPUNotReadyCapacityMap    map[string]map[string]float64
+	CPUNotReadyAllocatableMap map[string]map[string]float64
+	MemCapacityMap            map[string]map[string]int64
+	MemAllocatableMap         map[string]map[string]int64
+	MemNotReadyCapacityMap    map[string]map[string]int64
+	MemNotReadyAllocatableMap map[string]map[string]int64
 }
 
 type ComponentHealth struct {

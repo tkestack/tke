@@ -98,7 +98,8 @@ type ClusterSpec struct {
 	Properties ClusterProperty
 	// +optional
 	Machines []ClusterMachine
-
+	// +optional
+	ScalingMachines []ClusterMachine
 	// +optional
 	DockerExtraArgs map[string]string
 	// +optional
@@ -119,9 +120,6 @@ type ClusterSpec struct {
 	// Etcd holds configuration for etcd.
 	// +optional
 	Etcd *Etcd
-	// Upgrade control upgrade process.
-	// +optional
-	Upgrade Upgrade
 	// If true will use hostname as nodename, if false will use machine IP as nodename.
 	// +optional
 	HostnameAsNodename bool
@@ -216,6 +214,10 @@ const (
 	ClusterUpgrading ClusterPhase = "Upgrading"
 	// ClusterTerminating means the cluster is undergoing graceful termination.
 	ClusterTerminating ClusterPhase = "Terminating"
+	// ClusterUpscaling means the cluster is undergoing graceful up scaling.
+	ClusterUpscaling ClusterPhase = "Upscaling"
+	// ClusterDownscaling means the cluster is undergoing graceful down scaling.
+	ClusterDownscaling ClusterPhase = "Downscaling"
 )
 
 // ClusterCondition contains details for the current condition of this cluster.
@@ -354,6 +356,9 @@ type ClusterFeature struct {
 	EnableMetricsServer bool
 	// +optional
 	IPv6DualStack bool
+	// Upgrade control upgrade process.
+	// +optional
+	Upgrade Upgrade
 }
 
 type HA struct {
@@ -486,6 +491,11 @@ type UpgradeStrategy struct {
 	// 100% means ignore any pods unready which may be used in one worker node, use this carefully!
 	// default value is 0%.
 	MaxUnready intstr.IntOrString
+	// Whether drain node before upgrade.
+	// Draining node before upgrade is recommended.
+	// But not all pod running as cows, a few running as pets.
+	// If your pod can not accept be expelled from current node, this value should be false.
+	DrainNodeBeforeUpgrade bool
 }
 
 // ResourceList is a set of (resource name, quantity) pairs.
@@ -753,6 +763,9 @@ type StorageBackEndES struct {
 	Port      int32
 	Scheme    string
 	IndexName string
+	User      string
+	Password  string
+	ReserveDays int32
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

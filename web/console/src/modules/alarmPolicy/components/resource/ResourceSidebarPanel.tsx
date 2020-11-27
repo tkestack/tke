@@ -45,7 +45,7 @@ const mapDispatchToProps = dispatch =>
 export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps, ResourceSidebarPanelState> {
   constructor(props: ResourceListPanelProps) {
     super(props);
-    let urlParams = router.resolve(props.route);
+    const urlParams = router.resolve(props.route);
     this.state = {
       currentPath: urlParams['resourceName'],
       isOpenSecondBar: '',
@@ -54,11 +54,11 @@ export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps
   }
 
   componentWillReceiveProps(nextProps: ResourceListPanelProps) {
-    let { route, subRoot, subRouterList } = nextProps,
+    const { route, subRoot, subRouterList } = nextProps,
       urlParams = router.resolve(route),
       { type = '', resourceName = '' } = urlParams;
 
-    let oldSubRouterList = JSON.stringify(this.props.subRouterList),
+    const oldSubRouterList = JSON.stringify(this.props.subRouterList),
       newSubRouterList = JSON.stringify(subRouterList);
 
     /**
@@ -95,7 +95,7 @@ export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps
    * 生成二级导航路由主体部分
    */
   _renderBarList() {
-    let { subRouterList } = this.props;
+    const { subRouterList } = this.props;
 
     return (
       <ul className="secondary-aside-list">
@@ -150,7 +150,7 @@ export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps
    * @param sidebarPath   一级路由
    */
   private _handleDataFetcher(subSidebarPath: string, sidebarPath: string) {
-    let { actions, route } = this.props,
+    const { actions, route } = this.props,
       urlParams = router.resolve(route);
 
     // 避免重复点击，进行重复的操作
@@ -171,13 +171,13 @@ export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps
           Object.assign({}, route.queries)
         );
         // 这里去判断该资源是否需要进行namespace列表的拉取
-        let isNeedFetchNamespace = TellIsNeedFetchNS(subSidebarPath);
+        const isNeedFetchNamespace = TellIsNeedFetchNS(subSidebarPath);
         actions.resource.initResourceInfoAndFetchData(isNeedFetchNamespace, subSidebarPath);
         // 这里去清空多选的选项
         actions.resource.selectMultipleResource([]);
       } else {
         // 这几个都和namespace没有太大关系
-        let queries = Object.assign({}, route.queries, { np: undefined });
+        const queries = Object.assign({}, route.queries, { np: undefined });
         router.navigate(
           Object.assign({}, urlParams, { type: sidebarPath, resourceName: subSidebarPath }),
           JSON.parse(JSON.stringify(queries))
@@ -191,7 +191,7 @@ export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps
    * @param path  跳转的路由
    * @param isClickNested 是否点击了含有二级的路由
    */
-  private _handleClickForFirstBar(path: string, isClickNested: boolean = false, sidebarPath?: string) {
+  private _handleClickForFirstBar(path: string, isClickNested = false, sidebarPath?: string) {
     if (!isClickNested) {
       // 因为是非折叠的路由，所有openSecondBar置为空
       this.setState({
@@ -221,7 +221,7 @@ export class ResourceSidebarPanel extends React.Component<ResourceListPanelProps
    * 生成二级导航栏
    */
   private _renderSecondBarList(subMenu: BasicRouter[], sidebarPath: string) {
-    let subMenuList = subMenu.map((subSidebar, index) => {
+    const subMenuList = subMenu.map((subSidebar, index) => {
       return (
         <li key={index}>
           <a

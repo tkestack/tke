@@ -12,6 +12,7 @@ import { isEmpty } from './src/modules/common/utils';
 import * as classnames from 'classnames';
 import { Button, Icon, Text, Bubble, NavMenu, List, ExternalLink } from '@tencent/tea-component';
 import { insertCSS } from '@tencent/ff-redux';
+import 'antd/dist/antd.css';
 
 insertCSS(
   'tkestack-nav-logo',
@@ -22,7 +23,6 @@ insertCSS(
 `
 );
 
-// @ts-ignore
 const routerSea = seajs.require('router');
 
 /**平台管理员,业务成员,游客,未初始化 */
@@ -380,14 +380,14 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
 
   //获取用户信息包括用户业务信息
   async getUserInfo() {
-    let infoResourceInfo: ResourceInfo = resourceConfig()['info'];
-    let url = reduceK8sRestfulPath({ resourceInfo: infoResourceInfo });
-    let params: RequestParams = {
+    const infoResourceInfo: ResourceInfo = resourceConfig()['info'];
+    const url = reduceK8sRestfulPath({ resourceInfo: infoResourceInfo });
+    const params: RequestParams = {
       method: Method.get,
       url
     };
     try {
-      let response = await reduceNetworkRequest(params);
+      const response = await reduceNetworkRequest(params);
       this.setState({
         userInfo: response.data
       });
@@ -398,16 +398,16 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
    * 获取当前版本支持的模块，如 是否有tcr
    */
   async getConsoleModule() {
-    let moduleResourceInfo: ResourceInfo = resourceConfig()['module'];
-    let url = reduceK8sRestfulPath({ resourceInfo: moduleResourceInfo });
-    let params: RequestParams = {
+    const moduleResourceInfo: ResourceInfo = resourceConfig()['module'];
+    const url = reduceK8sRestfulPath({ resourceInfo: moduleResourceInfo });
+    const params: RequestParams = {
       method: Method.get,
       url
     };
     try {
       let consoleApiMap;
       if (isEmpty(this.state.consoleApiMap)) {
-        let response = await reduceNetworkRequest(params);
+        const response = await reduceNetworkRequest(params);
         consoleApiMap = response.data.components;
 
         // 设置全局的变量，console的值
@@ -418,10 +418,10 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
       }
 
       // 进行路由的更新
-      let moduleKeys = Object.keys(consoleApiMap);
-      let initRouterConfig =
+      const moduleKeys = Object.keys(consoleApiMap);
+      const initRouterConfig =
         this.props.platformType === PlatformTypeEnum.Business ? businessCommonRouterConfig : commonRouterConfig;
-      let currentRouterConfig: RouterConfig[] = initRouterConfig.filter((routerConfig, index) => {
+      const currentRouterConfig: RouterConfig[] = initRouterConfig.filter((routerConfig, index) => {
         if (Array.isArray(routerConfig.watchModule)) {
           return routerConfig.watchModule.some(item => moduleKeys.includes(item));
         }
@@ -430,7 +430,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
 
       // 过滤二级路由
       currentRouterConfig.forEach(routerConfig => {
-        let subRouterConfig = routerConfig.subRouterConfig;
+        const subRouterConfig = routerConfig.subRouterConfig;
         if (subRouterConfig) {
           // 重写subRouterConfig属性
           routerConfig.subRouterConfig = subRouterConfig.filter(subRouterConf => {
@@ -448,7 +448,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
       currentRouterConfig.forEach((routerConfig, index) => {
         // 进行二级路由信息的初始化
         if (subRouterIndex < 0 && routerConfig.subRouterConfig) {
-          let subRouterUrl = routerConfig.subRouterConfig.map(item => item.url);
+          const subRouterUrl = routerConfig.subRouterConfig.map(item => item.url);
           if (subRouterUrl.includes(this.state.selected)) {
             subRouterIndex = index;
           }
@@ -467,22 +467,22 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
 
   //获取用户信息包括用户业务信息
   async getUserProjectInfo() {
-    let userResourceInfo: ResourceInfo = resourceConfig().portal;
-    let url = reduceK8sRestfulPath({ resourceInfo: userResourceInfo });
-    let params: RequestParams = {
+    const userResourceInfo: ResourceInfo = resourceConfig().portal;
+    const url = reduceK8sRestfulPath({ resourceInfo: userResourceInfo });
+    const params: RequestParams = {
       method: Method.get,
       url
     };
     try {
-      let response = await reduceNetworkRequest(params);
+      const response = await reduceNetworkRequest(params);
       if (response.code === 0) {
-        let projects = Object.keys(response.data.projects).map(key => {
+        const projects = Object.keys(response.data.projects).map(key => {
           return {
             id: key,
             name: response.data.projects[key]
           };
         });
-        let userType = response.data.administrator
+        const userType = response.data.administrator
           ? UserType.admin
           : projects.length !== 0
           ? UserType.member
@@ -491,7 +491,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
           userType,
           projects
         });
-        let isInBlankPage = window.location.pathname.indexOf('tkestack/blank') !== -1;
+        const isInBlankPage = window.location.pathname.indexOf('tkestack/blank') !== -1;
         if (userType === UserType.member && this.props.platformType === PlatformTypeEnum.Manager) {
           location.href = location.origin + '/tkestack-project/application';
         } else if (
@@ -515,14 +515,14 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
 
   // 退出页面
   async userLogout() {
-    let logoutInfo: ResourceInfo = resourceConfig().logout;
-    let url = reduceK8sRestfulPath({ resourceInfo: logoutInfo });
-    let params: RequestParams = {
+    const logoutInfo: ResourceInfo = resourceConfig().logout;
+    const url = reduceK8sRestfulPath({ resourceInfo: logoutInfo });
+    const params: RequestParams = {
       method: Method.get,
       url
     };
     try {
-      let response = await reduceNetworkRequest(params);
+      const response = await reduceNetworkRequest(params);
     } catch (error) {}
   }
 
@@ -537,20 +537,20 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     this.setState({ toggleName: name });
   }
 
-  _handleHoverForFlatformSwitch(isShow: boolean = false) {
+  _handleHoverForFlatformSwitch(isShow = false) {
     this.setState({
       isShowPlatformSwitch: isShow
     });
   }
 
   render() {
-    let query = window.location.search;
+    const query = window.location.search;
     let finalContent: React.ReactNode;
 
     if (isEmpty(this.state.consoleApiMap)) {
       finalContent = <noscript />;
     } else {
-      let { sideBar = true } = this.props;
+      const { sideBar = true } = this.props;
       finalContent = (
         <React.Fragment>
           {this._renderTopBar(query)}
@@ -616,9 +616,9 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
    * 展示侧边导航栏
    */
   private _renderSideBar(query: string) {
-    let { platformType } = this.props;
-    let { userType, projects } = this.state;
-    let routerConfig: RouterConfig[] = this.state.routerConfig;
+    const { platformType } = this.props;
+    const { userType, projects } = this.state;
+    const routerConfig: RouterConfig[] = this.state.routerConfig;
     return (
       <div className="aside qc-aside-new">
         <div className="qc-aside-area">
@@ -661,10 +661,10 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
 
                   /** 需要判断当前路由设置是否为二级路由设置 */
                   if (routerIns.subRouterConfig) {
-                    let subRouterUrl = routerIns.subRouterConfig.map(item => item.url);
+                    const subRouterUrl = routerIns.subRouterConfig.map(item => item.url);
                     isSelected = subRouterUrl.includes(this.state.selected);
-                    let selectedIndex = subRouterUrl.findIndex(item => item === this.state.selected);
-                    let { index: asideIndex, isShow } = this.state.asideRouterSelect;
+                    const selectedIndex = subRouterUrl.findIndex(item => item === this.state.selected);
+                    const { index: asideIndex, isShow } = this.state.asideRouterSelect;
 
                     routerContent = (
                       <li

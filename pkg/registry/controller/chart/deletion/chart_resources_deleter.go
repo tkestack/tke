@@ -33,6 +33,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
+	harborHandler "tkestack.io/tke/pkg/registry/harbor/handler"
+	helm "tkestack.io/tke/pkg/registry/harbor/helmClient"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -49,12 +51,13 @@ func NewChartResourcesDeleter(
 	registryClient v1clientset.RegistryV1Interface,
 	multiTenantServer *multitenant.MultiTenantServer,
 	finalizerToken registryv1.FinalizerName,
-	deleteChartWhenDone bool) ChartResourcesDeleterInterface {
+	deleteChartWhenDone bool, helmClient *helm.APIClient) ChartResourcesDeleterInterface {
 	d := &chartResourcesDeleter{
 		registryClient:      registryClient,
 		finalizerToken:      finalizerToken,
 		multiTenantServer:   multiTenantServer,
 		deleteChartWhenDone: deleteChartWhenDone,
+		helmClient:          helmClient,
 	}
 	return d
 }
@@ -72,6 +75,7 @@ type chartResourcesDeleter struct {
 	multiTenantServer *multitenant.MultiTenantServer
 	// Also delete the chart when all resources in the chart have been deleted.
 	deleteChartWhenDone bool
+	helmClient          *helm.APIClient
 }
 
 // Delete deletes all resources in the given chart.
@@ -281,17 +285,26 @@ func deleteChart(ctx context.Context, deleter *chartResourcesDeleter, chart *reg
 	repo := chart.Spec.TenantID + "/" + chart.Spec.ChartGroupName
 	name := chart.Spec.Name
 	for _, v := range chart.Status.Versions {
-		// refer to: https://github.com/helm/chartmuseum/blob/v0.12.0/pkg/chartmuseum/server/multitenant/api.go#L81
-		filename := pathutil.Join(repo, cm_repo.ChartPackageFilenameFromNameVersion(name, v.Version))
-		log.Debugf("Deleting package %s from storage", filename)
-		deleteObjErr := deleter.multiTenantServer.StorageBackend.DeleteObject(filename)
-		if deleteObjErr != nil { //404
-			errs = append(errs, fmt.Errorf("Deleting package from storage error: %s", deleteObjErr.Error()))
-			log.Errorf("Deleting package from storage error: %s", deleteObjErr.Error())
-			continue
+		if deleter.helmClient != nil {
+			projectName := fmt.Sprintf("%s-chart-%s", chart.Spec.TenantID, chart.Spec.ChartGroupName)
+			err := harborHandler.DeleteChart(ctx, deleter.helmClient, projectName, name)
+			if err != nil {
+				log.Errorf("Deleting harbor chart error: %s", err.Error())
+				continue
+			}
+		} else {
+			// refer to: https://github.com/helm/chartmuseum/blob/v0.12.0/pkg/chartmuseum/server/multitenant/api.go#L81
+			filename := pathutil.Join(repo, cm_repo.ChartPackageFilenameFromNameVersion(name, v.Version))
+			log.Debugf("Deleting package %s from storage", filename)
+			deleteObjErr := deleter.multiTenantServer.StorageBackend.DeleteObject(filename)
+			if deleteObjErr != nil { //404
+				errs = append(errs, fmt.Errorf("Deleting package from storage error: %s", deleteObjErr.Error()))
+				log.Errorf("Deleting package from storage error: %s", deleteObjErr.Error())
+				continue
+			}
+			provFilename := pathutil.Join(repo, cm_repo.ProvenanceFilenameFromNameVersion(name, v.Version))
+			deleter.multiTenantServer.StorageBackend.DeleteObject(provFilename) // ignore error here, may be no prov file
 		}
-		provFilename := pathutil.Join(repo, cm_repo.ProvenanceFilenameFromNameVersion(name, v.Version))
-		deleter.multiTenantServer.StorageBackend.DeleteObject(provFilename) // ignore error here, may be no prov file
 	}
 	return utilerrors.NewAggregate(errs)
 }

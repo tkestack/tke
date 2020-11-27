@@ -6,10 +6,12 @@ import { cutNsStartClusterId } from '@helper';
 import { router } from '@src/modules/cluster/router';
 import List from './list';
 import Detail from './detail';
-import Hpa from  './editor/hpa';
+import Hpa from './editor/hpa';
 import Yaml from './editor/yaml';
 import { getHPAList } from '@src/modules/cluster/WebAPI/scale';
 import { useNamespaces } from '../common/hooks';
+import { RecordSet } from '@tencent/ff-redux';
+import { Resource } from '@src/modules/common';
 
 /**
  * HPAPanel组件，带有scope的局部全局数据的组件
@@ -26,7 +28,7 @@ export const HPAPanel = React.memo(() => {
  * HPA组件
  */
 export const HPA = React.memo(() => {
-  const route = useSelector((state) => state.route);
+  const route = useSelector(state => state.route);
   const { projectName, clusterId, HPAName, namespaceValue: namespaceValueInURL } = route.queries;
   const { mode } = router.resolve(route);
   const hpaState = useContext(StateContext);
@@ -42,7 +44,7 @@ export const HPA = React.memo(() => {
   /**
    * HPA列表数据获取
    */
-  const [HPAData, setHPAData] = useState();
+  const [HPAData, setHPAData] = useState<RecordSet<Resource, any> | undefined>();
   useEffect(() => {
     async function getHPAData(namespace) {
       const result = await getHPAList({ namespace, clusterId });
@@ -63,11 +65,10 @@ export const HPA = React.memo(() => {
   useEffect(() => {
     if (!isEmpty(HPAData)) {
       HPAData.records.forEach(hpa => {
-            if (hpa.metadata.name === HPAName) {
-              setSelectedHpa(hpa);
-            }
-          }
-      );
+        if (hpa.metadata.name === HPAName) {
+          setSelectedHpa(hpa);
+        }
+      });
     }
   }, [HPAData]);
 
@@ -92,9 +93,5 @@ export const HPA = React.memo(() => {
     default:
       content = '';
   }
-  return (
-    <>
-      {content}
-    </>
-  );
+  return <>{content}</>;
 });

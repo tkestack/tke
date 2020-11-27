@@ -301,6 +301,26 @@ export const editLogStashActions = {
     };
   },
 
+  /**
+   * pre: 消费端类型为ES - username
+   */
+  inputEsUsername: (esUsername: string): ReduxAction<string> => {
+    return {
+      type: ActionType.EsUsername,
+      payload: esUsername
+    };
+  },
+
+  /**
+   * pre: 消费端类型为ES - password
+   */
+  inputEsPassword: (esPassword: string): ReduxAction<string> => {
+    return {
+      type: ActionType.EsPassword,
+      payload: esPassword
+    };
+  },
+
   /** 清空logStashEdit的内容 */
   clearLogStashEdit: (): ReduxAction<any> => {
     return {

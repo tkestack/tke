@@ -150,6 +150,19 @@ type LogFileProxyOptions struct {
 	Container string `json:"container,omitempty" protobuf:"bytes,3,opt,name=container"`
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// LogEsDetection
+type LogEsDetection struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Scheme   string `json:"scheme,omitempty" protobuf:"bytes,1,opt,name=scheme"`
+	IP       string `json:"ip,omitempty" protobuf:"bytes,2,opt,name=ip"`
+	Port     string `json:"port,omitempty" protobuf:"bytes,3,opt,name=port"`
+	User     string `json:"user,omitempty" protobuf:"bytes,4,opt,name=user"`
+	Password string `json:"password,omitempty" protobuf:"bytes,5,opt,name=password"`
+}
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:skipVerbs=deleteCollection

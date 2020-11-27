@@ -21,6 +21,7 @@ package apiserver
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"tkestack.io/tke/api/registry"
+
 	// register project group api scheme for api server.
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	// install registry api

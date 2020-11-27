@@ -523,37 +523,6 @@
     },
     {
         "metadata": {
-            "name": "pol-{tenantID}-registry-basic",
-            "creationTimestamp": null
-        },
-        "spec": {
-            "displayName": "RegistryBasic",
-            "tenantID": "default",
-            "category": "common",
-            "type": "default",
-            "scope": "",
-            "username": "",
-            "description": "平台预设策略，允许创建、查看仓库，允许查看chart",
-            "statement": {
-                "actions": [
-                    "createChartgroup",
-                    "listChartgroups",
-                    "listCharts"
-                ],
-                "resources": [
-                    "*"
-                ],
-                "effect": "allow"
-            }
-        },
-        "status": {
-            "phase": "",
-            "users": null,
-            "groups": null
-        }
-    },
-    {
-        "metadata": {
             "name": "pol-{tenantID}-chartgroup-pull-fake",
             "creationTimestamp": null
         },
@@ -819,6 +788,7 @@
                     "createChannel",
                     "createChart",
                     "createChartgroup",
+                    "createChartgroupRepoupdating",
                     "createConfigmap",
                     "createControllerrevision",
                     "createCronjob",

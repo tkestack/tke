@@ -12,23 +12,22 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { METHODS } from 'http';
 import { User, UserFilter, PolicyFilter, PolicyPlain } from './models';
 
-// @ts-ignore
 const tips = seajs.require('tips');
 
 class RequestResult {
   data: any;
   error: any;
 }
-const SEND = async (url: string, method: string, bodyData: any, tipErr: boolean = true) => {
+const SEND = async (url: string, method: string, bodyData: any, tipErr = true) => {
   // 构建参数
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: method,
     url,
     data: bodyData
   };
-  let resp = new RequestResult();
+  const resp = new RequestResult();
   try {
-    let response = await reduceNetworkRequest(params);
+    const response = await reduceNetworkRequest(params);
     if (response.code !== 0) {
       if (tipErr === true) {
         tips.error(response.message, 2000);
@@ -53,26 +52,26 @@ const SEND = async (url: string, method: string, bodyData: any, tipErr: boolean 
   }
 };
 
-const GET = async (url: string, tipErr: boolean = true) => {
-  let response = await SEND(url, Method.get, null, tipErr);
+const GET = async (url: string, tipErr = true) => {
+  const response = await SEND(url, Method.get, null, tipErr);
   return response;
 };
-const DELETE = async (url: string, tipErr: boolean = true) => {
-  let response = await SEND(url, Method.delete, null, tipErr);
+const DELETE = async (url: string, tipErr = true) => {
+  const response = await SEND(url, Method.delete, null, tipErr);
   return response;
 };
-const POST = async (url: string, bodyData: any, tipErr: boolean = true) => {
-  let response = await SEND(url, Method.post, JSON.stringify(bodyData), tipErr);
-  return response;
-};
-
-const PUT = async (url: string, bodyData: any, tipErr: boolean = true) => {
-  let response = await SEND(url, Method.put, JSON.stringify(bodyData), tipErr);
+const POST = async (url: string, bodyData: any, tipErr = true) => {
+  const response = await SEND(url, Method.post, JSON.stringify(bodyData), tipErr);
   return response;
 };
 
-const PATCH = async (url: string, bodyData: any, tipErr: boolean = true) => {
-  let response = await SEND(url, Method.patch, JSON.stringify(bodyData), tipErr);
+const PUT = async (url: string, bodyData: any, tipErr = true) => {
+  const response = await SEND(url, Method.put, JSON.stringify(bodyData), tipErr);
+  return response;
+};
+
+const PATCH = async (url: string, bodyData: any, tipErr = true) => {
+  const response = await SEND(url, Method.patch, JSON.stringify(bodyData), tipErr);
   return response;
 };
 
@@ -160,8 +159,8 @@ export async function fetchPolicyPlainList(query: QueryState<PolicyFilter>) {
   const url = reduceK8sRestfulPath({ resourceInfo });
   // const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
   console.log('fetchPolicyPlainList url + queryString', url, queryString, 111, query);
-  let rr: RequestResult = await GET(url + queryString);
-  let items: PolicyPlain[] =
+  const rr: RequestResult = await GET(url + queryString);
+  const items: PolicyPlain[] =
     !rr.error && rr.data.items
       ? rr.data.items.map(i => {
           return {

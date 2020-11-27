@@ -1652,6 +1652,9 @@ func autoConvert_v1_ClusterFeature_To_platform_ClusterFeature(in *ClusterFeature
 	out.AuthzWebhookAddr = (*platform.AuthzWebhookAddr)(unsafe.Pointer(in.AuthzWebhookAddr))
 	out.EnableMetricsServer = in.EnableMetricsServer
 	out.IPv6DualStack = in.IPv6DualStack
+	if err := Convert_v1_Upgrade_To_platform_Upgrade(&in.Upgrade, &out.Upgrade, s); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -1674,6 +1677,9 @@ func autoConvert_platform_ClusterFeature_To_v1_ClusterFeature(in *platform.Clust
 	out.AuthzWebhookAddr = (*AuthzWebhookAddr)(unsafe.Pointer(in.AuthzWebhookAddr))
 	out.EnableMetricsServer = in.EnableMetricsServer
 	out.IPv6DualStack = in.IPv6DualStack
+	if err := Convert_platform_Upgrade_To_v1_Upgrade(&in.Upgrade, &out.Upgrade, s); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -1832,11 +1838,9 @@ func autoConvert_v1_ClusterSpec_To_platform_ClusterSpec(in *ClusterSpec, out *pl
 	out.SchedulerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.SchedulerExtraArgs))
 	out.ClusterCredentialRef = (*corev1.LocalObjectReference)(unsafe.Pointer(in.ClusterCredentialRef))
 	out.Etcd = (*platform.Etcd)(unsafe.Pointer(in.Etcd))
-	if err := Convert_v1_Upgrade_To_platform_Upgrade(&in.Upgrade, &out.Upgrade, s); err != nil {
-		return err
-	}
 	out.HostnameAsNodename = in.HostnameAsNodename
 	out.NetworkArgs = *(*map[string]string)(unsafe.Pointer(&in.NetworkArgs))
+	out.ScalingMachines = *(*[]platform.ClusterMachine)(unsafe.Pointer(&in.ScalingMachines))
 	return nil
 }
 
@@ -1864,6 +1868,7 @@ func autoConvert_platform_ClusterSpec_To_v1_ClusterSpec(in *platform.ClusterSpec
 		return err
 	}
 	out.Machines = *(*[]ClusterMachine)(unsafe.Pointer(&in.Machines))
+	out.ScalingMachines = *(*[]ClusterMachine)(unsafe.Pointer(&in.ScalingMachines))
 	out.DockerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.DockerExtraArgs))
 	out.KubeletExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.KubeletExtraArgs))
 	out.APIServerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.APIServerExtraArgs))
@@ -1871,9 +1876,6 @@ func autoConvert_platform_ClusterSpec_To_v1_ClusterSpec(in *platform.ClusterSpec
 	out.SchedulerExtraArgs = *(*map[string]string)(unsafe.Pointer(&in.SchedulerExtraArgs))
 	out.ClusterCredentialRef = (*corev1.LocalObjectReference)(unsafe.Pointer(in.ClusterCredentialRef))
 	out.Etcd = (*Etcd)(unsafe.Pointer(in.Etcd))
-	if err := Convert_platform_Upgrade_To_v1_Upgrade(&in.Upgrade, &out.Upgrade, s); err != nil {
-		return err
-	}
 	out.HostnameAsNodename = in.HostnameAsNodename
 	out.NetworkArgs = *(*map[string]string)(unsafe.Pointer(&in.NetworkArgs))
 	return nil
@@ -3423,6 +3425,9 @@ func autoConvert_v1_StorageBackEndES_To_platform_StorageBackEndES(in *StorageBac
 	out.Port = in.Port
 	out.Scheme = in.Scheme
 	out.IndexName = in.IndexName
+	out.User = in.User
+	out.Password = in.Password
+	out.ReserveDays = in.ReserveDays
 	return nil
 }
 
@@ -3436,6 +3441,9 @@ func autoConvert_platform_StorageBackEndES_To_v1_StorageBackEndES(in *platform.S
 	out.Port = in.Port
 	out.Scheme = in.Scheme
 	out.IndexName = in.IndexName
+	out.User = in.User
+	out.Password = in.Password
+	out.ReserveDays = in.ReserveDays
 	return nil
 }
 
@@ -3646,6 +3654,9 @@ func autoConvert_v1_UpgradeStrategy_To_platform_UpgradeStrategy(in *UpgradeStrat
 	if err := metav1.Convert_Pointer_intstr_IntOrString_To_intstr_IntOrString(&in.MaxUnready, &out.MaxUnready, s); err != nil {
 		return err
 	}
+	if err := metav1.Convert_Pointer_bool_To_bool(&in.DrainNodeBeforeUpgrade, &out.DrainNodeBeforeUpgrade, s); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -3656,6 +3667,9 @@ func Convert_v1_UpgradeStrategy_To_platform_UpgradeStrategy(in *UpgradeStrategy,
 
 func autoConvert_platform_UpgradeStrategy_To_v1_UpgradeStrategy(in *platform.UpgradeStrategy, out *UpgradeStrategy, s conversion.Scope) error {
 	if err := metav1.Convert_intstr_IntOrString_To_Pointer_intstr_IntOrString(&in.MaxUnready, &out.MaxUnready, s); err != nil {
+		return err
+	}
+	if err := metav1.Convert_bool_To_Pointer_bool(&in.DrainNodeBeforeUpgrade, &out.DrainNodeBeforeUpgrade, s); err != nil {
 		return err
 	}
 	return nil

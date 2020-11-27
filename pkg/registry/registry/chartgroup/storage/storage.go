@@ -152,18 +152,16 @@ func (r *GenericREST) List(ctx context.Context, options *metainternal.ListOption
 	wrappedOptions, repoType = apiserverutil.InterceptCustomSelectorFromListOptions(wrappedOptions, "repoType", defaultType)
 	wrappedOptions, targetProjectID = apiserverutil.InterceptCustomSelectorFromListOptions(wrappedOptions, "projectID", "")
 
-	switch registryapi.RepoType(repoType) {
-	case registryapi.RepoTypePersonal:
-		obj, err = registryutil.ListPersonalChartGroupsFromStore(ctx, wrappedOptions, r.businessClient, r.privilegedUsername, r.Store)
-	case registryapi.RepoTypeProject:
+	switch repoType {
+	case registryapi.ScopeTypeUser:
+		obj, err = registryutil.ListUserChartGroupsFromStore(ctx, wrappedOptions, r.businessClient, r.privilegedUsername, r.Store)
+	case registryapi.ScopeTypeProject:
 		obj, err = registryutil.ListProjectChartGroupsFromStore(ctx, wrappedOptions, targetProjectID, r.businessClient, r.authClient, r.privilegedUsername, r.Store)
-	case registryapi.RepoTypeSystem:
-		obj, err = registryutil.ListSystemChartGroupsFromStore(ctx, wrappedOptions, r.businessClient, r.privilegedUsername, r.Store)
-	case registryapi.RepoTypePublic:
+	case registryapi.ScopeTypePublic:
 		obj, err = registryutil.ListPublicChartGroupsFromStore(ctx, wrappedOptions, r.businessClient, r.privilegedUsername, r.Store)
-	case registryapi.RepoTypeAll:
+	case registryapi.ScopeTypeAll:
 		obj, err = registryutil.ListAllChartGroupsFromStore(ctx, wrappedOptions, targetProjectID, r.businessClient, r.authClient, r.privilegedUsername, r.Store)
-	case registryapi.RepoType(defaultType):
+	case defaultType:
 		obj, err = r.Store.List(ctx, wrappedOptions)
 	default:
 		return nil, errors.NewBadRequest(fmt.Sprintf("unsupport repoType: %s", repoType))

@@ -1,8 +1,5 @@
-import { app, i18n } from '@tencent/tea-app';
-import { translation } from '@i18n/translation';
+import './i18n';
 import ReactDOM from 'react-dom';
-// 国际化工具的初始化
-i18n.init({ translation });
 import * as React from 'react';
 import { Entry, insertCSS } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
@@ -21,6 +18,7 @@ import { Application as App } from '@src/modules/application';
 // 公有云的图表组件为异步加载，这里为了减少路径配置，还是保留为同步加载，预先import即可变成不split
 import '@tencent/tchart/build/ChartsComponents';
 import { Project } from '@src/modules/project';
+
 insertCSS(
   'myTagSearchBox',
   `.myTagSearchBox{ width:100% !important; background-color: #fff; }
@@ -51,7 +49,7 @@ class ForbiddentDialog extends React.Component<any, ForbiddentDialogState> {
   }
 
   render() {
-    let { isShow, message } = this.state.forbiddentConfig;
+    const { isShow, message } = this.state.forbiddentConfig;
     return (
       <TipDialog
         isShow={isShow}

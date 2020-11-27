@@ -57,6 +57,7 @@ contexts:
 type Option struct {
 	AuthzWebhookEndpoint string
 	IsGlobalCluster      bool
+	IsClusterUpscaling   bool
 }
 
 // WebhookCertAndKeyExist checks whether the certificate and private key exist,
@@ -74,7 +75,7 @@ func Install(s ssh.Interface, option *Option) error {
 	var webhookKeyName = constants.WebhookKeyName
 
 	basePath := constants.AppCertDir
-	if option.IsGlobalCluster {
+	if option.IsGlobalCluster && !option.IsClusterUpscaling {
 		basePath = installerconstants.DataDir
 	}
 	// For compatibility with old version clusters' webhook certificates and private keys.

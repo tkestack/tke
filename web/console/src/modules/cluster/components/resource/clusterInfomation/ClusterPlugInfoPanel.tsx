@@ -1,15 +1,16 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { FormPanel } from '@tencent/ff-component';
 import { Table, TableColumn, Button, Icon } from '@tea/component';
 import { RootProps } from '../../ClusterApp';
 import { FetchState } from '@tencent/ff-redux';
+import { router } from '../../../router';
 
 enum PlugType {
   Promethus,
   LogAgent
 }
 
-export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, clusterVersion }) => {
+export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, clusterVersion, route }) => {
   const targetCluster = cluster.selection;
   const { promethus = null, logAgent = null } = targetCluster ? cluster.selection.spec : {};
   const clusterId = targetCluster ? targetCluster.metadata.name : '';
@@ -17,7 +18,7 @@ export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, cl
   const open = (type: PlugType) => () => {
     switch (type) {
       case PlugType.Promethus:
-        actions.cluster.enablePromethus(cluster.selection, clusterVersion);
+        router.navigate({ sub: 'config-promethus' }, { rid: route.queries['rid'], clusterId: route.queries.clusterId });
         break;
       case PlugType.LogAgent:
         actions.cluster.enableLogAgent(cluster.selection);
@@ -49,9 +50,11 @@ export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, cl
       header: '操作',
       render({ action, type }) {
         return action ? (
-          <Button type="link" onClick={close(type)}>
-            关闭
-          </Button>
+          <>
+            <Button type="link" onClick={close(type)}>
+              关闭
+            </Button>
+          </>
         ) : (
           <Button type="link" onClick={open(type)}>
             开启
@@ -84,7 +87,7 @@ export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, cl
       {cluster.list.fetched !== true || cluster.list.fetchState === FetchState.Fetching ? (
         <Icon type="loading" />
       ) : (
-        <Table columns={columns} records={records} recordKey="plug" />
+        <Table columns={columns} records={records} recordKey="des" />
       )}
     </FormPanel>
   );

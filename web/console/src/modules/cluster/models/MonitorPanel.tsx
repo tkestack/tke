@@ -302,7 +302,7 @@ export const nodeMonitorFields = [
     unit: '%'
   },
   {
-    expr: 'mean(k8s_node_mem_usage)',
+    expr: 'mean(k8s_node_mem_usage_no_cache)',
     alias: t('内存利用率'),
     unit: '%'
   },

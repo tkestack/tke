@@ -19,6 +19,10 @@
 package rest
 
 import (
+	"encoding/base64"
+	"fmt"
+	"net/http"
+
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -33,11 +37,14 @@ import (
 	v1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	registryconfig "tkestack.io/tke/pkg/registry/apis/config"
+	harbor "tkestack.io/tke/pkg/registry/harbor/client"
+	helm "tkestack.io/tke/pkg/registry/harbor/helmClient"
 	chartstorage "tkestack.io/tke/pkg/registry/registry/chart/storage"
 	chartgroupstorage "tkestack.io/tke/pkg/registry/registry/chartgroup/storage"
 	configmapstorage "tkestack.io/tke/pkg/registry/registry/configmap/storage"
 	namespacestorage "tkestack.io/tke/pkg/registry/registry/namespace/storage"
 	repositorystorage "tkestack.io/tke/pkg/registry/registry/repository/storage"
+	"tkestack.io/tke/pkg/util/transport"
 )
 
 // StorageProvider is a REST type for core resources storage that implement
@@ -78,25 +85,57 @@ func (*StorageProvider) GroupName() string {
 func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter generic.RESTOptionsGetter, loopbackClientConfig *restclient.Config) map[string]rest.Storage {
 	registryClient := registryinternalclient.NewForConfigOrDie(loopbackClientConfig)
 
+	var harborClient *harbor.APIClient = nil
+	var helmClient *helm.APIClient
+
+	if s.RegistryConfig.HarborEnabled {
+		tr, _ := transport.NewOneWayTLSTransport(s.RegistryConfig.HarborCAFile, true)
+		headers := make(map[string]string)
+		headers["Authorization"] = "Basic " + base64.StdEncoding.EncodeToString([]byte(
+			s.RegistryConfig.Security.AdminUsername+":"+s.RegistryConfig.Security.AdminPassword),
+		)
+		harborCfg := &harbor.Configuration{
+			BasePath:      fmt.Sprintf("https://%s/api/v2.0", s.RegistryConfig.DomainSuffix),
+			DefaultHeader: headers,
+			UserAgent:     "Swagger-Codegen/1.0.0/go",
+			HTTPClient: &http.Client{
+				Transport: tr,
+			},
+		}
+		helmCfg := &helm.Configuration{
+			BasePath:      fmt.Sprintf("https://%s/api", s.RegistryConfig.DomainSuffix),
+			DefaultHeader: headers,
+			UserAgent:     "Swagger-Codegen/1.0.0/go",
+			HTTPClient: &http.Client{
+				Transport: tr,
+			},
+		}
+		harborClient = harbor.NewAPIClient(harborCfg)
+		helmClient = helm.NewAPIClient(helmCfg)
+	}
+
 	storageMap := make(map[string]rest.Storage)
 	{
 
 		configMapREST := configmapstorage.NewStorage(restOptionsGetter)
 		storageMap["configmaps"] = configMapREST.ConfigMap
 
-		namespaceREST := namespacestorage.NewStorage(restOptionsGetter, registryClient, s.PrivilegedUsername)
+		namespaceREST := namespacestorage.NewStorage(restOptionsGetter, registryClient, s.PrivilegedUsername, harborClient)
 		storageMap["namespaces"] = namespaceREST.Namespace
 		storageMap["namespaces/status"] = namespaceREST.Status
 
-		repositoryREST := repositorystorage.NewStorage(restOptionsGetter, registryClient, s.PrivilegedUsername)
+		repositoryREST := repositorystorage.NewStorage(restOptionsGetter, registryClient, s.PrivilegedUsername, harborClient)
 		storageMap["repositories"] = repositoryREST.Repository
 		storageMap["repositories/status"] = repositoryREST.Status
 
 		chartGroupRESTStorage := chartgroupstorage.NewStorage(restOptionsGetter, registryClient, s.AuthClient, s.BusinessClient, s.PrivilegedUsername)
-		chartGroupREST := chartgroupstorage.NewREST(chartGroupRESTStorage.ChartGroup, registryClient, s.AuthClient)
+		chartGroupREST := chartgroupstorage.NewREST(chartGroupRESTStorage.ChartGroup, registryClient, s.AuthClient, harborClient, helmClient)
+		repoUpdateREST := chartgroupstorage.NewRepoUpdateREST(chartGroupRESTStorage.ChartGroup, registryClient,
+			s.Authorizer)
 		storageMap["chartgroups"] = chartGroupREST
 		storageMap["chartgroups/status"] = chartGroupRESTStorage.Status
 		storageMap["chartgroups/finalize"] = chartGroupRESTStorage.Finalize
+		storageMap["chartgroups/repoupdating"] = repoUpdateREST
 
 		chartREST := chartstorage.NewStorage(restOptionsGetter, registryClient, s.AuthClient, s.BusinessClient, s.PrivilegedUsername)
 		chartVersionREST := chartstorage.NewVersionREST(chartREST.Chart, s.PlatformClient, registryClient, s.RegistryConfig,
@@ -104,7 +143,8 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 			s.ExternalHost,
 			s.ExternalPort,
 			s.ExternalCAFile,
-			s.Authorizer)
+			s.Authorizer,
+			helmClient)
 		storageMap["charts"] = chartREST.Chart
 		storageMap["charts/status"] = chartREST.Status
 		storageMap["charts/finalize"] = chartREST.Finalize

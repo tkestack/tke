@@ -19,14 +19,14 @@
 package action
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"helm.sh/helm/v3/pkg/action"
-	"helm.sh/helm/v3/pkg/downloader"
-	"helm.sh/helm/v3/pkg/getter"
-	"helm.sh/helm/v3/pkg/repo"
+	// "helm.sh/helm/v3/pkg/downloader"
+	// "helm.sh/helm/v3/pkg/getter"
+	// "helm.sh/helm/v3/pkg/repo"
 )
 
 // PullOptions is the options for pulling a chart.
@@ -62,39 +62,40 @@ func (c *Client) Pull(options *PullOptions) (string, error) {
 		return "", err
 	}
 
+	destfile := filepath.Join(client.DestDir, fmt.Sprintf("%s-%s.tgz", options.Chart, options.Version))
 	// get file name
-	var out strings.Builder
-	cd := downloader.ChartDownloader{
-		Out:     &out,
-		Keyring: client.Keyring,
-		Verify:  downloader.VerifyNever,
-		Getters: getter.All(client.Settings),
-		Options: []getter.Option{
-			getter.WithBasicAuth(client.Username, client.Password),
-			getter.WithTLSClientConfig(client.CertFile, client.KeyFile, client.CaFile),
-		},
-		RepositoryConfig: client.Settings.RepositoryConfig,
-		RepositoryCache:  client.Settings.RepositoryCache,
-	}
-	if client.Verify {
-		cd.Verify = downloader.VerifyAlways
-	} else if client.VerifyLater {
-		cd.Verify = downloader.VerifyLater
-	}
+	// var out strings.Builder
+	// cd := downloader.ChartDownloader{
+	// 	Out:     &out,
+	// 	Keyring: client.Keyring,
+	// 	Verify:  downloader.VerifyNever,
+	// 	Getters: getter.All(client.Settings),
+	// 	Options: []getter.Option{
+	// 		getter.WithBasicAuth(client.Username, client.Password),
+	// 		getter.WithTLSClientConfig(client.CertFile, client.KeyFile, client.CaFile),
+	// 	},
+	// 	RepositoryConfig: client.Settings.RepositoryConfig,
+	// 	RepositoryCache:  client.Settings.RepositoryCache,
+	// }
+	// if client.Verify {
+	// 	cd.Verify = downloader.VerifyAlways
+	// } else if client.VerifyLater {
+	// 	cd.Verify = downloader.VerifyLater
+	// }
 
-	chartRef := options.Chart
-	if client.RepoURL != "" {
-		chartURL, err := repo.FindChartInAuthRepoURL(client.RepoURL, client.Username, client.Password, chartRef, client.Version, client.CertFile, client.KeyFile, client.CaFile, getter.All(client.Settings))
-		if err != nil {
-			return out.String(), err
-		}
-		chartRef = chartURL
-	}
-	u, err := cd.ResolveChartVersion(chartRef, client.Version)
-	if err != nil {
-		return "", err
-	}
-	name := filepath.Base(u.Path)
-	destfile := filepath.Join(settings.RepositoryCache, name)
+	// chartRef := options.Chart
+	// if client.RepoURL != "" {
+	// 	chartURL, err := repo.FindChartInAuthRepoURL(client.RepoURL, client.Username, client.Password, chartRef, client.Version, client.CertFile, client.KeyFile, client.CaFile, getter.All(client.Settings))
+	// 	if err != nil {
+	// 		return out.String(), err
+	// 	}
+	// 	chartRef = chartURL
+	// }
+	// u, err := cd.ResolveChartVersion(chartRef, client.Version)
+	// if err != nil {
+	// 	return "", err
+	// }
+	// name := filepath.Base(u.Path)
+	// destfile := filepath.Join(client.DestDir, name)
 	return destfile, nil
 }

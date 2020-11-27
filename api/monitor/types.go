@@ -210,20 +210,24 @@ type ClusterOverview struct {
 }
 
 type ClusterOverviewResult struct {
-	ClusterCount     int32
-	ClusterAbnormal  int32
-	ProjectCount     int32
-	ProjectAbnormal  int32
-	NodeCount        int32
-	NodeAbnormal     int32
-	WorkloadCount    int32
-	WorkloadAbnormal int32
-	CPUCapacity      float64
-	CPUAllocatable   float64
-	MemCapacity      int64
-	MemAllocatable   int64
-	PodCount         int32
-	Clusters         []*ClusterStatistic
+	ClusterCount           int32
+	ClusterAbnormal        int32
+	ProjectCount           int32
+	ProjectAbnormal        int32
+	NodeCount              int32
+	NodeAbnormal           int32
+	WorkloadCount          int32
+	WorkloadAbnormal       int32
+	CPUCapacity            float64
+	CPUAllocatable         float64
+	CPUNotReadyCapacity    float64
+	CPUNotReadyAllocatable float64
+	MemCapacity            int64
+	MemAllocatable         int64
+	MemNotReadyCapacity    int64
+	MemNotReadyAllocatable int64
+	PodCount               int32
+	Clusters               []*ClusterStatistic
 }
 
 type ClusterStatistic struct {
@@ -241,6 +245,8 @@ type ClusterStatistic struct {
 	CPULimit                 float64
 	CPUCapacity              float64
 	CPUAllocatable           float64
+	CPUNotReadyCapacity      float64
+	CPUNotReadyAllocatable   float64
 	CPURequestRate           string
 	CPUAllocatableRate       string
 	CPUUsage                 string
@@ -249,6 +255,8 @@ type ClusterStatistic struct {
 	MemLimit                 int64
 	MemCapacity              int64
 	MemAllocatable           int64
+	MemNotReadyCapacity      int64
+	MemNotReadyAllocatable   int64
 	MemRequestRate           string
 	MemAllocatableRate       string
 	MemUsage                 string

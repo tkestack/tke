@@ -62,3 +62,9 @@ func NewHelmClient(ctx context.Context,
 	client := helmaction.NewClient("", restClientGetter)
 	return client, nil
 }
+
+// NewHelmClientWithoutRESTClient return a new client used to run helm cmd
+func NewHelmClientWithoutRESTClient() *helmaction.Client {
+	client := helmaction.NewClient("", nil)
+	return client
+}

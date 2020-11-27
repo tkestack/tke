@@ -46,7 +46,8 @@ import {
   ProjectNamespace,
   NamespaceFilter,
   ProjectNamespaceFilter,
-  ProjectFilter
+  ProjectFilter,
+  UserPlain
 } from './models';
 
 // 返回标准操作结果
@@ -572,6 +573,23 @@ export async function deleteChartGroup([chartGroup]: ChartGroup[]) {
 }
 
 /**
+ * 同步仓库
+ * @param group
+ */
+export async function repoUpdateChartGroup([chartGroup]: ChartGroup[]) {
+  let resourceInfo: ResourceInfo = resourceConfig()['chartgroup'];
+  const url = reduceK8sRestfulPath({
+    resourceInfo,
+    extraResource: 'repoupdating',
+    specificName: chartGroup.metadata.name
+  });
+  let rr: RequestResult = await POST({
+    url
+  });
+  return operationResult(rr.data, rr.error);
+}
+
+/**
  * 有权限的业务列表
  * @param query
  */
@@ -864,6 +882,37 @@ export async function fetchProjectNamespaceList(query: QueryState<ProjectNamespa
     recordCount: objs.length,
     records: objs,
     data: query.filter.chartInfoFilter
+  };
+  return result;
+}
+
+/**
+ * 用户列表的查询，不跟localidentities混用，不参杂其他场景参数，如策略、角色
+ * @param query 列表查询条件参数
+ */
+export async function fetchCommonUserList(query: QueryState<void>) {
+  const { search } = query;
+  const queryObj = {
+    'fieldSelector=keyword': search || ''
+  };
+
+  const resourceInfo: ResourceInfo = resourceConfig()['user'];
+  const url = reduceK8sRestfulPath({ resourceInfo });
+  const queryString = reduceK8sQueryString({ k8sQueryObj: queryObj });
+  let rr: RequestResult = await GET({ url: url + queryString });
+  let users: UserPlain[] =
+    !rr.error && rr.data.items
+      ? rr.data.items.map(i => {
+          return {
+            id: i.metadata && i.metadata.name,
+            name: i.spec && (i.spec.name ? i.spec.name : i.spec.username),
+            displayName: i.spec && i.spec.displayName
+          };
+        })
+      : [];
+  const result: RecordSet<UserPlain> = {
+    recordCount: users.length,
+    records: users
   };
   return result;
 }

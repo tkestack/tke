@@ -64,7 +64,7 @@ var _ = BeforeSuite(func() {
 
 var _ = AfterSuite(func() {
 	for _, name := range clusterNames {
-		Expect(deleteCluster(name)).Should(Succeed())
+		deleteCluster(name)
 	}
 
 	t.Delete()
