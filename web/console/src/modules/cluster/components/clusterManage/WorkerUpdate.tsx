@@ -13,8 +13,8 @@ export function WorkerUpdate({ route }: RootProps) {
 
   const [nodes, setNodes] = useState([]);
   const [targetKeys, setTargatKeys] = useState([]);
-  const [maxUnready, setMaxUnready] = useState(0);
-  const [isSubmitLoding, setIsSubmitLoding] = useState(false);
+  const [maxUnready, setMaxUnready] = useState(20);
+  const [drainNodeBeforeUpgrade, setDrainNodeBeforeUpgrade] = useState(true);
 
   const { clusterId, clusterVersion } = route.queries;
 
@@ -50,7 +50,6 @@ export function WorkerUpdate({ route }: RootProps) {
   ];
 
   async function submit() {
-    setIsSubmitLoding(true);
     const mchineNames = [
       ...new Set(
         nodes
@@ -63,9 +62,9 @@ export function WorkerUpdate({ route }: RootProps) {
     await updateWorkers({
       mchineNames,
       maxUnready,
+      drainNodeBeforeUpgrade,
       clusterName: clusterId
     });
-    setIsSubmitLoding(false);
     goback();
   }
 
@@ -78,14 +77,10 @@ export function WorkerUpdate({ route }: RootProps) {
       title="升级Worker"
       footer={
         <Space>
-          <Button type="primary" onClick={submit} loading={isSubmitLoding}>
-            {isSubmitLoding ? '升级中' : '确定'}
+          <Button type="primary" disabled={targetKeys.length > 0} onClick={submit}>
+            确定
           </Button>
-          <Button disabled={isSubmitLoding} onClick={goback}>
-            取消
-          </Button>
-
-          {isSubmitLoding && <Alert message="worker节点正在升级中，请耐心等待，不要关闭页面!" type="warning" />}
+          <Button onClick={goback}>取消</Button>
         </Space>
       }
     >
@@ -103,6 +98,15 @@ export function WorkerUpdate({ route }: RootProps) {
             listStyle={{}}
             onChange={targetKeys => setTargatKeys(targetKeys)}
           />
+        </Form.Item>
+
+        <Form.Item
+          label="驱逐节点"
+          extra="若选择升级前驱逐节点，该节点所有pod将在升级前被驱逐，此时节点如有pod使用emptyDir类卷会导致驱逐失败而影响升级流程"
+        >
+          <Checkbox defaultChecked={drainNodeBeforeUpgrade} onChange={e => setDrainNodeBeforeUpgrade(e.target.checked)}>
+            驱逐节点
+          </Checkbox>
         </Form.Item>
 
         <Form.Item label="最大不可用Pod占比" extra="升级过程中不可以Pod数超过该占比将暂停升级">
@@ -151,6 +155,7 @@ function TableTransfer({ columns, ...restProps }: TableTransferProps) {
             columns={columns}
             dataSource={filteredItems}
             size="small"
+            pagination={false}
             style={{ pointerEvents: listDisabled ? 'none' : null }}
             onRow={({ key, disabled: itemDisabled }) => ({
               onClick: () => {
