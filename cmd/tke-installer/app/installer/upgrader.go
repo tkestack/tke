@@ -219,11 +219,16 @@ func (t *TKE) loadRegistry(ctx context.Context) error {
 }
 
 func (t *TKE) loadThirdPartyRegistry(ctx context.Context) error {
+	thirdPartyRegistryConfig := &types.ThirdPartyRegistry{}
 	thirdPartyRegistryCm, err := t.globalClient.CoreV1().ConfigMaps(t.namespace).Get(ctx, thirdPartyRegistryCmName, metav1.GetOptions{})
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			t.log.Infof("Not found %s", thirdPartyRegistryCmName)
+			t.Para.Config.Registry.ThirdPartyRegistry = thirdPartyRegistryConfig
+			return nil
+		}
 		return err
 	}
-	thirdPartyRegistryConfig := &types.ThirdPartyRegistry{}
 	err = json.Unmarshal([]byte(thirdPartyRegistryCm.Data[thirdPartyRegistryCmKey]), thirdPartyRegistryConfig)
 	if err != nil {
 		return err
