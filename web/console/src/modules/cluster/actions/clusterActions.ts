@@ -15,6 +15,7 @@ import { AddonStatus } from '../models/Addon';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';
 import { resourceActions } from './resourceActions';
+import { checkClusterIsNeedUpdate } from '@src/webApi/cluster';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {
@@ -93,6 +94,16 @@ const FFModelClusterActions = createFFListActions<Cluster, ClusterFilter>({
   actionName: FFReduxActionName.CLUSTER,
   fetcher: async (query, getState: GetState) => {
     const response = await WebAPI.fetchClusterList(query, query.filter.regionId);
+    // checkupdate
+    for (const cluster of response.records) {
+      const update = await checkClusterIsNeedUpdate({
+        clusterName: cluster.metadata.name,
+        clusterVersion: cluster.status.version
+      });
+
+      cluster.spec.updateInfo = update;
+    }
+
     const ps = await WebAPI.fetchPrometheuses();
     const clusterHasPs = {};
     const clusterPsInfo = {};
@@ -148,7 +159,11 @@ const FFModelClusterActions = createFFListActions<Cluster, ClusterFilter>({
           clusterInfo && dispatch(clusterActions.selectCluster([clusterInfo]));
         }
 
-        if (record.data.records.filter(item => item.status.phase !== 'Running').length === 0) {
+        if (
+          record.data.records.filter(
+            item => item.status.phase !== 'Running' || item.spec.updateInfo.worker.message === '有节点正在升级中'
+          ).length === 0
+        ) {
           dispatch(clusterActions.clearPolling());
         }
       } else {

@@ -65,7 +65,7 @@ export class LinkButton extends React.Component<LinkButtonProps, {}> {
         onClick={e => onClick(e)}
       >
         <Bubble placement={tipDirection || 'bottom'} content={bubbleContent || null}>
-          <p>{children}</p>
+          <p style={{ marginBottom: 0 }}>{children}</p>
         </Bubble>
       </Button>
     ) : (

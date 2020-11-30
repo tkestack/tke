@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Bubble, Button, Drawer, Icon, Text } from '@tea/component';
+import { Bubble, Button, Drawer, Icon, Text, Dropdown, List } from '@tea/component';
 import { TablePanel, TablePanelColumnProps } from '@tencent/ff-component';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { ChartPanel } from '@tencent/tchart';
@@ -146,7 +146,7 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
                   actions.dialog.updateDialogState(DialogNameEnum.clusterStatusDialog);
                 }}
               >
-                查看创建详情
+                查看详情
               </Button>
             )}
           </React.Fragment>
@@ -285,8 +285,13 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
 
   /** 渲染操作按钮 */
   private _renderOperationCell(cluster: Cluster) {
-    const { actions } = this.props;
+    const { actions, region } = this.props;
     const isDisabledButon = cluster.status.phase === 'Terminating';
+
+    const routeQueries = {
+      rid: region.selection.value + '',
+      clusterId: cluster.metadata.name
+    };
 
     const renderConditions = () => {
       return (
@@ -352,12 +357,58 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
       );
     };
 
+    const renderMoreButton = () => {
+      return (
+        <Dropdown
+          trigger="hover"
+          style={{ marginRight: '5px' }}
+          button="更多"
+          onOpen={() => console.log('open')}
+          onClose={() => console.log('close')}
+        >
+          <List type="option">
+            <List.Item>
+              <LinkButton
+                disabled={!cluster.spec.updateInfo.master.isNeed || cluster.status.phase !== 'Running'}
+                errorTip={cluster.spec.updateInfo.master.message}
+                onClick={() => {
+                  router.navigate(
+                    { sub: 'cluster-update' },
+                    { ...routeQueries, clusterVersion: cluster?.status?.version }
+                  );
+                }}
+              >
+                升级Master
+              </LinkButton>
+            </List.Item>
+
+            <List.Item>
+              <LinkButton
+                disabled={!cluster.spec.updateInfo.worker.isNeed || cluster.status.phase !== 'Running'}
+                errorTip={cluster.spec.updateInfo.worker.message}
+                onClick={() => {
+                  router.navigate(
+                    { sub: 'worker-update' },
+                    { ...routeQueries, clusterVersion: cluster?.status?.version }
+                  );
+                }}
+              >
+                升级Worker
+              </LinkButton>
+            </List.Item>
+          </List>
+        </Dropdown>
+      );
+    };
+
     return (
       <React.Fragment>
         {/* {cluster.status.phase !== 'Running' && cluster.status.phase !== 'Terminating' && renderConditions()} */}
         {renderDeleteButton()}
         {renderKuberctlButton()}
         {/* {cluster.spec.type === 'Imported' && renderUpdateTokenButton()} */}
+        {cluster.spec.type === 'Imported' && renderUpdateTokenButton()}
+        {renderMoreButton()}
       </React.Fragment>
     );
   }
