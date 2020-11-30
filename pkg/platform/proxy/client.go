@@ -123,14 +123,14 @@ func getOrCreateClientCert(ctx context.Context, clusterWrapper *types.Cluster) (
 	if ok {
 		groups = append(groups, fmt.Sprintf("namespace:%s", ns))
 	}
-	uid := authentication.GetUID(ctx)
+	uin := authentication.GetUID(ctx)
 	clusterName := filter.ClusterFrom(ctx)
 	if clusterName == "" {
 		return nil, nil, errors.NewBadRequest("clusterName is required")
 	}
 	var clientCertData, clientKeyData []byte
 	client, _ := clusterWrapper.Clientset()
-	cache, err := client.CoreV1().ConfigMaps("kube-system").Get(ctx, clusterName+"-"+uid, metav1.GetOptions{})
+	cache, err := client.CoreV1().ConfigMaps("kube-system").Get(ctx, uin, metav1.GetOptions{})
 	if err != nil || cache == nil {
 		clientCertData, clientKeyData, err := pkiutil.GenerateClientCertAndKey(username, groups, credential.CACert,
 			credential.CAKey)
@@ -140,10 +140,13 @@ func getOrCreateClientCert(ctx context.Context, clusterWrapper *types.Cluster) (
 		confMap := &v1.ConfigMap{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: clusterName + "-" + uid,
+				Name:        uin,
+				ClusterName: clusterName,
 			},
 			Data: map[string]string{
-				"CommonName": username,
+				"CommonName":  username,
+				"UIN":         uin,
+				"clusterName": clusterName,
 			},
 			BinaryData: map[string][]byte{
 				"clientCertData": clientCertData,
