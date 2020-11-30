@@ -37,7 +37,7 @@
     "@vx/event": "0.0.179",
     "@vx/shape": "0.0.181",
     "@vx/tooltip": "0.0.179",
-    "antd": "^4.8.1",
+    "antd": "^4.8.5",
     "array-move": "^2.1.0",
     "compare-versions": "^3.6.0",
     "d3": "^5.9.2",
