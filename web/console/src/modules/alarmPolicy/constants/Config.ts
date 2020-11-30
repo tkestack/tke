@@ -355,6 +355,20 @@ export const AlarmPolicyMetrics = {
       tip: '',
       // metricType: 'event',
       unit: ''
+    },
+    {
+      enable: true,
+      measurement: 'k8s_node',
+      statisticsPeriod: 1,
+      metricName: 'k8s_node_filesystem_usage',
+      evaluatorType: 'gt',
+      evaluatorValue: '90',
+      metricDisplayName: t('节点磁盘已使用'),
+      continuePeriod: 5,
+      type: 'percent',
+      tip: '',
+      // metricType: 'metric',
+      unit: '%'
     }
   ],
   pod: [
