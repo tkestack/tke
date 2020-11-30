@@ -26,6 +26,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 func (p *Provider) EnsurePreUpgradeHook(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
@@ -64,7 +65,8 @@ func (p *Provider) EnsureUpgrade(ctx context.Context, machine *platformv1.Machin
 		MaxUnready:             cluster.Spec.Features.Upgrade.Strategy.MaxUnready,
 		DrainNodeBeforeUpgrade: cluster.Spec.Features.Upgrade.Strategy.DrainNodeBeforeUpgrade,
 	}
-	upgraded, err := kubeadm.UpgradeNode(machineSSH, clientset, p.platformClient, cluster, option)
+	logger := log.FromContext(ctx).WithName("Cluster upgrade")
+	upgraded, err := kubeadm.UpgradeNode(machineSSH, clientset, p.platformClient, logger, cluster, option)
 	if err != nil {
 		return err
 	}
