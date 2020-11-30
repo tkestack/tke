@@ -69,23 +69,9 @@ const fetchPodActions = generateFetcherActionCreator({
         }
       };
     } else {
-      const k8sapp = resourceDetailState?.resourceDetailInfo?.selection?.metadata?.labels?.['k8s-app'];
-      // hold special case
-      if (!k8sapp) {
-        let { records } = await WebAPI.fetchExtraResourceList(podQuery, resourceInfo, isClearData, 'pods');
-        records = records.filter(item => item.status.reason !== 'Evicted');
-        dispatch(resourcePodActions.changeContinueToken(''));
-        return {
-          records,
-          recordCount: records.length
-        };
-      }
-
       podResourceInfo.namespaces = 'namespaces';
       k8sQueryObj = {
-        labelSelector: {
-          'k8s-app': k8sapp
-        },
+        labelSelector: resourceDetailState?.resourceDetailInfo?.selection?.spec?.selector?.matchlabels,
         fieldSelector: {
           'metadata.name': podName ? podName : undefined,
           'status.phase': phase ? phase : undefined,
