@@ -19,6 +19,7 @@ export function ClusterUpdate({ route, actions }: RootProps) {
   };
 
   const { clusterId, clusterVersion } = route.queries;
+  const [_, clusterVersionSecondPart] = clusterVersion.split('.');
 
   function goBack() {
     history.back();
@@ -72,7 +73,17 @@ export function ClusterUpdate({ route, actions }: RootProps) {
           label="升级目标版本"
           extra="注意：master升级支持一个次版本升级到下一个次版本，或者同样次版本的补丁版。"
           name={['version']}
-          rules={[{ required: true }]}
+          rules={[
+            { required: true },
+            {
+              validator(_, value: string) {
+                const [__, targetSecond] = value.split('.');
+                return +targetSecond - +clusterVersionSecondPart === 1
+                  ? Promise.resolve()
+                  : Promise.reject('不支持直接升级到该版本！');
+              }
+            }
+          ]}
         >
           <Select style={ItemStyle()}>
             {k8sValidVersions.map(v => (
