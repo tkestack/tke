@@ -48,7 +48,9 @@ export class KubectlDialog extends React.Component<RootProps, any> {
       caCert: clustercredential.caCert,
       token: clustercredential.token,
       host: getHost(clusterInfo),
-      clusterId: clustercredential.clusterName
+      clusterId: clustercredential.clusterName,
+      clientKey: clustercredential.clientKey,
+      clientCert: clustercredential.clientCert
     });
 
     return kuberctlDialog ? (
@@ -66,51 +68,6 @@ export class KubectlDialog extends React.Component<RootProps, any> {
                   </React.Fragment>
                 );
               })}
-            </FormPanel.Item>
-            <FormPanel.Item label={t('Token')}>
-              <div className="rich-textarea hide-number">
-                <Clip target={'#token'} className="copy-btn">
-                  {t('复制')}
-                </Clip>
-                <div className="rich-content" contentEditable={false}>
-                  <p
-                    className="rich-text"
-                    id="token"
-                    style={{ width: '475px', whiteSpace: 'pre-wrap', height: '25px', marginTop: '0px' }}
-                  >
-                    {clustercredential.token}
-                  </p>
-                </div>
-              </div>
-            </FormPanel.Item>
-            <FormPanel.Item label={t('集群CA证书')}>
-              <div className="rich-textarea hide-number">
-                <Clip target={'#certificationAuthority'} className="copy-btn">
-                  {t('复制')}
-                </Clip>
-                <a
-                  href="javascript:void(0)"
-                  onClick={e => downloadCrt(clustercredential.caCert ? window.atob(clustercredential.caCert) : '')}
-                  className="copy-btn"
-                  style={{ right: '50px' }}
-                >
-                  {t('下载')}
-                </a>
-                <div className="rich-content" contentEditable={false}>
-                  <p
-                    className="rich-text"
-                    id="certificationAuthority"
-                    style={{
-                      width: '480px',
-                      whiteSpace: 'pre-wrap',
-                      overflow: 'auto',
-                      height: '64px'
-                    }}
-                  >
-                    {clustercredential.caCert && window.atob(clustercredential.caCert)}
-                  </p>
-                </div>
-              </div>
             </FormPanel.Item>
 
             <FormPanel.Item label="Kubeconfig">

@@ -265,7 +265,9 @@ const restActions = {
             name: response.records[0].metadata.name,
             clusterName: response.records[0].clusterName,
             caCert: response.records[0].caCert,
-            token: response.records[0].token
+            token: response.records[0].token,
+            clientKey: response.records[0].clientKey,
+            clientCert: response.records[0].clientCert
           }
         });
       }
