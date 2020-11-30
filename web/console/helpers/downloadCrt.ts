@@ -60,7 +60,34 @@ export function downloadKubeconfig(crtText, filename = 'kubeconfig') {
   downloadText(crtText, filename, 'applicatoin/octet-stream;charset=utf-8;');
 }
 
-export function getKubectlConfig({ caCert, token, host, clusterId }) {
-  const config = `apiVersion: v1\nclusters:\n- cluster:\n    certificate-authority-data: ${caCert}\n    server: ${host}\n  name: ${clusterId}\ncontexts:\n- context:\n    cluster: ${clusterId}\n    user: ${clusterId}-admin\n  name: ${clusterId}-context-default\ncurrent-context: ${clusterId}-context-default\nkind: Config\npreferences: {}\nusers:\n- name: ${clusterId}-admin\n  user:\n    token: ${token}\n`;
-  return config;
+export function getKubectlConfig({ caCert, token, host, clusterId, clientKey, clientCert }) {
+  const user = Object.entries({
+    token: token,
+    'client-key-data': clientKey,
+    'client-certificate-data': clientCert
+  })
+    .filter(([key, value]) => value)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join('\n    ');
+
+  return `
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: ${caCert}
+    server: ${host}
+  name: ${clusterId}
+contexts:
+- context:
+    cluster: ${clusterId}
+    user: ${clusterId}-admin
+  name: ${clusterId}-context-default
+current-context: ${clusterId}-default
+kind: Config
+preferences: {}
+users:
+- name: ${clusterId}-admin
+  user:
+    ${user}
+    `.trim();
 }

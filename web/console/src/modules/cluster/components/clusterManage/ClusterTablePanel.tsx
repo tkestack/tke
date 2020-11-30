@@ -48,7 +48,7 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
   };
 
   componentWillUnmount() {
-    let { actions } = this.props;
+    const { actions } = this.props;
     actions.cluster.clearPolling();
   }
 
@@ -64,7 +64,7 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
   }
 
   private _renderTablePanel() {
-    let { actions, cluster, region } = this.props;
+    const { actions, cluster, region } = this.props;
 
     const columns: TablePanelColumnProps<Cluster>[] = [
       {
@@ -173,7 +173,7 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
       { key: 'operation', header: t('操作'), width: '16%', render: x => this._renderOperationCell(x) }
     ];
 
-    let emptyTips: JSX.Element = (
+    const emptyTips: JSX.Element = (
       <div className="text-center">
         <Trans>
           当前集群列表为空，您可以
@@ -236,7 +236,7 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
   }
 
   private renderPromTip() {
-    let { selectCluster } = this.state;
+    const { selectCluster } = this.state;
     return (
       selectCluster &&
       !selectCluster.spec.hasPrometheus && (
@@ -256,8 +256,8 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
   }
 
   /** 处理创建时间 */
-  private _reduceTime(time: string = '') {
-    let showTime = dateFormatter(new Date(time), 'YYYY-MM-DD HH:mm:ss');
+  private _reduceTime(time = '') {
+    const showTime = dateFormatter(new Date(time), 'YYYY-MM-DD HH:mm:ss');
 
     return (
       <Bubble placement="left" content={showTime || null}>
@@ -268,10 +268,10 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
 
   /** 处理集群点击跳转 */
   private _handleClickForCluster(cluster: Cluster) {
-    let { actions, region } = this.props;
+    const { actions, region } = this.props;
 
     // 进行路由的跳转
-    let routeQueries = {
+    const routeQueries = {
       rid: region.selection.value + '',
       clusterId: cluster.metadata.name
     };
@@ -285,8 +285,8 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
 
   /** 渲染操作按钮 */
   private _renderOperationCell(cluster: Cluster) {
-    let { actions } = this.props;
-    let isDisabledButon = cluster.status.phase === 'Terminating';
+    const { actions } = this.props;
+    const isDisabledButon = cluster.status.phase === 'Terminating';
 
     const renderConditions = () => {
       return (
@@ -303,7 +303,7 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
     };
 
     const renderDeleteButton = () => {
-      let isCanNotDelete = cluster.metadata.name === 'global' || isDisabledButon;
+      const isCanNotDelete = cluster.metadata.name === 'global' || isDisabledButon;
       return (
         <LinkButton
           disabled={isCanNotDelete}
@@ -357,7 +357,7 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
         {/* {cluster.status.phase !== 'Running' && cluster.status.phase !== 'Terminating' && renderConditions()} */}
         {renderDeleteButton()}
         {renderKuberctlButton()}
-        {cluster.spec.type === 'Imported' && renderUpdateTokenButton()}
+        {/* {cluster.spec.type === 'Imported' && renderUpdateTokenButton()} */}
       </React.Fragment>
     );
   }
