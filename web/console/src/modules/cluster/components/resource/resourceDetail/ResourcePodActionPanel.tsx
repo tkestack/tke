@@ -154,13 +154,7 @@ export class ResourcePodActionPanel extends React.Component<RootProps, ResourceP
     const type = urlParams['type'];
     const isInNodeManage = IsInNodeManageDetail(type);
     const { subRoot, namespaceList } = this.props,
-      { podList, podQuery } = subRoot.resourceDetailState;
-
-    // 如果当前pods数目大于指定pageSize，说明当前没有采用分页
-
-    if (podList?.data?.recordCount > podQuery?.paging?.pageSize) {
-      return <noscript />;
-    }
+      { podList } = subRoot.resourceDetailState;
 
     /** podFilter的选择项 */
     const podNameValues: any[] = [];
