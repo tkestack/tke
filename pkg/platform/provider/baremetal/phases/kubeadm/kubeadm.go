@@ -411,9 +411,7 @@ func checkKubeletVersion(client kubernetes.Interface, nodeName, version string, 
 	if err != nil {
 		return false, err
 	}
-
-	sameVersion(node.Status.NodeInfo.KubeletVersion, version, ignorePatchVersion)
-
+	same, err = sameVersion(node.Status.NodeInfo.KubeletVersion, version, ignorePatchVersion)
 	if err != nil {
 		return false, err
 	}
