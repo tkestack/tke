@@ -141,20 +141,28 @@ func New(config *config.Config) *TKE {
 	c.docker.Stderr = c.log
 
 	if !config.Force {
-		data, err := ioutil.ReadFile(constants.ClusterFile)
+		err = c.loadTKEData()
 		if err == nil {
-			log.Infof("read %q success", constants.ClusterFile)
-			err = json.Unmarshal(data, c)
-			if err != nil {
-				log.Warnf("load tke data error:%s", err)
-			}
-			log.Infof("load tke data success")
 			c.isFromRestore = true
 			c.progress.Status = types.StatusDoing
 		}
 	}
 
 	return c
+}
+
+func (t *TKE) loadTKEData() error {
+	data, err := ioutil.ReadFile(constants.ClusterFile)
+	if err == nil {
+		t.log.Infof("read %q success", constants.ClusterFile)
+		err = json.Unmarshal(data, t)
+		if err != nil {
+			t.log.Infof("load tke data error:%s", err)
+		} else {
+			log.Infof("load tke data success")
+		}
+	}
+	return err
 }
 
 func (t *TKE) initSteps() {
@@ -208,8 +216,8 @@ func (t *TKE) initSteps() {
 			Func: t.createGlobalCluster,
 		},
 		{
-			Name: "Patch k8s version in cluster info",
-			Func: t.patchK8sValidVersions,
+			Name: "Patch platform versions in cluster info",
+			Func: t.patchPlatformVersion,
 		},
 		{
 			Name: "Write kubeconfig",
@@ -463,6 +471,15 @@ func (t *TKE) runWithUI() error {
 	restful.Add(s.WebService())
 
 	restful.Filter(globalLogging)
+
+	if t.Config.Upgrade {
+		err := t.prepareForUpgrade(context.Background())
+		if err != nil {
+			return err
+		}
+		t.do()
+		return nil
+	}
 
 	if t.isFromRestore {
 		go t.do()
@@ -953,15 +970,22 @@ func (t *TKE) do() {
 	start := time.Now()
 	ctx := t.log.WithContext(context.Background())
 
-	containerregistry.Init(t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace())
-	t.initSteps()
+	var taskType string
+	if t.Config.Upgrade {
+		taskType = "upgrade"
+		t.upgradeSteps()
+	} else {
+		taskType = "install"
+		containerregistry.Init(t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace())
+		t.initSteps()
+	}
 
 	if t.Step == 0 {
-		t.log.Info("===>starting install task")
+		t.log.Infof("===>starting %s task", taskType)
 		t.progress.Status = types.StatusDoing
 	}
 
-	if t.runAfterClusterReady() {
+	if !t.Config.Upgrade && t.runAfterClusterReady() {
 		t.initDataForDeployTKE()
 	}
 
@@ -1020,7 +1044,7 @@ func (t *TKE) do() {
 	}
 	t.progress.Servers = append(t.progress.Servers, t.servers...)
 
-	t.log.Infof("===>install task [Sucesss] [%fs]", time.Since(start).Seconds())
+	t.log.Infof("===>%s task [Sucesss] [%fs]", taskType, time.Since(start).Seconds())
 }
 
 func (t *TKE) runAfterClusterReady() bool {
@@ -2425,7 +2449,7 @@ func (t *TKE) writeKubeconfig(ctx context.Context) error {
 	return ioutil.WriteFile("/root/.kube/config", data, 0644)
 }
 
-func (t *TKE) patchK8sValidVersions(ctx context.Context) error {
+func (t *TKE) patchPlatformVersion(ctx context.Context) error {
 	versionsByte, err := json.Marshal(spec.K8sValidVersions)
 	if err != nil {
 		return err
@@ -2433,6 +2457,7 @@ func (t *TKE) patchK8sValidVersions(ctx context.Context) error {
 	patchData := map[string]interface{}{
 		"data": map[string]interface{}{
 			"k8sValidVersions": string(versionsByte),
+			"tkeVersion":       spec.TKEVersion,
 		},
 	}
 	patchByte, err := json.Marshal(patchData)

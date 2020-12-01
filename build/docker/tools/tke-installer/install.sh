@@ -142,7 +142,7 @@ function clean_old_data() {
 function start_installer() {
   echo "Step.5 start tke-installer [doing]"
 
-  docker run $OPTIONS "tkestack/tke-installer-${ARCH}:$VERSION"
+  docker run $OPTIONS "tkestack/tke-installer-${ARCH}:$VERSION" $@
 
   echo "Step.5 start tke-installer [ok]"
 }

@@ -49,7 +49,7 @@ tailNum=$((tailNum +1))
 tail -n +${tailNum} "${me}" >package.tgz    || die
 tar -zxf package.tgz                        || die
 
-./install.sh                                || die
+./install.sh $@                             || die
 cd "${cwd}"                                 || die
 exit 0
 

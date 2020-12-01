@@ -23,6 +23,7 @@ import (
 )
 
 var (
+	TKEVersion    = "1.5.0"
 	Archs         = []string{"amd64", "arm64"}
 	Arm64         = "arm64"
 	Arm64Variants = []string{"v8", "unknown"}
