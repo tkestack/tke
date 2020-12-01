@@ -38,6 +38,7 @@ export const checkClusterIsNeedUpdate = async ({
   clusterName: string;
   clusterVersion: string;
 }) => {
+  // 如果version不存在，说明集群在创建中
   if (!clusterVersion) {
     return {
       master: {
