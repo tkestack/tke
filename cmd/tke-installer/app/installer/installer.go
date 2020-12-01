@@ -141,20 +141,28 @@ func New(config *config.Config) *TKE {
 	c.docker.Stderr = c.log
 
 	if !config.Force {
-		data, err := ioutil.ReadFile(constants.ClusterFile)
+		err = c.loadTKEData()
 		if err == nil {
-			log.Infof("read %q success", constants.ClusterFile)
-			err = json.Unmarshal(data, c)
-			if err != nil {
-				log.Warnf("load tke data error:%s", err)
-			}
-			log.Infof("load tke data success")
 			c.isFromRestore = true
 			c.progress.Status = types.StatusDoing
 		}
 	}
 
 	return c
+}
+
+func (t *TKE) loadTKEData() error {
+	data, err := ioutil.ReadFile(constants.ClusterFile)
+	if err == nil {
+		t.log.Infof("read %q success", constants.ClusterFile)
+		err = json.Unmarshal(data, t)
+		if err != nil {
+			t.log.Infof("load tke data error:%s", err)
+		} else {
+			log.Infof("load tke data success")
+		}
+	}
+	return err
 }
 
 func (t *TKE) initSteps() {
