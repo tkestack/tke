@@ -20,7 +20,6 @@ package installer
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os/exec"
 	"time"
@@ -47,10 +46,8 @@ import (
 )
 
 const (
-	registryCmName           = "tke-registry-api"
-	registryCmKey            = "tke-registry-config.yaml"
-	thirdPartyRegistryCmName = "tke-thirdparty-registry"
-	thirdPartyRegistryCmKey  = "tke-thirdparty-registry.json"
+	registryCmName = "tke-registry-api"
+	registryCmKey  = "tke-registry-config.yaml"
 )
 
 func (t *TKE) upgradeSteps() {
@@ -185,10 +182,10 @@ func (t *TKE) prepareForUpgrade(ctx context.Context) error {
 	err = t.loadRegistry(ctx)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			t.log.Infof("No %s, try to load third party registry", registryCmName)
-			err = t.loadThirdPartyRegistry(ctx)
-			if err != nil {
-				return err
+			t.log.Infof("Not found %s", registryCmName)
+			if t.Para.Config.Registry.ThirdPartyRegistry == nil {
+				t.log.Infof("Not found third party registry")
+				t.Para.Config.Registry.ThirdPartyRegistry = &types.ThirdPartyRegistry{}
 			}
 		} else {
 			return err
@@ -215,25 +212,6 @@ func (t *TKE) loadRegistry(ctx context.Context) error {
 		Username:      registryConfig.Security.AdminUsername,
 		Password:      []byte(registryConfig.Security.AdminPassword),
 	}
-	return nil
-}
-
-func (t *TKE) loadThirdPartyRegistry(ctx context.Context) error {
-	thirdPartyRegistryConfig := &types.ThirdPartyRegistry{}
-	thirdPartyRegistryCm, err := t.globalClient.CoreV1().ConfigMaps(t.namespace).Get(ctx, thirdPartyRegistryCmName, metav1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			t.log.Infof("Not found %s", thirdPartyRegistryCmName)
-			t.Para.Config.Registry.ThirdPartyRegistry = thirdPartyRegistryConfig
-			return nil
-		}
-		return err
-	}
-	err = json.Unmarshal([]byte(thirdPartyRegistryCm.Data[thirdPartyRegistryCmKey]), thirdPartyRegistryConfig)
-	if err != nil {
-		return err
-	}
-	t.Para.Config.Registry.ThirdPartyRegistry = thirdPartyRegistryConfig
 	return nil
 }
 

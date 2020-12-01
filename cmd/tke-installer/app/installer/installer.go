@@ -409,15 +409,6 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
-	if t.Para.Config.Registry.ThirdPartyRegistry != nil {
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Save third party registry info",
-				Func: t.saveThirdPartyRegistryInfo,
-			},
-		}...)
-	}
-
 	t.steps = append(t.steps, []types.Handler{
 		{
 			Name: "Execute post install hook",
@@ -2466,23 +2457,4 @@ func (t *TKE) patchPlatformVersion(ctx context.Context) error {
 	}
 	_, err = t.globalClient.CoreV1().ConfigMaps("kube-public").Patch(ctx, "cluster-info", k8stypes.MergePatchType, patchByte, metav1.PatchOptions{})
 	return err
-}
-
-func (t *TKE) saveThirdPartyRegistryInfo(ctx context.Context) error {
-	if t.Para.Config.Registry.ThirdPartyRegistry == nil {
-		return errors.New("No third party registry info")
-	}
-	thirdPartyRegistryByte, err := json.Marshal(*t.Para.Config.Registry.ThirdPartyRegistry)
-	if err != nil {
-		return err
-	}
-	thirdPartyRegistryCm := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      thirdPartyRegistryCmName,
-			Namespace: t.namespace,
-		},
-		Data: map[string]string{},
-	}
-	thirdPartyRegistryCm.Data[thirdPartyRegistryCmKey] = string(thirdPartyRegistryByte)
-	return apiclient.CreateOrUpdateConfigMap(ctx, t.globalClient, thirdPartyRegistryCm)
 }
