@@ -77,7 +77,7 @@ export function WorkerUpdate({ route }: RootProps) {
       title="升级Worker"
       footer={
         <Space>
-          <Button type="primary" disabled={targetKeys.length > 0} onClick={submit}>
+          <Button type="primary" disabled={targetKeys.length <= 0} onClick={submit}>
             确定
           </Button>
           <Button onClick={goback}>取消</Button>
@@ -86,7 +86,7 @@ export function WorkerUpdate({ route }: RootProps) {
     >
       <Form labelAlign="left" labelCol={{ span: 3 }} size="middle">
         <Form.Item label=" 升级说明">
-          当前所选集群Master版本为1.16.3，您可为您的节点Kubernetes版本升级到当前的最新版本。
+          当前所选集群Master版本为{clusterVersion}，您可为您的节点Kubernetes版本升级到当前的最新版本。
         </Form.Item>
 
         <Form.Item label="选择节点">

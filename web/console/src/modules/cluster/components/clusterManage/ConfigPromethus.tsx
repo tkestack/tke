@@ -12,12 +12,12 @@ export function ConfigPromethus({ route, actions }: RootProps) {
   const initialConfig: LocalConfigType = {
     resources: {
       limits: {
-        cpu: 0,
-        memory: 0
+        cpu: 4,
+        memory: 8096
       },
       requests: {
-        cpu: 0,
-        memory: 0
+        cpu: 0.1,
+        memory: 128
       }
     },
     runOnMaster: false,
@@ -38,7 +38,6 @@ export function ConfigPromethus({ route, actions }: RootProps) {
   return (
     <AntdLayout
       title="配置告警"
-      goBack={cancelBack}
       footer={
         <Space>
           <Button type="primary" htmlType="submit" form="promethusConfigForm">
@@ -59,34 +58,34 @@ export function ConfigPromethus({ route, actions }: RootProps) {
       >
         <Form.Item label="Promethus CPU限制">
           <Space>
-            <Form.Item noStyle name={['resources', 'limits', 'cpu']} rules={[{ type: 'number' }]}>
-              <InputNumber style={inputStyle} />
+            <Form.Item noStyle name={['resources', 'limits', 'cpu']} rules={[{ type: 'number', min: 0 }]}>
+              <InputNumber style={inputStyle} min={0} />
             </Form.Item>
             核
           </Space>
         </Form.Item>
         <Form.Item label="Promethus CPU预留">
           <Space>
-            <Form.Item noStyle name={['resources', 'requests', 'cpu']} rules={[{ type: 'number' }]}>
-              <InputNumber style={inputStyle} />
+            <Form.Item noStyle name={['resources', 'requests', 'cpu']} rules={[{ type: 'number', min: 0 }]}>
+              <InputNumber style={inputStyle} min={0} />
             </Form.Item>
             核
           </Space>
         </Form.Item>
         <Form.Item label="Promethus 内存限制">
           <Space>
-            <Form.Item noStyle name={['resources', 'limits', 'memory']} rules={[{ type: 'number' }]}>
-              <InputNumber style={inputStyle} />
+            <Form.Item noStyle name={['resources', 'limits', 'memory']} rules={[{ type: 'number', min: 4 }]}>
+              <InputNumber style={inputStyle} min={4} />
             </Form.Item>
-            Gi
+            Mi
           </Space>
         </Form.Item>
         <Form.Item label="Promethus 内存预留">
           <Space>
-            <Form.Item noStyle name={['resources', 'requests', 'memory']} rules={[{ type: 'number' }]}>
-              <InputNumber style={inputStyle} />
+            <Form.Item noStyle name={['resources', 'requests', 'memory']} rules={[{ type: 'number', min: 4 }]}>
+              <InputNumber style={inputStyle} min={4} />
             </Form.Item>
-            Gi
+            Mi
           </Space>
         </Form.Item>
         <Form.Item label="Master节点上运行">
@@ -102,8 +101,8 @@ export function ConfigPromethus({ route, actions }: RootProps) {
         </Form.Item>
         <Form.Item label="重复告警的间隔">
           <Space>
-            <Form.Item noStyle name={['alertRepeatInterval']} rules={[{ type: 'number' }]}>
-              <InputNumber style={inputStyle} />
+            <Form.Item noStyle name={['alertRepeatInterval']} rules={[{ type: 'number', min: 0 }]}>
+              <InputNumber style={inputStyle} min={0} />
             </Form.Item>
             m
           </Space>

@@ -1,8 +1,7 @@
 import React from 'react';
-import { Card, Layout, Space, PageHeader } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { Card, Layout, PageHeader } from 'antd';
 
-const { Header, Content, Footer } = Layout;
+const { Content, Footer } = Layout;
 
 export interface AntdLayoutProps {
   title: string;

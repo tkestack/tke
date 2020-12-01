@@ -407,8 +407,8 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
         {renderDeleteButton()}
         {renderKuberctlButton()}
         {/* {cluster.spec.type === 'Imported' && renderUpdateTokenButton()} */}
-        {cluster.spec.type === 'Imported' && renderUpdateTokenButton()}
-        {renderMoreButton()}
+        {/* {cluster.spec.type === 'Imported' && renderUpdateTokenButton()} */}
+        {cluster.spec.type !== 'Imported' && renderMoreButton()}
       </React.Fragment>
     );
   }
