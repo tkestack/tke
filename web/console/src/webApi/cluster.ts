@@ -38,6 +38,19 @@ export const checkClusterIsNeedUpdate = async ({
   clusterName: string;
   clusterVersion: string;
 }) => {
+  if (!clusterVersion) {
+    return {
+      master: {
+        isNeed: false,
+        message: '集群创建中！'
+      },
+
+      worker: {
+        isNeed: false,
+        message: '集群创建中！'
+      }
+    };
+  }
   // check machin
   const { items } = await Request.get<any, { items: Array<any> }>('/apis/platform.tkestack.io/v1/machines', {
     params: {
