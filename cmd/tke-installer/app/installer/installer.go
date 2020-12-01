@@ -464,9 +464,6 @@ func (t *TKE) runWithUI() error {
 
 	restful.Filter(globalLogging)
 
-	if t.isFromRestore {
-		go t.do()
-	}
 	if t.Config.Upgrade {
 		err := t.prepareForUpgrade(context.Background())
 		if err != nil {
@@ -474,6 +471,10 @@ func (t *TKE) runWithUI() error {
 		}
 		t.do()
 		return nil
+	}
+
+	if t.isFromRestore {
+		go t.do()
 	}
 
 	log.Infof("Starting %s at http://%s", t.Config.ServerName, t.Config.ListenAddr)

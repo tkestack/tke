@@ -20,7 +20,9 @@ package installer
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os/exec"
 	"time"
 
@@ -33,6 +35,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -40,6 +43,7 @@ import (
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/file"
+	"tkestack.io/tke/pkg/util/log"
 
 	// import platform schema
 	_ "tkestack.io/tke/api/platform/install"
@@ -155,6 +159,9 @@ func (t *TKE) updateTKEPlatformController(ctx context.Context) error {
 
 func (t *TKE) prepareForUpgrade(ctx context.Context) error {
 	t.namespace = namespace
+
+	t.loadTKEData()
+
 	if !file.Exists(t.Config.Kubeconfig) || !file.IsFile(t.Config.Kubeconfig) {
 		return fmt.Errorf("kubeconfig %s doesn't exist", t.Config.Kubeconfig)
 	}
@@ -230,4 +237,17 @@ func (t *TKE) loginRegistryForUpgrade(ctx context.Context) error {
 		return err
 	}
 	return nil
+}
+
+func (t *TKE) loadTKEData() {
+	data, err := ioutil.ReadFile(constants.ClusterFile)
+	if err == nil {
+		t.log.Infof("read %q success", constants.ClusterFile)
+		err = json.Unmarshal(data, t)
+		if err != nil {
+			t.log.Infof("load tke data error:%s", err)
+		} else {
+			log.Infof("load tke data success")
+		}
+	}
 }
