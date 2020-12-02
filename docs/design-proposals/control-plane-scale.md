@@ -7,9 +7,9 @@
 
 ## Summary
 
-In production environment, the control plane in the cluster is in maintenance mode for OS upgrade, software upgrade or hardware repair reason, the cluster control plane need scale up so that keep high availability.  Administrator also want to migrate master node if initial placement policy doesn't meet zone/region anti-affinity policy. In current Tkestack implementation,  the master nodes defined in cluster object when fresh installation, it can't be get update during cluster life cycle.
+In production environment, the control plane in the cluster will in maintenance mode for OS upgrade, software upgrade or hardware repair reason, the cluster control plane need scale up so that keep high availability. Administrator also want to migrate master node if initial placement policy doesn't meet zone/region anti-affinity policy. In current Tkestack implementation, the master nodes defined in cluster object when fresh installation, it can't get updated during cluster life cycle.
 
-Tkestack None-HA mode is used for demo for experiment case, turning business/global cluster from None-HA mode to HA mode will lead to error-prone, so this case is out of scope of this project,  but Tkestack will not avoid administrator do it manually.
+Tkestack None-HA mode is used for demo and experiment case, turning business/global cluster from None-HA mode to HA mode will lead to error-prone, so this case is out of scope of this project, but Tkestack will not avoid administrator do it manually.
 
 ## Scope
 
@@ -23,37 +23,37 @@ Tkestack None-HA mode is used for demo for experiment case, turning business/glo
 
 ## Limitation
 
-1. `master[0]` from `global` cluster can't get scale down, since Tkestack doesn't have built-in `storage class` or external share storage solution, `spec.machines[0]` take cluster share storage role to persist built-in registry images and event log,  if scale down `spec.machines[0]`, the cluster will become unavailable
+1. `master[0]` from `global` or `business` cluster can't get scale down, since Tkestack doesn't have built-in `storage class` or external share storage solution, `spec.machines[0]` take cluster share storage role to persist built-in registry images and event log,  if scale down `spec.machines[0]`, the cluster will become unavailable
 
-2.  Base on above,  the `global` cluster doesn't support scaling up with new node place to first item in `cluster.spec.machines`
+2.  Base on above,  the `global` or `business` cluster doesn't support scaling up when new node place to first item in `cluster.spec.machines`
 
 ## Main proposal
 
-1. Actually, `kubeadm`already has the ability to support control plane scale up/down,   `tke-platform` component just leverage this functionality to implement this requirement. Currently, the control plane defined in `cluster` object `spec.machines` section when fresh install k8s cluster,  cluster controller `reconcile` will turning the set of node to k8s master nodes,  as well as add/remove new node to/from to cluster.  Machine controller will turning a set of node to k8s worker node join to cluster
+1. Actually, `kubeadm` already has the ability to support control plane scale up/down,  `tke-platform` component just leverage this functionality to implement this requirement. Currently, the control plane defined in `cluster` object `spec.machines` section when fresh install k8s cluster,  cluster controller `reconcile` will turning the set of node to k8s master nodes, as well as add/remove new master node to/from cluster. Machine controller will turning a set of node to k8s worker node join to cluster
 
 2.  New handler as bellows add to bare-metal cluster
 - ScaleUpHandlers： This is same as CreateHandlers, just handle new added nodes
 - ScaleDownHandlers:  The workload on the scaling down nodes will not get removed
    EnsureRemoveETCDMember: Remove etcd member from etcd cluster
-   EnsureRemoveNode: Delete k8s node from k8s cluster
+   EnsureRemoveNode: Remove k8s node from k8s cluster
  
 3. Cluster state transition:
- - Success path:  Running --> Upscaling/DownScaling --> Running
+ - Success path: Running --> Upscaling/DownScaling --> Running
  - Failed path: Running --> Upscaling/DownScaling --> Failed
 
 4. Scale up/down validation, if operator break below validation rules, there is a error message will show the reason in log or console:
  - Only the cluster in HA mode support control plane scale up/down
- - The `global` cluster doesn't support scaling up with new node place to first item in `cluster.spec.machines`
- - Scale down `cluster.spec.machines[0]` from `global` cluster is not allowed
+ - The cluster doesn't support scaling up when new node place to first item in `cluster.spec.machines`
+ - Scale down `cluster.spec.machines[0]` from cluster is not allowed
  
 5. State transition event：
-The scaling up/down event will persist to `cluster.status.conditions`section with `append` mode, operator is able to retrieve it to monitor status or debug
+The scaling up/down event will persist to `cluster.status.conditions`section in `append` mode, operator is able to retrieve it for monitoring status or debugging purpose
 
 ![enter image description here](../../docs/images/master-scale.png)
 
 ## Future work
 
-To minimum the impact cluster，the cluster/machine data model is not get changed,  still depends on cluster controller `reconcile` ,  but it is better to use machine controller  `reconcile`, after that, scale up/down control plane and worker node both leverage machine controller, this is align with k8s native design:  node controller cover master node and worker node in one controller.
+To minimum the impact of cluster，the cluster/master data model is not get changed, still depends on cluster controller `reconcile` to turning control-plane, but it is better to use machine controller `reconcile`, after that, scale up/down control plane and worker node both leverage machine controller, this is align with k8s native design: node controller cover both master node and worker node
 
 ## User case
 
