@@ -477,12 +477,11 @@ func (t *TKE) runWithUI() error {
 		if err != nil {
 			return err
 		}
-		t.do()
-		return nil
-	}
-
-	if t.isFromRestore {
 		go t.do()
+	} else {
+		if t.isFromRestore {
+			go t.do()
+		}
 	}
 
 	log.Infof("Starting %s at http://%s", t.Config.ServerName, t.Config.ListenAddr)
