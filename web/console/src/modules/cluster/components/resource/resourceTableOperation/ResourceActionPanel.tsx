@@ -59,7 +59,7 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
       resourceName = urlParams['resourceName'];
 
     let monitorButton = null;
-    monitorButton = ['deployment', 'statefulset', 'daemonset'].includes(resourceName) && this._renderMonitorButton();
+    monitorButton = ['deployment', 'statefulset', 'daemonset', 'tapp'].includes(resourceName) && this._renderMonitorButton();
 
     return (
       <Table.ActionPanel>
