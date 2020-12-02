@@ -137,6 +137,25 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
             <Text theme={ClusterStatus[x.status.phase]} verticalAlign="middle">
               {x.status.phase || '-'}
             </Text>
+            {x.spec.updateInfo.worker.message === '有节点正在升级中' && (
+              <>
+                <Icon className="tea-ml-1n" type="loading" />{' '}
+                <Button
+                  type="link"
+                  onClick={() => {
+                    router.navigate(
+                      { sub: 'sub', mode: 'list', type: 'nodeManage', resourceName: 'node' },
+                      {
+                        rid: region.selection.value + '',
+                        clusterId: x.metadata.name
+                      }
+                    );
+                  }}
+                >
+                  有节点正在升级中
+                </Button>
+              </>
+            )}
             {x.status.phase !== 'Running' && <Icon className="tea-ml-1n" type="loading" />}
             {x.status.phase !== 'Running' && x.status.phase !== 'Terminating' && (
               <Button
