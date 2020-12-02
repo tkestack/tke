@@ -173,5 +173,5 @@ prefight
 ensure_docker
 load_image
 clean_old_data
-start_installer
+start_installer $@
 check_installer
