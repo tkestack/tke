@@ -63,7 +63,6 @@ func (p *Provider) EnsureRemoveNode(ctx context.Context, c *v1.Cluster) error {
 			if !errors.IsNotFound(err) {
 				return err
 			}
-			log.FromContext(ctx).Info("deleteNode done")
 			return nil
 		}
 		err = client.CoreV1().Nodes().Delete(context.Background(), node.Name, metav1.DeleteOptions{})
