@@ -110,7 +110,7 @@ spec:
             - name: LOG_LEVEL
               value: "3"
             - name: EXTRA_FLAGS
-              value: "--incluster-mode=true"
+              value: "--incluster-mode=true --logtostderr"
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
@@ -224,7 +224,7 @@ spec:
               - name: LOG_LEVEL
                 value: "4"
               - name: EXTRA_FLAGS
-                value: "--incluster-mode=true"
+                value: "--incluster-mode=true --logtostderr"
             ports:
               - containerPort: 3456
             volumeMounts:
