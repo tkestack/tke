@@ -109,7 +109,7 @@ export function WorkerUpdate({ route }: RootProps) {
           </Checkbox>
         </Form.Item>
 
-        <Form.Item label="最大不可用Pod占比" extra="升级过程中不可以Pod数超过该占比将暂停升级">
+        <Form.Item label="最大不可用Pod占比" extra="升级过程中不可用Pod数超过该占比将暂停升级">
           <Space>
             <InputNumber
               style={ItemStyle()}
