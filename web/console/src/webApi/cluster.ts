@@ -221,6 +221,7 @@ export const getNodes = async ({ clusterName, clusterVersion }: { clusterName: s
       label: metadata?.labels,
       kubeletVersion: status.nodeInfo.kubeletVersion,
       clusterVersion,
+      phase: status.conditions.find(item => item.type === 'Ready')?.status === 'True' ? 'Running' : 'Failed',
       machines: machines
         .filter(m => metadata?.labels?.['platform.tkestack.io/machine-ip'] === m?.spec?.ip)
         .map(m => m?.metadata?.name)

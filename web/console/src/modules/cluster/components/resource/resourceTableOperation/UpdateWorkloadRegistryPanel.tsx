@@ -72,7 +72,7 @@ interface UpdateWorkloadRegistryPanelState {
   currentEditingContainerId?: string;
 }
 
-let mapDispatchToProps = dispatch =>
+const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
 @connect(state => state, mapDispatchToProps)
@@ -90,13 +90,13 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
 
     // 这里是从列表页进入的时候，需要去初始化 workloadEdit当中的内容，如果是直接在当前页面刷新的话，会去拉取列表，在fetchResource之后，会初始化
     if (ffResourceList.list.data.recordCount) {
-      let finder = ffResourceList.list.data.records.find(item => item.metadata.name === route.queries['resourceIns']);
+      const finder = ffResourceList.list.data.records.find(item => item.metadata.name === route.queries['resourceIns']);
       finder && actions.editWorkload.initWorkloadEditForUpdateRegistry(finder);
     }
   }
 
   componentWillUnmount() {
-    let { actions } = this.props;
+    const { actions } = this.props;
     actions.editWorkload.clearWorkloadEdit();
     actions.workflow.updateResourcePart.reset();
   }
@@ -122,25 +122,25 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
       } = workloadEdit;
 
     /** 当前滚动更新镜像的资源类型 */
-    let workloadType = urlParams['resourceName'],
+    const workloadType = urlParams['resourceName'],
       isDeployment = workloadType === 'deployment',
       isStatefulset = workloadType === 'statefulset',
       isDaemonset = workloadType === 'daemonset',
       isTapp = workloadType === 'tapp';
 
     /** 渲染更新方式 的列表 */
-    let finalUpdateTypeList = isDeployment ? deploymentUpdateTypeList : updateTypeList;
-    let updateTypeOptions = finalUpdateTypeList.map(item => ({
+    const finalUpdateTypeList = isDeployment ? deploymentUpdateTypeList : updateTypeList;
+    const updateTypeOptions = finalUpdateTypeList.map(item => ({
       value: item.value,
       text: item.label
     }));
-    let updateTypeTips = finalUpdateTypeList.find(item => item.value === resourceUpdateType).tip;
+    const updateTypeTips = finalUpdateTypeList.find(item => item.value === resourceUpdateType).tip;
 
     /** 滚动更新的策略 选择项 */
-    let finder = rollingUpdateTypeList.find(c => c.value === rollingUpdateStrategy),
+    const finder = rollingUpdateTypeList.find(c => c.value === rollingUpdateStrategy),
       tip = finder ? finder.tip : '';
 
-    let failed = updateResourcePart.operationState === OperationState.Done && !isSuccessWorkflow(updateResourcePart);
+    const failed = updateResourcePart.operationState === OperationState.Done && !isSuccessWorkflow(updateResourcePart);
 
     return (
       <MainBodyLayout>
@@ -223,7 +223,7 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
                               <InputField
                                 type="text"
                                 tipMode="popup"
-                                style={{ minWidth: '240px' }}
+                                style={{ minWidth: '300px' }}
                                 placeholder={t('0、正整数或者正百分数（default: 25%）')}
                                 validator={v_maxSurge}
                                 value={maxSurge}
@@ -239,7 +239,7 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
                               <InputField
                                 type="text"
                                 tipMode="popup"
-                                style={{ minWidth: '240px' }}
+                                style={{ minWidth: '300px' }}
                                 placeholder={t('0、正整数或者正百分数（default: 25%）')}
                                 validator={v_maxUnavailable}
                                 value={maxUnavailable}
@@ -252,7 +252,7 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
                               <InputField
                                 type="text"
                                 tipMode="popup"
-                                style={{ minWidth: '240px' }}
+                                style={{ minWidth: '300px' }}
                                 placeholder={t('0或者正整数（default: 0）')}
                                 validator={v_partition}
                                 value={partition}
@@ -270,7 +270,7 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
                 <FormItem label={t('MaxUnavailabl（个）')} isShow={isTapp}>
                   <InputField
                     type="text"
-                    style={{ minWidth: '240px' }}
+                    style={{ minWidth: '300px' }}
                     placeholder={t('正整数')}
                     tipMode="popup"
                     validator={v_maxUnavailable}
@@ -324,7 +324,7 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
     actions.validate.workload.validateUpdateRegistryEdit();
 
     if (validateWorkloadActions._validateUpdateRegistryEdit(workloadEdit)) {
-      let {
+      const {
         minReadySeconds,
         containers,
         workloadType,
@@ -337,12 +337,12 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
       } = workloadEdit;
 
       // 当前的资源的类型
-      let isStatefulset = workloadType === 'statefulset',
+      const isStatefulset = workloadType === 'statefulset',
         isDeployment = workloadType === 'deployment',
         isDaemonset = workloadType === 'daemonset',
         isTapp = workloadType === 'tapp';
       // 当前镜像的更新方式
-      let isRollingUpdate = resourceUpdateType === 'RollingUpdate';
+      const isRollingUpdate = resourceUpdateType === 'RollingUpdate';
 
       // 获取deployment滚动更新的内容
       let deploymentRollingUpdateContent = {};
@@ -390,8 +390,8 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
         };
       }
       // 获取容器的内容
-      let containersInfo = containers.map(c => {
-        let targetContainer = targetResource.spec.template.spec.containers.find(e => e.name === c.name);
+      const containersInfo = containers.map(c => {
+        const targetContainer = targetResource.spec.template.spec.containers.find(e => e.name === c.name);
         return !isTapp //对于tapp来说，由于更新方式是merge（非strategy-merge），所以需要带上原本的container之前的内容 不然之前的内容会被清空掉
           ? {
               name: c.name,
@@ -441,7 +441,7 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
       // 去除当中不需要的数据
       jsonData = JSON.parse(JSON.stringify(jsonData));
 
-      let resource: CreateResource = {
+      const resource: CreateResource = {
         id: uuid(),
         resourceInfo,
         mode,
@@ -459,12 +459,12 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
 
   /** 展示容器的相关信息 */
   private _renderContainerInfo() {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { workloadEdit, resourceOption } = subRoot,
       { ffResourceList } = resourceOption,
       { containers } = workloadEdit;
 
-    let loadingElement: JSX.Element = (
+    const loadingElement: JSX.Element = (
       <div>
         <i className="n-loading-icon" />
         &nbsp; <span className="text">{t('加载中...')}</span>
@@ -476,7 +476,7 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
         {ffResourceList.list.fetched === false || ffResourceList.list.fetchState === FetchState.Fetching
           ? loadingElement
           : containers.map((container, index) => {
-              let cKey = container.id + '';
+              const cKey = container.id + '';
 
               return (
                 <FixedFormLayout key={index} isRemoveUlMarginTop={true}>
@@ -488,6 +488,7 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
                       <input
                         type="text"
                         className="tc-15-input-text m mr10"
+                        style={{ minWidth: 300 }}
                         value={container.registry}
                         onChange={e => actions.editWorkload.updateContainer({ registry: e.target.value }, cKey)}
                         onBlur={e => actions.validate.workload.validateRegistrySelection(e.target.value, cKey)}
@@ -498,6 +499,7 @@ export class UpdateWorkloadRegistryPanel extends React.Component<RootProps, Upda
                   <FormItem label={t('镜像版本（Tag）')} className="tag-mod">
                     <div className="tc-15-autocomplete xl">
                       <input
+                        style={{ minWidth: 300 }}
                         placeholder={t('不填默认为latest')}
                         type="text"
                         className="tc-15-input-text m"
