@@ -69,6 +69,7 @@ func createAPIServerConfig(cfg *config.Config) *apiserver.Config {
 
 func createFilterChain(apiServer *genericapiserver.GenericAPIServer) {
 	apiServer.Handler.FullHandlerChain = filter.WithCluster(apiServer.Handler.FullHandlerChain)
+	apiServer.Handler.FullHandlerChain = filter.WithUin(apiServer.Handler.FullHandlerChain)
 	apiServer.Handler.FullHandlerChain = filter.WithRequestBody(apiServer.Handler.FullHandlerChain)
 	apiServer.Handler.FullHandlerChain = filter.WithFuzzyResource(apiServer.Handler.FullHandlerChain)
 	apiServer.Handler.FullHandlerChain = filter.WithNamespace(apiServer.Handler.FullHandlerChain)

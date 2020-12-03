@@ -28,6 +28,8 @@ import (
 )
 
 const clusterContextKey = "clusterName"
+const uinContextKey = "uin"
+
 const requestBodyKey = "requestBody"
 const fuzzyResourceContextKey = "fuzzyResourceName"
 
@@ -36,6 +38,7 @@ const namespaceParamKey = "namespace"
 
 // ClusterNameHeaderKey is the header name of cluster.
 const ClusterNameHeaderKey = "X-TKE-ClusterName"
+const UinHeaderKey = "X-Remote-User"
 
 // ProjectNameHeaderKey is the header name of project.
 const ProjectNameHeaderKey = "X-TKE-ProjectName"
@@ -56,6 +59,14 @@ func ClusterFrom(ctx context.Context) string {
 		return ""
 	}
 	return clusterName
+}
+
+func UinFrom(ctx context.Context) string {
+	uin, ok := ctx.Value(uinContextKey).(string)
+	if !ok {
+		return ""
+	}
+	return uin
 }
 
 // FuzzyResourceFrom get the fuzzy resource name from request context.
@@ -91,9 +102,19 @@ func NamespaceFrom(ctx context.Context) string {
 // provided context for the request.
 func WithCluster(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+
 		clusterName := req.Header.Get(ClusterNameHeaderKey)
 		if clusterName != "" {
 			req = req.WithContext(genericrequest.WithValue(req.Context(), clusterContextKey, clusterName))
+		}
+		handler.ServeHTTP(w, req)
+	})
+}
+func WithUin(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		uin := req.Header.Get(UinHeaderKey)
+		if uin != "" {
+			req = req.WithContext(genericrequest.WithValue(req.Context(), uinContextKey, uin))
 		}
 		handler.ServeHTTP(w, req)
 	})

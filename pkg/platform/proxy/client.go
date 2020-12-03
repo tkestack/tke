@@ -114,16 +114,12 @@ func ClientSet(ctx context.Context, platformClient platforminternalclient.Platfo
 func getOrCreateClientCert(ctx context.Context, clusterWrapper *types.Cluster) ([]byte, []byte, error) {
 	credential := clusterWrapper.ClusterCredential
 	groups := authentication.Groups(ctx)
-	username, tenantID := authentication.UsernameAndTenantID(ctx)
-	if tenantID != "" {
-		groups = append(groups, fmt.Sprintf("tenant:%s", tenantID))
-	}
-
-	ns, ok := request.NamespaceFrom(ctx)
-	if ok {
+	uin := filter.UinFrom(ctx)
+	ns := filter.NamespaceFrom(ctx)
+	if ns != "" {
 		groups = append(groups, fmt.Sprintf("namespace:%s", ns))
 	}
-	uin := authentication.GetUID(ctx)
+
 	clusterName := filter.ClusterFrom(ctx)
 	if clusterName == "" {
 		return nil, nil, errors.NewBadRequest("clusterName is required")
@@ -131,38 +127,60 @@ func getOrCreateClientCert(ctx context.Context, clusterWrapper *types.Cluster) (
 	var clientCertData, clientKeyData []byte
 	client, _ := clusterWrapper.Clientset()
 	cache, err := client.CoreV1().ConfigMaps("kube-system").Get(ctx, uin, metav1.GetOptions{})
-	if err != nil || cache == nil {
-		clientCertData, clientKeyData, err := pkiutil.GenerateClientCertAndKey(username, groups, credential.CACert,
-			credential.CAKey)
-		if err != nil {
+
+	if err != nil {
+		if IsNotFoundError(err) {
+			configmap, err := client.CoreV1().ConfigMaps("kube-system").Get(ctx, "config", metav1.GetOptions{})
+			if err != nil {
+				msg := fmt.Sprintf("GetK8s ConfigMaps of cluster %s failed, err: %s", clusterName, err.Error())
+				log.Errorf(msg)
+			}
+			credential.CACert = []byte(configmap.Data["ca.crt"])
+			credential.CAKey = []byte(configmap.Data["ca.key"])
+			clientCertData, clientKeyData, err = pkiutil.GenerateClientCertAndKey(uin, groups, credential.CACert,
+				credential.CAKey)
+			if err != nil {
+				return nil, nil, err
+			}
+			confMap := &v1.ConfigMap{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        uin,
+					ClusterName: clusterName,
+				},
+				Data: map[string]string{
+					"CommonName":  uin,
+					"UIN":         uin,
+					"clusterName": clusterName,
+				},
+				BinaryData: map[string][]byte{
+					"clientCertData": clientCertData,
+					"clientKeyData":  clientKeyData,
+				},
+			}
+			client.CoreV1().ConfigMaps("kube-system").Create(ctx, confMap, metav1.CreateOptions{})
+			log.Infof("generateClientCert success. username:%s groups:%v\n clientCertData:\n %s clientKeyData:\n %s",
+				uin, groups, clientCertData, clientKeyData)
+		} else {
+			log.Errorf(fmt.Sprintf("get configmap failed -- err: %v", err))
 			return nil, nil, err
 		}
-		confMap := &v1.ConfigMap{
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        uin,
-				ClusterName: clusterName,
-			},
-			Data: map[string]string{
-				"CommonName":  username,
-				"UIN":         uin,
-				"clusterName": clusterName,
-			},
-			BinaryData: map[string][]byte{
-				"clientCertData": clientCertData,
-				"clientKeyData":  clientKeyData,
-			},
-		}
-		client.CoreV1().ConfigMaps("kube-system").Create(ctx, confMap, metav1.CreateOptions{})
 	} else {
 		clientCertData = cache.BinaryData["clientCertData"]
 		clientKeyData = cache.BinaryData["clientKeyData"]
 	}
 
-	log.Debugf("generateClientCert success. username:%s groups:%v\n clientCertData:\n %s clientKeyData:\n %s",
-		username, groups, clientCertData, clientKeyData)
+	log.Infof("generateClientCert success. username:%s groups:%v\n clientCertData:\n %s clientKeyData:\n %s",
+		uin, groups, clientCertData, clientKeyData)
 
 	return clientCertData, clientKeyData, nil
+}
+
+func IsNotFoundError(err error) bool {
+	if strings.Contains(err.Error(), "not found") {
+		return true
+	}
+	return false
 }
 
 // RESTClient returns the versioned rest client of clientSet.
