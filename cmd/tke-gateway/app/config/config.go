@@ -97,8 +97,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, authapiserver.IgnoreAuthPathPrefixes()...)
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, harbor.IgnoreAuthPathPrefixes()...)
 	ignoreAuthPathPrefixes = append(ignoreAuthPathPrefixes, audit.IgnoredAuthPathPrefixes()...)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes, nil)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes, nil)
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes, nil, nil)
 	genericAPIServerConfig.MaxRequestBodyBytes = chartmuseum.MaxUploadSize
 	genericAPIServerConfig.LongRunningFunc = filter.LongRunningRequestCheck(sets.NewString(), sets.NewString("filedownload"), []string{"/"})
 	genericAPIServerConfig.EnableIndex = false

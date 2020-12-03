@@ -65,7 +65,7 @@ type Config struct {
 // on a given TKE application apiserver command line or configuration file option.
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
 	genericAPIServerConfig := genericapiserver.NewConfig(application.Codecs)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil, nil)
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil, nil, nil)
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 	genericAPIServerConfig.EnableIndex = false
 	genericAPIServerConfig.EnableProfiling = false

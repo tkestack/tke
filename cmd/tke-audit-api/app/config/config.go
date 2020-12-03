@@ -77,7 +77,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	genericAPIServerConfig := genericapiserver.NewConfig(apiserver.Codecs)
 	var ignoredAuthPathPrefixes []string
 	ignoredAuthPathPrefixes = append(ignoredAuthPathPrefixes, audit.IgnoredAuthPathPrefixes()...)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoredAuthPathPrefixes, nil)
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoredAuthPathPrefixes, nil, nil)
 	genericAPIServerConfig.EnableIndex = false
 	genericAPIServerConfig.EnableDiscovery = false
 	genericAPIServerConfig.EnableProfiling = false

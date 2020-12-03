@@ -21,11 +21,11 @@ package config
 import (
 	"fmt"
 	"time"
-	"tkestack.io/tke/pkg/apiserver/util"
 
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/client-go/rest"
+
 	"tkestack.io/tke/api/business"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
@@ -40,6 +40,8 @@ import (
 	"tkestack.io/tke/pkg/apiserver/handler"
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	"tkestack.io/tke/pkg/apiserver/storage"
+	"tkestack.io/tke/pkg/apiserver/util"
+	"tkestack.io/tke/pkg/auth/filter"
 	"tkestack.io/tke/pkg/business/apiserver"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
 )
@@ -66,7 +68,6 @@ type Config struct {
 // on a given TKE business apiserver command line or configuration file option.
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
 	genericAPIServerConfig := genericapiserver.NewConfig(business.Codecs)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil, nil)
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 	genericAPIServerConfig.EnableIndex = false
 	genericAPIServerConfig.EnableProfiling = false
@@ -130,6 +131,8 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	if err != nil {
 		return nil, err
 	}
+	clusterInspector := filter.NewClusterInspector(platformClient.PlatformV1(), opts.Authentication.PrivilegedUsername)
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil, nil, []filter.Inspector{clusterInspector})
 
 	cfg := &Config{
 		ServerName:                     serverName,
