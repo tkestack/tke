@@ -108,7 +108,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		clusterAddonTypeREST := clusteraddontypestorage.NewStorage(restOptionsGetter)
 		storageMap["clusteraddontypes"] = clusterAddonTypeREST.ClusterAddonType
 
-		persistentEventREST := persistenteventstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
+		persistentEventREST := persistenteventstorage.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
 		storageMap["persistentevents"] = persistentEventREST.PersistentEvent
 		storageMap["persistentevents/status"] = persistentEventREST.Status
 
@@ -116,37 +116,37 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["helms"] = helmREST.Helm
 		storageMap["helms/status"] = helmREST.Status
 
-		ipamREST := ipamstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
+		ipamREST := ipamstorage.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
 		storageMap["ipams"] = ipamREST.IPAM
 		storageMap["ipams/status"] = ipamREST.Status
 
 		configmapREST := configmapstorage.NewStorage(restOptionsGetter)
 		storageMap["configmaps"] = configmapREST.ConfigMap
 
-		registryREST := registrystorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
+		registryREST := registrystorage.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
 		storageMap["registries"] = registryREST.Registry
 
-		tappControllerREST := tappcontrollertorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
+		tappControllerREST := tappcontrollertorage.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
 		storageMap["tappcontrollers"] = tappControllerREST.TappController
 		storageMap["tappcontrollers/status"] = tappControllerREST.Status
 
-		csiOperatorREST := csioperatorstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
+		csiOperatorREST := csioperatorstorage.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
 		storageMap["csioperators"] = csiOperatorREST.CSIOperator
 		storageMap["csioperators/status"] = csiOperatorREST.Status
 
-		volumeDecoratorREST := volumedecoratorstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
+		volumeDecoratorREST := volumedecoratorstorage.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
 		storageMap["volumedecorators"] = volumeDecoratorREST.VolumeDecorator
 		storageMap["volumedecorators/status"] = volumeDecoratorREST.Status
 
-		logCollectorREST := logcollectorstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
+		logCollectorREST := logcollectorstorage.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
 		storageMap["logcollectors"] = logCollectorREST.LogCollector
 		storageMap["logcollectors/status"] = logCollectorREST.Status
 
-		cronHPAREST := cronhpastorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
+		cronHPAREST := cronhpastorage.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
 		storageMap["cronhpas"] = cronHPAREST.CronHPA
 		storageMap["cronhpas/status"] = cronHPAREST.Status
 
-		promREST := promstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
+		promREST := promstorage.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
 		storageMap["prometheuses"] = promREST.Prometheus
 		storageMap["prometheuses/status"] = promREST.Status
 

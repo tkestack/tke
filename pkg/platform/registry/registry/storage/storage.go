@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,6 +28,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
@@ -42,8 +44,8 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against namespace sets.
-func NewStorage(optsGetter generic.RESTOptionsGetter, privilegedUsername string) *Storage {
-	strategy := registry.NewStrategy()
+func NewStorage(optsGetter generic.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface, privilegedUsername string) *Storage {
+	strategy := registry.NewStrategy(platformClient)
 	store := &genericregistry.Store{
 		NewFunc:                  func() runtime.Object { return &platform.Registry{} },
 		NewListFunc:              func() runtime.Object { return &platform.RegistryList{} },

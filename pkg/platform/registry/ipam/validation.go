@@ -19,9 +19,13 @@
 package ipam
 
 import (
+	"context"
+
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/pkg/platform/util/validation"
 )
 
 // ValidateName is a ValidateNameFunc for names that must be a DNS
@@ -29,8 +33,9 @@ import (
 var ValidateName = apiMachineryValidation.ValidateNamespaceName
 
 // ValidateIPAM tests if required fields in the cluster are set.
-func ValidateIPAM(obj *platform.IPAM) field.ErrorList {
+func ValidateIPAM(ctx context.Context, platformClient platforminternalclient.PlatformInterface, obj *platform.IPAM) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&obj.ObjectMeta, false, ValidateName, field.NewPath("metadata"))
+	allErrs = append(allErrs, validation.ValidateCluster(ctx, platformClient, obj.Spec.ClusterName)...)
 
 	if len(obj.Spec.ClusterName) == 0 {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "clusterName"), "must specify a cluster name"))
@@ -41,9 +46,9 @@ func ValidateIPAM(obj *platform.IPAM) field.ErrorList {
 
 // ValidateIPAMUpdate tests if required fields in the namespace set are
 // set during an update.
-func ValidateIPAMUpdate(obj *platform.IPAM, old *platform.IPAM) field.ErrorList {
+func ValidateIPAMUpdate(ctx context.Context, platformClient platforminternalclient.PlatformInterface, obj *platform.IPAM, old *platform.IPAM) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&obj.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateIPAM(obj)...)
+	allErrs = append(allErrs, ValidateIPAM(ctx, platformClient, obj)...)
 
 	if obj.Spec.ClusterName != old.Spec.ClusterName {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "clusterName"), obj.Spec.ClusterName, "disallowed change the cluster name"))

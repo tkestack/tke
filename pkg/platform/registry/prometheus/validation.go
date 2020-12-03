@@ -19,9 +19,13 @@
 package prometheus
 
 import (
+	"context"
+
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/pkg/platform/util/validation"
 )
 
 // ValidateName is a ValidateNameFunc for names that must be a DNS
@@ -29,8 +33,9 @@ import (
 var ValidateName = apiMachineryValidation.ValidateNamespaceName
 
 // ValidatePrometheus tests if required fields in the cluster are set.
-func ValidatePrometheus(prom *platform.Prometheus) field.ErrorList {
+func ValidatePrometheus(ctx context.Context, platformClient platforminternalclient.PlatformInterface, prom *platform.Prometheus) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&prom.ObjectMeta, false, ValidateName, field.NewPath("metadata"))
+	allErrs = append(allErrs, validation.ValidateCluster(ctx, platformClient, prom.Spec.ClusterName)...)
 
 	if len(prom.Spec.ClusterName) == 0 {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "clusterName"), "must specify a cluster name"))
@@ -41,9 +46,9 @@ func ValidatePrometheus(prom *platform.Prometheus) field.ErrorList {
 
 // ValidatePrometheusUpdate tests if required fields in the namespace set are
 // set during an update.
-func ValidatePrometheusUpdate(prom *platform.Prometheus, old *platform.Prometheus) field.ErrorList {
+func ValidatePrometheusUpdate(ctx context.Context, platformClient platforminternalclient.PlatformInterface, prom *platform.Prometheus, old *platform.Prometheus) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&prom.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidatePrometheus(prom)...)
+	allErrs = append(allErrs, ValidatePrometheus(ctx, platformClient, prom)...)
 
 	if prom.Spec.ClusterName != old.Spec.ClusterName {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "clusterName"), prom.Spec.ClusterName, "disallowed change the cluster name"))

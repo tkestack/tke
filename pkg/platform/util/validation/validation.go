@@ -30,6 +30,7 @@ import (
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
+	"tkestack.io/tke/pkg/apiserver/authentication"
 )
 
 type ClusterGetter interface {
@@ -75,9 +76,15 @@ func ValidateCluster(ctx context.Context, platformClient platforminternalclient.
 	if clusterName == "" {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "clusterName"), "must specify cluster name"))
 	} else {
-		_, err := platformClient.Clusters().Get(ctx, clusterName, metav1.GetOptions{})
+		c, err := platformClient.Clusters().Get(ctx, clusterName, metav1.GetOptions{})
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "clusterName"), clusterName, fmt.Sprintf("can't get cluster:%s", err)))
+		}
+		_, tenantID := authentication.UsernameAndTenantID(ctx)
+		if len(tenantID) != 0 {
+			if c.Spec.TenantID != tenantID {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "clusterName"), clusterName, fmt.Sprintf("cluster %s not found", clusterName)))
+			}
 		}
 	}
 	return allErrs

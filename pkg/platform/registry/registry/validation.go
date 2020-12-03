@@ -19,13 +19,17 @@
 package registry
 
 import (
+	"context"
 	"fmt"
+	"regexp"
+	"strings"
+
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"regexp"
-	"strings"
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	platformValidation "tkestack.io/tke/pkg/platform/util/validation"
 )
 
 // ValidateName is a ValidateNameFunc for names that must be a DNS
@@ -33,8 +37,9 @@ import (
 var ValidateName = apiMachineryValidation.NameIsDNSSubdomain
 
 // ValidateRegistryConfig tests if required fields in the cluster are set.
-func ValidateRegistryConfig(registry *platform.Registry) field.ErrorList {
+func ValidateRegistryConfig(ctx context.Context, platformClient platforminternalclient.PlatformInterface, registry *platform.Registry) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&registry.ObjectMeta, false, ValidateName, field.NewPath("metadata"))
+	allErrs = append(allErrs, platformValidation.ValidateCluster(ctx, platformClient, registry.Spec.ClusterName)...)
 	if registry.Spec.DisplayName == "" {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "registry", "displayName"), "displayName should not be empty"))
 	}
@@ -52,9 +57,9 @@ func ValidateRegistryConfig(registry *platform.Registry) field.ErrorList {
 
 // ValidateRegistryConfigUpdate tests if required fields in the namespace set are
 // set during an update.
-func ValidateRegistryConfigUpdate(registryConfig *platform.Registry, old *platform.Registry) field.ErrorList {
+func ValidateRegistryConfigUpdate(ctx context.Context, platformClient platforminternalclient.PlatformInterface, registryConfig *platform.Registry, old *platform.Registry) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&registryConfig.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateRegistryConfig(registryConfig)...)
+	allErrs = append(allErrs, ValidateRegistryConfig(ctx, platformClient, registryConfig)...)
 
 	return allErrs
 }

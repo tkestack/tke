@@ -19,11 +19,14 @@
 package persistentevent
 
 import (
+	"context"
 	"reflect"
 
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/pkg/platform/util/validation"
 )
 
 // ValidateName is a ValidateNameFunc for names that must be a DNS
@@ -31,8 +34,9 @@ import (
 var ValidateName = apiMachineryValidation.ValidateNamespaceName
 
 // ValidatePersistentEvent tests if required fields in the cluster are set.
-func ValidatePersistentEvent(persistentEvent *platform.PersistentEvent) field.ErrorList {
+func ValidatePersistentEvent(ctx context.Context, platformClient platforminternalclient.PlatformInterface, persistentEvent *platform.PersistentEvent) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&persistentEvent.ObjectMeta, false, ValidateName, field.NewPath("metadata"))
+	allErrs = append(allErrs, validation.ValidateCluster(ctx, platformClient, persistentEvent.Spec.ClusterName)...)
 
 	if len(persistentEvent.Spec.ClusterName) == 0 {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "clusterName"), "must specify a cluster name"))
@@ -80,9 +84,9 @@ func ValidatePersistentEvent(persistentEvent *platform.PersistentEvent) field.Er
 
 // ValidatePersistentEventUpdate tests if required fields in the namespace set are
 // set during an update.
-func ValidatePersistentEventUpdate(persistentEvent *platform.PersistentEvent, old *platform.PersistentEvent) field.ErrorList {
+func ValidatePersistentEventUpdate(ctx context.Context, platformClient platforminternalclient.PlatformInterface, persistentEvent *platform.PersistentEvent, old *platform.PersistentEvent) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&persistentEvent.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidatePersistentEvent(persistentEvent)...)
+	allErrs = append(allErrs, ValidatePersistentEvent(ctx, platformClient, persistentEvent)...)
 
 	if persistentEvent.Spec.ClusterName != old.Spec.ClusterName {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "clusterName"), persistentEvent.Spec.ClusterName, "disallowed change the cluster name"))

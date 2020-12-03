@@ -29,6 +29,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/platform/controller/addon/ipam/images"
@@ -40,6 +41,7 @@ import (
 type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
+	platformClient platforminternalclient.PlatformInterface
 }
 
 var _ rest.RESTCreateStrategy = &Strategy{}
@@ -48,8 +50,8 @@ var _ rest.RESTDeleteStrategy = &Strategy{}
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating namespace set objects.
-func NewStrategy() *Strategy {
-	return &Strategy{platform.Scheme, namesutil.Generator}
+func NewStrategy(platformClient platforminternalclient.PlatformInterface) *Strategy {
+	return &Strategy{platform.Scheme, namesutil.Generator, platformClient}
 }
 
 // DefaultGarbageCollectionPolicy returns the default garbage collection behavior.
@@ -105,8 +107,8 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 }
 
 // Validate validates a new ipam.
-func (Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateIPAM(obj.(*platform.IPAM))
+func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	return ValidateIPAM(ctx, s.platformClient, obj.(*platform.IPAM))
 }
 
 // AllowCreateOnUpdate is false for persistent events
@@ -126,8 +128,8 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 }
 
 // ValidateUpdate is the default update validation for an end namespace set.
-func (Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateIPAMUpdate(obj.(*platform.IPAM), old.(*platform.IPAM))
+func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidateIPAMUpdate(ctx, s.platformClient, obj.(*platform.IPAM), old.(*platform.IPAM))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.

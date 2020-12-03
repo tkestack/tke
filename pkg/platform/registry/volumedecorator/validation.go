@@ -19,17 +19,22 @@
 package volumedecorator
 
 import (
+	"context"
+
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/pkg/platform/util/validation"
 )
 
 // ValidateName is a ValidateNameFunc for names that must be a DNS sub domain.
 var ValidateName = apiMachineryValidation.ValidateNamespaceName
 
 // ValidateVolumeDecorator tests if required fields in the cluster are set.
-func ValidateVolumeDecorator(decorator *platform.VolumeDecorator) field.ErrorList {
+func ValidateVolumeDecorator(ctx context.Context, platformClient platforminternalclient.PlatformInterface, decorator *platform.VolumeDecorator) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&decorator.ObjectMeta, false, ValidateName, field.NewPath("metadata"))
+	allErrs = append(allErrs, validation.ValidateCluster(ctx, platformClient, decorator.Spec.ClusterName)...)
 
 	if len(decorator.Spec.ClusterName) == 0 {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "clusterName"), "must specify a cluster name"))
@@ -40,9 +45,9 @@ func ValidateVolumeDecorator(decorator *platform.VolumeDecorator) field.ErrorLis
 
 // ValidateVolumeDecoratorUpdate tests if required fields in the namespace set are
 // set during an update.
-func ValidateVolumeDecoratorUpdate(new *platform.VolumeDecorator, old *platform.VolumeDecorator) field.ErrorList {
+func ValidateVolumeDecoratorUpdate(ctx context.Context, platformClient platforminternalclient.PlatformInterface, new *platform.VolumeDecorator, old *platform.VolumeDecorator) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&new.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateVolumeDecorator(new)...)
+	allErrs = append(allErrs, ValidateVolumeDecorator(ctx, platformClient, new)...)
 
 	if new.Spec.ClusterName != old.Spec.ClusterName {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "clusterName"), new.Spec.ClusterName, "disallowed change the cluster name"))

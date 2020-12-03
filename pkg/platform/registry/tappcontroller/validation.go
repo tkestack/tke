@@ -19,9 +19,13 @@
 package tappcontroller
 
 import (
+	"context"
+
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/pkg/platform/util/validation"
 )
 
 // ValidateName is a ValidateNameFunc for names that must be a DNS
@@ -29,8 +33,9 @@ import (
 var ValidateName = apiMachineryValidation.ValidateNamespaceName
 
 // ValidateTappController tests if required fields in the cluster are set.
-func ValidateTappController(tappController *platform.TappController) field.ErrorList {
+func ValidateTappController(ctx context.Context, platformClient platforminternalclient.PlatformInterface, tappController *platform.TappController) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&tappController.ObjectMeta, false, ValidateName, field.NewPath("metadata"))
+	allErrs = append(allErrs, validation.ValidateCluster(ctx, platformClient, tappController.Spec.ClusterName)...)
 
 	if len(tappController.Spec.ClusterName) == 0 {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "clusterName"), "must specify a cluster name"))
@@ -41,9 +46,9 @@ func ValidateTappController(tappController *platform.TappController) field.Error
 
 // ValidateTappControllerUpdate tests if required fields in the namespace set are
 // set during an update.
-func ValidateTappControllerUpdate(new *platform.TappController, old *platform.TappController) field.ErrorList {
+func ValidateTappControllerUpdate(ctx context.Context, platformClient platforminternalclient.PlatformInterface, new *platform.TappController, old *platform.TappController) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&new.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateTappController(new)...)
+	allErrs = append(allErrs, ValidateTappController(ctx, platformClient, new)...)
 
 	if new.Spec.ClusterName != old.Spec.ClusterName {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "clusterName"), new.Spec.ClusterName, "disallowed change the cluster name"))

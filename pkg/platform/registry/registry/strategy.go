@@ -34,6 +34,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/names"
 	"tkestack.io/tke/pkg/util/log"
 
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	namesutil "tkestack.io/tke/pkg/util/names"
 )
@@ -42,12 +43,13 @@ import (
 type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
+	platformClient platforminternalclient.PlatformInterface
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating project objects.
-func NewStrategy() *Strategy {
-	return &Strategy{platform.Scheme, namesutil.Generator}
+func NewStrategy(platformClient platforminternalclient.PlatformInterface) *Strategy {
+	return &Strategy{platform.Scheme, namesutil.Generator, platformClient}
 }
 
 // DefaultGarbageCollectionPolicy returns the default garbage collection behavior.
@@ -96,8 +98,8 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 }
 
 // Validate validates a new project.
-func (Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateRegistryConfig(obj.(*platform.Registry))
+func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	return ValidateRegistryConfig(ctx, s.platformClient, obj.(*platform.Registry))
 }
 
 // AllowCreateOnUpdate is false for projects.
@@ -117,8 +119,8 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 }
 
 // ValidateUpdate is the default update validation for an end cluster.
-func (Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateRegistryConfigUpdate(obj.(*platform.Registry), old.(*platform.Registry))
+func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidateRegistryConfigUpdate(ctx, s.platformClient, obj.(*platform.Registry), old.(*platform.Registry))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.

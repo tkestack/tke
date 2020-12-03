@@ -35,6 +35,7 @@ import (
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
+	platformvalidation "tkestack.io/tke/pkg/platform/util/validation"
 	utilmath "tkestack.io/tke/pkg/util/math"
 	"tkestack.io/tke/pkg/util/ssh"
 	utilvalidation "tkestack.io/tke/pkg/util/validation"
@@ -47,6 +48,7 @@ func ValidateMachine(ctx context.Context, machine *platform.Machine, platformCli
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&machine.ObjectMeta, false, apimachineryvalidation.NameIsDNSLabel, field.NewPath("metadata"))
 	allErrs = append(allErrs, ValidateMachineSpec(ctx, &machine.Spec, field.NewPath("spec"), platformClient)...)
 	allErrs = append(allErrs, ValidateMachineByProvider(machine)...)
+	allErrs = append(allErrs, platformvalidation.ValidateCluster(ctx, platformClient, machine.Spec.ClusterName)...)
 
 	return allErrs
 }

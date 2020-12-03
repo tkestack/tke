@@ -33,6 +33,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/util/log"
 	namesutil "tkestack.io/tke/pkg/util/names"
@@ -42,6 +43,7 @@ import (
 type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
+	platformClient platforminternalclient.PlatformInterface
 }
 
 var _ rest.RESTCreateStrategy = &Strategy{}
@@ -50,8 +52,8 @@ var _ rest.RESTDeleteStrategy = &Strategy{}
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating namespace set objects.
-func NewStrategy() *Strategy {
-	return &Strategy{platform.Scheme, namesutil.Generator}
+func NewStrategy(platformClient platforminternalclient.PlatformInterface) *Strategy {
+	return &Strategy{platform.Scheme, namesutil.Generator, platformClient}
 }
 
 // DefaultGarbageCollectionPolicy returns the default garbage collection behavior.
@@ -104,8 +106,8 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 }
 
 // Validate validates a new tapp controller.
-func (Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return ValidateCSIOperator(obj.(*platform.CSIOperator))
+func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
+	return ValidateCSIOperator(ctx, s.platformClient, obj.(*platform.CSIOperator))
 }
 
 // AllowCreateOnUpdate is false for persistent events
@@ -125,8 +127,8 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 }
 
 // ValidateUpdate is the default update validation for an end namespace set.
-func (Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateCSIOperatorUpdate(obj.(*platform.CSIOperator), old.(*platform.CSIOperator))
+func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
+	return ValidateCSIOperatorUpdate(ctx, s.platformClient, obj.(*platform.CSIOperator), old.(*platform.CSIOperator))
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.

@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 
@@ -33,6 +34,7 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -44,8 +46,8 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against VolumeDecorator.
-func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername string) *Storage {
-	strategy := volumedecorator.NewStrategy()
+func NewStorage(optsGetter genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface, privilegedUsername string) *Storage {
+	strategy := volumedecorator.NewStrategy(platformClient)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &platform.VolumeDecorator{} },
 		NewListFunc:              func() runtime.Object { return &platform.VolumeDecoratorList{} },

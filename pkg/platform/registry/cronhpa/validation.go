@@ -19,9 +19,13 @@
 package cronhpa
 
 import (
+	"context"
+
 	apiMachineryValidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/pkg/platform/util/validation"
 )
 
 // ValidateName is a ValidateNameFunc for names that must be a DNS
@@ -29,8 +33,9 @@ import (
 var ValidateName = apiMachineryValidation.ValidateNamespaceName
 
 // ValidateCronHPA tests if required fields in the cluster are set.
-func ValidateCronHPA(cronHPA *platform.CronHPA) field.ErrorList {
+func ValidateCronHPA(ctx context.Context, platformClient platforminternalclient.PlatformInterface, cronHPA *platform.CronHPA) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMeta(&cronHPA.ObjectMeta, false, ValidateName, field.NewPath("metadata"))
+	allErrs = append(allErrs, validation.ValidateCluster(ctx, platformClient, cronHPA.Spec.ClusterName)...)
 
 	if len(cronHPA.Spec.ClusterName) == 0 {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "clusterName"), "must specify a cluster name"))
@@ -41,9 +46,9 @@ func ValidateCronHPA(cronHPA *platform.CronHPA) field.ErrorList {
 
 // ValidateCronHPAUpdate tests if required fields in the namespace set are
 // set during an update.
-func ValidateCronHPAUpdate(new *platform.CronHPA, old *platform.CronHPA) field.ErrorList {
+func ValidateCronHPAUpdate(ctx context.Context, platformClient platforminternalclient.PlatformInterface, new *platform.CronHPA, old *platform.CronHPA) field.ErrorList {
 	allErrs := apiMachineryValidation.ValidateObjectMetaUpdate(&new.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
-	allErrs = append(allErrs, ValidateCronHPA(new)...)
+	allErrs = append(allErrs, ValidateCronHPA(ctx, platformClient, new)...)
 
 	if new.Spec.ClusterName != old.Spec.ClusterName {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "clusterName"), new.Spec.ClusterName, "disallowed change the cluster name"))

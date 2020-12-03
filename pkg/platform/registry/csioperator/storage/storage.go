@@ -20,9 +20,11 @@ package storage
 
 import (
 	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	"tkestack.io/tke/pkg/platform/registry/csioperator"
 	"tkestack.io/tke/pkg/platform/util"
@@ -44,8 +46,8 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against LogCollector.
-func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername string) *Storage {
-	strategy := csioperator.NewStrategy()
+func NewStorage(optsGetter genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface, privilegedUsername string) *Storage {
+	strategy := csioperator.NewStrategy(platformClient)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &platform.CSIOperator{} },
 		NewListFunc:              func() runtime.Object { return &platform.CSIOperatorList{} },
