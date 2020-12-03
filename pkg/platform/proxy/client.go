@@ -82,30 +82,22 @@ func ClientSet(ctx context.Context, platformClient platforminternalclient.Platfo
 	}
 
 	config := &rest.Config{}
-	//if cluster.AuthzWebhookEnabled() {
-	//	clientCertData, clientKeyData, err := getOrCreateClientCert(ctx, clusterWrapper.ClusterCredential)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	config, err = clusterWrapper.RESTConfigForClientX509(config, clientCertData, clientKeyData)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//} else {
-	//	config, err = clusterWrapper.RESTConfig(config)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//}
-
-	//转发给api-server的请求，都需要使用当前用户的证书去访问，如果没有证书，则生成证书
-	clientCertData, clientKeyData, err := getOrCreateClientCert(ctx, clusterWrapper)
-	if err != nil {
-		return nil, err
-	}
-	config, err = clusterWrapper.RESTConfigForClientX509(config, clientCertData, clientKeyData)
-	if err != nil {
-		return nil, err
+	uin := filter.UinFrom(ctx)
+	if uin != "" {
+		//转发给api-server的请求，都需要使用当前用户的证书去访问，如果没有证书，则生成证书
+		clientCertData, clientKeyData, err := getOrCreateClientCert(ctx, clusterWrapper)
+		if err != nil {
+			return nil, err
+		}
+		config, err = clusterWrapper.RESTConfigForClientX509(config, clientCertData, clientKeyData)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		config, err = clusterWrapper.RESTConfig(config)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return kubernetes.NewForConfig(config)
