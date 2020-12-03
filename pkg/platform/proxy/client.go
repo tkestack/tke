@@ -147,6 +147,9 @@ func getOrCreateClientCert(ctx context.Context, clusterWrapper *types.Cluster) (
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        uin,
 					ClusterName: clusterName,
+					Labels: map[string]string{
+						"rbac.cert": "cert",
+					},
 				},
 				Data: map[string]string{
 					"CommonName":  uin,
