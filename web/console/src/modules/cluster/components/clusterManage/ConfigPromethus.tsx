@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Space, Form, InputNumber, Button, Checkbox, Input } from 'antd';
 import { enablePromethus, EnablePromethusParams } from '@/src/webApi/promethus';
 import { RootProps } from '../ClusterApp';
@@ -9,7 +9,7 @@ type LocalConfigType = Omit<EnablePromethusParams, 'clusterName'>;
 export function ConfigPromethus({ route, actions }: RootProps) {
   const inputStyle = { width: '300px' };
 
-  const initialConfig: LocalConfigType = {
+  const initialConfig = (): LocalConfigType => ({
     resources: {
       limits: {
         cpu: 4,
@@ -23,6 +23,15 @@ export function ConfigPromethus({ route, actions }: RootProps) {
     runOnMaster: false,
     notifyWebhook: '',
     alertRepeatInterval: 20
+  });
+
+  const [config, setConfig] = useState(initialConfig);
+
+  const limitValidate = (type: 'cpu' | 'memory') => () => {
+    const {
+      resources: { limits, requests }
+    } = config;
+    return requests[type] > limits[type] ? Promise.reject(`${type}预留不能超过限制`) : Promise.resolve();
   };
 
   async function submit(values) {
@@ -52,38 +61,39 @@ export function ConfigPromethus({ route, actions }: RootProps) {
         labelCol={{ span: 3 }}
         size="middle"
         validateTrigger="onBlur"
-        initialValues={initialConfig}
+        initialValues={initialConfig()}
         onFinish={submit}
+        onValuesChange={(_, allConfig) => setConfig(allConfig)}
         id="promethusConfigForm"
       >
         <Form.Item label="Promethus CPU限制">
           <Space>
-            <Form.Item noStyle name={['resources', 'limits', 'cpu']} rules={[{ type: 'number', min: 0 }]}>
-              <InputNumber style={inputStyle} min={0} />
+            <Form.Item noStyle name={['resources', 'limits', 'cpu']} rules={[{ type: 'number', min: 0 }, {validator: limitValidate('cpu')}]}>
+              <InputNumber style={inputStyle} min={0} step={0.01} precision={2} />
             </Form.Item>
             核
           </Space>
         </Form.Item>
         <Form.Item label="Promethus CPU预留">
           <Space>
-            <Form.Item noStyle name={['resources', 'requests', 'cpu']} rules={[{ type: 'number', min: 0 }]}>
-              <InputNumber style={inputStyle} min={0} />
+            <Form.Item noStyle name={['resources', 'requests', 'cpu']} rules={[{ type: 'number', min: 0 }, {validator: limitValidate('cpu')}]}>
+              <InputNumber style={inputStyle} min={0} step={0.01} precision={2} />
             </Form.Item>
             核
           </Space>
         </Form.Item>
         <Form.Item label="Promethus 内存限制">
           <Space>
-            <Form.Item noStyle name={['resources', 'limits', 'memory']} rules={[{ type: 'number', min: 4 }]}>
-              <InputNumber style={inputStyle} min={4} />
+            <Form.Item noStyle name={['resources', 'limits', 'memory']} rules={[{ type: 'number', min: 4 }, {validator: limitValidate('memory')}]}>
+              <InputNumber style={inputStyle} min={4} precision={0} />
             </Form.Item>
             Mi
           </Space>
         </Form.Item>
         <Form.Item label="Promethus 内存预留">
           <Space>
-            <Form.Item noStyle name={['resources', 'requests', 'memory']} rules={[{ type: 'number', min: 4 }]}>
-              <InputNumber style={inputStyle} min={4} />
+            <Form.Item noStyle name={['resources', 'requests', 'memory']} rules={[{ type: 'number', min: 4 }, {validator: limitValidate('memory')}]}>
+              <InputNumber style={inputStyle} min={4} precision={0} />
             </Form.Item>
             Mi
           </Space>
@@ -102,7 +112,7 @@ export function ConfigPromethus({ route, actions }: RootProps) {
         <Form.Item label="重复告警的间隔">
           <Space>
             <Form.Item noStyle name={['alertRepeatInterval']} rules={[{ type: 'number', min: 0 }]}>
-              <InputNumber style={inputStyle} min={0} />
+              <InputNumber style={inputStyle} min={0} precision={0} />
             </Form.Item>
             m
           </Space>
