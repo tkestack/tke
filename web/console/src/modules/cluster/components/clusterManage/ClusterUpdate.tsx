@@ -98,15 +98,6 @@ export function ClusterUpdate({ route, actions }: RootProps) {
 
         <Form.Item
           valuePropName="checked"
-          name={['drainNodeBeforeUpgrade']}
-          label="驱逐节点"
-          extra="若选择升级前驱逐节点，该节点所有pod将在升级前被驱逐，此时节点如有pod使用emptyDir类卷会导致驱逐失败而影响升级流程"
-        >
-          <Checkbox>驱逐节点</Checkbox>
-        </Form.Item>
-
-        <Form.Item
-          valuePropName="checked"
           name={['autoMode']}
           label="自动升级Worker"
           extra="注意：启用自定升级Worker，在升级完Master后，将自动升级集群下所有Worker节点。"
@@ -115,17 +106,28 @@ export function ClusterUpdate({ route, actions }: RootProps) {
         </Form.Item>
 
         {showMaxPodUnready && (
-          <Form.Item
-            label="最大不可用Pod占比"
-            extra="注意如果节点过少，而设置比例过低，没有足够多的节点承载pod的迁移会导致升级卡死。如果业务对pod可用比例较高，请考虑选择升级前不驱逐节点。"
-          >
-            <Space>
-              <Form.Item name={['maxUnready']} noStyle rules={[{ type: 'number', required: true, min: 0, max: 100 }]}>
-                <InputNumber style={ItemStyle()} min={0} max={100} />
-              </Form.Item>
-              %
-            </Space>
-          </Form.Item>
+          <>
+            <Form.Item
+              valuePropName="checked"
+              name={['drainNodeBeforeUpgrade']}
+              label="驱逐节点"
+              extra="若选择升级前驱逐节点，该节点所有pod将在升级前被驱逐，此时节点如有pod使用emptyDir类卷会导致驱逐失败而影响升级流程"
+            >
+              <Checkbox>驱逐节点</Checkbox>
+            </Form.Item>
+
+            <Form.Item
+              label="最大不可用Pod占比"
+              extra="注意如果节点过少，而设置比例过低，没有足够多的节点承载pod的迁移会导致升级卡死。如果业务对pod可用比例较高，请考虑选择升级前不驱逐节点。"
+            >
+              <Space>
+                <Form.Item name={['maxUnready']} noStyle rules={[{ type: 'number', required: true, min: 0, max: 100 }]}>
+                  <InputNumber style={ItemStyle()} min={0} max={100} />
+                </Form.Item>
+                %
+              </Space>
+            </Form.Item>
+          </>
         )}
       </Form>
     </AntdLayout>

@@ -225,6 +225,9 @@ const restActions = {
         payload: podFilter
       });
 
+      // 清除分页信息
+      dispatch(resourceDetailActions.pod.resetPaging());
+
       // 根据筛选项，进行pod列表的查询，namespace、metadata.name等过滤条件
       dispatch(resourceDetailActions.pod.poll(podQuery.filter));
     };
