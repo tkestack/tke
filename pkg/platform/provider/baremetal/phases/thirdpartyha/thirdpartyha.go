@@ -20,6 +20,7 @@ package thirdpartyha
 
 import (
 	"fmt"
+	"strings"
 
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/ssh"
@@ -33,7 +34,7 @@ type Option struct {
 
 func Clear(s ssh.Interface, option *Option) {
 	for {
-		cmd := fmt.Sprintf("iptables -t nat -D OUTPUT  -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
+		cmd := fmt.Sprintf("iptables -w 30 -t nat -D OUTPUT -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
 			option.VIP, option.VPort)
 		_, err := s.CombinedOutput(cmd)
 		log.Info(fmt.Sprintf("delete iptables %s err:%s", cmd, err))
@@ -45,11 +46,11 @@ func Clear(s ssh.Interface, option *Option) {
 
 // Install solve request roll back problem by rediect request to local host
 func Install(s ssh.Interface, option *Option) error {
-	cmd := fmt.Sprintf("iptables -t nat -C OUTPUT  -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
+	cmd := fmt.Sprintf("iptables -w 30 -t nat -C OUTPUT -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
 		option.VIP, option.VPort)
 	_, err := s.CombinedOutput(cmd)
-	if err != nil { // redirect request to local port
-		cmd := fmt.Sprintf("iptables -t nat -I OUTPUT  -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
+	if err != nil && strings.Contains(err.Error(), "rule exist") { // redirect request to local port
+		cmd := fmt.Sprintf("iptables -w 30 -t nat -I OUTPUT -p tcp -d %s --dport %d -j REDIRECT --to-ports 6443",
 			option.VIP, option.VPort)
 		_, err = s.CombinedOutput(cmd)
 		if err != nil {
