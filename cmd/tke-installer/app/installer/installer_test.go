@@ -56,7 +56,7 @@ func TestTKE_validateCertAndKey(t *testing.T) {
 	err := tke.validateCertAndKey(
 		pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: cert.Raw}),
 		pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}),
-		[]string{"console.tke.com", "registry.tke.com", "*.registry.tke.com"},
+		"console.tke.com",
 	)
 	assert.True(t, err == nil)
 }
