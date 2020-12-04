@@ -280,8 +280,6 @@ func (p *DelegateProvider) OnUpdate(ctx context.Context, cluster *v1.Cluster) er
 	if nextConditionType == ConditionTypeDone {
 		cluster.Status.Phase = platformv1.ClusterRunning
 		if err := p.OnRunning(ctx, cluster); err != nil {
-			cluster.Spec.ScalingMachines = nil
-			log.FromContext(ctx).Info("zzzzzzzzzzzzzzzzzzzzzzzz")
 			return fmt.Errorf("%s.OnRunning error: %w", p.Name(), err)
 		}
 	} else {
