@@ -88,8 +88,6 @@ const fetchPodActions = generateFetcherActionCreator({
       isNeedSpecific: false,
       isContinue: true
     });
-    // 原因为 Evicted的pod没有必要再进行展示，直接进行过滤
-    records = records.filter(item => item.status.reason !== 'Evicted');
 
     dispatch(resourcePodActions.changeContinueToken(continueToken));
 

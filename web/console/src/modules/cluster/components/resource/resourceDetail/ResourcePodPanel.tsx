@@ -404,6 +404,16 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
       });
     }
 
+    function getPodStatus(pod) {
+      let result = pod.status.phase;
+      if (pod.status.phase === 'Running' && pod.metadata.deletionTimestamp) {
+        result = <Text theme="warning">Terminating</Text>;
+      }
+      if (pod.status.reason) {
+        result = <>{pod.status.phase}<Text theme="warning">({pod.status.reason})</Text></>
+      }
+      return result;
+    }
     return (
       <div>
         <span
@@ -412,7 +422,7 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
             'text-danger': isStatusOK && !isConditionOK
           })}
         >
-          {pod.status.phase}
+          {getPodStatus.call(this, pod)}
         </span>
         {(!isStatusOK || !isConditionOK) && pod.status.conditions && (
           <Bubble
