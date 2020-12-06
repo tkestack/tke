@@ -39,7 +39,6 @@ export class EditResource extends React.Component<Props, State> {
     const theSpec = state.resource.properties.spec;
     if (theSpec.pick === 'webhook') {
       const headers = theSpec.properties.webhook.properties.headers;
-      // let headers = state.resource.properties.spec.properties.webhook.properties.headers;
       if (headers && headers.value) {
         let headerArr = [];
         Object.keys(headers.value).forEach(key => {
@@ -169,15 +168,19 @@ export class EditResource extends React.Component<Props, State> {
     }
 
     // 将headers字符串转换为对象
-    if (json.spec && json.spec.webhook && json.spec.webhook.headers) {
-      let headersObj = {};
-      json.spec.webhook.headers.split(';').forEach(headerStr => {
-        if (headerStr) {
-          let headerArr = headerStr.split(':');
-          headersObj[headerArr[0]] = headerArr[1];
-        }
-      });
-      json.spec.webhook.headers = headersObj;
+    if (json.spec && json.spec.webhook) {
+      if (json.spec.webhook.headers) {
+        let headersObj = {};
+        json.spec.webhook.headers.split(';').forEach(headerStr => {
+          if (headerStr) {
+            let headerArr = headerStr.split(':');
+            headersObj[headerArr[0]] = headerArr[1];
+          }
+        });
+        json.spec.webhook.headers = headersObj;
+      }
+      json.spec.text = Object.assign({}, json.spec.webhook);
+      json.spec.webhook = undefined;
     }
 
     let jsonData = JSON.stringify(json);
