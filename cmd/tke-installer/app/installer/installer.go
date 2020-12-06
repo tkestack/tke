@@ -35,8 +35,6 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/util/validation"
-
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -733,16 +731,9 @@ func (t *TKE) validateConfig(config types.Config) *apierrors.StatusError {
 		}
 	}
 
-	var dnsNames []string
-	if config.Gateway != nil && config.Gateway.Domain != "" {
-		dnsNames = append(dnsNames, config.Gateway.Domain)
-	}
-	if config.Registry.TKERegistry != nil {
-		dnsNames = append(dnsNames, config.Registry.TKERegistry.Domain, "*."+config.Registry.TKERegistry.Domain)
-	}
 	if config.Gateway != nil && config.Gateway.Cert.ThirdPartyCert != nil {
 		statusError := t.validateCertAndKey(config.Gateway.Cert.ThirdPartyCert.Certificate,
-			config.Gateway.Cert.ThirdPartyCert.PrivateKey, dnsNames)
+			config.Gateway.Cert.ThirdPartyCert.PrivateKey, config.Gateway.Domain)
 		if statusError != nil {
 			return statusError
 		}
@@ -751,36 +742,27 @@ func (t *TKE) validateConfig(config types.Config) *apierrors.StatusError {
 	return nil
 }
 
-func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsNames []string) *apierrors.StatusError {
+func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsName string) *apierrors.StatusError {
 	if (certificate != nil && privateKey == nil) || (certificate == nil && privateKey != nil) {
 		return apierrors.NewBadRequest("certificate and privateKey must offer together")
 	}
 
 	if certificate != nil {
-		cert, err := tls.X509KeyPair(certificate, privateKey)
+		_, err := tls.X509KeyPair(certificate, privateKey)
 		if err != nil {
 			return apierrors.NewBadRequest(err.Error())
 		}
-		if len(cert.Certificate) != 1 {
-			return apierrors.NewBadRequest("certificate must only has one cert")
-		}
+
 		certs1, err := certutil.ParseCertsPEM(certificate)
 		if err != nil {
 			return apierrors.NewBadRequest(err.Error())
 		}
-		for _, one := range dnsNames {
-			if !matchDNSName(certs1[0].DNSNames, one) {
-				return apierrors.NewBadRequest(fmt.Sprintf("certificate DNSNames must contains %v", one))
-			}
+		err = certs1[0].VerifyHostname(dnsName)
+		if err != nil {
+			return apierrors.NewBadRequest(err.Error())
 		}
 	}
-
 	return nil
-}
-
-func matchDNSName(certDNSNames []string, dnsName string) bool {
-	dotIdx := strings.Index(dnsName, ".")
-	return funk.Contains(certDNSNames, dnsName) || validation.IsValidDNSName(dnsName) && dotIdx > -1 && funk.Contains(certDNSNames, "*"+dnsName[dotIdx:])
 }
 
 // validateResource validate the cpu and memory of cluster machines whether meets the requirements.
@@ -1521,8 +1503,8 @@ func (t *TKE) installTKEGateway(ctx context.Context) error {
 		option["TenantID"] = t.Para.Config.Auth.TKEAuth.TenantID
 	}
 	if t.Para.Config.Gateway.Cert.ThirdPartyCert != nil {
-		option["ServerCrt"] = t.Para.Config.Gateway.Cert.ThirdPartyCert.Certificate
-		option["ServerKey"] = t.Para.Config.Gateway.Cert.ThirdPartyCert.PrivateKey
+		option["ServerCrt"] = string(t.Para.Config.Gateway.Cert.ThirdPartyCert.Certificate)
+		option["ServerKey"] = string(t.Para.Config.Gateway.Cert.ThirdPartyCert.PrivateKey)
 	}
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-gateway/*.yaml", option)
 	if err != nil {
