@@ -81,7 +81,7 @@ const fetchPodActions = generateFetcherActionCreator({
     }
 
     k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
-    let { records, continueToken } = await WebAPI.fetchResourceList(podQuery, {
+    const { records, continueToken } = await WebAPI.fetchResourceList(podQuery, {
       resourceInfo: podResourceInfo,
       isClearData,
       k8sQueryObj,
@@ -223,8 +223,13 @@ const restActions = {
         payload: podFilter
       });
 
-      // 清除分页信息
-      dispatch(resourceDetailActions.pod.resetPaging());
+      if (podFilter.podName) {
+        // 清除分页信息
+        dispatch(resourceDetailActions.pod.changePaging({ pageIndex: 1, pageSize: 2048 }));
+      } else {
+        // 清除分页信息
+        dispatch(resourceDetailActions.pod.resetPaging());
+      }
 
       // 根据筛选项，进行pod列表的查询，namespace、metadata.name等过滤条件
       dispatch(resourceDetailActions.pod.poll(podQuery.filter));
