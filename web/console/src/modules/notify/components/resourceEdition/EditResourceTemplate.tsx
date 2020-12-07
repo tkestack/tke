@@ -6,6 +6,7 @@ import { onChange } from '../../schema/schemaUtil';
 import { Select } from '@tencent/tea-component';
 import { EditResource } from './EditResource';
 import { templateSchema } from '../../schema/templateSchema';
+import { router } from '../../router';
 
 export class EditResourceTemplate extends EditResource {
   componentDidMount() {
@@ -18,13 +19,13 @@ export class EditResourceTemplate extends EditResource {
   renderForm() {
     let resource = templateSchema;
     resource = this.state.resource;
-    let namespaceOptions = this.props.channel.list.data.records.map(c => ({
+    const namespaceOptions = this.props.channel.list.data.records.map(c => ({
       value: c.metadata.name,
       text: `${c.spec.displayName}(${c.metadata.name})`
     }));
 
     if (resource.properties.metadata.properties.namespace.value) {
-      let channel = this.props.channel.list.data.records.find(
+      const channel = this.props.channel.list.data.records.find(
         c => c.metadata.name === resource.properties.metadata.properties.namespace.value
       );
       let type = 'text';
@@ -44,6 +45,11 @@ export class EditResourceTemplate extends EditResource {
       }
       resource.properties.spec.pick = type;
     }
+
+    // 更新模式下disbale渠道
+    const { route } = this.props;
+    const { mode } = router.resolve(route);
+
     return (
       <Form>
         <Form.Item label={t('名称')} required>
@@ -57,6 +63,7 @@ export class EditResourceTemplate extends EditResource {
 
         <Form.Item label={t('渠道')} required>
           <Select
+            disabled={mode === 'update'}
             size="l"
             placeholder={t('请选择渠道')}
             options={namespaceOptions}
