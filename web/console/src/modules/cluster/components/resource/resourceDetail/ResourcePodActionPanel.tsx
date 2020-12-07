@@ -196,7 +196,7 @@ export class ResourcePodActionPanel extends React.Component<RootProps, ResourceP
       {
         type: 'input',
         key: 'ip',
-        name: t('ip地址')
+        name: t('实例IP')
       }
     ].concat(
       isInNodeManage
