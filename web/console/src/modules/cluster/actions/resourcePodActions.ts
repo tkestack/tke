@@ -224,11 +224,10 @@ const restActions = {
       });
 
       if (podFilter.podName) {
-        // 清除分页信息
+        // 有podname，后台会启用模糊查询，导致只能查到原本当前页的内容
         dispatch(resourceDetailActions.pod.changePaging({ pageIndex: 1, pageSize: 2048 }));
       } else {
-        // 清除分页信息
-        dispatch(resourceDetailActions.pod.resetPaging());
+        dispatch(resourceDetailActions.pod.changePaging({ pageIndex: 1, pageSize: 20 }));
       }
 
       // 根据筛选项，进行pod列表的查询，namespace、metadata.name等过滤条件
