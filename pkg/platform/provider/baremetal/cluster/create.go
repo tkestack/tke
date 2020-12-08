@@ -48,6 +48,8 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/addons/cniplugins"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/authzwebhook"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/containerd"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/critools"
 	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/docker"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy"
@@ -502,6 +504,55 @@ func (p *Provider) EnsureNvidiaContainerRuntime(ctx context.Context, c *v1.Clust
 	return nil
 }
 
+func (p *Provider) EnsureContainerRuntime(ctx context.Context, c *v1.Cluster) error {
+	if err := p.EnsureContainerd(ctx, c); err != nil {
+		return err
+	}
+
+	return p.EnsureCriTools(ctx, c)
+}
+
+func (p *Provider) EnsureCriTools(ctx context.Context, c *v1.Cluster) error {
+	option := &critools.Option{}
+	for _, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		err = critools.Install(machineSSH, option)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureContainerd(ctx context.Context, c *v1.Cluster) error {
+	insecureRegistries := []string{p.config.Registry.Domain}
+	if p.config.Registry.NeedSetHosts() && c.Spec.TenantID != "" {
+		insecureRegistries = append(insecureRegistries, c.Spec.TenantID+"."+p.config.Registry.Domain)
+	}
+	option := &containerd.Option{
+		InsecureRegistries: insecureRegistries,
+		SandboxImage:       images.Get().Pause.FullName(),
+	}
+	for _, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		option.IsGPU = gpu.IsEnable(machine.Labels)
+		err = containerd.Install(machineSSH, option)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
 func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 	machines := map[bool][]platformv1.ClusterMachine{
 		true:  c.Spec.ScalingMachines,

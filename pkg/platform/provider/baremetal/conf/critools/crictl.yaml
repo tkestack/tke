@@ -1,0 +1,4 @@
+runtime-endpoint: unix:///var/run/cri-runtime.sock
+image-endpoint: unix:///var/run/cri-runtime.sock
+timeout: 10
+debug: false
