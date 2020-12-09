@@ -87,7 +87,7 @@ data:
 
     [etcd]
     servers = [
-      "https://etcd:2379"
+      "https://etcd.kube-system:2379"
     ]
     cafile = "/app/certs/etcd-ca.crt"
     certfile = "/app/certs/etcd.crt"
