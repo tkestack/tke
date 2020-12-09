@@ -126,7 +126,7 @@ NAME         STATUS   ROLES    AGE     VERSION
 10.0.0.9     Ready    master   4h33m   v1.18.3
 root@VM-0-127-ubuntu:~#
 ```
-**Note**: If you want to repeat the case 1 to add new node to cluster control plane after scale down , you have to run `clean.sh` on this node at first so that clean environment 
+**Note**: If you want to repeat the case 1 to add new node to cluster control plane after scale down , you have to run `clean.sh` and `kubeadm reset -f` on this node at first so that clean environment 
 ##### 
 
 ## PR
