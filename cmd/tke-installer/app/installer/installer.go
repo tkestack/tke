@@ -1573,10 +1573,7 @@ func (t *TKE) installTKELogagentController(ctx context.Context) error {
 }
 
 func (t *TKE) installETCD(ctx context.Context) error {
-	return apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/etcd/*.yaml",
-		map[string]interface{}{
-			"Servers": t.servers,
-		})
+	return apiclient.CreateResourceWithFile(ctx, t.globalClient, "manifests/etcd/*.yaml", nil)
 }
 
 func (t *TKE) installTKEAuthAPI(ctx context.Context) error {
