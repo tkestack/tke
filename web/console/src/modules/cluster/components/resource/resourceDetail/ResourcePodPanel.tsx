@@ -1,7 +1,6 @@
 import * as classnames from 'classnames';
 import * as React from 'react';
 import { connect } from 'react-redux';
-
 import { Bubble, Icon, TableColumn, Text } from '@tea/component';
 import { autotip } from '@tea/component/table/addons/autotip';
 import { expandable } from '@tea/component/table/addons/expandable';
@@ -22,6 +21,8 @@ import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { IsInNodeManageDetail } from './ResourceDetail';
 import { PodTabel } from './ResourcePodTable';
+const moment = require('moment');
+moment.locale('zh-CN');
 
 /** 获取containerId，去掉前缀 docker:// */
 export function reduceContainerId(containerStatus: any[], containerName: string) {
@@ -84,7 +85,6 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
   constructor(props, context) {
     super(props, context);
     this.state = {
-      // expanded: [],
       expandedKeys: []
     };
   }
@@ -181,6 +181,17 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
         render: x => this._renderPodStatus(x)
       },
       {
+        key: 'image',
+        header: t('镜像'),
+        render: x => (
+          <ul>
+            {x.spec.containers.map(c => (
+              <li>{c.image}</li>
+            ))}
+          </ul>
+        )
+      },
+      {
         key: 'hostIP',
         header: t('实例所在节点IP'),
         width: '10%',
@@ -215,13 +226,12 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
         key: 'period',
         width: '10%',
         header: column => <HeadBubble autoflow={true} title={t('运行时间')} text={t('实例从启动至今的时间')} />,
-        render: x => this._getDays(x.status.startTime)
-      },
-      {
-        key: 'createTime',
-        header: t('创建时间'),
-        width: '10%',
-        render: x => this._getCreateTime(x.metadata.creationTimestamp)
+        // render: x => this._getDays(x.status.startTime)
+        render: x => (
+          <Bubble content={`创建时间：${moment(x.metadata.creationTimestamp).format('YYYY-MM-DD HH:mm:ss')}`}>
+            <Text>{this.runningTime(x.status.startTime)}</Text>
+          </Bubble>
+        )
       },
       {
         key: 'operation',
@@ -410,7 +420,12 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
         result = <Text theme="warning">Terminating</Text>;
       }
       if (pod.status.reason) {
-        result = <>{pod.status.phase}<Text theme="warning">({pod.status.reason})</Text></>
+        result = (
+          <>
+            {pod.status.phase}
+            <Text theme="warning">({pod.status.reason})</Text>
+          </>
+        );
       }
       return result;
     }
@@ -506,6 +521,8 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
 
     return <Text>{`${first} ${second}`}</Text>;
   }
+
+  private runningTime = (startTime: string) => moment.duration(moment().diff(moment(startTime))).humanize(true);
 
   /** 运行时间 */
   private _getDays(startTime: string) {
