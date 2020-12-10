@@ -55,7 +55,7 @@ export interface ResourceDetailState {
   updateGrayTappFlow?: ResourceModifyWorkflow;
 
   /**tapp 灰度升级编辑项 */
-  editTappGrayUpdate?: TappGrayUpdateEditItem[];
+  editTappGrayUpdate?: TappGrayUpdateEditItem;
 
   /** 是否展示 登录弹框 */
   isShowLoginDialog?: boolean;
@@ -177,13 +177,13 @@ export interface RsEditJSONYaml {
 }
 export interface TappGrayUpdateEditItem {
   /** 实例名称 */
-  name: string;
+  // name: string;
 
-  generateName: string;
+  // generateName: string;
   /** 容器 */
   containers: {
     /**容器名称 */
-    name: string;
+    // name: string;
     /**容器镜像名称 */
     imageName: string;
     /**容器镜像版本 */
