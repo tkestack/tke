@@ -44,7 +44,7 @@ export const validateSecretActions = {
   _validateKeyName(keyName: string, secretData: SecretData[]) {
     let status = 0,
       message = '',
-      reg = /^[a-z]([-a-z0-9_\.]*[a-z0-9])?$/;
+      reg = /[-._a-zA-Z0-9]+/;
 
     if (!keyName) {
       status = 2;
