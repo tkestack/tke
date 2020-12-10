@@ -45,16 +45,21 @@ func (p *Provider) getKubeadmInitConfig(c *v1.Cluster) *kubeadm.InitConfig {
 	return config
 }
 
-func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, nodeName string) *kubeadmv1beta2.JoinConfiguration {
+func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubeadmv1beta2.JoinConfiguration {
 	apiServerEndpoint, err := c.HostForBootstrap()
 	if err != nil {
 		panic(err)
 	}
 
+	kubeletExtraArgs := p.getKubeletExtraArgs(c)
+	if _, ok := kubeletExtraArgs["node-ip"]; !ok {
+		kubeletExtraArgs["node-ip"] = machineIP
+	}
+
 	return &kubeadmv1beta2.JoinConfiguration{
 		NodeRegistration: kubeadmv1beta2.NodeRegistrationOptions{
-			Name:             nodeName,
-			KubeletExtraArgs: p.getKubeletExtraArgs(c),
+			Name:             machineIP,
+			KubeletExtraArgs: kubeletExtraArgs,
 		},
 		Discovery: kubeadmv1beta2.Discovery{
 			BootstrapToken: &kubeadmv1beta2.BootstrapTokenDiscovery{
@@ -73,6 +78,11 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, nodeName string) *kubeadm
 func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfiguration {
 	token, _ := kubeadmv1beta2.NewBootstrapTokenString(*c.ClusterCredential.BootstrapToken)
 
+	kubeletExtraArgs := p.getKubeletExtraArgs(c)
+	if _, ok := kubeletExtraArgs["node-ip"]; !ok {
+		kubeletExtraArgs["node-ip"] = c.Spec.Machines[0].IP
+	}
+
 	return &kubeadmv1beta2.InitConfiguration{
 		BootstrapTokens: []kubeadmv1beta2.BootstrapToken{
 			{
@@ -83,7 +93,7 @@ func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfi
 		},
 		NodeRegistration: kubeadmv1beta2.NodeRegistrationOptions{
 			Name:             c.Spec.Machines[0].IP,
-			KubeletExtraArgs: p.getKubeletExtraArgs(c),
+			KubeletExtraArgs: kubeletExtraArgs,
 		},
 		LocalAPIEndpoint: kubeadmv1beta2.APIEndpoint{
 			AdvertiseAddress: c.Spec.Machines[0].IP,
