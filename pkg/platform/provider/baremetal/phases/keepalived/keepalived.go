@@ -35,6 +35,7 @@ import (
 type Option struct {
 	IP              string
 	VIP             string
+	VRID            *int32
 	LoadBalance     bool
 	IPVS            bool
 	KubernetesSvcIP string
@@ -44,7 +45,13 @@ var svcPortChain = "KUBE-SVC-NPX46M4PTMTKRN6Y"
 
 // vrid gets vrid from last byte of vip and plus 1 to prevent from vip ends with zero,
 // bcs vrid ranges from 1 to 255. if vip ends with 255, then throw error.
-func vrid(vip string) (int, error) {
+func vrid(vip string, vrid *int32) (int, error) {
+	if vrid != nil {
+		if *vrid > 0 && *vrid < 256 {
+			return int(*vrid), nil
+		}
+	}
+
 	var lastbyte = net.ParseIP(vip).To16()[net.IPv6len-1]
 	if lastbyte >= 255 {
 		return 1, fmt.Errorf("unusual vip :%s", vip)
@@ -59,7 +66,7 @@ func Install(s ssh.Interface, option *Option) error {
 		return fmt.Errorf("can't get network interface by %s", option.IP)
 	}
 
-	vrid, err := vrid(option.VIP)
+	vrid, err := vrid(option.VIP, option.VRID)
 	if err != nil {
 		return err
 	}
