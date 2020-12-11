@@ -72,7 +72,7 @@ var components = Components{
 	Busybox:  containerregistry.Image{Name: "busybox", Tag: "1.31.1"},
 	InfluxDB: containerregistry.Image{Name: "influxdb", Tag: "1.7.9"},
 
-	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.18.3-2"},
+	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.18.3-3"},
 
 	TKEAuthAPI:               containerregistry.Image{Name: "tke-auth-api", Tag: Version},
 	TKEAuthController:        containerregistry.Image{Name: "tke-auth-controller", Tag: Version},
