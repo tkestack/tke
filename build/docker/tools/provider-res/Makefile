@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations under the License.
 
 IMAGE = provider-res
-VERSION = v1.18.3-1
+VERSION = v1.18.3-3
 REGISTRY_PREFIX ?= tkestack
 
 COMMON_SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
@@ -64,7 +64,7 @@ manifest.multiarch: per.build
 	#@rm -rf "$(WORK_DIR)"
 	@echo "===========> Pushing manifest $(REGISTRY_PREFIX)/$(IMAGE):$(VERSION) and then remove the local manifest list"
 	REGISTRY_PREFIX=$(REGISTRY_PREFIX) PLATFROMS="$(PLATFORMS)" IMAGE=$(IMAGE) VERSION=$(VERSION) \
-	  DOCKER_CLI_EXPERIMENTAL=enabled $(ROOT_DIR)/build/lib/create-manifest.sh 
+	  DOCKER_CLI_EXPERIMENTAL=enabled $(ROOT_DIR)/build/lib/create-manifest.sh
 
 ## help: Show this help info.
 .PHONY: help
