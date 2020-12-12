@@ -178,7 +178,7 @@ export class HistoryTablePanel extends React.Component<RootProps, State> {
               this.showYaml(app.manifest, [app.revision]);
             }}
           >
-            {t('参数')}
+            {t('查看参数')}
           </LinkButton>
         </React.Fragment>
       );
@@ -190,7 +190,7 @@ export class HistoryTablePanel extends React.Component<RootProps, State> {
             this.showYaml(app.manifest, [app.revision]);
           }}
         >
-          {t('参数')}
+          {t('查看参数')}
         </LinkButton>
         <LinkButton onClick={() => this._rollbackApp(app)}>{t('回滚')}</LinkButton>
       </React.Fragment>

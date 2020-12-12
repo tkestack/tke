@@ -134,7 +134,7 @@ const commonRouterConfig: RouterConfig[] = [
       // },
       {
         url: '/tkestack/registry/chart',
-        title: 'Helm模板',
+        title: '应用商店',
         watchModule: ConsoleModuleEnum.Registry
       },
       {
@@ -247,7 +247,7 @@ const businessCommonRouterConfig: RouterConfig[] = [
       // },
       {
         url: '/tkestack-project/registry/chart',
-        title: 'Helm模板',
+        title: '应用商店',
         watchModule: ConsoleModuleEnum.Registry
       },
       {

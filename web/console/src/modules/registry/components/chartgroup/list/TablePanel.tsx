@@ -137,7 +137,8 @@ export class TablePanel extends React.Component<RootProps, ChartUsageGuideDialog
           action={actions.chartGroup.list}
           rowDisabled={record => record.status['phase'] === 'Terminating'}
           emptyTips={emptyTips}
-          isNeedPagination={true}
+          isNeedPagination={false}
+          paginationProps={{ pageSizeOptions: [5, 10, 20, 50, 100] }}
           bodyClassName={'tc-15-table-panel tc-15-table-fixed-body'}
         />
         <ChartUsageGuideDialog

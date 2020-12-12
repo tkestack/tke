@@ -39,7 +39,7 @@ export class AppCenter extends React.Component<RootProps, {}> {
           <Layout>
             <Body>
               <Content>
-                <Content.Header title={t('Helm模板')} />
+                <Content.Header title={t('应用商店')} />
                 <Content.Body>
                   <Tabs
                     ceiling
