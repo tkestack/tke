@@ -108,7 +108,7 @@ func Install(s ssh.Interface, option *Option) error {
 // clearLoadbalanceRuleInIpvsMode delete all ipvs mode relative iptables rules
 func clearLoadbalanceRuleInIpvsMode(s ssh.Interface, vip string, chain string, kubernetesSvcIP string) {
 	for {
-		cmd := fmt.Sprintf("iptables -t nat -D %s -d %s -p tcp --dport 6443 -j DNAT --to-destination %s:443", chain, vip, kubernetesSvcIP)
+		cmd := fmt.Sprintf("iptables -w 30 -t nat -D %s -d %s -p tcp --dport 6443 -j DNAT --to-destination %s:443", chain, vip, kubernetesSvcIP)
 		_, err := s.CombinedOutput(cmd)
 		log.Info(fmt.Sprintf("delete iptables %s err:%s", cmd, err))
 		if err != nil {
@@ -117,7 +117,7 @@ func clearLoadbalanceRuleInIpvsMode(s ssh.Interface, vip string, chain string, k
 	}
 
 	for {
-		cmd := fmt.Sprintf("iptables -t nat -D %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ", chain, vip)
+		cmd := fmt.Sprintf("iptables -w 30 -t nat -D %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ", chain, vip)
 		_, err := s.CombinedOutput(cmd)
 		log.Info(fmt.Sprintf("delete iptables %s err:%s", cmd, err))
 		if err != nil {
@@ -129,7 +129,7 @@ func clearLoadbalanceRuleInIpvsMode(s ssh.Interface, vip string, chain string, k
 // clearLoadbalanceRuleInIptablesMode delete all iptables mode relative iptables rules
 func clearLoadbalanceRuleInIptablesMode(s ssh.Interface, vip string, chain string) {
 	for {
-		cmd := fmt.Sprintf("iptables -t nat -D %s -d %s -p tcp --dport 6443 -j %s", chain, vip, svcPortChain)
+		cmd := fmt.Sprintf("iptables -w 30 -t nat -D %s -d %s -p tcp --dport 6443 -j %s", chain, vip, svcPortChain)
 		_, err := s.CombinedOutput(cmd)
 		log.Info(fmt.Sprintf("delete iptables %s err:%s", cmd, err))
 		if err != nil {
@@ -138,7 +138,7 @@ func clearLoadbalanceRuleInIptablesMode(s ssh.Interface, vip string, chain strin
 	}
 
 	for {
-		cmd := fmt.Sprintf("iptables -t nat -D %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ", chain, vip)
+		cmd := fmt.Sprintf("iptables -w 30 -t nat -D %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ", chain, vip)
 		_, err := s.CombinedOutput(cmd)
 		log.Info(fmt.Sprintf("delete iptables %s err:%s", cmd, err))
 		if err != nil {
