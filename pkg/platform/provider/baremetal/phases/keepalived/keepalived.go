@@ -96,7 +96,7 @@ func Install(s ssh.Interface, option *Option) error {
 	}
 
 	if option.LoadBalance {
-		err := installLoadBalance(s, option)
+		err := installLoadBalanceIfKubeProxyRunning(s, option)
 		if err != nil {
 			return errors.Wrap(err, option.IP)
 		}
@@ -108,7 +108,7 @@ func Install(s ssh.Interface, option *Option) error {
 // clearLoadbalanceRuleInIpvsMode delete all ipvs mode relative iptables rules
 func clearLoadbalanceRuleInIpvsMode(s ssh.Interface, vip string, chain string, kubernetesSvcIP string) {
 	for {
-		cmd := fmt.Sprintf("iptables -t nat -D %s -d %s -p tcp --dport 6443 -j DNAT --to-destination %s:443", chain, vip, kubernetesSvcIP)
+		cmd := fmt.Sprintf("iptables -w 30 -t nat -D %s -d %s -p tcp --dport 6443 -j DNAT --to-destination %s:443", chain, vip, kubernetesSvcIP)
 		_, err := s.CombinedOutput(cmd)
 		log.Info(fmt.Sprintf("delete iptables %s err:%s", cmd, err))
 		if err != nil {
@@ -117,7 +117,7 @@ func clearLoadbalanceRuleInIpvsMode(s ssh.Interface, vip string, chain string, k
 	}
 
 	for {
-		cmd := fmt.Sprintf("iptables -t nat -D %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ", chain, vip)
+		cmd := fmt.Sprintf("iptables -w 30 -t nat -D %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ", chain, vip)
 		_, err := s.CombinedOutput(cmd)
 		log.Info(fmt.Sprintf("delete iptables %s err:%s", cmd, err))
 		if err != nil {
@@ -129,7 +129,7 @@ func clearLoadbalanceRuleInIpvsMode(s ssh.Interface, vip string, chain string, k
 // clearLoadbalanceRuleInIptablesMode delete all iptables mode relative iptables rules
 func clearLoadbalanceRuleInIptablesMode(s ssh.Interface, vip string, chain string) {
 	for {
-		cmd := fmt.Sprintf("iptables -t nat -D %s -d %s -p tcp --dport 6443 -j %s", chain, vip, svcPortChain)
+		cmd := fmt.Sprintf("iptables -w 30 -t nat -D %s -d %s -p tcp --dport 6443 -j %s", chain, vip, svcPortChain)
 		_, err := s.CombinedOutput(cmd)
 		log.Info(fmt.Sprintf("delete iptables %s err:%s", cmd, err))
 		if err != nil {
@@ -138,7 +138,7 @@ func clearLoadbalanceRuleInIptablesMode(s ssh.Interface, vip string, chain strin
 	}
 
 	for {
-		cmd := fmt.Sprintf("iptables -t nat -D %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ", chain, vip)
+		cmd := fmt.Sprintf("iptables -w 30 -t nat -D %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ", chain, vip)
 		_, err := s.CombinedOutput(cmd)
 		log.Info(fmt.Sprintf("delete iptables %s err:%s", cmd, err))
 		if err != nil {
@@ -155,14 +155,24 @@ func ClearLoadBalance(s ssh.Interface, vip string, kubernetesSvcIP string) {
 	}
 }
 
-// installLoadBalanceInIpvsMode dnat vip:vport to kubernetes svc cluster ip:port and mark the request.
-// For more information, see the proposal: https://github.com/tkestack/tke/blob/master/docs/design-proposals/controlplane-ha-loadbalance.md
-func installLoadBalanceInIpvsMode(s ssh.Interface, option *Option, chain string) error {
-	cmd := fmt.Sprintf("iptables -t nat -C %s -d %s -p tcp --dport 6443 -j DNAT --to-destination %s:443",
+// installLoadBalanceInIpvsModeIfKubeProxyRunning dnat vip:vport to kubernetes svc cluster ip:port and mark the request.
+// For more information, see the proposal: https://github.com/tkestack/tke/blob/release-1.3/docs/design-proposals/controlplane-ha-loadbalance.md
+func installLoadBalanceInIpvsModeIfKubeProxyRunning(s ssh.Interface, option *Option, chain string) error {
+	cmd := fmt.Sprintf("ip a | grep %s", option.KubernetesSvcIP)
+	stdout, _, exit, err := s.Exec(cmd)
+	if err != nil || exit != 0 {
+		return fmt.Errorf("exec %q failed:exit %d:error %s:stdout %s", cmd, exit, err, stdout)
+	}
+
+	if !strings.Contains(stdout, option.KubernetesSvcIP) {
+		return nil
+	}
+
+	cmd = fmt.Sprintf("iptables -w 30 -t nat -C %s -d %s -p tcp --dport 6443 -j DNAT --to-destination %s:443",
 		chain, option.VIP, option.KubernetesSvcIP)
-	_, err := s.CombinedOutput(cmd)
-	if err != nil {
-		cmd := fmt.Sprintf("iptables -t nat -I %s -d %s -p tcp --dport 6443 -j DNAT --to-destination %s:443",
+	_, err = s.CombinedOutput(cmd)
+	if err != nil && strings.Contains(err.Error(), "rule exist") {
+		cmd := fmt.Sprintf("iptables -w 30 -t nat -I %s -d %s -p tcp --dport 6443 -j DNAT --to-destination %s:443",
 			chain, option.VIP, option.KubernetesSvcIP)
 		_, err = s.CombinedOutput(cmd)
 		if err != nil {
@@ -170,11 +180,11 @@ func installLoadBalanceInIpvsMode(s ssh.Interface, option *Option, chain string)
 		}
 	}
 
-	cmd = fmt.Sprintf("iptables -t nat -C %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ",
+	cmd = fmt.Sprintf("iptables -w 30 -t nat -C %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ",
 		chain, option.VIP)
 	_, err = s.CombinedOutput(cmd)
-	if err != nil {
-		cmd = fmt.Sprintf("iptables -t nat -I %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ",
+	if err != nil && strings.Contains(err.Error(), "rule exist") {
+		cmd = fmt.Sprintf("iptables -w 30 -t nat -I %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ",
 			chain, option.VIP)
 		_, err = s.CombinedOutput(cmd)
 		if err != nil {
@@ -186,20 +196,23 @@ func installLoadBalanceInIpvsMode(s ssh.Interface, option *Option, chain string)
 	return nil
 }
 
-// installLoadBalanceInIptableMode dnat vip:vport to kubernetes service chain and mark the request.
+// installLoadBalanceInIptableModeIfKubeProxyRunning dnat vip:vport to kubernetes service chain and mark the request.
 // kubernetes service chain generated by service name: kubernetes and port: 443 using hash alg
-// For more information, see the proposal: https://github.com/tkestack/tke/blob/master/docs/design-proposals/controlplane-ha-loadbalance.md
-func installLoadBalanceInIptableMode(s ssh.Interface, option *Option, chain string) error {
-	cmd := fmt.Sprintf("iptables -t nat -nxL %s", svcPortChain)
+// For more information, see the proposal: https://github.com/tkestack/tke/blob/release-1.3/docs/design-proposals/controlplane-ha-loadbalance.md
+func installLoadBalanceInIptableModeIfKubeProxyRunning(s ssh.Interface, option *Option, chain string) error {
+	cmd := fmt.Sprintf("iptables -w 30 -t nat -nxL %s", svcPortChain)
 	stdout, _, exit, err := s.Exec(cmd)
-	// make sure svcPortChain name exists in iptables
-	if err != nil || exit != 0 || !strings.Contains(stdout, svcPortChain) {
+	if err != nil || exit != 0 {
 		return fmt.Errorf("exec %q failed:exit %d:error %s:stdout %s", cmd, exit, err, stdout)
 	}
 
-	cmd = fmt.Sprintf("iptables -t nat -C %s -d %s -p tcp --dport 6443 -j %s", chain, option.VIP, svcPortChain)
+	if !strings.Contains(stdout, svcPortChain) {
+		return nil
+	}
+
+	cmd = fmt.Sprintf("iptables -w 30 -t nat -C %s -d %s -p tcp --dport 6443 -j %s", chain, option.VIP, svcPortChain)
 	_, err = s.CombinedOutput(cmd)
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), "rule exist") {
 		cmd = fmt.Sprintf("iptables -t nat -I %s -d %s -p tcp --dport 6443 -j %s", chain, option.VIP, svcPortChain)
 		_, err = s.CombinedOutput(cmd)
 		if err != nil {
@@ -207,10 +220,10 @@ func installLoadBalanceInIptableMode(s ssh.Interface, option *Option, chain stri
 		}
 	}
 
-	cmd = fmt.Sprintf("iptables -t nat -C %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ", chain, option.VIP)
+	cmd = fmt.Sprintf("iptables -w 30 -t nat -C %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ", chain, option.VIP)
 	_, err = s.CombinedOutput(cmd)
-	if err != nil {
-		cmd = fmt.Sprintf("iptables -t nat -I %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ", chain, option.VIP)
+	if err != nil && strings.Contains(err.Error(), "rule exist") {
+		cmd = fmt.Sprintf("iptables -w 30 -t nat -I %s -d %s -p tcp --dport 6443 -j KUBE-MARK-MASQ", chain, option.VIP)
 		_, err = s.CombinedOutput(cmd)
 		if err != nil {
 			return fmt.Errorf("run cmd(%s) error:%s", cmd, err)
@@ -221,16 +234,16 @@ func installLoadBalanceInIptableMode(s ssh.Interface, option *Option, chain stri
 	return nil
 }
 
-func installLoadBalance(s ssh.Interface, option *Option) error {
+func installLoadBalanceIfKubeProxyRunning(s ssh.Interface, option *Option) error {
 	chains := []string{"PREROUTING", "OUTPUT"}
 	for _, chain := range chains {
 		if option.IPVS {
-			err := installLoadBalanceInIpvsMode(s, option, chain)
+			err := installLoadBalanceInIpvsModeIfKubeProxyRunning(s, option, chain)
 			if err != nil {
 				return err
 			}
 		} else {
-			err := installLoadBalanceInIptableMode(s, option, chain)
+			err := installLoadBalanceInIptableModeIfKubeProxyRunning(s, option, chain)
 			if err != nil {
 				return err
 			}
