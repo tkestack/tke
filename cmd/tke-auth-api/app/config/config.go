@@ -26,7 +26,6 @@ import (
 	"regexp"
 	"strings"
 	"time"
-	"tkestack.io/tke/pkg/apiserver/util"
 
 	"github.com/casbin/casbin/v2"
 	casbinlog "github.com/casbin/casbin/v2/log"
@@ -62,6 +61,7 @@ import (
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	storageoptions "tkestack.io/tke/pkg/apiserver/storage/options"
+	"tkestack.io/tke/pkg/apiserver/util"
 	"tkestack.io/tke/pkg/auth/apiserver"
 	"tkestack.io/tke/pkg/auth/authentication/authenticator"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
@@ -101,7 +101,7 @@ type Config struct {
 // on a given TKE auth command line or configuration file option.
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
 	genericAPIServerConfig := genericapiserver.NewConfig(authapi.Codecs)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(apiserver.IgnoreAuthPathPrefixes(), apiserver.IgnoreAuthzPathPrefixes())
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(apiserver.IgnoreAuthPathPrefixes(), apiserver.IgnoreAuthzPathPrefixes(), nil)
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 
 	genericAPIServerConfig.EnableIndex = false

@@ -21,21 +21,24 @@ package filter
 import (
 	"fmt"
 	"net/http"
+	"net/http/httputil"
 	"strings"
+	"tkestack.io/tke/pkg/platform/registry/cluster"
 	"unicode"
-
-	"tkestack.io/tke/api/business"
 
 	"github.com/go-openapi/inflect"
 	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
+	auditapi "k8s.io/apiserver/pkg/apis/audit"
 	"k8s.io/apiserver/pkg/audit"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericfilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 
+	"tkestack.io/tke/api/business"
 	"tkestack.io/tke/api/registry"
 	commonapiserverfilter "tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
@@ -43,6 +46,11 @@ import (
 )
 
 const (
+	maxCheckClusterNameCount int = 6
+
+	createProjectAction string = "createProject"
+	updateProjectAction string = "updateProject"
+
 	// Annotation key names set in advanced audit
 	decisionAnnotationKey = "authorization.auth.tke.com/decision"
 	reasonAnnotationKey   = "authorization.auth.tke.com/reason"
@@ -52,6 +60,32 @@ const (
 	decisionForbid = "forbid"
 	reasonError    = "internal error"
 )
+
+func ExtractClusterNames(ctx context.Context, req *http.Request, resource string) []string {
+	clusterNames := sets.NewString()
+
+	clusterName := filter.ClusterFrom(ctx)
+	if len(clusterName) > 0 {
+		clusterNames.Insert(clusterName)
+	}
+
+	clusterNames.Insert(cluster.NamePattern.FindAllString(resource, -1)...)
+
+	data, err := httputil.DumpRequest(req, true)
+	if err == nil {
+		clusterNames.Insert(cluster.NamePattern.FindAllString(string(data), -1)...)
+	}
+
+	return clusterNames.List()
+}
+
+func ForbiddenResponse(ctx context.Context, tkeAttributes authorizer.Attributes,
+	w http.ResponseWriter, req *http.Request, ae *auditapi.Event, s runtime.NegotiatedSerializer, reason string) {
+	log.Infof("Forbidden: %#v %#v, Reason: %q", req.Method, req.RequestURI, reason)
+	audit.LogAnnotation(ae, decisionAnnotationKey, decisionForbid)
+	audit.LogAnnotation(ae, reasonAnnotationKey, reason)
+	responsewriters.Forbidden(ctx, tkeAttributes, w, req, reason, s)
+}
 
 // WithTKEAuthorization passes all tke-auth authorized requests on to handler, and returns a forbidden error otherwise.
 func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runtime.NegotiatedSerializer, ignoreAuthPathPrefixes []string) http.Handler {
@@ -112,11 +146,17 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 			return
 		}
 
-		log.Infof("Forbidden: %#v %#v, Reason: %q", req.Method, req.RequestURI, reason)
-		audit.LogAnnotation(ae, decisionAnnotationKey, decisionForbid)
-		audit.LogAnnotation(ae, reasonAnnotationKey, reason)
-		responsewriters.Forbidden(ctx, tkeAttributes, w, req, reason, s)
+		ForbiddenResponse(ctx, tkeAttributes, w, req, ae, s, reason)
 	})
+}
+
+func WithInspectors(handler http.Handler, inspectors []Inspector, c *genericapiserver.Config) http.Handler {
+	if len(inspectors) > 0 {
+		for _, inspector := range inspectors {
+			handler = inspector.Inspect(handler, c)
+		}
+	}
+	return handler
 }
 
 var (
