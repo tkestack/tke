@@ -137,7 +137,6 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 }
 
 func (p *Provider) EnsurePreClusterUpgradeHook(ctx context.Context, c *v1.Cluster) error {
-
 	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPreClusterUpgrade, c.Spec.Machines[:1])
 }
 
@@ -172,6 +171,7 @@ func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Clus
 		MaxUnready:             c.Spec.Features.Upgrade.Strategy.MaxUnready,
 		DrainNodeBeforeUpgrade: c.Spec.Features.Upgrade.Strategy.DrainNodeBeforeUpgrade,
 	}
+	logger := log.FromContext(ctx).WithName("Cluster upgrade")
 	for i, machine := range c.Spec.Machines {
 		option.MachineName = machine.Username
 		option.MachineIP = machine.IP
@@ -180,7 +180,7 @@ func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Clus
 		if err != nil {
 			return err
 		}
-		upgraded, err := kubeadm.UpgradeNode(s, client, p.platformClient, c, option)
+		upgraded, err := kubeadm.UpgradeNode(s, client, p.platformClient, logger, c, option)
 		if err != nil {
 			return err
 		}

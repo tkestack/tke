@@ -368,6 +368,7 @@ type HA struct {
 
 type TKEHA struct {
 	VIP string
+	VRID *int32
 }
 
 type ThirdPartyHA struct {

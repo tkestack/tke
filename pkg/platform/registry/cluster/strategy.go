@@ -21,6 +21,8 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -40,6 +42,14 @@ import (
 	"tkestack.io/tke/pkg/util"
 	"tkestack.io/tke/pkg/util/log"
 	namesutil "tkestack.io/tke/pkg/util/names"
+)
+
+const (
+	NamePrefix = "cls-"
+)
+
+var (
+	NamePattern = regexp.MustCompile(`(cls-[a-z0-9]+|global)`)
 )
 
 // Strategy implements verification logic for cluster.
@@ -104,8 +114,12 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 		cluster.Spec.TenantID = tenantID
 	}
 
+	if cluster.Name != "" {
+		cluster.Name = CorrectClusterName(cluster.Name)
+	}
+
 	if cluster.Name == "" && cluster.GenerateName == "" {
-		cluster.GenerateName = "cls-"
+		cluster.GenerateName = NamePrefix
 	}
 
 	cluster.Spec.Finalizers = []platform.FinalizerName{
@@ -281,4 +295,18 @@ func (FinalizeStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.O
 // the object.
 func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
 	return nil
+}
+
+func CorrectClusterName(clusterName string) string {
+	if !strings.HasPrefix(clusterName, NamePrefix) {
+		return ""
+	}
+	clusterName = strings.TrimPrefix(clusterName, NamePrefix)
+	clusterName = strings.ToLower(clusterName)
+	clusterName = strings.ReplaceAll(clusterName, "-", "")
+	clusterName = fmt.Sprintf("%s%s", NamePrefix, clusterName)
+	if !NamePattern.MatchString(clusterName) {
+		return ""
+	}
+	return clusterName
 }

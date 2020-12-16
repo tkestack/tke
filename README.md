@@ -58,7 +58,7 @@
 
    ```shell
    # Choose installation package according to your installation node CPU architecture [amd64, arm64]
-   arch=amd64 version=v1.4.0 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-linux-$arch-$version.run{,.sha256} && sha256sum --check --status tke-installer-linux-$arch-$version.run.sha256 && chmod +x tke-installer-linux-$arch-$version.run && ./tke-installer-linux-$arch-$version.run
+   arch=amd64 version=v1.5.0 && wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/tke-installer-linux-$arch-$version.run{,.sha256} && sha256sum --check --status tke-installer-linux-$arch-$version.run.sha256 && chmod +x tke-installer-linux-$arch-$version.run && ./tke-installer-linux-$arch-$version.run
    ```
 
 3. **Configure Console & Global Cluster:**  Open your browser to `http://【INSTALLER-NODE-IP】:8080/index.html`, the Web GUI will guide you to initialize and install the TKEStack's **Global Cluster and Console**. You can refer to [installation-procedures](docs/guide/zh-CN/installation/installation-procedures.md) for more information.

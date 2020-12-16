@@ -44,6 +44,15 @@ func ClusterVersionIsBefore116(client kubernetes.Interface) bool {
 	return result
 }
 
+func ClusterVersionIsBefore118(client kubernetes.Interface) bool {
+	result, err := CheckClusterVersion(client, "< 1.18")
+	if err != nil {
+		return false
+	}
+
+	return result
+}
+
 func CheckClusterVersion(client kubernetes.Interface, versionConstraint string) (bool, error) {
 	version, err := GetClusterVersion(client)
 	if err != nil {

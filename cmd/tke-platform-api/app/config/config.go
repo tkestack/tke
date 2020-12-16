@@ -26,6 +26,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/filters"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
+
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	generatedopenapi "tkestack.io/tke/api/openapi"
@@ -38,6 +39,7 @@ import (
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	"tkestack.io/tke/pkg/apiserver/util"
+	"tkestack.io/tke/pkg/auth/filter"
 	"tkestack.io/tke/pkg/platform/apiserver"
 )
 
@@ -59,7 +61,6 @@ type Config struct {
 // on a given TKE platform apiserver command line or configuration file option.
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
 	genericAPIServerConfig := genericapiserver.NewConfig(platform.Codecs)
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil, nil)
 	genericAPIServerConfig.LongRunningFunc = filters.BasicLongRunningRequestCheck(
 		sets.NewString("watch", "proxy"),
 		sets.NewString("attach", "exec", "proxy", "log", "portforward"),
@@ -103,6 +104,8 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	if err != nil {
 		return nil, fmt.Errorf("failed to create real external clientset: %v", err)
 	}
+	clusterInspector := filter.NewClusterInspector(clientgoExternalClient.PlatformV1(), opts.Authentication.PrivilegedUsername)
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil, nil, []filter.Inspector{clusterInspector})
 	versionedInformers := versionedinformers.NewSharedInformerFactory(clientgoExternalClient, 10*time.Minute)
 
 	debug.SetupDebug(genericAPIServerConfig, opts.Debug)

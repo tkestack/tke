@@ -798,6 +798,15 @@ func (c *Controller) makeConfigMap(ctx context.Context, backend *v1.PersistentBa
 		backend.ES.Password = string(password)
 	}
 
+	if backend.ES != nil {
+		backend.ES.IndexName = template.JSEscapeString(backend.ES.IndexName)
+		backend.ES.Scheme = template.JSEscapeString(backend.ES.Scheme)
+		backend.ES.IP = template.JSEscapeString(backend.ES.IP)
+	} else if backend.CLS != nil {
+		backend.CLS.LogSetID = template.JSEscapeString(backend.CLS.LogSetID)
+		backend.CLS.TopicID = template.JSEscapeString(backend.CLS.TopicID)
+	}
+
 	var b bytes.Buffer
 	if err = configTmpl.Execute(&b, backend); err != nil {
 		return nil, err

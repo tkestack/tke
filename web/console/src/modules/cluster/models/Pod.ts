@@ -20,6 +20,8 @@ interface Metadata {
 
   creationTimestamp?: string;
 
+  deletionTimestamp?: string;
+
   name?: string;
 
   namespace?: string;
@@ -39,6 +41,8 @@ interface Status {
   conditions?: any[];
 
   phase?: string;
+
+  reason?: string;
 
   qosClass?: string;
 

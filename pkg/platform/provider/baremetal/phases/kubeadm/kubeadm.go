@@ -300,7 +300,7 @@ type UpgradeOption struct {
 
 // UpgradeNode upgrades node by kubeadm.
 // Refer: https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
-func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient platformv1client.PlatformV1Interface, cluster *v1.Cluster, option UpgradeOption) (upgraded bool, err error) {
+func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient platformv1client.PlatformV1Interface, logger log.Logger, cluster *v1.Cluster, option UpgradeOption) (upgraded bool, err error) {
 	if option.NodeRole == NodeRoleWorker {
 		ok, err := checkMasterNodesVersion(client, option.Version)
 		if err != nil {
@@ -332,10 +332,12 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 	// Step 1: install kubeadm
 	// ignore patch version for patch version kubeadm may not exist in platform-controller
 	if !sameMinor {
+		logger.Infof("Start install kubeadm to %s", option.MachineIP)
 		err = Install(s, option.Version)
 		if err != nil {
 			return upgraded, err
 		}
+		logger.Infof("End install kubeadm to %s", option.MachineIP)
 	}
 
 	// Step 2(option): drain node
@@ -343,11 +345,13 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 		*option.DrainNodeBeforeUpgrade &&
 		option.NodeRole != NodeRoleMaster {
 		// ensure uncordon node
+		logger.Infof("Start drain node of %s", option.MachineIP)
 		defer uncordonNode(s, node.Name)
 		err = drainNodeCarefully(s, client, node.Name, option.MaxUnready, cluster.Name == "global")
 		if err != nil {
 			return upgraded, err
 		}
+		logger.Infof("End drain node to %s", option.MachineIP)
 	}
 
 	// Step 3: do upgrade
@@ -357,6 +361,7 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 			return upgraded, err
 		}
 		if needUpgrade {
+			logger.Infof("Start drain node to %s", option.MachineIP)
 			if cluster.Spec.Machines[0].IP == option.MachineIP {
 				err = upgradeBootstrapNode(s, client, option.Version)
 				if err != nil {
@@ -368,6 +373,7 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 					return upgraded, err
 				}
 			}
+			logger.Infof("End drain node to %s", option.MachineIP)
 		}
 	}
 
@@ -376,9 +382,10 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 	if sameMinor {
 		return true, nil
 	}
-	err = kubelet.ServiceOperate(s, kubelet.Stop)
 	// ensure kubelet service is active
-	err = kubelet.ServiceOperate(s, kubelet.Start)
+	defer kubelet.ServiceOperate(s, kubelet.Start)
+	logger.Infof("Start install kubelet to %s", option.MachineIP)
+	err = kubelet.ServiceOperate(s, kubelet.Stop)
 	if err != nil {
 		return upgraded, err
 	}
@@ -386,12 +393,19 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 	if err != nil {
 		return upgraded, err
 	}
+	err = kubelet.ServiceOperate(s, kubelet.Start)
+	if err != nil {
+		return upgraded, err
+	}
+	logger.Infof("End install kubelet to %s", option.MachineIP)
 
 	// Step 5: wait for node information to be updated
 	err = wait.PollImmediate(10*time.Second, 5*time.Minute, func() (bool, error) {
+		logger.Infof("Wait node info of %s", option.MachineIP)
 		// ignore patch version for patch version kubelet may not exist in platform-controller
 		same, err := checkKubeletVersion(client, node.Name, option.Version, false)
 		if err != nil {
+			logger.Infof("Check node info failed of %s, err is %v", option.MachineIP, err)
 			return false, nil
 		}
 		if same {
@@ -399,6 +413,7 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 		}
 		return false, nil
 	})
+	logger.Infof("Got node info of %s, err: %v", option.MachineIP, err)
 	if err != nil {
 		return upgraded, err
 	}
@@ -411,9 +426,7 @@ func checkKubeletVersion(client kubernetes.Interface, nodeName, version string, 
 	if err != nil {
 		return false, err
 	}
-
-	sameVersion(node.Status.NodeInfo.KubeletVersion, version, ignorePatchVersion)
-
+	same, err = sameVersion(node.Status.NodeInfo.KubeletVersion, version, ignorePatchVersion)
 	if err != nil {
 		return false, err
 	}

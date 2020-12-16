@@ -23,6 +23,7 @@ import (
 )
 
 var (
+	TKEVersion    = "1.5.0"
 	Archs         = []string{"amd64", "arm64"}
 	Arm64         = "arm64"
 	Arm64Variants = []string{"v8", "unknown"}
@@ -39,7 +40,7 @@ var (
 		return "v" + s
 	}).([]string)
 
-	DockerVersions                 = []string{"19.03.9"}
+	DockerVersions                 = []string{"19.03.14"}
 	CNIPluginsVersions             = []string{"v0.8.6"}
 	ConntrackToolsVersions         = []string{"1.4.4"}
 	NvidiaDriverVersions           = []string{"440.31"}

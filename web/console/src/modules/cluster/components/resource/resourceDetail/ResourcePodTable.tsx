@@ -50,6 +50,7 @@ export function PodTabel({
       <Card.Body>
         <Table columns={columns} records={podList?.data?.records || []} recordKey="id" addons={addons} />
         <Pagination
+          pageSizeOptions={[10, 20, 30, 50, 100, 200, 2048]}
           pageIndex={paging.pageIndex}
           pageSize={paging.pageSize}
           recordCount={recordCount}
@@ -57,7 +58,6 @@ export function PodTabel({
           stateText={`第${paging.pageIndex}页`}
           pageIndexVisible={false}
           endJumpVisible={false}
-          pageSizeVisible={podList?.data?.recordCount <= paging.pageSize}
         />
       </Card.Body>
     </Card>

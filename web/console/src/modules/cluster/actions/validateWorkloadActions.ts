@@ -792,11 +792,11 @@ export const validateWorkloadActions = {
     };
   },
 
-  validateGrayUpdateRegistrySelection(index_out: number, index_in: number, imageName: string) {
+  validateGrayUpdateRegistrySelection(index_in: number, imageName: string) {
     return async (dispatch, getState: GetState) => {
       const { editTappGrayUpdate } = getState().subRoot.resourceDetailState;
-      const target: TappGrayUpdateEditItem[] = cloneDeep(editTappGrayUpdate);
-      target[index_out].containers[index_in].v_imageName = validateWorkloadActions._validateRegistrySelection(
+      const target: TappGrayUpdateEditItem = cloneDeep(editTappGrayUpdate);
+      target.containers[index_in].v_imageName = validateWorkloadActions._validateRegistrySelection(
         imageName
       );
 
@@ -810,12 +810,10 @@ export const validateWorkloadActions = {
   validateGrayUpdate() {
     return async (dispatch, getState: GetState) => {
       const { editTappGrayUpdate } = getState().subRoot.resourceDetailState;
-      editTappGrayUpdate.forEach((item, index_out) => {
-        item.containers.forEach((container, index_in) => {
-          dispatch(
-            validateWorkloadActions.validateGrayUpdateRegistrySelection(index_out, index_in, container.imageName)
-          );
-        });
+      editTappGrayUpdate.containers.forEach((container, index_in) => {
+        dispatch(
+          validateWorkloadActions.validateGrayUpdateRegistrySelection(index_in, container.imageName)
+        );
       });
     };
   },

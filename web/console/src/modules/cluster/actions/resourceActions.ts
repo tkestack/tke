@@ -23,11 +23,11 @@ const fetchOptions: FetchOptions = {
 const listResourceActions = createFFListActions<Resource, ResourceFilter>({
   actionName: FFReduxActionName.Resource_Workload,
   fetcher: async (query, getState: GetState, fetchOptions) => {
-    let { subRoot, route, clusterVersion } = getState(),
+    const { subRoot, route, clusterVersion } = getState(),
       { resourceInfo, resourceOption, resourceName } = subRoot,
       { ffResourceList } = resourceOption;
 
-    let isClearData = fetchOptions && fetchOptions.noCache ? true : false;
+    const isClearData = fetchOptions && fetchOptions.noCache ? true : false;
 
     let response: any;
     // response = await WebAPI.fetchResourceList(resourceQuery, resourceInfo, isClearData);
@@ -40,6 +40,8 @@ const listResourceActions = createFFListActions<Resource, ResourceFilter>({
         isContinue: true
       });
     }
+
+    console.log('ffResourceList.query:  ', ffResourceList.query);
     return response;
   },
   getRecord: (getState: GetState) => {
@@ -52,8 +54,10 @@ const listResourceActions = createFFListActions<Resource, ResourceFilter>({
       { ffResourceList } = resourceOption;
 
     if (ffResourceList.list.data.recordCount) {
-      let defaultResourceIns = route.queries['resourceIns'];
-      let finder = ffResourceList.list.data.records.find(item => item.metadata && item.metadata.name === defaultResourceIns);
+      const defaultResourceIns = route.queries['resourceIns'];
+      const finder = ffResourceList.list.data.records.find(
+        item => item.metadata && item.metadata.name === defaultResourceIns
+      );
       dispatch(resourceActions.select(finder ? finder : ffResourceList.list.data.records[0]));
 
       /** ============== start 更新的时候，进行一些页面的初始化 =============  */
@@ -93,9 +97,9 @@ const listResourceActions = createFFListActions<Resource, ResourceFilter>({
 });
 
 async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceInfo, isClearData) {
-  let gameBGresourceInfo = resourceConfig(clusterVersion).lbcf_bg;
-  let gameBRresourceInfo = resourceConfig(clusterVersion).lbcf_br;
-  let gameBGList = await WebAPI.fetchResourceList(resourceQuery, {
+  const gameBGresourceInfo = resourceConfig(clusterVersion).lbcf_bg;
+  const gameBRresourceInfo = resourceConfig(clusterVersion).lbcf_br;
+  const gameBGList = await WebAPI.fetchResourceList(resourceQuery, {
       resourceInfo: gameBGresourceInfo,
       isClearData
     }),
@@ -109,14 +113,14 @@ async function _reduceGameGateResource(clusterVersion, resourceQuery, resourceIn
       isClearData
     });
   gameLBList.records.forEach((item, index) => {
-    let backGroups = [];
+    const backGroups = [];
     gameBGList.records.forEach(backgroup => {
       if (backgroup.spec.lbName === item.metadata.name) {
-        let backendRecords = gameBRList.records.filter(
+        const backendRecords = gameBRList.records.filter(
           records => records.metadata.labels['lbcf.tkestack.io/backend-group'] === backgroup.metadata.name
         );
         try {
-          let backGroup = {
+          const backGroup = {
             name: backgroup.metadata.name,
             status: backgroup.status,
             backendRecords: backendRecords.map(record => {
@@ -188,7 +192,7 @@ const restActions = {
   /** 初始化 resource */
   initResourceInfo: (rsName?: string) => {
     return async (dispatch, getState: GetState) => {
-      let { subRoot, clusterVersion } = getState(),
+      const { subRoot, clusterVersion } = getState(),
         { resourceName } = subRoot;
 
       let resourceInfo: ResourceInfo,
@@ -215,9 +219,9 @@ const restActions = {
           detailResourceOption: { detailResourceName, detailResourceList },
           resourceInfo
         } = subRoot;
-      let list = resourceInfo.requestType.detailInfoList[tab];
+      const list = resourceInfo.requestType.detailInfoList[tab];
       if (list) {
-        let finder = list.find(item => item.value === detailResourceName);
+        const finder = list.find(item => item.value === detailResourceName);
         if (!finder) {
           dispatch(resourceActions.initDetailResourceName(list[0].value));
         }
@@ -228,7 +232,7 @@ const restActions = {
   /** 修改当前资源的名称 */
   initDetailResourceName: (resourceName: string, defaultIns?: string) => {
     return async (dispatch, getState: GetState) => {
-      let {
+      const {
         subRoot: { mode }
       } = getState();
       dispatch({
@@ -245,9 +249,9 @@ const restActions = {
   //addon里面有些crd是由两个资源组成，所以在detail页面有时需要在不更新当前resourceInfo,切换resourceInfo
   initDetailResourceInfo: (rsName?: string) => {
     return async (dispatch, getState: GetState) => {
-      let { subRoot, clusterVersion } = getState();
+      const { subRoot, clusterVersion } = getState();
 
-      let resourceInfo: ResourceInfo = resourceConfig(clusterVersion)[rsName] || {};
+      const resourceInfo: ResourceInfo = resourceConfig(clusterVersion)[rsName] || {};
 
       dispatch({
         type: ActionType.InitDetailResourceInfo,
@@ -258,16 +262,16 @@ const restActions = {
 
   initDetailResourceList: (rsName?: string, defaultIns?: string) => {
     return async (dispatch, getState: GetState) => {
-      let {
+      const {
         route,
         subRoot: {
           resourceName,
           resourceOption: { ffResourceList }
         }
       } = getState();
-      let list = [];
+      const list = [];
       if (rsName === resourceName) {
-        let defaultResourceIns =
+        const defaultResourceIns =
           route.queries['resourceIns'] || (ffResourceList.selection && ffResourceList.selection.metadata.name);
         list.push({ value: defaultResourceIns, text: defaultResourceIns });
       } else if (rsName === 'lbcf_bg') {
@@ -298,7 +302,7 @@ const restActions = {
       let { route, subRoot } = getState(),
         { resourceDetailState, resourceInfo } = subRoot,
         { event } = resourceDetailState;
-      let { tab } = router.resolve(route);
+      const { tab } = router.resolve(route);
       dispatch({
         type: ActionType.SelectDetailResourceSelection,
         payload: rsIns
@@ -342,13 +346,9 @@ const restActions = {
   },
 
   /** 路由变化，不同的资源切换的时候，需要进行数据的初始化 */
-  initResourceInfoAndFetchData: (
-    isNeedFetchNamespace: boolean = true,
-    resourceName: string,
-    isNeedClear: boolean = true
-  ) => {
+  initResourceInfoAndFetchData: (isNeedFetchNamespace = true, resourceName: string, isNeedClear = true) => {
     return async (dispatch, getState: GetState) => {
-      let { clusterId, rid } = getState().route.queries;
+      const { clusterId, rid } = getState().route.queries;
       // 判断是否需要展示ns
       dispatch(resourceActions.toggleIsNeedFetchNamespace(isNeedFetchNamespace));
       // 初始化当前的资源的名称
@@ -363,10 +363,10 @@ const restActions = {
   /** 轮询拉取条件 */
   poll: () => {
     return async (dispatch, getState: GetState) => {
-      let { route } = getState();
-      let { np, clusterId, rid, meshId } = route.queries;
+      const { route } = getState();
+      const { np, clusterId, rid, meshId } = route.queries;
 
-      let filterObj: ResourceFilter = {
+      const filterObj: ResourceFilter = {
         namespace: np,
         clusterId,
         regionId: +rid,

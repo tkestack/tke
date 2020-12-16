@@ -35,8 +35,6 @@ import (
 	"strings"
 	"time"
 
-	"tkestack.io/tke/pkg/util/validation"
-
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -141,20 +139,28 @@ func New(config *config.Config) *TKE {
 	c.docker.Stderr = c.log
 
 	if !config.Force {
-		data, err := ioutil.ReadFile(constants.ClusterFile)
+		err = c.loadTKEData()
 		if err == nil {
-			log.Infof("read %q success", constants.ClusterFile)
-			err = json.Unmarshal(data, c)
-			if err != nil {
-				log.Warnf("load tke data error:%s", err)
-			}
-			log.Infof("load tke data success")
 			c.isFromRestore = true
 			c.progress.Status = types.StatusDoing
 		}
 	}
 
 	return c
+}
+
+func (t *TKE) loadTKEData() error {
+	data, err := ioutil.ReadFile(constants.ClusterFile)
+	if err == nil {
+		t.log.Infof("read %q success", constants.ClusterFile)
+		err = json.Unmarshal(data, t)
+		if err != nil {
+			t.log.Infof("load tke data error:%s", err)
+		} else {
+			log.Infof("load tke data success")
+		}
+	}
+	return err
 }
 
 func (t *TKE) initSteps() {
@@ -208,8 +214,8 @@ func (t *TKE) initSteps() {
 			Func: t.createGlobalCluster,
 		},
 		{
-			Name: "Patch k8s version in cluster info",
-			Func: t.patchK8sValidVersions,
+			Name: "Patch platform versions in cluster info",
+			Func: t.patchPlatformVersion,
 		},
 		{
 			Name: "Write kubeconfig",
@@ -464,8 +470,16 @@ func (t *TKE) runWithUI() error {
 
 	restful.Filter(globalLogging)
 
-	if t.isFromRestore {
+	if t.Config.Upgrade {
+		err := t.prepareForUpgrade(context.Background())
+		if err != nil {
+			return err
+		}
 		go t.do()
+	} else {
+		if t.isFromRestore {
+			go t.do()
+		}
 	}
 
 	log.Infof("Starting %s at http://%s", t.Config.ServerName, t.Config.ListenAddr)
@@ -657,7 +671,10 @@ func (t *TKE) setClusterDefault(cluster *platformv1.Cluster, config *types.Confi
 	if config.HA != nil {
 		if t.Para.Config.HA.TKEHA != nil {
 			cluster.Spec.Features.HA = &platformv1.HA{
-				TKEHA: &platformv1.TKEHA{VIP: t.Para.Config.HA.TKEHA.VIP},
+				TKEHA: &platformv1.TKEHA{
+					VIP:  t.Para.Config.HA.TKEHA.VIP,
+					VRID: t.Para.Config.HA.TKEHA.VRID,
+				},
 			}
 		}
 		if t.Para.Config.HA.ThirdPartyHA != nil {
@@ -717,16 +734,9 @@ func (t *TKE) validateConfig(config types.Config) *apierrors.StatusError {
 		}
 	}
 
-	var dnsNames []string
-	if config.Gateway != nil && config.Gateway.Domain != "" {
-		dnsNames = append(dnsNames, config.Gateway.Domain)
-	}
-	if config.Registry.TKERegistry != nil {
-		dnsNames = append(dnsNames, config.Registry.TKERegistry.Domain, "*."+config.Registry.TKERegistry.Domain)
-	}
 	if config.Gateway != nil && config.Gateway.Cert.ThirdPartyCert != nil {
 		statusError := t.validateCertAndKey(config.Gateway.Cert.ThirdPartyCert.Certificate,
-			config.Gateway.Cert.ThirdPartyCert.PrivateKey, dnsNames)
+			config.Gateway.Cert.ThirdPartyCert.PrivateKey, config.Gateway.Domain)
 		if statusError != nil {
 			return statusError
 		}
@@ -735,36 +745,27 @@ func (t *TKE) validateConfig(config types.Config) *apierrors.StatusError {
 	return nil
 }
 
-func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsNames []string) *apierrors.StatusError {
+func (t *TKE) validateCertAndKey(certificate []byte, privateKey []byte, dnsName string) *apierrors.StatusError {
 	if (certificate != nil && privateKey == nil) || (certificate == nil && privateKey != nil) {
 		return apierrors.NewBadRequest("certificate and privateKey must offer together")
 	}
 
 	if certificate != nil {
-		cert, err := tls.X509KeyPair(certificate, privateKey)
+		_, err := tls.X509KeyPair(certificate, privateKey)
 		if err != nil {
 			return apierrors.NewBadRequest(err.Error())
 		}
-		if len(cert.Certificate) != 1 {
-			return apierrors.NewBadRequest("certificate must only has one cert")
-		}
+
 		certs1, err := certutil.ParseCertsPEM(certificate)
 		if err != nil {
 			return apierrors.NewBadRequest(err.Error())
 		}
-		for _, one := range dnsNames {
-			if !matchDNSName(certs1[0].DNSNames, one) {
-				return apierrors.NewBadRequest(fmt.Sprintf("certificate DNSNames must contains %v", one))
-			}
+		err = certs1[0].VerifyHostname(dnsName)
+		if err != nil {
+			return apierrors.NewBadRequest(err.Error())
 		}
 	}
-
 	return nil
-}
-
-func matchDNSName(certDNSNames []string, dnsName string) bool {
-	dotIdx := strings.Index(dnsName, ".")
-	return funk.Contains(certDNSNames, dnsName) || validation.IsValidDNSName(dnsName) && dotIdx > -1 && funk.Contains(certDNSNames, "*"+dnsName[dotIdx:])
 }
 
 // validateResource validate the cpu and memory of cluster machines whether meets the requirements.
@@ -953,15 +954,22 @@ func (t *TKE) do() {
 	start := time.Now()
 	ctx := t.log.WithContext(context.Background())
 
-	containerregistry.Init(t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace())
-	t.initSteps()
+	var taskType string
+	if t.Config.Upgrade {
+		taskType = "upgrade"
+		t.upgradeSteps()
+	} else {
+		taskType = "install"
+		containerregistry.Init(t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace())
+		t.initSteps()
+	}
 
 	if t.Step == 0 {
-		t.log.Info("===>starting install task")
+		t.log.Infof("===>starting %s task", taskType)
 		t.progress.Status = types.StatusDoing
 	}
 
-	if t.runAfterClusterReady() {
+	if !t.Config.Upgrade && t.runAfterClusterReady() {
 		t.initDataForDeployTKE()
 	}
 
@@ -1020,7 +1028,7 @@ func (t *TKE) do() {
 	}
 	t.progress.Servers = append(t.progress.Servers, t.servers...)
 
-	t.log.Infof("===>install task [Sucesss] [%fs]", time.Since(start).Seconds())
+	t.log.Infof("===>%s task [Sucesss] [%fs]", taskType, time.Since(start).Seconds())
 }
 
 func (t *TKE) runAfterClusterReady() bool {
@@ -1498,8 +1506,8 @@ func (t *TKE) installTKEGateway(ctx context.Context) error {
 		option["TenantID"] = t.Para.Config.Auth.TKEAuth.TenantID
 	}
 	if t.Para.Config.Gateway.Cert.ThirdPartyCert != nil {
-		option["ServerCrt"] = t.Para.Config.Gateway.Cert.ThirdPartyCert.Certificate
-		option["ServerKey"] = t.Para.Config.Gateway.Cert.ThirdPartyCert.PrivateKey
+		option["ServerCrt"] = string(t.Para.Config.Gateway.Cert.ThirdPartyCert.Certificate)
+		option["ServerKey"] = string(t.Para.Config.Gateway.Cert.ThirdPartyCert.PrivateKey)
 	}
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-gateway/*.yaml", option)
 	if err != nil {
@@ -1568,10 +1576,7 @@ func (t *TKE) installTKELogagentController(ctx context.Context) error {
 }
 
 func (t *TKE) installETCD(ctx context.Context) error {
-	return apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/etcd/*.yaml",
-		map[string]interface{}{
-			"Servers": t.servers,
-		})
+	return apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/etcd/*.yaml", nil)
 }
 
 func (t *TKE) installTKEAuthAPI(ctx context.Context) error {
@@ -2425,7 +2430,7 @@ func (t *TKE) writeKubeconfig(ctx context.Context) error {
 	return ioutil.WriteFile("/root/.kube/config", data, 0644)
 }
 
-func (t *TKE) patchK8sValidVersions(ctx context.Context) error {
+func (t *TKE) patchPlatformVersion(ctx context.Context) error {
 	versionsByte, err := json.Marshal(spec.K8sValidVersions)
 	if err != nil {
 		return err
@@ -2433,6 +2438,7 @@ func (t *TKE) patchK8sValidVersions(ctx context.Context) error {
 	patchData := map[string]interface{}{
 		"data": map[string]interface{}{
 			"k8sValidVersions": string(versionsByte),
+			"tkeVersion":       spec.TKEVersion,
 		},
 	}
 	patchByte, err := json.Marshal(patchData)

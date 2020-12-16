@@ -69,23 +69,9 @@ const fetchPodActions = generateFetcherActionCreator({
         }
       };
     } else {
-      const k8sapp = resourceDetailState?.resourceDetailInfo?.selection?.metadata?.labels?.['k8s-app'];
-      // hold special case
-      if (!k8sapp) {
-        let { records } = await WebAPI.fetchExtraResourceList(podQuery, resourceInfo, isClearData, 'pods');
-        records = records.filter(item => item.status.reason !== 'Evicted');
-        dispatch(resourcePodActions.changeContinueToken(''));
-        return {
-          records,
-          recordCount: records.length
-        };
-      }
-
       podResourceInfo.namespaces = 'namespaces';
       k8sQueryObj = {
-        labelSelector: {
-          'k8s-app': k8sapp
-        },
+        labelSelector: resourceDetailState?.resourceDetailInfo?.selection?.spec?.selector?.matchLabels,
         fieldSelector: {
           'metadata.name': podName ? podName : undefined,
           'status.phase': phase ? phase : undefined,
@@ -95,15 +81,13 @@ const fetchPodActions = generateFetcherActionCreator({
     }
 
     k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
-    let { records, continueToken } = await WebAPI.fetchResourceList(podQuery, {
+    const { records, continueToken } = await WebAPI.fetchResourceList(podQuery, {
       resourceInfo: podResourceInfo,
       isClearData,
       k8sQueryObj,
       isNeedSpecific: false,
       isContinue: true
     });
-    // 原因为 Evicted的pod没有必要再进行展示，直接进行过滤
-    records = records.filter(item => item.status.reason !== 'Evicted');
 
     dispatch(resourcePodActions.changeContinueToken(continueToken));
 
@@ -178,18 +162,19 @@ const restActions = {
   },
 
   /**Tapp灰度升级编辑项 */
-  initTappGrayUpdate: (items: TappGrayUpdateEditItem[]): ReduxAction<TappGrayUpdateEditItem[]> => {
+  initTappGrayUpdate: (setting: TappGrayUpdateEditItem): ReduxAction<TappGrayUpdateEditItem> => {
     return {
       type: ActionType.W_TappGrayUpdate,
-      payload: items
+      payload: setting
     };
   },
-  updateTappGrayUpdate: (index_out, index_in, imageName, imageTag) => {
+
+  updateTappGrayUpdate: (index_in, imageName, imageTag) => {
     return async (dispatch, getState: GetState) => {
       const { editTappGrayUpdate } = getState().subRoot.resourceDetailState;
-      const target: TappGrayUpdateEditItem[] = cloneDeep(editTappGrayUpdate);
-      target[index_out].containers[index_in].imageName = imageName;
-      target[index_out].containers[index_in].imageTag = imageTag;
+      const target: TappGrayUpdateEditItem = cloneDeep(editTappGrayUpdate);
+      target.containers[index_in].imageName = imageName;
+      target.containers[index_in].imageTag = imageTag;
 
       dispatch({
         type: ActionType.W_TappGrayUpdate,
@@ -197,6 +182,7 @@ const restActions = {
       });
     };
   },
+
   /** 是否展示 登录弹框 */
   toggleLoginDialog: () => {
     return async (dispatch, getState: GetState) => {
@@ -238,6 +224,13 @@ const restActions = {
         type: ActionType.PodFilterInNode,
         payload: podFilter
       });
+
+      if (podFilter.podName) {
+        // 有podname，后台会启用模糊查询，导致只能查到原本当前页的内容
+        dispatch(resourceDetailActions.pod.changePaging({ pageIndex: 1, pageSize: 2048 }));
+      } else {
+        dispatch(resourceDetailActions.pod.changePaging({ pageIndex: 1, pageSize: 20 }));
+      }
 
       // 根据筛选项，进行pod列表的查询，namespace、metadata.name等过滤条件
       dispatch(resourceDetailActions.pod.poll(podQuery.filter));
