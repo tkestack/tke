@@ -73,14 +73,7 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 	var ct *platform.ClusterAddonType
 	for k, v := range clusteraddontype.Types {
 		if strings.EqualFold(string(k), name) {
-			ct = &platform.ClusterAddonType{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: strings.ToLower(string(k)),
-				},
-				Type:          string(k),
-				Level:         v.Level,
-				LatestVersion: v.LatestVersion,
-			}
+			ct = &v
 		}
 	}
 	if ct == nil {
@@ -107,19 +100,9 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 	l := &platform.ClusterAddonTypeList{
 		Items: make([]platform.ClusterAddonType, len(clusteraddontype.Types)),
 	}
-	i := 0
-	for k, v := range clusteraddontype.Types {
+	for _, v := range clusteraddontype.Types {
 		// todo: filter prometheus addon without storage configuration
-		l.Items[i] = platform.ClusterAddonType{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: strings.ToLower(string(k)),
-			},
-			Type:          string(k),
-			Level:         v.Level,
-			LatestVersion: v.LatestVersion,
-			Description:   v.Description,
-		}
-		i++
+		l.Items = append(l.Items, v)
 	}
 	return l, nil
 }
