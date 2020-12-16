@@ -98,7 +98,7 @@ func (r *REST) ConvertToTable(ctx context.Context, object runtime.Object, tableO
 // List selects resources in the storage which match to the selector. 'options' can be nil.
 func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (runtime.Object, error) {
 	l := &platform.ClusterAddonTypeList{
-		Items: make([]platform.ClusterAddonType, len(clusteraddontype.Types)),
+		Items: make([]platform.ClusterAddonType, 0, len(clusteraddontype.Types)),
 	}
 	for _, v := range clusteraddontype.Types {
 		// todo: filter prometheus addon without storage configuration
