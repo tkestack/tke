@@ -95,7 +95,7 @@ func CheckClustersTenant(ctx context.Context, tenantID string, clusterNames []st
 	for _, clusterName := range clusterNames {
 		cluster, err := platformClient.Clusters().Get(ctx, clusterName, metav1.GetOptions{})
 		if err != nil {
-			if verb == updateProjectAction && k8serrors.IsNotFound(err) {
+			if AllowClusterNotFoundActions.Has(verb) && k8serrors.IsNotFound(err) {
 				continue
 			}
 			return fmt.Sprintf("check cluster: %+v err: %+v", clusterName, err), false
