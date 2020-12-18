@@ -181,6 +181,10 @@ func (t *TKE) initSteps() {
 				Name: "Load images",
 				Func: t.loadImages,
 			},
+			{
+				Name: "Tag images",
+				Func: t.tagImages,
+			},
 		}...)
 	}
 
@@ -1125,16 +1129,14 @@ func (t *TKE) backup() error {
 	data, _ := json.MarshalIndent(t, "", " ")
 	return ioutil.WriteFile(constants.ClusterFile, data, 0777)
 }
-
 func (t *TKE) loadImages(ctx context.Context) error {
 	if _, err := os.Stat(constants.ImagesFile); err != nil {
 		return err
 	}
-	err := t.docker.LoadImages(constants.ImagesFile)
-	if err != nil {
-		return err
-	}
+	return t.docker.LoadImages(constants.ImagesFile)
+}
 
+func (t *TKE) tagImages(ctx context.Context) error {
 	tkeImages, err := t.docker.GetImages(constants.ImagesPattern)
 	if err != nil {
 		return err

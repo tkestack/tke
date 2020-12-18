@@ -39,6 +39,7 @@ type Config struct {
 	RegistryPassword           string
 	RegistryDomain             string
 	RegistryNamespace          string
+	CustomProviderResTag       string
 }
 
 // CreateConfigFromOptions creates a running configuration instance based

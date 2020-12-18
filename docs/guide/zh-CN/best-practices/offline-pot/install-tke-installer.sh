@@ -48,7 +48,8 @@ reinstall_tke_installer(){
   fi
   if [ `docker ps -a | grep tke-installer | wc -l` -eq 1 ]; then
     docker rm -f tke-installer
-    rm -rf /opt/tke-installer/data
+    # clean data dir except images and bins which are created by user for custom K8s upgrade
+    find /opt/tke-installer/data/* |egrep -v "(images|bins)" | xargs rm -rf
   fi
   if [ `echo "$version" | awk -Fv '{print $2}' | awk -F. '{print $1$2$3}'` -lt 130 ]; then
     TKT_INSTALLER_IMAGE="tkestack/tke-installer:${version}"

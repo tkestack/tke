@@ -21,7 +21,10 @@ package installer
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"os/exec"
+	"regexp"
 	"time"
 
 	"github.com/pkg/errors"
@@ -33,13 +36,16 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	configv1 "tkestack.io/tke/pkg/registry/apis/config/v1"
+	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/file"
+	"tkestack.io/tke/pkg/util/template"
 
 	// import platform schema
 	_ "tkestack.io/tke/api/platform/install"
@@ -60,6 +66,18 @@ func (t *TKE) upgradeSteps() {
 			{
 				Name: "Load images",
 				Func: t.loadImages,
+			},
+			{
+				Name: "Load custom K8s images",
+				Func: t.loadCustomK8sImages,
+			},
+			{
+				Name: "Build custom provider res image",
+				Func: t.buildCustomProviderRes,
+			},
+			{
+				Name: "Tag images",
+				Func: t.tagImages,
 			},
 			{
 				Name: "Push images",
@@ -137,7 +155,11 @@ func (t *TKE) updateTKEPlatformController(ctx context.Context) error {
 	if len(depl.Spec.Template.Spec.InitContainers) == 0 {
 		return fmt.Errorf("%s has no initContainers", com)
 	}
-	depl.Spec.Template.Spec.InitContainers[0].Image = images.Get().ProviderRes.FullName()
+	if t.Config.CustomProviderResTag != "" {
+		depl.Spec.Template.Spec.InitContainers[0].Image = containerregistry.GetImagePrefix(images.Get().ProviderRes.Name + ":" + t.Config.CustomProviderResTag)
+	} else {
+		depl.Spec.Template.Spec.InitContainers[0].Image = images.Get().ProviderRes.FullName()
+	}
 
 	_, err = t.globalClient.AppsV1().Deployments(t.namespace).Update(ctx, depl, metav1.UpdateOptions{})
 	if err != nil {
@@ -231,6 +253,141 @@ func (t *TKE) loginRegistryForUpgrade(ctx context.Context) error {
 			return errors.New(string(out))
 		}
 		return err
+	}
+	return nil
+}
+
+func (t *TKE) loadCustomK8sImages(ctx context.Context) error {
+	files, err := getFilesFromDir(constants.CustomK8sImageDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			t.log.Infof("%s doesn't exist, skip load custom K8s images", constants.CustomK8sImageDir)
+			return nil
+		}
+		return err
+	}
+	for _, file := range files {
+		err = t.docker.LoadImages(constants.CustomK8sImageDir + file.Name())
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (t *TKE) buildCustomProviderRes(ctx context.Context) error {
+	amdDirExists := false
+	armDirExists := false
+
+	amdFiles, err := getFilesFromDir(constants.CustomK8sBinaryAmdDir)
+	if err == nil {
+		amdDirExists = true
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	armFiles, err := getFilesFromDir(constants.CustomK8sBinaryArmDir)
+	if err == nil {
+		armDirExists = true
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	if !amdDirExists && !armDirExists {
+		t.log.Infof("%s and %s don't exist, skip build custom provider res image", constants.CustomK8sBinaryAmdDir, constants.CustomK8sBinaryArmDir)
+		return nil
+	}
+
+	if err := addCustomK8sVersionMap(append(amdFiles, armFiles...)); err != nil {
+		return err
+	}
+
+	values := map[string]interface{}{
+		"ProviderResName": images.Get().ProviderRes.Name,
+		"Arch":            "amd64",
+		"Tag":             images.Get().ProviderRes.Tag,
+		"HasAmdDir":       amdDirExists,
+		"AmdDir":          constants.CustomK8sBinaryAmdDir,
+		"HasArmDir":       armDirExists,
+		"ArmDir":          constants.CustomK8sBinaryArmDir,
+	}
+
+	amdDockerfile, err := genCustomProviderResDockerfile(values)
+	if err != nil {
+		return err
+	}
+	values["Arch"] = "arm64"
+	armDockerfile, err := genCustomProviderResDockerfile(values)
+	if err != nil {
+		return err
+	}
+
+	if t.Config.CustomProviderResTag == "" {
+		// Use timestamp as custom provider res tag.
+		t.Config.CustomProviderResTag = fmt.Sprint(time.Now().Unix())
+	}
+	nameWithoutArch := "tkestack/" + images.Get().ProviderRes.Name
+
+	amdTarget := nameWithoutArch + "-amd64:" + t.Config.CustomProviderResTag
+	err = t.docker.BuildImage(amdDockerfile, amdTarget, "linux/amd64")
+	if err != nil {
+		return err
+	}
+
+	armTarget := nameWithoutArch + "-arm64:" + t.Config.CustomProviderResTag
+	err = t.docker.BuildImage(armDockerfile, armTarget, "linux/arm64")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func genCustomProviderResDockerfile(values map[string]interface{}) ([]byte, error) {
+	dockerfileTpl := `FROM tkestack/{{ .ProviderResName }}-{{ .Arch }}:{{ .Tag }}
+
+WORKDIR /data
+
+{{- if .HasAmdDir }}
+COPY {{ .AmdDir }}* res/linux-amd64/
+{{- end }}
+
+{{- if .HasArmDir }}
+COPY {{ .ArmDir }}* res/linux-arm64/
+{{- end }}
+
+ENTRYPOINT ["sh"]`
+	return template.ParseString(dockerfileTpl, values)
+}
+
+func getFilesFromDir(path string) (files []os.FileInfo, err error) {
+	files = []os.FileInfo{}
+	imageDir, err := os.Stat(path)
+	if err != nil {
+		return files, err
+	}
+	if !imageDir.IsDir() {
+		return files, errors.Errorf("%s is not a dir", path)
+	}
+	files, err = ioutil.ReadDir(path)
+	return files, err
+}
+
+func addCustomK8sVersionMap(files []os.FileInfo) error {
+	versionMap := map[string]bool{}
+	for _, file := range files {
+		fileRegexp := regexp.MustCompile(`^[\w-]+-v([\d\.]+).tar.gz$`)
+		version := fileRegexp.FindStringSubmatch(file.Name())
+		if len(version) > 1 {
+			versionMap[version[1]] = true
+		}
+	}
+
+	if len(versionMap) == 0 {
+		return errors.New("can't find any custom K8s version")
+	}
+
+	for key := range versionMap {
+		spec.K8sValidVersions = append(spec.K8sValidVersions, key)
 	}
 	return nil
 }
