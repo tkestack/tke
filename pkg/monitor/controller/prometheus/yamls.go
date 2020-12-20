@@ -169,7 +169,7 @@ func scrapeConfigForPrometheus() string {
         target_label: namespace
       - source_labels: [__meta_kubernetes_pod_name]
         action: keep
-        regex: "tke-(.*)"
+        regex: "tke-(.*)|gpu-manager-(.*)"
       - source_labels: [__meta_kubernetes_pod_name]
         action: replace
         target_label: pod_name
@@ -191,7 +191,7 @@ func scrapeConfigForPrometheus() string {
         replacement: $1:$2
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'tke_(.*)|process_(.*)|grpc_(.*)|go_(.*)|apiserver_(.*)|etcd_(.*)'
+        regex: 'tke_(.*)|process_(.*)|grpc_(.*)|go_(.*)|apiserver_(.*)|etcd_(.*)|container_gpu_utilization|container_request_gpu_utilization|container_gpu_memory_total|container_request_gpu_memory'
         action: keep
       - source_labels: [label_tkestack_io_projectName]
         action: replace
