@@ -7,6 +7,7 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { useModal } from '../../common/utils';
 import { emptyTips, LinkButton } from '../../common/components';
 import { AuditDetailsDialog } from './AuditDetailsDialog';
+import { AuditSettingDialog } from './AuditSettingDialog';
 import { allActions } from '../actions';
 import { router } from '../router';
 import { Audit } from '../models';
@@ -59,6 +60,7 @@ export const AuditPanel = () => {
   const [expandedKeys, setExpandedKeys] = useState([]);
   const [record, setRecord] = useState(undefined);
   const { isShowing, toggle } = useModal(false);
+  const [ settingDialogVisible, showSettingDialog ] = useState(true);
 
   useEffect(() => {
     actions.audit.getAuditFilterCondition.fetch();
@@ -117,6 +119,8 @@ export const AuditPanel = () => {
       render: item => <Text parent="div">{item.status || '-'}</Text>
     }
   ];
+
+  const style = { marginRight: 5 };
 
   return (
     <>
@@ -179,6 +183,17 @@ export const AuditPanel = () => {
               }}
             />
           </Form.Item>
+          <Form.Item>
+            <Button icon="download" title="下载" style={style} />
+            <Button
+              icon="setting"
+              title="设置"
+              style={style}
+              onClick={() => {
+                showSettingDialog(!settingDialogVisible);
+              }}
+            />
+          </Form.Item>
         </Form>
       </Card>
       <Card>
@@ -230,6 +245,7 @@ export const AuditPanel = () => {
           ]}
         />
         <AuditDetailsDialog isShowing={isShowing} toggle={toggle} record={record} />
+        <AuditSettingDialog isShowing={settingDialogVisible} toggle={() => showSettingDialog(!settingDialogVisible)} />
       </Card>
     </>
   );

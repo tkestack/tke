@@ -62,6 +62,7 @@
     "prop-types": "^15.6.2",
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
+    "react-final-form": "^6.5.2",
     "react-final-form-hooks": "^2.0.2",
     "react-hook-form": "^6.8.1",
     "react-lazyload": "^2.3.0",
