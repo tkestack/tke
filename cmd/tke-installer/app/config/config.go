@@ -34,12 +34,13 @@ type Config struct {
 	SyncProjectsWithNamespaces bool
 	Replicas                   int
 	Upgrade                    bool
+	PrepareCustomK8sImages     bool
 	Kubeconfig                 string
 	RegistryUsername           string
 	RegistryPassword           string
 	RegistryDomain             string
 	RegistryNamespace          string
-	CustomProviderResTag       string
+	CustomUpgradeResourceDir   string
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -56,10 +57,12 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		SyncProjectsWithNamespaces: *opts.SyncProjectsWithNamespaces,
 		Replicas:                   *opts.Replicas,
 		Upgrade:                    *opts.Upgrade,
+		PrepareCustomK8sImages:     *opts.PrepareCustomK8sImages,
 		Kubeconfig:                 *opts.Kubeconfig,
 		RegistryUsername:           *opts.RegistryUsername,
 		RegistryPassword:           *opts.RegistryPassword,
 		RegistryDomain:             *opts.RegistryDomain,
 		RegistryNamespace:          *opts.RegistryNamespace,
+		CustomUpgradeResourceDir:   *opts.CustomUpgradeResourceDir,
 	}, nil
 }

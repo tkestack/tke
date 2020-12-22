@@ -474,13 +474,20 @@ func (t *TKE) runWithUI() error {
 
 	restful.Filter(globalLogging)
 
-	if t.Config.Upgrade {
+	switch {
+	case t.Config.PrepareCustomK8sImages:
+		err := t.prepareForPrepareCustomImages(context.Background())
+		if err != nil {
+			return err
+		}
+		go t.doPrepareCustomImages()
+	case t.Config.Upgrade:
 		err := t.prepareForUpgrade(context.Background())
 		if err != nil {
 			return err
 		}
 		go t.do()
-	} else {
+	default:
 		if t.isFromRestore {
 			go t.do()
 		}
@@ -955,7 +962,6 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 }
 
 func (t *TKE) do() {
-	start := time.Now()
 	ctx := t.log.WithContext(context.Background())
 
 	var taskType string
@@ -968,33 +974,11 @@ func (t *TKE) do() {
 		t.initSteps()
 	}
 
-	if t.Step == 0 {
-		t.log.Infof("===>starting %s task", taskType)
-		t.progress.Status = types.StatusDoing
-	}
-
 	if !t.Config.Upgrade && t.runAfterClusterReady() {
 		t.initDataForDeployTKE()
 	}
 
-	for t.Step < len(t.steps) {
-		wait.PollInfinite(10*time.Second, func() (bool, error) {
-			t.log.Infof("%d.%s doing", t.Step, t.steps[t.Step].Name)
-			start := time.Now()
-			err := t.steps[t.Step].Func(ctx)
-			if err != nil {
-				t.progress.Status = types.StatusRetrying
-				t.log.Errorf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
-				return false, nil
-			}
-			t.log.Infof("%d.%s [Success] [%fs]", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds())
-
-			t.Step++
-			t.backup()
-			t.progress.Status = types.StatusDoing
-			return true, nil
-		})
-	}
+	t.doSteps(ctx, taskType)
 
 	t.progress.Status = types.StatusSuccess
 	if t.Para.Config.Gateway != nil {
@@ -1031,6 +1015,34 @@ func (t *TKE) do() {
 		t.progress.Servers = append(t.progress.Servers, t.Para.Config.HA.VIP())
 	}
 	t.progress.Servers = append(t.progress.Servers, t.servers...)
+
+}
+
+func (t *TKE) doSteps(ctx context.Context, taskType string) {
+	start := time.Now()
+	if t.Step == 0 {
+		t.log.Infof("===>starting %s task", taskType)
+		t.progress.Status = types.StatusDoing
+	}
+
+	for t.Step < len(t.steps) {
+		wait.PollInfinite(10*time.Second, func() (bool, error) {
+			t.log.Infof("%d.%s doing", t.Step, t.steps[t.Step].Name)
+			start := time.Now()
+			err := t.steps[t.Step].Func(ctx)
+			if err != nil {
+				t.progress.Status = types.StatusRetrying
+				t.log.Errorf("%d.%s [Failed] [%fs] error %s", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds(), err)
+				return false, nil
+			}
+			t.log.Infof("%d.%s [Success] [%fs]", t.Step, t.steps[t.Step].Name, time.Since(start).Seconds())
+
+			t.Step++
+			t.backup()
+			t.progress.Status = types.StatusDoing
+			return true, nil
+		})
+	}
 
 	t.log.Infof("===>%s task [Sucesss] [%fs]", taskType, time.Since(start).Seconds())
 }
@@ -2433,6 +2445,14 @@ func (t *TKE) writeKubeconfig(ctx context.Context) error {
 }
 
 func (t *TKE) patchPlatformVersion(ctx context.Context) error {
+	tkeVersion, _, err := t.getPlatformVersions(ctx)
+	if err != nil {
+		return err
+	}
+	if tkeVersion == spec.TKEVersion {
+		log.Info("skip patch platform version, current installer version is equal to platform version")
+	}
+
 	versionsByte, err := json.Marshal(spec.K8sValidVersions)
 	if err != nil {
 		return err
@@ -2443,6 +2463,10 @@ func (t *TKE) patchPlatformVersion(ctx context.Context) error {
 			"tkeVersion":       spec.TKEVersion,
 		},
 	}
+	return t.patchClusterInfo(ctx, patchData)
+}
+
+func (t *TKE) patchClusterInfo(ctx context.Context, patchData interface{}) error {
 	patchByte, err := json.Marshal(patchData)
 	if err != nil {
 		return err

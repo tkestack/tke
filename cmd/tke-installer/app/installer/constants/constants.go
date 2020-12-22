@@ -19,13 +19,15 @@
 package constants
 
 const (
-	DataDir               = "data/"
-	ClusterFile           = DataDir + "tke.json"
-	ClusterLogFile        = DataDir + "tke.log"
-	CustomK8sImageDir     = DataDir + "images/"
-	CustomK8sBinaryDir    = DataDir + "bins/"
-	CustomK8sBinaryAmdDir = DataDir + "bins/linux-amd64/"
-	CustomK8sBinaryArmDir = DataDir + "bins/linux-arm64/"
+	DataDir        = "data/"
+	ClusterFile    = DataDir + "tke.json"
+	ClusterLogFile = DataDir + "tke.log"
+
+	DefaultCustomResourceDir  = DataDir + "custom_upgrade_resource"
+	CustomK8sImageDirName     = "images/"
+	CustomK8sBinaryDirName    = "bins/"
+	CustomK8sBinaryAmdDirName = "bins/linux-amd64/"
+	CustomK8sBinaryArmDirName = "bins/linux-arm64/"
 
 	ProviderConfigFile = "provider/baremetal/conf/config.yaml"
 
