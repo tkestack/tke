@@ -81,7 +81,14 @@ func New(c *Config) (*SSH, error) {
 
 	authMethods := make([]ssh.AuthMethod, 0)
 	if c.Password != "" {
-		authMethods = append(authMethods, ssh.Password(c.Password))
+		authMethods = append(authMethods,
+			ssh.Password(c.Password),
+			ssh.KeyboardInteractive(func(user, instruction string, questions []string, echos []bool) (answers []string, err error) {
+				if len(questions) == 1 {
+					return []string{c.Password}, nil
+				}
+				return nil, nil
+			}))
 	}
 	if len(c.PrivateKey) != 0 {
 		signer, err := MakePrivateKeySigner(c.PrivateKey, c.PassPhrase)
