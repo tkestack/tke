@@ -167,5 +167,3 @@ TKEStack 的安装需要一个小时左右，具体时间也依赖使用的硬�
 1. 请首先检查 [部署环境要求](../installation/installation-requirement.md)
 2. 如有更多安装类问题，例如安装失败了如何重新部署等，请参考 [部署类问题](../FAQ/Installation)
 3. 可以提出一个 [Issue](https://github.com/tkestack/tke/issues/new/choose)，我们会认真对待每一个 Issue
-4. 如果需要更多帮助，欢迎加入 TKEStack 社区，请扫描下方二维码，并备注“TKESTack”
-   ![](../../../images/wechat.jpeg)
