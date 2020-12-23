@@ -4,7 +4,7 @@
 
 ## 物料准备
 
-升级所需物料需要存放到`/opt/tke-installer/data/`下，默认物料文件夹名称为`custom_upgrade_resource`，由于installer以容器形式执行命令会挂在`/opt/tke-installer/data/`到执行目录的`data/`目录下，installer会默认从`data/custom_upgrade_resource`中获取物料，如用户想指定其他目录请通过installer的`--upgrade-resource-dir`指定位置。
+升级所需物料需要存放到`/opt/tke-installer/data/`下，默认物料文件夹名称为`custom_upgrade_resource`，由于installer以容器形式执行命令会挂在`/opt/tke-installer/data/`到执行目录的`data/`目录下，installer会默认从`data/custom_upgrade_resource`中获取物料，如用户想指定其他目录请通过installer的`--prepare-custom-images --upgrade-resource-dir your_resource_dir`在准备物料阶段指定位置，`--upgrade-resource-dir`未指定时默认值为`data/custom_upgrade_resource`。
 
 `custom_upgrade_resource`下需要有且仅有一个以版本号命名的文件夹，例如`1.16.15`，此文件夹下需要有`images`和`bins`文件夹。
 
@@ -50,7 +50,7 @@ kubectl edit cluster cls-yourcluster
 
 修改`spec.version`中的内容为`1.16.15`。
 
-> 目前Web UI不允许补丁版本升级，会导致可以在UI升级选项中可以看到`1.16.15`版本，但是提示无法升级到该版本，后续版本中将会修复。当前请使用kubectl修改cluster资源对象内容升级自定义版本。
+> 目前Web UI不允许补丁版本升级，会导致可以在UI升级选项中可以看到`1.16.15`版本，但是提示无法升级到该版本，后续版本中将会[修复](https://github.com/tkestack/tke/issues/1020)。当前请使用kubectl修改cluster资源对象内容升级自定义版本。
 
 # 用户手动进行自定义k8s版本升级
 
@@ -195,4 +195,4 @@ kubectl edit cluster cls-yourcluster
 
 更详细的升级相关文档请参考：[K8S 版本升级说明](https://github.com/tkestack/tke/blob/master/docs/guide/zh-CN/best-practices/cluster-upgrade-guide.md)。
 
-> 目前Web UI不允许补丁版本升级，会导致可以在UI升级选项中可以看到`1.16.15`版本，但是提示无法升级到该版本，后续版本中将会修复。当前请使用kubectl修改cluster资源对象内容升级自定义版本。
+> 目前Web UI不允许补丁版本升级，会导致可以在UI升级选项中可以看到`1.16.15`版本，但是提示无法升级到该版本，后续版本中将会[修复](https://github.com/tkestack/tke/issues/1020)。当前请使用kubectl修改cluster资源对象内容升级自定义版本。
