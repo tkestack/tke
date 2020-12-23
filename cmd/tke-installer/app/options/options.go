@@ -20,6 +20,7 @@ package options
 
 import (
 	"github.com/spf13/pflag"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -33,11 +34,13 @@ type Options struct {
 	SyncProjectsWithNamespaces *bool
 	Replicas                   *int
 	Upgrade                    *bool
+	PrepareCustomK8sImages     *bool
 	Kubeconfig                 *string
 	RegistryUsername           *string
 	RegistryPassword           *string
 	RegistryDomain             *string
 	RegistryNamespace          *string
+	CustomUpgradeResourceDir   *string
 }
 
 // NewOptions creates a new Options with a default config.
@@ -58,11 +61,13 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.SyncProjectsWithNamespaces = fs.Bool("sync-projects-with-namespaces", false, "Enable creating/deleting the corresponding namespace when creating/deleting a project.")
 	o.Replicas = fs.Int("replicas", 2, "tke components replicas")
 	o.Upgrade = fs.Bool("upgrade", false, "upgrade")
+	o.PrepareCustomK8sImages = fs.Bool("prepare-custom-images", false, "prepare images for custom K8s version")
 	o.Kubeconfig = fs.String("kubeconfig", "conf/kubeconfig", "specify kubeconfig for upgrade")
 	o.RegistryUsername = fs.String("username", "", "specify registry username for upgrade")
 	o.RegistryPassword = fs.String("password", "", "specify registry password for upgrade")
 	o.RegistryDomain = fs.String("domain", "", "specify registry domain for upgrade")
 	o.RegistryNamespace = fs.String("namespace", "", "specify registry namespace for upgrade")
+	o.CustomUpgradeResourceDir = fs.String("upgrade-resource-dir", constants.DefaultCustomResourceDir, "specify custom upgrade resource dir for prepare custom K8s images")
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file

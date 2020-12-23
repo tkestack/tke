@@ -23,6 +23,12 @@ const (
 	ClusterFile    = DataDir + "tke.json"
 	ClusterLogFile = DataDir + "tke.log"
 
+	DefaultCustomResourceDir  = DataDir + "custom_upgrade_resource"
+	CustomK8sImageDirName     = "images/"
+	CustomK8sBinaryDirName    = "bins/"
+	CustomK8sBinaryAmdDirName = "bins/linux-amd64/"
+	CustomK8sBinaryArmDirName = "bins/linux-arm64/"
+
 	ProviderConfigFile = "provider/baremetal/conf/config.yaml"
 
 	HooksDir             = "hooks/"
