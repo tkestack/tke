@@ -1,4 +1,58 @@
-# 自定义k8s版本升级
+# 使用installer进行自定义k8s版本升级
+
+使用installer进行自定义版本升级功能从1.5.1版本起开始提供，如果用户使用的TKEStack版本为1.5.0请参考下文中的《用户手动进行自定义k8s版本升级》章节，版本号小于1.5.0的TKEstack未提供升级K8s版本的能力。
+
+## 物料准备
+
+升级所需物料需要存放到`/opt/tke-installer/data/`下，默认物料文件夹名称为`custom_upgrade_resource`，由于installer以容器形式执行命令会挂在`/opt/tke-installer/data/`到执行目录的`data/`目录下，installer会默认从`data/custom_upgrade_resource`中获取物料，如用户想指定其他目录请通过installer的`--upgrade-resource-dir`指定位置。
+
+`custom_upgrade_resource`下需要有且仅有一个以版本号命名的文件夹，例如`1.16.15`，此文件夹下需要有`images`和`bins`文件夹。
+
+### images
+
+`images`文件夹下用于存放自定义K8s版本的镜像的tar包，如kube-proxy等。在镜像存为tar包之前需要注意：
+
+1. 镜像名的domain需要统一改为tkestack，否则将不会被installer识别为需要维护的镜像；
+2. 镜像名需要携带cpu架构，由于TKEStack支持多架构，installer会将镜像统以`multi-CPU architecture`维护，需要导入镜像携带cpu架构。
+
+以官方amd64架构的kube-proxy为例子，通过执行`docker tag k8s.gcr.io/kube-proxy-amd64:v1.16.15 tkestack/kube-proxy-amd64:v1.16.15 && docker save -o kp-amd-16.tar tkestack/kube-proxy-amd64:v1.16.15`就能得到一个可以被installer识别的镜像tar包。
+
+### bins
+
+`bins`目录下可以有两个目录`linux-amd64`和`linux-arm64`，分别用于存放amd64架构和arm64架构的二进制压缩包，用户可以根据自身需求同时创建两个或其中一个。这两个文件夹下需要有一个压缩包，命名规范需要符合`kubernetes-node-linux-$arch-v$version.tar.gz`。此压缩包可以从官方下载下来，以1.16.15版本amd64架构的K8s为例，可以通过命令`curl -o kubernetes-node-linux-amd64-v1.16.15.tar.gz -L https://dl.k8s.io/v1.16.15/kubernetes-node-linux-amd64.tar.gz`下载并重命名为可以被installer识别的压缩包。
+
+最终文件目录结构可以参考：
+
+```sh
+/opt/tke-installer/data/custom_upgrade_resource/
+`-- 1.16.15
+    |-- bins
+    |   `-- linux-amd64
+    |       `-- kubernetes-node-linux-amd64-v1.16.15.tar.gz
+    `-- images
+        |-- ka-amd-16.tar
+        |-- km-amd-16.tar
+        |-- kp-amd-16.tar
+        `-- ks-amd-16.tar
+```
+
+### 使用installer完成升级
+
+升级时注意要在global集群节点上执行，提前将kubeconfig文件存放到指定位置等事项，可参考[K8S 版本升级说明](https://github.com/tkestack/tke/blob/master/docs/guide/zh-CN/best-practices/cluster-upgrade-guide.md)。
+
+升级物料准备完成之后，首先通过`tke-installer-linux-amd64-xxx.run --prepare-custom-images`将用户的自定义K8s版本资源以镜像方式准备好，执行成功后再使用`tke-installer-linux-amd64-xxx.run --upgrade`执行升级。
+
+触发集群升级需要在global集群上修改cluster资源对象内容：
+
+```sh
+kubectl edit cluster cls-yourcluster
+```
+
+修改`spec.version`中的内容为`1.16.15`。
+
+> 目前Web UI不允许补丁版本升级，会导致可以在UI升级选项中可以看到`1.16.15`版本，但是提示无法升级到该版本，后续版本中将会修复。当前请使用kubectl修改cluster资源对象内容升级自定义版本。
+
+# 用户手动进行自定义k8s版本升级
 
 用户可以通过向TKEStack平台提供自定义版本的k8s，以允许集群升级到非内置的版本。本文将以v1.16.15版本的k8s作为例子演示用户如何将集群升级到自定义版本。本文中只以amd64环境作为示例，如果用户希望自己的物料镜像可以支持`multi-CPU architecture`，请在制作镜像和推送镜像阶段参考[Leverage multi-CPU architecture support](https://docs.docker.com/docker-for-mac/multi-arch/)和[构建多CPU架构支持的Docker镜像](https://blog.csdn.net/dev_csdn/article/details/79138424)。
 
@@ -141,4 +195,4 @@ kubectl edit cluster cls-yourcluster
 
 更详细的升级相关文档请参考：[K8S 版本升级说明](https://github.com/tkestack/tke/blob/master/docs/guide/zh-CN/best-practices/cluster-upgrade-guide.md)。
 
-> 目前Web UI不允许补丁版本升级，会导致可以在UI升级选项中可以看到`1.16.15`版本，但是提示无法升级到该版本，后续版本中将会修复。当前请使用kubectl修改cluster资源对象内容升级自定义版本。
+> 目前Web UI不允许补丁版本升级，会导致可以在UI升级选项中可以看到`1.16.15`版本，但是提示无法升级到该版本，后续版本中将会修复。当前请使用kubectl修改cluster资源对象内容升级自定义版本。
