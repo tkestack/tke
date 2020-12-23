@@ -32,9 +32,6 @@ COPY linux-arm64/docker-*.tar.gz       res/linux-arm64/
 COPY linux-amd64/kubernetes-*.tar.gz   res/linux-amd64/
 COPY linux-arm64/kubernetes-*.tar.gz   res/linux-arm64/
 
-COPY linux-amd64/kubeadm-*.tar.gz      res/linux-amd64/
-COPY linux-arm64/kubeadm-*.tar.gz      res/linux-arm64/
-
 COPY linux-amd64/NVIDIA-*.tar.gz       res/linux-amd64/
 
 COPY linux-amd64/nvidia-container-*.tar.gz res/linux-amd64/

@@ -73,13 +73,13 @@ var (
 )
 
 func Install(s ssh.Interface, version string) error {
-	dstFile, err := res.Kubeadm.CopyToNode(s, version)
+	dstFile, err := res.KubernetesNode.CopyToNode(s, version)
 	if err != nil {
 		return err
 	}
 
-	cmd := "tar xvaf %s -C %s "
-	_, stderr, exit, err := s.Execf(cmd, dstFile, constants.DstBinDir)
+	cmd := "tar -C %s -xvaf %s %s --strip-components=3"
+	_, stderr, exit, err := s.Execf(cmd, constants.DstBinDir, dstFile, constants.KubeadmPathInNodePackge)
 	if err != nil || exit != 0 {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
