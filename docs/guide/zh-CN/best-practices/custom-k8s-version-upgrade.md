@@ -1,7 +1,5 @@
 # 使用installer进行自定义k8s版本升级
 
-使用installer进行自定义版本升级功能从1.5.1版本起开始提供，如果用户使用的TKEStack版本为1.5.0请参考下文中的《用户手动进行自定义k8s版本升级》章节，版本号小于1.5.0的TKEstack未提供升级K8s版本的能力。
-
 ## 物料准备
 
 升级所需物料需要存放到`/opt/tke-installer/data/`下，默认物料文件夹名称为`custom_upgrade_resource`，由于installer以容器形式执行命令会挂在`/opt/tke-installer/data/`到执行目录的`data/`目录下，installer会默认从`data/custom_upgrade_resource`中获取物料，如用户想指定其他目录请通过installer的`--prepare-custom-images --upgrade-resource-dir your_resource_dir`在准备物料阶段指定位置，`--upgrade-resource-dir`未指定时默认值为`data/custom_upgrade_resource`。
@@ -30,10 +28,10 @@
     |   `-- linux-amd64
     |       `-- kubernetes-node-linux-amd64-v1.16.15.tar.gz
     `-- images
-        |-- ka-amd-16.tar
-        |-- km-amd-16.tar
-        |-- kp-amd-16.tar
-        `-- ks-amd-16.tar
+        |-- kube-proxy-amd64.tar
+        |-- kube-controller-manager-amd64.tar
+        |-- kube-apiserver-amd64.tar
+        `-- kube-scheduler-amd64.tar
 ```
 
 ### 使用installer完成升级
