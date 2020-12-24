@@ -265,7 +265,11 @@ func (t *TKE) getPlatformVersions(ctx context.Context) (tkeVersion string, k8sVa
 	if err != nil {
 		return
 	}
-	tkeVersion = clusterInfo.Data["tkeVersion"]
+
+	tkeVersion, ok := clusterInfo.Data["tkeVersion"]
+	if !ok {
+		return
+	}
 	err = json.Unmarshal([]byte(clusterInfo.Data["k8sValidVersions"]), &k8sValidVersions)
 	return
 }
