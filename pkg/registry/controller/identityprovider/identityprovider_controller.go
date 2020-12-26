@@ -21,6 +21,8 @@ package identityprovider
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -36,10 +38,16 @@ import (
 	authv1informer "tkestack.io/tke/api/client/informers/externalversions/auth/v1"
 	authv1lister "tkestack.io/tke/api/client/listers/auth/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
+	helmaction "tkestack.io/tke/pkg/application/helm/action"
+	applicationutil "tkestack.io/tke/pkg/application/util"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	registryconfigv1 "tkestack.io/tke/pkg/registry/apis/config/v1"
+	registryconfig "tkestack.io/tke/pkg/registry/config"
 	registrycontrollerconfig "tkestack.io/tke/pkg/registry/controller/config"
 	"tkestack.io/tke/pkg/registry/util"
+	chartpath "tkestack.io/tke/pkg/registry/util/chartpath/v1"
+	"tkestack.io/tke/pkg/util/compress"
+	"tkestack.io/tke/pkg/util/files"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -58,8 +66,9 @@ type Controller struct {
 	identityProviderListerSynced cache.InformerSynced
 
 	stopCh                       <-chan struct{}
-	registryDefaultConfiguration registrycontrollerconfig.RegistryDefaultConfiguration
+	registryDefaultConfiguration registrycontrollerconfig.ChartGroupSetting
 	registryConfig               *registryconfigv1.RegistryConfiguration
+	repoConfiguration            registryconfig.RepoConfiguration
 	corednsClient                *util.CoreDNS
 }
 
@@ -67,8 +76,9 @@ func NewController(authClient authversionedclient.AuthV1Interface,
 	client clientset.Interface,
 	identityProviderInformer authv1informer.IdentityProviderInformer,
 	resyncPeriod time.Duration,
-	registryDefaultConfiguration registrycontrollerconfig.RegistryDefaultConfiguration,
 	registryConfig *registryconfigv1.RegistryConfiguration,
+	registryDefaultConfiguration registrycontrollerconfig.ChartGroupSetting,
+	repoConfiguration registryconfig.RepoConfiguration,
 ) *Controller {
 	corednsClient, err := util.NewCoreDNS()
 	if err != nil {
@@ -78,8 +88,9 @@ func NewController(authClient authversionedclient.AuthV1Interface,
 		client:                       client,
 		authClient:                   authClient,
 		queue:                        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), controllerName),
-		registryDefaultConfiguration: registryDefaultConfiguration,
 		registryConfig:               registryConfig,
+		registryDefaultConfiguration: registryDefaultConfiguration,
+		repoConfiguration:            repoConfiguration,
 		corednsClient:                corednsClient,
 	}
 
@@ -190,11 +201,11 @@ func (c *Controller) syncItem(key string) error {
 		log.Warn("Unable to retrieve identityProvider from store", log.String("name", key), log.Err(err))
 	default:
 		log.Info("Init default registry setting for identityProvider", log.Any("name", idp.Name))
-		err = c.processUpdateItem(context.Background(), idp, key)
 		if c.corednsClient != nil {
 			item := fmt.Sprintf("%s.%s", idp.Name, c.registryConfig.DomainSuffix)
 			c.corednsClient.ParseCoreFile(item)
 		}
+		err = c.processUpdateItem(context.Background(), idp, key)
 	}
 	return err
 }
@@ -208,7 +219,7 @@ func (c *Controller) processUpdateItem(ctx context.Context, idp *authv1.Identity
 	if c.client == nil {
 		return nil
 	}
-	for _, cg := range c.registryDefaultConfiguration.DefaultSystemChartGroups {
+	for index, cg := range c.registryDefaultConfiguration.DefaultSystemChartGroups {
 		cgList, err := c.client.RegistryV1().ChartGroups().List(ctx, metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", idp.Spec.Name, cg),
 		})
@@ -220,8 +231,9 @@ func (c *Controller) processUpdateItem(ctx context.Context, idp *authv1.Identity
 			errs = append(errs, err)
 			continue
 		}
+		var chartgroup *registryv1.ChartGroup
 		if len(cgList.Items) == 0 {
-			_, err = c.client.RegistryV1().ChartGroups().Create(ctx, &registryv1.ChartGroup{
+			chartgroup, err = c.client.RegistryV1().ChartGroups().Create(ctx, &registryv1.ChartGroup{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: cg,
 				},
@@ -242,6 +254,70 @@ func (c *Controller) processUpdateItem(ctx context.Context, idp *authv1.Identity
 				log.Info("identityprovider controller - addChartGroup",
 					log.String("chartGroupName", cg),
 					log.String("tenant", idp.Spec.Name))
+			}
+		} else {
+			chartgroup = &cgList.Items[0]
+		}
+
+		if index == 0 {
+			err = c.importCharts(ctx, chartgroup)
+			if err != nil {
+				log.Warn("identityprovider controller - importCharts failed",
+					log.String("chartGroupName", cg),
+					log.String("tenant", idp.Spec.Name),
+					log.Err(err))
+				errs = append(errs, err)
+			}
+		}
+	}
+	return utilerrors.NewAggregate(errs)
+}
+
+func (c *Controller) importCharts(ctx context.Context, cg *registryv1.ChartGroup) error {
+	var errs []error
+	if len(c.registryDefaultConfiguration.ChartPaths) == 0 {
+		return nil
+	}
+	for _, path := range c.registryDefaultConfiguration.ChartPaths {
+		dest, err := ioutil.TempDir("", "chartpath-")
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		defer os.RemoveAll(dest)
+
+		err = compress.ExtractTarGz(path, dest)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		files, err := files.GetAllFiles(dest)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		client := applicationutil.NewHelmClientWithoutRESTClient()
+		for _, f := range files {
+			chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(c.repoConfiguration, *cg)
+			if err != nil {
+				errs = append(errs, err)
+				continue
+			}
+
+			existed, err := client.Push(&helmaction.PushOptions{
+				ChartPathOptions: chartPathBasicOptions,
+				ChartFile:        f,
+				ForceUpload:      false,
+			})
+			if err != nil {
+				if existed {
+					log.Warn(err.Error())
+				} else {
+					errs = append(errs, err)
+					continue
+				}
 			}
 		}
 	}

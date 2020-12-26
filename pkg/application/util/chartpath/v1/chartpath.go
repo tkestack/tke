@@ -24,8 +24,8 @@ import (
 
 	v1 "tkestack.io/tke/api/application/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
-	"tkestack.io/tke/pkg/application/config"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
+	registryconfig "tkestack.io/tke/pkg/registry/config"
 	registryutil "tkestack.io/tke/pkg/registry/util"
 )
 
@@ -41,7 +41,7 @@ func FullfillChartInfo(appChart v1.Chart, cg registryv1.ChartGroup) (v1.Chart, e
 }
 
 // BuildChartPathBasicOptions will judge chartgroup type and return well-structured ChartPathOptions
-func BuildChartPathBasicOptions(repo config.RepoConfiguration, appChart v1.Chart) (opt helmaction.ChartPathOptions, err error) {
+func BuildChartPathBasicOptions(repo registryconfig.RepoConfiguration, appChart v1.Chart) (opt helmaction.ChartPathOptions, err error) {
 	if appChart.ImportedRepo {
 		password, err := registryutil.VerifyDecodedPassword(appChart.RepoPassword)
 		if err != nil {

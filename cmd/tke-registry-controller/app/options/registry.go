@@ -44,46 +44,55 @@ func NewRegistryConfiguration() (*registryconfig.RegistryConfiguration, error) {
 
 const (
 	flagDefaultSystemChartGroups = "registry-setting-default-system-chartgroups"
+	flagChartPaths               = "registry-setting-chart-paths"
 )
 
 const (
 	configDefaultSystemChartGroups = "registry_setting.default_system_chartgroups"
+	configChartPaths               = "registry_setting.chart_paths"
 )
 
-// RegistryOptions contains configuration items related to registry attributes.
-type RegistryOptions struct {
+// ChartGroupSettingOptions contains configuration items related to registry attributes.
+type ChartGroupSettingOptions struct {
 	DefaultSystemChartGroups []string
+	ChartPaths               []string
 }
 
-// NewRegistryOptions creates a RegistryOptions object with default parameters.
-func NewRegistryOptions() *RegistryOptions {
-	return &RegistryOptions{}
+// NewChartGroupSettingOptions creates a ChartGroupSettingOptions object with default parameters.
+func NewChartGroupSettingOptions() *ChartGroupSettingOptions {
+	return &ChartGroupSettingOptions{}
 }
 
 // AddFlags adds flags for console to the specified FlagSet object.
-func (o *RegistryOptions) AddFlags(fs *pflag.FlagSet) {
+func (o *ChartGroupSettingOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringSlice(flagDefaultSystemChartGroups, o.DefaultSystemChartGroups,
 		"Default chartgroups with system type and public visibility.")
 	_ = viper.BindPFlag(configDefaultSystemChartGroups, fs.Lookup(flagDefaultSystemChartGroups))
+
+	fs.StringSlice(flagChartPaths, o.ChartPaths,
+		"Path to the default charts which will be load to the default platform chartgroup when started.")
+	_ = viper.BindPFlag(configChartPaths, fs.Lookup(flagChartPaths))
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
 // to the options instance.
-func (o *RegistryOptions) ApplyFlags() []error {
+func (o *ChartGroupSettingOptions) ApplyFlags() []error {
 	var errs []error
 
 	o.DefaultSystemChartGroups = viper.GetStringSlice(configDefaultSystemChartGroups)
+	o.ChartPaths = viper.GetStringSlice(configChartPaths)
 
 	return errs
 }
 
 // ApplyTo fills up Debugging config with options.
-func (o *RegistryOptions) ApplyTo(cfg *registrycontrollerconfig.RegistryDefaultConfiguration) error {
+func (o *ChartGroupSettingOptions) ApplyTo(cfg *registrycontrollerconfig.ChartGroupSetting) error {
 	if o == nil {
 		return nil
 	}
 
 	cfg.DefaultSystemChartGroups = o.DefaultSystemChartGroups[:]
+	cfg.ChartPaths = o.ChartPaths[:]
 
 	return nil
 }

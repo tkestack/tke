@@ -22,12 +22,12 @@ import (
 	"tkestack.io/tke/api/registry"
 	v1 "tkestack.io/tke/api/registry/v1"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
-	"tkestack.io/tke/pkg/registry/config"
+	registryconfig "tkestack.io/tke/pkg/registry/config"
 	chartpathv1 "tkestack.io/tke/pkg/registry/util/chartpath/v1"
 )
 
 // BuildChartPathBasicOptions will judge chartgroup type and return well-structured ChartPathOptions
-func BuildChartPathBasicOptions(repo config.RepoConfiguration, cg registry.ChartGroup) (opt helmaction.ChartPathOptions, err error) {
+func BuildChartPathBasicOptions(repo registryconfig.RepoConfiguration, cg registry.ChartGroup) (opt helmaction.ChartPathOptions, err error) {
 	var v1ChartGroup = &v1.ChartGroup{}
 	err = v1.Convert_registry_ChartGroup_To_v1_ChartGroup(&cg, v1ChartGroup, nil)
 	if err != nil {

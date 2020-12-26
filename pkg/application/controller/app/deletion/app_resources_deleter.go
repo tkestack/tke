@@ -31,8 +31,8 @@ import (
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	appconfig "tkestack.io/tke/pkg/application/config"
 	"tkestack.io/tke/pkg/application/controller/app/action"
+	registryconfig "tkestack.io/tke/pkg/registry/config"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -48,7 +48,7 @@ type AppResourcesDeleterInterface interface {
 func NewAppResourcesDeleter(
 	applicationClient v1clientset.ApplicationV1Interface,
 	platformClient platformversionedclient.PlatformV1Interface,
-	repo appconfig.RepoConfiguration,
+	repo registryconfig.RepoConfiguration,
 	finalizerToken applicationv1.FinalizerName,
 	deleteAppWhenDone bool) AppResourcesDeleterInterface {
 	d := &applicationResourcesDeleter{
@@ -75,7 +75,7 @@ type applicationResourcesDeleter struct {
 	// Also delete the app when all resources in the app have been deleted.
 	deleteAppWhenDone bool
 	//RepoConfiguration contains options to connect to a chart repo.
-	repo appconfig.RepoConfiguration
+	repo registryconfig.RepoConfiguration
 }
 
 // Delete deletes all resources in the given app.

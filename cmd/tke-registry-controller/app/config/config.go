@@ -32,6 +32,7 @@ import (
 	controlleroptions "tkestack.io/tke/pkg/controller/options"
 	registryconfigv1 "tkestack.io/tke/pkg/registry/apis/config/v1"
 	registryconfigvalidation "tkestack.io/tke/pkg/registry/apis/config/validation"
+	registryconfig "tkestack.io/tke/pkg/registry/config"
 	"tkestack.io/tke/pkg/registry/config/configfiles"
 	registrycontrollerconfig "tkestack.io/tke/pkg/registry/controller/config"
 	"tkestack.io/tke/pkg/util/log"
@@ -54,8 +55,9 @@ type Config struct {
 	// the rest config for the auth apiserver
 	AuthAPIServerClientConfig *restclient.Config
 	// the registry config for chartmuseum/image
-	RegistryConfig               *registryconfigv1.RegistryConfiguration
-	RegistryDefaultConfiguration registrycontrollerconfig.RegistryDefaultConfiguration
+	RegistryConfig    *registryconfigv1.RegistryConfiguration
+	RepoConfiguration registryconfig.RepoConfiguration
+	ChartGroupSetting registrycontrollerconfig.ChartGroupSetting
 
 	Component controlleroptions.ComponentConfiguration
 }
@@ -142,7 +144,11 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	if err := opts.Registry.ApplyTo(&controllerManagerConfig.RegistryDefaultConfiguration); err != nil {
+	if err := opts.ChartGroupSettingOptions.ApplyTo(&controllerManagerConfig.ChartGroupSetting); err != nil {
+		return nil, err
+	}
+
+	if err := (&opts.FeatureOptions.Repo).ApplyTo(&controllerManagerConfig.RepoConfiguration); err != nil {
 		return nil, err
 	}
 

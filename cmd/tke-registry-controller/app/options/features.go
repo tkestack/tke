@@ -44,5 +44,6 @@ func (o *FeatureOptions) ApplyFlags() []error {
 	var errs []error
 
 	errs = append(errs, o.Repo.ApplyFlags()...)
+
 	return errs
 }

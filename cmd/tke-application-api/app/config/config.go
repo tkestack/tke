@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"tkestack.io/tke/pkg/apiserver/util"
+	"tkestack.io/tke/pkg/registry/config"
 
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
@@ -41,7 +42,6 @@ import (
 	"tkestack.io/tke/pkg/apiserver/openapi"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	"tkestack.io/tke/pkg/application/apiserver"
-	appconfig "tkestack.io/tke/pkg/application/config"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
 )
 
@@ -58,7 +58,7 @@ type Config struct {
 	StorageFactory                 *serverstorage.DefaultStorageFactory
 	RegistryClient                 registryversionedclient.RegistryV1Interface
 	PlatformClient                 platformversionedclient.PlatformV1Interface
-	RepoConfiguration              appconfig.RepoConfiguration
+	RepoConfiguration              config.RepoConfiguration
 }
 
 // CreateConfigFromOptions creates a running configuration instance based

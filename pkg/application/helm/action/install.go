@@ -61,8 +61,8 @@ type ChartPathOptions struct {
 	Verify   bool   // --verify
 	Version  string // --version
 
-	Chart       string
-	ChartRepo   string
+	Chart       string // chart name
+	ChartRepo   string // tenantid/repo
 	ExistedFile string
 }
 

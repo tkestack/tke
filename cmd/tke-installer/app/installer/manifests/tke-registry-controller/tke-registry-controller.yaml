@@ -78,8 +78,17 @@ data:
     registry_config = "/app/conf/registry-config.yaml"
     
     [registry_setting]
-    default_system_chartgroups = ["public"]
+    default_system_chartgroups = ["platform"]
+    chart_paths = ["/app/registry/tencent-charts.tar.gz"]
     
+    [features]
+      [features.repo]
+      scheme = "https"
+      domain_suffix = "{{ .DomainSuffix }}"
+      admin = "{{ .AdminUsername }}"
+      admin_password = "{{ .AdminPassword }}"
+      cafile = "/app/certs/ca.crt"
+
     [secure_serving]
     tls_cert_file = "/app/certs/server.crt"
     tls_private_key_file = "/app/certs/server.key"

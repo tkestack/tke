@@ -42,21 +42,23 @@ type Options struct {
 	AuthAPIClient     *controlleroptions.APIServerClientOptions
 	// The Registry will load its initial configuration from this file.
 	// The path may be absolute or relative; relative paths are under the Registry's current working directory.
-	RegistryConfig string
-	Registry       *RegistryOptions
+	RegistryConfig           string
+	ChartGroupSettingOptions *ChartGroupSettingOptions
+	FeatureOptions           *FeatureOptions
 }
 
 // NewOptions creates a new Options with a default config.
 func NewOptions(serverName string, allControllers []string, disabledByDefaultControllers []string) *Options {
 	return &Options{
-		Log:               log.NewOptions(),
-		Debug:             apiserveroptions.NewDebugOptions(),
-		SecureServing:     apiserveroptions.NewSecureServingOptions(serverName, 9454),
-		Component:         controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
-		RegistryAPIClient: controlleroptions.NewAPIServerClientOptions("registry", true),
-		BusinessAPIClient: controlleroptions.NewAPIServerClientOptions("business", false),
-		AuthAPIClient:     controlleroptions.NewAPIServerClientOptions("auth", false),
-		Registry:          NewRegistryOptions(),
+		Log:                      log.NewOptions(),
+		Debug:                    apiserveroptions.NewDebugOptions(),
+		SecureServing:            apiserveroptions.NewSecureServingOptions(serverName, 9454),
+		Component:                controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
+		RegistryAPIClient:        controlleroptions.NewAPIServerClientOptions("registry", true),
+		BusinessAPIClient:        controlleroptions.NewAPIServerClientOptions("business", false),
+		AuthAPIClient:            controlleroptions.NewAPIServerClientOptions("auth", false),
+		FeatureOptions:           NewFeatureOptions(),
+		ChartGroupSettingOptions: NewChartGroupSettingOptions(),
 	}
 }
 
@@ -73,7 +75,8 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	fs.String(flagRegistryConfig, o.RegistryConfig,
 		"The Registry will load its initial configuration from this file. The path may be absolute or relative; relative paths start at the Registry's current working directory. Omit this flag to use the built-in default configuration values.")
 	_ = viper.BindPFlag(configRegistryConfig, fs.Lookup(flagRegistryConfig))
-	o.Registry.AddFlags(fs)
+	o.FeatureOptions.AddFlags(fs)
+	o.ChartGroupSettingOptions.AddFlags(fs)
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -90,7 +93,8 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.AuthAPIClient.ApplyFlags()...)
 
 	o.RegistryConfig = viper.GetString(configRegistryConfig)
-	errs = append(errs, o.Registry.ApplyFlags()...)
+	errs = append(errs, o.FeatureOptions.ApplyFlags()...)
+	errs = append(errs, o.ChartGroupSettingOptions.ApplyFlags()...)
 
 	return errs
 }

@@ -37,12 +37,12 @@ import (
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
-	appconfig "tkestack.io/tke/pkg/application/config"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	helmutil "tkestack.io/tke/pkg/application/helm/util"
 	applicationstrategy "tkestack.io/tke/pkg/application/registry/application"
 	"tkestack.io/tke/pkg/application/util"
 	"tkestack.io/tke/pkg/application/util/chartpath"
+	registryconfig "tkestack.io/tke/pkg/registry/config"
 	authorizationutil "tkestack.io/tke/pkg/registry/util/authorization"
 )
 
@@ -53,7 +53,7 @@ type REST struct {
 	platformClient    platformversionedclient.PlatformV1Interface
 	registryClient    registryversionedclient.RegistryV1Interface
 	authorizer        authorizer.Authorizer
-	repo              appconfig.RepoConfiguration
+	repo              registryconfig.RepoConfiguration
 }
 
 type ApplicationStorage interface {
@@ -77,7 +77,7 @@ func NewREST(
 	platformClient platformversionedclient.PlatformV1Interface,
 	registryClient registryversionedclient.RegistryV1Interface,
 	authorizer authorizer.Authorizer,
-	repo appconfig.RepoConfiguration,
+	repo registryconfig.RepoConfiguration,
 ) *REST {
 	rest := &REST{
 		application:       application,

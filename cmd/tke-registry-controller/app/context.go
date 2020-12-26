@@ -36,6 +36,7 @@ import (
 	"tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/controller/util"
 	registryconfigv1 "tkestack.io/tke/pkg/registry/apis/config/v1"
+	registryconfig "tkestack.io/tke/pkg/registry/config"
 	registrycontrollerconfig "tkestack.io/tke/pkg/registry/controller/config"
 )
 
@@ -81,8 +82,9 @@ type ControllerContext struct {
 	AuthInformerFactory versionedinformers.SharedInformerFactory
 
 	// the registry config for chartmuseum/image-repo
-	RegistryConfig               *registryconfigv1.RegistryConfiguration
-	RegistryDefaultConfiguration registrycontrollerconfig.RegistryDefaultConfiguration
+	RegistryConfig    *registryconfigv1.RegistryConfiguration
+	RepoConfiguration registryconfig.RepoConfiguration
+	ChartGroupSetting registrycontrollerconfig.ChartGroupSetting
 }
 
 // IsControllerEnabled returns whether the controller has been enabled
@@ -117,16 +119,17 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder, authClientBu
 	}
 
 	ctx := ControllerContext{
-		ClientBuilder:                rootClientBuilder,
-		InformerFactory:              sharedInformers,
-		RESTMapper:                   restMapper,
-		AvailableResources:           availableResources,
-		Stop:                         stop,
-		InformersStarted:             make(chan struct{}),
-		ResyncPeriod:                 controller.ResyncPeriod(&cfg.Component),
-		ControllerStartInterval:      cfg.Component.ControllerStartInterval,
-		RegistryConfig:               cfg.RegistryConfig,
-		RegistryDefaultConfiguration: cfg.RegistryDefaultConfiguration,
+		ClientBuilder:           rootClientBuilder,
+		InformerFactory:         sharedInformers,
+		RESTMapper:              restMapper,
+		AvailableResources:      availableResources,
+		Stop:                    stop,
+		InformersStarted:        make(chan struct{}),
+		ResyncPeriod:            controller.ResyncPeriod(&cfg.Component),
+		ControllerStartInterval: cfg.Component.ControllerStartInterval,
+		RegistryConfig:          cfg.RegistryConfig,
+		RepoConfiguration:       cfg.RepoConfiguration,
+		ChartGroupSetting:       cfg.ChartGroupSetting,
 	}
 
 	if cfg.BusinessAPIServerClientConfig != nil {

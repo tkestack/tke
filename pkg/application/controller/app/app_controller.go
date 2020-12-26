@@ -36,11 +36,11 @@ import (
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	applicationv1informer "tkestack.io/tke/api/client/informers/externalversions/application/v1"
 	applicationv1lister "tkestack.io/tke/api/client/listers/application/v1"
-	appconfig "tkestack.io/tke/pkg/application/config"
 	"tkestack.io/tke/pkg/application/controller/app/action"
 	"tkestack.io/tke/pkg/application/controller/app/deletion"
 	helmutil "tkestack.io/tke/pkg/application/helm/util"
 	controllerutil "tkestack.io/tke/pkg/controller"
+	registryconfig "tkestack.io/tke/pkg/registry/config"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -63,7 +63,7 @@ const (
 type Controller struct {
 	client         clientset.Interface
 	platformClient platformversionedclient.PlatformV1Interface
-	repo           appconfig.RepoConfiguration
+	repo           registryconfig.RepoConfiguration
 	cache          *applicationCache
 	health         *applicationHealth
 	queue          workqueue.RateLimitingInterface
@@ -78,7 +78,7 @@ type Controller struct {
 func NewController(
 	client clientset.Interface,
 	platformClient platformversionedclient.PlatformV1Interface,
-	repo appconfig.RepoConfiguration,
+	repo registryconfig.RepoConfiguration,
 	applicationInformer applicationv1informer.AppInformer,
 	resyncPeriod time.Duration, finalizerToken applicationv1.FinalizerName,
 ) *Controller {

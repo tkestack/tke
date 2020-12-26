@@ -245,3 +245,30 @@ func ReadFileWithDir(dir string, filename string) ([]byte, error) {
 	absFilePath := filepath.Join(dir, filename)
 	return ioutil.ReadFile(absFilePath)
 }
+
+// GetAllFiles gets all files in the specified directory, including files in subdirectories
+func GetAllFiles(dirPth string) (files []string, err error) {
+	var dirs []string
+	dir, err := ioutil.ReadDir(dirPth)
+	if err != nil {
+		return nil, err
+	}
+
+	sep := string(os.PathSeparator)
+
+	for _, fi := range dir {
+		if fi.IsDir() {
+			dirs = append(dirs, dirPth+sep+fi.Name())
+			GetAllFiles(dirPth + sep + fi.Name())
+		} else {
+			files = append(files, dirPth+sep+fi.Name())
+		}
+	}
+
+	for _, table := range dirs {
+		temp, _ := GetAllFiles(table)
+		files = append(files, temp...)
+	}
+
+	return files, nil
+}

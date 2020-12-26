@@ -22,9 +22,9 @@ import (
 	"tkestack.io/tke/api/application"
 	v1 "tkestack.io/tke/api/application/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
-	"tkestack.io/tke/pkg/application/config"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	chartpathv1 "tkestack.io/tke/pkg/application/util/chartpath/v1"
+	registryconfig "tkestack.io/tke/pkg/registry/config"
 )
 
 // FullfillChartInfo will full fill chart info by chartgroup
@@ -50,7 +50,7 @@ func FullfillChartInfo(appChart application.Chart, cg registryv1.ChartGroup) (ap
 }
 
 // BuildChartPathBasicOptions will judge chartgroup type and return well-structured ChartPathOptions
-func BuildChartPathBasicOptions(repo config.RepoConfiguration, appChart application.Chart) (opt helmaction.ChartPathOptions, err error) {
+func BuildChartPathBasicOptions(repo registryconfig.RepoConfiguration, appChart application.Chart) (opt helmaction.ChartPathOptions, err error) {
 	var v1Chart = &v1.Chart{}
 	err = v1.Convert_application_Chart_To_v1_Chart(&appChart, v1Chart, nil)
 	if err != nil {

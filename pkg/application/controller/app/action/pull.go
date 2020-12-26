@@ -25,10 +25,10 @@ import (
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	appconfig "tkestack.io/tke/pkg/application/config"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	"tkestack.io/tke/pkg/application/util"
 	chartpath "tkestack.io/tke/pkg/application/util/chartpath/v1"
+	registryconfig "tkestack.io/tke/pkg/registry/config"
 )
 
 // Pull is the action for pulling a chart.
@@ -36,7 +36,7 @@ func Pull(ctx context.Context,
 	applicationClient applicationversionedclient.ApplicationV1Interface,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
-	repo appconfig.RepoConfiguration,
+	repo registryconfig.RepoConfiguration,
 	updateStatusFunc updateStatusFunc) (string, error) {
 	client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Namespace)
 	if err != nil {

@@ -141,8 +141,9 @@ func startIdentityProviderController(ctx ControllerContext) (http.Handler, bool,
 		ctx.ClientBuilder.ClientOrDie("identityprovider-controller"),
 		ctx.AuthInformerFactory.Auth().V1().IdentityProviders(),
 		identityProviderSyncPeriod,
-		ctx.RegistryDefaultConfiguration,
 		ctx.RegistryConfig,
+		ctx.ChartGroupSetting,
+		ctx.RepoConfiguration,
 	)
 
 	go ctrl.Run(concurrentIdentityProviderSyncs, ctx.Stop)

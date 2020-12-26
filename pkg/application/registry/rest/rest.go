@@ -31,9 +31,9 @@ import (
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	"tkestack.io/tke/pkg/apiserver/storage"
-	appconfig "tkestack.io/tke/pkg/application/config"
 	applicationstorage "tkestack.io/tke/pkg/application/registry/application/storage"
 	configmapstorage "tkestack.io/tke/pkg/application/registry/configmap/storage"
+	registryconfig "tkestack.io/tke/pkg/registry/config"
 )
 
 // StorageProvider is a REST type for core resources storage that implement
@@ -43,7 +43,7 @@ type StorageProvider struct {
 	PlatformClient       platformversionedclient.PlatformV1Interface
 	RegistryClient       registryversionedclient.RegistryV1Interface
 	Authorizer           authorizer.Authorizer
-	RepoConfiguration    appconfig.RepoConfiguration
+	RepoConfiguration    registryconfig.RepoConfiguration
 }
 
 // Implement RESTStorageProvider

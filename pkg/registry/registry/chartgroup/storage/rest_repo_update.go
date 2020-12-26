@@ -34,7 +34,8 @@ import (
 	"tkestack.io/tke/api/registry"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	applicationutil "tkestack.io/tke/pkg/application/util"
-	"tkestack.io/tke/pkg/registry/util"
+	"tkestack.io/tke/pkg/registry/config"
+	"tkestack.io/tke/pkg/registry/util/chartpath"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -104,19 +105,14 @@ type repoUpdateProxyHandler struct {
 func (h *repoUpdateProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	client := applicationutil.NewHelmClientWithoutRESTClient()
 
-	password, err := util.VerifyDecodedPassword(h.chartGroup.Spec.ImportedInfo.Password)
+	chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(config.RepoConfiguration{}, *h.chartGroup)
 	if err != nil {
 		responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), w)
 		return
 	}
 
 	entry, err := client.RepoUpdate(&helmaction.RepoUpdateOptions{
-		ChartPathOptions: helmaction.ChartPathOptions{
-			ChartRepo: h.chartGroup.Spec.TenantID + "/" + h.chartGroup.Spec.Name,
-			RepoURL:   h.chartGroup.Spec.ImportedInfo.Addr,
-			Username:  h.chartGroup.Spec.ImportedInfo.Username,
-			Password:  password,
-		},
+		ChartPathOptions: chartPathBasicOptions,
 	})
 	if err != nil {
 		responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), w)

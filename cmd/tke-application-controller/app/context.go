@@ -32,9 +32,9 @@ import (
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/cmd/tke-application-controller/app/config"
-	appconfig "tkestack.io/tke/pkg/application/config"
 	"tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/controller/util"
+	registryconfig "tkestack.io/tke/pkg/registry/config"
 )
 
 // InitFunc is used to launch a particular controller.  It may run additional "should I activate checks".
@@ -71,7 +71,7 @@ type ControllerContext struct {
 	ResyncPeriod            func() time.Duration
 	ControllerStartInterval time.Duration
 
-	Repo           appconfig.RepoConfiguration
+	Repo           registryconfig.RepoConfiguration
 	PlatformClient platformv1.PlatformV1Interface
 }
 

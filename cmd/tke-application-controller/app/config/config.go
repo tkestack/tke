@@ -28,9 +28,9 @@ import (
 	restclient "k8s.io/client-go/rest"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	"tkestack.io/tke/cmd/tke-application-controller/app/options"
-	appconfig "tkestack.io/tke/pkg/application/config"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
 	controlleroptions "tkestack.io/tke/pkg/controller/options"
+	registryconfig "tkestack.io/tke/pkg/registry/config"
 )
 
 // Config is the running configuration structure of the TKE controller manager.
@@ -49,7 +49,7 @@ type Config struct {
 	ApplicationAPIServerClientConfig *restclient.Config
 	// the rest config for the platform apiserver
 	PlatformAPIServerClientConfig *restclient.Config
-	RepoConfiguration             appconfig.RepoConfiguration
+	RepoConfiguration             registryconfig.RepoConfiguration
 }
 
 // CreateConfigFromOptions creates a running configuration instance based

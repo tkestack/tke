@@ -18,7 +18,8 @@
 
 package config
 
-// RegistryDefaultConfiguration contains options to default set.
-type RegistryDefaultConfiguration struct {
+// ChartGroupSetting contains options to default set.
+type ChartGroupSetting struct {
 	DefaultSystemChartGroups []string
+	ChartPaths               []string
 }

@@ -21,4 +21,6 @@ RUN echo "hosts: files dns" >> /etc/nsswitch.conf
 WORKDIR /app
 ADD tke-registry-controller /app/bin/
 
+COPY registry/ /app/registry
+
 ENTRYPOINT ["/app/bin/tke-registry-controller"]

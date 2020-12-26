@@ -24,12 +24,12 @@ import (
 
 	v1 "tkestack.io/tke/api/registry/v1"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
-	"tkestack.io/tke/pkg/registry/config"
+	registryconfig "tkestack.io/tke/pkg/registry/config"
 	"tkestack.io/tke/pkg/registry/util"
 )
 
 // BuildChartPathBasicOptions will judge chartgroup type and return well-structured ChartPathOptions
-func BuildChartPathBasicOptions(repo config.RepoConfiguration, cg v1.ChartGroup) (opt helmaction.ChartPathOptions, err error) {
+func BuildChartPathBasicOptions(repo registryconfig.RepoConfiguration, cg v1.ChartGroup) (opt helmaction.ChartPathOptions, err error) {
 	if cg.Spec.Type == v1.RepoTypeImported {
 		password, err := util.VerifyDecodedPassword(cg.Spec.ImportedInfo.Password)
 		if err != nil {
