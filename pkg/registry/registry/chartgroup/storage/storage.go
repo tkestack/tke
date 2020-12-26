@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -43,6 +44,7 @@ import (
 	platformfilter "tkestack.io/tke/pkg/platform/apiserver/filter"
 	chartgroupstrategy "tkestack.io/tke/pkg/registry/registry/chartgroup"
 	registryutil "tkestack.io/tke/pkg/registry/util"
+	utilsort "tkestack.io/tke/pkg/registry/util/sort"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -183,6 +185,7 @@ func (r *GenericREST) List(ctx context.Context, options *metainternal.ListOption
 		}
 		chartGroupList.Items = newList
 	}
+	sort.Sort(utilsort.ChartGroupsByName{ChartGroupSlice: chartGroupList.Items, Desc: false})
 	return chartGroupList, nil
 }
 

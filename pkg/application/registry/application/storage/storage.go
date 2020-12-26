@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -39,6 +40,7 @@ import (
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	applicationtrategy "tkestack.io/tke/pkg/application/registry/application"
 	applicationutil "tkestack.io/tke/pkg/application/util"
+	utilsort "tkestack.io/tke/pkg/application/util/sort"
 	platformfilter "tkestack.io/tke/pkg/platform/apiserver/filter"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -158,6 +160,7 @@ func (r *GenericREST) List(ctx context.Context, options *metainternal.ListOption
 		}
 		applicationList.Items = newList
 	}
+	sort.Sort(utilsort.AppsByName{AppSlice: applicationList.Items, Desc: false})
 	return applicationList, nil
 }
 
