@@ -50,6 +50,9 @@ func TestCompare(t *testing.T) {
 		{"comp 3", "1.0-alpha", "1.0-", lt},
 		{"comp 4", "1.0+build1", "1.0build1.1", lt},
 		{"comp 5", "1.0.build1.1", "1.0build", gt},
+		{"comp 6", "1.5.0", "1.5.0", eq},
+		{"comp 7", "1.5.1", "1.5.0", gt},
+		{"comp 8", "1.6.0", "1.5.1", gt},
 	}
 
 	for _, rt := range tests {

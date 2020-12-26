@@ -63,15 +63,6 @@ function download::kubernetes() {
   done
 }
 
-function download::kubeadm() {
-  for version in ${K8S_VERSIONS}; do
-    wget -c "https://storage.googleapis.com/kubernetes-release/release/${version}/bin/${os}/${arch}/kubeadm"
-    chmod +x kubeadm
-    GZIP=-n tar cvzf "kubeadm-${platform}-${version}.tar.gz" kubeadm
-    rm kubeadm
-  done
-}
-
 function download::nvidia_driver() {
   if ! { [ "${os}" == "linux" ] && [ "${arch}" == "amd64" ]; }; then
     return
@@ -120,7 +111,6 @@ for os in ${OSS}; do
     download::cni_plugins
     download::docker
     download::kubernetes
-    download::kubeadm
     download::nvidia_driver
     download::nvidia_container_runtime
     download::pkgs

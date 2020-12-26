@@ -20,7 +20,9 @@ package clusteraddontype
 
 import (
 	"bytes"
+	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/api/platform"
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
 	helm "tkestack.io/tke/pkg/platform/controller/addon/helm/images"
@@ -64,77 +66,108 @@ const (
 	LBCF AddonType = "LBCF"
 )
 
-// Info defines the level of addon and the latest version of the package
-// structure.
-type Info struct {
-	Level                  platform.AddonLevel
-	LatestVersion          string
-	Description            string
-	CompatibleClusterTypes []string
-}
-
 // Types defines the type of each plugin and the mapping table of the latest
 // version number.
-var Types = map[AddonType]Info{
+var Types = map[AddonType]platform.ClusterAddonType{
 	Helm: {
-		Level:                  platform.LevelEnhance,
-		LatestVersion:          helm.LatestVersion,
-		Description:            description("Helm.md"),
-		CompatibleClusterTypes: cluster.Providers(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name: strings.ToLower(string(Helm)),
+		},
+		Type:                  string(Helm),
+		Level:                 platform.LevelEnhance,
+		LatestVersion:         helm.LatestVersion,
+		Description:           description("Helm.md"),
+		CompatibleClusterType: cluster.Providers(),
 	},
 	PersistentEvent: {
-		Level:                  platform.LevelEnhance,
-		LatestVersion:          persistentevent.LatestVersion,
-		Description:            description("PersistentEvent.md"),
-		CompatibleClusterTypes: cluster.Providers(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name: strings.ToLower(string(PersistentEvent)),
+		},
+		Type:                  string(PersistentEvent),
+		Level:                 platform.LevelEnhance,
+		LatestVersion:         persistentevent.LatestVersion,
+		Description:           description("PersistentEvent.md"),
+		CompatibleClusterType: cluster.Providers(),
 	},
 	LogCollector: {
-		Level:                  platform.LevelEnhance,
-		LatestVersion:          logcollector.LatestVersion,
-		Description:            description("LogCollector.md"),
-		CompatibleClusterTypes: cluster.Providers(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name: strings.ToLower(string(LogCollector)),
+		},
+		Type:                  string(LogCollector),
+		Level:                 platform.LevelEnhance,
+		LatestVersion:         logcollector.LatestVersion,
+		Description:           description("LogCollector.md"),
+		CompatibleClusterType: cluster.Providers(),
 	},
 	TappController: {
-		Level:                  platform.LevelEnhance,
-		LatestVersion:          tappcontroller.LatestVersion,
-		Description:            description("TappController.md"),
-		CompatibleClusterTypes: cluster.Providers(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name: strings.ToLower(string(TappController)),
+		},
+		Type:                  string(TappController),
+		Level:                 platform.LevelEnhance,
+		LatestVersion:         tappcontroller.LatestVersion,
+		Description:           description("TappController.md"),
+		CompatibleClusterType: cluster.Providers(),
 	},
 	CSIOperator: {
-		Level:                  platform.LevelBasic,
-		LatestVersion:          csioperator.LatestVersion,
-		Description:            description("CSIOperator.md"),
-		CompatibleClusterTypes: cluster.Providers(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name: strings.ToLower(string(CSIOperator)),
+		},
+		Type:                  string(CSIOperator),
+		Level:                 platform.LevelBasic,
+		LatestVersion:         csioperator.LatestVersion,
+		Description:           description("CSIOperator.md"),
+		CompatibleClusterType: cluster.Providers(),
 	},
 	VolumeDecorator: {
-		Level:                  platform.LevelEnhance,
-		LatestVersion:          volumedecorator.LatestVersion,
-		Description:            description("VolumeDecorator.md"),
-		CompatibleClusterTypes: cluster.Providers(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name: strings.ToLower(string(VolumeDecorator)),
+		},
+		Type:                  string(VolumeDecorator),
+		Level:                 platform.LevelEnhance,
+		LatestVersion:         volumedecorator.LatestVersion,
+		Description:           description("VolumeDecorator.md"),
+		CompatibleClusterType: cluster.Providers(),
 	},
 	CronHPA: {
-		Level:                  platform.LevelEnhance,
-		LatestVersion:          cronhpa.LatestVersion,
-		Description:            description("CronHPA.md"),
-		CompatibleClusterTypes: cluster.Providers(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name: strings.ToLower(string(CronHPA)),
+		},
+		Type:                  string(CronHPA),
+		Level:                 platform.LevelEnhance,
+		LatestVersion:         cronhpa.LatestVersion,
+		Description:           description("CronHPA.md"),
+		CompatibleClusterType: cluster.Providers(),
 	},
 	Prometheus: {
-		Level:                  platform.LevelBasic,
-		LatestVersion:          prometheus.LatestVersion,
-		Description:            description("Prometheus.md"),
-		CompatibleClusterTypes: cluster.Providers(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name: strings.ToLower(string(Prometheus)),
+		},
+		Type:                  string(Prometheus),
+		Level:                 platform.LevelBasic,
+		LatestVersion:         prometheus.LatestVersion,
+		Description:           description("Prometheus.md"),
+		CompatibleClusterType: cluster.Providers(),
 	},
 	IPAM: {
-		Level:                  platform.LevelEnhance,
-		LatestVersion:          ipam.LatestVersion,
-		Description:            description("IPAM.md"),
-		CompatibleClusterTypes: cluster.Providers(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name: strings.ToLower(string(IPAM)),
+		},
+		Type:                  string(IPAM),
+		Level:                 platform.LevelEnhance,
+		LatestVersion:         ipam.LatestVersion,
+		Description:           description("IPAM.md"),
+		CompatibleClusterType: cluster.Providers(),
 	},
 	LBCF: {
-		Level:                  platform.LevelBasic,
-		LatestVersion:          lbcf.LatestVersion,
-		Description:            description("LBCF.md"),
-		CompatibleClusterTypes: cluster.Providers(),
+		ObjectMeta: metav1.ObjectMeta{
+			Name: strings.ToLower(string(LBCF)),
+		},
+		Type:                  string(LBCF),
+		Level:                 platform.LevelBasic,
+		LatestVersion:         lbcf.LatestVersion,
+		Description:           description("LBCF.md"),
+		CompatibleClusterType: cluster.Providers(),
 	},
 }
 

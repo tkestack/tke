@@ -95,14 +95,6 @@ For the full story, head over to the [developer's documentation](docs/devel/deve
 
 * You are encouraged to communicate most things via GitHub [issues](https://github.com/tkestack/tke/issues/new/choose) or [pull requests](https://github.com/tkestack/tke/pulls).
 
-* Other active channels:
-
-  * WeChat Group
-
-  * Please scan the following WeChat QRcode and note "**TKEStack**", he will add you into the TKEStack WeChat Group.
-
-    ![TKEStack](docs/images/wechat.jpeg)
-
 ## Licensing
 
 TKEStack is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the full license text.

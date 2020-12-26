@@ -21,6 +21,7 @@ package docker
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -302,6 +303,20 @@ func (d *Docker) PushManifest(manifestName string, needPurge bool) error {
 	err := d.runCmd(cmdString)
 	if err != nil {
 		return pkgerrors.Wrap(err, "docker manifest push error")
+	}
+	return nil
+}
+
+// BuildImage from dockerfile
+func (d *Docker) BuildImage(dockerfile []byte, target, platform string) error {
+	err := ioutil.WriteFile("Dockerfile", dockerfile, 0644)
+	if err != nil {
+		return pkgerrors.Wrap(err, "docker build image error")
+	}
+	cmdString := fmt.Sprintf("docker build -t %s --platform %s .", target, platform)
+	err = d.runCmd(cmdString)
+	if err != nil {
+		return pkgerrors.Wrap(err, "docker build image error")
 	}
 	return nil
 }

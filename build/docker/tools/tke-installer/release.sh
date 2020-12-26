@@ -23,9 +23,9 @@ set -o pipefail
 REGISTRY_PREFIX=${REGISTRY_PREFIX:-tkestack}
 BUILDER=${BUILDER:-default}
 VERSION=${VERSION:-$(git describe --dirty --always --tags | sed 's/-/./g')}
-PROVIDER_RES_VERSION=v1.18.3-2
+PROVIDER_RES_VERSION=v1.18.3-3
 K8S_VERSION=${PROVIDER_RES_VERSION%-*}
-DOCKER_VERSION=19.03.9
+DOCKER_VERSION=19.03.14
 OSS=(linux)
 ARCHS=(amd64 arm64)
 OUTPUT_DIR=_output

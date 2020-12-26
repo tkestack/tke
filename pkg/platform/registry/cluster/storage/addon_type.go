@@ -20,7 +20,6 @@ package storage
 
 import (
 	"context"
-	"strings"
 
 	"github.com/thoas/go-funk"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,17 +62,9 @@ func (r *AddonTypeREST) Get(ctx context.Context, clusterName string, options *me
 		Items: make([]platform.ClusterAddonType, 0),
 	}
 
-	for k, v := range clusteraddontype.Types {
-		if funk.ContainsString(v.CompatibleClusterTypes, cluster.Spec.Type) {
-			l.Items = append(l.Items, platform.ClusterAddonType{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: strings.ToLower(string(k)),
-				},
-				Type:          string(k),
-				Level:         v.Level,
-				LatestVersion: v.LatestVersion,
-				Description:   v.Description,
-			})
+	for _, v := range clusteraddontype.Types {
+		if funk.ContainsString(v.CompatibleClusterType, cluster.Spec.Type) {
+			l.Items = append(l.Items, v)
 		}
 	}
 	return l, nil

@@ -65,7 +65,7 @@ type Config struct {
 func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config, error) {
 	genericAPIServerConfig := genericapiserver.NewConfig(notify.Codecs)
 	ignoreAuthPathPrefixes := []string{"/webhook"}
-	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes, nil)
+	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(ignoreAuthPathPrefixes, nil, nil)
 	genericAPIServerConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 	genericAPIServerConfig.EnableIndex = false
 	genericAPIServerConfig.EnableProfiling = false

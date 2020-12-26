@@ -192,7 +192,7 @@ export class Step3 extends React.Component<RootProps> {
                   <Form.Item label="docker设置">
                     {this.renderArg(editState.dockerExtraArgs, 'dockerExtraArgs')}
                     <Form.Text>
-                      为docker(19.03.9)运行设置自定义参数，默认不需要添加，详细请参考
+                      为docker(19.03.14)运行设置自定义参数，默认不需要添加，详细请参考
                       <ExternalLink href="https://docs.docker.com/engine/reference/commandline/run/">
                         帮助文档
                       </ExternalLink>
