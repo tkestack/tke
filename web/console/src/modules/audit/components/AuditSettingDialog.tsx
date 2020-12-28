@@ -5,7 +5,7 @@ import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Form, Modal, Button, Input, InputNumber } from '@tea/component';
 import { bindActionCreators } from '@tencent/ff-redux';
-import { Form as FinalForm, Field } from 'react-final-form';
+import { useForm, useFieldArray, Controller, NestedValue } from 'react-hook-form';
 import { isEqual, set } from 'lodash';
 import { Base64 } from 'js-base64';
 
@@ -33,30 +33,6 @@ const initialState = {
   // 记录连接状态
   connectionState: ConnectionState.READY
 };
-
-const getStatus = meta => {
-  console.log('meta@getStatus = ', meta);
-  if (meta.active && meta.validating) {
-    return 'validating';
-  }
-  if (!meta.touched) {
-    return null;
-  }
-  return meta.error ? 'error' : 'success';
-};
-
-const required = value => (value ? undefined : '内容不能为空');
-
-const composeValidators = (...validators) => value =>
-  validators.reduce((error, validator) => error || validator(value), undefined);
-
-const regexURL = new RegExp(
-  /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/
-);
-const isURL = value => {
-  return regexURL.test(value);
-};
-const mustBeURL = value => (!isURL(value) ? '请输入有效的URL地址格式' : undefined);
 
 export const AuditSetting = props => {
   const { onChange } = props;
@@ -96,35 +72,37 @@ export const AuditSetting = props => {
     return nextState;
   };
 
+  const { control, register, handleSubmit, setValue, watch, errors } = useForm({ mode: 'onTouched' });
   const [auditSetting, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
     const _getStoreConfig = async () => {
       const result = await getStoreConfig();
       dispatch({ type: 'elasticSearch', payload: result.elasticSearch });
+      setValue('address', result.elasticSearch.address);
+      setValue('indices', result.elasticSearch.indices);
+      setValue('reserveDays', result.elasticSearch.reserveDays);
     };
     _getStoreConfig();
   }, []);
 
-  const submit = async values => {
-    try {
-      // let payload = this.stateToPayload(values);
-      // let response = await createRule(clusterName, payload);
-    } catch (err) {
-      // message.error(err)
-    }
+  const onSubmit = async data => {
+    console.log(data);
   };
 
   /**
    * 检测连接
    * 成功的话更新测试链接状态，成功则完成按钮可用，否则禁用对话框的完成按钮
    */
-  const connect = async () => {
+  const onConnect = async data => {
+    console.log('data@onConnect = ', data);
     try {
       dispatch({ type: 'connectionState', payload: ConnectionState.CONNECTING });
       let response = await configTest({
-        ...auditSetting.elasticSearch,
-        password: Base64.encode(auditSetting.elasticSearch.password)
+        ...data,
+        // ...auditSetting.elasticSearch,
+        password: Base64.encode(data.password)
+        // password: Base64.encode(auditSetting.elasticSearch.password)
       });
       if (response.code === 0) {
         dispatch({ type: 'connectionState', payload: ConnectionState.SUCCESSFUL });
@@ -159,104 +137,131 @@ export const AuditSetting = props => {
     return result;
   };
 
+  const { address, indices, password, reserveDays, username } = auditSetting.elasticSearch;
+
   return (
-    <FinalForm
-      onSubmit={submit}
-      initialValues={{ ...auditSetting.elasticSearch }}
-      render={({ form, handleSubmit }) => (
-        <form id="auditSettingForm" onSubmit={handleSubmit}>
-          <Form>
-            <Field name="address" validate={composeValidators(required, mustBeURL)}>
-              {({ input, meta, ...rest }) => (
-                <Form.Item
-                  label={'ES地址'}
-                  required
-                  status={getStatus(meta)}
-                  message={getStatus(meta) === 'error' ? meta.error : '例如，http://10.0.0.1:9200'}
-                >
-                  <Input
-                    size="full"
-                    value={input.value}
-                    onChange={value => {
-                      if (input.onChange) {
-                        input.onChange(value);
-                      }
-                      dispatch({ type: 'address', payload: value });
-                    }}
-                  />
-                </Form.Item>
-              )}
-            </Field>
-            <Field name="indices" validate={required}>
-              {({ input, meta, ...rest }) => (
-                <Form.Item
-                  label={'索引'}
-                  required
-                  status={getStatus(meta)}
-                  message={getStatus(meta) === 'error' && meta.error}
-                >
-                  <Input
-                    size="full"
-                    value={input.value}
-                    onChange={value => {
-                      dispatch({ type: 'indices', payload: value });
-                      if (input.onChange) {
-                        input.onChange(value);
-                      }
-                    }}
-                  />
-                </Form.Item>
-              )}
-            </Field>
-            <Field name="reserveDays" validate={required}>
-              {({ input, meta, ...rest }) => (
-                <Form.Item
-                  label={'保留数据时间'}
-                  required
-                  status={getStatus(meta)}
-                  message={getStatus(meta) === 'error' && meta.error}
-                >
-                  <InputNumber
-                    min={1}
-                    max={30}
-                    value={input.value}
-                    onChange={value => dispatch({ type: 'reserveDays', payload: value })}
-                  />
-                </Form.Item>
-              )}
-            </Field>
-            <Field name="username">
-              {({ input, meta, ...rest }) => (
-                <Form.Item label={'用户名'} message={'仅需要用户验证的ES需要输入用户名和密码'}>
-                  <Input value={input.value} onChange={value => dispatch({ type: 'username', payload: value })} />
-                </Form.Item>
-              )}
-            </Field>
-            <Field name="password">
-              {({ input, meta, ...rest }) => (
-                <Form.Item label={'密码'}>
-                  <Input
-                    type="password"
-                    value={input.value}
-                    onChange={value => dispatch({ type: 'password', payload: value })}
-                  />
-                </Form.Item>
-              )}
-            </Field>
-            <Form.Item message={getConnectionStatusMessage(auditSetting.connectionState)}>
-              <Button
-                type="primary"
-                onClick={() => {
-                  connect();
+    <form id="auditSettingForm" onSubmit={handleSubmit(onSubmit)}>
+      <Form>
+        <Controller
+          name="address"
+          control={control}
+          rules={{
+            required: true,
+            pattern: /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/
+          }}
+          render={({ onChange, onBlur, value }) => (
+            <Form.Item
+              label={'ES地址'}
+              required
+              status={errors.address ? 'error' : undefined}
+              message={
+                (errors.address?.type === 'required' && '地址不能为空') ||
+                (errors.address?.type === 'pattern' && 'Elasticsearch地址格式不正确')
+              }
+            >
+              <Input
+                size="full"
+                value={value}
+                onBlur={onBlur}
+                onChange={value => {
+                  if (onChange) {
+                    onChange(value);
+                  }
+                  dispatch({ type: 'address', payload: value });
                 }}
-              >
-                检测连接
-              </Button>
+              />
             </Form.Item>
-          </Form>
-        </form>
-      )}
-    />
+          )}
+        />
+        <Controller
+          name="indices"
+          control={control}
+          rules={{ required: true }}
+          render={({ onChange, onBlur, value }) => (
+            <Form.Item
+              label={'索引'}
+              required
+              status={errors.indices ? 'error' : undefined}
+              message={errors.indices?.type === 'required' && '索引名不能为空'}
+            >
+              <Input
+                size="full"
+                value={value}
+                onBlur={onBlur}
+                onChange={value => {
+                  if (onChange) {
+                    onChange(value);
+                  }
+                  dispatch({ type: 'indices', payload: value });
+                }}
+              />
+            </Form.Item>
+          )}
+        />
+        <Controller
+          name="reserveDays"
+          control={control}
+          rules={{ required: true }}
+          render={({ onChange, value }) => (
+            <Form.Item label={'保留数据时间'} required>
+              <InputNumber
+                min={1}
+                max={30}
+                value={value}
+                onChange={value => {
+                  if (onChange) {
+                    onChange(value);
+                  }
+                  dispatch({ type: 'reserveDays', payload: value });
+                }}
+              />
+            </Form.Item>
+          )}
+        />
+        <Controller
+          name="username"
+          control={control}
+          defaultValue=""
+          render={({ onChange, value }) => (
+            <Form.Item label={'用户名'} message={'仅需要用户验证的ES需要输入用户名和密码'}>
+              <Input
+                value={value}
+                onChange={value => {
+                  if (onChange) {
+                    onChange(value);
+                  }
+                  dispatch({ type: 'username', payload: value });
+                }}
+              />
+            </Form.Item>
+          )}
+        />
+        <Controller
+          name="password"
+          control={control}
+          defaultValue=""
+          render={({ onChange, value }) => (
+            <Form.Item label={'密码'}>
+              <Input
+                type="password"
+                value={value}
+                onChange={value => {
+                  if (onChange) {
+                    onChange(value);
+                  }
+                  dispatch({ type: 'password', payload: value });
+                }}
+              />
+            </Form.Item>
+          )}
+        />
+        <Form.Item message={getConnectionStatusMessage(auditSetting.connectionState)}>
+          <Button type="primary" onClick={handleSubmit(onConnect)}>
+            检测连接
+          </Button>
+        </Form.Item>
+      </Form>
+    </form>
   );
 };
 
@@ -266,12 +271,6 @@ export const AuditSettingDialog = (props: { isShowing: boolean; toggle: () => vo
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
   const { isShowing, toggle } = props;
   const [editorState, setEditorState] = useState({ elasticSearch: {}, connectionState: ConnectionState.READY });
-
-  // const getTips = () => (
-  //   <Alert>
-  //     审计模块为平台提供了操作记录，管理员可以在运维中心里查询审计日志。TKEStack将在ES里生成名为auditevent的index存储审计记录。
-  //   </Alert>
-  // );
 
   const handleEditorChanged = ({ elasticSearch, connectionState }) => {
     setEditorState({ elasticSearch, connectionState });
@@ -293,7 +292,6 @@ export const AuditSettingDialog = (props: { isShowing: boolean; toggle: () => vo
   return (
     <Modal visible={isShowing} caption={'审计配置'} onClose={toggle}>
       <Modal.Body>
-        {/*{getTips()}*/}
         <AuditSetting onChange={handleEditorChanged} />
       </Modal.Body>
       <Modal.Footer>
