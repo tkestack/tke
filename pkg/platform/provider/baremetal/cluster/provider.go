@@ -186,7 +186,7 @@ func (p *Provider) RegisterHandler(mux *mux.PathRecorderMux) {
 }
 
 func (p *Provider) Validate(cluster *types.Cluster) field.ErrorList {
-	return validation.ValidateCluster(cluster)
+	return validation.ValidateCluster(p.platformClient, cluster)
 }
 
 func (p *Provider) PreCreate(cluster *types.Cluster) error {
