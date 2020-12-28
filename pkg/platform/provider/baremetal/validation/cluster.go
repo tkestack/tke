@@ -48,16 +48,16 @@ var (
 
 // ValidateCluster validates a given Cluster.
 func ValidateCluster(platformClient platformv1client.PlatformV1Interface, obj *types.Cluster) field.ErrorList {
-	allErrs := ValidatClusterSpec(platformClient, &obj.Spec, field.NewPath("spec"), obj.Status.Phase)
+	allErrs := ValidatClusterSpec(platformClient, obj.Name, &obj.Spec, field.NewPath("spec"), obj.Status.Phase)
 
 	return allErrs
 }
 
 // ValidatClusterSpec validates a given ClusterSpec.
-func ValidatClusterSpec(platformClient platformv1client.PlatformV1Interface, spec *platform.ClusterSpec, fldPath *field.Path, phase platform.ClusterPhase) field.ErrorList {
+func ValidatClusterSpec(platformClient platformv1client.PlatformV1Interface, clusterName string, spec *platform.ClusterSpec, fldPath *field.Path, phase platform.ClusterPhase) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	allErrs = append(allErrs, ValidateClusterSpecVersion(platformClient, spec.Version, fldPath.Child("version"), phase)...)
+	allErrs = append(allErrs, ValidateClusterSpecVersion(platformClient, clusterName, spec.Version, fldPath.Child("version"), phase)...)
 	allErrs = append(allErrs, ValidateCIDRs(spec, fldPath)...)
 	allErrs = append(allErrs, ValidateClusterProperty(spec, fldPath.Child("properties"))...)
 	allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
@@ -67,31 +67,13 @@ func ValidatClusterSpec(platformClient platformv1client.PlatformV1Interface, spe
 }
 
 // ValidateClusterSpecVersion validates a given version.
-func ValidateClusterSpecVersion(platformClient platformv1client.PlatformV1Interface, version string, fldPath *field.Path, phase platform.ClusterPhase) field.ErrorList {
+func ValidateClusterSpecVersion(platformClient platformv1client.PlatformV1Interface, clsName, version string, fldPath *field.Path, phase platform.ClusterPhase) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	client, err := util.BuildExternalClientSetWithName(context.Background(), platformClient, "global")
+	k8sValidVersions, err := getK8sValidVersions(platformClient, clsName)
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(fldPath, err))
 		return allErrs
-	}
-
-	clusterInfo, err := client.CoreV1().ConfigMaps("kube-public").Get(context.Background(), "cluster-info", metav1.GetOptions{})
-	if err != nil {
-		allErrs = append(allErrs, field.InternalError(fldPath, err))
-		return allErrs
-	}
-
-	k8sValidVersions := []string{}
-
-	if clusterInfo.Data["k8sValidVersions"] == "" {
-		k8sValidVersions = spec.K8sVersions
-	} else {
-		err = json.Unmarshal([]byte(clusterInfo.Data["k8sValidVersions"]), &k8sValidVersions)
-		if err != nil {
-			allErrs = append(allErrs, field.InternalError(fldPath, err))
-			return allErrs
-		}
 	}
 
 	if phase == platform.ClusterInitializing {
@@ -99,6 +81,33 @@ func ValidateClusterSpecVersion(platformClient platformv1client.PlatformV1Interf
 	}
 
 	return allErrs
+}
+
+func getK8sValidVersions(platformClient platformv1client.PlatformV1Interface, clsName string) (validVersions []string, err error) {
+	k8sValidVersions := []string{}
+	if clsName == "global" || platformClient == nil {
+		return spec.K8sVersions, nil
+	}
+	client, err := util.BuildExternalClientSetWithName(context.Background(), platformClient, "global")
+	if err != nil {
+		return k8sValidVersions, err
+	}
+
+	clusterInfo, err := client.CoreV1().ConfigMaps("kube-public").Get(context.Background(), "cluster-info", metav1.GetOptions{})
+	if err != nil {
+		return k8sValidVersions, err
+	}
+
+	_, ok := clusterInfo.Data["k8sValidVersions"]
+	if !ok {
+		k8sValidVersions = spec.K8sVersions
+	} else {
+		err = json.Unmarshal([]byte(clusterInfo.Data["k8sValidVersions"]), &k8sValidVersions)
+		if err != nil {
+			return k8sValidVersions, err
+		}
+	}
+	return k8sValidVersions, nil
 }
 
 // ValidateCIDRs validates clusterCIDR and serviceCIDR.
