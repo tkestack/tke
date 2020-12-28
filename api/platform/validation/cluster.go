@@ -276,6 +276,13 @@ func ValidateHA(ha *platform.HA, fldPath *field.Path) field.ErrorList {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("tke").Child("vip"), ha.TKEHA.VIP, msg))
 
 		}
+
+		if ha.TKEHA.VRID != nil {
+			if *ha.TKEHA.VRID < 1 || *ha.TKEHA.VRID > 255 {
+				msg := "must be a valid vrid, range [1, 255]"
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("tke").Child("vrid"), ha.TKEHA.VRID, msg))
+			}
+		}
 	}
 	if ha.ThirdPartyHA != nil {
 		for _, msg := range validation.IsValidIP(ha.ThirdPartyHA.VIP) {

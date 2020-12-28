@@ -3454,6 +3454,7 @@ func Convert_platform_StorageBackEndES_To_v1_StorageBackEndES(in *platform.Stora
 
 func autoConvert_v1_TKEHA_To_platform_TKEHA(in *TKEHA, out *platform.TKEHA, s conversion.Scope) error {
 	out.VIP = in.VIP
+	out.VRID = (*int32)(unsafe.Pointer(in.VRID))
 	return nil
 }
 
@@ -3464,6 +3465,7 @@ func Convert_v1_TKEHA_To_platform_TKEHA(in *TKEHA, out *platform.TKEHA, s conver
 
 func autoConvert_platform_TKEHA_To_v1_TKEHA(in *platform.TKEHA, out *TKEHA, s conversion.Scope) error {
 	out.VIP = in.VIP
+	out.VRID = (*int32)(unsafe.Pointer(in.VRID))
 	return nil
 }
 

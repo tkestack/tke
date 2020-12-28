@@ -1384,6 +1384,8 @@ message StorageBackEndES {
 
 message TKEHA {
   optional string vip = 1;
+
+  optional int32 vrid = 2;
 }
 
 // TappController is a new kubernetes workload.

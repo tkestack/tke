@@ -619,6 +619,7 @@ func (p *Provider) EnsureKeepalivedInit(ctx context.Context, c *v1.Cluster) erro
 	option := &keepalived.Option{
 		IP:              c.Spec.Machines[0].IP,
 		VIP:             c.Spec.Features.HA.TKEHA.VIP,
+		VRID:            c.Spec.Features.HA.TKEHA.VRID,
 		LoadBalance:     false,
 		IPVS:            false,
 		KubernetesSvcIP: kubernetesSvcIP,
@@ -1362,6 +1363,7 @@ func (p *Provider) EnsureKeepalivedWithLBOption(ctx context.Context, c *v1.Clust
 		option := &keepalived.Option{
 			IP:              machine.IP,
 			VIP:             c.Spec.Features.HA.TKEHA.VIP,
+			VRID:            c.Spec.Features.HA.TKEHA.VRID,
 			LoadBalance:     true,
 			IPVS:            ipvs,
 			KubernetesSvcIP: kubernetesSvcIP,
