@@ -31,6 +31,7 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
+	platformutil "tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/template"
 
@@ -81,7 +82,7 @@ func (t *TKE) prepareForPrepareCustomImages(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	tkeVersion, _, err := t.getPlatformVersions(ctx)
+	tkeVersion, _, err := platformutil.GetPlatformVersionsFromClusterInfo(ctx, t.globalClient)
 	if err != nil {
 		return err
 	}
@@ -108,7 +109,7 @@ func (t *TKE) getCustomPatchVersion(ctx context.Context) (patchVersion string, e
 	}
 
 	patchVersion = files[0].Name()
-	dirRegexp := regexp.MustCompile(`^\d+.\d+.\d+$`)
+	dirRegexp := regexp.MustCompile(`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)([-0-9a-zA-Z_\.+]*)?$`)
 	ressutl := dirRegexp.MatchString(patchVersion)
 	if !ressutl {
 		return "", errors.Errorf("your patch version dir name %s is not a version, please make sure your dir name is a version like 1.18.3", patchVersion)
@@ -207,7 +208,7 @@ func (t *TKE) buildCustomProviderRes(ctx context.Context) error {
 }
 
 func (t *TKE) addCustomK8sVersion(ctx context.Context) error {
-	_, k8sValidVersions, err := t.getPlatformVersions(ctx)
+	_, k8sValidVersions, err := platformutil.GetPlatformVersionsFromClusterInfo(ctx, t.globalClient)
 	if err != nil {
 		return err
 	}
@@ -229,7 +230,7 @@ func (t *TKE) addCustomK8sVersion(ctx context.Context) error {
 }
 
 func (t *TKE) getLatestProviderResTag(ctx context.Context) (tag string, err error) {
-	_, k8sValidVersions, err := t.getPlatformVersions(ctx)
+	_, k8sValidVersions, err := platformutil.GetPlatformVersionsFromClusterInfo(ctx, t.globalClient)
 	if err != nil {
 		return "", err
 	}
