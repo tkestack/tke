@@ -20,12 +20,10 @@ package validation
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net"
 	"strings"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/platform"
 
@@ -92,22 +90,9 @@ func getK8sValidVersions(platformClient platformv1client.PlatformV1Interface, cl
 	if err != nil {
 		return k8sValidVersions, err
 	}
+	_, k8sValidVersions, err = util.GetPlatformVersionsFromClusterInfo(context.Background(), client)
 
-	clusterInfo, err := client.CoreV1().ConfigMaps("kube-public").Get(context.Background(), "cluster-info", metav1.GetOptions{})
-	if err != nil {
-		return k8sValidVersions, err
-	}
-
-	_, ok := clusterInfo.Data["k8sValidVersions"]
-	if !ok {
-		k8sValidVersions = spec.K8sVersions
-	} else {
-		err = json.Unmarshal([]byte(clusterInfo.Data["k8sValidVersions"]), &k8sValidVersions)
-		if err != nil {
-			return k8sValidVersions, err
-		}
-	}
-	return k8sValidVersions, nil
+	return k8sValidVersions, err
 }
 
 // ValidateCIDRs validates clusterCIDR and serviceCIDR.
