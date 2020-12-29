@@ -14,6 +14,7 @@ import { CreateResource } from '../../common/models/CreateResource';
 import { authTypeMapping, CreateICVipType } from '../constants/Config';
 import { CreateIC } from '../models';
 import { deleteResourceIns } from './K8sResourceAPI';
+import {getK8sValidVersions} from '@src/webApi/cluster'
 
 /**
  * 集群列表的查询
@@ -273,11 +274,13 @@ export async function modifyClusterName(clusters: CreateResource[]) {
  * @param regionId: number 地域的id
  */
 export async function fetchCreateICK8sVersion() {
-  return [
-    { text: '1.16.9', value: '1.16.9' },
-    { text: '1.17.13', value: '1.17.13' },
-    { text: '1.18.3', value: '1.18.3' }
-  ];
+  const list = await getK8sValidVersions()
+  const hides = ['1.14.10', '1.16.6']
+
+  return list
+  .filter(_ => !hides.includes(_))
+  .map(_ => ({text: _, value: _}))
+  
 }
 
 /**
