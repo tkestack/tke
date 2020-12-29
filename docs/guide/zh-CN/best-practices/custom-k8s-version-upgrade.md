@@ -50,6 +50,8 @@ kubectl edit cluster cls-yourcluster
 
 > 目前Web UI不允许补丁版本升级，会导致可以在UI升级选项中可以看到`1.16.15`版本，但是提示无法升级到该版本，后续版本中将会[修复](https://github.com/tkestack/tke/issues/1020)。当前请使用kubectl修改cluster资源对象内容升级自定义版本。
 
+> K8s 1.16.x版本使用kubeadm升级存在[已知bug](https://github.com/kubernetes/kubernetes/issues/88725)，会导致coreDNS的pod启动失败。遇到此场景请首先使用`kubectl get -n kube-system cm coredns -o yaml`观察`Corefile`和`Corefile-backup`内容是否一致，如不一致请确保`Corefile`内容为期望内容。之后请使用`kubectl edit -n kube-system deployments.apps coredns`将使用`Corefile-backup`的地方统一修改为`Corefile`。
+
 # 用户手动进行自定义k8s版本升级
 
 用户可以通过向TKEStack平台提供自定义版本的k8s，以允许集群升级到非内置的版本。本文将以v1.16.15版本的k8s作为例子演示用户如何将集群升级到自定义版本。本文中只以amd64环境作为示例，如果用户希望自己的物料镜像可以支持`multi-CPU architecture`，请在制作镜像和推送镜像阶段参考[Leverage multi-CPU architecture support](https://docs.docker.com/docker-for-mac/multi-arch/)和[构建多CPU架构支持的Docker镜像](https://blog.csdn.net/dev_csdn/article/details/79138424)。
