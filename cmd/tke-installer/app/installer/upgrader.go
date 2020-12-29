@@ -20,7 +20,6 @@ package installer
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os/exec"
 	"time"
@@ -37,6 +36,7 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/platform/util"
 	configv1 "tkestack.io/tke/pkg/registry/apis/config/v1"
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/apiclient"
@@ -145,7 +145,7 @@ func (t *TKE) updateTKEPlatformController(ctx context.Context) error {
 		return fmt.Errorf("%s has no initContainers", com)
 	}
 
-	tkeVersion, k8sValidVersions, err := t.getPlatformVersions(ctx)
+	tkeVersion, k8sValidVersions, err := util.GetPlatformVersionsFromClusterInfo(ctx, t.globalClient)
 	if err != nil {
 		return err
 	}
@@ -257,19 +257,4 @@ func (t *TKE) loginRegistry(ctx context.Context) error {
 		return err
 	}
 	return nil
-}
-
-func (t *TKE) getPlatformVersions(ctx context.Context) (tkeVersion string, k8sValidVersions []string, err error) {
-	k8sValidVersions = []string{}
-	clusterInfo, err := t.globalClient.CoreV1().ConfigMaps("kube-public").Get(ctx, "cluster-info", metav1.GetOptions{})
-	if err != nil {
-		return
-	}
-
-	tkeVersion, ok := clusterInfo.Data["tkeVersion"]
-	if !ok {
-		return
-	}
-	err = json.Unmarshal([]byte(clusterInfo.Data["k8sValidVersions"]), &k8sValidVersions)
-	return
 }
