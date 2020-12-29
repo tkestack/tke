@@ -275,11 +275,8 @@ export async function modifyClusterName(clusters: CreateResource[]) {
  */
 export async function fetchCreateICK8sVersion() {
   const list = await getK8sValidVersions()
-  const hides = ['1.14.10', '1.16.6']
-
   return list
-  .filter(_ => !hides.includes(_))
-  .map(_ => ({text: _, value: _}))
+    .map(_ => ({text: _, value: _}))
   
 }
 
