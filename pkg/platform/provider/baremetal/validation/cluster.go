@@ -19,6 +19,7 @@
 package validation
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strings"
@@ -27,9 +28,11 @@ import (
 	"tkestack.io/tke/api/platform"
 
 	netutils "k8s.io/utils/net"
+	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	"tkestack.io/tke/pkg/platform/types"
+	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/ipallocator"
 	"tkestack.io/tke/pkg/util/validation"
@@ -42,17 +45,17 @@ var (
 )
 
 // ValidateCluster validates a given Cluster.
-func ValidateCluster(obj *types.Cluster) field.ErrorList {
-	allErrs := ValidatClusterSpec(&obj.Spec, field.NewPath("spec"), obj.Status.Phase)
+func ValidateCluster(platformClient platformv1client.PlatformV1Interface, obj *types.Cluster) field.ErrorList {
+	allErrs := ValidatClusterSpec(platformClient, obj.Name, &obj.Spec, field.NewPath("spec"), obj.Status.Phase)
 
 	return allErrs
 }
 
 // ValidatClusterSpec validates a given ClusterSpec.
-func ValidatClusterSpec(spec *platform.ClusterSpec, fldPath *field.Path, phase platform.ClusterPhase) field.ErrorList {
+func ValidatClusterSpec(platformClient platformv1client.PlatformV1Interface, clusterName string, spec *platform.ClusterSpec, fldPath *field.Path, phase platform.ClusterPhase) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	allErrs = append(allErrs, ValidateClusterSpecVersion(spec.Version, fldPath.Child("version"), phase)...)
+	allErrs = append(allErrs, ValidateClusterSpecVersion(platformClient, clusterName, spec.Version, fldPath.Child("version"), phase)...)
 	allErrs = append(allErrs, ValidateCIDRs(spec, fldPath)...)
 	allErrs = append(allErrs, ValidateClusterProperty(spec, fldPath.Child("properties"))...)
 	allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
@@ -62,13 +65,34 @@ func ValidatClusterSpec(spec *platform.ClusterSpec, fldPath *field.Path, phase p
 }
 
 // ValidateClusterSpecVersion validates a given version.
-func ValidateClusterSpecVersion(version string, fldPath *field.Path, phase platform.ClusterPhase) field.ErrorList {
+func ValidateClusterSpecVersion(platformClient platformv1client.PlatformV1Interface, clsName, version string, fldPath *field.Path, phase platform.ClusterPhase) field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	k8sValidVersions, err := getK8sValidVersions(platformClient, clsName)
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(fldPath, err))
+		return allErrs
+	}
+
 	if phase == platform.ClusterInitializing {
-		allErrs = utilvalidation.ValidateEnum(version, fldPath, spec.K8sVersions)
+		allErrs = utilvalidation.ValidateEnum(version, fldPath, k8sValidVersions)
 	}
 
 	return allErrs
+}
+
+func getK8sValidVersions(platformClient platformv1client.PlatformV1Interface, clsName string) (validVersions []string, err error) {
+	k8sValidVersions := []string{}
+	if clsName == "global" || platformClient == nil {
+		return spec.K8sVersions, nil
+	}
+	client, err := util.BuildExternalClientSetWithName(context.Background(), platformClient, "global")
+	if err != nil {
+		return k8sValidVersions, err
+	}
+	_, k8sValidVersions, err = util.GetPlatformVersionsFromClusterInfo(context.Background(), client)
+
+	return k8sValidVersions, err
 }
 
 // ValidateCIDRs validates clusterCIDR and serviceCIDR.
