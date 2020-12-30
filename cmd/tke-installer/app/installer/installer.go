@@ -2434,6 +2434,9 @@ func (t *TKE) writeKubeconfig(ctx context.Context) error {
 }
 
 func (t *TKE) patchPlatformVersion(ctx context.Context) error {
+	if t.globalClient == nil {
+		return errors.New("can't get cluster client")
+	}
 	versionsByte, err := json.Marshal(spec.K8sValidVersions)
 	if err != nil {
 		return err
