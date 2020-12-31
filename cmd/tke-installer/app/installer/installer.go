@@ -214,10 +214,6 @@ func (t *TKE) initSteps() {
 			Func: t.createGlobalCluster,
 		},
 		{
-			Name: "Patch platform versions in cluster info",
-			Func: t.patchPlatformVersion,
-		},
-		{
 			Name: "Write kubeconfig",
 			Func: t.writeKubeconfig,
 		},
@@ -244,6 +240,10 @@ func (t *TKE) initSteps() {
 		{
 			Name: "Install etcd",
 			Func: t.installETCD,
+		},
+		{
+			Name: "Patch platform versions in cluster info",
+			Func: t.patchPlatformVersion,
 		},
 	}...)
 
