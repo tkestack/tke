@@ -58,6 +58,7 @@ func GetCluster(ctx context.Context, platformClient platformversionedclient.Plat
 	result := new(Cluster)
 	result.Cluster = cluster
 	result.IsCredentialChanged = false
+	result.ClusterCredential = new(platformv1.ClusterCredential)
 	if cluster.Spec.ClusterCredentialRef != nil {
 		clusterCredential, err := platformClient.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
 		if err != nil {
