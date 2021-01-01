@@ -86,7 +86,7 @@ func ClientSetByCluster(ctx context.Context, cluster *platform.Cluster, platform
 		return nil, err
 	}
 
-	return BuildClientSet(ctx, cluster, credential, platformClient)
+	return BuildClientSetWithAuth(ctx, cluster, credential, platformClient)
 }
 
 // ResourceFromKind returns the resource name by kind.
@@ -403,7 +403,58 @@ func BuildExternalDynamicClientSet(cluster *platformv1.Cluster, credential *plat
 	return BuildExternalDynamicClientSetNoStatus(cluster, credential)
 }
 
-func BuildClientSet(ctx context.Context, cluster *platform.Cluster, credential *platform.ClusterCredential,platformClient platforminternalclient.PlatformInterface) (*kubernetes.Clientset, error) {
+func BuildClientSet(ctx context.Context, cluster *platform.Cluster, credential *platform.ClusterCredential) (*kubernetes.Clientset, error) {
+	if cluster.Status.Locked != nil && *cluster.Status.Locked {
+		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
+	}
+	host, err := ClusterHost(cluster)
+	if err != nil {
+		return nil, err
+	}
+	config := api.NewConfig()
+	config.CurrentContext = contextName
+
+	if credential.CACert == nil {
+		config.Clusters[contextName] = &api.Cluster{
+			Server:                fmt.Sprintf("https://%s", host),
+			InsecureSkipTLSVerify: true,
+		}
+	} else {
+		config.Clusters[contextName] = &api.Cluster{
+			Server:                   fmt.Sprintf("https://%s", host),
+			CertificateAuthorityData: credential.CACert,
+		}
+	}
+
+	if credential.Token != nil {
+		config.AuthInfos[contextName] = &api.AuthInfo{
+			Token: *credential.Token,
+		}
+	} else if credential.ClientCert != nil && credential.ClientKey != nil {
+		config.AuthInfos[contextName] = &api.AuthInfo{
+			ClientCertificateData: credential.ClientCert,
+			ClientKeyData:         credential.ClientKey,
+		}
+	} else {
+		return nil, fmt.Errorf("no credential for the cluster")
+	}
+
+	config.Contexts[contextName] = &api.Context{
+		Cluster:  contextName,
+		AuthInfo: contextName,
+	}
+	clientConfig := clientcmd.NewNonInteractiveClientConfig(*config, contextName, &clientcmd.ConfigOverrides{Timeout: "30s"}, nil)
+	restConfig, err := clientConfig.ClientConfig()
+	if err != nil {
+		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
+		return nil, err
+	}
+	restConfig.QPS = clientQPS
+	restConfig.Burst = clientBurst
+	return kubernetes.NewForConfig(restConfig)
+}
+
+func BuildClientSetWithAuth(ctx context.Context, cluster *platform.Cluster, credential *platform.ClusterCredential,platformClient platforminternalclient.PlatformInterface) (*kubernetes.Clientset, error) {
 	if cluster.Status.Locked != nil && *cluster.Status.Locked {
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
 	}
