@@ -84,7 +84,7 @@ func ClientSet(ctx context.Context, platformClient platforminternalclient.Platfo
 	config := &rest.Config{}
 	uin := filter.UinFrom(ctx)
 	if uin != "" {
-		//转发给api-server的请求，都需要使用当前用户的证书去访问，如果没有证书，则生成证书
+		// 转发给api-server的请求，都需要使用当前用户的证书去访问，如果没有证书，则生成证书
 		clientCertData, clientKeyData, err := getOrCreateClientCert(ctx, clusterWrapper)
 		if err != nil {
 			return nil, err

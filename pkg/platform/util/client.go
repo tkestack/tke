@@ -29,7 +29,10 @@ import (
 	"path"
 	"strings"
 	"time"
-
+	"tkestack.io/tke/pkg/platform/apiserver/filter"
+	"tkestack.io/tke/pkg/platform/types"
+	"tkestack.io/tke/pkg/util/pkiutil"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 
 	monitoringclient "github.com/coreos/prometheus-operator/pkg/client/versioned"
@@ -83,7 +86,7 @@ func ClientSetByCluster(ctx context.Context, cluster *platform.Cluster, platform
 		return nil, err
 	}
 
-	return BuildClientSet(ctx, cluster, credential)
+	return BuildClientSet(ctx, cluster, credential, platformClient)
 }
 
 // ResourceFromKind returns the resource name by kind.
@@ -400,8 +403,7 @@ func BuildExternalDynamicClientSet(cluster *platformv1.Cluster, credential *plat
 	return BuildExternalDynamicClientSetNoStatus(cluster, credential)
 }
 
-// BuildClientSet creates client based on cluster information and returns it.
-func BuildClientSet(ctx context.Context, cluster *platform.Cluster, credential *platform.ClusterCredential) (*kubernetes.Clientset, error) {
+func BuildClientSet(ctx context.Context, cluster *platform.Cluster, credential *platform.ClusterCredential,platformClient platforminternalclient.PlatformInterface) (*kubernetes.Clientset, error) {
 	if cluster.Status.Locked != nil && *cluster.Status.Locked {
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
 	}
@@ -424,19 +426,26 @@ func BuildClientSet(ctx context.Context, cluster *platform.Cluster, credential *
 		}
 	}
 
-	if credential.Token != nil {
+	uin := filter.UinFrom(ctx)
+	if uin != "" {
+		clusterWrapper, err := types.GetCluster(ctx, platformClient, cluster)
+		if err != nil {
+			return nil, err
+		}
+		// 转发给api-server的请求，都需要使用当前用户的证书去访问，如果没有证书，则生成证书
+		clientCertData, clientKeyData, err := getOrCreateClientCert(ctx,  clusterWrapper)
+		if err != nil {
+			return nil, err
+		}
+		config.AuthInfos[contextName] = &api.AuthInfo{
+			ClientCertificateData: clientCertData,
+			ClientKeyData:         clientKeyData,
+		}
+	} else {
 		config.AuthInfos[contextName] = &api.AuthInfo{
 			Token: *credential.Token,
 		}
-	} else if credential.ClientCert != nil && credential.ClientKey != nil {
-		config.AuthInfos[contextName] = &api.AuthInfo{
-			ClientCertificateData: credential.ClientCert,
-			ClientKeyData:         credential.ClientKey,
-		}
-	} else {
-		return nil, fmt.Errorf("no credential for the cluster")
 	}
-
 	config.Contexts[contextName] = &api.Context{
 		Cluster:  contextName,
 		AuthInfo: contextName,
@@ -451,7 +460,78 @@ func BuildClientSet(ctx context.Context, cluster *platform.Cluster, credential *
 	restConfig.Burst = clientBurst
 	return kubernetes.NewForConfig(restConfig)
 }
+func IsNotFoundError(err error) bool {
+	if strings.Contains(err.Error(), "not found") {
+		return true
+	}
+	return false
+}
+func getOrCreateClientCert(ctx context.Context, clusterWrapper *types.Cluster) ([]byte, []byte, error) {
+	credential := clusterWrapper.ClusterCredential
+	groups := authentication.Groups(ctx)
+	uin := filter.UinFrom(ctx)
+	ns := filter.NamespaceFrom(ctx)
+	if ns != "" {
+		groups = append(groups, fmt.Sprintf("namespace:%s", ns))
+	}
 
+	clusterName := filter.ClusterFrom(ctx)
+	if clusterName == "" {
+		return nil, nil, errors.NewBadRequest("clusterName is required")
+	}
+	var clientCertData, clientKeyData []byte
+	client, _ := clusterWrapper.Clientset()
+	cache, err := client.CoreV1().ConfigMaps("kube-system").Get(ctx, uin, metav1.GetOptions{})
+	if err != nil {
+		if IsNotFoundError(err) {
+			configmap, err := client.CoreV1().ConfigMaps("kube-system").Get(ctx, "config", metav1.GetOptions{})
+			if err != nil {
+				msg := fmt.Sprintf("GetK8s ConfigMaps of cluster %s failed, err: %s", clusterName, err.Error())
+				log.Errorf(msg)
+			}
+			credential.CACert = []byte(configmap.Data["ca.crt"])
+			credential.CAKey = []byte(configmap.Data["ca.key"])
+			clientCertData, clientKeyData, err = pkiutil.GenerateClientCertAndKey(uin, groups, credential.CACert,
+				credential.CAKey)
+			if err != nil {
+				return nil, nil, err
+			}
+			confMap := &v1.ConfigMap{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        uin,
+					ClusterName: clusterName,
+					Labels: map[string]string{
+						"rbac.cert": "cert",
+					},
+				},
+				Data: map[string]string{
+					"CommonName":  uin,
+					"UIN":         uin,
+					"clusterName": clusterName,
+				},
+				BinaryData: map[string][]byte{
+					"clientCertData": clientCertData,
+					"clientKeyData":  clientKeyData,
+				},
+			}
+			client.CoreV1().ConfigMaps("kube-system").Create(ctx, confMap, metav1.CreateOptions{})
+			log.Infof("generateClientCert success. username:%s groups:%v\n clientCertData:\n %s clientKeyData:\n %s",
+				uin, groups, clientCertData, clientKeyData)
+		} else {
+			log.Errorf(fmt.Sprintf("get configmap failed -- err: %v", err))
+			return nil, nil, err
+		}
+	} else {
+		clientCertData = cache.BinaryData["clientCertData"]
+		clientKeyData = cache.BinaryData["clientKeyData"]
+	}
+
+	log.Infof("generateClientCert success. username:%s groups:%v\n clientCertData:\n %s clientKeyData:\n %s",
+		uin, groups, clientCertData, clientKeyData)
+
+	return clientCertData, clientKeyData, nil
+}
 // ClusterHost returns host and port for kube-apiserver of cluster.
 func ClusterHost(cluster *platform.Cluster) (string, error) {
 	address, err := ClusterAddress(cluster)
