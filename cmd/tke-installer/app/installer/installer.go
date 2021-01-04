@@ -219,10 +219,6 @@ func (t *TKE) initSteps() {
 			Func: t.createGlobalCluster,
 		},
 		{
-			Name: "Patch platform versions in cluster info",
-			Func: t.patchPlatformVersion,
-		},
-		{
 			Name: "Write kubeconfig",
 			Func: t.writeKubeconfig,
 		},
@@ -249,6 +245,10 @@ func (t *TKE) initSteps() {
 		{
 			Name: "Install etcd",
 			Func: t.installETCD,
+		},
+		{
+			Name: "Patch platform versions in cluster info",
+			Func: t.patchPlatformVersion,
 		},
 	}...)
 
@@ -2446,6 +2446,10 @@ func (t *TKE) writeKubeconfig(ctx context.Context) error {
 }
 
 func (t *TKE) patchPlatformVersion(ctx context.Context) error {
+	if t.globalClient == nil {
+		return errors.New("can't get cluster client")
+	}
+
 	tkeVersion, _, err := platformutil.GetPlatformVersionsFromClusterInfo(ctx, t.globalClient)
 	if err != nil {
 		return err
