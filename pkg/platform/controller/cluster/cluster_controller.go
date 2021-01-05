@@ -409,6 +409,22 @@ func (c *Controller) ensureCreateClusterCredential(ctx context.Context, cluster 
 
 func (c *Controller) ensureSyncCredentialClusterName(ctx context.Context, cluster *platformv1.Cluster) {
 	if cluster.Spec.ClusterCredentialRef == nil {
+		clusterCredentials, err := c.platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fmt.Sprintf("clusterName=%s", cluster.Name)})
+		if err != nil {
+			return
+		}
+		if len(clusterCredentials.Items) > 0 {
+			credential := &clusterCredentials.Items[0]
+			oldCredential := credential.DeepCopy()
+			if credential.ObjectMeta.OwnerReferences == nil {
+				patchBytes, err := strategicpatch.GetPatchBytes(oldCredential, credential)
+				credential.ObjectMeta.OwnerReferences = []metav1.OwnerReference{*metav1.NewControllerRef(cluster, platformv1.SchemeGroupVersion.WithKind("Cluster"))}
+				_, err = c.platformClient.ClusterCredentials().Patch(ctx, credential.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
+				if err != nil {
+					return
+				}
+			}
+		}
 		return
 	}
 
