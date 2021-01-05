@@ -44,12 +44,12 @@ type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
 
-	applicationClient *applicationinternalclient.ApplicationClient
+	applicationClient applicationinternalclient.ApplicationInterface
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating application objects.
-func NewStrategy(applicationClient *applicationinternalclient.ApplicationClient) *Strategy {
+func NewStrategy(applicationClient applicationinternalclient.ApplicationInterface) *Strategy {
 	return &Strategy{application.Scheme, namesutil.Generator, applicationClient}
 }
 
