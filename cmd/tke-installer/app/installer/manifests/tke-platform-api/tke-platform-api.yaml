@@ -46,6 +46,8 @@ spec:
               mountPath: /app/certs
             - name: tke-platform-api-volume
               mountPath: /app/conf
+            - name: tke-ssh-key
+              mountPath: /app/aes/
             - name: provider-volume
               mountPath: /app/provider/baremetal
             - name: provider-config-volume
@@ -96,6 +98,9 @@ spec:
         - name: tke-platform-api-volume
           configMap:
             name: tke-platform-api
+        - name: tke-ssh-key
+          secret:
+            secretName: tke-ssh-key
         - name: provider-volume
           emptyDir: {}
         - name: provider-config-volume

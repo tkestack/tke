@@ -36,11 +36,13 @@ import (
 	"golang.org/x/crypto/ssh"
 	"gopkg.in/go-playground/validator.v9"
 	"k8s.io/apimachinery/pkg/util/wait"
+	utilcrypto "tkestack.io/tke/pkg/util/crypto"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
-	tmpDir = "/tmp"
+	tmpDir     = "/tmp"
+	AESKeyFile = "/app/aes/aes.key"
 )
 
 type SSH struct {
@@ -69,7 +71,35 @@ func (c *Config) addr() string {
 	return net.JoinHostPort(c.Host, fmt.Sprintf("%d", c.Port))
 }
 
+func (c *Config) decrypt() {
+	keyBytes, err := ioutil.ReadFile(AESKeyFile)
+	if err != nil {
+		return
+	}
+	if len(c.Password) != 0 {
+		origPassword, err := utilcrypto.AesDecrypt(c.Password, string(keyBytes))
+		if err != nil {
+			return
+		}
+		c.Password = origPassword
+		return
+	}
+	origPrivateKey, err := utilcrypto.AesDecrypt(string(c.PrivateKey), string(keyBytes))
+	if err != nil {
+		return
+	}
+	c.PrivateKey = []byte(origPrivateKey)
+	if len(c.PassPhrase) != 0 {
+		origPassPhrase, err := utilcrypto.AesDecrypt(string(c.PassPhrase), string(keyBytes))
+		if err == nil {
+			c.PassPhrase = []byte(origPassPhrase)
+		}
+	}
+	return
+}
+
 func New(c *Config) (*SSH, error) {
+	c.decrypt()
 	validate := validator.New()
 	err := validate.Struct(c)
 	if err != nil {
