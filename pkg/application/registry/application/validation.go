@@ -35,7 +35,7 @@ import (
 var ValidateApplicationName = apimachineryvalidation.NameIsDNSLabel
 
 // ValidateApplication tests if required fields in the message are set.
-func ValidateApplication(ctx context.Context, app *application.App, applicationClient *applicationinternalclient.ApplicationClient) field.ErrorList {
+func ValidateApplication(ctx context.Context, app *application.App, applicationClient applicationinternalclient.ApplicationInterface) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&app.ObjectMeta, true, ValidateApplicationName, field.NewPath("metadata"))
 
 	fldMetadataPath := field.NewPath("metadata")
@@ -68,7 +68,7 @@ func ValidateApplication(ctx context.Context, app *application.App, applicationC
 	}
 
 	applicationList, err := applicationClient.Apps(app.ObjectMeta.Namespace).List(ctx, metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", app.Spec.TenantID, app.Spec.Name),
+		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s,spec.targetCluster=%s", app.Spec.TenantID, app.Spec.Name, app.Spec.TargetCluster),
 	})
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(fldSpecPath.Child("name"), err))
