@@ -184,6 +184,14 @@ func (p *Provider) getKubeProxyConfiguration(c *v1.Cluster) *kubeproxyv1alpha1.K
 	if c.Spec.Features.IPVS != nil && *c.Spec.Features.IPVS {
 		config.Mode = "ipvs"
 		config.ClusterCIDR = c.Spec.ClusterCIDR
+		if c.Spec.Features.HA != nil {
+			if c.Spec.Features.HA.TKEHA != nil {
+				config.IPVS.ExcludeCIDRs = []string{fmt.Sprintf("%s/32", c.Spec.Features.HA.TKEHA.VIP)}
+			}
+			if c.Spec.Features.HA.ThirdPartyHA != nil {
+				config.IPVS.ExcludeCIDRs = []string{fmt.Sprintf("%s/32", c.Spec.Features.HA.ThirdPartyHA.VIP)}
+			}
+		}
 	}
 	if utilsnet.IsIPv6CIDRString(c.Spec.ClusterCIDR) {
 		config.BindAddress = "::"

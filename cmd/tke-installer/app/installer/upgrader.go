@@ -36,10 +36,13 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/platform/util"
 	configv1 "tkestack.io/tke/pkg/registry/apis/config/v1"
+	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/file"
+	"tkestack.io/tke/pkg/util/version"
 
 	// import platform schema
 	_ "tkestack.io/tke/api/platform/install"
@@ -55,11 +58,15 @@ func (t *TKE) upgradeSteps() {
 		t.steps = append(t.steps, []types.Handler{
 			{
 				Name: "Login registry",
-				Func: t.loginRegistryForUpgrade,
+				Func: t.loginRegistry,
 			},
 			{
 				Name: "Load images",
 				Func: t.loadImages,
+			},
+			{
+				Name: "Tag images",
+				Func: t.tagImages,
 			},
 			{
 				Name: "Push images",
@@ -137,7 +144,24 @@ func (t *TKE) updateTKEPlatformController(ctx context.Context) error {
 	if len(depl.Spec.Template.Spec.InitContainers) == 0 {
 		return fmt.Errorf("%s has no initContainers", com)
 	}
-	depl.Spec.Template.Spec.InitContainers[0].Image = images.Get().ProviderRes.FullName()
+
+	tkeVersion, k8sValidVersions, err := util.GetPlatformVersionsFromClusterInfo(ctx, t.globalClient)
+	if err != nil {
+		return err
+	}
+	result := version.Compare(tkeVersion, spec.TKEVersion)
+
+	switch {
+	case result < 0:
+		return errors.Errorf("can't upgrade, platform's version %s is higher than installer's version %s", tkeVersion, spec.TKEVersion)
+	case result == 0:
+		if len(k8sValidVersions) == len(spec.K8sValidVersions) {
+			return errors.Errorf("can't upgrade, platform's version %s is equal to installer's version %s, please prepare your custom upgrade images before upgrade", tkeVersion, spec.TKEVersion)
+		}
+		depl.Spec.Template.Spec.InitContainers[0].Image = containerregistry.GetImagePrefix(images.Get().ProviderRes.Name + ":" + k8sValidVersions[len(k8sValidVersions)-1])
+	case result > 0:
+		depl.Spec.Template.Spec.InitContainers[0].Image = images.Get().ProviderRes.FullName()
+	}
 
 	_, err = t.globalClient.AppsV1().Deployments(t.namespace).Update(ctx, depl, metav1.UpdateOptions{})
 	if err != nil {
@@ -218,7 +242,7 @@ func (t *TKE) loadRegistry(ctx context.Context) error {
 	return nil
 }
 
-func (t *TKE) loginRegistryForUpgrade(ctx context.Context) error {
+func (t *TKE) loginRegistry(ctx context.Context) error {
 	containerregistry.Init(t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace())
 	cmd := exec.Command("docker", "login",
 		"--username", t.Para.Config.Registry.Username(),

@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"strings"
-	"tkestack.io/tke/pkg/platform/registry/cluster"
 	"unicode"
 
 	"github.com/go-openapi/inflect"
@@ -42,6 +41,7 @@ import (
 	"tkestack.io/tke/api/registry"
 	commonapiserverfilter "tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
+	"tkestack.io/tke/pkg/platform/registry/cluster"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -50,6 +50,7 @@ const (
 
 	createProjectAction string = "createProject"
 	updateProjectAction string = "updateProject"
+	createClusterAction string = "createCluster"
 
 	// Annotation key names set in advanced audit
 	decisionAnnotationKey = "authorization.auth.tke.com/decision"
@@ -59,6 +60,10 @@ const (
 	decisionAllow  = "allow"
 	decisionForbid = "forbid"
 	reasonError    = "internal error"
+)
+
+var (
+	AllowClusterNotFoundActions = sets.NewString(createClusterAction, updateProjectAction)
 )
 
 func ExtractClusterNames(ctx context.Context, req *http.Request, resource string) []string {

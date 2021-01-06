@@ -97,11 +97,6 @@ make
 
 如果有使用问题、发现bug、有新的需求，我们都非常欢迎您通过的 GitHub [issues](https://github.com/tkestack/tke/issues/new/choose) or [pull requests](https://github.com/tkestack/tke/pulls) 进行交流。
 
-TKEStack 微信群:
-
-- 请扫描下方的二维码并备注： “**TKEStack**”
-
-![TKEStack](../../images/wechat.jpeg)
 
 ## Licensing
 

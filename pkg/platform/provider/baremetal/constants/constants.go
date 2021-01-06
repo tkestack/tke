@@ -49,6 +49,10 @@ const (
 	KubeSchedulerPodManifestFile         = KubeletPodManifestDir + "kube-scheduler.yaml"
 	KeepavlivedManifestFile              = KubeletPodManifestDir + "keepalived.yaml"
 
+	KubeadmPathInNodePackge = "kubernetes/node/bin/kubeadm"
+	KubeletPathInNodePackge = "kubernetes/node/bin/kubelet"
+	KubectlPathInNodePackge = "kubernetes/node/bin/kubectl"
+
 	DstTmpDir  = "/tmp/k8s/"
 	DstBinDir  = "/usr/bin/"
 	CNIBinDir  = "/opt/cni/bin/"

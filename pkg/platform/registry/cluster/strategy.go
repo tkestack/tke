@@ -298,6 +298,9 @@ func (s *FinalizeStrategy) ValidateUpdate(ctx context.Context, obj, old runtime.
 }
 
 func CorrectClusterName(clusterName string) string {
+	if clusterName == "global" {
+		return clusterName
+	}
 	if !strings.HasPrefix(clusterName, NamePrefix) {
 		return ""
 	}

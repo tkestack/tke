@@ -189,13 +189,13 @@ export const StrategyActionPanel = (props) => {
             <Form.Item
               label={t('策略名称')}
               required
-              status={messages.name ? 'error' : name ? 'success' : undefined}
+              status={messages.name ? 'error' : formParamsValue.name ? 'success' : undefined}
               message={messages.name ? t(messages.name) : t('长度需要小于256个字符')}
             >
               <Input
                 placeholder={t('请输入策略名称')}
                 style={{ width: '350px' }}
-                defaultValue={name}
+                defaultValue={formParamsValue.name}
                 onChange={(value) => {
                   let msg = '';
                   if (!value) {
@@ -298,9 +298,9 @@ export const StrategyActionPanel = (props) => {
                         if (!value) {
                           msg = '请输入资源名称';
                         }
-                        let newResource = cloneDeep(formParamsValue.resource);
+                        const newResource = cloneDeep(formParamsValue.resource);
                         newResource[index] = value;
-                        let newMessagesResource = cloneDeep(messages.resource);
+                        const newMessagesResource = cloneDeep(messages.resource);
                         newMessagesResource[index] = msg;
                         setFormParamsValue({ ...formParamsValue, resource: newResource });
                         setMessages({ ...messages, resource: newMessagesResource });
@@ -315,7 +315,7 @@ export const StrategyActionPanel = (props) => {
               })}
               <LinkButton
                 onClick={() => {
-                  let newResource: any[] = cloneDeep(formParamsValue.resource);
+                  const newResource: any[] = cloneDeep(formParamsValue.resource);
                   newResource.push('');
                   setFormParamsValue({ ...formParamsValue, resource: newResource });
                 }}
