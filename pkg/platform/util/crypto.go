@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	v1 "tkestack.io/tke/api/platform/v1"
 	utilcrypto "tkestack.io/tke/pkg/util/crypto"
 )
 
@@ -34,10 +35,10 @@ const (
 	SSHKeyName    = "aes.key"
 )
 
-type sshInfo struct {
-	password   []byte
-	privateKey []byte
-	passPharse []byte
+type SSHInfo struct {
+	Password   []byte
+	PrivateKey []byte
+	PassPharse []byte
 }
 
 func CreateAesKeySecret(ctx context.Context, k8sClient kubernetes.Interface) (secret *corev1.Secret, err error) {
@@ -51,7 +52,7 @@ func CreateAesKeySecret(ctx context.Context, k8sClient kubernetes.Interface) (se
 			SSHKeyName: []byte(utilcrypto.NewAesKey()),
 		},
 	}
-	secret, err = k8sClient.CoreV1().Secrets(metav1.NamespaceSystem).Create(ctx, secret, metav1.CreateOptions{})
+	secret, err = k8sClient.CoreV1().Secrets("tke").Create(ctx, secret, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +64,7 @@ func EncryptAllSSH(ctx context.Context, platformClient platformv1client.Platform
 	if err != nil {
 		return err
 	}
-	secret, err := k8sClient.CoreV1().Secrets(metav1.NamespaceSystem).Get(ctx, SSHKeyName, metav1.GetOptions{})
+	secret, err := k8sClient.CoreV1().Secrets("tke").Get(ctx, SSHSecretName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
@@ -74,24 +75,7 @@ func EncryptAllSSH(ctx context.Context, platformClient platformv1client.Platform
 		return err
 	}
 	for _, cls := range clusters.Items {
-		for i, mc := range cls.Spec.Machines {
-			ssh := sshInfo{
-				password:   mc.Password,
-				privateKey: mc.PrivateKey,
-				passPharse: mc.PassPhrase,
-			}
-			newSSH, err := encryptSSH(ssh, aesKey)
-			if err != nil {
-				return err
-			}
-			if bytes.Equal(ssh.password, newSSH.password) && bytes.Equal(ssh.password, newSSH.password) {
-				continue
-			}
-			cls.Spec.Machines[i].Password = newSSH.password
-			cls.Spec.Machines[i].PrivateKey = newSSH.privateKey
-			cls.Spec.Machines[i].PassPhrase = newSSH.passPharse
-		}
-		_, err = platformClient.Clusters().Update(ctx, &cls, metav1.UpdateOptions{})
+		err = EncryptClusterMachineSSH(ctx, platformClient, &cls, aesKey)
 		if err != nil {
 			return err
 		}
@@ -102,22 +86,7 @@ func EncryptAllSSH(ctx context.Context, platformClient platformv1client.Platform
 		return err
 	}
 	for _, mc := range mcs.Items {
-		ssh := sshInfo{
-			password:   mc.Spec.Password,
-			privateKey: mc.Spec.PrivateKey,
-			passPharse: mc.Spec.PassPhrase,
-		}
-		newSSH, err := encryptSSH(ssh, aesKey)
-		if err != nil {
-			return err
-		}
-		if bytes.Equal(ssh.password, newSSH.password) && bytes.Equal(ssh.password, newSSH.password) {
-			continue
-		}
-		mc.Spec.Password = newSSH.password
-		mc.Spec.PrivateKey = newSSH.privateKey
-		mc.Spec.PassPhrase = newSSH.passPharse
-		_, err = platformClient.Machines().Update(ctx, &mc, metav1.UpdateOptions{})
+		err = EncryptMachineSSH(ctx, platformClient, &mc, aesKey)
 		if err != nil {
 			return err
 		}
@@ -125,37 +94,79 @@ func EncryptAllSSH(ctx context.Context, platformClient platformv1client.Platform
 	return nil
 }
 
-func encryptSSH(ssh sshInfo, aesKey string) (sshInfo, error) {
+func EncryptClusterMachineSSH(ctx context.Context, platformClient platformv1client.PlatformV1Interface, cls *v1.Cluster, aesKey string) error {
+	for i, mc := range cls.Spec.Machines {
+		ssh := SSHInfo{
+			Password:   mc.Password,
+			PrivateKey: mc.PrivateKey,
+			PassPharse: mc.PassPhrase,
+		}
+		newSSH, err := EncryptSSH(ssh, aesKey)
+		if err != nil {
+			return err
+		}
+		if bytes.Equal(ssh.Password, newSSH.Password) && bytes.Equal(ssh.PrivateKey, newSSH.PrivateKey) {
+			continue
+		}
+		cls.Spec.Machines[i].Password = newSSH.Password
+		cls.Spec.Machines[i].PrivateKey = newSSH.PrivateKey
+		cls.Spec.Machines[i].PassPhrase = newSSH.PassPharse
+	}
+	_, err := platformClient.Clusters().Update(ctx, cls, metav1.UpdateOptions{})
+	return err
+}
+
+func EncryptMachineSSH(ctx context.Context, platformClient platformv1client.PlatformV1Interface, mc *v1.Machine, aesKey string) error {
+	ssh := SSHInfo{
+		Password:   mc.Spec.Password,
+		PrivateKey: mc.Spec.PrivateKey,
+		PassPharse: mc.Spec.PassPhrase,
+	}
+	newSSH, err := EncryptSSH(ssh, aesKey)
+	if err != nil {
+		return err
+	}
+	if bytes.Equal(ssh.Password, newSSH.Password) && bytes.Equal(ssh.PrivateKey, newSSH.PrivateKey) {
+		return nil
+	}
+	mc.Spec.Password = newSSH.Password
+	mc.Spec.PrivateKey = newSSH.PrivateKey
+	mc.Spec.PassPhrase = newSSH.PassPharse
+	_, err = platformClient.Machines().Update(ctx, mc, metav1.UpdateOptions{})
+	return err
+}
+
+func EncryptSSH(ssh SSHInfo, aesKey string) (SSHInfo, error) {
 	// ssh password case
-	if len(ssh.password) != 0 {
-		_, err := utilcrypto.AesDecrypt(string(ssh.password), aesKey)
+	if len(ssh.Password) != 0 {
+		_, err := utilcrypto.AesDecrypt(string(ssh.Password), aesKey)
 		if err == nil {
 			return ssh, nil
 		}
-		encryptPwd, err := utilcrypto.AesEncrypt(string(ssh.password), aesKey)
+		encryptPwd, err := utilcrypto.AesEncrypt(string(ssh.Password), aesKey)
 		if err != nil {
 			return ssh, err
 		}
-		ssh.password = []byte(encryptPwd)
+		ssh.Password = []byte(encryptPwd)
 		return ssh, nil
 	}
 	// ssh public/private key case
-	_, err := utilcrypto.AesDecrypt(string(ssh.privateKey), aesKey)
+	_, err := utilcrypto.AesDecrypt(string(ssh.PrivateKey), aesKey)
 	if err == nil {
 		return ssh, nil
 	}
-	encryptPrivateKey, err := utilcrypto.AesEncrypt(string(ssh.privateKey), aesKey)
+	encryptPrivateKey, err := utilcrypto.AesEncrypt(string(ssh.PrivateKey), aesKey)
 	if err != nil {
 		return ssh, err
 	}
-	ssh.privateKey = []byte(encryptPrivateKey)
+	ssh.PrivateKey = []byte(encryptPrivateKey)
 	// ssh use pass phrase case
-	if len(ssh.passPharse) != 0 {
-		encryptPassPhrase, err := utilcrypto.AesEncrypt(string(ssh.passPharse), aesKey)
+	if len(ssh.PassPharse) != 0 {
+		encryptPassPhrase, err := utilcrypto.AesEncrypt(string(ssh.PassPharse), aesKey)
 		if err != nil {
 			return ssh, err
 		}
-		ssh.passPharse = []byte(encryptPassPhrase)
+		ssh.PassPharse = []byte(encryptPassPhrase)
 	}
 	return ssh, nil
 }

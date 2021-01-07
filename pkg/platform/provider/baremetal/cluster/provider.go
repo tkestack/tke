@@ -131,6 +131,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureDisableOffloading, // will remove it when upgrade to k8s v1.18.5
 			p.EnsurePostInstallHook,
 			p.EnsurePostClusterInstallHook,
+			p.EncryptSSH,
 		},
 		UpdateHandlers: []clusterprovider.Handler{
 			p.EnsureAPIServerCert,

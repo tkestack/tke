@@ -64,11 +64,13 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
+	platformutil "tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/cmdstring"
 	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/hosts"
 	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/ssh"
 	"tkestack.io/tke/pkg/util/template"
 )
 
@@ -1432,4 +1434,13 @@ func (p *Provider) EnsureCreateClusterMark(ctx context.Context, c *v1.Cluster) e
 	}
 
 	return mark.Create(ctx, clientset)
+}
+
+func (p *Provider) EncryptSSH(ctx context.Context, c *v1.Cluster) error {
+	keyBytes, err := ioutil.ReadFile(ssh.AESKeyFile)
+	if err != nil {
+		log.FromContext(ctx).Infof("read aes key failed %v, skip encrypt ssh", err)
+		return nil
+	}
+	return platformutil.EncryptClusterMachineSSH(ctx, p.platformClient, c.Cluster, string(keyBytes))
 }

@@ -87,6 +87,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureNodeReady,
 			p.EnsureDisableOffloading, // will remove it when upgrade to k8s v1.18.5
 			p.EnsurePostInstallHook,
+			p.EncryptSSH,
 		},
 		UpdateHandlers: []machineprovider.Handler{
 			p.EnsurePreUpgradeHook,

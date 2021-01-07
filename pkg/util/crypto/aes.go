@@ -62,7 +62,10 @@ func AesEncrypt(orig string, key string) (string, error) {
 // either 16, 24, or 32 bytes to select
 // AES-128, AES-192, or AES-256.
 func AesDecrypt(cryted string, key string) (string, error) {
-	crytedByte, _ := base64.StdEncoding.DecodeString(cryted)
+	crytedByte, err := base64.StdEncoding.DecodeString(cryted)
+	if err != nil {
+		return "", err
+	}
 	k := []byte(key)
 
 	block, err := aes.NewCipher(k)

@@ -52,12 +52,14 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
 	certutil "k8s.io/client-go/util/cert"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
+	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/config"
@@ -247,6 +249,10 @@ func (t *TKE) initSteps() {
 			Func: t.installETCD,
 		},
 		{
+			Name: "Create AES key",
+			Func: t.createAesKey,
+		},
+		{
 			Name: "Patch platform versions in cluster info",
 			Func: t.patchPlatformVersion,
 		},
@@ -419,6 +425,13 @@ func (t *TKE) initSteps() {
 			},
 		}...)
 	}
+
+	t.steps = append(t.steps, []types.Handler{
+		{
+			Name: "Encrypt SSH sensitive information",
+			Func: t.encryptSSH,
+		},
+	}...)
 
 	t.steps = append(t.steps, []types.Handler{
 		{
@@ -2480,4 +2493,33 @@ func (t *TKE) patchClusterInfo(ctx context.Context, patchData interface{}) error
 	}
 	_, err = t.globalClient.CoreV1().ConfigMaps("kube-public").Patch(ctx, "cluster-info", k8stypes.MergePatchType, patchByte, metav1.PatchOptions{})
 	return err
+}
+
+func (t *TKE) createAesKey(ctx context.Context) error {
+	_, err := platformutil.CreateAesKeySecret(ctx, t.globalClient)
+	if err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			t.log.Info("AES secret already exists, skip create process")
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
+func (t *TKE) encryptSSH(ctx context.Context) error {
+	defaultConfigPath := "/root/.kube/config"
+	config, err := clientcmd.BuildConfigFromFlags("", t.Config.Kubeconfig)
+	if err != nil {
+		t.log.Infof("read kubeconfig from %s failed, try to read from %s", t.Config.Kubeconfig, defaultConfigPath)
+		config, err = clientcmd.BuildConfigFromFlags("", defaultConfigPath)
+		if err != nil {
+			return err
+		}
+	}
+	client, err := platformv1client.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	return platformutil.EncryptAllSSH(ctx, client)
 }

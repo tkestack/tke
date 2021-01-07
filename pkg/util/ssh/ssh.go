@@ -95,7 +95,6 @@ func (c *Config) decrypt() {
 			c.PassPhrase = []byte(origPassPhrase)
 		}
 	}
-	return
 }
 
 func New(c *Config) (*SSH, error) {

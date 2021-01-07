@@ -27,6 +27,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
 	"gopkg.in/yaml.v2"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -49,9 +50,23 @@ import (
 )
 
 const (
-	registryCmName = "tke-registry-api"
-	registryCmKey  = "tke-registry-config.yaml"
+	registryCmName   = "tke-registry-api"
+	registryCmKey    = "tke-registry-config.yaml"
+	aesKeyVolumeName = "tke-ssh-key"
 )
+
+var aesKeyVolume = v1.Volume{
+	Name: aesKeyVolumeName,
+	VolumeSource: v1.VolumeSource{
+		Secret: &v1.SecretVolumeSource{
+			SecretName: aesKeyVolumeName,
+		},
+	},
+}
+var aesKeyVolumeMount = v1.VolumeMount{
+	Name:      aesKeyVolumeName,
+	MountPath: "/app/aes/",
+}
 
 func (t *TKE) upgradeSteps() {
 	if !t.Para.Config.Registry.IsOfficial() {
@@ -72,6 +87,10 @@ func (t *TKE) upgradeSteps() {
 				Name: "Push images",
 				Func: t.pushImages,
 			},
+			{
+				Name: "Create AES key",
+				Func: t.createAesKey,
+			},
 		}...)
 	}
 
@@ -90,6 +109,13 @@ func (t *TKE) upgradeSteps() {
 		{
 			Name: "Patch platform versions in cluster info",
 			Func: t.patchPlatformVersion,
+		},
+	}...)
+
+	t.steps = append(t.steps, []types.Handler{
+		{
+			Name: "Encrypt SSH sensitive information",
+			Func: t.encryptSSH,
 		},
 	}...)
 
@@ -114,6 +140,8 @@ func (t *TKE) updateTKEPlatformAPI(ctx context.Context) error {
 		return fmt.Errorf("%s has no containers", com)
 	}
 	depl.Spec.Template.Spec.Containers[0].Image = images.Get().TKEPlatformAPI.FullName()
+	depl.Spec.Template.Spec.Volumes = append(depl.Spec.Template.Spec.Volumes, aesKeyVolume)
+	depl.Spec.Template.Spec.Containers[0].VolumeMounts = append(depl.Spec.Template.Spec.Containers[0].VolumeMounts, aesKeyVolumeMount)
 
 	_, err = t.globalClient.AppsV1().Deployments(t.namespace).Update(ctx, depl, metav1.UpdateOptions{})
 	if err != nil {
@@ -140,6 +168,8 @@ func (t *TKE) updateTKEPlatformController(ctx context.Context) error {
 		return fmt.Errorf("%s has no containers", com)
 	}
 	depl.Spec.Template.Spec.Containers[0].Image = images.Get().TKEPlatformController.FullName()
+	depl.Spec.Template.Spec.Volumes = append(depl.Spec.Template.Spec.Volumes, aesKeyVolume)
+	depl.Spec.Template.Spec.Containers[0].VolumeMounts = append(depl.Spec.Template.Spec.Containers[0].VolumeMounts, aesKeyVolumeMount)
 
 	if len(depl.Spec.Template.Spec.InitContainers) == 0 {
 		return fmt.Errorf("%s has no initContainers", com)
