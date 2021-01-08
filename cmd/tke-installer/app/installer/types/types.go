@@ -85,6 +85,7 @@ type ElasticSearch struct {
 	ReserveDays int    `json:"reserveDays" validate:"required"`
 	Username    string `json:"username"`
 	Password    string `json:"password"`
+	Index       string `json:"index"`
 }
 
 func (r *Registry) Domain() string {

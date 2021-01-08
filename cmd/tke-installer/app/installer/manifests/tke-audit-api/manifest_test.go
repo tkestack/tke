@@ -32,6 +32,7 @@ func TestManifest(t *testing.T) {
 			"Replicas":   1,
 			"Image":      "Image",
 			"EnableAuth": true,
+			"Index":      "auditevent",
 		})
 	if !assert.Nil(t, err) {
 		t.FailNow()

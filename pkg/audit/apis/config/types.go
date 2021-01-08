@@ -28,21 +28,21 @@ import (
 type AuditConfiguration struct {
 	metav1.TypeMeta
 
-	Storage Storage
+	Storage Storage `json:"storage"`
 }
 
 type Storage struct {
-	ElasticSearch *ElasticSearchStorage
+	ElasticSearch *ElasticSearchStorage `json:"elasticSearch"`
 }
 
 type ElasticSearchStorage struct {
-	Address string
+	Address string `json:"address"`
 	// +optional
-	Indices string
+	Indices string `json:"indices"`
 	// +optional
-	ReserveDays int
+	ReserveDays int `json:"reserveDays"`
 	// +optional
-	Username string
+	Username string `json:"username"`
 	// +optional
-	Password string
+	Password string `json:"password"`
 }
