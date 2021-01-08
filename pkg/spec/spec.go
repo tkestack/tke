@@ -19,13 +19,12 @@
 package spec
 
 import (
-	"os"
-
 	"github.com/thoas/go-funk"
+	"tkestack.io/tke/pkg/app/version"
 )
 
 var (
-	TKEVersion    = os.Getenv("VERSION")
+	TKEVersion    = version.Get().GitVersion
 	Archs         = []string{"amd64", "arm64"}
 	Arm64         = "arm64"
 	Arm64Variants = []string{"v8", "unknown"}
