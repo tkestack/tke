@@ -59,7 +59,6 @@ func ValidateMachineUpdate(ctx context.Context, machine *platform.Machine, oldMa
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.IP, oldMachine.Spec.IP, fldPath.Child("ip"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.Labels, oldMachine.Spec.Labels, fldPath.Child("labels"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.Taints, oldMachine.Spec.Taints, fldPath.Child("taints"))...)
-	allErrs = append(allErrs, ValidateSSH(fldPath, machine.Spec.IP, int(machine.Spec.Port), machine.Spec.Username, machine.Spec.Password, machine.Spec.PrivateKey, machine.Spec.PassPhrase)...)
 
 	return allErrs
 }
