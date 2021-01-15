@@ -41,7 +41,7 @@ import (
 func ValidateCluster(cluster *types.Cluster) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&cluster.ObjectMeta, false, apimachineryvalidation.NameIsDNSLabel, field.NewPath("metadata"))
 
-	allErrs = append(allErrs, ValidatClusterSpec(&cluster.Spec, field.NewPath("spec"))...)
+	allErrs = append(allErrs, ValidatClusterSpec(&cluster.Spec, field.NewPath("spec"), true)...)
 	allErrs = append(allErrs, ValidateClusterByProvider(cluster)...)
 
 	return allErrs
@@ -63,7 +63,8 @@ func ValidateClusterUpdate(cluster *types.Cluster, oldCluster *types.Cluster) fi
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.ControllerManagerExtraArgs, oldCluster.Spec.ControllerManagerExtraArgs, fldPath.Child("controllerManagerExtraArgs"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.SchedulerExtraArgs, oldCluster.Spec.SchedulerExtraArgs, fldPath.Child("schedulerExtraArgs"))...)
 
-	allErrs = append(allErrs, ValidateCluster(cluster)...)
+	allErrs = append(allErrs, ValidatClusterSpec(&cluster.Spec, field.NewPath("spec"), false)...)
+	allErrs = append(allErrs, ValidateClusterByProvider(cluster)...)
 	allErrs = append(allErrs, ValidateClusterScale(cluster.Cluster, oldCluster.Cluster, fldPath.Child("machines"))...)
 
 	return allErrs
@@ -93,10 +94,12 @@ func ValidateClusterScale(cluster *platform.Cluster, oldCluster *platform.Cluste
 }
 
 // ValidateCluster validates a given ClusterSpec.
-func ValidatClusterSpec(spec *platform.ClusterSpec, fldPath *field.Path) field.ErrorList {
+func ValidatClusterSpec(spec *platform.ClusterSpec, fldPath *field.Path, validateMachine bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, ValidateClusteType(spec.Type, fldPath.Child("type"))...)
-	allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
+	if validateMachine {
+		allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
+	}
 	allErrs = append(allErrs, ValidateClusterFeature(&spec.Features, fldPath.Child("features"))...)
 
 	return allErrs
