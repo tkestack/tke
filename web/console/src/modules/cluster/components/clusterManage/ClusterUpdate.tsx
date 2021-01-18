@@ -80,7 +80,7 @@ export function ClusterUpdate({ route, actions }: RootProps) {
             {
               validator(_, value: string) {
                 const [__, targetSecond] = value.split('.');
-                return +targetSecond - +clusterVersionSecondPart === 1
+                return +targetSecond - +clusterVersionSecondPart <= 1 // 等于0 或者等于1
                   ? Promise.resolve()
                   : Promise.reject('不支持直接升级到该版本！');
               }
