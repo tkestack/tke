@@ -61,7 +61,7 @@ export const validatorActions = {
 
   validateDescription() {
     return async (dispatch, getState: GetState) => {
-      let name = getState().alarmPolicyEdition.alarmPolicyDescription;
+      const name = getState().alarmPolicyEdition.alarmPolicyDescription;
       const result = validatorActions._validateDescription(name);
 
       dispatch({
@@ -72,7 +72,7 @@ export const validatorActions = {
   },
   validatePolicyTime() {
     return async (dispatch, getState: GetState) => {
-      let start = getState().alarmPolicyEdition.shieldTimeStart,
+      const start = getState().alarmPolicyEdition.shieldTimeStart,
         end = getState().alarmPolicyEdition.shieldTimeEnd;
       const result = validatorActions._validatePolicyTime(start, end);
 
@@ -96,7 +96,7 @@ export const validatorActions = {
   },
   validateGroupSelection() {
     return async (dispatch, getState: GetState) => {
-      let group = getState().receiverGroup.selections;
+      const group = getState().receiverGroup.selections;
 
       const result = validatorActions._validateGroupSelection(group);
 
@@ -121,7 +121,7 @@ export const validatorActions = {
   },
   validateAlarmPolicyType() {
     return async (dispatch, getState: GetState) => {
-      let type = getState().alarmPolicyEdition.alarmPolicyType;
+      const type = getState().alarmPolicyEdition.alarmPolicyType;
 
       const result = validatorActions._validateAlarmPolicyType(type);
 
@@ -183,9 +183,9 @@ export const validatorActions = {
   },
   validateEvaluatorValue(id: string) {
     return async (dispatch, getState: GetState) => {
-      let { alarmPolicyEdition } = getState(),
+      const { alarmPolicyEdition } = getState(),
         { alarmMetrics } = alarmPolicyEdition;
-      let newAlarmMetrics = deepClone(alarmMetrics),
+      const newAlarmMetrics = deepClone(alarmMetrics),
         index = newAlarmMetrics.findIndex(e => e.id === id);
       if (newAlarmMetrics[index].type === 'sumCpu' || newAlarmMetrics[index].type === 'sumMem') {
         newAlarmMetrics[index].v_evaluatorValue = validatorActions._validateEvaluatorSumValue(
@@ -231,7 +231,7 @@ export const validatorActions = {
 
   validateAlarmPolicyEdition() {
     return async (dispatch, getState: GetState) => {
-      let { alarmPolicyEdition } = getState(),
+      const { alarmPolicyEdition } = getState(),
         { alarmMetrics } = alarmPolicyEdition;
       dispatch(validatorActions.validateAlarmPolicyType());
       dispatch(validatorActions.validateAlarmPolicyName());
@@ -286,6 +286,14 @@ export const validatorActions = {
           type: ActionType.ValidatetAlarmNotifyWay,
           payload: {
             message: t('通知方式不能为空'),
+            status: 2
+          }
+        });
+      } else if (alarmPolicyEdition.notifyWays.find(({ channel, template }) => !channel || !template)) {
+        dispatch({
+          type: ActionType.ValidatetAlarmNotifyWay,
+          payload: {
+            message: t('渠道与模板不能为空'),
             status: 2
           }
         });

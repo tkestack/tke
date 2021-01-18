@@ -11,19 +11,10 @@ import { resourceConfig } from './config';
 import { isEmpty } from './src/modules/common/utils';
 import * as classnames from 'classnames';
 import { Button, Icon, Text, Bubble, NavMenu, List, ExternalLink } from '@tencent/tea-component';
-import { insertCSS } from '@tencent/ff-redux';
 import 'antd/dist/antd.css';
 import zhCN from 'antd/lib/locale/zh_CN';
 import { ConfigProvider } from 'antd';
-
-insertCSS(
-  'tkestack-nav-logo',
-  `
-  .tkestack-nav-logo a {
-    display: inline;
-  }
-`
-);
+import { TkeVersion } from '@/src/modules/common/components/tke-version';
 
 const routerSea = seajs.require('router');
 
@@ -582,8 +573,10 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
       <NavMenu
         left={
           <React.Fragment>
-            <NavMenu.Item type="logo" className={'tkestack-nav-logo'}>
+            <NavMenu.Item>
               <img src="/static/icon/logo.svg" style={{ height: '30px' }} alt="logo" />
+
+              <TkeVersion />
             </NavMenu.Item>
           </React.Fragment>
         }
