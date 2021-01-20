@@ -29,6 +29,7 @@ import (
 	auth "tkestack.io/tke/api/auth/install"
 	business "tkestack.io/tke/api/business/install"
 	logagent "tkestack.io/tke/api/logagent/install"
+	mesh "tkestack.io/tke/api/mesh/install"
 	monitor "tkestack.io/tke/api/monitor/install"
 	notify "tkestack.io/tke/api/notify/install"
 	platform "tkestack.io/tke/api/platform/install"
@@ -50,6 +51,7 @@ func Install(scheme *runtime.Scheme) {
 	auth.Install(scheme)
 	business.Install(scheme)
 	logagent.Install(scheme)
+	mesh.Install(scheme)
 	monitor.Install(scheme)
 	notify.Install(scheme)
 	platform.Install(scheme)

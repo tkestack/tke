@@ -30,6 +30,8 @@ import (
 	"tkestack.io/tke/api/business"
 	businessv1 "tkestack.io/tke/api/business/v1"
 	logagentapi "tkestack.io/tke/api/logagent/v1"
+	"tkestack.io/tke/api/mesh"
+	meshv1 "tkestack.io/tke/api/mesh/v1"
 	"tkestack.io/tke/api/monitor"
 	monitorv1 "tkestack.io/tke/api/monitor/v1"
 	"tkestack.io/tke/api/notify"
@@ -57,6 +59,7 @@ type Components struct {
 	Audit       *GroupVersion `json:"audit,omitempty"`
 	LogAgent    *GroupVersion `json:"logagent,omitempty"`
 	Application *GroupVersion `json:"application,omitempty"`
+	Mesh        *GroupVersion `json:"mesh,omitempty"`
 }
 
 type SysInfo struct {
@@ -143,6 +146,12 @@ func handleGetSysInfoFunc(cfg *gatewayconfig.GatewayConfiguration) func(*restful
 			cmp.Application = &GroupVersion{
 				GroupName: applicationapi.GroupName,
 				Version:   applicationapi.Version,
+			}
+		}
+		if cfg.Components.Mesh != nil {
+			cmp.Notify = &GroupVersion{
+				GroupName: mesh.GroupName,
+				Version:   meshv1.Version,
 			}
 		}
 		sysInfo := SysInfo{
