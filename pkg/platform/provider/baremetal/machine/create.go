@@ -400,7 +400,7 @@ func (p *Provider) EnsureJoinPhasePreflight(ctx context.Context, machine *platfo
 		return err
 	}
 
-	err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(cluster, machine.Spec.IP), "preflight")
+	err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(cluster, machine.Spec.IP), "preflight", []string{constants.APIServerHostName})
 	if err != nil {
 		return err
 	}
@@ -414,7 +414,7 @@ func (p *Provider) EnsureJoinPhaseKubeletStart(ctx context.Context, machine *pla
 		return err
 	}
 
-	err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(cluster, machine.Spec.IP), "kubelet-start")
+	err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(cluster, machine.Spec.IP), "kubelet-start", []string{constants.APIServerHostName})
 	if err != nil {
 		return err
 	}
@@ -458,4 +458,22 @@ func (p *Provider) EnsureNodeReady(ctx context.Context, machine *platformv1.Mach
 
 		return false, nil
 	})
+}
+
+func (p *Provider) EnsureInitAPIServerHost(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+	remoteHosts := hosts.RemoteHosts{Host: constants.APIServerHostName, SSH: machineSSH}
+	apiserverIP := cluster.Spec.Machines[0].IP
+	if cluster.Spec.Features.HA != nil {
+		if cluster.Spec.Features.HA.TKEHA != nil {
+			apiserverIP = cluster.Spec.Features.HA.TKEHA.VIP
+		}
+		if cluster.Spec.Features.HA.ThirdPartyHA != nil {
+			apiserverIP = cluster.Spec.Features.HA.ThirdPartyHA.VIP
+		}
+	}
+	return remoteHosts.Set(apiserverIP)
 }

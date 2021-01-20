@@ -26,7 +26,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	utilsnet "k8s.io/utils/net"
-	platformv1 "tkestack.io/tke/api/platform/v1"
 	kubeadmv1beta2 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeadm/v1beta2"
 	kubeletv1beta1 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubelet/config/v1beta1"
 	kubeproxyv1alpha1 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeproxy/config/v1alpha1"
@@ -124,11 +123,7 @@ func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfi
 }
 
 func (p *Provider) getClusterConfiguration(c *v1.Cluster) *kubeadmv1beta2.ClusterConfiguration {
-	controlPlaneEndpoint := net.JoinHostPort(c.Spec.Machines[0].IP, "6443")
-	addr := c.Address(platformv1.AddressAdvertise)
-	if addr != nil {
-		controlPlaneEndpoint = net.JoinHostPort(addr.Host, fmt.Sprintf("%d", addr.Port))
-	}
+	controlPlaneEndpoint := net.JoinHostPort(constants.APIServerHostName, "6443")
 
 	kubernetesVolume := kubeadmv1beta2.HostPathMount{
 		Name:      "vol-dir-0",

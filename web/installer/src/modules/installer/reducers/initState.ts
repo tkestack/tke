@@ -43,7 +43,7 @@ export const initEdit: EditState = {
   v_haTkeVip: initValidation,
   haThirdVip: '',
   v_haThirdVip: initValidation,
-  haThirdVipPort: '',
+  haThirdVipPort: '6443',
   v_haThirdVipPort: initValidation,
 
   //集群设置

@@ -912,6 +912,14 @@ func (p *Provider) EnsureGalaxy(ctx context.Context, c *v1.Cluster) error {
 	})
 }
 
+func (p *Provider) clusterMachineIPs(c *v1.Cluster) []string {
+	ips := []string{}
+	for _, mc := range c.Spec.Machines {
+		ips = append(ips, mc.IP)
+	}
+	return ips
+}
+
 func (p *Provider) EnsureJoinPhasePreflight(ctx context.Context, c *v1.Cluster) error {
 	machines := map[bool][]platformv1.ClusterMachine{
 		true:  c.Spec.ScalingMachines,
@@ -923,7 +931,7 @@ func (p *Provider) EnsureJoinPhasePreflight(ctx context.Context, c *v1.Cluster) 
 			return err
 		}
 
-		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "preflight")
+		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "preflight", p.clusterMachineIPs(c))
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -942,7 +950,7 @@ func (p *Provider) EnsureJoinPhaseControlPlanePrepare(ctx context.Context, c *v1
 			return err
 		}
 
-		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "control-plane-prepare all")
+		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "control-plane-prepare all", p.clusterMachineIPs(c))
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -961,7 +969,7 @@ func (p *Provider) EnsureJoinPhaseKubeletStart(ctx context.Context, c *v1.Cluste
 			return err
 		}
 
-		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "kubelet-start")
+		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "kubelet-start", p.clusterMachineIPs(c))
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -980,7 +988,7 @@ func (p *Provider) EnsureJoinPhaseControlPlaneJoinETCD(ctx context.Context, c *v
 			return err
 		}
 
-		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "control-plane-join etcd")
+		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "control-plane-join etcd", p.clusterMachineIPs(c))
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -999,7 +1007,7 @@ func (p *Provider) EnsureJoinPhaseControlPlaneJoinUpdateStatus(ctx context.Conte
 			return err
 		}
 
-		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "control-plane-join update-status")
+		err = kubeadm.Join(machineSSH, p.getKubeadmJoinConfig(c, machine.IP), "control-plane-join update-status", p.clusterMachineIPs(c))
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -1432,4 +1440,33 @@ func (p *Provider) EnsureCreateClusterMark(ctx context.Context, c *v1.Cluster) e
 	}
 
 	return mark.Create(ctx, clientset)
+}
+
+func (p *Provider) setAPIServerHost(ctx context.Context, c *v1.Cluster, ip string) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+
+	for _, machine := range machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		remoteHosts := hosts.RemoteHosts{Host: constants.APIServerHostName, SSH: machineSSH}
+		err = remoteHosts.Set(ip)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+	return nil
+}
+
+func (p *Provider) EnsureInitAPIServerHost(ctx context.Context, c *v1.Cluster) error {
+	// Set host to master0 IP firstly, when local apiserver is at work, modify the host to 127.0.0.1.
+	return p.setAPIServerHost(ctx, c, c.Spec.Machines[0].IP)
+}
+
+func (p *Provider) EnsureModifyAPIServerHost(ctx context.Context, c *v1.Cluster) error {
+	return p.setAPIServerHost(ctx, c, "127.0.0.1")
 }
