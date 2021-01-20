@@ -123,33 +123,41 @@ func Init(s ssh.Interface, kubeadmConfig *InitConfig, phase string, preActions .
 	return nil
 }
 
-func Join(s ssh.Interface, config *kubeadmv1beta2.JoinConfiguration, phase string) error {
-	configData, err := MarshalToYAML(config)
-	if err != nil {
-		return err
-	}
-	err = s.WriteFile(bytes.NewReader(configData), constants.KubeadmConfigFileName)
-	if err != nil {
-		return err
-	}
-	if phase == "preflight" {
-		phase = fmt.Sprintf("preflight --ignore-preflight-errors=%s", strings.Join(ignoreErrors, ","))
-	}
+func Join(s ssh.Interface, config *kubeadmv1beta2.JoinConfiguration, phase string, endPointIPs []string) error {
+	var errs []error
+	for _, ip := range endPointIPs {
+		config.Discovery.BootstrapToken.APIServerEndpoint = ip + ":6443"
+		configData, err := MarshalToYAML(config)
+		if err != nil {
+			return err
+		}
+		err = s.WriteFile(bytes.NewReader(configData), constants.KubeadmConfigFileName)
+		if err != nil {
+			return err
+		}
+		if phase == "preflight" {
+			phase = fmt.Sprintf("preflight --ignore-preflight-errors=%s", strings.Join(ignoreErrors, ","))
+		}
 
-	cmd, err := template.ParseString(joinCmd, map[string]interface{}{
-		"Phase":  phase,
-		"Config": constants.KubeadmConfigFileName,
-	})
-	if err != nil {
-		return errors.Wrap(err, "parse joinCmd error")
-	}
-	out, err := s.CombinedOutput(string(cmd))
-	if err != nil {
-		return fmt.Errorf("kubeadm.Join error: %w", err)
-	}
-	log.Debug(string(out))
+		cmd, err := template.ParseString(joinCmd, map[string]interface{}{
+			"Phase":  phase,
+			"Config": constants.KubeadmConfigFileName,
+		})
+		if err != nil {
+			return errors.Wrap(err, "parse joinCmd error")
+		}
+		out, err := s.CombinedOutput(string(cmd))
+		if err != nil {
+			err = errors.Wrapf(err, "join %s failed", ip)
+			log.Warnf("kubeadm.Join error: %w", err)
+			errs = append(errs, err)
+			continue
+		}
+		log.Debug(string(out))
 
-	return nil
+		return nil
+	}
+	return fmt.Errorf("no endpoint is available in %v, erros: %v", endPointIPs, errs)
 }
 
 func Reset(s ssh.Interface, phase string) error {

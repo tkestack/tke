@@ -74,6 +74,7 @@ func NewProvider() (*Provider, error) {
 
 			// configure system
 			p.EnsureRegistryHosts,
+			p.EnsureInitAPIServerHost,
 			p.EnsureKernelModule,
 			p.EnsureSysctl,
 			p.EnsureDisableSwap,
@@ -120,6 +121,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureMarkControlPlane,
 			p.EnsureKeepalivedWithLBOption,
 			p.EnsureThirdPartyHA,
+			p.EnsureModifyAPIServerHost,
 			// deploy apps
 			p.EnsureNvidiaDevicePlugin,
 			p.EnsureGPUManager,

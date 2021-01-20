@@ -127,4 +127,6 @@ const (
 
 	// MinNumCPU mininum cpu number.
 	MinNumCPU = 2
+
+	APIServerHostName = "api.tke.com"
 )

@@ -30,6 +30,7 @@ import (
 	utilsnet "k8s.io/utils/net"
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/util/ipallocator"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -100,7 +101,7 @@ func GetIndexedIP(subnet string, index int) (net.IP, error) {
 
 // GetAPIServerCertSANs returns extra APIServer's certSANs need to pass kubeadm
 func GetAPIServerCertSANs(c *platformv1.Cluster) []string {
-	certSANs := sets.NewString("127.0.0.1", "localhost", "::1")
+	certSANs := sets.NewString("127.0.0.1", "localhost", "::1", constants.APIServerHostName)
 	certSANs = certSANs.Insert(c.Spec.PublicAlternativeNames...)
 	if c.Spec.Features.HA != nil {
 		if c.Spec.Features.HA.TKEHA != nil {
