@@ -123,6 +123,7 @@ export class Step2 extends React.Component<RootProps> {
                     />
                     <React.Fragment>
                       <Input
+                        disabled
                         size={'s'}
                         placeholder={'请输入端口'}
                         value={editState.haThirdVipPort}

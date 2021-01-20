@@ -63,6 +63,7 @@ func NewProvider() (*Provider, error) {
 
 			p.EnsureClean,
 			p.EnsureRegistryHosts,
+			p.EnsureInitAPIServerHost,
 
 			p.EnsureKernelModule,
 			p.EnsureSysctl,

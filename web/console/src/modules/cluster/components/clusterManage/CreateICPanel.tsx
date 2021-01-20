@@ -232,6 +232,7 @@ export class CreateICPanel extends React.Component<RootProps, State> {
               {vipType === CreateICVipType.existed && (
                 <React.Fragment>
                   <InputField
+                    disabled
                     type="text"
                     value={vipPort}
                     style={{ width: '120px', marginRight: '5px' }}
