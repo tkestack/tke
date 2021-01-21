@@ -46,7 +46,7 @@ var (
 	}
 	KubernetesNode = Package{
 		Name:     "kubernetes-node",
-		Versions: spec.K8sValidVersionsWithV,
+		Versions: spec.K8sVersionsWithV,
 	}
 	NvidiaDriver = Package{
 		Name:     "NVIDIA",

@@ -31,7 +31,7 @@ func main() {
 	env := os.Environ()
 	env = append(env, fmt.Sprintf("ARCHS=%s", strings.Join(spec.Archs, " ")))
 	env = append(env, fmt.Sprintf("OSS=%s", strings.Join(spec.OSs, " ")))
-	env = append(env, fmt.Sprintf("K8S_VERSIONS=%s", strings.Join(spec.K8sValidVersionsWithV, " ")))
+	env = append(env, fmt.Sprintf("K8S_VERSIONS=%s", strings.Join(spec.K8sVersionsWithV, " ")))
 	env = append(env, fmt.Sprintf("DOCKER_VERSIONS=%s", strings.Join(spec.DockerVersions, " ")))
 	env = append(env, fmt.Sprintf("CNI_PLUGINS_VERSIONS=%s", strings.Join(spec.CNIPluginsVersions, " ")))
 	env = append(env, fmt.Sprintf("NVIDIA_DRIVER_VERSIONS=%s", strings.Join(spec.NvidiaDriverVersions, " ")))
