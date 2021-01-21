@@ -35,6 +35,14 @@ type ClusterHandler interface {
 	List(req *restful.Request, resp *restful.Response)
 }
 
+// MeshClusterHandler mesh rest handler
+type MeshClusterHandler interface {
+	Routing
+	ListMeshServices(req *restful.Request, resp *restful.Response)
+	GetMeshService(req *restful.Request, resp *restful.Response)
+	CreateMeshResource(req *restful.Request, resp *restful.Response)
+}
+
 // ConfigHandler config rest handler
 type ConfigHandler interface {
 	Routing

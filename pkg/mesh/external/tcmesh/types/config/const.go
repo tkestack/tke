@@ -30,7 +30,6 @@ const (
 	InjectionEnabledValue  = "enabled"
 	InjectionDisabledValue = "disabled"
 	InjectionLabelKeyNew   = "istio.io/rev"
-
 )
 
 type AccessType string

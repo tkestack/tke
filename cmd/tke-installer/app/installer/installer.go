@@ -712,8 +712,9 @@ func (t *TKE) setClusterDefault(cluster *platformv1.Cluster, config *types.Confi
 		}
 	}
 	if config.Business != nil {
-		cluster.Spec.Features.AuthzWebhookAddr = &platformv1.
-		AuthzWebhookAddr{Builtin: &platformv1.BuiltinAuthzWebhookAddr{}}
+		cluster.Spec.Features.AuthzWebhookAddr = &platformv1.AuthzWebhookAddr{
+			Builtin: &platformv1.BuiltinAuthzWebhookAddr{},
+		}
 	}
 }
 

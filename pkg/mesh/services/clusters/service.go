@@ -64,9 +64,7 @@ func (c *clusterService) List(ctx context.Context) ([]platformv1.Cluster, error)
 		return nil, err
 	}
 	clusters := make([]platformv1.Cluster, 0)
-	for _, cluster := range list.Items {
-		clusters = append(clusters, cluster)
-	}
+	clusters = append(clusters, list.Items...)
 	return clusters, nil
 }
 

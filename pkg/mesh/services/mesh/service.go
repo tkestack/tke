@@ -52,7 +52,7 @@ var _ services.MeshClusterService = &meshClusterService{}
 
 func New(
 	config meshconfig.MeshConfiguration, tcmClient *tcmesh.Client, clients clusterclient.Client,
-) *meshClusterService {
+) services.MeshClusterService {
 
 	return &meshClusterService{
 		config:    config,
@@ -65,9 +65,9 @@ func New(
 func (m *meshClusterService) CreateMeshResource(ctx context.Context, meshName string, obj *unstructured.Unstructured) error {
 	clusters := m.tcmClient.Cache().Clusters(meshName)
 	var (
-		errs  = errors.NewMultiError()
-		size  = len(clusters)
-		wg    = &sync.WaitGroup{}
+		errs = errors.NewMultiError()
+		size = len(clusters)
+		wg   = &sync.WaitGroup{}
 	)
 	wg.Add(size)
 
@@ -114,10 +114,11 @@ func (m *meshClusterService) ListMicroServices(
 	)
 	wg.Add(size)
 
-	fieldSelector := constants.ExcludeNamespacesSelector
-	if serviceName != "" {
-		fieldSelector = fields.AndSelectors(fieldSelector, fields.OneTermEqualSelector("metadata.name", serviceName))
-	}
+	// TODO: check
+	//fieldSelector := constants.ExcludeNamespacesSelector
+	//if serviceName != "" {
+	//	fieldSelector = fields.AndSelectors(fieldSelector, fields.OneTermEqualSelector("metadata.name", serviceName))
+	//}
 
 	labelSelector := constants.IstioAppSelector
 	if selector != nil {

@@ -78,7 +78,7 @@ func (loader *fsLoader) Load() (*meshconfig.MeshConfiguration, error) {
 	}
 
 	// make all paths absolute
-	// resolveRelativePaths(nil, filepath.Dir(loader.meshFile))
+	resolveRelativePaths(nil, filepath.Dir(loader.meshFile))
 	return cfg, nil
 }
 

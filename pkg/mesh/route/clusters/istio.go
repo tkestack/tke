@@ -84,7 +84,7 @@ func (h clusterHandler) ListIstioResources(req *restful.Request, resp *restful.R
 		&ctrlclient.ListOptions{Namespace: namespace, LabelSelector: selector})
 	if err != nil {
 		var ok bool
-		ok, status, result.Err = errors.HandleApiError(err)
+		ok, status, result.Err = errors.HandleAPIError(err)
 		if !ok {
 			status = http.StatusInternalServerError
 			result.Err = err.Error()
@@ -95,7 +95,6 @@ func (h clusterHandler) ListIstioResources(req *restful.Request, resp *restful.R
 	status = http.StatusOK
 	result.Result = true
 	result.Data = ret.Items
-	return
 }
 
 // GetIstioResource get istio resource
@@ -138,7 +137,7 @@ func (h clusterHandler) GetIstioResource(req *restful.Request, resp *restful.Res
 	err := h.istioService.GetResource(ctx, cluster, entity)
 	if err != nil {
 		var ok bool
-		ok, status, result.Err = errors.HandleApiError(err)
+		ok, status, result.Err = errors.HandleAPIError(err)
 		if !ok {
 			status = http.StatusInternalServerError
 			result.Err = err.Error()
@@ -149,7 +148,6 @@ func (h clusterHandler) GetIstioResource(req *restful.Request, resp *restful.Res
 	status = http.StatusOK
 	result.Result = true
 	result.Data = entity
-	return
 }
 
 // CreateIstioResource create istio resource
@@ -185,7 +183,7 @@ func (h clusterHandler) CreateIstioResource(req *restful.Request, resp *restful.
 	_, err = h.istioService.CreateResource(ctx, cluster, entity)
 	if err != nil {
 		var ok bool
-		ok, status, result.Err = errors.HandleApiError(err)
+		ok, status, result.Err = errors.HandleAPIError(err)
 		if !ok {
 			status = http.StatusInternalServerError
 			result.Err = err.Error()
@@ -196,7 +194,6 @@ func (h clusterHandler) CreateIstioResource(req *restful.Request, resp *restful.
 	status = http.StatusOK
 	result.Result = true
 	result.Data = entity
-	return
 }
 
 // DeleteIstioResource delete istio resource
@@ -238,7 +235,7 @@ func (h clusterHandler) DeleteIstioResource(req *restful.Request, resp *restful.
 	_, err = h.istioService.DeleteResource(ctx, cluster, entity)
 	if err != nil {
 		var ok bool
-		ok, status, result.Err = errors.HandleApiError(err)
+		ok, status, result.Err = errors.HandleAPIError(err)
 		if !ok {
 			status = http.StatusInternalServerError
 			result.Err = err.Error()
@@ -249,5 +246,4 @@ func (h clusterHandler) DeleteIstioResource(req *restful.Request, resp *restful.
 	status = http.StatusOK
 	result.Result = true
 	result.Data = entity
-	return
 }

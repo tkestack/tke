@@ -57,7 +57,6 @@ func (h clusterHandler) ListAll(req *restful.Request, resp *restful.Response) {
 	status = http.StatusOK
 	result.Result = true
 	result.Data = ret
-	return
 }
 
 // GetNorthTrafficGateway Get istio resource
@@ -80,7 +79,7 @@ func (h clusterHandler) GetNorthTrafficGateway(req *restful.Request, resp *restf
 	ret, err := h.istioService.GetNorthTrafficGateway(ctx, cluster, entity)
 	if err != nil {
 		var ok bool
-		ok, status, result.Err = errors.HandleApiError(err)
+		ok, status, result.Err = errors.HandleAPIError(err)
 		if !ok {
 			status = http.StatusInternalServerError
 			result.Err = err.Error()
@@ -91,7 +90,6 @@ func (h clusterHandler) GetNorthTrafficGateway(req *restful.Request, resp *restf
 	status = http.StatusOK
 	result.Result = true
 	result.Data = ret
-	return
 }
 
 // CreateNorthTrafficGateway create istio resource
@@ -118,7 +116,7 @@ func (h clusterHandler) CreateNorthTrafficGateway(req *restful.Request, resp *re
 
 	if err != nil {
 		var ok bool
-		ok, status, result.Err = errors.HandleApiError(err)
+		ok, status, result.Err = errors.HandleAPIError(err)
 		if !ok {
 			status = http.StatusInternalServerError
 			result.Err = err.Error()
@@ -129,7 +127,6 @@ func (h clusterHandler) CreateNorthTrafficGateway(req *restful.Request, resp *re
 	status = http.StatusOK
 	result.Result = true
 	result.Data = entity
-	return
 }
 
 // UpdateNorthTrafficGateway update istio resource
@@ -158,7 +155,7 @@ func (h clusterHandler) UpdateNorthTrafficGateway(req *restful.Request, resp *re
 
 	if err != nil {
 		var ok bool
-		ok, status, result.Err = errors.HandleApiError(err)
+		ok, status, result.Err = errors.HandleAPIError(err)
 		if !ok {
 			status = http.StatusInternalServerError
 			result.Err = err.Error()
@@ -169,7 +166,6 @@ func (h clusterHandler) UpdateNorthTrafficGateway(req *restful.Request, resp *re
 	status = http.StatusOK
 	result.Result = true
 	result.Data = entity
-	return
 }
 
 // DeleteNorthTrafficGateway Delete istio resource
@@ -193,7 +189,7 @@ func (h clusterHandler) DeleteNorthTrafficGateway(req *restful.Request, resp *re
 
 	if err != nil {
 		var ok bool
-		ok, status, result.Err = errors.HandleApiError(err)
+		ok, status, result.Err = errors.HandleAPIError(err)
 		if !ok {
 			status = http.StatusInternalServerError
 			result.Err = err.Error()
@@ -204,7 +200,4 @@ func (h clusterHandler) DeleteNorthTrafficGateway(req *restful.Request, resp *re
 	status = http.StatusOK
 	result.Result = true
 	result.Data = entity
-	return
 }
-
-

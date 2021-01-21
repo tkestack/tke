@@ -108,7 +108,7 @@ func (c *Cacher) ReloadMeshes() {
 	}
 
 	for clusterName, meshName := range clusterToMeshMap {
-		mainClusterName, _ := meshToMainClusterMap[meshName]
+		mainClusterName := meshToMainClusterMap[meshName]
 		clusterToMainClusterMap[clusterName] = mainClusterName
 	}
 
@@ -131,10 +131,10 @@ func (c *Cacher) ReloadMeshes() {
 		c.clusterToMainClustersMap)
 }
 
-func (c *Cacher) preSync() {
-	log.Infof("Pre-sync mesh info while starting...")
-	c.ReloadMeshes()
-}
+//func (c *Cacher) preSync() {
+//	log.Infof("Pre-sync mesh info while starting...")
+//	c.ReloadMeshes()
+//}
 
 func (c *Cacher) Clusters(meshName string) []string {
 	clusters := c.getClusters(meshName)
@@ -166,7 +166,7 @@ func (c *Cacher) MainClusters(meshName string) []string {
 }
 
 func (c *Cacher) MainClustersMap(meshName string) map[string]struct{} {
-	ret := make(map[string]struct{}, 0)
+	ret := make(map[string]struct{})
 	mainClusters := c.MainClusters(meshName)
 	for _, cls := range mainClusters {
 		ret[cls] = struct{}{}

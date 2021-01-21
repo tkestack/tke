@@ -31,12 +31,12 @@ import (
 )
 
 const (
-	TcmApiPrefix = "/api/meshes"
+	TcmAPIPrefix = "/api/meshes"
 )
 
 var (
 	TcmAuthHeader = tcmHeader{
-		Key: "X-Remote-TenantID",
+		Key:   "X-Remote-TenantID",
 		Value: "default",
 	}
 )
@@ -88,7 +88,7 @@ func (c *Client) ReloadMeshes() {
 }
 
 func (c *Client) GetMeshes(ctx context.Context) ([]types.Mesh, error) {
-	uri := TcmApiPrefix
+	uri := TcmAPIPrefix
 	var response []types.Mesh
 	err := c.RESTClient().
 		Get().
@@ -105,7 +105,7 @@ func (c *Client) GetMeshes(ctx context.Context) ([]types.Mesh, error) {
 }
 
 func (c *Client) GetMesh(ctx context.Context, meshName string) (*types.Mesh, error) {
-	uri := TcmApiPrefix + "/" + meshName
+	uri := TcmAPIPrefix + "/" + meshName
 	var response types.Mesh
 	err := c.RESTClient().
 		Get().

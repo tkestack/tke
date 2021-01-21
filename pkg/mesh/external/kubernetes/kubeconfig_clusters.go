@@ -54,13 +54,13 @@ func (k KubeConfigClusterProvider) kubeconfigGetter(clusterName string) (func() 
 	}
 
 	clusters := make(map[string]*clientcmdapi.Config)
-	for filename, _ := range filenameMap {
+	for filename := range filenameMap {
 		clusterConfig, err := clientcmd.LoadFromFile(filename)
 		if err != nil {
 			log.Errorf("loading cluster kubeconfig file[%s] failed: %v", filename, err)
 			continue
 		}
-		for name, _ := range clusterConfig.Clusters {
+		for name := range clusterConfig.Clusters {
 			clusters[name] = clusterConfig
 		}
 	}

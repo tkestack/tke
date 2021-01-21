@@ -35,6 +35,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	meshconfig "tkestack.io/tke/pkg/mesh/apis/config"
+	"tkestack.io/tke/pkg/mesh/route"
 	"tkestack.io/tke/pkg/mesh/services"
 	"tkestack.io/tke/pkg/mesh/services/rest"
 	"tkestack.io/tke/pkg/mesh/util/json"
@@ -52,7 +53,7 @@ type meshClusterHandler struct {
 }
 
 func New(config meshconfig.MeshConfiguration, clusterService services.ClusterService,
-	istioService services.IstioService, meshService services.MeshClusterService) meshClusterHandler {
+	istioService services.IstioService, meshService services.MeshClusterService) route.MeshClusterHandler {
 	return meshClusterHandler{
 		meshService:    meshService,
 		clusterService: clusterService,
@@ -285,7 +286,6 @@ func (h meshClusterHandler) ListMeshServices(req *restful.Request, resp *restful
 	status = http.StatusOK
 	result.Result = true
 	result.Data = ret
-	return
 }
 
 // GetMeshServices get mesh service, which contains the Istio "app" label
@@ -329,7 +329,6 @@ func (h meshClusterHandler) GetMeshService(req *restful.Request, resp *restful.R
 	status = http.StatusOK
 	result.Result = true
 	result.Data = ret
-	return
 }
 
 func (h meshClusterHandler) CreateMeshResource(req *restful.Request, resp *restful.Response) {
@@ -378,7 +377,6 @@ func (h meshClusterHandler) CreateMeshResource(req *restful.Request, resp *restf
 	status = http.StatusOK
 	result.Result = true
 	result.Data = entity
-	return
 }
 
 // reverse proxy to mesh
@@ -393,7 +391,7 @@ func (h meshClusterHandler) reverseProxy(reverseRestPath string, o ...proxy.Opt)
 			_ = w.WriteHeaderAndEntity(status, result)
 		}()
 
-		rewritePathOpt, err := h.rewriteUrl(r, reverseRestPath)
+		rewritePathOpt, err := h.rewriteURL(r, reverseRestPath)
 		if err != nil {
 			status = http.StatusInternalServerError
 			result.Err = err.Error()
@@ -418,7 +416,7 @@ const (
 	meshManagerContextPath = "/api"
 )
 
-func (h meshClusterHandler) rewriteUrl(req *restful.Request, subPath string) (proxy.Opt, error) {
+func (h meshClusterHandler) rewriteURL(req *restful.Request, subPath string) (proxy.Opt, error) {
 	params := req.PathParameters()
 	replaces := make([]string, 0)
 	for key, value := range params {
@@ -538,9 +536,9 @@ func returnResponse(res *http.Response, body interface{}) {
 func RewriteHeaderOnTCM() proxy.Opt {
 	return func(p *proxy.Proxy) {
 		p.Request.Header = map[string][]string{
-			"X-Remote-TenantID": []string{"default"},
-			"Content-Type":      []string{"application/json"},
-			"Accept":            []string{"*/*"},
+			"X-Remote-TenantID": {"default"},
+			"Content-Type":      {"application/json"},
+			"Accept":            {"*/*"},
 		}
 	}
 }

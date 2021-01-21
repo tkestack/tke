@@ -29,8 +29,8 @@ import (
 func TestManifest(t *testing.T) {
 	data, err := template.ParseFile("tke-mesh-controller.yaml",
 		map[string]interface{}{
-			"Replicas":       1,
-			"Image":          "Image",
+			"Replicas": 1,
+			"Image":    "Image",
 		})
 	if !assert.Nil(t, err) {
 		t.FailNow()

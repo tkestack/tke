@@ -23,9 +23,9 @@ type MeshState struct {
 	Clusters []*ClusterState `json:"clusters"`
 
 	IstiodMetaLB  string `json:"istiod_meta_lb,omitempty"`
-	ApiServerLB   string `json:"api_server_lb,omitempty"`
-	ApiServerIP   string `json:"api_server_ip,omitempty"`
-	ApiServerPort int    `json:"api_server_port,omitempty"`
+	APIServerLB   string `json:"api_server_lb,omitempty"`
+	APIServerIP   string `json:"api_server_ip,omitempty"`
+	APIServerPort int    `json:"api_server_port,omitempty"`
 
 	// CA
 	RootCert string `json:"rootcert"`

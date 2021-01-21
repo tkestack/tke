@@ -22,9 +22,7 @@ package rest
 import (
 	"encoding/json"
 	"io"
-	"strconv"
 
-	"github.com/pkg/errors"
 	istionetworking "istio.io/client-go/pkg/apis/networking/v1alpha3"
 	autoscaling "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
@@ -118,14 +116,14 @@ type MetricQueryCondition struct {
 }
 
 type TopoQuery struct {
-	AppId       string
-	StartTime   *int64
-	EndTime     *int64
-	MeshId      string
-	TopoType    string
-	Namespaces  []string
-	MeshVersion string
-	App         string
+	AppID       string   `json:"appId"`
+	StartTime   *int64   `json:"startTime"`
+	EndTime     *int64   `json:"endTime"`
+	MeshID      string   `json:"meshId"`
+	TopoType    string   `json:"topoType"`
+	Namespaces  []string `json:"namespaces"`
+	MeshVersion string   `json:"meshVersion"`
+	App         string   `json:"app"`
 }
 
 type TopoData struct {
@@ -142,13 +140,13 @@ type Edge struct {
 type Node struct {
 	Name           string      `json:"name"`
 	Type           string      `json:"type"`
-	ServiceNodeId  string      `json:"serviceNodeId,omitempty"`
-	WorkloadNodeId string      `json:"workloadNodeId,omitempty"`
-	HttpMetric     *HttpMetric `json:"http_metric,omitempty"`
-	TcpMetric      *TcpMetric  `json:"tcp_metric,omitempty"`
+	ServiceNodeID  string      `json:"serviceNodeId,omitempty"`
+	WorkloadNodeID string      `json:"workloadNodeId,omitempty"`
+	HTTPMetric     *HTTPMetric `json:"http_metric,omitempty"`
+	TCPMetric      *TCPMetric  `json:"tcp_metric,omitempty"`
 }
 
-type HttpMetric struct {
+type HTTPMetric struct {
 	Count        float32 `json:"count"`
 	DurationAvg  float32 `json:"durationAvg"`
 	Rps          float32 `json:"rps"`
@@ -156,24 +154,10 @@ type HttpMetric struct {
 	FailedCount  float32 `json:"failedCount"`
 }
 
-type TcpMetric struct {
+type TCPMetric struct {
 	ConnectionReceivedBytesTotal float32 `json:"connectionReceivedBytesTotal"`
 	ConnectionSentBytesTotal     float32 `json:"connectionSentBytesTotal"`
 	// Count                        float32 `json:"count"`
-}
-
-func parseBool(str string) (bool, error) {
-	_, err := strconv.ParseInt(str, 10, 64)
-	if err == nil {
-		return false, errors.New("not bool")
-	}
-
-	b, err := strconv.ParseBool(str)
-	if err == nil {
-		return b, nil
-	}
-
-	return false, errors.New("not bool")
 }
 
 type MicroService struct {

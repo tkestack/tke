@@ -224,7 +224,7 @@ type CommonConfiguration struct {
 }
 
 type CommonServiceConfiguration struct {
-	ServiceType        v1.ServiceType       `json:"serviceType,omitempty"`
+	ServiceType        v1.ServiceType    `json:"serviceType,omitempty"`
 	ServiceAnnotations map[string]string `json:"serviceAnnotations,omitempty"`
 	ServiceLabels      map[string]string `json:"serviceLabels,omitempty"`
 }

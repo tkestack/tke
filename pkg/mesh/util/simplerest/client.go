@@ -38,7 +38,7 @@ type Interface interface {
 }
 
 // simple rest client , inspired by k8s client-go restClient
-type SimpleRESTClient struct {
+type Client struct {
 	// base is the root URL for all invocations of the client
 	base *url.URL
 
@@ -61,9 +61,9 @@ type ClientContentConfig struct {
 }
 
 // RESTClientFor new simple rest client for config
-func RESTClientFor(config *restclient.Config) (*SimpleRESTClient, error) {
+func RESTClientFor(config *restclient.Config) (*Client, error) {
 
-	baseURL, err := defaultServerUrlFor(config)
+	baseURL, err := defaultServerURLFor(config)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func RESTClientFor(config *restclient.Config) (*SimpleRESTClient, error) {
 
 // NewRESTClient creates a new RESTClient. This client performs generic REST functions
 // such as Get, Put, Post, and Delete on specified paths.
-func NewRESTClient(baseURL *url.URL, config ClientContentConfig, client *http.Client) (*SimpleRESTClient, error) {
+func NewRESTClient(baseURL *url.URL, config ClientContentConfig, client *http.Client) (*Client, error) {
 	if len(config.ContentType) == 0 {
 		config.ContentType = "application/json"
 	}
@@ -104,14 +104,14 @@ func NewRESTClient(baseURL *url.URL, config ClientContentConfig, client *http.Cl
 	base.RawQuery = ""
 	base.Fragment = ""
 
-	return &SimpleRESTClient{
+	return &Client{
 		base:    &base,
 		content: config,
 		Client:  client,
 	}, nil
 }
 
-func defaultServerUrlFor(config *restclient.Config) (*url.URL, error) {
+func defaultServerURLFor(config *restclient.Config) (*url.URL, error) {
 	hasCA := len(config.CAFile) != 0 || len(config.CAData) != 0
 	hasCert := len(config.CertFile) != 0 || len(config.CertData) != 0
 	defaultTLS := hasCA || hasCert || config.Insecure
@@ -137,26 +137,26 @@ func defaultServerUrlFor(config *restclient.Config) (*url.URL, error) {
 	return hostURL, nil
 }
 
-func (c *SimpleRESTClient) Verb(verb string) *Request {
+func (c *Client) Verb(verb string) *Request {
 	return NewRequest(c).Verb(verb)
 }
 
 // Post begins a POST request. Short for c.Verb("POST").
-func (c *SimpleRESTClient) Post() *Request {
+func (c *Client) Post() *Request {
 	return c.Verb("POST")
 }
 
 // Put begins a PUT request. Short for c.Verb("PUT").
-func (c *SimpleRESTClient) Put() *Request {
+func (c *Client) Put() *Request {
 	return c.Verb("PUT")
 }
 
 // Get begins a GET request. Short for c.Verb("GET").
-func (c *SimpleRESTClient) Get() *Request {
+func (c *Client) Get() *Request {
 	return c.Verb("GET")
 }
 
 // Delete begins a DELETE request. Short for c.Verb("DELETE").
-func (c *SimpleRESTClient) Delete() *Request {
+func (c *Client) Delete() *Request {
 	return c.Verb("DELETE")
 }

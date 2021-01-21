@@ -51,7 +51,7 @@ func (h *clusterHandler) Get(req *restful.Request, resp *restful.Response) {
 	cl, err := h.clusterService.Get(ctx, clusterName)
 	if err != nil {
 		var ok bool
-		ok, status, result.Err = errors.HandleApiError(err)
+		ok, status, result.Err = errors.HandleAPIError(err)
 		if !ok {
 			status = http.StatusInternalServerError
 			result.Err = err.Error()
@@ -62,7 +62,6 @@ func (h *clusterHandler) Get(req *restful.Request, resp *restful.Response) {
 	status = http.StatusOK
 	result.Result = true
 	result.Data = cl
-	return
 }
 
 // List list cluster
@@ -77,7 +76,7 @@ func (h *clusterHandler) List(req *restful.Request, resp *restful.Response) {
 	cls, err := h.clusterService.List(ctx)
 	if err != nil {
 		var ok bool
-		ok, status, result.Err = errors.HandleApiError(err)
+		ok, status, result.Err = errors.HandleAPIError(err)
 		if !ok {
 			status = http.StatusInternalServerError
 			result.Err = err.Error()
@@ -88,7 +87,6 @@ func (h *clusterHandler) List(req *restful.Request, resp *restful.Response) {
 	status = http.StatusOK
 	result.Result = true
 	result.Data = cls
-	return
 }
 
 // ListNamespacs list namespaces
@@ -105,7 +103,7 @@ func (h *clusterHandler) ListNamespaces(req *restful.Request, resp *restful.Resp
 	ret, err := h.clusterService.ListNamespaces(ctx, clusterName)
 	if err != nil {
 		var ok bool
-		ok, status, result.Err = errors.HandleApiError(err)
+		ok, status, result.Err = errors.HandleAPIError(err)
 		if !ok {
 			status = http.StatusInternalServerError
 			result.Err = err.Error()
@@ -116,7 +114,6 @@ func (h *clusterHandler) ListNamespaces(req *restful.Request, resp *restful.Resp
 	status = http.StatusOK
 	result.Result = true
 	result.Data = ret
-	return
 }
 
 // ListServices list services
@@ -135,7 +132,7 @@ func (h clusterHandler) ListServices(req *restful.Request, resp *restful.Respons
 
 	if err != nil {
 		var ok bool
-		ok, status, result.Err = errors.HandleApiError(err)
+		ok, status, result.Err = errors.HandleAPIError(err)
 		if !ok {
 			status = http.StatusInternalServerError
 			result.Err = err.Error()
@@ -146,12 +143,11 @@ func (h clusterHandler) ListServices(req *restful.Request, resp *restful.Respons
 	status = http.StatusOK
 	result.Result = true
 	result.Data = list
-	return
 }
 
 func (h clusterHandler) Proxy(req *restful.Request, resp *restful.Response) {
 	clusterName := req.PathParameter(web.ClusterKey)
-	clusterCrdResourceApiPath := req.PathParameter("path")
+	clusterCrdResourceAPIPath := req.PathParameter("path")
 
 	transport, host, err := h.clusterService.Proxy(context.TODO(), clusterName)
 	if err != nil {
@@ -175,10 +171,10 @@ func (h clusterHandler) Proxy(req *restful.Request, resp *restful.Response) {
 				Kind:       "Status",
 				APIVersion: "v1",
 			},
-			Status:   "Failure",
-			Message:  err.Error(),
-			Reason:   metav1.StatusReasonInternalError,
-			Code:     http.StatusInternalServerError,
+			Status:  "Failure",
+			Message: err.Error(),
+			Reason:  metav1.StatusReasonInternalError,
+			Code:    http.StatusInternalServerError,
 		}
 		_ = resp.WriteHeaderAndEntity(http.StatusInternalServerError, result)
 		return
@@ -187,7 +183,7 @@ func (h clusterHandler) Proxy(req *restful.Request, resp *restful.Response) {
 	location := &url.URL{
 		Scheme: "https",
 		Host:   host,
-		Path:   clusterCrdResourceApiPath,
+		Path:   clusterCrdResourceAPIPath,
 	}
 	reverseProxy := &nrdProxyHandler{
 		location:  location,

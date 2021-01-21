@@ -21,24 +21,24 @@ var (
 	Get                 = json.Get
 )
 
-func NewJsonRequest(req *http.Request) (*JsonRequest, error) {
+func NewJSONRequest(req *http.Request) (*Request, error) {
 	buf, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot read the request body")
 	}
 	req.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
 
-	return &JsonRequest{
+	return &Request{
 		req,
 		buf,
 	}, nil
 }
 
-type JsonRequest struct {
+type Request struct {
 	req *http.Request
 	raw []byte
 }
 
-func (j *JsonRequest) FindObject(jsonpath ...interface{}) jsoniter.Any {
+func (j *Request) FindObject(jsonpath ...interface{}) jsoniter.Any {
 	return json.Get(j.raw, jsonpath...)
 }

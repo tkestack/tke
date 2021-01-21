@@ -25,6 +25,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	meshconfig "tkestack.io/tke/pkg/mesh/apis/config"
+	"tkestack.io/tke/pkg/mesh/route"
 	"tkestack.io/tke/pkg/mesh/services"
 	"tkestack.io/tke/pkg/mesh/services/rest"
 	"tkestack.io/tke/pkg/mesh/util/web"
@@ -34,13 +35,12 @@ import (
 type clusterHandler struct {
 	clusterService services.ClusterService
 	istioService   services.IstioService
-
-	config   meshconfig.MeshConfiguration
+	config         meshconfig.MeshConfiguration
 }
 
 // New new ClusterHandler
 func New(config meshconfig.MeshConfiguration, clusterService services.ClusterService,
-	istioService services.IstioService) *clusterHandler {
+	istioService services.IstioService) route.ClusterHandler {
 
 	return &clusterHandler{
 		clusterService: clusterService,

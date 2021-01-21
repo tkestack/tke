@@ -73,9 +73,6 @@ const (
 	maxRetryCount = 5
 
 	upgradePatchTemplate = `[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"%s"}]`
-
-	storageTypeElasticsearch = "elasticsearch"
-	storageTypeThanos        = "thanos"
 )
 
 // Controller is responsible for performing actions dependent upon a MeshManager phase.
@@ -671,7 +668,7 @@ func (c *Controller) genDeployment(meshManager *v1.MeshManager) *appsv1.Deployme
 								"--insecure-bind-address=0.0.0.0",
 								"--insecure-port=10072",
 								"--log-level=info",
-								"--image-hub="+ containerregistryutil.GetPrefix(),
+								"--image-hub=" + containerregistryutil.GetPrefix(),
 								"--db-host=" + meshManager.Spec.DataBase.Host,
 								"--db-port=" + strconv.Itoa((int)(meshManager.Spec.DataBase.Port)),
 								"--db-user=" + meshManager.Spec.DataBase.UserName,

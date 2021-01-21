@@ -83,7 +83,7 @@ func (p *Proxy) defaultDirector(req *http.Request) {
 	if p.Request.Header != nil {
 		for key, value := range p.Request.Header {
 			val := ""
-			if value != nil && len(value) == 1 {
+			if len(value) == 1 {
 				val = value[0]
 			}
 			newReq.Header.Set(key, val)
@@ -113,7 +113,7 @@ func (p *Proxy) defaultDirector(req *http.Request) {
 		newReq.URL = nil
 		return
 	}
-	if body != nil && len(body) != 0 {
+	if len(body) != 0 {
 		newReq.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 	}
 }
@@ -146,13 +146,13 @@ func (r *Request) copyBody(body io.ReadCloser) error {
 
 func (r *Request) modifyBody() ([]byte, error) {
 	if len(r.Body) != 0 && len(r.BodyPatches) != 0 {
-		patchJson, err := json.Marshal(r.BodyPatches)
+		patchJSON, err := json.Marshal(r.BodyPatches)
 		eMsg := "fleet-hub.proxy: modify request body error, Cause: %s"
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf(eMsg, err.Error()))
 		}
 
-		patch, err := jsonpatch.DecodePatch(patchJson)
+		patch, err := jsonpatch.DecodePatch(patchJSON)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf(eMsg, err.Error()))
 		}
@@ -170,7 +170,7 @@ func (r *Request) modifyBody() ([]byte, error) {
 
 func NewDumpResponseWriter() *DumpResponseWriter {
 	return &DumpResponseWriter{
-		header: make(http.Header, 0),
+		header: make(http.Header),
 		Status: 0,
 	}
 }
@@ -197,14 +197,14 @@ func (w *DumpResponseWriter) WriteHeader(statusCode int) {
 	w.Status = statusCode
 }
 
-func (w *DumpResponseWriter) Unmarshal(model BaseApiResponse) (err error) {
+func (w *DumpResponseWriter) Unmarshal(model BaseAPIResponse) (err error) {
 	if err = json.Unmarshal(w.Body.Bytes(), model); err != nil {
 		return errors.Wrap(err, fmt.Sprintf("fleet-hub.proxy: API json decode error, Cause: %s", err))
 	}
 	return
 }
 
-func (w *DumpResponseWriter) OnData(fn func(data jsoniter.Any)) (error, int) {
+func (w *DumpResponseWriter) OnData(fn func(data jsoniter.Any)) (int, error) {
 	bs := w.Body.Bytes()
 
 	if w.Status != http.StatusOK {
@@ -221,24 +221,24 @@ func (w *DumpResponseWriter) OnData(fn func(data jsoniter.Any)) (error, int) {
 		} else {
 			me = append(me, e.ToString())
 		}
-		return fmt.Errorf("%s", strings.Join(me, ", ")), w.Status
-	} else {
-		data := json.Get(bs, "data")
-		if data.LastError() != nil {
-			log.Warnf(data.LastError().Error())
-		} else {
-			fn(data)
-		}
+		return w.Status, fmt.Errorf("%s", strings.Join(me, ", "))
 	}
 
-	return nil, w.Status
+	data := json.Get(bs, "data")
+	if data.LastError() != nil {
+		log.Warnf(data.LastError().Error())
+	} else {
+		fn(data)
+	}
+
+	return w.Status, nil
 }
 
 func NewLoopPageProxy(f func(gojson.RawMessage) ([]interface{}, error), proxyOpts ...Opt) *LoopPageProxy {
 	return &LoopPageProxy{
 		proxy: New(proxyOpts...),
 		ws:    make([]*DumpResponseWriter, 0),
-		apiResponse: &ApiResponse{
+		apiResponse: &APIResponse{
 			ResultCode: 0,
 			Msg:        "",
 		},
@@ -252,7 +252,7 @@ type LoopPageProxy struct {
 
 	ws []*DumpResponseWriter
 
-	apiResponse *ApiResponse
+	apiResponse *APIResponse
 
 	pageItems []interface{}
 
@@ -290,7 +290,7 @@ func (l *LoopPageProxy) Loop(req *http.Request) PageItems {
 		l.proxy.Proxy(writer, req)
 		l.ws = append(l.ws, writer)
 
-		response := &ApiPageResponse{}
+		response := &APIPageResponse{}
 		err = writer.Unmarshal(response)
 		if err != nil {
 			log.Errorf("fleet-hub.proxy: json decoding data error, Cause: %s", err.Error())

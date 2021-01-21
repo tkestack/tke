@@ -72,7 +72,7 @@ type ControllerContext struct {
 	ControllerStartInterval time.Duration
 
 	PlatformClient platformv1.PlatformV1Interface
-	MeshConfig  *meshconfig.MeshConfiguration
+	MeshConfig     *meshconfig.MeshConfiguration
 }
 
 // IsControllerEnabled returns whether the controller has been enabled
@@ -116,7 +116,7 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		ResyncPeriod:            controller.ResyncPeriod(&cfg.Component),
 		ControllerStartInterval: cfg.Component.ControllerStartInterval,
 
-		MeshConfig:   cfg.MeshConfig,
+		MeshConfig: cfg.MeshConfig,
 	}
 
 	if cfg.PlatformAPIServerClientConfig != nil {

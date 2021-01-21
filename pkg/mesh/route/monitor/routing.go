@@ -25,6 +25,7 @@ import (
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"
 	tcmeshclient "tkestack.io/tke/pkg/mesh/external/tcmesh"
+	"tkestack.io/tke/pkg/mesh/route"
 	"tkestack.io/tke/pkg/mesh/services"
 	monitorservice "tkestack.io/tke/pkg/mesh/services/monitor"
 	"tkestack.io/tke/pkg/mesh/services/rest"
@@ -34,7 +35,7 @@ type monitorHandler struct {
 	monitorService services.MonitorService
 }
 
-func New(tcmeshClient *tcmeshclient.Client) *monitorHandler {
+func New(tcmeshClient *tcmeshclient.Client) route.MonitorHandler {
 	return &monitorHandler{
 		monitorService: monitorservice.New(tcmeshClient),
 	}

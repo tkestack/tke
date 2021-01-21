@@ -33,7 +33,7 @@ func WithModifyResponse(f func(*http.Response) error) Opt {
 	}
 }
 
-func WithTargetUrl(u *url.URL) Opt {
+func WithTargetURL(u *url.URL) Opt {
 	return func(p *Proxy) {
 		p.Request.URL = u
 	}

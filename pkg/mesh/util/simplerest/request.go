@@ -23,7 +23,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -37,14 +36,13 @@ import (
 )
 
 type Request struct {
-	c *SimpleRESTClient
+	c *Client
 
 	timeout time.Duration
 
 	// generic components accessible via method setters
 	verb       string
 	pathPrefix string
-	subpath    string
 	params     url.Values
 	headers    http.Header
 
@@ -54,7 +52,7 @@ type Request struct {
 }
 
 // NewRequest creates a new request helper object for accessing runtime.Objects on a server.
-func NewRequest(c *SimpleRESTClient) *Request {
+func NewRequest(c *Client) *Request {
 
 	var pathPrefix string
 	if c.base != nil {
@@ -299,7 +297,7 @@ func (r *Request) transformResponse(resp *http.Response, _ *http.Request) Result
 	case resp.StatusCode == http.StatusSwitchingProtocols:
 		// no-op, we've been upgraded
 	case resp.StatusCode < http.StatusOK || resp.StatusCode > http.StatusPartialContent:
-		err := errors.New(fmt.Sprintf("err response code:%d", resp.StatusCode))
+		err := fmt.Errorf("err response code:%d", resp.StatusCode)
 		return Result{
 			body:        body,
 			contentType: contentType,

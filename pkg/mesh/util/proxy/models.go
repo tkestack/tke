@@ -4,7 +4,7 @@ import (
 	gojson "encoding/json"
 )
 
-type BaseApiResponse interface {
+type BaseAPIResponse interface {
 	Code() int
 	Message() string
 	RawData() *gojson.RawMessage
@@ -27,12 +27,12 @@ type Page struct {
 	TotalCount int         `json:"total_count"`
 }
 
-var _ BaseApiResponse = ApiResponse{}
+var _ BaseAPIResponse = APIResponse{}
 
-// var _ BaseApiResponse = ApiPageResponse{}
+// var _ BaseAPIResponse = APIPageResponse{}
 
-// ApiResponse - API 响应结构体
-type ApiResponse struct {
+// APIResponse - API 响应结构体
+type APIResponse struct {
 	// 错误码
 	ResultCode int `json:"result_code,omitempty"`
 
@@ -45,54 +45,54 @@ type ApiResponse struct {
 	Data interface{} `json:"-"`
 }
 
-type ApiError struct {
+type APIError struct {
 	Response `json:",inline"`
 	Status   int `json:"-"`
 }
 
-func (a ApiResponse) Code() int {
+func (a APIResponse) Code() int {
 	return a.ResultCode
 }
 
-func (a ApiResponse) Message() string {
+func (a APIResponse) Message() string {
 	return a.Msg
 }
 
-func (a ApiResponse) RawData() *gojson.RawMessage {
+func (a APIResponse) RawData() *gojson.RawMessage {
 	return a.Raw
 }
 
-func (a ApiResponse) SetData(data interface{}) {
+func (a APIResponse) SetData(data interface{}) {
 	a.Data = data
 }
 
-type ApiPageResponse struct {
+type APIPageResponse struct {
 	// 错误码
 	ResultCode int `json:"result_code,omitempty"`
 
 	// 错误信息
 	Msg string `json:"message,omitempty"`
 
-	Data ApiPage `json:"data"`
+	Data APIPage `json:"data"`
 }
 
-func (p ApiPageResponse) Code() int {
+func (p APIPageResponse) Code() int {
 	return p.ResultCode
 }
 
-func (p ApiPageResponse) Message() string {
+func (p APIPageResponse) Message() string {
 	return p.Msg
 }
 
-func (p ApiPageResponse) RawData() *gojson.RawMessage {
+func (p APIPageResponse) RawData() *gojson.RawMessage {
 	return p.Data.Items
 }
 
-func (p ApiPageResponse) SetData(data interface{}) {
-	p.Data = data.(ApiPage)
+func (p APIPageResponse) SetData(data interface{}) {
+	p.Data = data.(APIPage)
 }
 
-type ApiPage struct {
+type APIPage struct {
 	Items      *gojson.RawMessage `json:"items,omitempty"`
 	TotalCount int                `json:"total_count"`
 }
@@ -147,7 +147,6 @@ type PageQuery struct {
 	Offset int `json:"offset" form:"offset"`
 	Limit  int `json:"limit" form:"limit"`
 }
-
 
 type TCMErrorResponse struct {
 	Code    int         `json:"code"`

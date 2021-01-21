@@ -35,6 +35,7 @@ import (
 	meshconfig "tkestack.io/tke/pkg/mesh/apis/config"
 	clusterclient "tkestack.io/tke/pkg/mesh/external/kubernetes"
 	"tkestack.io/tke/pkg/mesh/models"
+	"tkestack.io/tke/pkg/mesh/services"
 	"tkestack.io/tke/pkg/mesh/util/constants"
 	"tkestack.io/tke/pkg/mesh/util/errors"
 	"tkestack.io/tke/pkg/util/log"
@@ -49,7 +50,7 @@ type istioService struct {
 	clients clusterclient.Client
 }
 
-func New(config meshconfig.MeshConfiguration, clients clusterclient.Client) *istioService {
+func New(config meshconfig.MeshConfiguration, clients clusterclient.Client) services.IstioService {
 	return &istioService{
 		config:  config,
 		clients: clients,
@@ -117,7 +118,7 @@ func (c *istioService) ListAllResources(
 	ctx context.Context, clusterName, namespace, kind string, selector labels.Selector,
 ) (kindMaplist map[string][]unstructured.Unstructured, errs *errors.MultiError) {
 
-	kindMaplist = make(map[string][]unstructured.Unstructured, 0)
+	kindMaplist = make(map[string][]unstructured.Unstructured)
 	errs = errors.NewMultiError()
 	client, err := c.clients.Istio(clusterName)
 	if err != nil {
@@ -194,10 +195,15 @@ func (c *istioService) GetResource(
 ) error {
 
 	client, err := c.clients.Istio(clusterName)
+	if err != nil {
+		return err
+	}
+
 	key, err := ctrlclient.ObjectKeyFromObject(obj)
 	if err != nil {
 		return err
 	}
+
 	err = client.Get(ctx, key, obj)
 	if err != nil {
 		return err
@@ -255,7 +261,6 @@ func (c *istioService) CreateNorthTrafficGateway(
 	ctx context.Context, clusterName string, obj *models.IstioNetworkingConfig,
 ) (bool, error) {
 
-	ctx = context.TODO()
 	// setting gateway attributes
 	gateway := obj.Gateway
 	serviceRuntime := gateway.GetLabels()[appRuntimeLabelKey]
@@ -339,8 +344,6 @@ func (c *istioService) UpdateNorthTrafficGateway(
 	if obj == nil || obj.Gateway == nil {
 		return false, fmt.Errorf("gateway resource can not be empty while update north traffic")
 	}
-
-	ctx = context.TODO()
 
 	// get gateway resource
 	gateway := obj.Gateway

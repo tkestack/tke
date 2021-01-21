@@ -129,7 +129,7 @@ var (
 	   kube-public
 	*/
 	ExcludeNamespacesSelector, _ = fields.ParseSelector(
-			"metadata.namespace!=default," +
+		"metadata.namespace!=default," +
 			"metadata.namespace!=kube-system," +
 			"metadata.namespace!=istio-system," +
 			"metadata.namespace!=kube-public",

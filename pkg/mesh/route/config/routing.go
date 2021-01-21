@@ -24,6 +24,7 @@ import (
 
 	"github.com/emicklei/go-restful"
 	meshconfig "tkestack.io/tke/pkg/mesh/apis/config"
+	"tkestack.io/tke/pkg/mesh/route"
 	"tkestack.io/tke/pkg/mesh/services/rest"
 )
 
@@ -31,7 +32,7 @@ type configHandler struct {
 	meshConfig meshconfig.MeshConfiguration
 }
 
-func New(c meshconfig.MeshConfiguration) *configHandler {
+func New(c meshconfig.MeshConfiguration) route.ConfigHandler {
 	return &configHandler{
 		meshConfig: c,
 	}
@@ -40,16 +41,16 @@ func New(c meshconfig.MeshConfiguration) *configHandler {
 func (c *configHandler) AddToWebService(ws *restful.WebService) {
 	ws.Route(
 		ws.GET("/config/istioversions").
-		To(c.ListIstioSupportedVersions).
-		// Supported Operation's Prefix
-		//  "get", "log", "read", "replace", "patch", "delete", "deletecollection",
-		//  "watch", "connect", "proxy", "list", "create", "patch"
-		Operation("listIstioVersions").
-		Doc("List istio supported versions").
-		Returns(http.StatusOK, "List", rest.Response{}).
-		Returns(http.StatusBadRequest, "Error", rest.Response{}).
-		Returns(http.StatusNotFound, "Not Found", rest.Response{}).
-		Produces(restful.MIME_JSON),
+			To(c.ListIstioSupportedVersions).
+			// Supported Operation's Prefix
+			//  "get", "log", "read", "replace", "patch", "delete", "deletecollection",
+			//  "watch", "connect", "proxy", "list", "create", "patch"
+			Operation("listIstioVersions").
+			Doc("List istio supported versions").
+			Returns(http.StatusOK, "List", rest.Response{}).
+			Returns(http.StatusBadRequest, "Error", rest.Response{}).
+			Returns(http.StatusNotFound, "Not Found", rest.Response{}).
+			Produces(restful.MIME_JSON),
 	)
 }
 

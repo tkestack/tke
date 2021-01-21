@@ -23,7 +23,7 @@ import (
 	apierror "k8s.io/apimachinery/pkg/api/errors"
 )
 
-func HandleApiError(err error) (isErrStatus bool, code int, message string) {
+func HandleAPIError(err error) (isErrStatus bool, code int, message string) {
 	if err != nil {
 		var s *apierror.StatusError
 		s, isErrStatus = err.(*apierror.StatusError)
