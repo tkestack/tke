@@ -234,7 +234,7 @@ func (t *TKE) getLatestProviderResTag(ctx context.Context) (tag string, err erro
 	if err != nil {
 		return "", err
 	}
-	if len(k8sValidVersions) > len(spec.K8sVersions) {
+	if len(k8sValidVersions) > len(spec.K8sValidVersions) {
 		return k8sValidVersions[len(k8sValidVersions)-1], nil
 	}
 	return images.Get().ProviderRes.Tag, nil
