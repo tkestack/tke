@@ -155,7 +155,7 @@ func (t *TKE) updateTKEPlatformController(ctx context.Context) error {
 	case result < 0:
 		return errors.Errorf("can't upgrade, platform's version %s is higher than installer's version %s", tkeVersion, spec.TKEVersion)
 	case result == 0:
-		if len(k8sValidVersions) == len(spec.K8sVersions) {
+		if len(k8sValidVersions) == len(spec.K8sValidVersions) {
 			return errors.Errorf("can't upgrade, platform's version %s is equal to installer's version %s, please prepare your custom upgrade images before upgrade", tkeVersion, spec.TKEVersion)
 		}
 		depl.Spec.Template.Spec.InitContainers[0].Image = containerregistry.GetImagePrefix(images.Get().ProviderRes.Name + ":" + k8sValidVersions[len(k8sValidVersions)-1])
