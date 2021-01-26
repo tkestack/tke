@@ -1291,6 +1291,13 @@ type LogCollectorProxyOptions struct {
 	Name      string
 }
 
+// CLSLogConfigProxyOptions is the query options to a kube-apiserver proxy call for CLS LogConfig crd object.
+type CLSLogConfigProxyOptions struct {
+	metav1.TypeMeta
+
+	Name string
+}
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:skipVerbs=deleteCollection
