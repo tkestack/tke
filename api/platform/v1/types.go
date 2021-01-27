@@ -1304,6 +1304,13 @@ type VolumeDecoratorStatus struct {
 	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,8,name=lastReInitializingTimestamp"`
 }
 
+// CLSLogConfigProxyOptions is the query options to a kube-apiserver proxy call for CLS LogConfig crd object.
+type CLSLogConfigProxyOptions struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Name string `json:"name,omitempty" protobuf:"bytes,2,opt,name=name"`
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // LogCollectorProxyOptions is the query options to a kube-apiserver proxy call for LogCollector crd object.

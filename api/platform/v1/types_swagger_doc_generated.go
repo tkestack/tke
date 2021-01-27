@@ -37,6 +37,14 @@ func (AddonSpec) SwaggerDoc() map[string]string {
 	return map_AddonSpec
 }
 
+var map_CLSLogConfigProxyOptions = map[string]string{
+	"": "CLSLogConfigProxyOptions is the query options to a kube-apiserver proxy call for CLS LogConfig crd object.",
+}
+
+func (CLSLogConfigProxyOptions) SwaggerDoc() map[string]string {
+	return map_CLSLogConfigProxyOptions
+}
+
 var map_CSIOperator = map[string]string{
 	"":     "CSIOperator is a operator to manages CSI external components.",
 	"spec": "Spec defines the desired identities of storage operator.",

@@ -52,6 +52,11 @@ message AuthzWebhookAddr {
 message BuiltinAuthzWebhookAddr {
 }
 
+// CLSLogConfigProxyOptions is the query options to a kube-apiserver proxy call for CLS LogConfig crd object.
+message CLSLogConfigProxyOptions {
+  optional string name = 2;
+}
+
 // CSIOperator is a operator to manages CSI external components.
 message CSIOperator {
   // +optional
