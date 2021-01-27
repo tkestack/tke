@@ -81,7 +81,7 @@ spec:
               mountPath: /app/certs
             - name: tke-audit-api-volume
               mountPath: /app/conf
-            - name: timeout
+            - name: timezone
               mountPath: /etc/localtime
           ports:
             - containerPort: 9461
