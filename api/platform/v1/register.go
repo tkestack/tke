@@ -102,7 +102,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&LogCollector{},
 		&LogCollectorList{},
 		&LogCollectorProxyOptions{},
-
+		&CLSLogConfigProxyOptions{},
 		&LBCF{},
 		&LBCFList{},
 		&LBCFProxyOptions{},

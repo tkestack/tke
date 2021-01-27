@@ -1291,6 +1291,8 @@ type LogCollectorProxyOptions struct {
 	Name      string
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 // CLSLogConfigProxyOptions is the query options to a kube-apiserver proxy call for CLS LogConfig crd object.
 type CLSLogConfigProxyOptions struct {
 	metav1.TypeMeta
