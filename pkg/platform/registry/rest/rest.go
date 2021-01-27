@@ -89,6 +89,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["clusters/csis"] = clusterREST.CSI
 		storageMap["clusters/pvcrs"] = clusterREST.PVCR
 		storageMap["clusters/logcollector"] = clusterREST.LogCollector
+		storageMap["clusters/logconfig"] = clusterREST.CLSLogConfig
 		storageMap["clusters/cronhpas"] = clusterREST.CronHPA
 		storageMap["clusters/addons"] = clusterREST.Addon
 		storageMap["clusters/addontypes"] = clusterREST.AddonType
