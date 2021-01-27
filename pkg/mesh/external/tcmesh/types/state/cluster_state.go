@@ -41,7 +41,7 @@ type ClusterState struct {
 
 	MornitorReportAddress string `json:"mornitor_report_address,omitempty"`
 
-	// 敏感信息
+	// sensitive information
 	Token        string `json:"token"`
 	CaCert       string `json:"cacert"`
 	CaKey        string `json:"cakey"`

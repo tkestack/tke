@@ -40,31 +40,19 @@ type MeshMetadata struct {
 	OutboundTrafficPolicy string   `json:"outboundTrafficPolicy,omitempty"`
 	TraceSampling         *float32 `json:"traceSampling,omitempty"`
 	DisablePolicyChecks   *bool    `json:"disablePolicyChecks,omitempty"`
-	MeshMonitorEnable     *bool    `json:"meshMonitorEnable,omitempty"`
+	MeshTracingEnable     *bool    `json:"meshTracingEnable,omitempty"`
 }
 
 type ComponentsConfig struct {
-	Pilot       CommonConfiguration `json:"pilot,omitempty"`
-	Telemetry   CommonConfiguration `json:"telemetry,omitempty"`
-	Policy      CommonConfiguration `json:"policy,omitempty"`
-	Galley      CommonConfiguration `json:"galley,omitempty"`
-	MeshMonitor MeshMonitorConfig   `json:"meshMonitor,omitempty"`
+	Istiod      CommonConfiguration `json:"istiod,omitempty"`
+	MeshTracing MeshTracingConfig   `json:"meshTracing,omitempty"`
 }
 
-type MeshMonitorConfig struct {
+type MeshTracingConfig struct {
 	CommonConfiguration `json:",inline"`
 
 	Debug       bool   `json:"debug,omitempty"`
 	LogToStderr bool   `json:"logToStderr,omitempty"`
 	LoggerDir   string `json:"loggerDir,omitempty"`
 	LoggerFile  string `json:"loggerFile,omitempty"`
-}
-
-type SidecarInjectorConfig struct {
-	CommonConfiguration `json:",inline"`
-
-	// If true, sidecar injector will rewrite PodSpec for liveness
-	// health check to redirect request to sidecar. This makes liveness check work
-	// even when mTLS is enabled.
-	RewriteAppHTTPProbe bool `json:"rewriteAppHTTPProbe,omitempty"`
 }

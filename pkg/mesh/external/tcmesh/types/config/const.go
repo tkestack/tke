@@ -24,14 +24,6 @@ const (
 	ClusterRoleRemote = "remote"
 )
 
-const (
-	IstioNamespace         = "istio-system"
-	InjectionLabelKey      = "istio-injection"
-	InjectionEnabledValue  = "enabled"
-	InjectionDisabledValue = "disabled"
-	InjectionLabelKeyNew   = "istio.io/rev"
-)
-
 type AccessType string
 
 const (

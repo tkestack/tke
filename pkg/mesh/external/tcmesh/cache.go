@@ -131,11 +131,6 @@ func (c *Cacher) ReloadMeshes() {
 		c.clusterToMainClustersMap)
 }
 
-//func (c *Cacher) preSync() {
-//	log.Infof("Pre-sync mesh info while starting...")
-//	c.ReloadMeshes()
-//}
-
 func (c *Cacher) Clusters(meshName string) []string {
 	clusters := c.getClusters(meshName)
 

@@ -44,7 +44,7 @@ type MeshConfig struct {
 
 	Clusters []*ClusterConfig `json:"clusters"`
 
-	// may remove 存量 1.3.6, DO NOT USE ANYMORE
+	// TODO： may remove， from 1.3.6 DO NOT USE ANYMORE
 	MasterCluster  *ClusterConfig   `json:"masterCluster"`
 	RemoteClusters []*ClusterConfig `json:"remoteClusters,omitempty"`
 
@@ -59,21 +59,8 @@ type MeshConfig struct {
 
 	TraceSampling float32 `json:"traceSampling"`
 
-	// If SDS is configured, mTLS certificates for the sidecars will be distributed
-	// through the SecretDiscoveryService instead of using K8S secrets to mount the certificates
-	SDS SDSConfiguration `json:"sds,omitempty"`
-
-	// Pilot configuration options
-	Pilot PilotConfiguration `json:"pilot,omitempty"`
-
-	// Galley configuration options
-	Galley GalleyConfiguration `json:"galley,omitempty"`
-
-	// Telemetry configuration options
-	Telemetry MixerConfiguration `json:"telemetry,omitempty"`
-
-	// Policy configuration options
-	Policy MixerConfiguration `json:"policy,omitempty"`
+	// Istiod configuration options
+	Istiod IstiodConfiguration `json:"istiod,omitempty"`
 
 	// Proxy configuration options
 	Proxy ProxyConfiguration `json:"proxy,omitempty"`
@@ -88,46 +75,8 @@ type MeshConfig struct {
 	// Set the default behavior of the sidecar for handling outbound traffic from the application (ALLOW_ANY or REGISTRY_ONLY)
 	OutboundTrafficPolicy OutboundTrafficPolicyConfiguration `json:"outboundTrafficPolicy,omitempty"`
 
-	// MeshConfig monitor(adapter) configuration options
-	MeshMonitorAdapter MeshMonitorAdapterConfiguration `json:"meshMonitorAdapter,omitempty"`
-}
-
-// SDSConfiguration defines Secret Discovery Service config options
-type SDSConfiguration struct {
-	// If set to true, mTLS certificates for the sidecars will be
-	// distributed through the SecretDiscoveryService instead of using K8S secrets to mount the certificates.
-	Disabled bool `json:"disabled,omitempty"`
-	// Unix Domain Socket through which envoy communicates with NodeAgent SDS to get
-	// key/cert for mTLS. Use secret-mount files instead of SDS if set to empty.
-	UdsPath string `json:"udsPath,omitempty"`
-	// If set to true, MeshConfig will inject volumes mount for k8s service account JWT,
-	// so that K8s API server mounts k8s service account JWT to envoy container, which
-	// will be used to generate key/cert eventually.
-	// (prerequisite: https://kubernetes.io/docs/concepts/storage/volumes/#projected)
-	UseTrustworthyJwt bool `json:"useTrustworthyJwt,omitempty"`
-	// If set to true, envoy will fetch normal k8s service account JWT from '/var/run/secrets/kubernetes.io/serviceaccount/token'
-	// (https://kubernetes.io/docs/tasks/access-application-cluster/access-cluster/#accessing-the-api-from-a-pod)
-	// and pass to sds server, which will be used to request key/cert eventually
-	// this flag is ignored if UseTrustworthyJwt is set
-	UseNormalJwt bool `json:"useNormalJwt,omitempty"`
-}
-
-// PilotConfiguration defines config options for Pilot
-type PilotConfiguration struct {
-	TraceSampling float32 `json:"traceSampling"`
-
-	CommonConfiguration
-}
-
-// CitadelConfiguration defines config options for Citadel
-type CitadelConfiguration struct {
-	CommonConfiguration
-	SelfSigned bool `json:"selfSigned,omitempty"`
-}
-
-// GalleyConfiguration defines config options for Galley
-type GalleyConfiguration struct {
-	CommonConfiguration
+	// MeshTracing  configuration options
+	MeshTracing MeshTracingConfiguration `json:"meshTracing,omitempty"`
 }
 
 // GatewaysConfiguration defines config options for Gateways
@@ -154,15 +103,15 @@ type GatewayConfiguration struct {
 }
 
 type IngressGatewayConfiguration struct {
-	GatewayConfiguration `protobuf:"bytes,21,opt,name=gatewayConfiguration"`
-	ExistLBID            string     `json:"existLBID,omitempty" protobuf:"bytes,20,opt,name=resources"` // TCNP-TODO
-	LBName               string     `json:"lbName,omitempty"`                                           // TCNP-TODO
-	AccessType           AccessType `json:"accessType"`                                                 // TCNP-TODO
-	Subnet               string     `json:"subnet,omitempty"`                                           // TCNP-TODO
+	GatewayConfiguration
+	ExistLBID  string     `json:"existLBID,omitempty"` // TCNP-TODO
+	LBName     string     `json:"lbName,omitempty"`    // TCNP-TODO
+	AccessType AccessType `json:"accessType"`          // TCNP-TODO
+	Subnet     string     `json:"subnet,omitempty"`    // TCNP-TODO
 }
 
 type K8SIngressConfiguration struct {
-	Disabled bool `json:"disabled,omitempty" protobuf:"varint,1,opt,name=disabled"`
+	Disabled bool `json:"disabled,omitempty"`
 }
 
 // SidecarInjectorConfiguration defines config options for SidecarInjector
@@ -171,7 +120,7 @@ type SidecarInjectorConfiguration struct {
 	// If true, sidecar injector will rewrite PodSpec for liveness
 	// health check to redirect request to sidecar. This makes liveness check work
 	// even when mTLS is enabled.
-	RewriteAppHTTPProbe bool `json:"rewriteAppHTTPProbe,omitempty" protobuf:"varint,3,opt,name=rewriteAppHTTPProbe"`
+	RewriteAppHTTPProbe bool `json:"rewriteAppHTTPProbe,omitempty"`
 }
 
 // MixerConfiguration defines config options for Mixer
@@ -181,46 +130,46 @@ type MixerConfiguration struct {
 
 // ProxyConfiguration defines config options for Proxy
 type ProxyConfiguration struct {
-	Image string `json:"image,omitempty" protobuf:"bytes,1,opt,name=image"`
+	Image string `json:"image,omitempty"`
 	// If set to true, istio-proxy container will have privileged securityContext
-	Privileged bool `json:"privileged,omitempty" protobuf:"varint,2,opt,name=privileged"`
+	Privileged bool `json:"privileged,omitempty"`
 	// If set, newly injected sidecars will have core dumps enabled.
-	EnableCoreDump bool `json:"enableCoreDump,omitempty" protobuf:"varint,3,opt,name=enableCoreDump"`
+	EnableCoreDump bool `json:"enableCoreDump,omitempty"`
 
-	Resources *v1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,5,opt,name=resources"`
+	Resources *v1.ResourceRequirements `json:"resources,omitempty"`
 }
 
 // ProxyInitConfiguration defines config options for Proxy Init containers
 type ProxyInitConfiguration struct {
-	Image string `json:"image,omitempty" protobuf:"bytes,1,opt,name=image"`
+	Image string `json:"image,omitempty"`
 }
 
 // PDBConfiguration holds Pod Disruption Budget related config options
 type PDBConfiguration struct {
-	Disabled bool `json:"disabled,omitempty" protobuf:"varint,1,opt,name=disabled"`
+	Disabled bool `json:"disabled,omitempty"`
 }
 
 type OutboundTrafficPolicyConfiguration struct {
-	Mode string `json:"mode,omitempty" protobuf:"bytes,1,opt,name=mode"`
+	Mode string `json:"mode,omitempty"`
 }
 
-type MeshMonitorAdapterConfiguration struct {
+type MeshTracingConfiguration struct {
 	CommonConfiguration
-	Disabled    bool   `json:"disabled,omitempty" protobuf:"varint,10,opt,name=disabled"`
-	Debug       bool   `json:"debug,omitempty" protobuf:"varint,5,opt,name=debug"`
-	LogToStderr bool   `json:"logToStderr,omitempty" protobuf:"varint,6,opt,name=logToStderr"`
-	LoggerDir   string `json:"loggerDir,omitempty" protobuf:"bytes,7,opt,name=loggerDir"`
-	LoggerFile  string `json:"loggerFile,omitempty" protobuf:"bytes,8,opt,name=loggerFile"`
+	Disabled    bool   `json:"disabled,omitempty"`
+	Debug       bool   `json:"debug,omitempty"`
+	LogToStderr bool   `json:"logToStderr,omitempty"`
+	LoggerDir   string `json:"loggerDir,omitempty"`
+	LoggerFile  string `json:"loggerFile,omitempty"`
 }
 
 type CommonConfiguration struct {
-	Image         string                   `json:"image,omitempty" protobuf:"bytes,1,opt,name=image"`
-	ReplicaCount  int32                    `json:"replicaCount,omitempty" protobuf:"varint,2,opt,name=replicaCount"`
-	MinReplicas   int32                    `json:"minReplicas,omitempty" protobuf:"varint,3,opt,name=minReplicas"`
-	MaxReplicas   int32                    `json:"maxReplicas,omitempty" protobuf:"varint,4,opt,name=maxReplicas"`
-	Resources     *v1.ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,5,opt,name=resources"`
-	Metrics       []v2beta1.MetricSpec     `json:"metrics,omitempty" protobuf:"bytes,11,rep,name=metrics"`
-	SelectedNodes []string                 `json:"selectedNodes,omitempty" protobuf:"bytes,12,rep,name=selectedNodes"`
+	Image         string                   `json:"image,omitempty"`
+	ReplicaCount  int32                    `json:"replicaCount,omitempty"`
+	MinReplicas   int32                    `json:"minReplicas,omitempty"`
+	MaxReplicas   int32                    `json:"maxReplicas,omitempty"`
+	Resources     *v1.ResourceRequirements `json:"resources,omitempty"`
+	Metrics       []v2beta1.MetricSpec     `json:"metrics,omitempty"`
+	SelectedNodes []string                 `json:"selectedNodes,omitempty"`
 }
 
 type CommonServiceConfiguration struct {

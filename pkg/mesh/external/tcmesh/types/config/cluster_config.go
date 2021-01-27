@@ -31,9 +31,7 @@ type ClusterConfig struct {
 	SidecarInjector         SidecarInjectorConfiguration  `json:"sidecarInjector,omitempty"`
 	DeployMode              ComponentDeployMode           `json:"deployMode,omitempty"`
 	MeshKubeOperator        MeshKubeOperatorConfiguration `json:"meshKubeOperator,omitempty"`
-	// Citadel configuration options
-	Citadel CitadelConfiguration `json:"citadel,omitempty"`
-	Istiod  IstiodConfiguration  `json:"istiod,omitempty"`
+	Istiod                  IstiodConfiguration           `json:"istiod,omitempty"`
 
 	Proxy     ProxyConfiguration     `json:"proxy,omitempty"`
 	ProxyInit ProxyInitConfiguration `json:"proxyInit,omitempty"`
@@ -47,7 +45,8 @@ type KubeMeshConfiguration struct {
 }
 
 type IstiodConfiguration struct {
-	PilotConfiguration
+	TraceSampling float32 `json:"traceSampling"`
+	CommonConfiguration
 	CommonServiceConfiguration
 }
 

@@ -105,31 +105,3 @@ func (s *monitorService) filterTopologyByApp(
 
 	return result, nil
 }
-
-//func inApp(serviceNames []string, name string) bool {
-//	tmpSvcName := getServiceName(name)
-//	for _, svcName := range serviceNames {
-//		if tmpSvcName == svcName {
-//			return true
-//		}
-//	}
-//
-//	return false
-//}
-//
-//// omitted the namespace name
-//func getServiceName(origin string) string {
-//	pos := strings.LastIndex(origin, "_")
-//	return origin[0:pos]
-//}
-//
-//func getSvcName(node rest.Node) string {
-//	var name string
-//	if node.Type == "service" {
-//		name = node.Name
-//	} else {
-//		// delete the "service_" prefix
-//		name = node.ServiceNodeID[8:]
-//	}
-//	return name
-//}

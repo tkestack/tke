@@ -179,27 +179,6 @@ func (m *meshClusterService) ListMicroServices(
 	return rets, errs
 }
 
-/*func (m *meshClusterService) GetService(
-	ctx context.Context, meshName, namespace, serviceName string,
-) (*corev1.Service, error) {
-
-	clusterName := m.tcmClient.Cache().MainClusters(meshName)
-	cluster, err := m.clients.Cluster(clusterName)
-	if err != nil {
-		return nil, err
-	}
-	objectKey := types.NamespacedName{
-		Namespace: namespace,
-		Name:      serviceName,
-	}
-	ret := &corev1.Service{}
-	err = cluster.Get(ctx, objectKey, ret)
-	if err != nil {
-		return nil, err
-	}
-	return ret, nil
-}*/
-
 // 2020-11-06 implements micro service list
 func fetchMicroServices(ctx context.Context, clusterClient ctrlclient.Client, istioClient ctrlclient.Client,
 	meshName, clusterName, namespace, serviceName string,

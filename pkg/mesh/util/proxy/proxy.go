@@ -49,21 +49,11 @@ func New(opts ...Opt) *Proxy {
 }
 
 type Proxy struct {
-	// TargetUrl *url.URL
-
-	// http request header to replace
-	// Headers map[string][]string
-
-	// http request json body to rewrite patches
-	// Patches []json.Patch
-
 	Request *Request
 
 	Director       func(*http.Request)
 	ModifyResponse func(*http.Response) error
 	ErrorHandler   func(http.ResponseWriter, *http.Request, error)
-
-	// proxy *httputil.ReverseProxy
 }
 
 type Request struct {

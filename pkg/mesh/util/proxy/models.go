@@ -31,13 +31,13 @@ type BaseAPIResponse interface {
 }
 
 type Response struct {
-	// 错误码
+	// result code
 	ResultCode int `json:"result_code,omitempty"`
 
-	// 错误信息
+	// err message
 	Msg string `json:"message,omitempty"`
 
-	// 返回结构体，可选
+	// return data，optional
 	Data interface{} `json:"data,omitempty"`
 }
 
@@ -50,15 +50,15 @@ var _ BaseAPIResponse = APIResponse{}
 
 // var _ BaseAPIResponse = APIPageResponse{}
 
-// APIResponse - API 响应结构体
+// APIResponse - API
 type APIResponse struct {
-	// 错误码
+	// result code
 	ResultCode int `json:"result_code,omitempty"`
 
-	// 错误信息
+	// err message
 	Msg string `json:"message,omitempty"`
 
-	// 返回结构体，可选
+	// return data，optional
 	Raw *gojson.RawMessage `json:"data,omitempty"`
 
 	Data interface{} `json:"-"`
@@ -86,10 +86,10 @@ func (a APIResponse) SetData(data interface{}) {
 }
 
 type APIPageResponse struct {
-	// 错误码
+	// result code
 	ResultCode int `json:"result_code,omitempty"`
 
-	// 错误信息
+	// err message
 	Msg string `json:"message,omitempty"`
 
 	Data APIPage `json:"data"`
