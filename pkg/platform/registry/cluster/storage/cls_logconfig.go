@@ -26,6 +26,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"tkestack.io/tke/pkg/util/log"
 
 	"tkestack.io/tke/pkg/platform/util"
 
@@ -93,6 +94,8 @@ type clsLogConfigProxyHandler struct {
 }
 
 func (h *clsLogConfigProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	log.Errorf("debug-","debug")
+
 	loc := *h.location
 	loc.RawQuery = req.URL.RawQuery
 
