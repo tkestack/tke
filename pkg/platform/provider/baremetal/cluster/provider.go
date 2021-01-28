@@ -110,6 +110,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureKubeadmInitPhaseAddon,
 
 			p.EnsureGalaxy,
+			p.EnsureCorrectCoreDNSConfig,
 
 			p.EnsureJoinPhasePreflight,
 			p.EnsureJoinPhaseControlPlanePrepare,
@@ -144,6 +145,7 @@ func NewProvider() (*Provider, error) {
 		UpgradeHandlers: []clusterprovider.Handler{
 			p.EnsurePreClusterUpgradeHook,
 			p.EnsureUpgradeControlPlaneNode,
+			p.EnsureCorrectCoreDNSConfig,
 			p.EnsurePostClusterUpgradeHook,
 		},
 		ScaleDownHandlers: []clusterprovider.Handler{

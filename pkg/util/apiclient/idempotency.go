@@ -25,6 +25,7 @@ import (
 	"io/ioutil"
 	"math"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -675,4 +676,22 @@ func GetNodeIPV6Label(ip string) string {
 	lableipv6Head := fmt.Sprintf("%s=%s", LabelMachineIPV6Head, strings.Replace(ip[0:splitLength], ":", "a", -1))
 	lableipv6Tail := fmt.Sprintf("%s=%s", LabelMachineIPV6Tail, strings.Replace(ip[splitLength:], ":", "a", -1))
 	return lableipv6Head + "," + lableipv6Tail
+}
+
+// RemoveUnsupportedCoreDNSProperty will remove unsupported property for old version coreDNS,
+// more information please check https://github.com/coredns/coredns/issues/4362
+func RemoveUnsupportedCoreDNSProperty(ctx context.Context, client clientset.Interface) error {
+	cm, err := client.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, "coredns", metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	re, err := regexp.Compile(`\s*max_concurrent\s*\w+`)
+	if err != nil {
+		return errors.Wrap(err, "unable to remove unsupported coreDNS property")
+	}
+	cm.Data["Corefile"] = re.ReplaceAllString(cm.Data["Corefile"], "")
+	if _, err := client.CoreV1().ConfigMaps(metav1.NamespaceSystem).Update(ctx, cm, metav1.UpdateOptions{}); err != nil {
+		return errors.Wrap(err, "unable to remove unsupported coreDNS property")
+	}
+	return nil
 }
