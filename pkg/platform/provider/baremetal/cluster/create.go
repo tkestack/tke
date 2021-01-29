@@ -920,17 +920,6 @@ func (p *Provider) clusterMachineIPs(c *v1.Cluster) []string {
 	return ips
 }
 
-func (p *Provider) EnsureCorrectCoreDNSConfig(ctx context.Context, c *v1.Cluster) error {
-	if c.Status.Phase == platformv1.ClusterUpscaling {
-		return nil
-	}
-	clientset, err := c.ClientsetForBootstrap()
-	if err != nil {
-		return err
-	}
-	return apiclient.RemoveUnsupportedCoreDNSProperty(ctx, clientset)
-}
-
 func (p *Provider) EnsureJoinPhasePreflight(ctx context.Context, c *v1.Cluster) error {
 	machines := map[bool][]platformv1.ClusterMachine{
 		true:  c.Spec.ScalingMachines,
