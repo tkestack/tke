@@ -88,6 +88,23 @@ git clone https://github.com/tkestack/tke
 cd tke
 make
 ```
+ 
+If you want to refer to this repe for code integration, the `go get` will be failed as below, pelase add `replace` section to your `go.mod` to fix it
+
+```
+go: tkestack.io/tke upgrade => v1.5.1
+go get: tkestack.io/tke@v1.5.1 requires
+        github.com/chartmuseum/storage@v0.8.0 requires
+        github.com/NetEase-Object-Storage/nos-golang-sdk@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
+```
+
+```
+replace (
+	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.0.0-20200507092433-6aea2df34764
+)
+
+```
+
 
 For the full story, head over to the [developer's documentation](docs/devel/development.md).
 
