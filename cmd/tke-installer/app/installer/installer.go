@@ -2461,7 +2461,7 @@ func (t *TKE) patchPlatformVersion(ctx context.Context) error {
 		return nil
 	}
 
-	versionsByte, err := json.Marshal(spec.K8sValidVersions)
+	versionsByte, err := json.Marshal(spec.K8sVersions)
 	if err != nil {
 		return err
 	}

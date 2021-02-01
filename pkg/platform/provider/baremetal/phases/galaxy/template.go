@@ -142,6 +142,7 @@ metadata:
 data:
   00-galaxy.conf: |
     {
+      "name": "galaxy-sdn",
       "type": "galaxy-sdn",
       "capabilities": {"portMappings": true},
       "cniVersion": "0.2.0"

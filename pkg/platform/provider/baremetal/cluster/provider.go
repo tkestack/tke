@@ -143,6 +143,7 @@ func NewProvider() (*Provider, error) {
 		},
 		UpgradeHandlers: []clusterprovider.Handler{
 			p.EnsurePreClusterUpgradeHook,
+			p.EnsureUpgradeCoreDNS,
 			p.EnsureUpgradeControlPlaneNode,
 			p.EnsurePostClusterUpgradeHook,
 		},

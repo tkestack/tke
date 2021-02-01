@@ -35,6 +35,7 @@ import (
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/json"
+	"tkestack.io/tke/pkg/util/version"
 )
 
 func (p *Provider) getKubeadmInitConfig(c *v1.Cluster) *kubeadm.InitConfig {
@@ -155,14 +156,16 @@ func (p *Provider) getClusterConfiguration(c *v1.Cluster) *kubeadmv1beta2.Cluste
 		},
 		DNS: kubeadmv1beta2.DNS{
 			Type: kubeadmv1beta2.CoreDNS,
-			ImageMeta: kubeadmv1beta2.ImageMeta{
-				ImageTag: images.Get().CoreDNS.Tag,
-			},
 		},
 		ImageRepository: p.config.Registry.Prefix,
 		ClusterName:     c.Name,
 		FeatureGates: map[string]bool{
 			"IPv6DualStack": c.Cluster.Spec.Features.IPv6DualStack},
+	}
+
+	// since k8s 1.19 will use offical coreDNS version
+	if version.Compare(c.Spec.Version, constants.NeedUpgradeCoreDNSK8sVersion) < 0 {
+		config.DNS.ImageTag = images.Get().CoreDNS.Tag
 	}
 
 	utilruntime.Must(json.Merge(&config.Etcd, &c.Spec.Etcd))
