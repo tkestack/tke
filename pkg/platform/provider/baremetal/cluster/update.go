@@ -147,15 +147,12 @@ func (p *Provider) EnsurePreClusterUpgradeHook(ctx context.Context, c *v1.Cluste
 }
 
 func (p *Provider) EnsureUpgradeCoreDNS(ctx context.Context, c *v1.Cluster) error {
-	versionRet, err := version.Parse(c.Spec.Version)
-	if err != nil {
-		return errors.Wrap(err, "unable to update coreDNS version")
+	logger := log.FromContext(ctx).WithName("Upgrade coreDNS")
+	if version.Compare(c.Status.Version, constants.NeedUpgradeCoreDNSK8sVersion) >= 0 {
+		logger.Infof("Current k8s version is %s, skip upgrade coreDNS", c.Spec.Version)
+		return nil
 	}
-	if len(versionRet) < 2 {
-		return errors.Wrap(fmt.Errorf("invaild version format %s", c.Spec.Version), "unable to update coreDNS version")
-	}
-	if versionRet[0] == "1" && versionRet[1] == "19" {
-
+	if version.Compare(c.Spec.Version, constants.NeedUpgradeCoreDNSK8sVersion) >= 0 {
 		client, err := c.Clientset()
 		if err != nil {
 			return errors.Wrap(err, "unable to update coreDNS version")
@@ -165,7 +162,6 @@ func (p *Provider) EnsureUpgradeCoreDNS(ctx context.Context, c *v1.Cluster) erro
 			return errors.Wrap(err, "unable to update coreDNS version")
 		}
 	} else {
-		logger := log.FromContext(ctx).WithName("Upgrade coreDNS")
 		logger.Infof("Target k8s version is %s, skip upgrade coreDNS", c.Spec.Version)
 	}
 	return nil
