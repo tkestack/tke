@@ -33,7 +33,10 @@ const (
 )
 
 type Components struct {
-	MeshManager containerregistry.Image
+	MeshManager               containerregistry.Image
+	IstioProxy                containerregistry.Image
+	IstioPilot                containerregistry.Image
+	IstioMeshTracingCollector containerregistry.Image
 }
 
 func (c Components) Get(name string) *containerregistry.Image {
@@ -49,7 +52,10 @@ func (c Components) Get(name string) *containerregistry.Image {
 
 var versionMap = map[string]Components{
 	LatestVersion: {
-		MeshManager: containerregistry.Image{Name: "mesh-manager", Tag: "v1.1.0"},
+		MeshManager:               containerregistry.Image{Name: "mesh-manager", Tag: "v1.1.0"},
+		IstioProxy:                containerregistry.Image{Name: "istio-proxyv2", Tag: "1.6.6"},
+		IstioPilot:                containerregistry.Image{Name: "istio-pilot", Tag: "1.6.6"},
+		IstioMeshTracingCollector: containerregistry.Image{Name: "istio-mesh-tracing-collector", Tag: "1.6.6"},
 	},
 }
 
