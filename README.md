@@ -26,7 +26,7 @@
   * Integrated system monitoring and application monitoring.
   * Persistent Kubernetes events and audit logs.
   * Limit, track, and manage the developers and teams on the platform.
-* **Plugin Support And Management**  
+* **Plugin Support And Management**
   * Authentication identity provider plugin.
   * Authorization provider plugin.
   * Event persistence storage plugin.
@@ -48,7 +48,7 @@
 * **Operating Systems**
   * ≥ Ubuntu 16.04/18.04  LTS (64-bit)
   * ≥ CentOS Linux 7.6 (64-bit)
-  * ≥ Tencent Linux 2.2 
+  * ≥ Tencent Linux 2.2
 
 ### QuickStart
 
@@ -65,7 +65,7 @@
 4. **Enjoy TKEStack:**  Open your browser to http://console.tke.com.
 
 > TKEStack use tke-installer tool to deploy. Please refer to [tke-installer](docs/user/tke-installer/introduction.md) for more information.
-> 
+>
 > If you encounter problems during installation, you can refer to [FAQ installation](docs/guide/zh-CN/FAQ/Installation).
 
 
@@ -75,7 +75,7 @@
 
 ## Developing
 
-If you are interested in contributing to the TKEStack, please check the [CONTRIBUTING.md](CONTRIBUTING.md) first. 
+If you are interested in contributing to the TKEStack, please check the [CONTRIBUTING.md](CONTRIBUTING.md) first.
 
 Make sure that you have [Git-LFS](https://github.com/git-lfs/git-lfs) installed before developing TKEStack.
 
@@ -88,8 +88,8 @@ git clone https://github.com/tkestack/tke
 cd tke
 make
 ```
- 
-If you want to refer to this repe for code integration, the `go get` will be failed as below, pelase add `replace` section to your `go.mod` to fix it
+
+If you want to refer to this repo for code integration, the `go get` will be failed as below, please add `replace` section to your `go.mod` to fix it
 
 ```
 go: tkestack.io/tke upgrade => v1.5.1
@@ -105,6 +105,22 @@ replace (
 
 ```
 
+If you refer to this repo and get run failed messages as below, it's caused by the [etcd issue #11931](https://github.com/etcd-io/etcd/issues/11931), just replace the grpc version to v1.26.0 in the `go.mod` to fix it
+```
+# go.etcd.io/etcd/clientv3/balancer/resolver/endpoint
+../../../../../../go/pkg/mod/go.etcd.io/etcd@v0.5.0-alpha.5.0.20200401174654-e694b7bb0875/clientv3/balancer/resolver/endpoint/endpoint.go:114:78: undefined: resolver.BuildOption
+../../../../../../go/pkg/mod/go.etcd.io/etcd@v0.5.0-alpha.5.0.20200401174654-e694b7bb0875/clientv3/balancer/resolver/endpoint/endpoint.go:182:31: undefined: resolver.ResolveNowOption
+# go.etcd.io/etcd/clientv3/balancer/picker
+../../../../../../go/pkg/mod/go.etcd.io/etcd@v0.5.0-alpha.5.0.20200401174654-e694b7bb0875/clientv3/balancer/picker/err.go:37:44: undefined: balancer.PickOptions
+../../../../../../go/pkg/mod/go.etcd.io/etcd@v0.5.0-alpha.5.0.20200401174654-e694b7bb0875/clientv3/balancer/picker/roundrobin_balanced.go:55:54: undefined: balancer.PickOptions
+```
+
+```
+replace (
+	google.golang.org/grpc => google.golang.org/grpc v1.26.0
+)
+
+```
 
 For the full story, head over to the [developer's documentation](docs/devel/development.md).
 
