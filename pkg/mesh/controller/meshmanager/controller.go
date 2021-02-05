@@ -638,6 +638,7 @@ func (c *Controller) genDeployment(meshManager *v1.MeshManager) *appsv1.Deployme
 			Namespace: namespace,
 		},
 		Spec: appsv1.DeploymentSpec{
+			Replicas: controllerutil.Int32Ptr(2),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{"app": deploymentName},
 			},

@@ -2155,8 +2155,10 @@ func (t *TKE) installTKEMeshAPI(ctx context.Context) error {
 func (t *TKE) installTKEMeshController(ctx context.Context) error {
 	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-mesh-controller/*.yaml",
 		map[string]interface{}{
-			"Replicas": t.Config.Replicas,
-			"Image":    images.Get().TKEMeshController.FullName(),
+			"Replicas":          t.Config.Replicas,
+			"Image":             images.Get().TKEMeshController.FullName(),
+			"RegistryDomain":    t.Para.Config.Registry.Domain(),
+			"RegistryNamespace": t.Para.Config.Registry.Namespace(),
 		})
 	if err != nil {
 		return err
