@@ -33,3 +33,12 @@ func RandomStr(length int) string {
 	}
 	return string(result)
 }
+
+func Contains(arr []string, item string) bool {
+	for _, a := range arr {
+		if a == item {
+			return true
+		}
+	}
+	return false
+}

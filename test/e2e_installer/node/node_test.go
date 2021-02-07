@@ -16,64 +16,64 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package platform_test
+package node_test
 
 import (
 	"context"
 	"errors"
-	"time"
-	"tkestack.io/tke/pkg/platform/apiserver/cluster"
-	"tkestack.io/tke/test/e2e/tke"
-	tke2 "tkestack.io/tke/test/tke"
-	"tkestack.io/tke/test/util"
-	"tkestack.io/tke/test/util/cloudprovider/tencent"
-	"tkestack.io/tke/test/util/env"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
+	"os"
+	"time"
 	platformv1 "tkestack.io/tke/api/platform/v1"
-	"tkestack.io/tke/test/util/cloudprovider"
+	"tkestack.io/tke/pkg/platform/apiserver/cluster"
+	tke2 "tkestack.io/tke/test/tke"
+	testclient "tkestack.io/tke/test/util/client"
+	"tkestack.io/tke/test/util/cloudprovider/tencent"
+	"tkestack.io/tke/test/util/env"
 )
-
-const namespacePrefix = "platform-"
 
 var (
-	t                 = tke.TKE{Namespace: namespacePrefix + util.RandomStr(6)}
-	testTKE           *tke2.TestTKE
-	err               error
-	tkeKubeConfigFile string
+	provider = tencent.NewTencentProvider()
+	testTKE  *tke2.TestTKE
+	cls      *platformv1.Cluster
+	err      error
 )
 
-var _ = BeforeSuite(func() {
-	t.Create()
+var _ = Describe("node", func() {
 
-	tkeKubeConfigFile = t.GetKubeConfigFile()
-	restConf, err := t.GetKubeConfig()
-	Expect(err).To(BeNil())
-	tkeClient := tkeclientset.NewForConfigOrDie(restConf)
-	testTKE = tke2.Init(tkeClient, tencent.NewTencentProvider())
-})
+	SynchronizedBeforeSuite(func() []byte {
+		// Download and install tke-installer
+		installer := tke2.InitInstaller(provider)
+		err := installer.InstallInstaller(os.Getenv("OS"), os.Getenv("ARCH"), os.Getenv("VERSION"))
+		Expect(err).Should(BeNil(), "Install tke-installer failed")
 
-var _ = AfterSuite(func() {
-	for _, cls := range testTKE.Clusters {
-		testTKE.DeleteCluster(cls.Name)
-	}
+		// Install tkestack with one master node
+		nodes, err := provider.CreateInstances(1)
+		Expect(err).Should(BeNil(), "Create instance failed")
 
-	t.Delete()
+		para := installer.CreateClusterParaTemplate(nodes)
+		err = installer.Install(para)
+		Expect(err).To(BeNil(), "Install failed")
+		kubeconfig, err := testclient.GenerateTKEAdminKubeConfig(nodes[0])
+		Expect(err).Should(BeNil(), "Generate tke admin kubeconfig failed")
 
-	if !env.NeedDelete() {
-		return
-	}
-	Expect(testTKE.TearDown()).Should(Succeed())
-})
+		return []byte(kubeconfig)
+	}, func(data []byte) {
+		tkeClient, err := testclient.GetTKEClient(data)
+		Expect(err).Should(BeNil(), "Get tke client with admin token failed")
+		testTKE = tke2.Init(tkeClient, provider)
+	})
 
-var _ = Describe("Platform Test", func() {
+	SynchronizedAfterSuite(func() {
+		if !env.NeedDelete() {
+			return
+		}
+		Expect(provider.TearDown()).Should(BeNil())
+	}, func() {})
 
 	Context("Baremetal cluster", func() {
-		var cls *platformv1.Cluster
-
 		BeforeEach(func() {
 			// Create Baremetal cluster
 			if cls == nil {
@@ -82,27 +82,25 @@ var _ = Describe("Platform Test", func() {
 			}
 		})
 
-		It("Create Baremetal cluster", func() {
-			// Cluster create operation has been executed in BeforeEach, this empty 'It' indicates a independent case
-		})
-
 		Context("Node", func() {
-			var workerNode cloudprovider.Instance
 			var machine *platformv1.Machine
 
 			BeforeEach(func() {
-				if machine == nil {
-					workerNodes, err := testTKE.CreateInstances(1)
-					Expect(err).To(BeNil())
-					workerNode = workerNodes[0]
-					time.Sleep(10 * time.Second)
-					machine, err = testTKE.AddNode(cls.Name, workerNode)
-					Expect(err).To(BeNil())
+				nodes, err := testTKE.CreateInstances(1)
+				Expect(err).To(BeNil(), "Create instance failed")
+				time.Sleep(10 * time.Second)
+				machine, err = testTKE.AddNode(cls.Name, nodes[0])
+				Expect(err).To(BeNil(), "Add node to cluster failed")
+			})
+
+			AfterEach(func() {
+				if machine != nil {
+					Expect(testTKE.DeleteNode(machine.Name)).Should(Succeed())
 				}
 			})
 
-			It("Add node to cluster", func() {
-				// Adding node operation has been executed in BeforeEach, this empty 'It' indicates a independent case
+			It("Add and delete node", func() {
+				Expect(testTKE.DeleteNode(machine.Name)).Should(Succeed())
 			})
 
 			It("Add label to node", func() {
@@ -125,33 +123,26 @@ var _ = Describe("Platform Test", func() {
 			})
 
 			It("Unschedulable node", func() {
-				workerNodeIP := workerNode.InternalIP
-
 				// Unschedule node
-				node, _ := testTKE.UnscheduleNode(cls, workerNodeIP)
+				node, _ := testTKE.UnscheduleNode(cls, machine.Spec.IP)
 				Expect(node.Spec.Unschedulable).Should(BeTrue())
 
 				// Cancel unschedule node
-				node, _ = testTKE.CancleUnschedulableNode(cls, workerNodeIP)
+				node, _ = testTKE.CancleUnschedulableNode(cls, machine.Spec.IP)
 				Expect(node.Spec.Unschedulable).Should(BeFalse())
 			})
 
 			It("Drain node", func() {
-				workerNodeIP := workerNode.InternalIP
 				k8sClient := testTKE.K8sClient(cls)
 
-				node, err := k8sClient.CoreV1().Nodes().Get(context.Background(), workerNodeIP, metav1.GetOptions{})
+				node, err := k8sClient.CoreV1().Nodes().Get(context.Background(), machine.Spec.IP, metav1.GetOptions{})
 				Expect(err).Should(BeNil())
 
 				// Drain node
 				Expect(cluster.DrainNode(context.Background(), k8sClient, node)).Should(Succeed())
 
-				node, _ = k8sClient.CoreV1().Nodes().Get(context.Background(), workerNodeIP, metav1.GetOptions{})
+				node, _ = k8sClient.CoreV1().Nodes().Get(context.Background(), machine.Spec.IP, metav1.GetOptions{})
 				Expect(node.Spec.Unschedulable).Should(BeTrue())
-			})
-
-			It("Delete node", func() {
-				Expect(testTKE.DeleteNode(machine.Name)).Should(Succeed())
 			})
 		})
 
@@ -218,39 +209,6 @@ var _ = Describe("Platform Test", func() {
 					return nil
 				}, 10*time.Minute, 10*time.Second).Should(Succeed())
 			})
-		})
-
-		It("Delete Baremetal cluster", func() {
-			Expect(testTKE.DeleteCluster(cls.Name)).Should(Succeed())
-		})
-	})
-
-	Context("Imported cluster", func() {
-		var cls *platformv1.Cluster
-		var credential *platformv1.ClusterCredential
-
-		BeforeEach(func() {
-			if cls == nil {
-				// Prepare a cluster to be imported
-				cls, err = testTKE.CreateCluster()
-				Expect(err).To(BeNil())
-
-				// Get the credential of cluster
-				credential, err = testTKE.TkeClient.PlatformV1().ClusterCredentials().Get(context.Background(), cls.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
-				Expect(err).Should(BeNil())
-
-				// Delete cluster from the global cluster to be imported
-				Expect(testTKE.DeleteCluster(cls.Name)).Should(Succeed())
-			}
-		})
-
-		It("Import cluster", func() {
-			// Import cluster
-			importedCluster, err := testTKE.ImportCluster(cls.Spec.Machines[0].IP, 6443, credential.CACert, credential.Token)
-			Expect(err).Should(BeNil())
-			Expect(importedCluster.Name).ShouldNot(Equal(cls.Name))
-			Expect(importedCluster.Status.Phase).Should(Equal(platformv1.ClusterRunning))
-			Expect(importedCluster.Spec.Type).Should(Equal("Imported"))
 		})
 	})
 })

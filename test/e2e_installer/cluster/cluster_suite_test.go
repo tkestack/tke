@@ -1,4 +1,4 @@
-package e2e_installer_test
+package cluster_test
 
 import (
 	"testing"
@@ -10,5 +10,5 @@ import (
 
 func TestE2EInstaller(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "E2EInstaller Suite")
+	RunSpecs(t, "Cluster Suite")
 }
