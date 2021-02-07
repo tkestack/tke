@@ -220,7 +220,7 @@ var _ = Describe("Platform Test", func() {
 		})
 
 		It("Delete Baremetal cluster", func() {
-			Expect(testTKE.DeleteCluster(cls.Name)).Should(BeNil())
+			Expect(testTKE.DeleteCluster(cls.Name)).Should(BeNil(), "Delete cluster failed")
 		})
 	})
 
