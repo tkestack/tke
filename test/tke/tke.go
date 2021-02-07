@@ -49,7 +49,6 @@ func (testTke *TestTKE) K8sClient(cls *platformv1.Cluster) kubernetes.Interface 
 
 func (testTke *TestTKE) CreateCluster() (cluster *platformv1.Cluster, err error) {
 	cluster = testTke.ClusterTemplate()
-	time.Sleep(10 * time.Second)
 	return testTke.CreateClusterInternal(cluster)
 }
 
@@ -64,6 +63,7 @@ func (testTke *TestTKE) ClusterTemplate(nodes ...cloudprovider.Instance) *platfo
 			Version:       env.K8sVersion(),
 			ClusterCIDR:   "10.244.0.0/16",
 			NetworkDevice: "eth0",
+			Machines:      []platformv1.ClusterMachine{},
 		}}
 	if len(nodes) == 0 {
 		var err error
@@ -84,7 +84,7 @@ func (testTke *TestTKE) ClusterTemplate(nodes ...cloudprovider.Instance) *platfo
 }
 
 func (testTke *TestTKE) CreateClusterInternal(cls *platformv1.Cluster) (cluster *platformv1.Cluster, err error) {
-	klog.Info("Create cluster")
+	klog.Info("Create cluster: ", cls.String())
 	cluster, err = testTke.TkeClient.PlatformV1().Clusters().Create(context.Background(), cls, metav1.CreateOptions{})
 	if err != nil {
 		return
@@ -255,7 +255,7 @@ func (testTke *TestTKE) DeleteCluster(clusterName string) (err error) {
 		return err
 	}
 	klog.Info("Wait cluster to be deleted")
-	return wait.Poll(5*time.Second, 10*time.Minute, func() (bool, error) {
+	return wait.Poll(5*time.Second, 20*time.Minute, func() (bool, error) {
 		cls, err := testTke.TkeClient.PlatformV1().Clusters().Get(context.Background(), clusterName, metav1.GetOptions{})
 		if k8serror.IsNotFound(err) {
 			klog.Info("Cluster was deleted")
@@ -343,10 +343,6 @@ func (testTke *TestTKE) updateNode(cls *platformv1.Cluster, nodeName string, uns
 	}
 
 	return testTke.K8sClient(cls).CoreV1().Nodes().Get(context.Background(), nodeName, metav1.GetOptions{})
-}
-
-func (testTke *TestTKE) TearDown() error {
-	return testTke.provider.TearDown()
 }
 
 func (testTke *TestTKE) CreateInstances(count int64) ([]cloudprovider.Instance, error) {

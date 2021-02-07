@@ -24,7 +24,6 @@ func InitInstaller(provider cloudprovider.Provider) *Installer {
 	if err != nil {
 		panic(fmt.Errorf("create instance failed. %v", err))
 	}
-	time.Sleep(10 * time.Second)
 	return &Installer{node: nodes[0]}
 }
 
@@ -108,7 +107,7 @@ func (installer *Installer) Install(createClusterPara *types.CreateClusterPara) 
 	resp.Body.Close()
 
 	klog.Info("Wait install finish")
-	return wait.Poll(20*time.Second, 2*time.Hour, func() (bool, error) {
+	err = wait.Poll(30*time.Second, 2*time.Hour, func() (bool, error) {
 		progress, err := installer.GetInstallProgress()
 		if err != nil {
 			return false, err
@@ -122,8 +121,7 @@ func (installer *Installer) Install(createClusterPara *types.CreateClusterPara) 
 		case types.StatusSuccess:
 			return true, nil
 		default:
-			klog.Infof("unknown install progress status: %s", progress.Status)
-			klog.Info("Install again")
+			klog.Infof("Install again as we got an unknown install progress status: %s", progress.Status)
 			resp, err = http.Post(url, "application/json", bytes.NewReader(body))
 			if err != nil {
 				return false, fmt.Errorf("post data to install failed. %v", err)
@@ -131,6 +129,10 @@ func (installer *Installer) Install(createClusterPara *types.CreateClusterPara) 
 			return false, nil
 		}
 	})
+	if err == nil {
+		klog.Info("Install finished")
+	}
+	return err
 }
 
 func (installer *Installer) GetInstallProgress() (*types.ClusterProgress, error) {

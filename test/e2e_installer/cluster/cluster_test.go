@@ -25,12 +25,12 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog"
 	"os"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	tke2 "tkestack.io/tke/test/tke"
 	testclient "tkestack.io/tke/test/util/client"
 	"tkestack.io/tke/test/util/cloudprovider/tencent"
+	"tkestack.io/tke/test/util/env"
 )
 
 var (
@@ -52,22 +52,12 @@ var _ = Describe("cluster", func() {
 		nodes, err := provider.CreateInstances(1)
 		Expect(err).Should(BeNil(), "Create instance failed")
 
-		//nodes := []cloudprovider.Instance{}
-		//nodes = append(nodes, cloudprovider.Instance{
-		//	InstanceID: "ins-aokoh8au",
-		//	InternalIP: "172.19.0.118",
-		//	PublicIP:   "43.128.10.94",
-		//	Port:       22,
-		//	Username:   "root",
-		//	Password:   "jyf@1026",
-		//})
 		para := installer.CreateClusterParaTemplate(nodes)
 		err = installer.Install(para)
 		Expect(err).To(BeNil(), "Install failed")
 
 		kubeconfig, err := testclient.GenerateTKEAdminKubeConfig(nodes[0])
 		Expect(err).Should(BeNil(), "Generate tke admin kubeconfig failed")
-		klog.Info(kubeconfig)
 		return []byte(kubeconfig)
 	}, func(data []byte) {
 		tkeClient, err := testclient.GetTKEClient(data)
@@ -75,23 +65,22 @@ var _ = Describe("cluster", func() {
 		testTKE = tke2.Init(tkeClient, provider)
 	})
 
-	//SynchronizedAfterSuite(func() {
-	//	if !env.NeedDelete() {
-	//		return
-	//	}
-	//	Expect(provider.TearDown()).Should(BeNil())
-	//}, func() {})
+	SynchronizedAfterSuite(func() {
+		if env.NeedDelete() {
+			Expect(provider.TearDown()).Should(BeNil())
+		}
+	}, func() {})
 
-	//AfterEach(func() {
-	//	if cls != nil {
-	//		testTKE.DeleteCluster(cls.Name)
-	//	}
-	//})
+	AfterEach(func() {
+		if cls != nil {
+			testTKE.DeleteCluster(cls.Name)
+		}
+	})
 
 	It("Create and Delete Baremetal cluster", func() {
 		cls, err = testTKE.CreateCluster()
 		Expect(err).To(BeNil(), "Create cluster failed")
-		Expect(testTKE.DeleteCluster(cls.Name)).Should(Succeed(), "Delete cluster failed")
+		Expect(testTKE.DeleteCluster(cls.Name)).Should(BeNil(), "Delete cluster failed")
 	})
 
 	It("Import cluster", func() {
@@ -104,7 +93,7 @@ var _ = Describe("cluster", func() {
 		Expect(err).Should(BeNil(), "Get ClusterCredential failed")
 
 		// Delete cluster from the global cluster in order to import it
-		Expect(testTKE.DeleteCluster(oldCls.Name)).Should(Succeed(), "Delete cluster failed")
+		Expect(testTKE.DeleteCluster(oldCls.Name)).Should(BeNil(), "Delete cluster failed")
 
 		// Import cluster
 		cls, err = testTKE.ImportCluster(oldCls.Spec.Machines[0].IP, 6443, credential.CACert, credential.Token)
@@ -144,7 +133,6 @@ var _ = Describe("cluster", func() {
 			VIP:   *vip,
 			VPort: 6443,
 		}
-		klog.Info(cls.String())
 		cls, err = testTKE.CreateClusterInternal(cls)
 		Expect(err).To(BeNil(), "Create cluster failed")
 

@@ -41,6 +41,7 @@ const namespacePrefix = "platform-"
 
 var (
 	t                 = tke.TKE{Namespace: namespacePrefix + util.RandomStr(6)}
+	provider          = tencent.NewTencentProvider()
 	testTKE           *tke2.TestTKE
 	err               error
 	tkeKubeConfigFile string
@@ -53,7 +54,7 @@ var _ = BeforeSuite(func() {
 	restConf, err := t.GetKubeConfig()
 	Expect(err).To(BeNil())
 	tkeClient := tkeclientset.NewForConfigOrDie(restConf)
-	testTKE = tke2.Init(tkeClient, tencent.NewTencentProvider())
+	testTKE = tke2.Init(tkeClient, provider)
 })
 
 var _ = AfterSuite(func() {
@@ -63,10 +64,9 @@ var _ = AfterSuite(func() {
 
 	t.Delete()
 
-	if !env.NeedDelete() {
-		return
+	if env.NeedDelete() {
+		Expect(provider.TearDown()).Should(BeNil())
 	}
-	Expect(testTKE.TearDown()).Should(Succeed())
 })
 
 var _ = Describe("Platform Test", func() {
@@ -95,7 +95,6 @@ var _ = Describe("Platform Test", func() {
 					workerNodes, err := testTKE.CreateInstances(1)
 					Expect(err).To(BeNil())
 					workerNode = workerNodes[0]
-					time.Sleep(10 * time.Second)
 					machine, err = testTKE.AddNode(cls.Name, workerNode)
 					Expect(err).To(BeNil())
 				}
@@ -119,7 +118,7 @@ var _ = Describe("Platform Test", func() {
 						machine, _ = testTKE.TkeClient.PlatformV1().Machines().Get(context.Background(), machine.Name, metav1.GetOptions{})
 					}
 					return err
-				}, 5*time.Second, time.Second).Should(Succeed())
+				}, 5*time.Second, time.Second).Should(BeNil())
 				machine, _ = testTKE.TkeClient.PlatformV1().Machines().Get(context.Background(), machine.Name, metav1.GetOptions{})
 				Expect(machine.Labels).Should(HaveKeyWithValue(labelKey, labelValue))
 			})
@@ -144,14 +143,14 @@ var _ = Describe("Platform Test", func() {
 				Expect(err).Should(BeNil())
 
 				// Drain node
-				Expect(cluster.DrainNode(context.Background(), k8sClient, node)).Should(Succeed())
+				Expect(cluster.DrainNode(context.Background(), k8sClient, node)).Should(BeNil())
 
 				node, _ = k8sClient.CoreV1().Nodes().Get(context.Background(), workerNodeIP, metav1.GetOptions{})
 				Expect(node.Spec.Unschedulable).Should(BeTrue())
 			})
 
 			It("Delete node", func() {
-				Expect(testTKE.DeleteNode(machine.Name)).Should(Succeed())
+				Expect(testTKE.DeleteNode(machine.Name)).Should(BeNil())
 			})
 		})
 
@@ -174,7 +173,7 @@ var _ = Describe("Platform Test", func() {
 						return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
 					}
 					return nil
-				}, 10*time.Minute, 10*time.Second).Should(Succeed())
+				}, 10*time.Minute, 10*time.Second).Should(BeNil())
 			})
 
 			It("IPAM", func() {
@@ -195,7 +194,7 @@ var _ = Describe("Platform Test", func() {
 						return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
 					}
 					return nil
-				}, 10*time.Minute, 10*time.Second).Should(Succeed())
+				}, 10*time.Minute, 10*time.Second).Should(BeNil())
 			})
 
 			It("CronHPA", func() {
@@ -216,12 +215,12 @@ var _ = Describe("Platform Test", func() {
 						return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
 					}
 					return nil
-				}, 10*time.Minute, 10*time.Second).Should(Succeed())
+				}, 10*time.Minute, 10*time.Second).Should(BeNil())
 			})
 		})
 
 		It("Delete Baremetal cluster", func() {
-			Expect(testTKE.DeleteCluster(cls.Name)).Should(Succeed())
+			Expect(testTKE.DeleteCluster(cls.Name)).Should(BeNil())
 		})
 	})
 
@@ -240,7 +239,7 @@ var _ = Describe("Platform Test", func() {
 				Expect(err).Should(BeNil())
 
 				// Delete cluster from the global cluster to be imported
-				Expect(testTKE.DeleteCluster(cls.Name)).Should(Succeed())
+				Expect(testTKE.DeleteCluster(cls.Name)).Should(BeNil())
 			}
 		})
 

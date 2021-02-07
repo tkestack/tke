@@ -104,6 +104,7 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 		klog.Info("InstanceId: ", ins.InstanceID, ", InternalIP: ", ins.InternalIP)
 		p.instanceIds = append(p.instanceIds, ins.InstanceID)
 	}
+	time.Sleep(10 * time.Second)
 
 	return result, nil
 }

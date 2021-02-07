@@ -88,7 +88,6 @@ var _ = Describe("node", func() {
 			BeforeEach(func() {
 				nodes, err := testTKE.CreateInstances(1)
 				Expect(err).To(BeNil(), "Create instance failed")
-				time.Sleep(10 * time.Second)
 				machine, err = testTKE.AddNode(cls.Name, nodes[0])
 				Expect(err).To(BeNil(), "Add node to cluster failed")
 			})
