@@ -4,11 +4,7 @@ on:
   repository_dispatch:
     types: [release]
   schedule:
-    - cron:  '0 18 * * *'
-
-  pull_request:
-    branches:
-      - master
+    - cron:  '30 16 * * *'
 
 env:
   VERSION: ${{ github.sha }}
