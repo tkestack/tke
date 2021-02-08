@@ -197,6 +197,10 @@ func (p *provider) WaitLBReady(lbIds []*string) error {
 }
 
 func (p *provider) DeleteLBs(lbIds []*string) error {
+	klog.Info("Delete LBs: ", common.StringValues(lbIds))
+	if len(lbIds) == 0 {
+		return nil
+	}
 	req := clb.NewDeleteLoadBalancerRequest()
 	req.LoadBalancerIds = lbIds
 	rsp, err := p.clbClient.DeleteLoadBalancer(req)

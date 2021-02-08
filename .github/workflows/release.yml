@@ -6,6 +6,10 @@ on:
   schedule:
     - cron:  '0 18 * * *'
 
+  pull_request:
+    branches:
+      - master
+
 env:
   VERSION: ${{ github.sha }}
 

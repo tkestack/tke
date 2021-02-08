@@ -146,7 +146,7 @@ release:
 ## release-test: test release
 .PHONY: release-test
 release-test:
-	go test -v -timeout=1200m tkestack.io/tke/test/e2e_installer
+	ginkgo -nodes=3 -v test/e2e_installer/cluster
 
 ## help: Show this help info.
 .PHONY: help
