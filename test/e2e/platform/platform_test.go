@@ -150,7 +150,7 @@ var _ = Describe("Platform Test", func() {
 			})
 
 			It("Delete node", func() {
-				Expect(testTKE.DeleteNode(machine.Name)).Should(BeNil())
+				Expect(testTKE.DeleteNode(machine.Name)).Should(BeNil(), "Delete node failed")
 			})
 		})
 
