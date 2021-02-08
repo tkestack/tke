@@ -32,12 +32,12 @@ jobs:
         run: |
           make push IMAGES="tke-platform-api tke-platform-controller" VERSION=${{ github.sha }}
   platform1:
-    name: platform test - 1.18.3
+    name: platform test - 1.19.7
     needs: image
     #    if: contains(toJson(github.event.pull_request.labels.*.name), 'platform')
     runs-on: self-hosted
     env:
-      K8SVERSION: 1.18.3
+      K8SVERSION: 1.19.7
     steps:
       - name: printversion
         env:
@@ -48,6 +48,23 @@ jobs:
         if: contains(env.COMMIT_MSG, 'installer') || contains(env.COMMIT_MSG, 'platform') || contains(env.COMMIT_MSG, 'cluster') || contains(env.COMMIT_MSG, 'gateway') || contains(env.COMMIT_MSG, 'addon') || contains(env.COMMIT_MSG, 'registry')
         run: |
           ginkgo -nodes=2 -timeout 40m -v tkestack.io/tke/test/e2e/platform
+  # platform1:
+  #   name: platform test - 1.18.3
+  #   needs: image
+  #   #    if: contains(toJson(github.event.pull_request.labels.*.name), 'platform')
+  #   runs-on: self-hosted
+  #   env:
+  #     K8SVERSION: 1.18.3
+  #   steps:
+  #     - name: printversion
+  #       env:
+  #         LABELNAME_CONTEXT: ${{ toJson(github.event.pull_request.labels.*.name) }}
+  #       run: |
+  #         echo "$LABELNAME_CONTEXT"
+  #     - name: e2e test
+  #       if: contains(env.COMMIT_MSG, 'installer') || contains(env.COMMIT_MSG, 'platform') || contains(env.COMMIT_MSG, 'cluster') || contains(env.COMMIT_MSG, 'gateway') || contains(env.COMMIT_MSG, 'addon') || contains(env.COMMIT_MSG, 'registry')
+  #       run: |
+  #         go test -timeout 40m -v tkestack.io/tke/test/e2e/platform
   #  platform2:
   #    name: platform test - 1.16.9
   #    needs: image

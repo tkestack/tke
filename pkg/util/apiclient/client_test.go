@@ -39,7 +39,7 @@ func TestPullImageWithPod(t *testing.T) {
 			Containers: []corev1.Container{
 				{
 					Name:  "test",
-					Image: "tkestack/pause:3.1",
+					Image: "tkestack/pause:3.2",
 				},
 			},
 		},
