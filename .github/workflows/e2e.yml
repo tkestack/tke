@@ -47,7 +47,7 @@ jobs:
       - name: e2e test
         if: contains(env.COMMIT_MSG, 'installer') || contains(env.COMMIT_MSG, 'platform') || contains(env.COMMIT_MSG, 'cluster') || contains(env.COMMIT_MSG, 'gateway') || contains(env.COMMIT_MSG, 'addon') || contains(env.COMMIT_MSG, 'registry')
         run: |
-          go test -timeout 40m -v tkestack.io/tke/test/e2e/platform
+          ginkgo -nodes=2 -timeout 40m -v tkestack.io/tke/test/e2e/platform
   #  platform2:
   #    name: platform test - 1.16.9
   #    needs: image
