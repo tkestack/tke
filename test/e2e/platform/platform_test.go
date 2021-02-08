@@ -246,7 +246,7 @@ var _ = Describe("Platform Test", func() {
 		It("Import cluster", func() {
 			// Import cluster
 			importedCluster, err := testTKE.ImportCluster(cls.Spec.Machines[0].IP, 6443, credential.CACert, credential.Token)
-			Expect(err).Should(BeNil())
+			Expect(err).Should(BeNil(), "Import cluster failed")
 			Expect(importedCluster.Name).ShouldNot(Equal(cls.Name))
 			Expect(importedCluster.Status.Phase).Should(Equal(platformv1.ClusterRunning))
 			Expect(importedCluster.Spec.Type).Should(Equal("Imported"))
