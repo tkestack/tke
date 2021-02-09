@@ -4,7 +4,10 @@ on:
   repository_dispatch:
     types: [release]
   schedule:
-    - cron:  '30 16 * * *'
+    - cron:  '00 18 * * *'
+  pull_request:
+    branches:
+      - master
 
 env:
   VERSION: ${{ github.sha }}
@@ -17,79 +20,79 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: azure/docker-login@v1
-        with:
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+#      - uses: azure/docker-login@v1
+#        with:
+#          username: ${{ secrets.REGISTRY_USERNAME }}
+#          password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Build release
-        run: |
-          (
-          cat <<EOF
-          {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>"
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
-
-          make release.build && make release
-
-          (
-          cat <<EOF
-          {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>
-          "
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
+#      - name: Build release
+#        run: |
+#          (
+#          cat <<EOF
+#          {
+#            "msgtype": "markdown",
+#            "markdown": {
+#              "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>"
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#             -H 'Content-Type: application/json' \
+#             -d @-
+#
+#          make release.build && make release
+#
+#          (
+#          cat <<EOF
+#          {
+#            "msgtype": "markdown",
+#            "markdown": {
+#              "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>
+#          "
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#             -H 'Content-Type: application/json' \
+#             -d @-
 
       - name: Test release
         if: ${{ success() }}
         run: |
-          (
-          cat <<EOF
-          {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Start test release.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>
-          "
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
+#          (
+#          cat <<EOF
+#          {
+#            "msgtype": "markdown",
+#            "markdown": {
+#              "content": "<font color=\"info\">${{ github.repository }}: Start test release.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>
+#          "
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#             -H 'Content-Type: application/json' \
+#             -d @-
           make release-test
 
-      - name: Report status
-        if: ${{ always() }}
-        run: |
-          (
-          cat <<EOF
-          {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Build release finished.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>\n
-          >status:  <font color=\"warning\">${{ job.status }}</font>\n
-          >committer: <font color=\"comment\">${{ github.actor }}</font>\n
-          "
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
+#      - name: Report status
+#        if: ${{ always() }}
+#        run: |
+#          (
+#          cat <<EOF
+#          {
+#            "msgtype": "markdown",
+#            "markdown": {
+#              "content": "<font color=\"info\">${{ github.repository }}: Build release finished.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>\n
+#          >status:  <font color=\"warning\">${{ job.status }}</font>\n
+#          >committer: <font color=\"comment\">${{ github.actor }}</font>\n
+#          "
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#             -H 'Content-Type: application/json' \
+#             -d @-
