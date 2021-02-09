@@ -11,7 +11,7 @@ on:
         - master
 
 env:
-  VERSION: 1.5.1
+  VERSION: a1be94da6cf2073f2bf13ed3ec734df6b75e52f2
 
 jobs:
   release:
