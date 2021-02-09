@@ -3,16 +3,12 @@ name: release
 on:
   repository_dispatch:
     types: [release]
-  schedule:
-    - cron:  '* * * * *'
+    schedule:
+      - cron:  '0 18 * * *'
 
-  push:
-    branches:
-      - master
-
-  pull_request:
-    branches:
-      - master
+    pull_request:
+      branches:
+        - master
 
 env:
   VERSION: ${{ github.sha }}
