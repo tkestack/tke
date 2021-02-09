@@ -255,15 +255,15 @@ func (p *provider) CreateListener(lbID *string, port int64) (*string, error) {
 	return rsp.Response.ListenerIds[0], err
 }
 
-func (p *provider) RegisterTargets(lbId, listenerID *string, eniIPs []*string) error {
+func (p *provider) RegisterTargets(lbID, listenerID *string, eniIPs []*string) error {
 	klog.Info("Register targets")
-	listener, err := p.DescribeListeners(lbId)
+	listener, err := p.DescribeListeners(lbID)
 	if err != nil {
 		return err
 	}
 
 	req := clb.NewRegisterTargetsRequest()
-	req.LoadBalancerId = lbId
+	req.LoadBalancerId = lbID
 	req.ListenerId = listenerID
 	req.Targets = []*clb.Target{}
 	for _, eniIP := range eniIPs {
@@ -290,9 +290,9 @@ func (p *provider) RegisterTargets(lbId, listenerID *string, eniIPs []*string) e
 	return err
 }
 
-func (p *provider) DescribeListeners(lbId *string) (*clb.Listener, error) {
+func (p *provider) DescribeListeners(lbID *string) (*clb.Listener, error) {
 	req := clb.NewDescribeListenersRequest()
-	req.LoadBalancerId = lbId
+	req.LoadBalancerId = lbID
 	rsp, err := p.clbClient.DescribeListeners(req)
 	if err != nil {
 		return nil, fmt.Errorf("DescribeListeners failed. %v", err)
