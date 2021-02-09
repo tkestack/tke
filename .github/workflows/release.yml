@@ -26,21 +26,21 @@ jobs:
 #          username: ${{ secrets.REGISTRY_USERNAME }}
 #          password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      - name: Build release
-        run: |
-          (
-          cat <<EOF
-          {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>"
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
+#      - name: Build release
+#        run: |
+#          (
+#          cat <<EOF
+#          {
+#            "msgtype": "markdown",
+#            "markdown": {
+#              "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>"
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#             -H 'Content-Type: application/json' \
+#             -d @-
 
 #          echo $VERSION
 
