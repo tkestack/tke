@@ -1,10 +1,10 @@
 name: release
 
 on:
-  repository_dispatch:
-    types: [release]
-  schedule:
-    - cron:  '00 18 * * *'
+#  repository_dispatch:
+#    types: [release]
+#  schedule:
+#    - cron:  '00 18 * * *'
   pull_request:
     branches:
       - master
