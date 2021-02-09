@@ -126,6 +126,7 @@ var _ = Describe("cluster", func() {
 			ips = append(ips, node.InternalIP)
 		}
 		vip, err := provider.CreateCLB(common.StringPtrs(ips))
+		Expect(err).Should(BeNil(), "Create LB failed")
 
 		// Create cluster with the first prepared node
 		cls = testTKE.ClusterTemplate(nodes[0])

@@ -163,11 +163,11 @@ func (p *provider) CreateCLBs(eniIps []*string, count uint64) ([]*string, error)
 	lbs, err := p.DescribeLBs(rsp.Response.LoadBalancerIds)
 	for _, lb := range lbs {
 		vips = append(vips, lb.LoadBalancerVips...)
-		listenerId, err := p.CreateListener(lb.LoadBalancerId, 6443)
+		listenerID, err := p.CreateListener(lb.LoadBalancerId, 6443)
 		if err != nil {
 			return vips, err
 		}
-		err = p.RegisterTargets(lb.LoadBalancerId, listenerId, eniIps)
+		err = p.RegisterTargets(lb.LoadBalancerId, listenerID, eniIps)
 		if err != nil {
 			return vips, err
 		}
@@ -231,10 +231,10 @@ func (p *provider) DescribeLBs(lbIds []*string) ([]*clb.LoadBalancer, error) {
 	return rsp.Response.LoadBalancerSet, err
 }
 
-func (p *provider) CreateListener(lbId *string, port int64) (*string, error) {
-	klog.Infof("Create listener. lbId: %v; port: %v", *lbId, port)
+func (p *provider) CreateListener(lbID *string, port int64) (*string, error) {
+	klog.Infof("Create listener. lbID: %v; port: %v", *lbID, port)
 	req := clb.NewCreateListenerRequest()
-	req.LoadBalancerId = lbId
+	req.LoadBalancerId = lbID
 	req.Ports = []*int64{common.Int64Ptr(port)}
 	req.Protocol = common.StringPtr("TCP")
 	req.Scheduler = common.StringPtr("WRR")
@@ -255,7 +255,7 @@ func (p *provider) CreateListener(lbId *string, port int64) (*string, error) {
 	return rsp.Response.ListenerIds[0], err
 }
 
-func (p *provider) RegisterTargets(lbId, listenerId *string, eniIps []*string) error {
+func (p *provider) RegisterTargets(lbId, listenerID *string, eniIPs []*string) error {
 	klog.Info("Register targets")
 	listener, err := p.DescribeListeners(lbId)
 	if err != nil {
@@ -264,13 +264,13 @@ func (p *provider) RegisterTargets(lbId, listenerId *string, eniIps []*string) e
 
 	req := clb.NewRegisterTargetsRequest()
 	req.LoadBalancerId = lbId
-	req.ListenerId = listenerId
+	req.ListenerId = listenerID
 	req.Targets = []*clb.Target{}
-	for _, eniIp := range eniIps {
+	for _, eniIP := range eniIPs {
 		req.Targets = append(req.Targets, &clb.Target{
 			Port:   listener.Port,
 			Weight: common.Int64Ptr(10),
-			EniIp:  eniIp,
+			EniIp:  eniIP,
 		})
 	}
 	rsp, err := p.clbClient.RegisterTargets(req)

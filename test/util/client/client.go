@@ -90,8 +90,14 @@ func GenerateTKEAdminKubeConfig(globalClusterNode cloudprovider.Instance) (strin
 	}
 	serviceAccountCmd := "sudo kubectl create serviceaccount k8sadmin -n kube-system"
 	_, err = s.CombinedOutput(serviceAccountCmd)
+	if err != nil {
+		return "", fmt.Errorf("create serviceaccount failed. %v", err)
+	}
 	roleBindingCmd := "sudo kubectl create clusterrolebinding k8sadmin --clusterrole=cluster-admin --serviceaccount=kube-system:k8sadmin"
 	_, err = s.CombinedOutput(roleBindingCmd)
+	if err != nil {
+		return "", fmt.Errorf("create clusterrolebinding failed. %v", err)
+	}
 	tokenCmd := "sudo kubectl -n kube-system describe secret $(sudo kubectl -n kube-system get secret | (grep k8sadmin || echo \"$_\") | awk '{print $1}') | grep token: | awk '{print $2}'"
 	token, err := s.CombinedOutput(tokenCmd)
 	if err != nil {
