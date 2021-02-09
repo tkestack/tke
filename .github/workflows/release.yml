@@ -61,7 +61,7 @@ jobs:
 
       - name: Test release
 #        if: ${{ success() }}
-        run: |
+        run: make release-test
 #          (
 #          cat <<EOF
 #          {
@@ -76,7 +76,6 @@ jobs:
 #          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
 #             -H 'Content-Type: application/json' \
 #             -d @-
-          make release-test
 
 #      - name: Report status
 #        if: ${{ always() }}
