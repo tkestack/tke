@@ -4,7 +4,7 @@ on:
   repository_dispatch:
     types: [release]
     schedule:
-      - cron:  '0 18 * * *'
+      - cron:  '45 11 * * *'
 
     pull_request:
       branches:
