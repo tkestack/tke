@@ -11,7 +11,7 @@ on:
         - master
 
 env:
-  VERSION: ${{ github.sha }}
+  VERSION: 1.5.1
 
 jobs:
   release:
@@ -21,10 +21,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: azure/docker-login@v1
-        with:
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+#      - uses: azure/docker-login@v1
+#        with:
+#          username: ${{ secrets.REGISTRY_USERNAME }}
+#          password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Build release
         run: |
@@ -42,25 +42,25 @@ jobs:
              -H 'Content-Type: application/json' \
              -d @-
 
-          make release.build && make release
+#          echo $VERSION
 
-          (
-          cat <<EOF
-          {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>
-          "
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
+#          (
+#          cat <<EOF
+#          {
+#            "msgtype": "markdown",
+#            "markdown": {
+#              "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>
+#          "
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#             -H 'Content-Type: application/json' \
+#             -d @-
 
       - name: Test release
-        if: ${{ success() }}
+#        if: ${{ success() }}
         run: |
           (
           cat <<EOF
