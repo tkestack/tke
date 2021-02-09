@@ -120,7 +120,7 @@ func (c *Controller) updateCluster(old, obj interface{}) {
 	if !c.needsUpdate(oldCluster, cluster) {
 		return
 	}
-	c.log.Info("Updating cluster", "clusterName", cluster.Name)
+	c.log.Info("Updating cluster", "clusterName", cluster.Name, "Phase", cluster.Status.Phase)
 	c.enqueue(cluster)
 }
 
@@ -247,6 +247,8 @@ func (c *Controller) syncCluster(key string) error {
 		return err
 	}
 
+	c.log.Info("Lister get cluster", "clusterName", cluster.Name, "Phase", cluster.Status.Phase)
+
 	valueCtx := context.WithValue(ctx, KeyLister, &c.lister)
 	return c.reconcile(valueCtx, key, cluster)
 }
@@ -270,7 +272,7 @@ func (c *Controller) reconcile(ctx context.Context, key string, cluster *platfor
 		log.FromContext(ctx).Info("Cluster has been terminated. Attempting to cleanup resources")
 		err = c.deleter.Delete(ctx, key)
 		if err == nil {
-			log.FromContext(ctx).Info("Machine has been successfully deleted")
+			log.FromContext(ctx).Info("Cluster has been successfully deleted")
 		}
 	default:
 		log.FromContext(ctx).Info("unknown cluster phase", "status.phase", cluster.Status.Phase)

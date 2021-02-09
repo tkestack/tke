@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/client-go/rest"
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
@@ -219,7 +220,8 @@ func (d *clusterDeleter) finalizeCluster(ctx context.Context, cluster *platformv
 	}
 
 	cluster = &platformv1.Cluster{}
-	err := d.platformClient.RESTClient().Put().
+	restClient := StubGetPlatformRESTClient(d.platformClient)
+	err := restClient.Put().
 		Resource("clusters").
 		Name(clusterFinalize.Name).
 		SubResource("finalize").
@@ -234,6 +236,11 @@ func (d *clusterDeleter) finalizeCluster(ctx context.Context, cluster *platformv
 		}
 	}
 	return cluster, err
+}
+
+// StubGetPlatformRESTClient stub func for test case
+var StubGetPlatformRESTClient = func(client v1clientset.PlatformV1Interface) rest.Interface {
+	return client.RESTClient()
 }
 
 type deleteResourceFunc func(ctx context.Context, deleter *clusterDeleter, cluster *platformv1.Cluster) error
