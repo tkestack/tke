@@ -62,20 +62,20 @@ jobs:
       - name: Test release
 #        if: ${{ success() }}
         run: |
-          (
-          cat <<EOF
-          {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Start test release.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>
-          "
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
+#          (
+#          cat <<EOF
+#          {
+#            "msgtype": "markdown",
+#            "markdown": {
+#              "content": "<font color=\"info\">${{ github.repository }}: Start test release.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>
+#          "
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#             -H 'Content-Type: application/json' \
+#             -d @-
           make release-test
 
 #      - name: Report status
