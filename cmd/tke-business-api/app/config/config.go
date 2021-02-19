@@ -44,6 +44,7 @@ import (
 	"tkestack.io/tke/pkg/auth/filter"
 	"tkestack.io/tke/pkg/business/apiserver"
 	controllerconfig "tkestack.io/tke/pkg/controller/config"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
@@ -131,7 +132,11 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	if err != nil {
 		return nil, err
 	}
-	clusterInspector := filter.NewClusterInspector(platformClient.PlatformV1(), opts.Authentication.PrivilegedUsername)
+	clusterInspector, err := filter.NewClusterInspector(platformClient.PlatformV1(), opts.Authentication.PrivilegedUsername)
+	if err != nil {
+		log.Errorf("create clusterInspector failed: %+v", err)
+		return nil, err
+	}
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil, nil, []filter.Inspector{clusterInspector})
 
 	cfg := &Config{

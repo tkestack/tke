@@ -37,6 +37,20 @@ import (
 	toolswatch "k8s.io/client-go/tools/watch"
 )
 
+func BuildKubeClient() (*kubernetes.Clientset, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return clientset, nil
+}
+
 // GetClientset return clientset
 func GetClientset(masterEndpoint string, token string, caCert []byte) (*kubernetes.Clientset, error) {
 	restConfig := &rest.Config{
