@@ -20,12 +20,12 @@ package node_test
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
+	"strings"
 	"time"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/apiserver/cluster"
@@ -60,25 +60,27 @@ var _ = Describe("node", func() {
 		kubeconfig, err := testclient.GenerateTKEAdminKubeConfig(nodes[0])
 		Expect(err).Should(BeNil(), "Generate tke admin kubeconfig failed")
 
+		// Prepare a cluster
 		tkeClient, err := testclient.GetTKEClient([]byte(kubeconfig))
 		Expect(err).Should(BeNil(), "Get tke client with admin token failed")
-		testTKE = tke2.Init(tkeClient, provider)
-
-		cls, err = testTKE.CreateCluster()
+		testTKE := tke2.Init(tkeClient, provider)
+		cls, err := testTKE.CreateCluster()
 		Expect(err).To(BeNil(), "Create cluster failed")
 
-		temp := tkeAndCluster{
-			Tke: testTKE,
-			Cls: cls,
-		}
-		data, err := json.Marshal(temp)
-		Expect(err).Should(BeNil())
-		return data
+		return []byte(cls.Name + ";" + kubeconfig)
 	}, func(data []byte) {
-		temp := new(tkeAndCluster)
-		Expect(json.Unmarshal(data, temp)).Should(BeNil())
-		testTKE = temp.Tke
-		cls = temp.Cls
+		temp := strings.Split(string(data), ";")
+
+		tkeClient, err := testclient.GetTKEClient([]byte(temp[1]))
+		Expect(err).Should(BeNil(), "Get tke client with admin token failed")
+		testTKE = tke2.Init(tkeClient, provider)
+		clusters, _ := testTKE.TkeClient.PlatformV1().Clusters().List(context.Background(), metav1.ListOptions{})
+		for _, c := range clusters.Items {
+			if c.Name == temp[0] {
+				cls = &c
+			}
+		}
+		Expect(cls).ShouldNot(BeNil(), "Cluster %v was not found", temp[0])
 	})
 
 	SynchronizedAfterSuite(func() {
@@ -217,8 +219,3 @@ var _ = Describe("node", func() {
 		})
 	})
 })
-
-type tkeAndCluster struct {
-	Tke *tke2.TestTKE
-	Cls *platformv1.Cluster
-}
