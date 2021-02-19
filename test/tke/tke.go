@@ -255,17 +255,18 @@ func (testTke *TestTKE) DeleteCluster(clusterName string) (err error) {
 	}
 	klog.Info("Wait cluster to be deleted")
 	return wait.Poll(5*time.Second, 10*time.Minute, func() (bool, error) {
-		cls, err := testTke.TkeClient.PlatformV1().Clusters().Get(context.Background(), clusterName, metav1.GetOptions{})
-		if k8serror.IsNotFound(err) {
-			klog.Info("Cluster was deleted")
-			return true, nil
-		}
+		clusters, err := testTke.TkeClient.PlatformV1().Clusters().List(context.Background(), metav1.ListOptions{})
 		if err != nil {
 			klog.Error(err)
 			return false, err
 		}
-		klog.Info(cls.Status.Phase)
-		return false, nil
+		for _, cls := range clusters.Items {
+			if cls.Name == clusterName {
+				klog.Info(cls.Status.Phase)
+				return false, nil
+			}
+		}
+		return true, nil
 	})
 }
 

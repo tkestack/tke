@@ -146,7 +146,7 @@ release:
 ## release-test: test release
 .PHONY: release-test
 release-test:
-	ginkgo -nodes=3 -v test/e2e_installer/cluster
+	ginkgo -nodes=3 -v -r test/e2e_installer
 
 ## help: Show this help info.
 .PHONY: help
