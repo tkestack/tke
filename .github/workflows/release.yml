@@ -14,42 +14,63 @@ env:
   VERSION: a1be94da6cf2073f2bf13ed3ec734df6b75e52f2
 
 jobs:
-  release:
-
+  image:
+    name: build tke image
     runs-on: self-hosted
-
     steps:
       - uses: actions/checkout@v2
 
-#      - uses: azure/docker-login@v1
-#        with:
-#          username: ${{ secrets.REGISTRY_USERNAME }}
-#          password: ${{ secrets.REGISTRY_PASSWORD }}
+      #      - uses: azure/docker-login@v1
+      #        with:
+      #          username: ${{ secrets.REGISTRY_USERNAME }}
+      #          password: ${{ secrets.REGISTRY_PASSWORD }}
 
-#      - name: Build release
-#        run: |
+      #      - name: Build release
+      #        run: |
+      #          (
+      #          cat <<EOF
+      #          {
+      #            "msgtype": "markdown",
+      #            "markdown": {
+      #              "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>\n
+      #          >version: <font color=\"comment\">$VERSION</font>"
+      #            }
+      #          }
+      #          EOF
+      #          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+      #             -H 'Content-Type: application/json' \
+      #             -d @-
+
+      #          echo $VERSION
+
+      #          (
+      #          cat <<EOF
+      #          {
+      #            "msgtype": "markdown",
+      #            "markdown": {
+      #              "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>\n
+      #          >version: <font color=\"comment\">$VERSION</font>
+      #          "
+      #            }
+      #          }
+      #          EOF
+      #          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+      #             -H 'Content-Type: application/json' \
+      #             -d @-
+
+  installer:
+    name: installer test
+    needs: image
+    runs-on: self-hosted
+    steps:
+      - name: Test installer
+        run: ginkgo -nodes=2 -v test/e2e_installer/installer
 #          (
 #          cat <<EOF
 #          {
 #            "msgtype": "markdown",
 #            "markdown": {
-#              "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>\n
-#          >version: <font color=\"comment\">$VERSION</font>"
-#            }
-#          }
-#          EOF
-#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-#             -H 'Content-Type: application/json' \
-#             -d @-
-
-#          echo $VERSION
-
-#          (
-#          cat <<EOF
-#          {
-#            "msgtype": "markdown",
-#            "markdown": {
-#              "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>\n
+#              "content": "<font color=\"info\">${{ github.repository }}: Start test release.</font>\n
 #          >version: <font color=\"comment\">$VERSION</font>
 #          "
 #            }
@@ -58,10 +79,34 @@ jobs:
 #          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
 #             -H 'Content-Type: application/json' \
 #             -d @-
-
-      - name: Test release
-#        if: ${{ success() }}
-        run: make release-test
+  cluster:
+    name: cluster test
+    needs: image
+    runs-on: self-hosted
+    steps:
+      - name: Test cluster
+        run: ginkgo -nodes=2 -v test/e2e_installer/cluster
+#          (
+#          cat <<EOF
+#          {
+#            "msgtype": "markdown",
+#            "markdown": {
+#              "content": "<font color=\"info\">${{ github.repository }}: Start test release.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>
+#          "
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#             -H 'Content-Type: application/json' \
+#             -d @-
+  node:
+    name: node test
+    needs: image
+    runs-on: self-hosted
+    steps:
+      - name: Test node
+        run: ginkgo -nodes=2 -v test/e2e_installer/node
 #          (
 #          cat <<EOF
 #          {
@@ -77,8 +122,12 @@ jobs:
 #             -H 'Content-Type: application/json' \
 #             -d @-
 
-#      - name: Report status
-#        if: ${{ always() }}
+#  report:
+#    name: report status
+#    needs: [installer, cluster, node]
+#    runs-on: self-hosted
+#    steps:
+#      - name: report status
 #        run: |
 #          (
 #          cat <<EOF
