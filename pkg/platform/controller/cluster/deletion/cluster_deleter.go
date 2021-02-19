@@ -394,6 +394,10 @@ func deleteClusterProvider(ctx context.Context, deleter *clusterDeleter, cluster
 	if err != nil {
 		return err
 	}
+	// cluster credential is nil, do nothing.
+	if clusterWrapper.ClusterCredential == nil {
+		return nil
+	}
 
 	err = provider.OnDelete(ctx, clusterWrapper)
 	if err != nil {

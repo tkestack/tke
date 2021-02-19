@@ -139,6 +139,10 @@ func (c *Cluster) RESTConfig(config *rest.Config) (*rest.Config, error) {
 		return nil, err
 	}
 
+	if c.ClusterCredential == nil {
+		return nil, fmt.Errorf("cluster credential is nil, get restconfig failed")
+	}
+
 	if c.ClusterCredential.CACert != nil {
 		config.TLSClientConfig.CAData = c.ClusterCredential.CACert
 	} else {
