@@ -14,12 +14,6 @@
 
 ## Main proposal
 
-### 执行流程图
-
-#### Smoke Test
-
-![avatar](../images/smoke-test.png)
-
 ### 如何在CVM执行自动化测试
 
 1. 准备一台CVM（后续操作均在此CVM上）
@@ -54,21 +48,27 @@
 
 ### 如何进行失败用例分析
 
-- Actions下提供详细的自动化用例执行日志
+- Github Actions下提供详细的自动化用例执行日志
 - 登录执行机通过`kubectl`进行分析（需要执行机登录信息及`KUBECONFIG`配置，仅部分人有权限操作）
 - 本地调试（需要本地搭建环境，参考[本地执行自动化测试](#如何在本地执行自动化测试)）
 
 ### 常见问题
 
-- 如何过滤用例：`go test -run <regexp>`
+- 如何过滤用例：`ginkgo -skip=REGEXP -focus=REGEXP` （[The Ginkgo CLI](http://onsi.github.io/ginkgo/#the-ginkgo-cli) ）
 - 用例执行完如何保留CVM：配置`NEED_DELETE`设置为空
 - 用例执行超时CVM是否会删除：不会，需要手动删除
 - 如何手动删除CVM：登录到腾讯云控制台，搜索`CREATE_INSTANCES_PARAM`中配置`InstanceName`的值(`platformtest`)进行过滤删除，也可以通过`所属项目`（`tkeci`）进行过滤删除
-- 是否支持k8s不同版本间并行执行：e2e workflow已支持，但需要有多个Runner作为前提
+- 测试用例是否支持并行执行：支持
 
 ## Smoke Test
 
 每次pr或commit时执行，检查关键功能是否正确，执行时间控制在30分钟内。
+
+### 执行流程图
+
+![avatar](../images/smoke-test.png)
+
+### Smoke Test Cases
 
 用例路径：tke/test/e2e/platform/
 
@@ -179,4 +179,82 @@
 
 每晚定时在release build后执行，验证通过tke-installer安装部署集群及更多组件功能，时间控制在4小时内。
 
-TBD
+### 执行流程图
+
+![avatar](../images/release-test.png)
+
+### Release Test Cases
+
+用例路径：tke/test/e2e-installer/
+
+#### 0. 包括所欲smoke test测试用例
+
+#### 1. tke-installer 最小化安装
+
+目标：验证最小化安装tkestack平台功能正常
+
+步骤：
+
+1. 准备CVM及VIP等相关资源，获取tke-installer安装包
+2. 调用接口创建TKEStack集群，关闭所有组件，等待TKEStack创建成功
+
+期望：
+
+1. 检查TKEStack状态正常，检查TKEStack接口返回正确的参数
+
+
+#### 2. tke-installer 默认安装
+
+目标：验证完整安装tkestack平台功能正常
+
+步骤：
+
+1. 准备CVM及VIP等相关资源，获取tke-installer安装包
+2. 调用接口创建TKEStack集群，等待TKEStack创建成功
+
+期望：
+
+1. 检查TKEStack状态正常，检查TKEStack接口返回正确的参数
+
+
+#### 3. 登录并访问 TKEStack平台
+
+目标：验证登录tkestack平台正常
+
+步骤：
+
+1. 登录TKEStack平台，获取相应token
+2. 使用api 方式获取平台相应信息
+
+期望：
+
+1. 登录TKEStack正常，TKEStack接口返回正确的参数
+2. 使用api 方式访问正常，能够获取正确的信息
+
+#### 4. k8s集群升级
+
+目标：验证k8s集群升级功能正常
+
+步骤：
+
+1. 调用接口升级k8s集群，等待k8s集群升级成功
+
+期望：
+
+1. 检查集群状态正常，检查cluster接口返回正确的参数
+2. 获取集群凭证，通过Kubectl 检查K8s集群工作正常
+
+#### 5. k8s集群扩缩容
+
+目标：验证k8s集群扩缩master节点功能正常
+
+步骤：
+
+1. 调用接口为集群添加master节点，等待节点添加成功
+2. 调用接口为集群移出master节点，等待节点移出成功
+
+期望：
+
+1. 检查集群状态正常，检查cluster接口返回正确的参数
+2. 获取集群凭证，通过Kubectl 检查K8s集群工作正常
+3. 查看master节点数量正确

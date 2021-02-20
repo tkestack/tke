@@ -20,8 +20,10 @@ package installer_test
 
 import (
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"os"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	tke2 "tkestack.io/tke/test/tke"
 	"tkestack.io/tke/test/util/cloudprovider/tencent"
 	"tkestack.io/tke/test/util/env"
@@ -35,34 +37,29 @@ var (
 var _ = Describe("tke-installer", func() {
 
 	AfterEach(func() {
-		if !env.NeedDelete() {
-			return
+		if env.NeedDelete() {
+			Expect(provider.TearDown()).Should(BeNil(), "")
 		}
-		Expect(provider.TearDown()).Should(BeNil(), "")
 	})
 
-	It("最小化安装", func() {
-		installInstaller()
-
-		nodes, err := provider.CreateInstances(1)
-		Expect(err).Should(BeNil(), "Create instance failed")
-
-		para := installer.CreateClusterParaTemplate(nodes)
-		err = installer.Install(para)
-		Expect(err).To(BeNil(), "Install failed")
-	})
-
-	It("默认安装", func() {
-		installInstaller()
-
-		nodes, err := provider.CreateInstances(1)
-		Expect(err).Should(BeNil(), "Create instance failed")
-
-		para := installer.CreateClusterParaTemplate(nodes)
-		// TODO: add more para
-		err = installer.Install(para)
-		Expect(err).To(BeNil(), "Install failed")
-	})
+	DescribeTable("install",
+		func(paraGenerator BuildCreateClusterPara) {
+			installInstaller()
+			para := paraGenerator()
+			Expect(installer.Install(para)).To(BeNil(), "Install failed")
+		},
+		Entry("最小化安装", func() *types.CreateClusterPara {
+			nodes, err := provider.CreateInstances(1)
+			Expect(err).Should(BeNil(), "Create instance failed")
+			return installer.CreateClusterParaTemplate(nodes)
+		}),
+		Entry("默认安装", func() *types.CreateClusterPara {
+			nodes, err := provider.CreateInstances(1)
+			Expect(err).Should(BeNil(), "Create instance failed")
+			para := installer.CreateClusterParaTemplate(nodes)
+			// TODO：customize para
+			return para
+		}))
 })
 
 func installInstaller() {
@@ -71,3 +68,5 @@ func installInstaller() {
 	err := installer.InstallInstaller(os.Getenv("OS"), os.Getenv("ARCH"), os.Getenv("VERSION"))
 	Expect(err).Should(BeNil(), "Install tke-installer failed")
 }
+
+type BuildCreateClusterPara func() *types.CreateClusterPara
