@@ -23,6 +23,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"os"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	tke2 "tkestack.io/tke/test/tke"
 	"tkestack.io/tke/test/util/cloudprovider/tencent"
@@ -57,7 +58,21 @@ var _ = Describe("tke-installer", func() {
 			nodes, err := provider.CreateInstances(1)
 			Expect(err).Should(BeNil(), "Create instance failed")
 			para := installer.CreateClusterParaTemplate(nodes)
-			// TODO：customize para
+			// 业务模块
+			para.Config.Business = &types.Business{}
+			// 监控模块
+			para.Config.Monitor = &types.Monitor{
+				InfluxDBMonitor: &types.InfluxDBMonitor{
+					LocalInfluxDBMonitor: &types.LocalInfluxDBMonitor{},
+				},
+			}
+			// 集群设置: GPU类型: Virtual
+			gpuType := platformv1.GPUVirtual
+			para.Cluster.Spec.Features = platformv1.ClusterFeature{
+				GPUType:             &gpuType,
+				EnableMetricsServer: true,
+			}
+
 			return para
 		}))
 })

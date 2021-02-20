@@ -75,12 +75,8 @@ func (installer *Installer) CreateClusterParaTemplate(nodes []cloudprovider.Inst
 				Domain: "registry.tke.com",
 			},
 		},
-		Business: &types.Business{},
-		Monitor: &types.Monitor{
-			InfluxDBMonitor: &types.InfluxDBMonitor{
-				LocalInfluxDBMonitor: &types.LocalInfluxDBMonitor{},
-			},
-		},
+		Business: nil,
+		Monitor:  nil,
 		Logagent: &types.Logagent{},
 		HA:       nil,
 		Gateway: &types.Gateway{

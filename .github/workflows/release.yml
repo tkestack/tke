@@ -41,7 +41,7 @@ jobs:
       #             -H 'Content-Type: application/json' \
       #             -d @-
 
-      #          echo $VERSION
+      #          make release.build && make release
 
       #          (
       #          cat <<EOF

@@ -266,6 +266,7 @@ func (testTke *TestTKE) DeleteCluster(clusterName string) (err error) {
 				return false, nil
 			}
 		}
+		klog.Info("Cluster was deleted")
 		return true, nil
 	})
 }
