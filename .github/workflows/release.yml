@@ -6,9 +6,9 @@ on:
     schedule:
       - cron:  '0 18 * * *'
 
-  pull_request:
-    branches:
-      - master
+#  pull_request:
+#    branches:
+#      - master
 
 env:
   VERSION: a1be94da6cf2073f2bf13ed3ec734df6b75e52f2
