@@ -176,6 +176,15 @@ func GetClusterFromGroups(groups []string) string {
 	return ""
 }
 
+func IsAnonymous(groups []string) bool {
+	for _, group := range groups {
+		if group == "system:unauthenticated" {
+			return true
+		}
+	}
+	return false
+}
+
 func GroupWithProject(project string) string {
 	return fmt.Sprintf("project:%s", project)
 }
