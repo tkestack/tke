@@ -575,8 +575,6 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
           <React.Fragment>
             <NavMenu.Item>
               <img src="/static/icon/logo.svg" style={{ height: '30px' }} alt="logo" />
-
-              <TkeVersion />
             </NavMenu.Item>
           </React.Fragment>
         }
@@ -742,6 +740,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
             </ul>
           </div>
         </div>
+        <TkeVersion />
       </div>
     );
   }
