@@ -21,7 +21,7 @@ set -o nounset
 set -o pipefail
 
 REGISTRY_PREFIX=${REGISTRY_PREFIX:-"tkestack"}
-PLATFORMS=${PLATFORMS:-"linux_amd64 linux_arm64"}
+PLATFORMS=${PLATFORMS:-"linux_amd64"}
 
 if [ -z ${IMAGE} ]; then
   echo "Please provide IMAGE."
