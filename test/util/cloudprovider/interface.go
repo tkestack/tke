@@ -23,8 +23,10 @@ type Provider interface {
 	CreateInstances(count int64) ([]Instance, error)
 	// DeleteInstances delete instances
 	DeleteInstances(instanceIDs []string) error
-	// DeleteAllInstances delete all instances
-	DeleteAllInstances() error
+	// CreateCLB create a load balancer and return the vip
+	CreateCLB(eniIps []*string) (*string, error)
+	// TearDown clean up all resources
+	TearDown() error
 }
 
 type Instance struct {

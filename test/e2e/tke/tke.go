@@ -99,7 +99,7 @@ func (t *TKE) createNamespace(ctx context.Context) error {
 			Name: t.Namespace,
 		},
 	}
-
+	klog.Info("Create namespace: ", t.Namespace)
 	return apiclient.CreateOrUpdateNamespace(context.Background(), t.client, ns)
 }
 

@@ -21,10 +21,13 @@ package client
 import (
 	"encoding/base64"
 	"fmt"
+	"k8s.io/klog"
 	"log"
 	"os"
 	"os/exec"
 	"time"
+	"tkestack.io/tke/pkg/util/ssh"
+	"tkestack.io/tke/test/util/cloudprovider"
 	"tkestack.io/tke/test/util/env"
 
 	"github.com/pkg/errors"
@@ -65,6 +68,46 @@ func GetTKEClientFromEnv() (tkeclientset.Interface, error) {
 	}
 
 	return GetTKEClient(kubeconfig)
+}
+
+func GetTKEClientWithAdminToken(globalClusterNode cloudprovider.Instance) (tkeclientset.Interface, error) {
+	kubeconfig, err := GenerateTKEAdminKubeConfig(globalClusterNode)
+	if err != nil {
+		return nil, err
+	}
+	return GetTKEClient([]byte(kubeconfig))
+}
+
+func GenerateTKEAdminKubeConfig(globalClusterNode cloudprovider.Instance) (string, error) {
+	// Get admin token
+	s, err := ssh.New(&ssh.Config{
+		User:     globalClusterNode.Username,
+		Password: globalClusterNode.Password,
+		Host:     globalClusterNode.PublicIP,
+		Port:     int(globalClusterNode.Port),
+	})
+	if err != nil {
+		return "", err
+	}
+	serviceAccountCmd := "sudo kubectl create serviceaccount k8sadmin -n kube-system"
+	_, err = s.CombinedOutput(serviceAccountCmd)
+	if err != nil {
+		klog.Info("Create serviceaccount failed. ", err)
+	}
+	roleBindingCmd := "sudo kubectl create clusterrolebinding k8sadmin --clusterrole=cluster-admin --serviceaccount=kube-system:k8sadmin"
+	_, err = s.CombinedOutput(roleBindingCmd)
+	if err != nil {
+		klog.Info("Create clusterrolebinding failed. ", err)
+	}
+	tokenCmd := "sudo kubectl -n kube-system describe secret $(sudo kubectl -n kube-system get secret | (grep k8sadmin || echo \"$_\") | awk '{print $1}') | grep token: | awk '{print $2}'"
+	token, err := s.CombinedOutput(tokenCmd)
+	if err != nil {
+		return "", fmt.Errorf("get admin token failed. %v", err)
+	}
+	// Create kubeconfig based on admin token
+	kubeconfigTemplate := "apiVersion: v1\nkind: Config\nclusters:\n- name: default-cluster\n  cluster:\n    insecure-skip-tls-verify: true\n    server: https://%s:6443\ncontexts:\n- name: default-context\n  context:\n    cluster: default-cluster\n    user: default-user\ncurrent-context: default-context\nusers:\n- name: default-user\n  user:\n    token: %s"
+	kubeconfig := fmt.Sprintf(kubeconfigTemplate, globalClusterNode.PublicIP, string(token))
+	return kubeconfig, err
 }
 
 func GetTKEClient(kubeconfig []byte) (tkeclientset.Interface, error) {

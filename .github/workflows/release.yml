@@ -10,72 +10,127 @@ env:
   VERSION: ${{ github.sha }}
 
 jobs:
-  release:
-
+  image:
+    name: build tke image
     runs-on: self-hosted
-
     steps:
       - uses: actions/checkout@v2
-
       - uses: azure/docker-login@v1
-        with:
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-
+          with:
+            username: ${{ secrets.REGISTRY_USERNAME }}
+            password: ${{ secrets.REGISTRY_PASSWORD }}
       - name: Build release
+          run: |
+            (
+            cat <<EOF
+            {
+              "msgtype": "markdown",
+              "markdown": {
+                "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>\n
+            >version: <font color=\"comment\">$VERSION</font>"
+              }
+            }
+            EOF
+            ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+               -H 'Content-Type: application/json' \
+               -d @-
+
+            make release.build && make release
+
+            (
+            cat <<EOF
+            {
+              "msgtype": "markdown",
+              "markdown": {
+                "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>\n
+            >version: <font color=\"comment\">$VERSION</font>
+            "
+              }
+            }
+            EOF
+            ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+               -H 'Content-Type: application/json' \
+               -d @-
+
+  installer:
+    name: installer test
+    runs-on: self-hosted
+    needs: image
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test installer
         run: |
           (
           cat <<EOF
           {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>"
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
-
-          make release.build && make release
-
-          (
-          cat <<EOF
-          {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>\n
+          "msgtype": "markdown",
+          "markdown": {
+            "content": "<font color=\"info\">${{ github.repository }}: Start test installer.</font>\n
           >version: <font color=\"comment\">$VERSION</font>
           "
             }
           }
           EOF
           ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
+            -H 'Content-Type: application/json' \
+            -d @-
+          ginkgo -nodes=2 -v test/e2e_installer/installer
 
-      - name: Test release
-        if: ${{ success() }}
+  cluster:
+    name: cluster test
+    runs-on: self-hosted
+    needs: image
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test cluster
         run: |
           (
           cat <<EOF
           {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Start test release.</font>\n
+          "msgtype": "markdown",
+          "markdown": {
+            "content": "<font color=\"info\">${{ github.repository }}: Start test cluster.</font>\n
           >version: <font color=\"comment\">$VERSION</font>
           "
             }
           }
           EOF
           ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
-          make release-test
+            -H 'Content-Type: application/json' \
+            -d @-
+          ginkgo -nodes=1 -v test/e2e_installer/cluster
 
-      - name: Report status
-        if: ${{ always() }}
+  node:
+    name: node test
+    runs-on: self-hosted
+    needs: image
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test node
+        run: |
+          (
+          cat <<EOF
+          {
+          "msgtype": "markdown",
+          "markdown": {
+            "content": "<font color=\"info\">${{ github.repository }}: Start test node.</font>\n
+          >version: <font color=\"comment\">$VERSION</font>
+          "
+            }
+          }
+          EOF
+          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+            -H 'Content-Type: application/json' \
+            -d @-
+          ginkgo -nodes=2 -v test/e2e_installer/node
+
+  report-failure:
+    name: report failure
+    runs-on: self-hosted
+    needs: [installer, cluster, node]
+    if: failure()
+    steps:
+      - name: report failure
         run: |
           (
           cat <<EOF
@@ -84,7 +139,32 @@ jobs:
             "markdown": {
               "content": "<font color=\"info\">${{ github.repository }}: Build release finished.</font>\n
           >version: <font color=\"comment\">$VERSION</font>\n
-          >status:  <font color=\"warning\">${{ job.status }}</font>\n
+          >status:  <font color=\"warning\">failure</font>\n
+          >committer: <font color=\"comment\">${{ github.actor }}</font>\n
+          "
+            }
+          }
+          EOF
+          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+             -H 'Content-Type: application/json' \
+             -d @-
+
+  report-success:
+    name: report success
+    runs-on: self-hosted
+    needs: [installer, cluster, node]
+    if: success()
+    steps:
+      - name: report success
+        run: |
+          (
+          cat <<EOF
+          {
+            "msgtype": "markdown",
+            "markdown": {
+              "content": "<font color=\"info\">${{ github.repository }}: Build release finished.</font>\n
+          >version: <font color=\"comment\">$VERSION</font>\n
+          >status:  <font color=\"warning\">success</font>\n
           >committer: <font color=\"comment\">${{ github.actor }}</font>\n
           "
             }
