@@ -27,7 +27,7 @@ PROVIDER_RES_VERSION=v1.19.7-1
 K8S_VERSION=${PROVIDER_RES_VERSION%-*}
 DOCKER_VERSION=19.03.14
 OSS=(linux)
-ARCHS=(amd64)
+ARCHS=(amd64 arm64)
 OUTPUT_DIR=_output
 DST_DIR=$(mktemp -d)
 echo "${DST_DIR}" || exit
