@@ -21,6 +21,7 @@ package env
 import (
 	"os"
 	"path"
+	"strings"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/pkg/spec"
 
@@ -80,8 +81,8 @@ func CreateInstancesParam() string {
 	return os.Getenv(CREATEINSTANCESPARAM)
 }
 
-func NeedDelete() string {
-	return os.Getenv(NEEDDELETE)
+func NeedDelete() bool {
+	return strings.ToLower(os.Getenv(NEEDDELETE)) == "true"
 }
 
 func ProviderResImageVersion() string {
