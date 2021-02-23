@@ -48,7 +48,7 @@ endif
 GIT_COMMIT:=$(shell git rev-parse HEAD)
 
 # The OS must be linux when building docker images
-PLATFORMS ?= linux_amd64
+PLATFORMS ?= linux_amd64 linux_arm64
 # The OS can be linux/windows/darwin when building binaries
 # PLATFORMS ?= darwin_amd64 windows_amd64 linux_amd64 linux_arm64
 
