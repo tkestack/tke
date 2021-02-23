@@ -21,6 +21,7 @@ package installer
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -40,6 +41,7 @@ import (
 	"github.com/segmentio/ksuid"
 	"github.com/thoas/go-funk"
 	"gopkg.in/go-playground/validator.v9"
+	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -322,6 +324,15 @@ func (t *TKE) initSteps() {
 				},
 			}...)
 		}
+		if t.Para.Config.Monitor.ThanosMonitor != nil {
+			t.steps = append(t.steps, []types.Handler{
+				{
+					Name: "Install Thanos",
+					Func: t.installThanos,
+				},
+			}...)
+		}
+
 		t.steps = append(t.steps, []types.Handler{
 			{
 				Name: "Install tke-monitor-api",
@@ -1768,6 +1779,10 @@ func (t *TKE) installTKEPlatformController(ctx context.Context) error {
 				address = address + "&p=" + string(t.Para.Config.Monitor.ESMonitor.Password)
 			}
 			params["MonitorStorageAddresses"] = address
+		} else if t.Para.Config.Monitor.ThanosMonitor != nil {
+			params["MonitorStorageType"] = "thanos"
+			// TODO:2021-02-23 thanos receive node-port service
+			params["MonitorStorageAddresses"] = fmt.Sprintf("http://%s:30902", t.servers[0])
 		}
 	}
 
@@ -1859,6 +1874,51 @@ func (t *TKE) installInfluxDB(ctx context.Context) error {
 	})
 }
 
+func (t *TKE) installThanos(ctx context.Context) error {
+	// TODO:2021-02-23 deploy thanos
+	/*node, err := apiclient.GetNodeByMachineIP(ctx, t.globalClient, t.servers[0])
+	if err != nil {
+		return err
+	}*/
+	bucketConfig := t.Para.Config.Monitor.ThanosMonitor.BucketConfig
+	thanosYamlBytes, err := yaml.Marshal(bucketConfig)
+	if err != nil {
+		return err
+	}
+	thanosYaml := base64.StdEncoding.EncodeToString(thanosYamlBytes)
+	params := map[string]interface{}{
+		"Image":      images.Get().Thanos.FullName(),
+		"ThanosYaml": thanosYaml,
+	}
+	err = apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/thanos/*.yaml", params)
+	if err != nil {
+		return err
+	}
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckStatefulSet(ctx, t.globalClient, t.namespace, "thanos-store")
+		if err != nil || !ok {
+			return false, nil
+		}
+		ok, err = apiclient.CheckStatefulSet(ctx, t.globalClient, t.namespace, "thanos-receive")
+		if err != nil || !ok {
+			return false, nil
+		}
+		ok, err = apiclient.CheckStatefulSet(ctx, t.globalClient, t.namespace, "thanos-compact")
+		if err != nil || !ok {
+			return false, nil
+		}
+		ok, err = apiclient.CheckStatefulSet(ctx, t.globalClient, t.namespace, "thanos-rule")
+		if err != nil || !ok {
+			return false, nil
+		}
+		ok, err = apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "thanos-query")
+		if err != nil || !ok {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
 func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":       t.Config.Replicas,
@@ -1889,6 +1949,10 @@ func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 				// todo
 				options["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.servers[0])
 			}
+		} else if t.Para.Config.Monitor.ThanosMonitor != nil {
+			options["StorageType"] = "thanos"
+			// thanos-query address
+			options["StorageAddresses"] = "http://thanos-query.tke.svc.cluster.local:9090"
 		}
 	}
 
@@ -1949,6 +2013,11 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 				params["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.servers[0])
 				params["MonitorStorageAddresses"] = fmt.Sprintf("http://%s:8086", t.servers[0])
 			}
+		} else if t.Para.Config.Monitor.ThanosMonitor != nil {
+			params["StorageType"] = "thanos"
+			params["MonitorStorageType"] = "thanos"
+			// thanos-query address
+			params["MonitorStorageAddresses"] = "http://thanos-query.tke.svc.cluster.local:9090"
 		}
 	}
 

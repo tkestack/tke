@@ -31,6 +31,7 @@ type Components struct {
 	Registry containerregistry.Image
 	Busybox  containerregistry.Image
 	InfluxDB containerregistry.Image
+	Thanos   containerregistry.Image
 
 	ProviderRes containerregistry.Image
 
@@ -73,6 +74,7 @@ var components = Components{
 	Registry: containerregistry.Image{Name: "registry", Tag: "2.7.1"},
 	Busybox:  containerregistry.Image{Name: "busybox", Tag: "1.31.1"},
 	InfluxDB: containerregistry.Image{Name: "influxdb", Tag: "1.7.9"},
+	Thanos:   containerregistry.Image{Name: "thanos", Tag: "v0.15.0"},
 
 	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.19.7-1"},
 
