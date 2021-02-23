@@ -84,10 +84,9 @@ var _ = Describe("node", func() {
 	})
 
 	SynchronizedAfterSuite(func() {
-		if !env.NeedDelete() {
-			return
+		if env.NeedDelete() {
+			Expect(provider.TearDown()).Should(BeNil())
 		}
-		Expect(provider.TearDown()).Should(BeNil())
 	}, func() {})
 
 	Context("Node", func() {

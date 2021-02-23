@@ -3,15 +3,11 @@ name: release
 on:
   repository_dispatch:
     types: [release]
-    schedule:
-      - cron:  '0 18 * * *'
-
-#  pull_request:
-#    branches:
-#      - master
+  schedule:
+    - cron:  '0 18 * * *'
 
 env:
-  VERSION: a1be94da6cf2073f2bf13ed3ec734df6b75e52f2
+  VERSION: ${{ github.sha }}
 
 jobs:
   image:
@@ -19,44 +15,42 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
+      - uses: azure/docker-login@v1
+          with:
+            username: ${{ secrets.REGISTRY_USERNAME }}
+            password: ${{ secrets.REGISTRY_PASSWORD }}
+      - name: Build release
+          run: |
+            (
+            cat <<EOF
+            {
+              "msgtype": "markdown",
+              "markdown": {
+                "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>\n
+            >version: <font color=\"comment\">$VERSION</font>"
+              }
+            }
+            EOF
+            ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+               -H 'Content-Type: application/json' \
+               -d @-
 
-      #      - uses: azure/docker-login@v1
-      #        with:
-      #          username: ${{ secrets.REGISTRY_USERNAME }}
-      #          password: ${{ secrets.REGISTRY_PASSWORD }}
+            make release.build && make release
 
-      #      - name: Build release
-      #        run: |
-      #          (
-      #          cat <<EOF
-      #          {
-      #            "msgtype": "markdown",
-      #            "markdown": {
-      #              "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>\n
-      #          >version: <font color=\"comment\">$VERSION</font>"
-      #            }
-      #          }
-      #          EOF
-      #          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-      #             -H 'Content-Type: application/json' \
-      #             -d @-
-
-      #          make release.build && make release
-
-      #          (
-      #          cat <<EOF
-      #          {
-      #            "msgtype": "markdown",
-      #            "markdown": {
-      #              "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>\n
-      #          >version: <font color=\"comment\">$VERSION</font>
-      #          "
-      #            }
-      #          }
-      #          EOF
-      #          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-      #             -H 'Content-Type: application/json' \
-      #             -d @-
+            (
+            cat <<EOF
+            {
+              "msgtype": "markdown",
+              "markdown": {
+                "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>\n
+            >version: <font color=\"comment\">$VERSION</font>
+            "
+              }
+            }
+            EOF
+            ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+               -H 'Content-Type: application/json' \
+               -d @-
 
   installer:
     name: installer test
@@ -65,21 +59,23 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Test installer
-        run: ginkgo -nodes=2 -v test/e2e_installer/installer
-  #          (
-  #          cat <<EOF
-  #          {
-  #            "msgtype": "markdown",
-  #            "markdown": {
-  #              "content": "<font color=\"info\">${{ github.repository }}: Start test release.</font>\n
-  #          >version: <font color=\"comment\">$VERSION</font>
-  #          "
-  #            }
-  #          }
-  #          EOF
-  #          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-  #             -H 'Content-Type: application/json' \
-  #             -d @-
+        run: |
+          (
+          cat <<EOF
+          {
+          "msgtype": "markdown",
+          "markdown": {
+            "content": "<font color=\"info\">${{ github.repository }}: Start test installer.</font>\n
+          >version: <font color=\"comment\">$VERSION</font>
+          "
+            }
+          }
+          EOF
+          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+            -H 'Content-Type: application/json' \
+            -d @-
+          ginkgo -nodes=2 -v test/e2e_installer/installer
+
   cluster:
     name: cluster test
     runs-on: self-hosted
@@ -87,21 +83,23 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Test cluster
-        run: ginkgo -nodes=1 -v test/e2e_installer/cluster
-  #          (
-  #          cat <<EOF
-  #          {
-  #            "msgtype": "markdown",
-  #            "markdown": {
-  #              "content": "<font color=\"info\">${{ github.repository }}: Start test release.</font>\n
-  #          >version: <font color=\"comment\">$VERSION</font>
-  #          "
-  #            }
-  #          }
-  #          EOF
-  #          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-  #             -H 'Content-Type: application/json' \
-  #             -d @-
+        run: |
+          (
+          cat <<EOF
+          {
+          "msgtype": "markdown",
+          "markdown": {
+            "content": "<font color=\"info\">${{ github.repository }}: Start test cluster.</font>\n
+          >version: <font color=\"comment\">$VERSION</font>
+          "
+            }
+          }
+          EOF
+          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+            -H 'Content-Type: application/json' \
+            -d @-
+          ginkgo -nodes=1 -v test/e2e_installer/cluster
+
   node:
     name: node test
     runs-on: self-hosted
@@ -109,21 +107,22 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Test node
-        run: ginkgo -nodes=2 -v test/e2e_installer/node
-  #          (
-  #          cat <<EOF
-  #          {
-  #            "msgtype": "markdown",
-  #            "markdown": {
-  #              "content": "<font color=\"info\">${{ github.repository }}: Start test release.</font>\n
-  #          >version: <font color=\"comment\">$VERSION</font>
-  #          "
-  #            }
-  #          }
-  #          EOF
-  #          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-  #             -H 'Content-Type: application/json' \
-  #             -d @-
+        run: |
+          (
+          cat <<EOF
+          {
+          "msgtype": "markdown",
+          "markdown": {
+            "content": "<font color=\"info\">${{ github.repository }}: Start test node.</font>\n
+          >version: <font color=\"comment\">$VERSION</font>
+          "
+            }
+          }
+          EOF
+          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+            -H 'Content-Type: application/json' \
+            -d @-
+          ginkgo -nodes=2 -v test/e2e_installer/node
 
   report-failure:
     name: report failure
