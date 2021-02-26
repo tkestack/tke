@@ -33,8 +33,6 @@ import (
 	tokencache "k8s.io/apiserver/pkg/authentication/token/cache"
 	"k8s.io/apiserver/pkg/authentication/token/tokenfile"
 	tokenunion "k8s.io/apiserver/pkg/authentication/token/union"
-	"k8s.io/apiserver/plugin/pkg/authenticator/password/passwordfile"
-	"k8s.io/apiserver/plugin/pkg/authenticator/request/basicauth"
 	"k8s.io/apiserver/plugin/pkg/authenticator/token/webhook"
 	certutil "k8s.io/client-go/util/cert"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/localtrust"
@@ -159,16 +157,6 @@ func (config Config) New() (authenticator.Request, *spec.SecurityDefinitions, er
 	finalAuthenticator := union.New(authenticators...)
 	finalAuthenticator = group.NewAuthenticatedGroupAdder(finalAuthenticator)
 	return finalAuthenticator, &securityDefinitions, nil
-}
-
-// newAuthenticatorFromBasicAuthFile returns an authenticator.Request or an error
-func newAuthenticatorFromBasicAuthFile(basicAuthFile string) (authenticator.Request, error) {
-	basicAuthenticator, err := passwordfile.NewCSV(basicAuthFile)
-	if err != nil {
-		return nil, err
-	}
-
-	return basicauth.New(basicAuthenticator), nil
 }
 
 // newAuthenticatorFromTokenFile returns an authenticator.Token or an error
