@@ -19,7 +19,7 @@ jobs:
         with:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
-      - name: Build release
+      - name: notify start building release
         run: |
           (
           cat <<EOF
@@ -34,9 +34,11 @@ jobs:
           ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
              -H 'Content-Type: application/json' \
              -d @-
-
-          make release.build && make release
-
+      - name: build release
+        run: make release.build && make release
+      - name: notify build release success
+        if: success()
+        run: |
           (
           cat <<EOF
           {
@@ -51,11 +53,29 @@ jobs:
           ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
              -H 'Content-Type: application/json' \
              -d @-
+      - name: notify build release failure
+        if: failure()
+        run: |
+          (
+          cat <<EOF
+          {
+            "msgtype": "markdown",
+            "markdown": {
+              "content": "<font color=\"warning\">${{ github.repository }}: Build release failure.</font>\n
+          >version: <font color=\"comment\">$VERSION</font>
+          "
+            }
+          }
+          EOF
+          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+             -H 'Content-Type: application/json' \
+             -d @-
 
   installer:
     name: installer test
     runs-on: self-hosted
     needs: image
+    if: success()
     steps:
       - uses: actions/checkout@v2
       - name: Test installer
@@ -80,6 +100,7 @@ jobs:
     name: cluster test
     runs-on: self-hosted
     needs: image
+    if: success()
     steps:
       - uses: actions/checkout@v2
       - name: Test cluster
@@ -104,6 +125,7 @@ jobs:
     name: node test
     runs-on: self-hosted
     needs: image
+    if: success()
     steps:
       - uses: actions/checkout@v2
       - name: Test node
@@ -130,14 +152,14 @@ jobs:
     needs: [installer, cluster, node]
     if: failure()
     steps:
-      - name: report failure
+      - name: notify test release failure
         run: |
           (
           cat <<EOF
           {
             "msgtype": "markdown",
             "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Build release finished.</font>\n
+              "content": "<font color=\"info\">${{ github.repository }}: Test release finished.</font>\n
           >version: <font color=\"comment\">$VERSION</font>\n
           >status:  <font color=\"warning\">failure</font>\n
           >committer: <font color=\"comment\">${{ github.actor }}</font>\n
@@ -155,16 +177,16 @@ jobs:
     needs: [installer, cluster, node]
     if: success()
     steps:
-      - name: report success
+      - name: notify test release success
         run: |
           (
           cat <<EOF
           {
             "msgtype": "markdown",
             "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Build release finished.</font>\n
+              "content": "<font color=\"info\">${{ github.repository }}: Test release finished.</font>\n
           >version: <font color=\"comment\">$VERSION</font>\n
-          >status:  <font color=\"warning\">success</font>\n
+          >status:  <font color=\"info\">success</font>\n
           >committer: <font color=\"comment\">${{ github.actor }}</font>\n
           "
             }
