@@ -110,7 +110,7 @@ func (installer *Installer) Install(createClusterPara *types.CreateClusterPara) 
 		}
 		klog.Info(progress.Status)
 		switch progress.Status {
-		case types.StatusUnknown, types.StatusDoing:
+		case types.StatusUnknown, types.StatusDoing, types.StatusRetrying:
 			return false, nil
 		case types.StatusFailed:
 			return false, fmt.Errorf("install failed:\n%s", progress.Data)
