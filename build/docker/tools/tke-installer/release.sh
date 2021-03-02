@@ -111,7 +111,9 @@ function build::installer() {
     echo "build tke-installer success! OUTPUT => $OUTPUT_DIR/${installer}"
     (cd $OUTPUT_DIR && sha256sum "${installer}" > "${installer}.sha256")
 
+    echo "current builder is ${BUILDER}"
     if [[ "${BUILDER}" == "tke" ]]; then
+      echo "start upload process"
       coscmd upload "${INSTALLER_DIR}/$installer" "$installer"
       coscmd upload "$OUTPUT_DIR/$installer.sha256" "$installer.sha256"
     fi
