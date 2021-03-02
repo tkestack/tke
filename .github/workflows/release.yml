@@ -86,8 +86,8 @@ jobs:
   installer:
     name: installer test
     runs-on: self-hosted
-    needs: image
-    if: success()
+#    needs: image
+#    if: success()
     steps:
       - uses: actions/checkout@v2
         with:
@@ -98,8 +98,8 @@ jobs:
   cluster:
     name: cluster test
     runs-on: self-hosted
-    needs: image
-    if: success()
+#    needs: image
+#    if: success()
     steps:
       - uses: actions/checkout@v2
         with:
