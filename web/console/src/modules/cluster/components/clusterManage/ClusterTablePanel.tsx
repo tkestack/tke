@@ -111,22 +111,25 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
         key: 'monitor',
         header: t('监控'),
         width: '7%',
-        render: x => (
-          <div>
-            <p className="text-overflow m-width">
-              <i
-                className="dosage-icon"
-                style={{ cursor: 'pointer' }}
-                data-monitor
-                data-title={t('查看监控')}
-                onClick={() => {
-                  this._handleMonitor(x);
-                }}
-              />
-              {/* {!x.clusterBMonitor && <span className="alarm-label-tips">{t('未配告警')}</span>} */}
-            </p>
-          </div>
-        )
+        render: x => {
+          const { promethus } = x.spec;
+          return (
+            <div>
+              <p className="text-overflow m-width">
+                <i
+                  className="dosage-icon"
+                  style={{ cursor: promethus ? 'pointer' : 'not-allowed' }}
+                  data-monitor
+                  data-title={promethus ? t('查看监控') : '监控告警组件未开启'}
+                  onClick={() => {
+                    promethus && this._handleMonitor(x);
+                  }}
+                />
+                {/* {!x.clusterBMonitor && <span className="alarm-label-tips">{t('未配告警')}</span>} */}
+              </p>
+            </div>
+          );
+        }
       },
       {
         key: 'status',
