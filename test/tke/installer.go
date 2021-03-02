@@ -75,7 +75,7 @@ func (installer *Installer) CreateClusterParaTemplate(nodes []cloudprovider.Inst
 				Domain: "registry.tke.com",
 			},
 		},
-		Business: nil,
+		Business: &types.Business{},
 		Monitor:  nil,
 		Logagent: &types.Logagent{},
 		HA:       nil,
