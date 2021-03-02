@@ -1,6 +1,9 @@
 name: release
 
 on:
+  pull_request:
+    branches:
+      - master
   workflow_dispatch:
     inputs:
       commit:
@@ -13,71 +16,72 @@ on:
     - cron:  '0 18 * * *'
 
 env:
-  VERSION: ${{ github.sha }}
+  NEED_DELETE: false
+  VERSION: 4c68c7e2cf307b569d71fb31c5408840889dda6d
 
 jobs:
-  image:
-    name: build tke image
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.inputs.commit }}
-      - uses: azure/docker-login@v1
-        with:
-          username: ${{ secrets.REGISTRY_USERNAME }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-      - name: notify start building release
-        run: |
-          (
-          cat <<EOF
-          {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>"
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
-      - name: build release
-        run: make release.build && make release
-      - name: notify build release success
-        if: success()
-        run: |
-          (
-          cat <<EOF
-          {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>
-          "
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
-      - name: notify build release failure
-        if: failure()
-        run: |
-          (
-          cat <<EOF
-          {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"warning\">${{ github.repository }}: Build release failure.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>
-          "
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
+#  image:
+#    name: build tke image
+#    runs-on: self-hosted
+#    steps:
+#      - uses: actions/checkout@v2
+#        with:
+#          ref: ${{ github.event.inputs.commit }}
+#      - uses: azure/docker-login@v1
+#        with:
+#          username: ${{ secrets.REGISTRY_USERNAME }}
+#          password: ${{ secrets.REGISTRY_PASSWORD }}
+#      - name: notify start building release
+#        run: |
+#          (
+#          cat <<EOF
+#          {
+#            "msgtype": "markdown",
+#            "markdown": {
+#              "content": "<font color=\"info\">${{ github.repository }}: Start build release.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>"
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#             -H 'Content-Type: application/json' \
+#             -d @-
+#      - name: build release
+#        run: make release.build && make release
+#      - name: notify build release success
+#        if: success()
+#        run: |
+#          (
+#          cat <<EOF
+#          {
+#            "msgtype": "markdown",
+#            "markdown": {
+#              "content": "<font color=\"info\">${{ github.repository }}: Build release success.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>
+#          "
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#             -H 'Content-Type: application/json' \
+#             -d @-
+#      - name: notify build release failure
+#        if: failure()
+#        run: |
+#          (
+#          cat <<EOF
+#          {
+#            "msgtype": "markdown",
+#            "markdown": {
+#              "content": "<font color=\"warning\">${{ github.repository }}: Build release failure.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>
+#          "
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#             -H 'Content-Type: application/json' \
+#             -d @-
 
   installer:
     name: installer test
@@ -89,22 +93,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.commit }}
       - name: Test installer
-        run: |
-          (
-          cat <<EOF
-          {
-          "msgtype": "markdown",
-          "markdown": {
-            "content": "<font color=\"info\">${{ github.repository }}: Start test installer.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>
-          "
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-            -H 'Content-Type: application/json' \
-            -d @-
-          ginkgo -nodes=2 -v test/e2e_installer/installer
+        run: ginkgo -nodes=2 -v test/e2e_installer/installer
 
   cluster:
     name: cluster test
@@ -116,96 +105,81 @@ jobs:
         with:
           ref: ${{ github.event.inputs.commit }}
       - name: Test cluster
-        run: |
-          (
-          cat <<EOF
-          {
-          "msgtype": "markdown",
-          "markdown": {
-            "content": "<font color=\"info\">${{ github.repository }}: Start test cluster.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>
-          "
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-            -H 'Content-Type: application/json' \
-            -d @-
-          ginkgo -nodes=1 -v test/e2e_installer/cluster
+        run: ginkgo -nodes=1 -v test/e2e_installer/cluster
 
-  node:
-    name: node test
-    runs-on: self-hosted
-    needs: image
-    if: success()
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.inputs.commit }}
-      - name: Test node
-        run: |
-          (
-          cat <<EOF
-          {
-          "msgtype": "markdown",
-          "markdown": {
-            "content": "<font color=\"info\">${{ github.repository }}: Start test node.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>
-          "
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-            -H 'Content-Type: application/json' \
-            -d @-
-          ginkgo -nodes=2 -v test/e2e_installer/node
+#  node:
+#    name: node test
+#    runs-on: self-hosted
+#    needs: image
+#    if: success()
+#    steps:
+#      - uses: actions/checkout@v2
+#        with:
+#          ref: ${{ github.event.inputs.commit }}
+#      - name: Test node
+#        run: |
+#          (
+#          cat <<EOF
+#          {
+#          "msgtype": "markdown",
+#          "markdown": {
+#            "content": "<font color=\"info\">${{ github.repository }}: Start test node.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>
+#          "
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#            -H 'Content-Type: application/json' \
+#            -d @-
+#          ginkgo -nodes=2 -v test/e2e_installer/node
 
-  report-failure:
-    name: report failure
-    runs-on: self-hosted
-    needs: [installer, cluster, node]
-    if: failure()
-    steps:
-      - name: notify test release failure
-        run: |
-          (
-          cat <<EOF
-          {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Test release finished.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>\n
-          >status:  <font color=\"warning\">failure</font>\n
-          >committer: <font color=\"comment\">${{ github.actor }}</font>\n
-          "
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
-
-  report-success:
-    name: report success
-    runs-on: self-hosted
-    needs: [installer, cluster, node]
-    if: success()
-    steps:
-      - name: notify test release success
-        run: |
-          (
-          cat <<EOF
-          {
-            "msgtype": "markdown",
-            "markdown": {
-              "content": "<font color=\"info\">${{ github.repository }}: Test release finished.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>\n
-          >status:  <font color=\"info\">success</font>\n
-          >committer: <font color=\"comment\">${{ github.actor }}</font>\n
-          "
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-             -H 'Content-Type: application/json' \
-             -d @-
+#  report-failure:
+#    name: report failure
+#    runs-on: self-hosted
+#    needs: [installer, cluster, node]
+#    if: failure()
+#    steps:
+#      - name: notify test release failure
+#        run: |
+#          (
+#          cat <<EOF
+#          {
+#            "msgtype": "markdown",
+#            "markdown": {
+#              "content": "<font color=\"info\">${{ github.repository }}: Test release finished.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>\n
+#          >status:  <font color=\"warning\">failure</font>\n
+#          >committer: <font color=\"comment\">${{ github.actor }}</font>\n
+#          "
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#             -H 'Content-Type: application/json' \
+#             -d @-
+#
+#  report-success:
+#    name: report success
+#    runs-on: self-hosted
+#    needs: [installer, cluster, node]
+#    if: success()
+#    steps:
+#      - name: notify test release success
+#        run: |
+#          (
+#          cat <<EOF
+#          {
+#            "msgtype": "markdown",
+#            "markdown": {
+#              "content": "<font color=\"info\">${{ github.repository }}: Test release finished.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>\n
+#          >status:  <font color=\"info\">success</font>\n
+#          >committer: <font color=\"comment\">${{ github.actor }}</font>\n
+#          "
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#             -H 'Content-Type: application/json' \
+#             -d @-
