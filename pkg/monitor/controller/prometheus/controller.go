@@ -1550,7 +1550,7 @@ func createAlertManagerCRD(components images.Components, prometheus *v1.Promethe
 				},
 			},
 			BaseImage: containerregistryutil.GetImagePrefix(alertManagerImagePath),
-			Replicas:  controllerutil.Int32Ptr(3),
+			Replicas:  controllerutil.Int32Ptr(1),
 			SecurityContext: &corev1.PodSecurityContext{
 				FSGroup:      controllerutil.Int64Ptr(2000),
 				RunAsNonRoot: controllerutil.BoolPtr(true),
