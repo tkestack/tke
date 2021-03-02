@@ -1,6 +1,12 @@
 name: release
 
 on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Commit'
+        required: false
+        default: ''
   repository_dispatch:
     types: [release]
   schedule:
@@ -15,6 +21,8 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.commit }}
       - uses: azure/docker-login@v1
         with:
           username: ${{ secrets.REGISTRY_USERNAME }}
@@ -78,6 +86,8 @@ jobs:
     if: success()
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.commit }}
       - name: Test installer
         run: |
           (
@@ -103,6 +113,8 @@ jobs:
     if: success()
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.commit }}
       - name: Test cluster
         run: |
           (
@@ -128,6 +140,8 @@ jobs:
     if: success()
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.commit }}
       - name: Test node
         run: |
           (
