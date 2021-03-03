@@ -102,7 +102,7 @@ var _ = Describe("node", func() {
 
 		AfterEach(func() {
 			if machine != nil {
-				Expect(testTKE.DeleteNode(machine.Name)).Should(Succeed())
+				testTKE.DeleteNode(machine.Name)
 			}
 		})
 
