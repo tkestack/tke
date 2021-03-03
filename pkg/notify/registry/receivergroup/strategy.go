@@ -22,6 +22,8 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -58,7 +60,7 @@ func (Strategy) DefaultGarbageCollectionPolicy(ctx context.Context) rest.Garbage
 
 // PrepareForUpdate is invoked on update before validation to normalize the
 // object.
-func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+func (s *Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	oldReceiverGroup := old.(*notify.ReceiverGroup)
 	receiverGroup, _ := obj.(*notify.ReceiverGroup)
 	_, tenantID := authentication.UsernameAndTenantID(ctx)
@@ -72,6 +74,16 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	if receiverGroup.Name == "" && receiverGroup.GenerateName == "" {
 		receiverGroup.GenerateName = "recvgrp-"
 	}
+	receivers := []string{}
+	for _, receiverName := range receiverGroup.Spec.Receivers {
+		receiver, err := s.notifyClient.Receivers().Get(ctx, receiverName, metav1.GetOptions{})
+		if err != nil && errors.IsNotFound(err) {
+			continue
+		} else {
+			receivers = append(receivers, receiver.Name)
+		}
+	}
+	receiverGroup.Spec.Receivers = receivers
 }
 
 // NamespaceScoped is false for receiverGroups.
