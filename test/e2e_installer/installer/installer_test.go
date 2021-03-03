@@ -27,7 +27,6 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	tke2 "tkestack.io/tke/test/tke"
 	"tkestack.io/tke/test/util/cloudprovider/tencent"
-	"tkestack.io/tke/test/util/env"
 )
 
 var (
@@ -38,7 +37,7 @@ var (
 var _ = Describe("tke-installer", func() {
 
 	AfterEach(func() {
-		if env.NeedDelete() {
+		if !CurrentGinkgoTestDescription().Failed {
 			Expect(provider.TearDown()).Should(BeNil(), "")
 		}
 	})

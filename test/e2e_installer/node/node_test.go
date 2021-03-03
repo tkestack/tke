@@ -101,8 +101,11 @@ var _ = Describe("node", func() {
 		})
 
 		AfterEach(func() {
-			if machine != nil {
-				testTKE.DeleteNode(machine.Name)
+			if !CurrentGinkgoTestDescription().Failed {
+				if machine != nil {
+					testTKE.DeleteNode(machine.Name)
+					machine = nil
+				}
 			}
 		})
 

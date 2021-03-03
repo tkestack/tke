@@ -298,10 +298,14 @@ func (testTke *TestTKE) AddNode(clusterName string, workerNode cloudprovider.Ins
 		}
 		if len(machine.Status.Conditions) > 0 {
 			lastCondition := machine.Status.Conditions[len(machine.Status.Conditions)-1]
-			klog.Info("Phase: ", machine.Status.Phase, ", Type: ", lastCondition.Type, ", message: ", lastCondition.Message)
+			klog.Info("Phase: ", machine.Status.Phase, ", Type: ", lastCondition.Type, ", message: ", lastCondition.Message, ", reason: ", machine.Status.Reason)
 		}
 		return machine.Status.Phase == platformv1.MachineRunning, nil
 	})
+	if err != nil {
+		cls, _ := testTke.TkeClient.PlatformV1().Clusters().Get(context.Background(), clusterName, metav1.GetOptions{})
+		klog.Error(cls.String())
+	}
 	return
 }
 
