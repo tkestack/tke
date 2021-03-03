@@ -93,7 +93,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.commit }}
       - name: Test installer
-        run: env
+        run: env;sleep 60
 
   cluster:
     name: cluster test
@@ -105,7 +105,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.commit }}
       - name: Test cluster
-        run: env
+        run: env;sleep 60
 
   node:
     name: node test
@@ -117,7 +117,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.commit }}
       - name: Test node
-        run: env
+        run: env;sleep 60
 
 #  report-failure:
 #    name: report failure
