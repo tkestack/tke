@@ -58,8 +58,6 @@ var _ = Describe("tke-installer", func() {
 			nodes, err := provider.CreateInstances(1)
 			Expect(err).Should(BeNil(), "Create instance failed")
 			para := installer.CreateClusterParaTemplate(nodes)
-			// 业务模块
-			para.Config.Business = &types.Business{}
 			// 监控模块
 			para.Config.Monitor = &types.Monitor{
 				InfluxDBMonitor: &types.InfluxDBMonitor{

@@ -75,7 +75,7 @@ func (installer *Installer) CreateClusterParaTemplate(nodes []cloudprovider.Inst
 				Domain: "registry.tke.com",
 			},
 		},
-		Business: nil,
+		Business: &types.Business{},
 		Monitor:  nil,
 		Logagent: &types.Logagent{},
 		HA:       nil,
@@ -103,7 +103,7 @@ func (installer *Installer) Install(createClusterPara *types.CreateClusterPara) 
 	resp.Body.Close()
 
 	klog.Info("Wait install finish")
-	err = wait.Poll(30*time.Second, 2*time.Hour, func() (bool, error) {
+	err = wait.Poll(time.Minute, 90*time.Minute, func() (bool, error) {
 		progress, err := installer.GetInstallProgress()
 		if err != nil {
 			return false, err
