@@ -38,7 +38,7 @@ var (
 var _ = Describe("tke-installer", func() {
 
 	AfterEach(func() {
-		if env.NeedDelete() && !CurrentGinkgoTestDescription().Failed {
+		if env.NeedDelete() {
 			Expect(provider.TearDown()).Should(BeNil(), "")
 		}
 	})
