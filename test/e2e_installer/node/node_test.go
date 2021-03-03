@@ -31,6 +31,7 @@ import (
 	"tkestack.io/tke/pkg/platform/apiserver/cluster"
 	tke2 "tkestack.io/tke/test/tke"
 	testclient "tkestack.io/tke/test/util/client"
+	"tkestack.io/tke/test/util/cloudprovider"
 	"tkestack.io/tke/test/util/cloudprovider/tencent"
 )
 
@@ -83,19 +84,20 @@ var _ = Describe("node", func() {
 	})
 
 	SynchronizedAfterSuite(func() {
-		if CurrentGinkgoTestDescription().Failed {
-			return
-		}
-		Expect(provider.TearDown()).Should(BeNil())
+		//if cls != nil {
+		//	testTKE.DeleteCluster(cls.Name)
+		//}
 	}, func() {})
 
 	Context("Node", func() {
+		var node cloudprovider.Instance
 		var machine *platformv1.Machine
 
 		BeforeEach(func() {
 			nodes, err := testTKE.CreateInstances(1)
+			node = nodes[0]
 			Expect(err).To(BeNil(), "Create instance failed")
-			machine, err = testTKE.AddNode(cls.Name, nodes[0])
+			machine, err = testTKE.AddNode(cls.Name, node)
 			Expect(err).To(BeNil(), "Add node to cluster failed")
 		})
 
@@ -105,6 +107,7 @@ var _ = Describe("node", func() {
 					testTKE.DeleteNode(machine.Name)
 					machine = nil
 				}
+				provider.DeleteInstances([]string{node.InstanceID})
 			}
 		})
 
@@ -176,6 +179,7 @@ var _ = Describe("node", func() {
 				}
 				return nil
 			}, 10*time.Minute, 10*time.Second).Should(Succeed())
+			Expect(testTKE.TkeClient.PlatformV1().TappControllers().Delete(context.Background(), tapp.Name, metav1.DeleteOptions{})).Should(BeNil())
 		})
 
 		It("IPAM", func() {
@@ -197,6 +201,7 @@ var _ = Describe("node", func() {
 				}
 				return nil
 			}, 10*time.Minute, 10*time.Second).Should(Succeed())
+			Expect(testTKE.TkeClient.PlatformV1().IPAMs().Delete(context.Background(), ipam.Name, metav1.DeleteOptions{})).Should(BeNil())
 		})
 
 		It("CronHPA", func() {
@@ -218,6 +223,7 @@ var _ = Describe("node", func() {
 				}
 				return nil
 			}, 10*time.Minute, 10*time.Second).Should(Succeed())
+			Expect(testTKE.TkeClient.PlatformV1().CronHPAs().Delete(context.Background(), cronHPA.Name, metav1.DeleteOptions{})).Should(BeNil())
 		})
 	})
 })

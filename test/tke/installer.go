@@ -103,17 +103,15 @@ func (installer *Installer) Install(createClusterPara *types.CreateClusterPara) 
 	resp.Body.Close()
 
 	klog.Info("Wait install finish")
+	var progress *types.ClusterProgress
 	err = wait.Poll(time.Minute, 90*time.Minute, func() (bool, error) {
-		progress, err := installer.GetInstallProgress()
+		progress, err = installer.GetInstallProgress()
 		if err != nil {
 			return false, err
 		}
 		klog.Info(progress.Status)
 		switch progress.Status {
-		case types.StatusUnknown, types.StatusDoing:
-			return false, nil
-		case types.StatusRetrying:
-			klog.Info(progress.Data)
+		case types.StatusUnknown, types.StatusDoing, types.StatusRetrying:
 			return false, nil
 		case types.StatusFailed:
 			return false, fmt.Errorf("install failed:\n%s", progress.Data)
@@ -130,6 +128,8 @@ func (installer *Installer) Install(createClusterPara *types.CreateClusterPara) 
 	})
 	if err == nil {
 		klog.Info("Install finished")
+	} else {
+		klog.Errorf("Install failed. %v", progress.Data)
 	}
 	return err
 }
