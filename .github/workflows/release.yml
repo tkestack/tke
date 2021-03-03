@@ -16,6 +16,7 @@ on:
     - cron:  '0 18 * * *'
 
 env:
+  BUILDER: ${{ secrets.BUILDER }}
   VERSION: 4c68c7e2cf307b569d71fb31c5408840889dda6d
 
 jobs:
