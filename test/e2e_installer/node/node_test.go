@@ -32,7 +32,6 @@ import (
 	tke2 "tkestack.io/tke/test/tke"
 	testclient "tkestack.io/tke/test/util/client"
 	"tkestack.io/tke/test/util/cloudprovider/tencent"
-	"tkestack.io/tke/test/util/env"
 )
 
 var (
@@ -84,7 +83,7 @@ var _ = Describe("node", func() {
 	})
 
 	SynchronizedAfterSuite(func() {
-		if !env.NeedDelete() {
+		if CurrentGinkgoTestDescription().Failed {
 			return
 		}
 		Expect(provider.TearDown()).Should(BeNil())
