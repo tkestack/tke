@@ -163,7 +163,7 @@ jobs:
   report-failure:
     name: report failure
     runs-on: self-hosted
-    needs: [installer, cluster, node]
+    needs: [cluster]
     if: failure()
     steps:
       - name: notify test release failure
