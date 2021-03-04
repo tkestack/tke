@@ -63,9 +63,17 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 		return nil, err
 	}
 	request.InstanceCount = &count
-	response, err := p.cvmClient.RunInstances(request)
+	var response *cvm.RunInstancesResponse
+	for _, insType := range env.InstanceTypes() {
+		request.InstanceType = common.StringPtr(insType)
+		response, err = p.cvmClient.RunInstances(request)
+		if err == nil {
+			break
+		} else {
+			klog.Infof("Create instance of type %v failed. %v", insType, err)
+		}
+	}
 	if err != nil {
-		klog.Error(err)
 		return nil, err
 	}
 
