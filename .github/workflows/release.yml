@@ -188,7 +188,7 @@ jobs:
   report-success:
     name: report success
     runs-on: self-hosted
-    needs: [installer, cluster, node]
+    needs: [cluster]
     if: success()
     steps:
       - name: notify test release success
