@@ -86,7 +86,6 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 			result[i] = cloudprovider.Instance{
 				InstanceID: *one.InstanceId,
 				InternalIP: *one.PrivateIpAddresses[0],
-				PublicIP:   *one.PublicIpAddresses[0],
 				Port:       22,
 				Username:   "root",
 				Password:   env.Password(),
