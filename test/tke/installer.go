@@ -32,7 +32,7 @@ func (installer *Installer) RunCMD(cmd string) (string, error) {
 	s, err := ssh.New(&ssh.Config{
 		User:     installer.node.Username,
 		Password: installer.node.Password,
-		Host:     installer.node.PublicIP,
+		Host:     installer.node.InternalIP,
 		Port:     int(installer.node.Port),
 	})
 	if err != nil {

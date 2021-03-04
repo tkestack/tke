@@ -83,7 +83,7 @@ func GenerateTKEAdminKubeConfig(globalClusterNode cloudprovider.Instance) (strin
 	s, err := ssh.New(&ssh.Config{
 		User:     globalClusterNode.Username,
 		Password: globalClusterNode.Password,
-		Host:     globalClusterNode.PublicIP,
+		Host:     globalClusterNode.InternalIP,
 		Port:     int(globalClusterNode.Port),
 	})
 	if err != nil {
@@ -106,7 +106,7 @@ func GenerateTKEAdminKubeConfig(globalClusterNode cloudprovider.Instance) (strin
 	}
 	// Create kubeconfig based on admin token
 	kubeconfigTemplate := "apiVersion: v1\nkind: Config\nclusters:\n- name: default-cluster\n  cluster:\n    insecure-skip-tls-verify: true\n    server: https://%s:6443\ncontexts:\n- name: default-context\n  context:\n    cluster: default-cluster\n    user: default-user\ncurrent-context: default-context\nusers:\n- name: default-user\n  user:\n    token: %s"
-	kubeconfig := fmt.Sprintf(kubeconfigTemplate, globalClusterNode.PublicIP, string(token))
+	kubeconfig := fmt.Sprintf(kubeconfigTemplate, globalClusterNode.InternalIP, string(token))
 	return kubeconfig, err
 }
 

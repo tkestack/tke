@@ -38,7 +38,7 @@ func RunCmdOnNode(ins cloudprovider.Instance, cmd string) (string, error) {
 	s, err := ssh.New(&ssh.Config{
 		User:     ins.Username,
 		Password: ins.Password,
-		Host:     ins.PublicIP,
+		Host:     ins.InternalIP,
 		Port:     int(ins.Port),
 	})
 	if err != nil {
