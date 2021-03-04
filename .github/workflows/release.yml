@@ -83,29 +83,29 @@ jobs:
 #             -H 'Content-Type: application/json' \
 #             -d @-
 
-#  installer:
-#    name: installer test
-#    runs-on: self-hosted
-##    needs: image
-##    if: success()
-#    steps:
-#      - uses: actions/checkout@v2
-#        with:
-#          ref: ${{ github.event.inputs.commit }}
-#      - name: Test installer
-#        run: ginkgo -nodes=2 -v test/e2e_installer/installer
+  installer:
+    name: installer test
+    runs-on: self-hosted
+#    needs: image
+#    if: success()
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.commit }}
+      - name: Test installer
+        run: ginkgo -nodes=2 -v test/e2e_installer/installer
 
-#  cluster:
-#    name: cluster test
-#    runs-on: self-hosted
-##    needs: image
-##    if: success()
-#    steps:
-#      - uses: actions/checkout@v2
-#        with:
-#          ref: ${{ github.event.inputs.commit }}
-#      - name: Test cluster
-#        run: ginkgo -nodes=1 -v test/e2e_installer/cluster
+  cluster:
+    name: cluster test
+    runs-on: self-hosted
+#    needs: image
+#    if: success()
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.commit }}
+      - name: Test cluster
+        run: ginkgo -nodes=2 -v test/e2e_installer/cluster
 
   node:
     name: node test
@@ -117,7 +117,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.commit }}
       - name: Test node
-        run: ginkgo -nodes=1 -v test/e2e_installer/node
+        run: ginkgo -nodes=2 -v test/e2e_installer/node
 
 #  report-failure:
 #    name: report failure
