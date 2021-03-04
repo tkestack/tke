@@ -60,7 +60,7 @@ func WithAuthentication(handler http.Handler, opts *Options) (http.Handler, erro
 type authentication struct {
 	handler        http.Handler
 	externalScheme string
-	authenticator  authenticator.Password
+	authenticator  authenticator.Request
 }
 
 func (a *authentication) ServeHTTP(w http.ResponseWriter, req *http.Request) {

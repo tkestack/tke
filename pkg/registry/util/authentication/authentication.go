@@ -29,12 +29,8 @@ import (
 // RequestUser according to the basic auth credentials carried in the http
 // request, use the password as an APIKey to call the authentication method,
 // and return the tenantUser.
-func RequestUser(req *http.Request, apiKeyAuthenticator authenticator.Password) (*TenantUser, bool) {
-	username, password, ok := req.BasicAuth()
-	if !ok {
-		return nil, false
-	}
-	res, authOk, err := apiKeyAuthenticator.AuthenticatePassword(req.Context(), username, password)
+func RequestUser(req *http.Request, apiKeyAuthenticator authenticator.Request) (*TenantUser, bool) {
+	res, authOk, err := apiKeyAuthenticator.AuthenticateRequest(req)
 	if err != nil || !authOk || res == nil {
 		return nil, false
 	}
