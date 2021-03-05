@@ -51,17 +51,17 @@ spec:
       port: 10901
       protocol: TCP
       targetPort: 10901
-      nodePort: 30901
+      nodePort: 31139
     - name: http
       port: 10902
       protocol: TCP
       targetPort: 10902
-      nodePort: 30902
+      nodePort: 31140
     - name: remote-write
       port: 19291
       protocol: TCP
       targetPort: 19291
-      nodePort: 30291
+      nodePort: 31141
   selector:
     kubernetes.io/name: thanos-receive
   type: NodePort

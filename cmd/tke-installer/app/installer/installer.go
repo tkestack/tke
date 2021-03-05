@@ -1781,8 +1781,8 @@ func (t *TKE) installTKEPlatformController(ctx context.Context) error {
 			params["MonitorStorageAddresses"] = address
 		} else if t.Para.Config.Monitor.ThanosMonitor != nil {
 			params["MonitorStorageType"] = "thanos"
-			// TODO:2021-02-23 thanos receive node-port service
-			params["MonitorStorageAddresses"] = fmt.Sprintf("http://%s:30902", t.servers[0])
+			// thanos receive remote-write node-port address
+			params["MonitorStorageAddresses"] = fmt.Sprintf("http://%s:31141", t.servers[0])
 		}
 	}
 
