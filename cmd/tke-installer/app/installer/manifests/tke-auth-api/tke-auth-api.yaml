@@ -15,7 +15,7 @@ spec:
     - protocol: TCP
       port: 443
       targetPort: 9451
-      nodePort: {{ .NodePort }}
+      nodePort: { { .NodePort } }
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -25,7 +25,7 @@ metadata:
   name: tke-auth-api
   namespace: tke
 spec:
-  replicas: {{ .Replicas }}
+  replicas: { { .Replicas } }
   selector:
     matchLabels:
       app: tke-auth-api
@@ -36,48 +36,48 @@ spec:
     spec:
       containers:
         - name: tke-auth-api
-          image: {{ .Image }}
+          image: { { .Image } }
           args:
             - -C=/app/conf/tke-auth-api.toml
-{{- if .EnableAudit }}
-            - --audit-policy-file=/app/conf/audit-policy.yaml
-            - --audit-webhook-config-file=/app/conf/audit-api-client-config.yaml
-{{- end }}
-          volumeMounts:
-            - name: certs-volume
-              mountPath: /app/certs
-            - name: tke-auth-api-volume
-              mountPath: /app/conf
-          ports:
-            - containerPort: 9451
-          readinessProbe:
-            httpGet:
-              port: 9451
-              path: /healthz/ping
-              scheme: HTTPS
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              port: 9451
-              path: /healthz
-              scheme: HTTPS
-            initialDelaySeconds: 15
-            periodSeconds: 20
-          resources:
-            limits:
-              cpu: 500m
-              memory: 512Mi
-            requests:
-              cpu: 250m
-              memory: 256Mi
-      volumes:
-        - name: certs-volume
-          configMap:
-            name: certs
-        - name: tke-auth-api-volume
-          configMap:
-            name: tke-auth-api
+  { { - if .EnableAudit } }
+  - --audit-policy-file=/app/conf/audit-policy.yaml
+  - --audit-webhook-config-file=/app/conf/audit-api-client-config.yaml
+    { { - end } }
+volumeMounts:
+  - name: certs-volume
+    mountPath: /app/certs
+  - name: tke-auth-api-volume
+    mountPath: /app/conf
+ports:
+  - containerPort: 9451
+readinessProbe:
+  httpGet:
+    port: 9451
+    path: /healthz/ping
+    scheme: HTTPS
+  initialDelaySeconds: 5
+  periodSeconds: 10
+livenessProbe:
+  httpGet:
+    port: 9451
+    path: /healthz
+    scheme: HTTPS
+  initialDelaySeconds: 15
+  periodSeconds: 20
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+volumes:
+  - name: certs-volume
+    configMap:
+      name: certs
+  - name: tke-auth-api-volume
+    configMap:
+      name: tke-auth-api
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -86,7 +86,8 @@ metadata:
   namespace: tke
 data:
   abac-policy.json: |
-    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"system:*","namespace":"*", "resource":"*","apiGroup":"*", "group": "*", "nonResourcePath":"*"}}
+    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"system:kube-*|system:serviceaccount:kube-system:*","namespace":"*", "resource":"*","apiGroup":"*tkestack.io", "group": "*", "nonResourcePath":"*"}}
+    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"^system:serviceaccount:tke:default$","namespace":"*", "resource":"*","apiGroup":"*", "group": "*", "nonResourcePath":"*"}}
   tke-auth-api.toml: |
     [secure_serving]
     tls_cert_file = "/app/certs/server.crt"
@@ -123,39 +124,39 @@ data:
     init_client_id = "{{ .TenantID }}"
     init_client_secret = "{{ .OIDCClientSecret }}"
     init_client_redirect_uris = [
-{{- range $element := .RedirectHosts}}
-  {{ printf `      "http://%s/callback",` $element}}
-  {{ printf `      "https://%s/callback",` $element}}
-{{- end}}
-    ]
+  { { - range $element := .RedirectHosts } }
+  { { printf `      "http://%s/callback",` $element } }
+  { { printf `      "https://%s/callback",` $element } }
+  { { - end } }
+]
 
-{{- if .EnableAudit }}
-  audit-policy.yaml: |
-    apiVersion: audit.k8s.io/v1
-    kind: Policy
-    omitStages:
-    - "RequestReceived"
-    - "ResponseStarted"
-    rules:
-    - level: None
-      resources:
-      - group: "auth.tkestack.io"
-        resources: ["configmaps", "*/status"]
-    - level: RequestResponse
-      verbs: ["create", "update", "patch", "delete", "deletecollection"]
+  { { - if .EnableAudit } }
+audit-policy.yaml: |
+  apiVersion: audit.k8s.io/v1
+  kind: Policy
+  omitStages:
+  - "RequestReceived"
+  - "ResponseStarted"
+  rules:
+  - level: None
+    resources:
+    - group: "auth.tkestack.io"
+      resources: ["configmaps", "*/status"]
+  - level: RequestResponse
+    verbs: ["create", "update", "patch", "delete", "deletecollection"]
 
-  audit-api-client-config.yaml: |
-    apiVersion: v1
-    kind: Config
-    clusters:
-      - name: tke
-        cluster:
-          insecure-skip-tls-verify: true
-          server: https://tke-audit-api/apis/audit.tkestack.io/v1/events/sink/control-plane
-    current-context: tke
-    contexts:
-      - context:
-          cluster: tke
-        name: tke
+audit-api-client-config.yaml: |
+  apiVersion: v1
+  kind: Config
+  clusters:
+    - name: tke
+      cluster:
+        insecure-skip-tls-verify: true
+        server: https://tke-audit-api/apis/audit.tkestack.io/v1/events/sink/control-plane
+  current-context: tke
+  contexts:
+    - context:
+        cluster: tke
+      name: tke
 
-{{- end }}
+  { { - end } }
