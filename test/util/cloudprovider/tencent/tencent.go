@@ -78,7 +78,8 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 			return false, nil
 		}
 		for _, one := range describeInstancesResponse.Response.InstanceSet {
-			if *one.InstanceState != "RUNNING" {
+			klog.Infof("InstanceId: %v, InternalIP: %v, InstanceState: %v", *one.InstanceId, common.StringValues(one.PrivateIpAddresses), *one.InstanceState)
+			if *one.InstanceState != "RUNNING" || len(one.PrivateIpAddresses) == 0 {
 				return false, nil
 			}
 		}
@@ -100,7 +101,6 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 	}
 
 	for _, ins := range result {
-		klog.Info("InstanceId: ", ins.InstanceID, ", InternalIP: ", ins.InternalIP)
 		p.instanceIds = append(p.instanceIds, ins.InstanceID)
 	}
 	time.Sleep(10 * time.Second)
