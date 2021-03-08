@@ -44,6 +44,7 @@ type Config struct {
 	Gateway     *Gateway     `json:"gateway,omitempty"`
 	Audit       *Audit       `json:"audit,omitempty"`
 	Application *Application `json:"application,omitempty"`
+	Mesh        *Mesh        `json:"mesh,omitempty"`
 	SkipSteps   []string     `json:"skipSteps,omitempty"`
 }
 
@@ -171,6 +172,9 @@ type Application struct {
 type Monitor struct {
 	ESMonitor       *ESMonitor       `json:"es,omitempty"`
 	InfluxDBMonitor *InfluxDBMonitor `json:"influxDB,omitempty"`
+}
+
+type Mesh struct {
 }
 
 type ESMonitor struct {

@@ -116,6 +116,11 @@ func (in *Components) DeepCopyInto(out *Components) {
 		*out = new(Component)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.Mesh != nil {
+		in, out := &in.Mesh, &out.Mesh
+		*out = new(Component)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 

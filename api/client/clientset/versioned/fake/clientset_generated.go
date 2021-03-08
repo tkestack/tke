@@ -35,6 +35,8 @@ import (
 	fakebusinessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1/fake"
 	logagentv1 "tkestack.io/tke/api/client/clientset/versioned/typed/logagent/v1"
 	fakelogagentv1 "tkestack.io/tke/api/client/clientset/versioned/typed/logagent/v1/fake"
+	meshv1 "tkestack.io/tke/api/client/clientset/versioned/typed/mesh/v1"
+	fakemeshv1 "tkestack.io/tke/api/client/clientset/versioned/typed/mesh/v1/fake"
 	monitorv1 "tkestack.io/tke/api/client/clientset/versioned/typed/monitor/v1"
 	fakemonitorv1 "tkestack.io/tke/api/client/clientset/versioned/typed/monitor/v1/fake"
 	notifyv1 "tkestack.io/tke/api/client/clientset/versioned/typed/notify/v1"
@@ -110,6 +112,11 @@ func (c *Clientset) BusinessV1() businessv1.BusinessV1Interface {
 // LogagentV1 retrieves the LogagentV1Client
 func (c *Clientset) LogagentV1() logagentv1.LogagentV1Interface {
 	return &fakelogagentv1.FakeLogagentV1{Fake: &c.Fake}
+}
+
+// MeshV1 retrieves the MeshV1Client
+func (c *Clientset) MeshV1() meshv1.MeshV1Interface {
+	return &fakemeshv1.FakeMeshV1{Fake: &c.Fake}
 }
 
 // MonitorV1 retrieves the MonitorV1Client

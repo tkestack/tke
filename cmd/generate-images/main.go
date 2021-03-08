@@ -18,13 +18,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/pflag"
 	"sort"
 	"strings"
+
+	"github.com/spf13/pflag"
 
 	"github.com/thoas/go-funk"
 	installer "tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	logagent "tkestack.io/tke/pkg/logagent/controller/logagent/images"
+	mesh "tkestack.io/tke/pkg/mesh/controller/meshmanager/images"
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
 	helm "tkestack.io/tke/pkg/platform/controller/addon/helm/images"
 	ipam "tkestack.io/tke/pkg/platform/controller/addon/ipam/images"
@@ -64,6 +66,7 @@ func main() {
 		installer.List,
 		galaxy.List,
 		ipam.List,
+		mesh.List,
 	}
 
 	var result []string

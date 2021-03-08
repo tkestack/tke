@@ -35,6 +35,7 @@ import (
 	business "tkestack.io/tke/api/client/informers/internalversion/business"
 	internalinterfaces "tkestack.io/tke/api/client/informers/internalversion/internalinterfaces"
 	logagent "tkestack.io/tke/api/client/informers/internalversion/logagent"
+	mesh "tkestack.io/tke/api/client/informers/internalversion/mesh"
 	monitor "tkestack.io/tke/api/client/informers/internalversion/monitor"
 	notify "tkestack.io/tke/api/client/informers/internalversion/notify"
 	platform "tkestack.io/tke/api/client/informers/internalversion/platform"
@@ -185,6 +186,7 @@ type SharedInformerFactory interface {
 	Auth() auth.Interface
 	Business() business.Interface
 	Logagent() logagent.Interface
+	Mesh() mesh.Interface
 	Monitor() monitor.Interface
 	Notify() notify.Interface
 	Platform() platform.Interface
@@ -205,6 +207,10 @@ func (f *sharedInformerFactory) Business() business.Interface {
 
 func (f *sharedInformerFactory) Logagent() logagent.Interface {
 	return logagent.New(f, f.namespace, f.tweakListOptions)
+}
+
+func (f *sharedInformerFactory) Mesh() mesh.Interface {
+	return mesh.New(f, f.namespace, f.tweakListOptions)
 }
 
 func (f *sharedInformerFactory) Monitor() monitor.Interface {

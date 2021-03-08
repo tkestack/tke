@@ -35,6 +35,8 @@ import (
 	fakebusinessinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion/fake"
 	logagentinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/logagent/internalversion"
 	fakelogagentinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/logagent/internalversion/fake"
+	meshinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/mesh/internalversion"
+	fakemeshinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/mesh/internalversion/fake"
 	monitorinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/monitor/internalversion"
 	fakemonitorinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/monitor/internalversion/fake"
 	notifyinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/notify/internalversion"
@@ -110,6 +112,11 @@ func (c *Clientset) Business() businessinternalversion.BusinessInterface {
 // Logagent retrieves the LogagentClient
 func (c *Clientset) Logagent() logagentinternalversion.LogagentInterface {
 	return &fakelogagentinternalversion.FakeLogagent{Fake: &c.Fake}
+}
+
+// Mesh retrieves the MeshClient
+func (c *Clientset) Mesh() meshinternalversion.MeshInterface {
+	return &fakemeshinternalversion.FakeMesh{Fake: &c.Fake}
 }
 
 // Monitor retrieves the MonitorClient
