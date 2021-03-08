@@ -84,10 +84,9 @@ var _ = Describe("node", func() {
 	})
 
 	SynchronizedAfterSuite(func() {
-		if !env.NeedDelete() {
-			return
+		if env.NeedDelete() {
+			Expect(provider.TearDown()).Should(BeNil())
 		}
-		Expect(provider.TearDown()).Should(BeNil())
 	}, func() {})
 
 	Context("Node", func() {
@@ -174,6 +173,7 @@ var _ = Describe("node", func() {
 				}
 				return nil
 			}, 10*time.Minute, 10*time.Second).Should(Succeed())
+			Expect(testTKE.TkeClient.PlatformV1().TappControllers().Delete(context.Background(), tapp.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete TappController failed")
 		})
 
 		It("IPAM", func() {
@@ -195,6 +195,7 @@ var _ = Describe("node", func() {
 				}
 				return nil
 			}, 10*time.Minute, 10*time.Second).Should(Succeed())
+			Expect(testTKE.TkeClient.PlatformV1().IPAMs().Delete(context.Background(), ipam.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete IPAM failed")
 		})
 
 		It("CronHPA", func() {
@@ -216,6 +217,7 @@ var _ = Describe("node", func() {
 				}
 				return nil
 			}, 10*time.Minute, 10*time.Second).Should(Succeed())
+			Expect(testTKE.TkeClient.PlatformV1().CronHPAs().Delete(context.Background(), cronHPA.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete CronHPA failed")
 		})
 	})
 })
