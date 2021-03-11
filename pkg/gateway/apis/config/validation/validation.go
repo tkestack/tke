@@ -65,6 +65,10 @@ func ValidateGatewayConfiguration(gc *gatewayconfig.GatewayConfiguration) error 
 		allErrors = append(allErrors, validateComponent(gc.Components.Application, fld.Child("application"))...)
 	}
 
+	if gc.Components.Mesh != nil {
+		allErrors = append(allErrors, validateComponent(gc.Components.Mesh, fld.Child("mesh"))...)
+	}
+
 	return utilerrors.NewAggregate(allErrors)
 }
 

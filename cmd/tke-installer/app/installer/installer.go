@@ -367,6 +367,19 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
+	if t.Para.Config.Mesh != nil {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Install tke-mesh-api",
+				Func: t.installTKEMeshAPI,
+			},
+			{
+				Name: "Install tke-mesh-controller",
+				Func: t.installTKEMeshController,
+			},
+		}...)
+	}
+
 	// others
 
 	// Add more tke component before THIS!!!
@@ -699,8 +712,9 @@ func (t *TKE) setClusterDefault(cluster *platformv1.Cluster, config *types.Confi
 		}
 	}
 	if config.Business != nil {
-		cluster.Spec.Features.AuthzWebhookAddr = &platformv1.AuthzWebhookAddr{Builtin: &platformv1.
-			BuiltinAuthzWebhookAddr{}}
+		cluster.Spec.Features.AuthzWebhookAddr = &platformv1.AuthzWebhookAddr{
+			Builtin: &platformv1.BuiltinAuthzWebhookAddr{},
+		}
 	}
 }
 
@@ -1513,6 +1527,7 @@ func (t *TKE) installTKEGateway(ctx context.Context) error {
 		"EnableLogagent":    t.Para.Config.Logagent != nil,
 		"EnableAudit":       t.auditEnabled(),
 		"EnableApplication": t.Para.Config.Application != nil,
+		"EnableMesh":        t.Para.Config.Mesh != nil,
 	}
 	if t.Para.Config.Registry.TKERegistry != nil {
 		option["RegistryDomainSuffix"] = t.Para.Config.Registry.TKERegistry.Domain
@@ -2111,6 +2126,53 @@ func (t *TKE) installTKEApplicationController(ctx context.Context) error {
 	})
 }
 
+func (t *TKE) installTKEMeshAPI(ctx context.Context) error {
+	options := map[string]interface{}{
+		"Replicas":    t.Config.Replicas,
+		"Image":       images.Get().TKEMeshAPI.FullName(),
+		"EnableAuth":  t.Para.Config.Auth.TKEAuth != nil,
+		"EnableAudit": t.auditEnabled(),
+	}
+	if t.Para.Config.Auth.OIDCAuth != nil {
+		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
+		options["OIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
+		options["UseOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
+	}
+
+	if err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-mesh-api/*.yaml", options); err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-mesh-api")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+func (t *TKE) installTKEMeshController(ctx context.Context) error {
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-mesh-controller/*.yaml",
+		map[string]interface{}{
+			"Replicas":          t.Config.Replicas,
+			"Image":             images.Get().TKEMeshController.FullName(),
+			"RegistryDomain":    t.Para.Config.Registry.Domain(),
+			"RegistryNamespace": t.Para.Config.Registry.Namespace(),
+		})
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-mesh-controller")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
 func (t *TKE) preparePushImagesToTKERegistry(ctx context.Context) error {
 	if !t.docker.Healthz() {
 		t.log.Info("Actively exit in order to reconnect to the docker service")
@@ -2179,6 +2241,9 @@ func (t *TKE) registerAPI(ctx context.Context) error {
 	}
 	if t.Para.Config.Application != nil {
 		svcs = append(svcs, "tke-application-api")
+	}
+	if t.Para.Config.Mesh != nil {
+		svcs = append(svcs, "tke-mesh-api")
 	}
 	for _, one := range svcs {
 		name := strings.TrimSuffix(one[4:], "-api")
