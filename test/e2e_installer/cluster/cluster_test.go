@@ -113,7 +113,8 @@ var _ = Describe("cluster", func() {
 			Expect(err).Should(BeNil(), "Upgrade cluster failed")
 			Expect(cls.Spec.Version).Should(Equal(newVersion), "Cluster version is wrong")
 		},
-		Entry("1.17.13->1.18.3", "1.17.13", "1.18.3"))
+		Entry("1.17.13->1.18.3", "1.17.13", "1.18.3"),
+		Entry("1.18.3->1.19.7", "1.18.3", "1.19.7"))
 
 	It("Cluster scaling", func() {
 		// Prepare two instances
