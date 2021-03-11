@@ -79,17 +79,17 @@ jobs:
 #             -H 'Content-Type: application/json' \
 #             -d @-
 
-  installer:
-    name: installer test
-    runs-on: self-hosted
-    needs: image
-    if: success()
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.inputs.commit }}
-      - name: Test installer
-        run: ginkgo -nodes=2 -v test/e2e_installer/installer
+#  installer:
+#    name: installer test
+#    runs-on: self-hosted
+#    needs: image
+#    if: success()
+#    steps:
+#      - uses: actions/checkout@v2
+#        with:
+#          ref: ${{ github.event.inputs.commit }}
+#      - name: Test installer
+#        run: ginkgo -nodes=2 -v test/e2e_installer/installer
 #          (
 #          cat <<EOF
 #          {
