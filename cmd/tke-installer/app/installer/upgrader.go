@@ -79,12 +79,20 @@ func (t *TKE) upgradeSteps() {
 
 	t.steps = append(t.steps, []types.Handler{
 		{
-			Name: "Update tke-platform-api",
-			Func: t.updateTKEPlatformAPI,
+			Name: "Upgrade tke-platform-api",
+			Func: t.upgradeTKEPlatformAPI,
 		},
 		{
-			Name: "Update tke-platform-controller",
-			Func: t.updateTKEPlatformController,
+			Name: "Upgrade tke-platform-controller",
+			Func: t.upgradeTKEPlatformController,
+		},
+		{
+			Name: "Upgrade tke-monitor-api",
+			Func: t.upgradeTKEMonitorAPI,
+		},
+		{
+			Name: "Upgrade tke-monitor-controller",
+			Func: t.upgradeTKEMonitorController,
 		},
 	}...)
 
@@ -116,7 +124,7 @@ func (t *TKE) upgradeSteps() {
 	}
 }
 
-func (t *TKE) updateTKEPlatformAPI(ctx context.Context) error {
+func (t *TKE) upgradeTKEPlatformAPI(ctx context.Context) error {
 	com := "tke-platform-api"
 	depl, err := t.globalClient.AppsV1().Deployments(t.namespace).Get(ctx, com, metav1.GetOptions{})
 	if err != nil {
@@ -142,7 +150,7 @@ func (t *TKE) updateTKEPlatformAPI(ctx context.Context) error {
 	})
 }
 
-func (t *TKE) updateTKEPlatformController(ctx context.Context) error {
+func (t *TKE) upgradeTKEPlatformController(ctx context.Context) error {
 	com := "tke-platform-controller"
 	depl, err := t.globalClient.AppsV1().Deployments(t.namespace).Get(ctx, com, metav1.GetOptions{})
 	if err != nil {
@@ -175,6 +183,58 @@ func (t *TKE) updateTKEPlatformController(ctx context.Context) error {
 	case result < 0:
 		depl.Spec.Template.Spec.InitContainers[0].Image = images.Get().ProviderRes.FullName()
 	}
+
+	_, err = t.globalClient.AppsV1().Deployments(t.namespace).Update(ctx, depl, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, com)
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+func (t *TKE) upgradeTKEMonitorAPI(ctx context.Context) error {
+	com := "tke-monitor-api"
+	depl, err := t.globalClient.AppsV1().Deployments(t.namespace).Get(ctx, com, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	if len(depl.Spec.Template.Spec.Containers) == 0 {
+		return fmt.Errorf("%s has no containers", com)
+	}
+	depl.Spec.Template.Spec.Containers[0].Image = images.Get().TKEMonitorAPI.FullName()
+
+	_, err = t.globalClient.AppsV1().Deployments(t.namespace).Update(ctx, depl, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, com)
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+func (t *TKE) upgradeTKEMonitorController(ctx context.Context) error {
+	com := "tke-monitor-controller"
+	depl, err := t.globalClient.AppsV1().Deployments(t.namespace).Get(ctx, com, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	if len(depl.Spec.Template.Spec.Containers) == 0 {
+		return fmt.Errorf("%s has no containers", com)
+	}
+	depl.Spec.Template.Spec.Containers[0].Image = images.Get().TKEMonitorController.FullName()
 
 	_, err = t.globalClient.AppsV1().Deployments(t.namespace).Update(ctx, depl, metav1.UpdateOptions{})
 	if err != nil {
