@@ -98,6 +98,14 @@ func (c *Cluster) ClientsetForBootstrap() (kubernetes.Interface, error) {
 	return kubernetes.NewForConfig(config)
 }
 
+func (c *Cluster) PlatformClientsetForBootstrap() (platformversionedclient.PlatformV1Interface, error) {
+	config, err := c.RESTConfigForBootstrap(&rest.Config{})
+	if err != nil {
+		return nil, err
+	}
+	return platformversionedclient.NewForConfig(config)
+}
+
 func (c *Cluster) RESTConfigForBootstrap(config *rest.Config) (*rest.Config, error) {
 	host, err := c.HostForBootstrap()
 	if err != nil {

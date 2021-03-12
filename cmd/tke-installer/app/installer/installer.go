@@ -57,7 +57,7 @@ import (
 	certutil "k8s.io/client-go/util/cert"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
-	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
+	tkeclientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/config"
@@ -107,9 +107,10 @@ type TKE struct {
 
 	docker *docker.Docker
 
-	globalClient kubernetes.Interface
-	servers      []string
-	namespace    string
+	globalClient   kubernetes.Interface
+	platformClient tkeclientset.PlatformV1Interface
+	servers        []string
+	namespace      string
 }
 
 func New(config *config.Config) *TKE {
@@ -1272,6 +1273,11 @@ func (t *TKE) initDataForDeployTKE() error {
 		return err
 	}
 
+	t.platformClient, err = t.Cluster.PlatformClientsetForBootstrap()
+	if err != nil {
+		return err
+	}
+
 	for _, address := range t.Cluster.Status.Addresses {
 		if address.Type == platformv1.AddressReal {
 			t.servers = append(t.servers, address.Host)
@@ -2302,23 +2308,14 @@ func (t *TKE) registerAPI(ctx context.Context) error {
 }
 
 func (t *TKE) importResource(ctx context.Context) error {
-	restConfig, err := t.Cluster.RESTConfigForBootstrap(&rest.Config{Timeout: 120 * time.Second})
-	if err != nil {
-		return err
-	}
-
-	client, err := tkeclientset.NewForConfig(restConfig)
-	if err != nil {
-		return err
-	}
-
+	var err error
 	// ensure api ready
 	err = wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		_, err = client.PlatformV1().Clusters().List(ctx, metav1.ListOptions{})
+		_, err = t.platformClient.Clusters().List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return false, nil
 		}
-		_, err = client.PlatformV1().ClusterCredentials().List(ctx, metav1.ListOptions{})
+		_, err = t.platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return false, nil
 		}
@@ -2328,26 +2325,26 @@ func (t *TKE) importResource(ctx context.Context) error {
 		return err
 	}
 
-	_, err = client.PlatformV1().ClusterCredentials().Get(ctx, t.Cluster.ClusterCredential.Name, metav1.GetOptions{})
+	_, err = t.platformClient.ClusterCredentials().Get(ctx, t.Cluster.ClusterCredential.Name, metav1.GetOptions{})
 	if err == nil {
-		err := client.PlatformV1().ClusterCredentials().Delete(ctx, t.Cluster.ClusterCredential.Name, metav1.DeleteOptions{})
+		err := t.platformClient.ClusterCredentials().Delete(ctx, t.Cluster.ClusterCredential.Name, metav1.DeleteOptions{})
 		if err != nil {
 			return err
 		}
 	}
-	_, err = client.PlatformV1().ClusterCredentials().Create(ctx, t.Cluster.ClusterCredential, metav1.CreateOptions{})
+	_, err = t.platformClient.ClusterCredentials().Create(ctx, t.Cluster.ClusterCredential, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
 
-	_, err = client.PlatformV1().Clusters().Get(ctx, t.Cluster.Name, metav1.GetOptions{})
+	_, err = t.platformClient.Clusters().Get(ctx, t.Cluster.Name, metav1.GetOptions{})
 	if err == nil {
-		err := client.PlatformV1().Clusters().Delete(ctx, t.Cluster.Name, metav1.DeleteOptions{})
+		err := t.platformClient.Clusters().Delete(ctx, t.Cluster.Name, metav1.DeleteOptions{})
 		if err != nil {
 			return err
 		}
 	}
-	_, err = client.PlatformV1().Clusters().Create(ctx, t.Cluster.Cluster, metav1.CreateOptions{})
+	_, err = t.platformClient.Clusters().Create(ctx, t.Cluster.Cluster, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}

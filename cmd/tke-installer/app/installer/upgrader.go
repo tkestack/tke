@@ -35,6 +35,8 @@ import (
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
+	cronhpaimage "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
+	tappimage "tkestack.io/tke/pkg/platform/controller/addon/tappcontroller/images"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/platform/util"
 	configv1 "tkestack.io/tke/pkg/registry/apis/config/v1"
@@ -90,6 +92,17 @@ func (t *TKE) upgradeSteps() {
 		{
 			Name: "Patch platform versions in cluster info",
 			Func: t.patchPlatformVersion,
+		},
+	}...)
+
+	t.steps = append(t.steps, []types.Handler{
+		{
+			Name: "Upgrade TAPP",
+			Func: t.upgradeTAPP,
+		},
+		{
+			Name: "Upgrade CronHPA",
+			Func: t.upgradeCronHPA,
 		},
 	}...)
 
@@ -152,14 +165,14 @@ func (t *TKE) updateTKEPlatformController(ctx context.Context) error {
 	result := version.Compare(tkeVersion, spec.TKEVersion)
 
 	switch {
-	case result < 0:
+	case result > 0:
 		return errors.Errorf("can't upgrade, platform's version %s is higher than installer's version %s", tkeVersion, spec.TKEVersion)
 	case result == 0:
 		if len(k8sValidVersions) == len(spec.K8sVersions) {
 			return errors.Errorf("can't upgrade, platform's version %s is equal to installer's version %s, please prepare your custom upgrade images before upgrade", tkeVersion, spec.TKEVersion)
 		}
 		depl.Spec.Template.Spec.InitContainers[0].Image = containerregistry.GetImagePrefix(images.Get().ProviderRes.Name + ":" + k8sValidVersions[len(k8sValidVersions)-1])
-	case result > 0:
+	case result < 0:
 		depl.Spec.Template.Spec.InitContainers[0].Image = images.Get().ProviderRes.FullName()
 	}
 
@@ -193,11 +206,11 @@ func (t *TKE) prepareForUpgrade(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	platformClient, err := platformv1.NewForConfig(config)
+	t.platformClient, err = platformv1.NewForConfig(config)
 	if err != nil {
 		return err
 	}
-	t.Cluster, err = typesv1.GetClusterByName(ctx, platformClient, "global")
+	t.Cluster, err = typesv1.GetClusterByName(ctx, t.platformClient, "global")
 	if err != nil {
 		return err
 	}
@@ -256,5 +269,43 @@ func (t *TKE) loginRegistry(ctx context.Context) error {
 		}
 		return err
 	}
+	return nil
+}
+
+func (t *TKE) upgradeTAPP(ctx context.Context) error {
+	t.log.Infof("start to upgrade TAPPControllers, TAPPControllers latest version is %s", tappimage.LatestVersion)
+	tapps, err := t.platformClient.TappControllers().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	for _, tapp := range tapps.Items {
+		t.log.Infof("upgrade %s from %s to %s", tapp.Name, tapp.Spec.Version, tappimage.LatestVersion)
+		tapp.Spec.Version = tappimage.LatestVersion
+		_, err = t.platformClient.TappControllers().Update(ctx, &tapp, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+	}
+	t.log.Infof("end TAPPControllers upgrade process")
+
+	return nil
+}
+
+func (t *TKE) upgradeCronHPA(ctx context.Context) error {
+	t.log.Infof("start to upgrade CronHPAs, CronHPAs latest version is %s", cronhpaimage.LatestVersion)
+	cronhpas, err := t.platformClient.CronHPAs().List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	for _, cronhpa := range cronhpas.Items {
+		t.log.Infof("upgrade %s from %s to %s", cronhpa.Name, cronhpa.Spec.Version, cronhpaimage.LatestVersion)
+		cronhpa.Spec.Version = cronhpaimage.LatestVersion
+		_, err = t.platformClient.CronHPAs().Update(ctx, &cronhpa, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+	}
+	t.log.Infof("end CronHPAs upgrade process")
+
 	return nil
 }
