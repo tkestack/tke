@@ -28,7 +28,7 @@ import (
 
 const (
 	// LatestVersion is latest version of addon.
-	LatestVersion = "v1.0.0"
+	LatestVersion = "v1.0.1"
 )
 
 type Components struct {
@@ -48,7 +48,7 @@ func (c Components) Get(name string) *containerregistry.Image {
 
 var versionMap = map[string]Components{
 	LatestVersion: {
-		CronHPA: containerregistry.Image{Name: "cron-hpa-controller", Tag: "v1.0.0"},
+		CronHPA: containerregistry.Image{Name: "cron-hpa-controller", Tag: LatestVersion},
 	},
 }
 

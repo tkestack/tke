@@ -1,0 +1,584 @@
+---
+apiVersion: v1
+data:
+  thanos.yaml: {{ .ThanosYaml }}
+kind: Secret
+metadata:
+  name: thanos-objectstorage
+  namespace: tke
+type: Opaque
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: database-write-hashring
+    app.kubernetes.io/instance: thanos-receive
+    app.kubernetes.io/name: thanos-receive
+    app.kubernetes.io/version: v0.15.0
+  name: thanos-receive
+  namespace: tke
+spec:
+  clusterIP: None
+  ports:
+    - name: grpc
+      port: 10901
+      targetPort: 10901
+    - name: http
+      port: 10902
+      targetPort: 10902
+    - name: remote-write
+      port: 19291
+      targetPort: 19291
+  selector:
+    app.kubernetes.io/component: database-write-hashring
+    app.kubernetes.io/instance: thanos-receive
+    app.kubernetes.io/name: thanos-receive
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    kubernetes.io/cluster-service: "true"
+    kubernetes.io/name: thanos-receive-nodeport
+  name: thanos-receive-nodeport
+  namespace: kube-system
+spec:
+  ports:
+    - name: grpc
+      port: 10901
+      protocol: TCP
+      targetPort: 10901
+      nodePort: 31139
+    - name: http
+      port: 10902
+      protocol: TCP
+      targetPort: 10902
+      nodePort: 31140
+    - name: remote-write
+      port: 19291
+      protocol: TCP
+      targetPort: 19291
+      nodePort: 31141
+  selector:
+    kubernetes.io/name: thanos-receive
+  type: NodePort
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thanos-receive-hashrings
+  namespace: tke
+data:
+  thanos-receive-hashrings.json: |
+    [
+      {
+        "hashring": "soft-tenants",
+        "endpoints":
+        [
+          "thanos-receive-0.thanos-receive.thanos.svc.cluster.local:10901"
+        ]
+      }
+    ]
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app.kubernetes.io/component: database-write-hashring
+    app.kubernetes.io/instance: thanos-receive
+    app.kubernetes.io/name: thanos-receive
+    app.kubernetes.io/version: v0.15.0
+  name: thanos-receive
+  namespace: tke
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: database-write-hashring
+      app.kubernetes.io/instance: thanos-receive
+      app.kubernetes.io/name: thanos-receive
+  serviceName: thanos-receive
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: database-write-hashring
+        app.kubernetes.io/instance: thanos-receive
+        app.kubernetes.io/name: thanos-receive
+        app.kubernetes.io/version: v0.15.0
+    spec:
+      containers:
+        - args:
+            - receive
+            - --grpc-address=0.0.0.0:10901
+            - --http-address=0.0.0.0:10902
+            - --remote-write.address=0.0.0.0:19291
+            - --receive.replication-factor=3
+            - --objstore.config=$(OBJSTORE_CONFIG)
+            - --tsdb.path=/var/thanos/receive
+            - --tsdb.retention=12h
+            - --label=receive_replica="$(NAME)"
+            - --label=receive="true"
+            - --receive.hashrings-file=/etc/thanos/thanos-receive-hashrings.json
+            - --receive.local-endpoint=$(NAME).thanos-receive.$(NAMESPACE).svc.cluster.local:10901
+          env:
+            - name: NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OBJSTORE_CONFIG
+              valueFrom:
+                secretKeyRef:
+                  key: thanos.yaml
+                  name: thanos-objectstorage
+          image: {{ .Image }}
+          livenessProbe:
+            failureThreshold: 8
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 30
+          name: thanos-receive
+          ports:
+            - containerPort: 10901
+              name: grpc
+            - containerPort: 10902
+              name: http
+            - containerPort: 19291
+              name: remote-write
+          readinessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /-/ready
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 5
+          terminationMessagePolicy: FallbackToLogsOnError
+          volumeMounts:
+            - mountPath: /var/thanos/receive
+              name: data
+              readOnly: false
+            - mountPath: /etc/thanos/thanos-receive-hashrings.json
+              name: thanos-receive-hashrings
+              subPath: thanos-receive-hashrings.json
+      terminationGracePeriodSeconds: 120
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: thanos-receive-hashrings
+          name: thanos-receive-hashrings
+        - name: data
+          hostPath:
+            path: /data/thanos-receive
+            type: DirectoryOrCreate
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: object-store-gateway
+    app.kubernetes.io/instance: thanos-store
+    app.kubernetes.io/name: thanos-store
+    app.kubernetes.io/version: v0.15.0
+  name: thanos-store
+  namespace: tke
+spec:
+  clusterIP: None
+  ports:
+    - name: grpc
+      port: 10901
+      targetPort: 10901
+    - name: http
+      port: 10902
+      targetPort: 10902
+  selector:
+    app.kubernetes.io/component: object-store-gateway
+    app.kubernetes.io/instance: thanos-store
+    app.kubernetes.io/name: thanos-store
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app.kubernetes.io/component: object-store-gateway
+    app.kubernetes.io/instance: thanos-store
+    app.kubernetes.io/name: thanos-store
+    app.kubernetes.io/version: v0.15.0
+  name: thanos-store
+  namespace: tke
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: object-store-gateway
+      app.kubernetes.io/instance: thanos-store
+      app.kubernetes.io/name: thanos-store
+  serviceName: thanos-store
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: object-store-gateway
+        app.kubernetes.io/instance: thanos-store
+        app.kubernetes.io/name: thanos-store
+        app.kubernetes.io/version: v0.15.0
+    spec:
+      containers:
+        - args:
+            - store
+            - --data-dir=/var/thanos/store
+            - --grpc-address=0.0.0.0:10901
+            - --http-address=0.0.0.0:10902
+            - --objstore.config=$(OBJSTORE_CONFIG)
+          env:
+            - name: OBJSTORE_CONFIG
+              valueFrom:
+                secretKeyRef:
+                  key: thanos.yaml
+                  name: thanos-objectstorage
+          image: {{ .Image }}
+          livenessProbe:
+            failureThreshold: 8
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 30
+          name: thanos-store
+          ports:
+            - containerPort: 10901
+              name: grpc
+            - containerPort: 10902
+              name: http
+          readinessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /-/ready
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 5
+          terminationMessagePolicy: FallbackToLogsOnError
+          volumeMounts:
+            - mountPath: /var/thanos/store
+              name: data
+              readOnly: false
+      terminationGracePeriodSeconds: 120
+      volumes:
+        - name: data
+          hostPath:
+            path: /data/thanos-store
+            type: DirectoryOrCreate
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: database-compactor
+    app.kubernetes.io/instance: thanos-compact
+    app.kubernetes.io/name: thanos-compact
+    app.kubernetes.io/version: v0.15.0
+  name: thanos-compact
+  namespace: tke
+spec:
+  ports:
+    - name: http
+      port: 10902
+      targetPort: http
+  selector:
+    app.kubernetes.io/component: database-compactor
+    app.kubernetes.io/instance: thanos-compact
+    app.kubernetes.io/name: thanos-compact
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app.kubernetes.io/component: database-compactor
+    app.kubernetes.io/instance: thanos-compact
+    app.kubernetes.io/name: thanos-compact
+    app.kubernetes.io/version: v0.15.0
+  name: thanos-compact
+  namespace: tke
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: database-compactor
+      app.kubernetes.io/instance: thanos-compact
+      app.kubernetes.io/name: thanos-compact
+  serviceName: thanos-compact
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: database-compactor
+        app.kubernetes.io/instance: thanos-compact
+        app.kubernetes.io/name: thanos-compact
+        app.kubernetes.io/version: v0.15.0
+    spec:
+      containers:
+        - args:
+            - compact
+            - --wait
+            - --objstore.config=$(OBJSTORE_CONFIG)
+            - --data-dir=/var/thanos/compact
+            - --debug.accept-malformed-index
+            - --log.level=info
+            - --retention.resolution-raw=90d
+            - --retention.resolution-5m=180d
+            - --retention.resolution-1h=360d
+          env:
+            - name: OBJSTORE_CONFIG
+              valueFrom:
+                secretKeyRef:
+                  key: thanos.yaml
+                  name: thanos-objectstorage
+          image: {{ .Image }}
+          livenessProbe:
+            failureThreshold: 4
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 30
+          name: thanos-compact
+          ports:
+            - containerPort: 10902
+              name: http
+          readinessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /-/ready
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 5
+          terminationMessagePolicy: FallbackToLogsOnError
+          volumeMounts:
+            - mountPath: /var/thanos/compact
+              name: data
+              readOnly: false
+      terminationGracePeriodSeconds: 120
+      volumes:
+        - name: data
+          hostPath:
+            path: /data/thanos-compact
+            type: DirectoryOrCreate
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: query-layer
+    app.kubernetes.io/instance: thanos-query
+    app.kubernetes.io/name: thanos-query
+    app.kubernetes.io/version: v0.15.0
+  name: thanos-query
+  namespace: tke
+spec:
+  ports:
+    - name: grpc
+      port: 10901
+      targetPort: grpc
+    - name: http
+      port: 9090
+      targetPort: http
+  selector:
+    app.kubernetes.io/component: query-layer
+    app.kubernetes.io/instance: thanos-query
+    app.kubernetes.io/name: thanos-query
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: query-layer
+    app.kubernetes.io/instance: thanos-query
+    app.kubernetes.io/name: thanos-query
+    app.kubernetes.io/version: v0.15.0
+  name: thanos-query
+  namespace: tke
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: query-layer
+      app.kubernetes.io/instance: thanos-query
+      app.kubernetes.io/name: thanos-query
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: query-layer
+        app.kubernetes.io/instance: thanos-query
+        app.kubernetes.io/name: thanos-query
+        app.kubernetes.io/version: v0.15.0
+    spec:
+      containers:
+        - args:
+            - query
+            - --grpc-address=0.0.0.0:10901
+            - --http-address=0.0.0.0:9090
+            - --query.replica-label=prometheus_replica
+            - --query.replica-label=rule_replica
+            - --query.replica-label=receive_replica
+            - --store=dnssrv+_grpc._tcp.thanos-receive.tke.svc.cluster.local
+            - --store=dnssrv+_grpc._tcp.thanos-rule.tke.svc.cluster.local
+            - --store=dnssrv+_grpc._tcp.thanos-store.tke.svc.cluster.local
+          image: {{ .Image }}
+          livenessProbe:
+            failureThreshold: 4
+            httpGet:
+              path: /-/healthy
+              port: 9090
+              scheme: HTTP
+            periodSeconds: 30
+          name: thanos-query
+          ports:
+            - containerPort: 10901
+              name: grpc
+            - containerPort: 9090
+              name: http
+          readinessProbe:
+            failureThreshold: 20
+            httpGet:
+              path: /-/ready
+              port: 9090
+              scheme: HTTP
+            periodSeconds: 5
+          terminationMessagePolicy: FallbackToLogsOnError
+      terminationGracePeriodSeconds: 120
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: rule-evaluation-engine
+    app.kubernetes.io/instance: thanos-rule
+    app.kubernetes.io/name: thanos-rule
+    app.kubernetes.io/version: v0.15.0
+  name: thanos-rule
+  namespace: tke
+spec:
+  clusterIP: None
+  ports:
+    - name: grpc
+      port: 10901
+      targetPort: grpc
+    - name: http
+      port: 10902
+      targetPort: http
+  selector:
+    app.kubernetes.io/component: rule-evaluation-engine
+    app.kubernetes.io/instance: thanos-rule
+    app.kubernetes.io/name: thanos-rule
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app.kubernetes.io/component: rule-evaluation-engine
+    app.kubernetes.io/instance: thanos-rule
+    app.kubernetes.io/name: thanos-rule
+    app.kubernetes.io/version: v0.15.0
+  name: thanos-rule
+  namespace: tke
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: rule-evaluation-engine
+      app.kubernetes.io/instance: thanos-rule
+      app.kubernetes.io/name: thanos-rule
+  serviceName: thanos-rule
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: rule-evaluation-engine
+        app.kubernetes.io/instance: thanos-rule
+        app.kubernetes.io/name: thanos-rule
+        app.kubernetes.io/version: v0.15.0
+    spec:
+      containers:
+        - args:
+            - rule
+            - --grpc-address=0.0.0.0:10901
+            - --http-address=0.0.0.0:10902
+            - --objstore.config=$(OBJSTORE_CONFIG)
+            - --data-dir=/var/thanos/rule
+            - --rule-file=/etc/thanos/rules/*rules.yaml
+            - --label=rule_replica="$(NAME)"
+            - --alert.label-drop="rule_replica"
+            - --query=dnssrv+_http._tcp.thanos-query.tke.svc.cluster.local
+          env:
+            - name: NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OBJSTORE_CONFIG
+              valueFrom:
+                secretKeyRef:
+                  key: thanos.yaml
+                  name: thanos-objectstorage
+          image: {{ .Image }}
+          livenessProbe:
+            failureThreshold: 24
+            httpGet:
+              path: /-/healthy
+              port: 10902
+              scheme: HTTP
+            periodSeconds: 5
+          name: thanos-rule
+          ports:
+            - containerPort: 10901
+              name: grpc
+            - containerPort: 10902
+              name: http
+          readinessProbe:
+            failureThreshold: 18
+            httpGet:
+              path: /-/ready
+              port: 10902
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          terminationMessagePolicy: FallbackToLogsOnError
+          volumeMounts:
+            - mountPath: /var/thanos/rule
+              name: data
+              readOnly: false
+            - name: thanos-rules
+              mountPath: /etc/thanos/rules
+      volumes:
+        - name: thanos-rules
+          configMap:
+            name: thanos-rules
+        - name: data
+          hostPath:
+            path: /data/thanos-rule
+            type: DirectoryOrCreate
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: thanos-rules
+  labels:
+    app: thanos-rules
+  namespace: tke
+data: {}

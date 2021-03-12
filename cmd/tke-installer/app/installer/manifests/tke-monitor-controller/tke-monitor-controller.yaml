@@ -171,3 +171,8 @@ data:
             username: {{ .StorageUsername }}
             password: {{ .StoragePassword }}
 {{- end }}
+{{- if eq .StorageType "thanos" }}
+      thanos:
+        servers:
+          - address: {{ .StorageAddress }}
+{{- end }}
