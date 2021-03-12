@@ -170,8 +170,18 @@ type Application struct {
 }
 
 type Monitor struct {
+	ThanosMonitor   *ThanosMonitor   `json:"thanos,omitempty"`
 	ESMonitor       *ESMonitor       `json:"es,omitempty"`
 	InfluxDBMonitor *InfluxDBMonitor `json:"influxDB,omitempty"`
+}
+
+type ThanosMonitor struct {
+	BucketConfig *ThanosBucketConfig `json:"bucketConfig"`
+}
+
+type ThanosBucketConfig struct {
+	Type   string      `json:"type"`
+	Config interface{} `json:"config"`
 }
 
 type Mesh struct {
