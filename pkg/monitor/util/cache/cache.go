@@ -64,7 +64,9 @@ const (
 	ControllerManager Component = "controller-manager"
 	Etcd              Component = "etcd-0"
 
-	EtcdPrefix = "etcd-"
+	SchedulerPrefix         = "kube-scheduler-"
+	ControllerManagerPrefix = "kube-controller-manager-"
+	EtcdPrefix              = "etcd-"
 
 	FirstLoad    = int32(1)
 	NotFirstLoad = int32(0)
@@ -192,6 +194,7 @@ func (c *cacher) getClusters(ctx context.Context) {
 				calResourceRate(resourceCounter)
 				health := &util.ComponentHealth{}
 				c.getComponentStatuses(ctx, clusterID, clientSet, health)
+				log.Infof("cluster: %v's components' health: %+v", clusterID, health)
 				syncMap.Store(clusterID, map[string]interface{}{
 					ClusterClientSet:   clientSet,
 					WorkloadCounter:    workloadCounter,
@@ -389,9 +392,18 @@ func (c *cacher) getDaemonSets(ctx context.Context, clusterID string, clientSet 
 	return count
 }
 
-func isReady(node *corev1.Node) bool {
+func nodeIsReady(node *corev1.Node) bool {
 	for _, one := range node.Status.Conditions {
 		if one.Type == corev1.NodeReady && one.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
+}
+
+func podIsReady(pod *corev1.Pod) bool {
+	for _, one := range pod.Status.Conditions {
+		if one.Type == corev1.PodReady && one.Status == corev1.ConditionTrue {
 			return true
 		}
 	}
@@ -416,6 +428,46 @@ func isHealthy(component *corev1.ComponentStatus) bool {
 	return false
 }
 
+func allPodsAreReady(pods []corev1.Pod) bool {
+	if len(pods) == 0 {
+		return false
+	}
+	for _, pod := range pods {
+		if !podIsReady(&pod) {
+			log.Infof("pod: %+v in %v is not ready", pod.GetName(), pod.GetNamespace())
+			return false
+		}
+	}
+	return true
+}
+
+func checkComponentsHealthFromPods(ctx context.Context, clientSet *kubernetes.Clientset) (
+	*util.ComponentHealth, error) {
+	podList, err := clientSet.CoreV1().Pods("kube-system").List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	schedulerPods := make([]corev1.Pod, 0)
+	controllerManagerPods := make([]corev1.Pod, 0)
+	etcdPods := make([]corev1.Pod, 0)
+	for _, pod := range podList.Items {
+		switch {
+		case strings.HasPrefix(pod.GetName(), SchedulerPrefix):
+			schedulerPods = append(schedulerPods, pod)
+		case strings.HasPrefix(pod.GetName(), ControllerManagerPrefix):
+			controllerManagerPods = append(controllerManagerPods, pod)
+		case strings.HasPrefix(pod.GetName(), EtcdPrefix):
+			etcdPods = append(etcdPods, pod)
+		}
+	}
+	health := &util.ComponentHealth{
+		Scheduler:         allPodsAreReady(schedulerPods),
+		ControllerManager: allPodsAreReady(controllerManagerPods),
+		Etcd:              allPodsAreReady(etcdPods),
+	}
+	return health, nil
+}
+
 func (c *cacher) getComponentStatuses(ctx context.Context, clusterID string, clientSet *kubernetes.Clientset,
 	health *util.ComponentHealth) {
 	if componentStatuses, err := clientSet.CoreV1().ComponentStatuses().List(ctx, metav1.ListOptions{}); err == nil {
@@ -427,8 +479,11 @@ func (c *cacher) getComponentStatuses(ctx context.Context, clusterID string, cli
 				health.Etcd = health.Etcd && isHealthy(&cs)
 			}
 		}
-	} else if !errors.IsNotFound(err) {
-		log.Error("Query componentStatuses failed", log.Any("clusterID", clusterID), log.Err(err))
+	}
+	if !health.AllHealthy() {
+		if val, err := checkComponentsHealthFromPods(ctx, clientSet); err == nil {
+			*health = *val
+		}
 	}
 }
 
@@ -493,7 +548,7 @@ func (c *cacher) getNodes(ctx context.Context, clusterID string,
 	if nodes, err := clientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{}); err == nil {
 		counter.NodeTotal = len(nodes.Items)
 		for i, node := range nodes.Items {
-			if !isReady(&nodes.Items[i]) {
+			if !nodeIsReady(&nodes.Items[i]) {
 				counter.NodeAbnormal++
 				if node.Status.Allocatable != nil && node.Status.Allocatable.Cpu() != nil {
 					cpuNotReadyAllocatableInc = float64(node.Status.Allocatable.Cpu().MilliValue()) / float64(1000)

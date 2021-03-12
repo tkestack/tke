@@ -137,3 +137,7 @@ type ComponentHealth struct {
 	ControllerManager bool
 	Etcd              bool
 }
+
+func (ch *ComponentHealth) AllHealthy() bool {
+	return ch.Scheduler && ch.ControllerManager && ch.Etcd
+}
