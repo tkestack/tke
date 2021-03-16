@@ -1,6 +1,7 @@
 import { ModelTypeEnum, RuleTypeEnum, ValidateSchema, ValidatorStatusEnum } from '@tencent/ff-validator';
 import { Validation } from '../../common/models';
 import { UserInfo } from '../models';
+import validatorjs from 'validator';
 
 import { t } from '@tencent/tea-app/lib/i18n';
 
@@ -34,13 +35,18 @@ export const ChartGroupValidateSchema: ValidateSchema = {
         {
           type: RuleTypeEnum.custom,
           customFunc: (value, store, extraStore): Validation => {
-            let type = extraStore[0] ? extraStore[0].type : '';
             let status = ValidatorStatusEnum.Init,
               message = '';
+
             if (store.spec.type === 'Imported') {
               if (value !== '') {
-                status = ValidatorStatusEnum.Success;
-                message = t('');
+                if (validatorjs.isURL(value)) {
+                  status = ValidatorStatusEnum.Success;
+                  message = t('');
+                } else {
+                  status = ValidatorStatusEnum.Failed;
+                  message = t('仓库地址格式不正确');
+                }
               } else {
                 status = ValidatorStatusEnum.Failed;
                 message = t('仓库类型为导入时，仓库地址不能为空');

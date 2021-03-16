@@ -29,7 +29,7 @@ export function ClusterUpdate({ route, actions }: RootProps) {
 
   async function perform(values) {
     await updateCluster({ ...values, clusterName: clusterId });
-    actions.cluster.applyPolling();
+    // actions.cluster.applyPolling();
     goBack();
   }
 

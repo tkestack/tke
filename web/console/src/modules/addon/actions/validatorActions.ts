@@ -19,7 +19,7 @@ export const validatorActions = {
       message = t('Elasticsearch地址不能为空');
     } else if (!hostReg.test(address) && !domainReg.test(address)) {
       status = 2;
-      message = t('Elasticsearch地址格式不正确，{{scheme}}://{{addr}}:{{port}}');
+      message = t('Elasticsearch地址格式不正确');
     } else {
       status = 1;
       message = '';
@@ -29,9 +29,9 @@ export const validatorActions = {
 
   validateEsAddress() {
     return async (dispatch, getState: GetState) => {
-      let { esAddress } = getState().editAddon.peEdit;
+      const { esAddress } = getState().editAddon.peEdit;
 
-      let result = validatorActions._validateEsAddress(esAddress);
+      const result = validatorActions._validateEsAddress(esAddress);
       dispatch({
         type: ActionType.V_EsAddress,
         payload: result
@@ -62,8 +62,8 @@ export const validatorActions = {
 
   validateIndexName() {
     return async (dispatch, getState: GetState) => {
-      let { indexName } = getState().editAddon.peEdit;
-      let result = validatorActions._validateIndexName(indexName);
+      const { indexName } = getState().editAddon.peEdit;
+      const result = validatorActions._validateIndexName(indexName);
       dispatch({
         type: ActionType.V_IndexName,
         payload: result
@@ -75,7 +75,7 @@ export const validatorActions = {
   /** 创建addon的校验 */
   _validateAddonEdit(addonEdit: AddonEdit) {
     let result = true;
-    let { addonName, peEdit } = addonEdit;
+    const { addonName, peEdit } = addonEdit;
 
     result = result && addonName !== '';
 

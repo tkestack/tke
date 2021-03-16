@@ -104,19 +104,22 @@ const FFModelClusterActions = createFFListActions<Cluster, ClusterFilter>({
       cluster.spec.updateInfo = update;
     }
 
-    const ps = await WebAPI.fetchPrometheuses();
-    const clusterHasPs = {};
-    const clusterPsInfo = {};
-    for (const p of ps.records) {
-      clusterHasPs[p.spec.clusterName] = true;
+    if (window?.['modules']?.['monitor']) {
+      const ps = await WebAPI.fetchPrometheuses();
+      const clusterHasPs = {};
+      const clusterPsInfo = {};
+      for (const p of ps.records) {
+        clusterHasPs[p.spec.clusterName] = true;
 
-      clusterPsInfo[p.spec.clusterName] = p;
-    }
-    for (const record of response.records) {
-      record.spec.hasPrometheus = clusterHasPs[record.metadata.name];
+        clusterPsInfo[p.spec.clusterName] = p;
+      }
+      for (const record of response.records) {
+        record.spec.hasPrometheus = clusterHasPs[record.metadata.name];
 
-      record.spec.promethus = clusterPsInfo[record.metadata.name];
+        record.spec.promethus = clusterPsInfo[record.metadata.name];
+      }
     }
+
     if (window['modules'] && window['modules']['logagent']) {
       // 增加获取日志采集组件信息
       const agents = await CommonAPI.fetchLogagents();

@@ -55,7 +55,7 @@ export const validatorActions = {
         { logStashName, logMode, containerFileNamespace } = logStashEdit,
         urlParams = router.resolve(route),
         { clusterId, rid } = route.queries;
-      let namespace = logMode === 'containerFile' ? containerFileNamespace : 'kube-system';
+      const namespace = logMode === 'containerFile' ? containerFileNamespace : 'kube-system';
       const result = await validatorActions._validateStashName(
         clusterVersion,
         namespace,
@@ -91,10 +91,10 @@ export const validatorActions = {
 
   validateNamespace(logIndex: number) {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { containerLogs } = getState().logStashEdit,
+      const { containerLogs } = getState().logStashEdit,
         containerLogsArr: ContainerLogs[] = cloneDeep(containerLogs);
-      let containerLog: ContainerLogs = containerLogs[logIndex];
-      let result = validatorActions._validateNamespace(containerLog.namespaceSelection, containerLogs);
+      const containerLog: ContainerLogs = containerLogs[logIndex];
+      const result = validatorActions._validateNamespace(containerLog.namespaceSelection, containerLogs);
       containerLogsArr[logIndex].v_namespaceSelection = result;
       dispatch({
         type: ActionType.UpdateContainerLogs,
@@ -123,7 +123,7 @@ export const validatorActions = {
   _validateWorkloadSelectedNumber(workloadSelection: WorkloadType<string>) {
     let status = 0,
       message = '';
-    let { deployment, statefulset, daemonset, job, cronjob } = workloadSelection;
+    const { deployment, statefulset, daemonset, job, cronjob } = workloadSelection;
     if (
       deployment.length === 0 &&
       statefulset.length === 0 &&
@@ -142,9 +142,9 @@ export const validatorActions = {
 
   validateWorkloadSelectedNumber(containerLogIndex: number) {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let containerLogArr: ContainerLogs[] = cloneDeep(getState().logStashEdit.containerLogs);
-      let containerLog = containerLogArr[containerLogIndex];
-      let result = validatorActions._validateWorkloadSelectedNumber(containerLog.workloadSelection);
+      const containerLogArr: ContainerLogs[] = cloneDeep(getState().logStashEdit.containerLogs);
+      const containerLog = containerLogArr[containerLogIndex];
+      const result = validatorActions._validateWorkloadSelectedNumber(containerLog.workloadSelection);
       containerLogArr[containerLogIndex]['v_workloadSelection'] = result;
       dispatch({
         type: ActionType.UpdateContainerLogs,
@@ -202,10 +202,10 @@ export const validatorActions = {
 
   validateNodeLogPath() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { logStashEdit } = getState(),
+      const { logStashEdit } = getState(),
         { nodeLogPath } = logStashEdit;
 
-      let result = await validatorActions._validateNodeLogPath(nodeLogPath);
+      const result = await validatorActions._validateNodeLogPath(nodeLogPath);
       dispatch({
         type: ActionType.V_NodeLogPath,
         payload: result
@@ -245,10 +245,10 @@ export const validatorActions = {
 
   validateMetadataItem(obj: { [props: string]: string }, mIndex: number) {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let metadataArr: MetadataItem[] = cloneDeep(getState().logStashEdit.metadatas),
+      const metadataArr: MetadataItem[] = cloneDeep(getState().logStashEdit.metadatas),
         keyName = Object.keys(obj)[0];
 
-      let result = validatorActions._validateMetadataItem(obj[keyName], metadataArr, keyName === 'metadataKey');
+      const result = validatorActions._validateMetadataItem(obj[keyName], metadataArr, keyName === 'metadataKey');
       metadataArr[mIndex]['v_' + keyName] = result;
       dispatch({
         type: ActionType.UpdateMetadata,
@@ -261,7 +261,7 @@ export const validatorActions = {
   _validateAllMetadataItem(metadatas: MetadataItem[]) {
     let result = true;
     metadatas.forEach((metadata, index) => {
-      let resultKey = validatorActions._validateMetadataItem(metadata.metadataKey, metadatas, true),
+      const resultKey = validatorActions._validateMetadataItem(metadata.metadataKey, metadatas, true),
         resultValue = validatorActions._validateMetadataItem(metadata.metadataValue, metadatas, false);
 
       result = result && resultKey.status === 1 && resultValue.status === 1;
@@ -271,9 +271,9 @@ export const validatorActions = {
 
   validateAllMetadataItem() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let metadatas: MetadataItem[] = cloneDeep(getState().logStashEdit.metadatas);
+      const metadatas: MetadataItem[] = cloneDeep(getState().logStashEdit.metadatas);
       metadatas.forEach((metadata, index) => {
-        let resultKey = validatorActions._validateMetadataItem(metadata.metadataKey, metadatas, true),
+        const resultKey = validatorActions._validateMetadataItem(metadata.metadataKey, metadatas, true),
           resultValue = validatorActions._validateMetadataItem(metadata.metadataValue, metadatas, false);
         metadatas[index]['v_metadataKey'] = resultKey;
         metadatas[index]['v_metadataValue'] = resultValue;
@@ -309,7 +309,7 @@ export const validatorActions = {
 
   validateAddressIP() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let result = validatorActions._validateAddressIP(getState().logStashEdit.addressIP);
+      const result = validatorActions._validateAddressIP(getState().logStashEdit.addressIP);
       dispatch({
         type: ActionType.V_AddressIP,
         payload: result
@@ -340,7 +340,7 @@ export const validatorActions = {
 
   validateAddressPort() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let result = validatorActions._validateAddressPort(getState().logStashEdit.addressPort);
+      const result = validatorActions._validateAddressPort(getState().logStashEdit.addressPort);
       dispatch({
         type: ActionType.V_AddressPort,
         payload: result
@@ -375,7 +375,7 @@ export const validatorActions = {
 
   validateTopic() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let result = validatorActions._validateTopic(getState().logStashEdit.topic);
+      const result = validatorActions._validateTopic(getState().logStashEdit.topic);
       dispatch({
         type: ActionType.V_Topic,
         payload: result
@@ -395,7 +395,7 @@ export const validatorActions = {
       message = 'Elasticsearch地址不能为空';
     } else if (!hostReg.test(address) && !domainReg.test(address)) {
       status = 2;
-      message = 'Elasticsearch地址格式不正确，{scheme}://{addr}:{port}';
+      message = 'Elasticsearch地址格式不正确';
     } else {
       status = 1;
       message = '';
@@ -405,9 +405,9 @@ export const validatorActions = {
 
   validateEsAddress() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { esAddress } = getState().logStashEdit;
+      const { esAddress } = getState().logStashEdit;
 
-      let result = validatorActions._validateEsAddress(esAddress);
+      const result = validatorActions._validateEsAddress(esAddress);
       dispatch({
         type: ActionType.V_EsAddress,
         payload: result
@@ -438,8 +438,8 @@ export const validatorActions = {
 
   validateIndexName() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { indexName } = getState().logStashEdit;
-      let result = validatorActions._validateIndexName(indexName);
+      const { indexName } = getState().logStashEdit;
+      const result = validatorActions._validateIndexName(indexName);
       dispatch({
         type: ActionType.V_IndexName,
         payload: result
@@ -456,7 +456,7 @@ export const validatorActions = {
     mode: string,
     regionId: number
   ) {
-    let {
+    const {
       logStashName,
       logMode,
       isSelectedAllNamespace,
@@ -522,7 +522,7 @@ export const validatorActions = {
 
   validateLogStashEdit() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { logStashEdit, clusterVersion } = getState(),
+      const { logStashEdit, clusterVersion } = getState(),
         { logMode, isSelectedAllNamespace, containerLogs, metadatas, consumerMode } = logStashEdit;
       // 校验日志采集的名称
       dispatch(validatorActions.validateStashName());
@@ -567,7 +567,7 @@ export const validatorActions = {
   validateContainerFileNamespace() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       const namespace = getState().logStashEdit.containerFileNamespace;
-      let result = validatorActions._validateContainerFileNamespace(namespace);
+      const result = validatorActions._validateContainerFileNamespace(namespace);
       dispatch({
         type: ActionType.V_ContainerFileNamespace,
         payload: result
@@ -595,7 +595,7 @@ export const validatorActions = {
   validateContainerFileWorkloadType() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       const WorkloadType = getState().logStashEdit.containerFileWorkloadType;
-      let result = validatorActions._validateContainerFileNamespace(WorkloadType);
+      const result = validatorActions._validateContainerFileNamespace(WorkloadType);
       dispatch({
         type: ActionType.V_ContainerFileWorkloadType,
         payload: result
@@ -623,7 +623,7 @@ export const validatorActions = {
   validateContainerFileWorkload() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       const Workload = getState().logStashEdit.containerFileWorkload;
-      let result = validatorActions._validateContainerFileWorkload(Workload);
+      const result = validatorActions._validateContainerFileWorkload(Workload);
       dispatch({
         type: ActionType.V_ContainerFileWorkload,
         payload: result
@@ -649,9 +649,9 @@ export const validatorActions = {
    */
   validateContainerFileContainerName(index: number) {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let containerFilePathArr: ContainerFilePathItem[] = cloneDeep(getState().logStashEdit.containerFilePaths);
-      let { containerName } = containerFilePathArr[index];
-      let result = validatorActions._validateContainerFileContainerName(containerName);
+      const containerFilePathArr: ContainerFilePathItem[] = cloneDeep(getState().logStashEdit.containerFilePaths);
+      const { containerName } = containerFilePathArr[index];
+      const result = validatorActions._validateContainerFileContainerName(containerName);
 
       containerFilePathArr[index].v_containerName = result;
       dispatch({
@@ -682,8 +682,8 @@ export const validatorActions = {
 
   validateContainerFileContainerFilePath(index: number) {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let containerFilePathArr: ContainerFilePathItem[] = cloneDeep(getState().logStashEdit.containerFilePaths);
-      let result = validatorActions._validateContainerFileContainerFilePath(
+      const containerFilePathArr: ContainerFilePathItem[] = cloneDeep(getState().logStashEdit.containerFilePaths);
+      const result = validatorActions._validateContainerFileContainerFilePath(
         containerFilePathArr[index].containerName,
         containerFilePathArr[index].containerFilePath,
         containerFilePathArr,
@@ -733,10 +733,10 @@ export const validatorActions = {
   /**校验所有的容器文件路径 + 容器名 */
   validateAllContainerFilePath() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let containerFilePathArr: ContainerFilePathItem[] = cloneDeep(getState().logStashEdit.containerFilePaths);
+      const containerFilePathArr: ContainerFilePathItem[] = cloneDeep(getState().logStashEdit.containerFilePaths);
       containerFilePathArr.forEach((item, index) => {
-        let nameResult = validatorActions._validateContainerFileContainerName(item.containerName);
-        let filePathResult = validatorActions._validateContainerFileContainerFilePath(
+        const nameResult = validatorActions._validateContainerFileContainerName(item.containerName);
+        const filePathResult = validatorActions._validateContainerFileContainerFilePath(
           item.containerName,
           item.containerFilePath,
           containerFilePathArr,
@@ -755,8 +755,8 @@ export const validatorActions = {
   _validateAllContainerFilePath(contaierFilePaths: ContainerFilePathItem[]) {
     let result = true;
     contaierFilePaths.forEach((item, index) => {
-      let nameResult = validatorActions._validateContainerFileContainerName(item.containerName);
-      let filePathResult = validatorActions._validateContainerFileContainerFilePath(
+      const nameResult = validatorActions._validateContainerFileContainerName(item.containerName);
+      const filePathResult = validatorActions._validateContainerFileContainerFilePath(
         item.containerName,
         item.containerFilePath,
         contaierFilePaths,

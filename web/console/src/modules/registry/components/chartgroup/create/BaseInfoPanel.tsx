@@ -72,9 +72,11 @@ export class BaseInfoPanel extends React.Component<RootProps, {}> {
     return (
       <FormPanel vactions={actions.chartGroup.create.validator} formvalidator={chartGroupValidator}>
         <FormPanel.Item
+          required
           label={t('仓库名称')}
           vkey="spec.name"
           input={{
+            style: { width: 320 },
             placeholder: t('请输入仓库名称，不超过60个字符'),
             value: chartGroupCreation.spec.name,
             onChange: value =>
@@ -165,60 +167,66 @@ export class BaseInfoPanel extends React.Component<RootProps, {}> {
             }
           }}
         />
-        {chartGroupCreation.spec && chartGroupCreation.spec.type === 'Imported' && (
-          <React.Fragment>
-            <FormPanel.Item
-              label={t('第三方仓库地址')}
-              vkey="spec.importedInfo.addr"
-              input={{
-                placeholder: t('请输入仓库地址'),
-                value: chartGroupCreation.spec.importedInfo.addr,
-                onChange: value => {
-                  const info = Object.assign({}, chartGroupCreation.spec.importedInfo);
-                  info.addr = value;
-                  actions.chartGroup.create.updateCreationState({
-                    spec: Object.assign({}, chartGroupCreation.spec, { importedInfo: info })
-                  });
-                }
-              }}
-            />
-            <FormPanel.Item
-              label={t('第三方仓库用户名')}
-              vkey="spec.importedInfo.username"
-              input={{
-                placeholder: t('请输入用户名'),
-                value: chartGroupCreation.spec.importedInfo.username,
-                onChange: value => {
-                  const info = Object.assign({}, chartGroupCreation.spec.importedInfo);
-                  info.username = value;
-                  actions.chartGroup.create.updateCreationState({
-                    spec: Object.assign({}, chartGroupCreation.spec, { importedInfo: info })
-                  });
-                }
-              }}
-            />
-            <FormPanel.Item
-              label={t('第三方仓库密码')}
-              vkey="spec.importedInfo.password"
-              input={{
-                type: 'password',
-                placeholder: t('请输入仓库密码'),
-                value: chartGroupCreation.spec.importedInfo.password,
-                onChange: value => {
-                  const info = Object.assign({}, chartGroupCreation.spec.importedInfo);
-                  info.password = value;
-                  actions.chartGroup.create.updateCreationState({
-                    spec: Object.assign({}, chartGroupCreation.spec, { importedInfo: info })
-                  });
-                }
-              }}
-            />
-          </React.Fragment>
-        )}
+
+        <FormPanel.Item
+          required
+          isShow={chartGroupCreation?.spec?.type === 'Imported'}
+          label={t('第三方仓库地址')}
+          vkey="spec.importedInfo.addr"
+          input={{
+            style: { width: 320 },
+            placeholder: t('请输入仓库地址, 例如:  http://mirror.azure.cn/kubernetes/charts'),
+            value: chartGroupCreation.spec.importedInfo.addr,
+            onChange: value => {
+              const info = Object.assign({}, chartGroupCreation.spec.importedInfo);
+              info.addr = value;
+              actions.chartGroup.create.updateCreationState({
+                spec: Object.assign({}, chartGroupCreation.spec, { importedInfo: info })
+              });
+            }
+          }}
+        />
+        <FormPanel.Item
+          isShow={chartGroupCreation?.spec?.type === 'Imported'}
+          label={t('第三方仓库用户名')}
+          vkey="spec.importedInfo.username"
+          input={{
+            style: { width: 320 },
+            placeholder: t('请输入用户名'),
+            value: chartGroupCreation.spec.importedInfo.username,
+            onChange: value => {
+              const info = Object.assign({}, chartGroupCreation.spec.importedInfo);
+              info.username = value;
+              actions.chartGroup.create.updateCreationState({
+                spec: Object.assign({}, chartGroupCreation.spec, { importedInfo: info })
+              });
+            }
+          }}
+        />
+        <FormPanel.Item
+          isShow={chartGroupCreation?.spec?.type === 'Imported'}
+          label={t('第三方仓库密码')}
+          vkey="spec.importedInfo.password"
+          input={{
+            style: { width: 320 },
+            type: 'password',
+            placeholder: t('请输入仓库密码'),
+            value: chartGroupCreation.spec.importedInfo.password,
+            onChange: value => {
+              const info = Object.assign({}, chartGroupCreation.spec.importedInfo);
+              info.password = value;
+              actions.chartGroup.create.updateCreationState({
+                spec: Object.assign({}, chartGroupCreation.spec, { importedInfo: info })
+              });
+            }
+          }}
+        />
+
         <FormPanel.Item
           label={t('仓库描述')}
           vkey="spec.description"
           input={{
+            style: { width: 320 },
             multiline: true,
             placeholder: t('请输入仓库描述，不超过255个字符'),
             value: chartGroupCreation.spec.description,
