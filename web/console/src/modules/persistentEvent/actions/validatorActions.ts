@@ -17,7 +17,7 @@ export const validatorActions = {
       message = t('Elasticsearch地址不能为空');
     } else if (!hostReg.test(address) && !domainReg.test(address)) {
       status = 2;
-      message = t('Elasticsearch地址格式不正确，{{scheme}}://{{addr}}:{{port}}');
+      message = t('Elasticsearch地址格式不正确');
     } else {
       status = 1;
       message = '';
@@ -27,9 +27,9 @@ export const validatorActions = {
 
   validateEsAddress() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { esAddress } = getState().peEdit;
+      const { esAddress } = getState().peEdit;
 
-      let result = validatorActions._validateEsAddress(esAddress);
+      const result = validatorActions._validateEsAddress(esAddress);
       dispatch({
         type: ActionType.V_EsAddress,
         payload: result
@@ -60,8 +60,8 @@ export const validatorActions = {
 
   validateIndexName() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { indexName } = getState().peEdit;
-      let result = validatorActions._validateIndexName(indexName);
+      const { indexName } = getState().peEdit;
+      const result = validatorActions._validateIndexName(indexName);
       dispatch({
         type: ActionType.V_IndexName,
         payload: result
@@ -85,7 +85,7 @@ export const validatorActions = {
 
   validatePeEdit() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { peEdit } = getState();
+      const { peEdit } = getState();
       if (peEdit.isOpen) {
         dispatch(validatorActions.validateEsAddress());
         dispatch(validatorActions.validateIndexName());
