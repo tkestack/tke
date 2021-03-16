@@ -30,7 +30,7 @@ export const SEND = async (args: RequestArgs) => {
     if (response.code !== 0) {
       tips.error(response.message, 2000);
       resp.data = args.bodyData;
-      resp.error = response.message;
+      resp.error = response?.message;
     } else {
       if (args.method !== Method.get) {
         tips.success('操作成功', 2000);
@@ -40,7 +40,7 @@ export const SEND = async (args: RequestArgs) => {
     }
     return resp;
   } catch (error) {
-    tips.error(error.response.data.message, 2000);
+    tips.error(error?.response?.data?.ErrStatus?.message ?? error.response.data.message, 2000);
     resp.data = args.bodyData;
     resp.error = error.response.data.message;
     return resp;
