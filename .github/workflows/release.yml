@@ -16,6 +16,7 @@ on:
       - 'v*.*.*'
 
 env:
+  VERSION: ${{ github.sha }}
   BUILDER: ${{ secrets.BUILDER }}
 
 jobs:
@@ -29,8 +30,6 @@ jobs:
             echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
           elif ${{ github.event.inputs.commit != '' }}; then
             echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
-          else
-            echo "VERSION=${{ github.sha }}" >> $GITHUB_ENV
           fi
       - uses: actions/checkout@v2
         with:
@@ -91,41 +90,39 @@ jobs:
              -H 'Content-Type: application/json' \
              -d @-
 
-  installer:
-    name: installer test
-    runs-on: self-hosted
-    needs: image
-    if: success()
-    steps:
-      - name: Set VERSION
-        run: |
-          if ${{github.event_name == 'push'}}; then
-            echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-          elif ${{ github.event.inputs.commit != '' }}; then
-            echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
-          else
-            echo "VERSION=${{ github.sha }}" >> $GITHUB_ENV
-          fi
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ env.VERSION }}
-      - name: Test installer
-        run: |
-          (
-          cat <<EOF
-          {
-          "msgtype": "markdown",
-          "markdown": {
-            "content": "<font color=\"info\">${{ github.repository }}: Start test installer.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>
-          "
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-            -H 'Content-Type: application/json' \
-            -d @-
-          ginkgo -nodes=2 -v test/e2e_installer/installer
+#  installer:
+#    name: installer test
+#    runs-on: self-hosted
+#    needs: image
+#    if: success()
+#    steps:
+#      - name: Set VERSION
+#        run: |
+#          if ${{github.event_name == 'push'}}; then
+#            echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+#          elif ${{ github.event.inputs.commit != '' }}; then
+#            echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
+#          fi
+#      - uses: actions/checkout@v2
+#        with:
+#          ref: ${{ env.VERSION }}
+#      - name: Test installer
+#        run: |
+#          (
+#          cat <<EOF
+#          {
+#          "msgtype": "markdown",
+#          "markdown": {
+#            "content": "<font color=\"info\">${{ github.repository }}: Start test installer.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>
+#          "
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#            -H 'Content-Type: application/json' \
+#            -d @-
+#          ginkgo -nodes=2 -v test/e2e_installer/installer
 
   cluster:
     name: cluster test
@@ -139,8 +136,6 @@ jobs:
             echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
           elif ${{ github.event.inputs.commit != '' }}; then
             echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
-          else
-            echo "VERSION=${{ github.sha }}" >> $GITHUB_ENV
           fi
       - uses: actions/checkout@v2
         with:
@@ -163,41 +158,39 @@ jobs:
             -d @-
           ginkgo -nodes=1 -v test/e2e_installer/cluster
 
-  node:
-    name: node test
-    runs-on: self-hosted
-    needs: image
-    if: success()
-    steps:
-      - name: Set VERSION
-        run: |
-          if ${{github.event_name == 'push'}}; then
-            echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-          elif ${{ github.event.inputs.commit != '' }}; then
-            echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
-          else
-            echo "VERSION=${{ github.sha }}" >> $GITHUB_ENV
-          fi
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ env.VERSION }}
-      - name: Test node
-        run: |
-          (
-          cat <<EOF
-          {
-          "msgtype": "markdown",
-          "markdown": {
-            "content": "<font color=\"info\">${{ github.repository }}: Start test node.</font>\n
-          >version: <font color=\"comment\">$VERSION</font>
-          "
-            }
-          }
-          EOF
-          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-            -H 'Content-Type: application/json' \
-            -d @-
-          ginkgo -nodes=2 -v test/e2e_installer/node
+#  node:
+#    name: node test
+#    runs-on: self-hosted
+#    needs: image
+#    if: success()
+#    steps:
+#      - name: Set VERSION
+#        run: |
+#          if ${{github.event_name == 'push'}}; then
+#            echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+#          elif ${{ github.event.inputs.commit != '' }}; then
+#            echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
+#          fi
+#      - uses: actions/checkout@v2
+#        with:
+#          ref: ${{ env.VERSION }}
+#      - name: Test node
+#        run: |
+#          (
+#          cat <<EOF
+#          {
+#          "msgtype": "markdown",
+#          "markdown": {
+#            "content": "<font color=\"info\">${{ github.repository }}: Start test node.</font>\n
+#          >version: <font color=\"comment\">$VERSION</font>
+#          "
+#            }
+#          }
+#          EOF
+#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+#            -H 'Content-Type: application/json' \
+#            -d @-
+#          ginkgo -nodes=2 -v test/e2e_installer/node
 
   report-failure:
     name: report failure
@@ -211,8 +204,6 @@ jobs:
             echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
           elif ${{ github.event.inputs.commit != '' }}; then
             echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
-          else
-            echo "VERSION=${{ github.sha }}" >> $GITHUB_ENV
           fi
       - name: notify test release failure
         run: |
@@ -245,8 +236,6 @@ jobs:
             echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
           elif ${{ github.event.inputs.commit != '' }}; then
             echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
-          else
-            echo "VERSION=${{ github.sha }}" >> $GITHUB_ENV
           fi
       - name: notify test release success
         run: |
