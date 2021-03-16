@@ -39,7 +39,9 @@ export class KubectlDialog extends React.Component<RootProps, any> {
       }
 
       const address =
-        clusterInfo.status.addresses.find(({ type }) => type === 'Advertise') || clusterInfo.status.addresses[0];
+        clusterInfo?.status?.addresses?.find(({ type }) => type === 'Advertise') || clusterInfo?.status?.addresses?.[0];
+
+      if (!address) return '';
 
       return `https://${address.host}:${address.port}${address.path}`;
     }
