@@ -65,7 +65,7 @@ type Option struct {
 // and we will completely replace webhook certificates and private keys' file name in 1.6 or future release.
 func WebhookCertAndKeyExist(basePath string) bool {
 	return utilfile.Exists(basePath+constants.WebhookCertName) &&
-		utilfile.Exists(basePath+constants.WebhookCertName)
+		utilfile.Exists(basePath+constants.WebhookKeyName)
 }
 
 func Install(s ssh.Interface, option *Option) error {
