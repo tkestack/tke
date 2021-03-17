@@ -75,8 +75,8 @@ export interface AlarmPolicyEdition extends Identifiable {
   v_policyTime?: Validation;
 
   /**策略告警通道方式  eg：SMS，EMAIL..*/
-  // notifyWay: string[];
-  // v_notifyWay?: Validation;
+  notifyWay: string[];
+  v_notifyWay?: Validation;
 
   notifyWays: { channel: string; template: string; id: string }[];
 
