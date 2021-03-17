@@ -1,5 +1,6 @@
 import { TYPES } from './schemaUtil';
 import { resourceConfig } from '@config';
+import validatorjs from 'validator';
 
 export const channelSchema = {
   properties: {
@@ -44,8 +45,26 @@ export const channelSchema = {
         },
         webhook: {
           properties: {
-            url: { ...TYPES.string, required: true },
-            headers: { ...TYPES.string, placeholder: '自定义Header，仅支持Key:Value格式，中间用;号分割。eg param1:1;param2:2' }
+            url: {
+              ...TYPES.string,
+              required: true,
+              validator(value) {
+                if (value === undefined) return {};
+
+                if (value === '') return { status: 'error', message: 'url为必填' };
+
+                if (!validatorjs.isURL(value)) return { status: 'error', message: 'url格式有误' };
+
+                return {
+                  status: 'success',
+                  message: ''
+                };
+              }
+            },
+            headers: {
+              ...TYPES.string,
+              placeholder: '自定义Header，仅支持Key:Value格式，中间用;号分割。eg param1:1;param2:2'
+            }
           }
         }
       }

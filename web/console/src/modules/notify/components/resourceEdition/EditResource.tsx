@@ -29,8 +29,8 @@ interface State {
 export class EditResource extends React.Component<Props, State> {
   constructor(props) {
     super(props);
-    let schema = this.getSchema();
-    let state = this.getState();
+    const schema = this.getSchema();
+    const state = this.getState();
     state.resource = props.instance
       ? getState(schema, this, this.props.instance, this.props.instance)
       : getState(schema, this);
@@ -40,7 +40,7 @@ export class EditResource extends React.Component<Props, State> {
     if (theSpec.pick === 'webhook') {
       const headers = theSpec.properties.webhook.properties.headers;
       if (headers && headers.value) {
-        let headerArr = [];
+        const headerArr = [];
         Object.keys(headers.value).forEach(key => {
           headerArr.push(key + ':' + headers.value[key]);
         });
@@ -67,7 +67,7 @@ export class EditResource extends React.Component<Props, State> {
   }
 
   render() {
-    let { modifyResourceFlow } = this.props;
+    const { modifyResourceFlow } = this.props;
     return (
       <Card>
         <Card.Body>
@@ -99,7 +99,12 @@ export class EditResource extends React.Component<Props, State> {
 
   renderFields(obj) {
     return Object.keys(obj.properties).map(key => (
-      <Form.Item label={key} key={key} required={obj.properties[key].required}>
+      <Form.Item
+        label={key}
+        key={key}
+        required={obj.properties[key].required}
+        {...(obj.properties[key].validator ? obj.properties[key].validator(obj.properties[key].value) : {})}
+      >
         {obj.properties[key].type === 'boolean' ? (
           <Switch value={obj.properties[key].value} onChange={onChange(obj.properties[key])} />
         ) : obj.properties[key].type === 'number' ? (
@@ -112,6 +117,7 @@ export class EditResource extends React.Component<Props, State> {
             placeholder={obj.properties[key].placeholder}
             value={obj.properties[key].value}
             onChange={onChange(obj.properties[key])}
+            onBlur={() => onChange(obj.properties[key])('')}
           />
         )}
         {obj.properties[key].bodyTip && (
@@ -157,12 +163,12 @@ export class EditResource extends React.Component<Props, State> {
   }
 
   submit = () => {
-    let { actions, route } = this.props;
-    let urlParams = router.resolve(route);
+    const { actions, route } = this.props;
+    const urlParams = router.resolve(route);
 
-    let resourceInfo = rc[urlParams.resourceName] || rc.channel;
-    let mode = this.props.instance ? 'modify' : 'create';
-    let json = schemaObjToJSON(this.state.resource);
+    const resourceInfo = rc[urlParams.resourceName] || rc.channel;
+    const mode = this.props.instance ? 'modify' : 'create';
+    const json = schemaObjToJSON(this.state.resource);
     if (this.props.instance) {
       json.metadata.resourceVersion = this.props.instance.metadata.resourceVersion;
     }
@@ -170,10 +176,10 @@ export class EditResource extends React.Component<Props, State> {
     // 将headers字符串转换为对象
     if (json.spec && json.spec.webhook) {
       if (json.spec.webhook.headers) {
-        let headersObj = {};
+        const headersObj = {};
         json.spec.webhook.headers.split(';').forEach(headerStr => {
           if (headerStr) {
-            let headerArr = headerStr.split(':');
+            const headerArr = headerStr.split(':');
             headersObj[headerArr[0]] = headerArr[1];
           }
         });
@@ -185,9 +191,9 @@ export class EditResource extends React.Component<Props, State> {
       }
     }
 
-    let jsonData = JSON.stringify(json);
+    const jsonData = JSON.stringify(json);
 
-    let resource: CreateResource = {
+    const resource: CreateResource = {
       id: uuid(),
       resourceInfo,
       mode,
@@ -202,8 +208,8 @@ export class EditResource extends React.Component<Props, State> {
     actions.workflow.modifyResource.perform();
   };
   back = () => {
-    let { route } = this.props;
-    let urlParams = router.resolve(route);
+    const { route } = this.props;
+    const urlParams = router.resolve(route);
     router.navigate(
       Object.assign({}, urlParams, {
         mode: urlParams.mode === 'update' ? 'detail' : 'list'
