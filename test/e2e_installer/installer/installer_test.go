@@ -64,6 +64,8 @@ var _ = Describe("tke-installer", func() {
 					LocalInfluxDBMonitor: &types.LocalInfluxDBMonitor{},
 				},
 			}
+			// 开启mesh
+			para.Config.Mesh = &types.Mesh{}
 			// 集群设置: GPU类型: Virtual
 			gpuType := platformv1.GPUVirtual
 			para.Cluster.Spec.Features = platformv1.ClusterFeature{

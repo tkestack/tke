@@ -4,25 +4,36 @@ on:
   workflow_dispatch:
     inputs:
       commit:
-        description: 'Commit'
+        description: 'Commit or Tag'
         required: false
         default: ''
   repository_dispatch:
     types: [release]
   schedule:
     - cron:  '0 18 * * *'
+  push:
+    tags:
+      - 'v*.*.*'
 
 env:
   VERSION: ${{ github.sha }}
   BUILDER: ${{ secrets.BUILDER }}
+
 jobs:
   image:
     name: build tke image
     runs-on: self-hosted
     steps:
+      - name: Set VERSION
+        run: |
+          if ${{github.event_name == 'push'}}; then
+            echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          elif ${{ github.event.inputs.commit != '' }}; then
+            echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
+          fi
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.inputs.commit }}
+          ref: ${{ env.VERSION }}
       - uses: azure/docker-login@v1
         with:
           username: ${{ secrets.REGISTRY_USERNAME }}
@@ -85,9 +96,16 @@ jobs:
 #    needs: image
 #    if: success()
 #    steps:
+#      - name: Set VERSION
+#        run: |
+#          if ${{github.event_name == 'push'}}; then
+#            echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+#          elif ${{ github.event.inputs.commit != '' }}; then
+#            echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
+#          fi
 #      - uses: actions/checkout@v2
 #        with:
-#          ref: ${{ github.event.inputs.commit }}
+#          ref: ${{ env.VERSION }}
 #      - name: Test installer
 #        run: |
 #          (
@@ -112,9 +130,16 @@ jobs:
     needs: image
     if: success()
     steps:
+      - name: Set VERSION
+        run: |
+          if ${{github.event_name == 'push'}}; then
+            echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          elif ${{ github.event.inputs.commit != '' }}; then
+            echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
+          fi
       - uses: actions/checkout@v2
         with:
-          ref: ${{ github.event.inputs.commit }}
+          ref: ${{ env.VERSION }}
       - name: Test cluster
         run: |
           (
@@ -139,9 +164,16 @@ jobs:
 #    needs: image
 #    if: success()
 #    steps:
+#      - name: Set VERSION
+#        run: |
+#          if ${{github.event_name == 'push'}}; then
+#            echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+#          elif ${{ github.event.inputs.commit != '' }}; then
+#            echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
+#          fi
 #      - uses: actions/checkout@v2
 #        with:
-#          ref: ${{ github.event.inputs.commit }}
+#          ref: ${{ env.VERSION }}
 #      - name: Test node
 #        run: |
 #          (
@@ -166,6 +198,13 @@ jobs:
     needs: [cluster]
     if: failure()
     steps:
+      - name: Set VERSION
+        run: |
+          if ${{github.event_name == 'push'}}; then
+            echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          elif ${{ github.event.inputs.commit != '' }}; then
+            echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
+          fi
       - name: notify test release failure
         run: |
           (
@@ -191,6 +230,13 @@ jobs:
     needs: [cluster]
     if: success()
     steps:
+      - name: Set VERSION
+        run: |
+          if ${{github.event_name == 'push'}}; then
+            echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          elif ${{ github.event.inputs.commit != '' }}; then
+            echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
+          fi
       - name: notify test release success
         run: |
           (
