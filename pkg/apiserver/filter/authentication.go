@@ -75,7 +75,6 @@ var (
 		"/metrics",
 		"/debug",
 		"/openapi",
-		"/version",
 		"/swagger",
 		"/favicon.ico",
 		"/healthz",
