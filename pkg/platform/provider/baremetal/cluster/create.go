@@ -793,13 +793,8 @@ func (p *Provider) EnsureKubeadmInitPhaseKubeletStart(ctx context.Context, c *v1
 	if err != nil {
 		return err
 	}
+
 	phase := "kubelet-start"
-	kubeletExtraArgs := p.getKubeletExtraArgs(c)
-	if _, ok := kubeletExtraArgs["hostname-override"]; !ok {
-		if !c.Spec.HostnameAsNodename {
-			phase += fmt.Sprintf(" --node-name=%s", c.Spec.Machines[0].IP)
-		}
-	}
 	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), phase)
 }
 
