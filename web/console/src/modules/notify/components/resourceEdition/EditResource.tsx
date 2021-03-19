@@ -117,7 +117,7 @@ export class EditResource extends React.Component<Props, State> {
             placeholder={obj.properties[key].placeholder}
             value={obj.properties[key].value}
             onChange={onChange(obj.properties[key])}
-            onBlur={() => onChange(obj.properties[key])('')}
+            onBlur={e => onChange(obj.properties[key])(e.target.value)}
           />
         )}
         {obj.properties[key].bodyTip && (
