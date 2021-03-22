@@ -215,6 +215,7 @@ func (p *Provider) getKubeletConfiguration(c *v1.Cluster) *kubeletv1beta1.Kubele
 func (p *Provider) getAPIServerExtraArgs(c *v1.Cluster) map[string]string {
 	args := map[string]string{
 		"token-auth-file": constants.TokenFile,
+		"anonymous-auth":  "false",
 	}
 	if p.config.AuditEnabled() {
 		args["audit-policy-file"] = constants.KubernetesAuditPolicyConfigFile
