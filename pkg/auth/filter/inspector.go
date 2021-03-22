@@ -125,7 +125,8 @@ func (i *clusterInspector) needInspect(ctx context.Context, privilegedUsername s
 				if len(cr.Rules) != 2 {
 					continue
 				}
-				log.Debugf("needInspect: username: %+v clusterRole: %+v->%v", username, cr.Name, cr.Rules)
+				log.Debugf("needInspect: username: %+v, namespace: %+v, clusterRole: %+v->%v",
+					username, sub.Namespace, cr.Name, cr.Rules)
 				if isClusterAdmin(cr.Rules) {
 					return false
 				}
