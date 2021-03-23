@@ -21,7 +21,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
+	"regexp"
 	"time"
 	"tkestack.io/tke/pkg/apiserver/util"
 
@@ -42,6 +42,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 	rbaclisters "k8s.io/client-go/listers/rbac/v1"
 	"k8s.io/client-go/tools/cache"
+)
+
+var (
+	serviceAccountRegExp = regexp.MustCompile(`^system:serviceaccount:([^:]+):(.+)$`)
 )
 
 type Inspector interface {
@@ -113,10 +117,15 @@ func (i *clusterInspector) needInspect(ctx context.Context, privilegedUsername s
 		log.Errorf("query clusterRoleBindings failed: %+v", err)
 		return true
 	}
-	username = strings.TrimPrefix(username, "system:serviceaccount:kube-system:")
+	matches := serviceAccountRegExp.FindStringSubmatch(username)
+	if len(matches) != 3 {
+		return true
+	}
+	namespace := matches[1]
+	username = matches[2]
 	for _, crb := range clusterRoleBindings {
 		for _, sub := range crb.Subjects {
-			if sub.Name == username && sub.Namespace == "kube-system" {
+			if sub.Name == username && sub.Namespace == namespace {
 				cr, err := i.crLister.Get(crb.RoleRef.Name)
 				if err != nil {
 					log.Errorf("query clusterRole: %+v failed: %+v", crb.RoleRef.Name, err)
@@ -125,7 +134,8 @@ func (i *clusterInspector) needInspect(ctx context.Context, privilegedUsername s
 				if len(cr.Rules) != 2 {
 					continue
 				}
-				log.Debugf("needInspect: username: %+v clusterRole: %+v->%v", username, cr.Name, cr.Rules)
+				log.Debugf("needInspect: username: %+v, namespace: %+v, clusterRole: %+v->%v",
+					username, namespace, cr.Name, cr.Rules)
 				if isClusterAdmin(cr.Rules) {
 					return false
 				}
