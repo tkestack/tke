@@ -45,7 +45,7 @@ spec:
         - --client-cert-auth=true
         - --ca-file=/app/certs/etcd-ca.crt
         - --trusted-ca-file=/app/certs/etcd-ca.crt
-      image: quay.io/coreos/etcd:latest
+      image: registry.tke.com/library/etcd:{{ .Tag }}
       volumeMounts:
         - name: certs-volume
           mountPath: /app/certs

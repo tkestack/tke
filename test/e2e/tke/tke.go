@@ -26,6 +26,7 @@ import (
 	"net/url"
 	"os"
 	"time"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 
 	"github.com/onsi/gomega"
 
@@ -153,6 +154,7 @@ func (t *TKE) createEtcd(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Servers":   []string{t.hostName},
 		"Namespace": t.Namespace,
+		"Tag":       images.Get().ETCD.Tag,
 	}
 	err := apiclient.CreateResourceWithDir(context.Background(), t.client, e2e.EtcdYamlFile, options)
 	if err != nil {
