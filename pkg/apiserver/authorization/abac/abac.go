@@ -34,10 +34,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/howeyc/fsnotify"
-
+	genericfilter "tkestack.io/tke/pkg/apiserver/filter"
 	"tkestack.io/tke/pkg/util/log"
 
+	"github.com/howeyc/fsnotify"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
@@ -81,6 +81,10 @@ func NewABACAuthorizer(policyFile string) (authorizer.Authorizer, error) {
 func (az *abacAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 	az.mutex.RLock()
 	defer az.mutex.RUnlock()
+	groups := a.GetUser().GetGroups()
+	if genericfilter.IsAnonymous(groups) {
+		return authorizer.DecisionDeny, "Disable anonymous users", nil
+	}
 	for _, p := range az.policyList {
 		if matches(*p, a) {
 			log.Debug("ABAC authorize success", log.Any("attr", a), log.Any("policy", *p))
