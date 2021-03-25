@@ -29,7 +29,7 @@ import (
 func TestManifest(t *testing.T) {
 	data, err := template.ParseFile("tke-auth-controller.yaml",
 		map[string]interface{}{
-			"Replicas":      1,
+			"Replicas":      2,
 			"Image":         "Image",
 			"AdminUsername": "AdminUsername",
 			"AdminPassword": "AdminPassword",
