@@ -1,3 +1,19 @@
+## [1.5.1](https://github.com/tkestack/tke/compare/v1.5.0...v1.5.1) (2021-01-07)
+
+
+### Bug Fixes
+
+* **installer:** move patch version step location ([#1039](https://github.com/tkestack/tke/issues/1039)) ([f0a9a86](https://github.com/tkestack/tke/commit/f0a9a869de5f1315201a89ea601253c9f5a7d7a6))
+* **installer:** nil globalclient case ([#1038](https://github.com/tkestack/tke/issues/1038)) ([bbf47fb](https://github.com/tkestack/tke/commit/bbf47fb1ecfbf442c30199332a55713b6184fdfd))
+* **installer:** tke version is empty ([#1047](https://github.com/tkestack/tke/issues/1047)) ([c91c8c7](https://github.com/tkestack/tke/commit/c91c8c7c761e5f81b9c4b20ccb382d4ed49a9bd4))
+* get cluster versions from server ([#1033](https://github.com/tkestack/tke/issues/1033)) ([dfec872](https://github.com/tkestack/tke/commit/dfec872f650a30a00957f7e9545d7f99e2410809))
+* **platform:** one node with multi gpu cause gpu-manager crash ([#981](https://github.com/tkestack/tke/issues/981)) ([#1025](https://github.com/tkestack/tke/issues/1025)) ([72162de](https://github.com/tkestack/tke/commit/72162dee4f2818a8660c1fc56ba5f74d085cfbcd))
+
+
+### Features
+
+* **platform:** support deploy custom k8s ([#1029](https://github.com/tkestack/tke/issues/1029)) ([1d75003](https://github.com/tkestack/tke/commit/1d75003870d961a32234c385030603a10b3aad3e))
+
 
 # [1.5.0](https://github.com/tkestack/tke/compare/v1.4.0...v1.5.0) (2020-12-07)
 
