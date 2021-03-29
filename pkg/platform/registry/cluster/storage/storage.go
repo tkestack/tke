@@ -55,6 +55,7 @@ type Storage struct {
 	PVCR              *PVCRREST
 	LogCollector      *LogCollectorREST
 	CLSLogConfig      *CLSLogConfigREST
+	HpcConfig		  *HpcREST
 	CronHPA           *CronHPAREST
 	Addon             *AddonREST
 	AddonType         *AddonTypeREST
@@ -126,6 +127,10 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, platformClient pla
 			platformClient: platformClient,
 		},
 		CLSLogConfig: &CLSLogConfigREST{
+			store:          store,
+			platformClient: platformClient,
+		},
+		HpcConfig: &HpcREST{
 			store:          store,
 			platformClient: platformClient,
 		},

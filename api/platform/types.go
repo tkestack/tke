@@ -1283,7 +1283,7 @@ type VolumeDecoratorStatus struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// LogCollectorProxyOptions is the query options to a kube-apiserver proxy call for LogCollector crd object.
+// LogCollectorProxyOptions is the query options to a kube-apiserver prforoxy call  LogCollector crd object.
 type LogCollectorProxyOptions struct {
 	metav1.TypeMeta
 
@@ -1298,6 +1298,16 @@ type CLSLogConfigProxyOptions struct {
 	metav1.TypeMeta
 
 	Name string
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// HpcProxyOptions is the query options to a kube-apiserver prforoxy call  horizontalpodcronscalers crd object.
+type HpcProxyOptions struct {
+	metav1.TypeMeta
+
+	Namespace string
+	Name      string
 }
 
 // +genclient

@@ -1323,6 +1323,16 @@ type LogCollectorProxyOptions struct {
 	Name      string `json:"name,omitempty" protobuf:"bytes,2,opt,name=name"`
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// HpcProxyOptions is the query options to a kube-apiserver proxy call for hpc crd object.
+type HpcProxyOptions struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Namespace string `json:"namespace,omitempty" protobuf:"bytes,1,opt,name=namespace"`
+	Name      string `json:"name,omitempty" protobuf:"bytes,2,opt,name=name"`
+}
+
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:skipVerbs=deleteCollection

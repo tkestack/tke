@@ -955,6 +955,13 @@ message LogCollectorList {
   repeated LogCollector items = 2;
 }
 
+// HpcProxyOptions is the query options to a kube-apiserver proxy call for hpc crd object.
+message HpcProxyOptions {
+  optional string namespace = 1;
+
+  optional string name = 2;
+}
+
 // LogCollectorProxyOptions is the query options to a kube-apiserver proxy call for LogCollector crd object.
 message LogCollectorProxyOptions {
   optional string namespace = 1;
