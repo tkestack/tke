@@ -61,6 +61,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, businessClient *bu
 
 		ShouldDeleteDuringUpdate: registry.ShouldDeleteDuringUpdate,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    emigration.GetAttrs,

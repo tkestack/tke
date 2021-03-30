@@ -50,7 +50,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter) *Storage {
 		DeleteStrategy: strategy,
 		ExportStrategy: strategy,
 	}
-
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 	}

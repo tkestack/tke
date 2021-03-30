@@ -57,6 +57,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, platformClient pla
 		DeleteStrategy: strategy,
 		ExportStrategy: strategy,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    clustercredential.GetAttrs,

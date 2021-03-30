@@ -62,7 +62,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername
 		DeleteStrategy: strategy,
 		ExportStrategy: strategy,
 	}
-
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    registrylogagent.GetAttrs,

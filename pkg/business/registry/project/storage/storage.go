@@ -74,6 +74,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter,
 
 		ShouldDeleteDuringUpdate: shouldDeleteDuringUpdate,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 
 	if err := store.CompleteWithOptions(&genericregistry.StoreOptions{
 		RESTOptions: optsGetter,

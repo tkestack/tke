@@ -80,6 +80,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, businessClient *bu
 
 		ShouldDeleteDuringUpdate: shouldDeleteDuringUpdate,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    namespace.GetAttrs,
