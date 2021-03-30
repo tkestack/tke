@@ -86,6 +86,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureKubeconfig,
 			p.EnsureMarkNode,
 			p.EnsureNodeReady,
+			p.EnsureDisableOffloading, // will remove it when upgrade to k8s v1.18.5
 			p.EnsurePostInstallHook,
 		},
 		UpdateHandlers: []machineprovider.Handler{
