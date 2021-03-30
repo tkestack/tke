@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
@@ -49,7 +50,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter) *Storage {
 		DeleteStrategy: strategy,
 		ExportStrategy: strategy,
 	}
-
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 	}

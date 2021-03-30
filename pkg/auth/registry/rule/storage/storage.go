@@ -51,6 +51,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter) *Storage {
 		CreateStrategy: strategy,
 		DeleteStrategy: strategy,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &generic.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    rule.GetAttrs,

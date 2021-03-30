@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,6 +56,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername
 		DeleteStrategy: strategy,
 		ExportStrategy: strategy,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    cronhpa.GetAttrs,

@@ -63,6 +63,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 
 		PredicateFunc: apikey.MatchAPIKey,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &generic.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    apikey.GetAttrs,

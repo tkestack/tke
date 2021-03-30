@@ -70,6 +70,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 
 		ShouldDeleteDuringUpdate: projectpolicybinding.ShouldDeleteDuringUpdate,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &generic.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    projectpolicybinding.GetAttrs,

@@ -75,6 +75,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 		PredicateFunc:            localidentity.MatchLocalIdentity,
 		ShouldDeleteDuringUpdate: localidentity.ShouldDeleteDuringUpdate,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &generic.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    localidentity.GetAttrs,
