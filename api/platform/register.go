@@ -115,6 +115,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&LogCollectorList{},
 		&LogCollectorProxyOptions{},
 		&CLSLogConfigProxyOptions{},
+		&HpcProxyOptions{},
 		&LBCF{},
 		&LBCFList{},
 		&LBCFProxyOptions{},
