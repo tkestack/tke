@@ -438,6 +438,14 @@ func (HelmStatus) SwaggerDoc() map[string]string {
 	return map_HelmStatus
 }
 
+var map_HpcProxyOptions = map[string]string{
+	"": "HpcProxyOptions is the query options to a kube-apiserver proxy call for hpc crd object.",
+}
+
+func (HpcProxyOptions) SwaggerDoc() map[string]string {
+	return map_HpcProxyOptions
+}
+
 var map_IPAM = map[string]string{
 	"":     "IPAM is a scheduler plugin for assigning IP.",
 	"spec": "Spec defines the desired identities of clusters in this set.",
