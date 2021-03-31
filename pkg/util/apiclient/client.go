@@ -239,7 +239,7 @@ func PullImageWithPod(ctx context.Context, clientset kubernetes.Interface, pod *
 		},
 	}
 
-	_, err = toolswatch.ListWatchUntil(ctx, lw, func(event watch.Event) (bool, error) {
+	_, err = toolswatch.Until(ctx, "1", lw, func(event watch.Event) (bool, error) {
 		if event.Type != watch.Modified {
 			return false, nil
 		}
