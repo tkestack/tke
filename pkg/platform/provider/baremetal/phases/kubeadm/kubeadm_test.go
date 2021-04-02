@@ -44,10 +44,29 @@ func Test_sameVersion(t *testing.T) {
 			false,
 		},
 		{
+			"same version with v",
+			args{
+				ver1: "1.20.4",
+				ver2: "v1.20.4",
+			},
+			true,
+			false,
+		},
+		{
 			"diffrent version",
 			args{
 				ver1: "1.20.4",
 				ver2: "1.20.4-tke.1",
+			},
+			false,
+			false,
+		},
+		{
+			"diffrent minor version",
+			args{
+				ver1:               "1.19.4",
+				ver2:               "1.20.4",
+				ignorePatchVersion: true,
 			},
 			false,
 			false,
@@ -61,6 +80,26 @@ func Test_sameVersion(t *testing.T) {
 			},
 			true,
 			false,
+		},
+		{
+			"same inc version with v",
+			args{
+				ver1:               "v1.20.4-tke.1",
+				ver2:               "1.20.4-tke.1",
+				ignorePatchVersion: false,
+			},
+			true,
+			false,
+		},
+		{
+			"empty",
+			args{
+				ver1:               "",
+				ver2:               "1.20.4-tke.1",
+				ignorePatchVersion: false,
+			},
+			false,
+			true,
 		},
 		// TODO: Add test cases.
 	}
