@@ -674,6 +674,8 @@ func AddNeedUpgradeLabel(platformClient platformv1client.PlatformV1Interface, cl
 }
 
 func sameVersion(ver1, ver2 string, ignorePatchVersion bool) (bool, error) {
+	ver1 = strings.TrimPrefix(ver1, "v")
+	ver2 = strings.TrimPrefix(ver2, "v")
 	semVer1, err := semver.NewVersion(ver1)
 	if err != nil {
 		return false, err
