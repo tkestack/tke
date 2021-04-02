@@ -39,6 +39,7 @@
     "@vx/tooltip": "0.0.179",
     "antd": "^4.12.3",
     "array-move": "^2.1.0",
+    "classnames": "2.2.6",
     "compare-versions": "^3.6.0",
     "d3": "^5.9.2",
     "d3-scale": "^2.1.2",
