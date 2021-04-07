@@ -45,11 +45,7 @@ import (
 	"tkestack.io/tke/api/platform"
 )
 
-const (
 
-	// Events is an action that lists events
-	Events Action = "events"
-)
 
 // HpcREST implements proxy HPC request to cluster of user.    //hpc rest实现了将 hpc的request转发至 用户集群
 type HpcREST struct {
