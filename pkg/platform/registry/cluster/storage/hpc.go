@@ -25,13 +25,17 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"path"
+	"sort"
 	"strings"
 	"time"
-
+	"encoding/json"
+	platformv1 "tkestack.io/tke/api/platform/v1"
+	corev1 "k8s.io/api/core/v1"
 	"tkestack.io/tke/pkg/util/log"
-
+	"k8s.io/apimachinery/pkg/api/errors"
 	"tkestack.io/tke/pkg/platform/util"
-
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	netutil "k8s.io/apimachinery/pkg/util/net"
@@ -39,6 +43,12 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+)
+
+const (
+
+	// Events is an action that lists events
+	Events Action = "events"
 )
 
 // HpcREST implements proxy HPC request to cluster of user.    //hpc rest实现了将 hpc的request转发至 用户集群
@@ -71,6 +81,7 @@ func (r *HpcREST) Connect(ctx context.Context, clusterName string, opts runtime.
 	proxyOpts := opts.(*platform.HpcProxyOptions)
 
 	location, transport, token, err := util.APIServerLocationByCluster(ctx, cluster, r.platformClient)
+	credential, err := util.GetClusterCredential(ctx, r.platformClient, cluster)
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +91,9 @@ func (r *HpcREST) Connect(ctx context.Context, clusterName string, opts runtime.
 		token:     token,
 		namespace: proxyOpts.Namespace,
 		name:      proxyOpts.Name,
+		action:    proxyOpts.Action,
+		cluster:           cluster,
+		clusterCredential: credential,
 	}, nil
 }
 
@@ -87,21 +101,28 @@ func (r *HpcREST) Connect(ctx context.Context, clusterName string, opts runtime.
 func (r *HpcREST) New() runtime.Object {
 	return &platform.HpcProxyOptions{}
 }
-
 type HpcProxyHandler struct {
 	transport http.RoundTripper
 	location  *url.URL
 	token     string
 	namespace string
 	name      string
+	action    string
+	cluster           *platform.Cluster
+	clusterCredential *platform.ClusterCredential
 }
 
 func (h *HpcProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	loc := *h.location
 	loc.RawQuery = req.URL.RawQuery
 
-	// todo: Change the apigroup here once the integration pipeline configuration is complete using the tapp in the tkestack group
+	// todo: Change the apigroup here once the integration pipeline configuration is complete using the hpc in the tkestack group
 	prefix := "/apis/autoscaling.cloud.tencent.com/v1"
+
+	if len(h.action) > 0{
+		h.serveAction(w,req)
+		return
+	}
 
 	if len(h.namespace) == 0 && len(h.name) == 0 {
 		loc.Path = path.Join(loc.Path, fmt.Sprintf("%s/horizontalpodcronscalers", prefix))
@@ -125,4 +146,83 @@ func (h *HpcProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	reverseProxy.FlushInterval = 100 * time.Millisecond
 	reverseProxy.ErrorLog = log.StdErrLogger()
 	reverseProxy.ServeHTTP(w, newReq)
+}
+
+
+func (h *HpcProxyHandler) serveAction(w http.ResponseWriter, req *http.Request) {
+	if len(h.namespace) == 0 || len(h.name) == 0 {
+		responsewriters.WriteRawJSON(http.StatusBadRequest, errors.NewBadRequest("namespace and name must be specified"), w)
+		return
+	}
+	switch h.action {
+	case string(Events):
+		if eventList, err := h.getEventList(req.Context()); err != nil {
+			responsewriters.WriteRawJSON(http.StatusInternalServerError, errors.NewInternalError(err), w)
+		} else {
+			responsewriters.WriteRawJSON(http.StatusOK, eventList, w)
+		}
+	default:
+		responsewriters.WriteRawJSON(http.StatusBadRequest, errors.NewBadRequest("unsupported action"), w)
+	}
+}
+
+// Get retrieves the object from the storage. It is required to support Patch.
+func (h *HpcProxyHandler) getEventList(ctx context.Context) (*corev1.EventList, error) {
+	hpc, err := getHpc(ctx, h.cluster, h.clusterCredential, h.namespace, h.name)
+	if err != nil {
+		return nil, err
+	}
+
+	kubeclient, err := util.BuildClientSet(ctx, h.cluster, h.clusterCredential)
+	if err != nil {
+		return nil, err
+	}
+	// Get hpc events
+	hpcEvents, err := util.GetEvents(ctx, kubeclient, string(hpc.UID), hpc.Namespace, hpc.Name, "HorizontalPodCronscaler")
+	if err != nil {
+		return nil, err
+	}
+
+	var events util.EventSlice
+	for _, event := range hpcEvents.Items {
+		events = append(events, event)
+	}
+	sort.Sort(events)
+
+	return &corev1.EventList{
+		Items: events,
+	}, nil
+}
+
+
+func getHpc(ctx context.Context, cluster *platform.Cluster, credential *platform.ClusterCredential, namespace, name string) (*util.CustomResource, error) {
+	var clusterv1 platformv1.Cluster
+	if err := platformv1.Convert_platform_Cluster_To_v1_Cluster(cluster, &clusterv1, nil); err != nil {
+		return nil, err
+	}
+	var clusterCredential platformv1.ClusterCredential
+	if err := platformv1.Convert_platform_ClusterCredential_To_v1_ClusterCredential(credential, &clusterCredential, nil); err != nil {
+		return nil, err
+	}
+
+	dynamicclient, err := util.BuildExternalDynamicClientSet(&clusterv1, &clusterCredential)
+	if err != nil {
+		return nil, err
+	}
+	hpcResource := schema.GroupVersionResource{Group: "autoscaling.cloud.tencent.com", Version: "v1", Resource: "horizontalpodcronscalers"}
+	content, err := dynamicclient.Resource(hpcResource).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := content.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	var hpc util.CustomResource
+	if err := json.Unmarshal(data, &hpc); err != nil {
+		return nil, err
+	}
+	return &hpc, nil
 }

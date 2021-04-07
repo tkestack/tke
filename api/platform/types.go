@@ -1308,6 +1308,7 @@ type HpcProxyOptions struct {
 
 	Namespace string
 	Name      string
+	Action    string
 }
 
 // +genclient
