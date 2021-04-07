@@ -2401,6 +2401,7 @@ func Convert_platform_HelmStatus_To_v1_HelmStatus(in *platform.HelmStatus, out *
 func autoConvert_v1_HpcProxyOptions_To_platform_HpcProxyOptions(in *HpcProxyOptions, out *platform.HpcProxyOptions, s conversion.Scope) error {
 	out.Namespace = in.Namespace
 	out.Name = in.Name
+	out.Action = in.Action
 	return nil
 }
 
@@ -2412,6 +2413,7 @@ func Convert_v1_HpcProxyOptions_To_platform_HpcProxyOptions(in *HpcProxyOptions,
 func autoConvert_platform_HpcProxyOptions_To_v1_HpcProxyOptions(in *platform.HpcProxyOptions, out *HpcProxyOptions, s conversion.Scope) error {
 	out.Namespace = in.Namespace
 	out.Name = in.Name
+	out.Action = in.Action
 	return nil
 }
 

@@ -1331,6 +1331,7 @@ type HpcProxyOptions struct {
 
 	Namespace string `json:"namespace,omitempty" protobuf:"bytes,1,opt,name=namespace"`
 	Name      string `json:"name,omitempty" protobuf:"bytes,2,opt,name=name"`
+	Action    string `json:"action,omitempty" protobuf:"bytes,3,opt,name=action"`
 }
 
 // +genclient

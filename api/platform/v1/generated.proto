@@ -799,6 +799,8 @@ message HpcProxyOptions {
   optional string namespace = 1;
 
   optional string name = 2;
+
+  optional string action = 3;
 }
 
 // IPAM is a scheduler plugin for assigning IP.
