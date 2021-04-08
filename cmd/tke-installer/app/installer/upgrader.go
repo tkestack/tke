@@ -114,6 +114,20 @@ func (t *TKE) upgradeSteps() {
 		},
 	}...)
 
+	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
+		t.Para.Config.Registry.TKERegistry != nil {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Check need imported chart groups",
+				Func: t.checkNeedImportedChartgroups,
+			},
+			{
+				Name: "Import charts",
+				Func: t.importCharts,
+			},
+		}...)
+	}
+
 	t.steps = funk.Filter(t.steps, func(step types.Handler) bool {
 		return !funk.ContainsString(t.Para.Config.SkipSteps, step.Name)
 	}).([]types.Handler)

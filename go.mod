@@ -18,6 +18,7 @@ require (
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/caddyserver/caddy v1.0.5
 	github.com/casbin/casbin/v2 v2.2.1
+	github.com/chartmuseum/helm-push v0.9.0
 	github.com/chartmuseum/storage v0.8.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/coreos/prometheus-operator v0.38.1-0.20200506070354-4231c1d4b313
@@ -38,7 +39,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/google/gofuzz v1.1.0
 	github.com/gorilla/mux v1.7.3
-	github.com/gorilla/websocket v1.4.0
+	github.com/gorilla/websocket v1.4.2
 	github.com/gosuri/uitable v0.0.4
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-uuid v1.0.1
@@ -63,9 +64,9 @@ require (
 	github.com/segmentio/ksuid v1.0.3
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/afero v1.2.2
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.0
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.6.2
+	github.com/spf13/viper v1.7.0
 	github.com/stretchr/testify v1.5.1
 	github.com/tencentcloud/tencentcloud-sdk-go v3.0.107+incompatible
 	github.com/thoas/go-funk v0.4.0
@@ -79,10 +80,10 @@ require (
 	gopkg.in/ldap.v2 v2.5.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/square/go-jose.v2 v2.4.1
-	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v2 v2.3.0
 	gotest.tools v2.2.0+incompatible
 	helm.sh/chartmuseum v0.12.0
-	helm.sh/helm/v3 v3.2.1
+	helm.sh/helm/v3 v3.3.4
 	istio.io/api v0.0.0-20200715212100-dbf5277541ef
 	istio.io/client-go v0.0.0-20200715214203-1ab538406cd1
 	k8s.io/api v0.18.2

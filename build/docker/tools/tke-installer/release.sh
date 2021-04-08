@@ -66,6 +66,8 @@ function prepare::tke_installer() {
   curl -L "https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/${os}/${arch}/kubectl" -o "${DST_DIR}/bin/kubectl"
   chmod +x "${DST_DIR}/bin/kubectl"
 
+  curl -L "https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/public.charts.tar.gz" -o "${DST_DIR}/public.charts.tar.gz"
+
   make build BINS="tke-installer" OS="${os}" ARCH="${arch}" VERSION="${VERSION}"
 
   cp -v "$OUTPUT_DIR/${os}/${arch}/tke-installer" "${DST_DIR}/bin"

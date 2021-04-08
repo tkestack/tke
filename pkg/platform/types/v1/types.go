@@ -31,6 +31,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 )
 
@@ -104,6 +105,14 @@ func (c *Cluster) PlatformClientsetForBootstrap() (platformversionedclient.Platf
 		return nil, err
 	}
 	return platformversionedclient.NewForConfig(config)
+}
+
+func (c *Cluster) RegistryClientsetForBootstrap() (registryversionedclient.RegistryV1Interface, error) {
+	config, err := c.RESTConfigForBootstrap(&rest.Config{})
+	if err != nil {
+		return nil, err
+	}
+	return registryversionedclient.NewForConfig(config)
 }
 
 func (c *Cluster) RESTConfigForBootstrap(config *rest.Config) (*rest.Config, error) {
