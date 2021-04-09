@@ -60,6 +60,7 @@ import (
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	registryclientset "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/config"
@@ -111,6 +112,7 @@ type TKE struct {
 
 	globalClient   kubernetes.Interface
 	platformClient tkeclientset.PlatformV1Interface
+	registryClient registryclientset.RegistryV1Interface
 	servers        []string
 	namespace      string
 }
@@ -441,6 +443,14 @@ func (t *TKE) initSteps() {
 			{
 				Name: "Set global cluster hosts",
 				Func: t.setGlobalClusterHosts,
+			},
+			{
+				Name: "Check need imported chart groups",
+				Func: t.checkNeedImportedChartgroups,
+			},
+			{
+				Name: "Import charts",
+				Func: t.importCharts,
 			},
 		}...)
 	}
@@ -1289,6 +1299,11 @@ func (t *TKE) initDataForDeployTKE() error {
 		return err
 	}
 
+	t.registryClient, err = t.Cluster.RegistryClientsetForBootstrap()
+	if err != nil {
+		return err
+	}
+
 	for _, address := range t.Cluster.Status.Addresses {
 		if address.Type == platformv1.AddressReal {
 			t.servers = append(t.servers, address.Host)
@@ -2127,14 +2142,15 @@ func (t *TKE) installTKERegistryController(ctx context.Context) error {
 
 	err = apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-registry-controller/*.yaml",
 		map[string]interface{}{
-			"Replicas":       t.Config.Replicas,
-			"Image":          images.Get().TKERegistryController.FullName(),
-			"NodeName":       node.Name,
-			"AdminUsername":  t.Para.Config.Registry.TKERegistry.Username,
-			"AdminPassword":  string(t.Para.Config.Registry.TKERegistry.Password),
-			"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
-			"EnableBusiness": t.businessEnabled(),
-			"DomainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
+			"Replicas":           t.Config.Replicas,
+			"Image":              images.Get().TKERegistryController.FullName(),
+			"NodeName":           node.Name,
+			"AdminUsername":      t.Para.Config.Registry.TKERegistry.Username,
+			"AdminPassword":      string(t.Para.Config.Registry.TKERegistry.Password),
+			"EnableAuth":         t.Para.Config.Auth.TKEAuth != nil,
+			"EnableBusiness":     t.businessEnabled(),
+			"DomainSuffix":       t.Para.Config.Registry.TKERegistry.Domain,
+			"DefaultChartGroups": defaultChartGroupsStringConfig,
 		})
 	if err != nil {
 		return err
@@ -2253,22 +2269,27 @@ func (t *TKE) preparePushImagesToTKERegistry(ctx context.Context) error {
 		t.log.Info("Actively exit in order to reconnect to the docker service")
 		os.Exit(1)
 	}
-
-	localHosts := hosts.LocalHosts{Host: t.Para.Config.Registry.Domain(), File: "hosts"}
-	err := localHosts.Set(t.servers[0])
-	if err != nil {
-		return err
+	domains := []string{
+		t.Para.Config.Registry.Domain(),
+		constants.DefaultTeantID + "." + t.Para.Config.Registry.Domain(),
 	}
-	localHosts.File = "/etc/hosts"
-	err = localHosts.Set(t.servers[0])
-	if err != nil {
-		return err
+	for _, domain := range domains {
+		localHosts := hosts.LocalHosts{Host: domain, File: "hosts"}
+		err := localHosts.Set(t.servers[0])
+		if err != nil {
+			return err
+		}
+		localHosts.File = "/etc/hosts"
+		err = localHosts.Set(t.servers[0])
+		if err != nil {
+			return err
+		}
 	}
 
 	dir := path.Join(constants.DockerCertsDir, t.Para.Config.Registry.Domain())
 	_ = os.MkdirAll(dir, 0777)
 	caCert, _ := ioutil.ReadFile(constants.CACrtFile)
-	err = ioutil.WriteFile(path.Join(dir, "ca.crt"), caCert, 0644)
+	err := ioutil.WriteFile(path.Join(dir, "ca.crt"), caCert, 0644)
 	if err != nil {
 		return err
 	}
