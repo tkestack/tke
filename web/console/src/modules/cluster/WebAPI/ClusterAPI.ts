@@ -298,7 +298,7 @@ export async function createImportClsutter(resource: CreateResource[], regionId:
 
     const clustercredentialData = {
       metadata: {
-        generateName: 'clustercredential'
+        generateName: 'cc'
       },
       caCert: clusterData.status.credential.caCert,
       token: clusterData.status.credential.token ? clusterData.status.credential.token : undefined,
