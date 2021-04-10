@@ -101,7 +101,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		log.Error("Failed to validate registry configuration", log.Err(err))
 		return nil, err
 	}
-
 	genericAPIServerConfig := genericapiserver.NewConfig(registry.Codecs)
 	var ignoredAuthPathPrefixes []string
 	ignoredAuthPathPrefixes = append(ignoredAuthPathPrefixes, distribution.IgnoredAuthPathPrefixes()...)

@@ -3,8 +3,11 @@ module tkestack.io/tke
 go 1.12
 
 replace (
-	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.0.0-20200507092433-6aea2df34764
+	github.com/Azure/go-autorest => github.com/Azure/go-autorest v14.0.0+incompatible
+	github.com/NetEase-Object-Storage/nos-golang-sdk => github.com/karuppiah7890/nos-golang-sdk v0.0.0-20191116042345-0792ba35abcc
+	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.5.1-0.20200507034031-d025b446aa0b
 	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
+	go.etcd.io/etcd => github.com/eddycjy/etcd v0.5.0-alpha.5.0.20200218102753-4258cdd2efdf
 	helm.sh/helm/v3 => helm.sh/helm/v3 v3.2.0
 	k8s.io/client-go => k8s.io/client-go v0.18.2
 )
@@ -73,7 +76,7 @@ require (
 	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904
 	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	google.golang.org/grpc v1.26.0
+	google.golang.org/grpc v1.27.1
 	gopkg.in/go-playground/validator.v9 v9.29.1
 	gopkg.in/ldap.v2 v2.5.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0

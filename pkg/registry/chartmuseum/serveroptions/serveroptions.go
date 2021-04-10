@@ -84,9 +84,14 @@ func buildStorageConfiguration(registryConfig *registryconfig.RegistryConfigurat
 	var backend storage.Backend
 	var err error
 	storageCfg := &registryConfig.Storage
-	if storageCfg.FileSystem != nil {
+	if storageCfg.Etcd != nil {
+		log.Info("Using etcd storage")
+		backend, err = buildETCDStorageConfiguration(registryConfig.Storage.Etcd)
+	} else if storageCfg.FileSystem != nil {
+		log.Info("Using filesystem storage")
 		backend = storage.Backend(storage.NewLocalFilesystemBackend(storageCfg.FileSystem.RootDirectory))
 	} else if storageCfg.S3 != nil {
+		log.Info("Using sr storage")
 		backend, err = buildS3StorageConfiguration(registryConfig.Storage.S3)
 	}
 
@@ -98,6 +103,16 @@ func buildStorageConfiguration(registryConfig *registryconfig.RegistryConfigurat
 		return nil, fmt.Errorf("no storage backend specified")
 	}
 	return backend, nil
+}
+
+func buildETCDStorageConfiguration(cfg *registryconfig.EtcdStorage) (storage.Backend, error) {
+	return storage.NewEtcdCSBackend(
+		strings.Join(cfg.EndPoints, ","),
+		cfg.CAFile,
+		cfg.CertFile,
+		cfg.KeyFile,
+		cfg.Prefix,
+	), nil
 }
 
 func buildS3StorageConfiguration(cfg *registryconfig.S3Storage) (storage.Backend, error) {
