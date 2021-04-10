@@ -20,12 +20,13 @@ package cluster_test
 
 import (
 	"context"
+	"os"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"os"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	tke2 "tkestack.io/tke/test/tke"
 	testclient "tkestack.io/tke/test/util/client"
@@ -113,7 +114,8 @@ var _ = Describe("cluster", func() {
 			Expect(err).Should(BeNil(), "Upgrade cluster failed")
 			Expect(cls.Spec.Version).Should(Equal(newVersion), "Cluster version is wrong")
 		},
-		Entry("1.17.13->1.18.3", "1.17.13", "1.18.3"))
+		Entry("1.19.7->1.20.4", "1.19.7", "1.20.4"),
+		Entry("1.18.3->1.19.7", "1.18.3", "1.19.7"))
 
 	It("Cluster scaling", func() {
 		// Prepare two instances

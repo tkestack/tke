@@ -61,6 +61,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, registryClient *re
 		DeleteStrategy: strategy,
 		ExportStrategy: strategy,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    namespacestrategy.GetAttrs,

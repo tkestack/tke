@@ -39,6 +39,7 @@ func TestManifest(t *testing.T) {
 			"EnableLogagent":    true,
 			"EnableAudit":       true,
 			"EnableApplication": true,
+			"EnableMesh":        true,
 		})
 	if !assert.Nil(t, err) {
 		t.FailNow()

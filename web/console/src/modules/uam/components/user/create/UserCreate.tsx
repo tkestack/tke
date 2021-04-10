@@ -11,22 +11,22 @@ import {
   VALIDATE_EMAIL_RULE,
   VALIDATE_NAME_RULE,
   VALIDATE_PASSWORD_RULE,
-  VALIDATE_PHONE_RULE,
+  VALIDATE_PHONE_RULE
 } from '../../../constants/Config';
 import { getStatus } from '../../../../common/validate';
 
 const { useState, useEffect, useRef } = React;
 const { scrollable, selectable, removeable } = Table.addons;
 
-export const UserCreate = (props) => {
-  const state = useSelector((state) => state);
+export const UserCreate = props => {
+  const state = useSelector(state => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
 
   const { filterUsers, policyPlainList } = state;
   let strategyList = policyPlainList.list.data.records || [];
-  strategyList = strategyList.filter((item) => ['平台管理员', '平台用户', '租户'].includes(item.displayName) === false);
-  const tenantID = strategyList.filter((item) => item.displayName === '平台管理员').tenantID;
+  strategyList = strategyList.filter(item => ['平台管理员', '平台用户', '租户'].includes(item.displayName) === false);
+  const tenantID = strategyList.filter(item => item.displayName === '平台管理员').tenantID;
 
   const [targetKeys, setTargetKeys] = useState([]);
   const [inputValue, setInputValue] = useState('');
@@ -48,7 +48,7 @@ export const UserCreate = (props) => {
   function onSubmit(values, form) {
     console.log('submit .....', values, targetKeys);
     const { name, displayName, password, phone, email, role } = values;
-    let userInfo: User = {
+    const userInfo: User = {
       id: uuid(),
       spec: {
         username: name,
@@ -57,9 +57,9 @@ export const UserCreate = (props) => {
         email,
         phoneNumber: phone,
         extra: {
-          policies: role === 'custom' ? targetKeys.join(',') : role,
-        },
-      },
+          policies: role === 'custom' ? targetKeys.join(',') : role
+        }
+      }
     };
     console.log('submit userInfo: ', userInfo);
     actions.user.addUser.start([userInfo]);
@@ -85,7 +85,7 @@ export const UserCreate = (props) => {
         rePassword: undefined,
         phone: undefined,
         email: undefined,
-        role: undefined,
+        role: undefined
       };
       if (!name) {
         errors.name = t('请输入用户账号');
@@ -132,7 +132,7 @@ export const UserCreate = (props) => {
       }
 
       return errors;
-    },
+    }
   });
 
   const name = useField('name', form);
@@ -169,7 +169,7 @@ export const UserCreate = (props) => {
             >
               <Input
                 {...name.input}
-                onChange={(value) => {
+                onChange={value => {
                   name.input.onChange(value);
                   actions.user.getUsersByName(value);
                 }}
@@ -253,30 +253,32 @@ export const UserCreate = (props) => {
                 </Radio>
                 <Radio name="custom">
                   <Text>自定义</Text>
-                  <Transfer
-                    leftCell={
-                      <Transfer.Cell
-                        scrollable={false}
-                        title="为这个用户自定义独立的权限"
-                        tip="支持按住 shift 键进行多选"
-                        header={<SearchBox value={inputValue} onChange={(value) => setInputValue(value)} />}
-                      >
-                        <SourceTable
-                          dataSource={strategyList.filter((i) => i.displayName.includes(inputValue))}
-                          targetKeys={targetKeys}
-                          onChange={(keys) => setTargetKeys(keys)}
-                        />
-                      </Transfer.Cell>
-                    }
-                    rightCell={
-                      <Transfer.Cell title={`已选择 (${targetKeys.length})`}>
-                        <TargetTable
-                          dataSource={strategyList.filter((i) => targetKeys.includes(i.id))}
-                          onRemove={(key) => setTargetKeys(targetKeys.filter((i) => i !== key))}
-                        />
-                      </Transfer.Cell>
-                    }
-                  />
+                  <Text parent="div">为这个用户自定义独立的权限</Text>
+                  {roleValue === 'custom' && (
+                    <Transfer
+                      leftCell={
+                        <Transfer.Cell
+                          scrollable={false}
+                          tip="支持按住 shift 键进行多选"
+                          header={<SearchBox value={inputValue} onChange={value => setInputValue(value)} />}
+                        >
+                          <SourceTable
+                            dataSource={strategyList.filter(i => i.displayName.includes(inputValue))}
+                            targetKeys={targetKeys}
+                            onChange={keys => setTargetKeys(keys)}
+                          />
+                        </Transfer.Cell>
+                      }
+                      rightCell={
+                        <Transfer.Cell title={`已选择 (${targetKeys.length})`}>
+                          <TargetTable
+                            dataSource={strategyList.filter(i => targetKeys.includes(i.id))}
+                            onRemove={key => setTargetKeys(targetKeys.filter(i => i !== key))}
+                          />
+                        </Transfer.Cell>
+                      }
+                    />
+                  )}
                 </Radio>
               </Radio.Group>
             </Form.Item>
@@ -289,7 +291,7 @@ export const UserCreate = (props) => {
             <Form.Action style={{ borderTop: 0, marginTop: 0, paddingTop: 0 }}>
               <Button type="primary">保存</Button>
               <Button
-                onClick={(e) => {
+                onClick={e => {
                   e.preventDefault();
                   router.navigate({ module: 'user' });
                 }}
@@ -308,14 +310,14 @@ const columns = [
   {
     key: 'displayName',
     header: '策略名称',
-    render: (strategy) => <p>{strategy.displayName}</p>,
+    render: strategy => <p>{strategy.displayName}</p>
   },
   {
     key: 'description',
     header: '描述',
     width: 300,
-    render: (strategy) => <p>{strategy.description || '-'}</p>,
-  },
+    render: strategy => <p>{strategy.description || '-'}</p>
+  }
 ];
 
 function SourceTable({ dataSource, targetKeys, onChange }) {
@@ -327,13 +329,13 @@ function SourceTable({ dataSource, targetKeys, onChange }) {
       addons={[
         scrollable({
           maxHeight: 310,
-          onScrollBottom: () => console.log('到达底部'),
+          onScrollBottom: () => console.log('到达底部')
         }),
         selectable({
           value: targetKeys,
           onChange,
-          rowSelect: true,
-        }),
+          rowSelect: true
+        })
       ]}
     />
   );

@@ -75,6 +75,10 @@ type Components struct {
 	// backend service.
 	// +optional
 	Application *Component
+	// mesh is used to specify the access information of the `tke-mesh-api`
+	// backend service.
+	// +optional
+	Mesh *Component
 }
 
 type Component struct {

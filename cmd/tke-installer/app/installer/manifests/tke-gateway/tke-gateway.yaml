@@ -176,6 +176,12 @@ data:
         passthrough:
           caFile: /app/certs/ca.crt
 {{- end }}
+{{- if .EnableMesh }}
+      mesh:
+        address: https://tke-mesh-api
+        passthrough:
+          caFile: /app/certs/ca.crt
+{{- end }}
 {{- if not .SelfSigned }}
   server.crt: |
 {{ .ServerCrt | spaces 4 }}

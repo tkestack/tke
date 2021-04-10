@@ -27,14 +27,14 @@ import { EditAlarmPolicyReceiverGroup } from './EditAlarmPolicyReceiverGroup';
 
 export class EditAlarmPolicyPanel extends React.Component<RootProps, {}> {
   componentWillUnmount() {
-    let { actions } = this.props;
+    const { actions } = this.props;
     actions.alarmPolicy.clearAlarmPolicyEdit();
     actions.workflow.editAlarmPolicy.reset();
   }
   _renderAlarmMetrics(alarmMetrics: MetricsObjectEdition[]) {
-    let { actions, alarmPolicyEdition, channel, template } = this.props;
-    let width = alarmPolicyEdition.alarmPolicyType === 'pod' ? 190 : 150;
-    let content: JSX.Element[] = [];
+    const { actions, alarmPolicyEdition, channel, template } = this.props;
+    const width = alarmPolicyEdition.alarmPolicyType === 'pod' ? 190 : 150;
+    const content: JSX.Element[] = [];
     alarmMetrics.forEach((item, index) => {
       content.push(
         <div key={index}>
@@ -143,7 +143,7 @@ export class EditAlarmPolicyPanel extends React.Component<RootProps, {}> {
   }
 
   render() {
-    let {
+    const {
       actions,
       alarmPolicyEdition,
       cluster,
@@ -153,8 +153,8 @@ export class EditAlarmPolicyPanel extends React.Component<RootProps, {}> {
       channel,
       template
     } = this.props;
-    let urlParams = router.resolve(route);
-    let workflow = urlParams['sub'] === 'update' ? alarmPolicyUpdateWorkflow : alarmPolicyCreateWorkflow;
+    const urlParams = router.resolve(route);
+    const workflow = urlParams['sub'] === 'update' ? alarmPolicyUpdateWorkflow : alarmPolicyCreateWorkflow;
     const failed = workflow.operationState === OperationState.Done && !isSuccessWorkflow(workflow);
     return (
       <MainBodyLayout className="secondary-main">
@@ -318,6 +318,13 @@ export class EditAlarmPolicyPanel extends React.Component<RootProps, {}> {
                       </Col>
                     </Row>
                   ))}
+
+                  <div className="is-error">
+                    <p className="form-input-help" style={{ fontSize: '12px', marginTop: '5px' }}>
+                      {alarmPolicyEdition.v_notifyWay.message}
+                    </p>
+                  </div>
+
                   <Row>
                     <Col>
                       <Button type="link" onClick={() => actions.alarmPolicy.addAlarmNotifyWay()}>
@@ -359,7 +366,7 @@ export class EditAlarmPolicyPanel extends React.Component<RootProps, {}> {
   }
   /** 处理提交请求 */
   private _handleSubmit() {
-    let { actions, alarmPolicyEdition, route, regionSelection, cluster, receiverGroup } = this.props;
+    const { actions, alarmPolicyEdition, route, regionSelection, cluster, receiverGroup } = this.props;
 
     actions.validator.validateAlarmPolicyEdition();
 

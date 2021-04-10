@@ -81,7 +81,7 @@ contexts:
 - context:
     cluster: ${clusterId}
     user: ${clusterId}-admin
-  name: ${clusterId}-default
+  name: ${clusterId}-context-default
 current-context: ${clusterId}-context-default
 kind: Config
 preferences: {}

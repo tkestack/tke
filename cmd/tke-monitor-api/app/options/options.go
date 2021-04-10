@@ -20,6 +20,7 @@ package options
 
 import (
 	"fmt"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	genericapiserveroptions "k8s.io/apiserver/pkg/server/options"
@@ -114,8 +115,8 @@ func (o *Options) Complete() error {
 	}
 
 	if o.ETCD.EnableWatchCache {
-		log.Infof("Initializing cache sizes based on %dMB limit", o.Generic.TargetRAMMB)
-		sizes := cachesize.NewHeuristicWatchCacheSizes(o.Generic.TargetRAMMB)
+		log.Infof("Initializing cache sizes based on %dMB limit", o.ETCD.DefaultWatchCacheSize)
+		sizes := cachesize.NewHeuristicWatchCacheSizes(o.ETCD.DefaultWatchCacheSize)
 		if userSpecified, err := genericapiserveroptions.ParseWatchCacheSizes(o.ETCD.WatchCacheSizes); err == nil {
 			for resource, size := range userSpecified {
 				sizes[resource] = size

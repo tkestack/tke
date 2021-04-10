@@ -20,16 +20,16 @@ package apikey
 
 import (
 	"bytes"
-	"context"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
 	"io/ioutil"
-	"k8s.io/api/authentication/v1"
+	"net/http"
+	"net/url"
+
+	jsoniter "github.com/json-iterator/go"
+	v1 "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/user"
-	"net/http"
-	"net/url"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/transport"
 )
@@ -44,8 +44,8 @@ type Options struct {
 	AdminPassword   string
 }
 
-// NewAPIKeyAuthenticator creates a basic auth authenticator and returns it.
-func NewAPIKeyAuthenticator(opts *Options) (authenticator.Password, error) {
+// NewAPIKeyAuthenticator creates a request auth authenticator and returns it.
+func NewAPIKeyAuthenticator(opts *Options) (authenticator.Request, error) {
 	issuerURL, err := url.Parse(opts.OIDCIssuerURL)
 	if err != nil {
 		return nil, err
@@ -75,8 +75,12 @@ type Authenticator struct {
 	tokenReviewTransport *http.Transport
 }
 
-// AuthenticatePassword implements authenticator.Password.
-func (a *Authenticator) AuthenticatePassword(_ context.Context, username, password string) (*authenticator.Response, bool, error) {
+// AuthenticateRequest implements authenticator.Request.
+func (a *Authenticator) AuthenticateRequest(req *http.Request) (*authenticator.Response, bool, error) {
+	username, password, ok := req.BasicAuth()
+	if !ok {
+		return nil, false, fmt.Errorf("cannot get user info from request")
+	}
 	if a.adminPassword != "" &&
 		a.adminUsername != "" &&
 		username == a.adminUsername &&
@@ -115,7 +119,7 @@ func (a *Authenticator) AuthenticatePassword(_ context.Context, username, passwo
 		return nil, false, err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, a.tokenReviewURL, bytes.NewBuffer(bs))
+	req, err = http.NewRequest(http.MethodPost, a.tokenReviewURL, bytes.NewBuffer(bs))
 	if err != nil {
 		log.Error("Failed to create token review request", log.Err(err))
 		return nil, false, err

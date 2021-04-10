@@ -51,6 +51,7 @@ const (
 	CREATEINSTANCESPARAM = "CREATE_INSTANCES_PARAM"
 	PASSWORD             = "PASSWORD"
 	NEEDDELETE           = "NEED_DELETE"
+	INSTANCETYPES        = "INSTANCE_TYPES"
 )
 
 func ImageVersion() string {
@@ -79,6 +80,15 @@ func Password() string {
 
 func CreateInstancesParam() string {
 	return os.Getenv(CREATEINSTANCESPARAM)
+}
+
+func InstanceTypes() []string {
+	v := os.Getenv(INSTANCETYPES)
+	v = strings.Trim(v, "[]")
+	if v == "" {
+		return []string{"S5.2XLARGE16", "S2.2XLARGE16", "S2.3XLARGE24"}
+	}
+	return strings.Split(v, ",")
 }
 
 func NeedDelete() bool {

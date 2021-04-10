@@ -75,7 +75,6 @@ var (
 		"/metrics",
 		"/debug",
 		"/openapi",
-		"/version",
 		"/swagger",
 		"/favicon.ico",
 		"/healthz",
@@ -174,6 +173,15 @@ func GetClusterFromGroups(groups []string) string {
 		}
 	}
 	return ""
+}
+
+func IsAnonymous(groups []string) bool {
+	for _, group := range groups {
+		if group == "system:unauthenticated" {
+			return true
+		}
+	}
+	return false
 }
 
 func GroupWithProject(project string) string {

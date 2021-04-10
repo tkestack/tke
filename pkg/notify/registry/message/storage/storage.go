@@ -20,6 +20,8 @@ package storage
 
 import (
 	"context"
+	"time"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,7 +29,6 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"time"
 	"tkestack.io/tke/api/notify"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
@@ -60,6 +61,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername
 		DeleteStrategy: strategy,
 		ExportStrategy: strategy,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    messagestrategy.GetAttrs,

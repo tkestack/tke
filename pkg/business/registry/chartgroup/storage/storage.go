@@ -64,6 +64,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, businessClient *bu
 		DeleteStrategy: strategy,
 		ExportStrategy: strategy,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    chartgroup.GetAttrs,

@@ -78,7 +78,7 @@ data:
     registry_config = "/app/conf/registry-config.yaml"
     
     [registry_setting]
-    default_system_chartgroups = ["public"]
+    default_system_chartgroups = {{ .DefaultChartGroups }}
     
     [secure_serving]
     tls_cert_file = "/app/certs/server.crt"

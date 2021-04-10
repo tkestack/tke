@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apiserver/pkg/registry/rest"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/auth/registry/apisigningkey"
 	"tkestack.io/tke/pkg/util/log"
@@ -44,6 +45,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter) *Storage {
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &generic.StoreOptions{RESTOptions: optsGetter}
 
 	if err := store.CompleteWithOptions(options); err != nil {

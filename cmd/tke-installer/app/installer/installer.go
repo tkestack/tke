@@ -21,6 +21,7 @@ package installer
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -40,6 +41,7 @@ import (
 	"github.com/segmentio/ksuid"
 	"github.com/thoas/go-funk"
 	"gopkg.in/go-playground/validator.v9"
+	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,7 +59,8 @@ import (
 	certutil "k8s.io/client-go/util/cert"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
-	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
+	tkeclientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	registryclientset "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/config"
@@ -107,9 +110,11 @@ type TKE struct {
 
 	docker *docker.Docker
 
-	globalClient kubernetes.Interface
-	servers      []string
-	namespace    string
+	globalClient   kubernetes.Interface
+	platformClient tkeclientset.PlatformV1Interface
+	registryClient registryclientset.RegistryV1Interface
+	servers        []string
+	namespace      string
 }
 
 func New(config *config.Config) *TKE {
@@ -321,6 +326,15 @@ func (t *TKE) initSteps() {
 				},
 			}...)
 		}
+		if t.Para.Config.Monitor.ThanosMonitor != nil {
+			t.steps = append(t.steps, []types.Handler{
+				{
+					Name: "Install Thanos",
+					Func: t.installThanos,
+				},
+			}...)
+		}
+
 		t.steps = append(t.steps, []types.Handler{
 			{
 				Name: "Install tke-monitor-api",
@@ -363,6 +377,19 @@ func (t *TKE) initSteps() {
 			{
 				Name: "Install tke-application-controller",
 				Func: t.installTKEApplicationController,
+			},
+		}...)
+	}
+
+	if t.Para.Config.Mesh != nil {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Install tke-mesh-api",
+				Func: t.installTKEMeshAPI,
+			},
+			{
+				Name: "Install tke-mesh-controller",
+				Func: t.installTKEMeshController,
 			},
 		}...)
 	}
@@ -416,6 +443,14 @@ func (t *TKE) initSteps() {
 			{
 				Name: "Set global cluster hosts",
 				Func: t.setGlobalClusterHosts,
+			},
+			{
+				Name: "Check need imported chart groups",
+				Func: t.checkNeedImportedChartgroups,
+			},
+			{
+				Name: "Import charts",
+				Func: t.importCharts,
 			},
 		}...)
 	}
@@ -699,8 +734,9 @@ func (t *TKE) setClusterDefault(cluster *platformv1.Cluster, config *types.Confi
 		}
 	}
 	if config.Business != nil {
-		cluster.Spec.Features.AuthzWebhookAddr = &platformv1.AuthzWebhookAddr{Builtin: &platformv1.
-			BuiltinAuthzWebhookAddr{}}
+		cluster.Spec.Features.AuthzWebhookAddr = &platformv1.AuthzWebhookAddr{
+			Builtin: &platformv1.BuiltinAuthzWebhookAddr{},
+		}
 	}
 }
 
@@ -1258,6 +1294,16 @@ func (t *TKE) initDataForDeployTKE() error {
 		return err
 	}
 
+	t.platformClient, err = t.Cluster.PlatformClientsetForBootstrap()
+	if err != nil {
+		return err
+	}
+
+	t.registryClient, err = t.Cluster.RegistryClientsetForBootstrap()
+	if err != nil {
+		return err
+	}
+
 	for _, address := range t.Cluster.Status.Addresses {
 		if address.Type == platformv1.AddressReal {
 			t.servers = append(t.servers, address.Host)
@@ -1513,6 +1559,7 @@ func (t *TKE) installTKEGateway(ctx context.Context) error {
 		"EnableLogagent":    t.Para.Config.Logagent != nil,
 		"EnableAudit":       t.auditEnabled(),
 		"EnableApplication": t.Para.Config.Application != nil,
+		"EnableMesh":        t.Para.Config.Mesh != nil,
 	}
 	if t.Para.Config.Registry.TKERegistry != nil {
 		option["RegistryDomainSuffix"] = t.Para.Config.Registry.TKERegistry.Domain
@@ -1747,6 +1794,10 @@ func (t *TKE) installTKEPlatformController(ctx context.Context) error {
 				address = address + "&p=" + string(t.Para.Config.Monitor.ESMonitor.Password)
 			}
 			params["MonitorStorageAddresses"] = address
+		} else if t.Para.Config.Monitor.ThanosMonitor != nil {
+			params["MonitorStorageType"] = "thanos"
+			// thanos receive remote-write node-port address
+			params["MonitorStorageAddresses"] = fmt.Sprintf("http://%s:31141", t.servers[0])
 		}
 	}
 
@@ -1838,6 +1889,51 @@ func (t *TKE) installInfluxDB(ctx context.Context) error {
 	})
 }
 
+func (t *TKE) installThanos(ctx context.Context) error {
+	// TODO:2021-02-23 deploy thanos
+	/*node, err := apiclient.GetNodeByMachineIP(ctx, t.globalClient, t.servers[0])
+	if err != nil {
+		return err
+	}*/
+	bucketConfig := t.Para.Config.Monitor.ThanosMonitor.BucketConfig
+	thanosYamlBytes, err := yaml.Marshal(bucketConfig)
+	if err != nil {
+		return err
+	}
+	thanosYaml := base64.StdEncoding.EncodeToString(thanosYamlBytes)
+	params := map[string]interface{}{
+		"Image":      images.Get().Thanos.FullName(),
+		"ThanosYaml": thanosYaml,
+	}
+	err = apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/thanos/*.yaml", params)
+	if err != nil {
+		return err
+	}
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckStatefulSet(ctx, t.globalClient, t.namespace, "thanos-store")
+		if err != nil || !ok {
+			return false, nil
+		}
+		ok, err = apiclient.CheckStatefulSet(ctx, t.globalClient, t.namespace, "thanos-receive")
+		if err != nil || !ok {
+			return false, nil
+		}
+		ok, err = apiclient.CheckStatefulSet(ctx, t.globalClient, t.namespace, "thanos-compact")
+		if err != nil || !ok {
+			return false, nil
+		}
+		ok, err = apiclient.CheckStatefulSet(ctx, t.globalClient, t.namespace, "thanos-rule")
+		if err != nil || !ok {
+			return false, nil
+		}
+		ok, err = apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "thanos-query")
+		if err != nil || !ok {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
 func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Replicas":       t.Config.Replicas,
@@ -1868,6 +1964,10 @@ func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 				// todo
 				options["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.servers[0])
 			}
+		} else if t.Para.Config.Monitor.ThanosMonitor != nil {
+			options["StorageType"] = "thanos"
+			// thanos-query address
+			options["StorageAddresses"] = "http://thanos-query.tke.svc.cluster.local:9090"
 		}
 	}
 
@@ -1928,6 +2028,11 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 				params["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.servers[0])
 				params["MonitorStorageAddresses"] = fmt.Sprintf("http://%s:8086", t.servers[0])
 			}
+		} else if t.Para.Config.Monitor.ThanosMonitor != nil {
+			params["StorageType"] = "thanos"
+			params["MonitorStorageType"] = "thanos"
+			// thanos-query address
+			params["MonitorStorageAddresses"] = "http://thanos-query.tke.svc.cluster.local:9090"
 		}
 	}
 
@@ -2037,14 +2142,15 @@ func (t *TKE) installTKERegistryController(ctx context.Context) error {
 
 	err = apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-registry-controller/*.yaml",
 		map[string]interface{}{
-			"Replicas":       t.Config.Replicas,
-			"Image":          images.Get().TKERegistryController.FullName(),
-			"NodeName":       node.Name,
-			"AdminUsername":  t.Para.Config.Registry.TKERegistry.Username,
-			"AdminPassword":  string(t.Para.Config.Registry.TKERegistry.Password),
-			"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
-			"EnableBusiness": t.businessEnabled(),
-			"DomainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
+			"Replicas":           t.Config.Replicas,
+			"Image":              images.Get().TKERegistryController.FullName(),
+			"NodeName":           node.Name,
+			"AdminUsername":      t.Para.Config.Registry.TKERegistry.Username,
+			"AdminPassword":      string(t.Para.Config.Registry.TKERegistry.Password),
+			"EnableAuth":         t.Para.Config.Auth.TKEAuth != nil,
+			"EnableBusiness":     t.businessEnabled(),
+			"DomainSuffix":       t.Para.Config.Registry.TKERegistry.Domain,
+			"DefaultChartGroups": defaultChartGroupsStringConfig,
 		})
 	if err != nil {
 		return err
@@ -2111,27 +2217,79 @@ func (t *TKE) installTKEApplicationController(ctx context.Context) error {
 	})
 }
 
+func (t *TKE) installTKEMeshAPI(ctx context.Context) error {
+	options := map[string]interface{}{
+		"Replicas":    t.Config.Replicas,
+		"Image":       images.Get().TKEMeshAPI.FullName(),
+		"EnableAuth":  t.Para.Config.Auth.TKEAuth != nil,
+		"EnableAudit": t.auditEnabled(),
+	}
+	if t.Para.Config.Auth.OIDCAuth != nil {
+		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
+		options["OIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
+		options["UseOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
+	}
+
+	if err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-mesh-api/*.yaml", options); err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-mesh-api")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+func (t *TKE) installTKEMeshController(ctx context.Context) error {
+	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-mesh-controller/*.yaml",
+		map[string]interface{}{
+			"Replicas":          t.Config.Replicas,
+			"Image":             images.Get().TKEMeshController.FullName(),
+			"RegistryDomain":    t.Para.Config.Registry.Domain(),
+			"RegistryNamespace": t.Para.Config.Registry.Namespace(),
+		})
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-mesh-controller")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
 func (t *TKE) preparePushImagesToTKERegistry(ctx context.Context) error {
 	if !t.docker.Healthz() {
 		t.log.Info("Actively exit in order to reconnect to the docker service")
 		os.Exit(1)
 	}
-
-	localHosts := hosts.LocalHosts{Host: t.Para.Config.Registry.Domain(), File: "hosts"}
-	err := localHosts.Set(t.servers[0])
-	if err != nil {
-		return err
+	domains := []string{
+		t.Para.Config.Registry.Domain(),
+		constants.DefaultTeantID + "." + t.Para.Config.Registry.Domain(),
 	}
-	localHosts.File = "/etc/hosts"
-	err = localHosts.Set(t.servers[0])
-	if err != nil {
-		return err
+	for _, domain := range domains {
+		localHosts := hosts.LocalHosts{Host: domain, File: "hosts"}
+		err := localHosts.Set(t.servers[0])
+		if err != nil {
+			return err
+		}
+		localHosts.File = "/etc/hosts"
+		err = localHosts.Set(t.servers[0])
+		if err != nil {
+			return err
+		}
 	}
 
 	dir := path.Join(constants.DockerCertsDir, t.Para.Config.Registry.Domain())
 	_ = os.MkdirAll(dir, 0777)
 	caCert, _ := ioutil.ReadFile(constants.CACrtFile)
-	err = ioutil.WriteFile(path.Join(dir, "ca.crt"), caCert, 0644)
+	err := ioutil.WriteFile(path.Join(dir, "ca.crt"), caCert, 0644)
 	if err != nil {
 		return err
 	}
@@ -2179,6 +2337,9 @@ func (t *TKE) registerAPI(ctx context.Context) error {
 	}
 	if t.Para.Config.Application != nil {
 		svcs = append(svcs, "tke-application-api")
+	}
+	if t.Para.Config.Mesh != nil {
+		svcs = append(svcs, "tke-mesh-api")
 	}
 	for _, one := range svcs {
 		name := strings.TrimSuffix(one[4:], "-api")
@@ -2237,23 +2398,14 @@ func (t *TKE) registerAPI(ctx context.Context) error {
 }
 
 func (t *TKE) importResource(ctx context.Context) error {
-	restConfig, err := t.Cluster.RESTConfigForBootstrap(&rest.Config{Timeout: 120 * time.Second})
-	if err != nil {
-		return err
-	}
-
-	client, err := tkeclientset.NewForConfig(restConfig)
-	if err != nil {
-		return err
-	}
-
+	var err error
 	// ensure api ready
 	err = wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		_, err = client.PlatformV1().Clusters().List(ctx, metav1.ListOptions{})
+		_, err = t.platformClient.Clusters().List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return false, nil
 		}
-		_, err = client.PlatformV1().ClusterCredentials().List(ctx, metav1.ListOptions{})
+		_, err = t.platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{})
 		if err != nil {
 			return false, nil
 		}
@@ -2263,26 +2415,26 @@ func (t *TKE) importResource(ctx context.Context) error {
 		return err
 	}
 
-	_, err = client.PlatformV1().ClusterCredentials().Get(ctx, t.Cluster.ClusterCredential.Name, metav1.GetOptions{})
+	_, err = t.platformClient.ClusterCredentials().Get(ctx, t.Cluster.ClusterCredential.Name, metav1.GetOptions{})
 	if err == nil {
-		err := client.PlatformV1().ClusterCredentials().Delete(ctx, t.Cluster.ClusterCredential.Name, metav1.DeleteOptions{})
+		err := t.platformClient.ClusterCredentials().Delete(ctx, t.Cluster.ClusterCredential.Name, metav1.DeleteOptions{})
 		if err != nil {
 			return err
 		}
 	}
-	_, err = client.PlatformV1().ClusterCredentials().Create(ctx, t.Cluster.ClusterCredential, metav1.CreateOptions{})
+	_, err = t.platformClient.ClusterCredentials().Create(ctx, t.Cluster.ClusterCredential, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
 
-	_, err = client.PlatformV1().Clusters().Get(ctx, t.Cluster.Name, metav1.GetOptions{})
+	_, err = t.platformClient.Clusters().Get(ctx, t.Cluster.Name, metav1.GetOptions{})
 	if err == nil {
-		err := client.PlatformV1().Clusters().Delete(ctx, t.Cluster.Name, metav1.DeleteOptions{})
+		err := t.platformClient.Clusters().Delete(ctx, t.Cluster.Name, metav1.DeleteOptions{})
 		if err != nil {
 			return err
 		}
 	}
-	_, err = client.PlatformV1().Clusters().Create(ctx, t.Cluster.Cluster, metav1.CreateOptions{})
+	_, err = t.platformClient.Clusters().Create(ctx, t.Cluster.Cluster, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}

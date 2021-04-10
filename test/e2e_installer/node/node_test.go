@@ -84,10 +84,9 @@ var _ = Describe("node", func() {
 	})
 
 	SynchronizedAfterSuite(func() {
-		if !env.NeedDelete() {
-			return
+		if env.NeedDelete() {
+			Expect(provider.TearDown()).Should(BeNil())
 		}
-		Expect(provider.TearDown()).Should(BeNil())
 	}, func() {})
 
 	Context("Node", func() {
@@ -174,6 +173,7 @@ var _ = Describe("node", func() {
 				}
 				return nil
 			}, 10*time.Minute, 10*time.Second).Should(Succeed())
+			Expect(testTKE.TkeClient.PlatformV1().TappControllers().Delete(context.Background(), tapp.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete TappController failed")
 		})
 
 		It("IPAM", func() {
@@ -195,6 +195,7 @@ var _ = Describe("node", func() {
 				}
 				return nil
 			}, 10*time.Minute, 10*time.Second).Should(Succeed())
+			Expect(testTKE.TkeClient.PlatformV1().IPAMs().Delete(context.Background(), ipam.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete IPAM failed")
 		})
 
 		It("CronHPA", func() {
@@ -216,6 +217,95 @@ var _ = Describe("node", func() {
 				}
 				return nil
 			}, 10*time.Minute, 10*time.Second).Should(Succeed())
+			Expect(testTKE.TkeClient.PlatformV1().CronHPAs().Delete(context.Background(), cronHPA.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete CronHPA failed")
+		})
+
+		It("VolumeDecorator", func() {
+			vd := &platformv1.VolumeDecorator{
+				Spec: platformv1.VolumeDecoratorSpec{
+					ClusterName: cls.Name,
+				},
+			}
+			vd, err := testTKE.TkeClient.PlatformV1().VolumeDecorators().Create(context.Background(), vd, metav1.CreateOptions{})
+			Expect(err).Should(BeNil())
+
+			Eventually(func() error {
+				addon, err := testTKE.TkeClient.PlatformV1().VolumeDecorators().Get(context.Background(), vd.Name, metav1.GetOptions{})
+				if err != nil {
+					return err
+				}
+				if addon.Status.Phase != "Running" {
+					return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
+				}
+				return nil
+			}, 10*time.Minute, 10*time.Second).Should(Succeed())
+			Expect(testTKE.TkeClient.PlatformV1().VolumeDecorators().Delete(context.Background(), vd.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete VolumeDecorator failed")
+		})
+
+		It("LBCF", func() {
+			lbcf := &platformv1.LBCF{
+				Spec: platformv1.LBCFSpec{
+					ClusterName: cls.Name,
+				},
+			}
+			lbcf, err := testTKE.TkeClient.PlatformV1().LBCFs().Create(context.Background(), lbcf, metav1.CreateOptions{})
+			Expect(err).Should(BeNil())
+
+			Eventually(func() error {
+				addon, err := testTKE.TkeClient.PlatformV1().LBCFs().Get(context.Background(), lbcf.Name, metav1.GetOptions{})
+				if err != nil {
+					return err
+				}
+				if addon.Status.Phase != "Running" {
+					return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
+				}
+				return nil
+			}, 10*time.Minute, 10*time.Second).Should(Succeed())
+			Expect(testTKE.TkeClient.PlatformV1().LBCFs().Delete(context.Background(), lbcf.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete LBCF failed")
+		})
+
+		It("Helm", func() {
+			helm := &platformv1.Helm{
+				Spec: platformv1.HelmSpec{
+					ClusterName: cls.Name,
+				},
+			}
+			helm, err := testTKE.TkeClient.PlatformV1().Helms().Create(context.Background(), helm, metav1.CreateOptions{})
+			Expect(err).Should(BeNil())
+
+			Eventually(func() error {
+				addon, err := testTKE.TkeClient.PlatformV1().Helms().Get(context.Background(), helm.Name, metav1.GetOptions{})
+				if err != nil {
+					return err
+				}
+				if addon.Status.Phase != "Running" {
+					return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
+				}
+				return nil
+			}, 10*time.Minute, 10*time.Second).Should(Succeed())
+			Expect(testTKE.TkeClient.PlatformV1().Helms().Delete(context.Background(), helm.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete Helm failed")
+		})
+
+		It("CSIOperator", func() {
+			csiOperator := &platformv1.CSIOperator{
+				Spec: platformv1.CSIOperatorSpec{
+					ClusterName: cls.Name,
+				},
+			}
+			csiOperator, err := testTKE.TkeClient.PlatformV1().CSIOperators().Create(context.Background(), csiOperator, metav1.CreateOptions{})
+			Expect(err).Should(BeNil())
+
+			Eventually(func() error {
+				addon, err := testTKE.TkeClient.PlatformV1().CSIOperators().Get(context.Background(), csiOperator.Name, metav1.GetOptions{})
+				if err != nil {
+					return err
+				}
+				if addon.Status.Phase != "Running" {
+					return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
+				}
+				return nil
+			}, 10*time.Minute, 10*time.Second).Should(Succeed())
+			Expect(testTKE.TkeClient.PlatformV1().CSIOperators().Delete(context.Background(), csiOperator.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete CSIOperator failed")
 		})
 	})
 })

@@ -77,6 +77,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 
 		ShouldDeleteDuringUpdate: localgroup.ShouldDeleteDuringUpdate,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &generic.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    localgroup.GetAttrs,

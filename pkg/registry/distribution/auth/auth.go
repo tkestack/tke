@@ -60,7 +60,7 @@ type handler struct {
 	expiredHours  int64
 	domainSuffix  string
 	defaultTenant string
-	authenticator authenticator.Password
+	authenticator authenticator.Request
 }
 
 // NewHandler creates a new handler object and returns it.

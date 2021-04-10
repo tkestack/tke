@@ -1,0 +1,132 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: tke-mesh-controller
+  name: tke-mesh-controller
+  namespace: tke
+spec:
+  replicas: {{ .Replicas }}
+  selector:
+    matchLabels:
+      app: tke-mesh-controller
+  template:
+    metadata:
+      labels:
+        app: tke-mesh-controller
+      annotations:
+        tke.prometheus.io/scrape: "true"
+        prometheus.io/scheme: https
+    spec:
+      containers:
+        - name: tke-mesh-controller
+          image: {{ .Image }}
+          args:
+            - -C=/app/conf/tke-mesh-controller.toml
+          volumeMounts:
+            - name: certs-volume
+              mountPath: /app/certs
+            - name: tke-mesh-controller-volume
+              mountPath: /app/conf
+          ports:
+            - containerPort: 9468
+          livenessProbe:
+            httpGet:
+              port: 9468
+              path: /healthz
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 100m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 128Mi
+      volumes:
+        - name: certs-volume
+          configMap:
+            name: certs
+        - name: tke-mesh-controller-volume
+          configMap:
+            name: tke-mesh-controller
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tke-mesh-controller
+  namespace: tke
+data:
+  tke-mesh-controller.toml: |
+    mesh_config = "/app/conf/tke-mesh-config.yaml"
+
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [client]
+
+      [client.mesh]
+      api_server = "https://tke-mesh-api"
+      api_server_client_config = "/app/conf/tke-mesh-api-config.yaml"
+
+      [client.platform]
+      api_server = "https://tke-platform-api"
+      api_server_client_config = "/app/conf/tke-platform-config.yaml"
+
+    [registry]
+    container_domain = "{{ .RegistryDomain }}"
+    container_namespace = "{{ .RegistryNamespace }}"
+
+  tke-mesh-api-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-mesh-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
+
+  tke-platform-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          certificate-authority: /app/certs/ca.crt
+          server: https://tke-platform-api
+    users:
+      - name: admin-cert
+        user:
+          client-certificate: /app/certs/admin.crt
+          client-key: /app/certs/admin.key
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+          user: admin-cert
+        name: tke
+
+  tke-mesh-config.yaml: |
+    apiVersion: mesh.config.tkestack.io/v1
+    kind: MeshConfiguration
+    region:
+      name: local
+    istio:
+      supportedVersion:
+        - 1.6.6
+      gateway:
+        defaultHttpPort: 80

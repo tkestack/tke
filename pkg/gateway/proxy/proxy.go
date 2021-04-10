@@ -36,6 +36,7 @@ import (
 	"tkestack.io/tke/pkg/gateway/proxy/handler/frontproxy"
 	"tkestack.io/tke/pkg/gateway/proxy/handler/passthrough"
 	"tkestack.io/tke/pkg/gateway/proxy/handler/rewriteproxy"
+	mesh "tkestack.io/tke/pkg/mesh/apiserver"
 	platformapiserver "tkestack.io/tke/pkg/platform/apiserver"
 	"tkestack.io/tke/pkg/registry/chartmuseum"
 	"tkestack.io/tke/pkg/registry/distribution"
@@ -61,6 +62,7 @@ const (
 	moduleNameLogagent    moduleName = "logagent"
 	moduleNameAudit       moduleName = "audit"
 	moduleNameApplication moduleName = "application"
+	moduleNameMesh        moduleName = "mesh"
 )
 
 type modulePath struct {
@@ -160,6 +162,12 @@ func componentPrefix() map[moduleName][]modulePath {
 		moduleNameApplication: {
 			modulePath{
 				prefix:    fmt.Sprintf("%s/%s/", apiPrefix, application.GroupName),
+				protected: true,
+			},
+		},
+		moduleNameMesh: {
+			modulePath{
+				prefix:    fmt.Sprintf("%s/", mesh.MeshAPIPrefix),
 				protected: true,
 			},
 		},
@@ -282,7 +290,7 @@ func prefixProxy(cfg *gatewayconfig.GatewayConfiguration) map[modulePath]gateway
 			}
 		}
 	}
-	//log agent
+	// log agent
 	if cfg.Components.LogAgent != nil {
 		if prefixes, ok := componentPrefixMap[moduleNameLogagent]; ok {
 			for _, prefix := range prefixes {
@@ -303,6 +311,14 @@ func prefixProxy(cfg *gatewayconfig.GatewayConfiguration) map[modulePath]gateway
 		if prefixes, ok := componentPrefixMap[moduleNameApplication]; ok {
 			for _, prefix := range prefixes {
 				pathPrefixProxyMap[prefix] = *cfg.Components.Application
+			}
+		}
+	}
+	// mesh
+	if cfg.Components.Mesh != nil {
+		if prefixes, ok := componentPrefixMap[moduleNameMesh]; ok {
+			for _, prefix := range prefixes {
+				pathPrefixProxyMap[prefix] = *cfg.Components.Mesh
 			}
 		}
 	}
@@ -348,6 +364,10 @@ func openapiProxy(cfg *gatewayconfig.GatewayConfiguration) map[modulePath]gatewa
 	// audit
 	if cfg.Components.Audit != nil {
 		openapiProxyMap[newOpenapiPath(moduleNameAudit)] = *cfg.Components.Audit
+	}
+	// monitor
+	if cfg.Components.Mesh != nil {
+		openapiProxyMap[newOpenapiPath(moduleNameMesh)] = *cfg.Components.Mesh
 	}
 	return openapiProxyMap
 }

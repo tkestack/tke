@@ -101,19 +101,10 @@ export const validateClusterCreationAction = {
   },
 
   _validateCertfile(certFile: string) {
-    let status = 0,
-      message = '';
-
-    //验证集群名称
-    if (!certFile) {
-      status = 2;
-      message = '证书不能为空';
-    } else {
-      status = 1;
-      message = '';
-    }
-
-    return { status, message };
+    return {
+      status: 1,
+      message: ''
+    };
   },
 
   validateCertfile() {
@@ -126,18 +117,6 @@ export const validateClusterCreationAction = {
   },
 
   _validateToken(token: string) {
-    let status = 0,
-      message = '';
-
-    //验证集群名称
-    if (!token) {
-      status = 2;
-      message = 'token不能为空';
-    } else {
-      status = 1;
-      message = '';
-    }
-
     return {
       status: 1,
       message: ''

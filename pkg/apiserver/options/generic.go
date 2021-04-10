@@ -20,20 +20,20 @@ package options
 
 import (
 	"fmt"
+	"net"
+	"os"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	netutil "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/sets"
 	genericserveroptions "k8s.io/apiserver/pkg/server/options"
-	"net"
-	"os"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
 	flagAdvertiseAddress            = "advertise-address"
 	flagCORSAllowedOrigins          = "cors-allowed-origins"
-	flagTargetRAMMb                 = "target-ram-mb"
 	flagExternalHostname            = "external-hostname"
 	flagExternalPort                = "external-port"
 	flagExternalScheme              = "external-scheme"
@@ -48,7 +48,6 @@ const (
 const (
 	configAdvertiseAddress            = "generic.advertise_address"
 	configCORSAllowedOrigins          = "generic.cors_allowed_origins"
-	configTargetRAMMb                 = "generic.target_ram_mb"
 	configExternalHostname            = "generic.external_hostname"
 	configExternalPort                = "generic.external_port"
 	configExternalScheme              = "generic.external_scheme"
@@ -95,7 +94,6 @@ func (o *GenericOptions) AddFlags(fs *pflag.FlagSet) {
 
 	_ = viper.BindPFlag(configAdvertiseAddress, fs.Lookup(flagAdvertiseAddress))
 	_ = viper.BindPFlag(configCORSAllowedOrigins, fs.Lookup(flagCORSAllowedOrigins))
-	_ = viper.BindPFlag(configTargetRAMMb, fs.Lookup(flagTargetRAMMb))
 	_ = viper.BindPFlag(configExternalHostname, fs.Lookup(flagExternalHostname))
 	_ = viper.BindPFlag(configRequestTimeout, fs.Lookup(flagRequestTimeout))
 	_ = viper.BindPFlag(configMaxMutatingRequestsInflight, fs.Lookup(flagMaxMutatingRequestsInflight))
@@ -110,7 +108,6 @@ func (o *GenericOptions) ApplyFlags() []error {
 
 	o.AdvertiseAddress = net.ParseIP(viper.GetString(configAdvertiseAddress))
 	o.CorsAllowedOriginList = viper.GetStringSlice(configCORSAllowedOrigins)
-	o.TargetRAMMB = viper.GetInt(configTargetRAMMb)
 	o.ExternalHost = viper.GetString(configExternalHostname)
 	o.ExternalPort = viper.GetInt(configExternalPort)
 	o.ExternalScheme = viper.GetString(configExternalScheme)

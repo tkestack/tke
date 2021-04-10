@@ -29,6 +29,7 @@ import (
 	auth "tkestack.io/tke/api/auth"
 	business "tkestack.io/tke/api/business"
 	logagent "tkestack.io/tke/api/logagent"
+	mesh "tkestack.io/tke/api/mesh"
 	monitor "tkestack.io/tke/api/monitor"
 	notify "tkestack.io/tke/api/notify"
 	platform "tkestack.io/tke/api/platform"
@@ -122,6 +123,12 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Logagent().InternalVersion().ConfigMaps().Informer()}, nil
 	case logagent.SchemeGroupVersion.WithResource("logagents"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Logagent().InternalVersion().LogAgents().Informer()}, nil
+
+		// Group=mesh.tkestack.io, Version=internalVersion
+	case mesh.SchemeGroupVersion.WithResource("configmaps"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Mesh().InternalVersion().ConfigMaps().Informer()}, nil
+	case mesh.SchemeGroupVersion.WithResource("meshmanagers"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Mesh().InternalVersion().MeshManagers().Informer()}, nil
 
 		// Group=monitor.tkestack.io, Version=internalVersion
 	case monitor.SchemeGroupVersion.WithResource("configmaps"):

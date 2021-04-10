@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -49,6 +50,7 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 	}
+	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &generic.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    category.GetAttrs,

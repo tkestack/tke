@@ -44,6 +44,7 @@ type Config struct {
 	Gateway     *Gateway     `json:"gateway,omitempty"`
 	Audit       *Audit       `json:"audit,omitempty"`
 	Application *Application `json:"application,omitempty"`
+	Mesh        *Mesh        `json:"mesh,omitempty"`
 	SkipSteps   []string     `json:"skipSteps,omitempty"`
 }
 
@@ -169,8 +170,21 @@ type Application struct {
 }
 
 type Monitor struct {
+	ThanosMonitor   *ThanosMonitor   `json:"thanos,omitempty"`
 	ESMonitor       *ESMonitor       `json:"es,omitempty"`
 	InfluxDBMonitor *InfluxDBMonitor `json:"influxDB,omitempty"`
+}
+
+type ThanosMonitor struct {
+	BucketConfig *ThanosBucketConfig `json:"bucketConfig"`
+}
+
+type ThanosBucketConfig struct {
+	Type   string      `json:"type"`
+	Config interface{} `json:"config"`
+}
+
+type Mesh struct {
 }
 
 type ESMonitor struct {

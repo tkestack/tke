@@ -23,7 +23,7 @@ set -o pipefail
 REGISTRY_PREFIX=${REGISTRY_PREFIX:-tkestack}
 BUILDER=${BUILDER:-default}
 VERSION=${VERSION:-$(git describe --dirty --always --tags | sed 's/-/./g')}
-PROVIDER_RES_VERSION=v1.19.7-1
+PROVIDER_RES_VERSION=v1.20.4-1
 K8S_VERSION=${PROVIDER_RES_VERSION%-*}
 DOCKER_VERSION=19.03.14
 OSS=(linux)
@@ -65,6 +65,8 @@ function prepare::tke_installer() {
 
   curl -L "https://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/${os}/${arch}/kubectl" -o "${DST_DIR}/bin/kubectl"
   chmod +x "${DST_DIR}/bin/kubectl"
+
+  curl -L "https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/public.charts.tar.gz" -o "${DST_DIR}/public.charts.tar.gz"
 
   make build BINS="tke-installer" OS="${os}" ARCH="${arch}" VERSION="${VERSION}"
 

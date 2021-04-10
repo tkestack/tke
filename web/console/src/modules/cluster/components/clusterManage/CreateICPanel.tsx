@@ -45,14 +45,14 @@ export class CreateICPanel extends React.Component<RootProps, State> {
   }
 
   onSaveComputer(computer: ICComponter) {
-    let { actions, createIC } = this.props,
-      { computerList } = createIC;
+    const { actions, createIC } = this.props;
+    let { computerList } = createIC;
     computerList = computerList.map(c => (c.isEditing ? computer : c));
     actions.createIC.updateComputerList(computerList.slice(0));
     this.setState({ isAdding: false });
   }
   onCancelComputer() {
-    let { actions, createIC } = this.props,
+    const { actions, createIC } = this.props,
       { computerList } = createIC;
     computerList.forEach(c => {
       c.isEditing = false;
@@ -61,20 +61,20 @@ export class CreateICPanel extends React.Component<RootProps, State> {
     this.setState({ isAdding: false });
   }
   onAddComputer(computer: ICComponter) {
-    let { actions, createIC } = this.props,
+    const { actions, createIC } = this.props,
       { computerList } = createIC;
     computerList.push(computer);
     actions.createIC.updateComputerList(computerList.slice(0));
     this.setState({ isAdding: false });
   }
   onEditComputer(index: number) {
-    let { actions, createIC } = this.props,
+    const { actions, createIC } = this.props,
       { computerList } = createIC;
     computerList[index].isEditing = true;
     actions.createIC.updateComputerList(computerList.slice(0));
   }
   onDeleteComputer(index: number) {
-    let { actions, createIC } = this.props,
+    const { actions, createIC } = this.props,
       { computerList } = createIC;
     computerList.splice(index, 1);
     actions.createIC.updateComputerList(computerList.slice(0));
@@ -105,8 +105,8 @@ export class CreateICPanel extends React.Component<RootProps, State> {
         merticsServer
       } = createIC;
 
-    let hasEditing = computerList.filter(c => c.isEditing).length > 0 || this.state.isAdding;
-    let canAdd = !hasEditing;
+    const hasEditing = computerList.filter(c => c.isEditing).length > 0 || this.state.isAdding;
+    const canAdd = !hasEditing;
 
     let canSave =
       !hasEditing &&
@@ -199,7 +199,10 @@ export class CreateICPanel extends React.Component<RootProps, State> {
               <FormPanel.Segment
                 value={vipType}
                 options={CreateICVipTypeOptions}
-                onChange={actions.createIC.selectVipType}
+                onChange={type => {
+                  actions.createIC.selectVipType(type);
+                  actions.createIC.inputVipAddress('');
+                }}
               />
             </FormPanel.Item>
 
