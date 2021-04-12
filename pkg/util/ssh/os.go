@@ -48,7 +48,7 @@ func BackupFile(s Interface, file string) (string, error) {
 	cmd := fmt.Sprintf("mv %s %s", file, backup)
 	_, err := s.CombinedOutput(cmd)
 	if err != nil {
-		return "", fmt.Errorf("backup %q error: %w", file, err)
+		return backup, fmt.Errorf("backup %q error: %w", file, err)
 	}
 
 	return backup, nil
