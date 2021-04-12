@@ -17,7 +17,7 @@ export const compareVersion = (firstVersion: string, secondVersion: string) => {
   if (firstVersionPart2 === secondVersionPart2) return 0;
 
   // firstVersionPart2不存在
-  if (firstVersionPart1 === undefined) return -1;
+  if (firstVersionPart2 === undefined) return -1;
 
   // secondVersionPart2不存在
   if (secondVersionPart2 === undefined) return 1;
