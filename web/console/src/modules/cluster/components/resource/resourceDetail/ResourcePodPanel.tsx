@@ -229,7 +229,7 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
         // render: x => this._getDays(x.status.startTime)
         render: x => (
           <Bubble content={`创建时间：${moment(x.metadata.creationTimestamp).format('YYYY-MM-DD HH:mm:ss')}`}>
-            <Text>{this.runningTime(x.status.startTime)}</Text>
+            <Text>{this._getDays(x.status.startTime)}</Text>
           </Bubble>
         )
       },
@@ -522,7 +522,7 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
     return <Text>{`${first} ${second}`}</Text>;
   }
 
-  private runningTime = (startTime: string) => moment.duration(moment().diff(moment(startTime))).humanize(true);
+  private runningTime = (startTime: string) => moment.duration(moment().diff(moment(startTime))).humanize();
 
   /** 运行时间 */
   private _getDays(startTime: string) {

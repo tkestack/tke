@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Space, Button, Form, Select, Checkbox, InputNumber, Typography } from 'antd';
 import { AntdLayout } from '@src/modules/common/layouts';
 import { getK8sValidVersions } from '@src/webApi/cluster';
-import { compare } from 'compare-versions';
+import { compareVersion } from '@helper/version';
 import { RootProps } from '../ClusterApp';
 import { updateCluster } from '@src/webApi/cluster';
 
@@ -89,7 +89,7 @@ export function ClusterUpdate({ route, actions }: RootProps) {
         >
           <Select style={ItemStyle()}>
             {k8sValidVersions.map(v => (
-              <Select.Option key={v} disabled={compare(clusterVersion, v, '>=')} value={v}>
+              <Select.Option key={v} disabled={compareVersion(clusterVersion, v) >= 0} value={v}>
                 {v}
               </Select.Option>
             ))}
