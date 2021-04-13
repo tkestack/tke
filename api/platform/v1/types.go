@@ -392,6 +392,9 @@ type ClusterFeature struct {
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
+	// Expansion
+	// +optional
+	DelegateConditions []string `json:"delegateConditions,omitempty" protobuf:"bytes,14,opt,name=delegateConditions"`
 }
 
 type HA struct {
@@ -465,46 +468,46 @@ type Etcd struct {
 
 	// Local provides configuration knobs for configuring the local etcd instance
 	// Local and External are mutually exclusive
-	Local *LocalEtcd `json:"local,omitempty" protobuf:"bytes,1,opt,name=local"`
+	Local *LocalEtcd `json:"local,omitempty" protobuf:"bytes,1,opt,name=local" yaml:"local"`
 
 	// External describes how to connect to an external etcd cluster
 	// Local and External are mutually exclusive
-	External *ExternalEtcd `json:"external,omitempty" protobuf:"bytes,2,opt,name=external"`
+	External *ExternalEtcd `json:"external,omitempty" protobuf:"bytes,2,opt,name=external" yaml:"external"`
 }
 
 // LocalEtcd describes that kubeadm should run an etcd cluster locally
 type LocalEtcd struct {
 	// DataDir is the directory etcd will place its data.
 	// Defaults to "/var/lib/etcd".
-	DataDir string `json:"dataDir" protobuf:"bytes,1,opt,name=dataDir"`
+	DataDir string `json:"dataDir" protobuf:"bytes,1,opt,name=dataDir" yaml:"dataDir"`
 
 	// ExtraArgs are extra arguments provided to the etcd binary
 	// when run inside a static pod.
-	ExtraArgs map[string]string `json:"extraArgs,omitempty" protobuf:"bytes,2,rep,name=extraArgs"`
+	ExtraArgs map[string]string `json:"extraArgs,omitempty" protobuf:"bytes,2,rep,name=extraArgs" yaml:"extraArgs"`
 
 	// ServerCertSANs sets extra Subject Alternative Names for the etcd server signing cert.
-	ServerCertSANs []string `json:"serverCertSANs,omitempty" protobuf:"bytes,3,rep,name=serverCertSANs"`
+	ServerCertSANs []string `json:"serverCertSANs,omitempty" protobuf:"bytes,3,rep,name=serverCertSANs" yaml:"serverCertSANs"`
 	// PeerCertSANs sets extra Subject Alternative Names for the etcd peer signing cert.
-	PeerCertSANs []string `json:"peerCertSANs,omitempty" protobuf:"bytes,4,rep,name=peerCertSANs"`
+	PeerCertSANs []string `json:"peerCertSANs,omitempty" protobuf:"bytes,4,rep,name=peerCertSANs" yaml:"peerCertSANs"`
 }
 
 // ExternalEtcd describes an external etcd cluster.
 // Kubeadm has no knowledge of where certificate files live and they must be supplied.
 type ExternalEtcd struct {
 	// Endpoints of etcd members. Required for ExternalEtcd.
-	Endpoints []string `json:"endpoints" protobuf:"bytes,1,rep,name=endpoints"`
+	Endpoints []string `json:"endpoints" protobuf:"bytes,1,rep,name=endpoints" yaml:"endpoints"`
 
 	// CAFile is an SSL Certificate Authority file used to secure etcd communication.
 	// Required if using a TLS connection.
-	CAFile string `json:"caFile" protobuf:"bytes,2,opt,name=caFile"`
+	CAFile string `json:"caFile" protobuf:"bytes,2,opt,name=caFile" yaml:"caFile"`
 
 	// CertFile is an SSL certification file used to secure etcd communication.
 	// Required if using a TLS connection.
-	CertFile string `json:"certFile" protobuf:"bytes,3,opt,name=certFile"`
+	CertFile string `json:"certFile" protobuf:"bytes,3,opt,name=certFile" yaml:"certFile"`
 
 	// KeyFile is an SSL key file used to secure etcd communication.
 	// Required if using a TLS connection.
-	KeyFile string `json:"keyFile" protobuf:"bytes,4,opt,name=keyFile"`
+	KeyFile string `json:"keyFile" protobuf:"bytes,4,opt,name=keyFile" yaml:"keyFile"`
 }
 
 type Upgrade struct {

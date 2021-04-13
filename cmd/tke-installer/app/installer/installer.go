@@ -35,6 +35,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	applicationv1client "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"
@@ -68,6 +69,7 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
+	"tkestack.io/tke/pkg/expansion"
 	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	baremetalconfig "tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	baremetalconstants "tkestack.io/tke/pkg/platform/provider/baremetal/constants"
@@ -110,11 +112,13 @@ type TKE struct {
 
 	docker *docker.Docker
 
-	globalClient   kubernetes.Interface
-	platformClient tkeclientset.PlatformV1Interface
-	registryClient registryclientset.RegistryV1Interface
-	servers        []string
-	namespace      string
+	globalClient      kubernetes.Interface
+	platformClient    tkeclientset.PlatformV1Interface
+	registryClient    registryclientset.RegistryV1Interface
+	applicationClient applicationv1client.ApplicationV1Interface
+	servers           []string
+	namespace         string
+	expansionDriver   *expansion.ExpansionDriver
 }
 
 func New(config *config.Config) *TKE {
@@ -152,6 +156,9 @@ func New(config *config.Config) *TKE {
 		}
 	}
 
+	// Expansion
+	c.expansionDriver, err = expansion.NewExpansionDriver(log.WithName("tke-expansions"))
+	// TODO: ignore the error
 	return c
 }
 
@@ -170,6 +177,27 @@ func (t *TKE) loadTKEData() error {
 }
 
 func (t *TKE) initSteps() {
+
+	// Expansion
+	t.steps = append(t.steps, []types.Handler{
+		{
+			Name: "Load Expansion Operator Image",
+			Func: t.loadOperatorImage,
+		},
+	}...)
+	t.steps = append(t.steps, []types.Handler{
+		{
+			Name: "Patch Hook Files",
+			Func: t.patchHookFiles,
+		},
+	}...)
+	t.steps = append(t.steps, []types.Handler{
+		{
+			Name: "Start Expansion Operator",
+			Func: t.startOperator,
+		},
+	}...)
+
 	t.steps = append(t.steps, []types.Handler{
 		{
 			Name: "Execute pre install hook",
@@ -451,6 +479,16 @@ func (t *TKE) initSteps() {
 			{
 				Name: "Import charts",
 				Func: t.importCharts,
+			},
+		}...)
+	}
+
+	// TODO: when expansion enabled, auto set t.Para.Config.Application to be true
+	if t.Para.Config.Application != nil {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Install applications",
+				Func: t.installApplications,
 			},
 		}...)
 	}
@@ -1001,6 +1039,11 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 func (t *TKE) do() {
 	ctx := t.log.WithContext(context.Background())
 
+	// Expansion
+	t.mergeExpansionsProviderConf()
+	t.mergeExpansionsConfig()
+	t.mergeExpansionsCluster()
+
 	var taskType string
 	if t.Config.Upgrade {
 		taskType = "upgrade"
@@ -1161,6 +1204,14 @@ func (t *TKE) createGlobalCluster(ctx context.Context) error {
 	for t.Cluster.Status.Phase == platformv1.ClusterInitializing {
 		err := t.clusterProvider.OnCreate(ctx, t.Cluster)
 		if err != nil {
+			if err == clusterprovider.ErrorWaitingForExpansionOperator {
+				reloadErr := t.loadTKEData()
+				if reloadErr != nil {
+					t.log.Errorf("reload tkedata failed, %v", reloadErr)
+					return fmt.Errorf("reload tkedata failed, %w", err)
+				}
+				t.log.Info("reload from tke.json for condition updated")
+			}
 			return err
 		}
 		t.backup()
@@ -1182,7 +1233,12 @@ func (t *TKE) loadImages(ctx context.Context) error {
 	if _, err := os.Stat(constants.ImagesFile); err != nil {
 		return err
 	}
-	return t.docker.LoadImages(constants.ImagesFile)
+	if err := t.docker.LoadImages(constants.ImagesFile); err != nil {
+		return err
+	}
+
+	// Expansion
+	return t.loadExpansionImages(ctx, t.docker)
 }
 
 func (t *TKE) tagImages(ctx context.Context) error {
@@ -1190,6 +1246,8 @@ func (t *TKE) tagImages(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	// Expansion
+	t.expansionDriver.MergeExpansionImages(&tkeImages)
 
 	for _, image := range tkeImages {
 		imageNames := strings.Split(image, "/")
@@ -1300,6 +1358,11 @@ func (t *TKE) initDataForDeployTKE() error {
 	}
 
 	t.registryClient, err = t.Cluster.RegistryClientsetForBootstrap()
+	if err != nil {
+		return err
+	}
+
+	t.applicationClient, err = t.Cluster.ApplicationClientsetForBootstrap()
 	if err != nil {
 		return err
 	}
@@ -1750,6 +1813,12 @@ func (t *TKE) installTKEPlatformAPI(ctx context.Context) error {
 		return err
 	}
 
+	// Expansion
+	err = t.expansionDriver.PatchPlatformWithExpansion(ctx, t.globalClient, "tke-platform-api")
+	if err != nil {
+		return err
+	}
+
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
 		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-platform-api")
 		if err != nil {
@@ -1802,6 +1871,12 @@ func (t *TKE) installTKEPlatformController(ctx context.Context) error {
 	}
 
 	if err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-platform-controller/*.yaml", params); err != nil {
+		return err
+	}
+
+	// Expansion
+	err := t.expansionDriver.PatchPlatformWithExpansion(ctx, t.globalClient, "tke-platform-controller")
+	if err != nil {
 		return err
 	}
 
@@ -2594,8 +2669,16 @@ func (t *TKE) writeKubeconfig(ctx context.Context) error {
 		return err
 	}
 	_ = ioutil.WriteFile(constants.KubeconfigFile, data, 0644)
-	_ = os.MkdirAll("/root/.kube", 0755)
-	return ioutil.WriteFile("/root/.kube/config", data, 0644)
+
+	// Expansion
+	_ = t.expansionWriteKubeconfigFile(ctx, data)
+
+	home := os.Getenv("HOME")
+	if home == "" {
+		home = "/root"
+	}
+	_ = os.MkdirAll(fmt.Sprintf("%s/.kube", home), 0755)
+	return ioutil.WriteFile(fmt.Sprintf("%s/.kube/config", home), data, 0644)
 }
 
 func (t *TKE) patchPlatformVersion(ctx context.Context) error {
@@ -2633,4 +2716,13 @@ func (t *TKE) patchClusterInfo(ctx context.Context, patchData interface{}) error
 	}
 	_, err = t.globalClient.CoreV1().ConfigMaps("kube-public").Patch(ctx, "cluster-info", k8stypes.MergePatchType, patchByte, metav1.PatchOptions{})
 	return err
+}
+
+func (t *TKE) installApplications(ctx context.Context) error {
+
+	// TODO: install tke-core applications
+	// TODO: install tke-addon applications
+
+	// Expansion
+	return t.installExpansionApplications(ctx)
 }

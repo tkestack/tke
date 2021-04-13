@@ -55,30 +55,30 @@ type AppList struct {
 
 // AppSpec is a description of a project.
 type AppSpec struct {
-	Type          AppType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=AppType"`
-	TenantID      string  `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
-	Name          string  `json:"name" protobuf:"bytes,3,opt,name=name"`
-	TargetCluster string  `json:"targetCluster" protobuf:"bytes,4,opt,name=targetCluster"`
+	Type          AppType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=AppType" yaml:"type"`
+	TenantID      string  `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID" yaml:"tenantID"`
+	Name          string  `json:"name" protobuf:"bytes,3,opt,name=name" yaml:"name"`
+	TargetCluster string  `json:"targetCluster" protobuf:"bytes,4,opt,name=targetCluster" yaml:"targetCluster"`
 	// +optional
-	Chart Chart `json:"chart" protobuf:"bytes,5,opt,name=chart,casttype=Chart"`
+	Chart Chart `json:"chart" protobuf:"bytes,5,opt,name=chart,casttype=Chart" yaml:"chart"`
 	// Values holds the values for this app.
 	// +optional
-	Values AppValues `json:"values,omitempty" protobuf:"bytes,6,opt,name=values,casttype=AppValues"`
+	Values AppValues `json:"values,omitempty" protobuf:"bytes,6,opt,name=values,casttype=AppValues" yaml:"values"`
 	// +optional
-	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,7,rep,name=finalizers,casttype=FinalizerName"`
-	DryRun     bool            `json:"dryRun" protobuf:"bytes,8,opt,name=dryRun"`
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,7,rep,name=finalizers,casttype=FinalizerName" yaml:"finalizers"`
+	DryRun     bool            `json:"dryRun" protobuf:"bytes,8,opt,name=dryRun" yaml:"dryRun"`
 }
 
 // Chart is a description of a chart.
 type Chart struct {
-	TenantID       string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
-	ChartGroupName string `json:"chartGroupName" protobuf:"bytes,2,opt,name=chartGroupName"`
-	ChartName      string `json:"chartName" protobuf:"bytes,3,opt,name=chartName"`
-	ChartVersion   string `json:"chartVersion" protobuf:"bytes,4,opt,name=chartVersion"`
-	RepoURL        string `json:"repoURL" protobuf:"bytes,5,opt,name=repoURL"`
-	RepoUsername   string `json:"repoUsername" protobuf:"bytes,6,opt,name=repoUsername"`
-	RepoPassword   string `json:"repoPassword" protobuf:"bytes,7,opt,name=repoPassword"`
-	ImportedRepo   bool   `json:"importedRepo" protobuf:"bytes,8,opt,name=importedRepo"`
+	TenantID       string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID" yaml:"tenantID"`
+	ChartGroupName string `json:"chartGroupName" protobuf:"bytes,2,opt,name=chartGroupName" yaml:"chartGroupName"`
+	ChartName      string `json:"chartName" protobuf:"bytes,3,opt,name=chartName" yaml:"chartName"`
+	ChartVersion   string `json:"chartVersion" protobuf:"bytes,4,opt,name=chartVersion" yaml:"chartVersion"`
+	RepoURL        string `json:"repoURL" protobuf:"bytes,5,opt,name=repoURL" yaml:"repoURL"`
+	RepoUsername   string `json:"repoUsername" protobuf:"bytes,6,opt,name=repoUsername" yaml:"repoUsername"`
+	RepoPassword   string `json:"repoPassword" protobuf:"bytes,7,opt,name=repoPassword" yaml:"repoPassword"`
+	ImportedRepo   bool   `json:"importedRepo" protobuf:"bytes,8,opt,name=importedRepo" yaml:"importedRepo"`
 }
 
 // AppStatus represents information about the status of a bootstrap.

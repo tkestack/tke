@@ -401,6 +401,11 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 	if err != nil {
 		return upgraded, err
 	}
+	// Expansion
+	err = kubelet.StartService(s)
+	if err != nil {
+		return upgraded, err
+	}
 	err = kubelet.ServiceOperate(s, kubelet.Start)
 	if err != nil {
 		return upgraded, err

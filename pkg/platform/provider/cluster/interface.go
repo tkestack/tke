@@ -45,6 +45,13 @@ const (
 	ReasonFailedDelete = "FailedDelete"
 
 	ConditionTypeDone = "EnsureDone"
+	// Expansion
+	ReasonDelegated = "Delegated"
+)
+
+var (
+	// Expansion
+	ErrorWaitingForExpansionOperator = fmt.Errorf("installer is waiting for *Expansion operator* to do this step")
 )
 
 type APIProvider interface {
@@ -166,14 +173,27 @@ func (p *DelegateProvider) OnCreate(ctx context.Context, cluster *v1.Cluster) er
 	if err != nil {
 		return err
 	}
+	// Expansion
+	if condition.Reason == ReasonDelegated {
+		time.Sleep(2 * time.Second)
+		return ErrorWaitingForExpansionOperator
+	}
 
-	if cluster.Spec.Features.SkipConditions != nil &&
+	if len(cluster.Spec.Features.SkipConditions) > 0 &&
 		funk.ContainsString(cluster.Spec.Features.SkipConditions, condition.Type) {
 		cluster.SetCondition(platformv1.ClusterCondition{
 			Type:    condition.Type,
 			Status:  platformv1.ConditionTrue,
 			Reason:  ReasonSkip,
 			Message: "Skip current condition",
+		}, false)
+	} else if len(cluster.Spec.Features.DelegateConditions) > 0 &&
+		funk.ContainsString(cluster.Spec.Features.DelegateConditions, condition.Type) {
+		cluster.SetCondition(platformv1.ClusterCondition{
+			Type:    condition.Type,
+			Status:  platformv1.ConditionFalse,
+			Reason:  ReasonDelegated,
+			Message: "Waiting operator to do current condition",
 		}, false)
 	} else {
 		handler := p.getHandler(condition.Type, p.CreateHandlers)

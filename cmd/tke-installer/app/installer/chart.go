@@ -23,12 +23,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"os"
+	"path"
+	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
+	registryv1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	applicationutil "tkestack.io/tke/pkg/application/util"
@@ -59,6 +63,21 @@ func init() {
 func (t *TKE) importCharts(ctx context.Context) error {
 	var errs []error
 	client := applicationutil.NewHelmClientWithoutRESTClient()
+
+	// Expansion
+	var parseChartPackage = func(filepath string) (name string, version string) {
+		filename := path.Base(filepath)
+		filename = strings.TrimSuffix(filename, ".tgz")
+		filename = strings.TrimSuffix(filename, ".tar.gz")
+		arr := strings.Split(filename, "-")
+		if len(arr) == 1 {
+			return arr[0], ""
+		}
+		name = strings.Join(arr[:len(arr)-1], "-")
+		version = arr[len(arr)-1]
+		return
+	}
+
 	for _, chartGroup := range needImportedChartGroups {
 		dest, err := ioutil.TempDir("", "chartpath-")
 		if err != nil {
@@ -68,6 +87,14 @@ func (t *TKE) importCharts(ctx context.Context) error {
 		defer os.RemoveAll(dest)
 
 		err = compress.ExtractTarGz(chartGroup+chartFilesSuffix, dest)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		// Expansion
+		// TODO: now we only support expanding public charts
+		err = t.expansionDriver.CopyChartsToDst(chartGroup, dest)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -97,6 +124,7 @@ func (t *TKE) importCharts(ctx context.Context) error {
 			AdminPassword: string(t.Para.Config.Registry.Password()),
 		}
 
+		cg := cgs.Items[0]
 		chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(conf, cgs.Items[0])
 		if err != nil {
 			errs = append(errs, err)
@@ -114,6 +142,38 @@ func (t *TKE) importCharts(ctx context.Context) error {
 				errs = append(errs, err)
 				continue
 			}
+			chartName, _ := parseChartPackage(f)
+			chart := &registryv1.Chart{
+				Spec: registryv1.ChartSpec{
+					Name:           chartName,
+					TenantID:       cg.Spec.TenantID,
+					ChartGroupName: cg.Spec.Name,
+					DisplayName:    chartName,
+					Visibility:     cg.Spec.Visibility,
+				},
+			}
+			// TODO: this not works by now. cause chart CR name is not chart name
+			c, err := t.registryClient.Charts(cg.Name).Get(ctx, chartName, metav1.GetOptions{})
+			if err == nil {
+				t.log.Infof("chart already exists %v", chart)
+				continue
+			}
+			t.log.Infof("do not get chart by name %v, %v", chartName, c)
+			if errors.IsNotFound(err) {
+				_, err = t.registryClient.Charts(cg.Name).Create(ctx, chart, metav1.CreateOptions{})
+				if err != nil {
+					// TODO: workaround.
+					if strings.Contains(err.Error(), "spec.name: Duplicate value") {
+						t.log.Infof("create chart duplicated %v, %+v, %v", f, chart, err)
+						continue
+					}
+					t.log.Errorf("create chart failed %v, %+v, %v", f, chart, err)
+					errs = append(errs, err)
+				}
+				continue
+			}
+			t.log.Errorf("get chart error %v, %v", chart, err)
+			errs = append(errs, err)
 		}
 	}
 	return utilerrors.NewAggregate(errs)

@@ -78,13 +78,25 @@ func Install(s ssh.Interface, version string) (err error) {
 		return err
 	}
 
-	err = ss.Start()
+	//err = ss.Start()
+	//if err != nil {
+	//	return err
+	//}
+
+	cmd = "kubectl completion bash > /etc/bash_completion.d/kubectl"
+	_, err = s.CombinedOutput(cmd)
 	if err != nil {
 		return err
 	}
 
-	cmd = "kubectl completion bash > /etc/bash_completion.d/kubectl"
-	_, err = s.CombinedOutput(cmd)
+	return nil
+}
+
+// Expansion
+func StartService(s ssh.Interface) (err error) {
+	ss := &supervisor.SystemdSupervisor{Name: "kubelet", SSH: s}
+
+	err = ss.Start()
 	if err != nil {
 		return err
 	}

@@ -25,6 +25,7 @@ import (
 	"net"
 	"path"
 	"time"
+	applicationv1client "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -113,6 +114,14 @@ func (c *Cluster) RegistryClientsetForBootstrap() (registryversionedclient.Regis
 		return nil, err
 	}
 	return registryversionedclient.NewForConfig(config)
+}
+
+func (c *Cluster) ApplicationClientsetForBootstrap() (applicationv1client.ApplicationV1Interface, error) {
+	config, err := c.RESTConfigForBootstrap(&rest.Config{})
+	if err != nil {
+		return nil, err
+	}
+	return applicationv1client.NewForConfig(config)
 }
 
 func (c *Cluster) RESTConfigForBootstrap(config *rest.Config) (*rest.Config, error) {

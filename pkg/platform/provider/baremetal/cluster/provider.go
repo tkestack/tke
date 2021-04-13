@@ -86,8 +86,12 @@ func NewProvider() (*Provider, error) {
 			p.EnsureNvidiaDriver,
 			p.EnsureNvidiaContainerRuntime,
 			p.EnsureDocker,
+			// Expansion
+			p.EnsureStartDocker,
 			p.EnsureKubernetesImages,
 			p.EnsureKubelet,
+			// Expansion
+			p.EnsureStartKubelet,
 			p.EnsureCNIPlugins,
 			p.EnsureConntrackTools,
 			p.EnsureKubeadm,

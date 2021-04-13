@@ -533,6 +533,26 @@ func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 	return nil
 }
 
+func (p *Provider) EnsureStartDocker(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+
+	for _, machine := range machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		err = docker.Start(machineSSH)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
 func (p *Provider) EnsureKubernetesImages(ctx context.Context, c *v1.Cluster) error {
 	machines := map[bool][]platformv1.ClusterMachine{
 		true:  c.Spec.ScalingMachines,
@@ -1139,6 +1159,26 @@ func (p *Provider) EnsureKubelet(ctx context.Context, c *v1.Cluster) error {
 		}
 
 		err = kubelet.Install(machineSSH, c.Spec.Version)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
+// Expansion
+func (p *Provider) EnsureStartKubelet(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+	for _, machine := range machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		err = kubelet.StartService(machineSSH)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}

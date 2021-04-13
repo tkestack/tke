@@ -100,6 +100,11 @@ func (t *TKE) doPrepareCustomImages() {
 }
 
 func (t *TKE) getCustomPatchVersion(ctx context.Context) (patchVersion string, err error) {
+	// Expansion
+	if t.expansionDriver != nil && t.expansionDriver.HasNewK8sVersion() {
+		return t.expansionDriver.NewK8sVersion()
+	}
+
 	files, err := ioutil.ReadDir(t.Config.CustomUpgradeResourceDir)
 	if err != nil {
 		return "", err
@@ -118,6 +123,12 @@ func (t *TKE) getCustomPatchVersion(ctx context.Context) (patchVersion string, e
 }
 
 func (t *TKE) loadCustomK8sImages(ctx context.Context) error {
+	// Expansion
+	if t.expansionDriver != nil && t.expansionDriver.EnableImages() {
+		// Images will be loaded by expansion framework
+		return nil
+	}
+
 	patchVersion, err := t.getCustomPatchVersion(ctx)
 	if err != nil {
 		return err

@@ -49,3 +49,27 @@ yarn-error.log*
 
 # provider config
 /provider/
+/cmd/tke-installer/app/installer/provider/
+/cmd/tke-installer/app/installer/data/
+
+# data log
+/data
+/data/
+
+# hooks
+/hooks
+/hooks/
+
+# manifests
+/manifests
+/manifests/
+
+# assets
+/assets
+/asstes/
+
+# images.tar.gz
+/images.tar.gz
+
+# .charts.tar.gz
+*.charts.tar.gz

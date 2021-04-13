@@ -55,7 +55,7 @@ func ExtractTarGz(src, dest string) error {
 		file := strings.TrimRight(dest, "/") + "/" + header.Name
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if err := os.Mkdir(file, 0755); err != nil {
+			if err := os.MkdirAll(file, 0755); err != nil {
 				return fmt.Errorf("ExtractTarGz: Mkdir() failed: %s", err.Error())
 			}
 		case tar.TypeReg:

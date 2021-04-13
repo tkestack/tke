@@ -338,6 +338,21 @@ func (p *Provider) EnsureDocker(ctx context.Context, machine *platformv1.Machine
 	return nil
 }
 
+// Expansion
+func (p *Provider) EnsureStartDocker(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	err = docker.Start(machineSSH)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (p *Provider) EnsureKubelet(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
@@ -345,6 +360,21 @@ func (p *Provider) EnsureKubelet(ctx context.Context, machine *platformv1.Machin
 	}
 
 	err = kubelet.Install(machineSSH, cluster.Spec.Version)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Expansion
+func (p *Provider) EnsureStartKubelet(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+
+	err = kubelet.StartService(machineSSH)
 	if err != nil {
 		return err
 	}

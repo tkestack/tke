@@ -85,7 +85,18 @@ func Install(s ssh.Interface, option *Option) error {
 		return err
 	}
 
-	err = ss.Start()
+	//err = ss.Start()
+	//if err != nil {
+	//	return err
+	//}
+
+	return nil
+}
+
+// Expansion
+func Start(s ssh.Interface) error {
+	ss := &supervisor.SystemdSupervisor{Name: "docker", SSH: s}
+	err := ss.Start()
 	if err != nil {
 		return err
 	}

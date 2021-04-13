@@ -22,6 +22,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"k8s.io/apimachinery/pkg/types"
 	"net/http"
 	"time"
 
@@ -257,4 +259,89 @@ func PullImageWithPod(ctx context.Context, clientset kubernetes.Interface, pod *
 	}
 
 	return clientset.CoreV1().Pods(pod.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{})
+}
+
+//
+func GenerateConfigmapFromFiles(ctx context.Context, client kubernetes.Interface, nn *types.NamespacedName, fileDir string, files []string, force bool) error {
+	_, err := client.CoreV1().ConfigMaps(nn.Namespace).Get(ctx, nn.Name, metav1.GetOptions{})
+	if err == nil && !force {
+		return nil
+	}
+	if err != nil && !apierrors.IsNotFound(err) {
+		return err
+	}
+	if force {
+		err = client.CoreV1().ConfigMaps(nn.Namespace).Delete(ctx, nn.Name, metav1.DeleteOptions{})
+		if err != nil && !apierrors.IsNotFound(err) {
+			return err
+		}
+	}
+	// TODO: check files
+	data := make(map[string]string)
+	for _, f := range files {
+		p := fileDir + f
+		body, err := ioutil.ReadFile(p)
+		if err != nil {
+			return fmt.Errorf("create configmap failed, read file error %v,%v", p, err)
+		}
+		data[f] = string(body)
+	}
+
+	_, err = client.CoreV1().ConfigMaps(nn.Namespace).Create(ctx, &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: nn.Name,
+		},
+		Data: data,
+	}, metav1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("create configmap failed %v, %v", nn, err)
+	}
+
+	return nil
+}
+
+func PatchDeployWithConfigmap(ctx context.Context, client kubernetes.Interface, deployName string, cmNN *types.NamespacedName, mountPath string) error {
+	deploy, err := client.AppsV1().Deployments(cmNN.Namespace).Get(ctx, deployName, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("PatchDeployWithConfigmap failed, get deployment failed %v/%v, %v", cmNN.Namespace, deployName, err)
+	}
+	_, err = client.CoreV1().ConfigMaps(cmNN.Namespace).Get(ctx, cmNN.Name, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("PatchDeployWithConfigmap failed, get cm failed %v, %v", cmNN, err)
+	}
+	volumeName := fmt.Sprintf("%s-volume", cmNN.Name)
+	deploy.Spec.Template.Spec.Volumes = append(deploy.Spec.Template.Spec.Volumes, corev1.Volume{
+		Name: volumeName,
+		VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: cmNN.Name,
+				},
+			},
+		},
+	})
+	for idx := range deploy.Spec.Template.Spec.Containers {
+		var alreadyExists bool
+		for _, vm := range deploy.Spec.Template.Spec.Containers[idx].VolumeMounts {
+			if vm.Name == volumeName {
+				alreadyExists = true
+				break
+			}
+		}
+		if alreadyExists {
+			continue
+		}
+		deploy.Spec.Template.Spec.Containers[idx].VolumeMounts = append(deploy.Spec.Template.Spec.Containers[idx].VolumeMounts, corev1.VolumeMount{
+			Name:      volumeName,
+			ReadOnly:  true,
+			MountPath: mountPath,
+		})
+	}
+	// workaround for update conflict
+	deploy.ObjectMeta.ResourceVersion = ""
+	_, err = client.AppsV1().Deployments(deploy.Namespace).Update(ctx, deploy, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("patch deployment with cm failed. %v, %v, %v", cmNN, deployName, err)
+	}
+	return nil
 }
