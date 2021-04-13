@@ -25,7 +25,7 @@ import (
 
 func scrapeConfigForPrometheus() string {
 	cfgStr := `
-    # Use kubelet_running_pod_count to get kube node labels
+    # Use kubelet_running_pod_count or kubelet_running_pods to get kube node labels
     - job_name: 'kubernetes-nodes'
       scrape_timeout: 60s
       scheme: https
@@ -42,7 +42,7 @@ func scrapeConfigForPrometheus() string {
         target_label: device_type
       metric_relabel_configs:
       - source_labels: [ __name__ ]
-        regex: 'kubelet_running_pod_count|kubelet_volume_stats_used_bytes|kubelet_volume_stats_available_bytes|kubelet_volume_stats_capacity_bytes|kubelet_pleg_relist_duration_seconds_sum|kubelet_pleg_relist_duration_seconds_count|kubelet_docker_operations_errors|kubelet_docker_operations_errors_total|kubelet_running_container_count|volume_manager_total_volumes|kubelet_node_config_error|kubelet_runtime_operations_total|kubelet_runtime_operations_errors_total|kubelet_pod_start_duration_seconds_(.*)|kubelet_pod_worker_duration_seconds_(.*)|storage_operation_duration_seconds_(.*)|storage_operation_errors_total|kubelet_runtime_operations_duration_seconds_(.*)|kubelet_cgroup_manager_duration_seconds_(.*)|go_goroutines|process_resident_memory_bytes|process_cpu_seconds_total|rest_client_requests_total|rest_client_request_latency_seconds_(.*)'
+        regex: 'kubelet_running_pods|kubelet_running_pod_count|kubelet_volume_stats_used_bytes|kubelet_volume_stats_available_bytes|kubelet_volume_stats_capacity_bytes|kubelet_pleg_relist_duration_seconds_sum|kubelet_pleg_relist_duration_seconds_count|kubelet_docker_operations_errors|kubelet_docker_operations_errors_total|kubelet_running_containers|kubelet_running_container_count|volume_manager_total_volumes|kubelet_node_config_error|kubelet_runtime_operations_total|kubelet_runtime_operations_errors_total|kubelet_pod_start_duration_seconds_(.*)|kubelet_pod_worker_duration_seconds_(.*)|storage_operation_duration_seconds_(.*)|storage_operation_errors_total|kubelet_runtime_operations_duration_seconds_(.*)|kubelet_cgroup_manager_duration_seconds_(.*)|go_goroutines|process_resident_memory_bytes|process_cpu_seconds_total|rest_client_requests_total|rest_client_request_latency_seconds_(.*)'
         action: keep
       - regex: (__name__|instance|node_role_kubernetes_io_master|device_type|state|namespace|persistentvolumeclaim|operation_type|container_state|plugin_name|operation_name|volume_plugin)
         action: labelkeep
@@ -453,7 +453,7 @@ groups:
 - name: k8s-ag-data
   rules:
   - record: kube_node_labels
-    expr: kubelet_running_pod_count*0 + 1
+    expr: '{__name__=~"kubelet_running_pod_count|kubelet_running_pods"}*0 + 1'
 
   - record: kube_node_status_capacity_gpu
     expr: sum by(node) (kube_node_status_capacity{resource="tencent_com_vcuda_core"})
