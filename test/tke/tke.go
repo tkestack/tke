@@ -87,13 +87,18 @@ func (testTke *TestTKE) ClusterTemplate(nodes ...cloudprovider.Instance) *platfo
 func (testTke *TestTKE) CreateClusterInternal(cls *platformv1.Cluster) (cluster *platformv1.Cluster, err error) {
 	klog.Info("Create cluster: ", cls.String())
 
-	err = wait.PollImmediate(10*time.Second, time.Minute, func() (bool, error) {
+	err = wait.PollImmediate(30*time.Second, 5*time.Minute, func() (bool, error) {
 		cluster, err = testTke.TkeClient.PlatformV1().Clusters().Create(context.Background(), cls, metav1.CreateOptions{})
 		if err != nil {
+			klog.Warningf("Create cluster failed: %v", err)
 			return false, err
 		}
 		return true, nil
 	})
+
+	if err != nil {
+		return
+	}
 
 	klog.Info("Cluster name: ", cluster.Name)
 	testTke.Clusters = append(testTke.Clusters, cluster)
