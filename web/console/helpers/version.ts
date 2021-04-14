@@ -1,4 +1,4 @@
-import compareVersions from 'compare-versions';
+import * as compareVersions from 'compare-versions';
 
 export const compareVersion = (firstVersion: string, secondVersion: string) => {
   // 判断是否包含“-”， 因为项目这边：1.20.4-tke.1 版本号是大于1.20.4的
