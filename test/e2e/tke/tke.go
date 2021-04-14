@@ -21,11 +21,12 @@ package tke
 import (
 	"context"
 	"fmt"
-	"k8s.io/klog"
 	"net"
 	"net/url"
 	"os"
 	"time"
+
+	"k8s.io/klog"
 
 	"github.com/onsi/gomega"
 
@@ -193,7 +194,7 @@ func (t *TKE) createPlatformController(ctx context.Context) error {
 	options := map[string]interface{}{
 		"Image":             fmt.Sprintf("tkestack/tke-platform-controller-amd64:%s", env.ImageVersion()),
 		"ProviderResImage":  fmt.Sprintf("tkestack/provider-res-amd64:%s", env.ProviderResImageVersion()),
-		"RegistryDomain":    "docker.io",
+		"RegistryDomain":    "ccr.ccs.tencentyun.com",
 		"RegistryNamespace": "tkestack",
 		"Namespace":         t.Namespace,
 	}
