@@ -17,6 +17,7 @@ import (
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/util/ssh"
 	"tkestack.io/tke/test/util"
 	"tkestack.io/tke/test/util/cloudprovider"
 	"tkestack.io/tke/test/util/env"
@@ -74,6 +75,26 @@ func (testTke *TestTKE) ClusterTemplate(nodes ...cloudprovider.Instance) *platfo
 		}
 	}
 	for _, one := range nodes {
+		sshConfig := &ssh.Config{
+			User:        one.Username,
+			Host:        one.InternalIP,
+			Port:        int(one.Port),
+			Password:    one.Password,
+			DialTimeOut: 30 * time.Second,
+			Retry:       5,
+		}
+		s, err := ssh.New(sshConfig)
+		if err != nil {
+			panic(fmt.Errorf("create ssh failed: %v", err))
+		}
+		out, err := s.CombinedOutput("mkdir /root/.docker")
+		if err != nil {
+			panic(fmt.Errorf("mkdir /root/.docker failed: %v, out: %v", err, string(out)))
+		}
+		err = s.CopyFile("/data//data/github-docker/config.json", "/root/.docker/config.json")
+		if err != nil {
+			panic(fmt.Errorf("copy config.json failed: %v", err))
+		}
 		cluster.Spec.Machines = append(cluster.Spec.Machines, platformv1.ClusterMachine{
 			IP:       one.InternalIP,
 			Port:     one.Port,
