@@ -379,10 +379,22 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 // TODO: add gc collector for clean non reference ClusterCredential.
 func (c *Controller) ensureCreateClusterCredential(ctx context.Context, cluster *platformv1.Cluster) (*platformv1.Cluster, error) {
 	if cluster.Spec.ClusterCredentialRef != nil {
+		// Set OwnerReferences for imported cluster credentials
+		cc, err := c.platformClient.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+		cc.ObjectMeta.OwnerReferences = []metav1.OwnerReference{
+			*metav1.NewControllerRef(cluster, platformv1.SchemeGroupVersion.WithKind("Cluster"))}
+		_, err = c.platformClient.ClusterCredentials().Update(ctx, cc, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, err
+		}
 		return cluster, nil
 	}
 
 	var err error
+	// Set OwnerReferences for baremetal cluster credentials
 	credential := &platformv1.ClusterCredential{
 		TenantID:    cluster.Spec.TenantID,
 		ClusterName: cluster.Name,
