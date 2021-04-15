@@ -1,4 +1,7 @@
-# How to run TKEStack locally
+# How to run TKEStack locally 
+
+## This document is out of date, maybe doesn't work as expected
+
 This guide will walk you through deploying the full TKEStack on you local machine and allow you to play with the core components. It is highly recommended if you want to develop TKEStack and contribute regularly.
 
 ## Table of Contents
