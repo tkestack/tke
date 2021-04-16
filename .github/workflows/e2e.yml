@@ -19,6 +19,7 @@ env:
   CREATE_INSTANCES_PARAM: ${{ secrets.CREATE_INSTANCES_PARAM }}
   PASSWORD: ${{ secrets.PASSWORD }}
   NEED_DELETE: ${{ secrets.NEED_DELETE }}
+  DOCKER_HUB_ACTION_AUTH: ${{ secrets.DOCKER_HUB_ACTION_AUTH }}
 jobs:
   image:
     name: build tke image
