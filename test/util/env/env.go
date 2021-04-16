@@ -94,7 +94,8 @@ func InstanceTypes() []string {
 }
 
 func NeedDelete() bool {
-	return strings.ToLower(os.Getenv(NEEDDELETE)) == "true"
+	// return strings.ToLower(os.Getenv(NEEDDELETE)) == "true"
+	return false
 }
 
 func ProviderResImageVersion() string {

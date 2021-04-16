@@ -87,7 +87,7 @@ func (t *TKE) importCharts(ctx context.Context) error {
 			continue
 		}
 		if len(cgs.Items) == 0 {
-			errs = append(errs, fmt.Errorf("cannot find %s chartgroup", chartGroup))
+			errs = append(errs, fmt.Errorf("cannot find %s chartgroup ", chartGroup))
 			continue
 		}
 		conf := config.RepoConfiguration{
