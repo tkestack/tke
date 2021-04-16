@@ -22,6 +22,7 @@ import (
 	"os"
 	"path"
 	"strings"
+
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/pkg/spec"
 
@@ -52,6 +53,7 @@ const (
 	PASSWORD             = "PASSWORD"
 	NEEDDELETE           = "NEED_DELETE"
 	INSTANCETYPES        = "INSTANCE_TYPES"
+	DOCKERHUBACTIONAUTH  = "DOCKER_HUB_ACTION_AUTH"
 )
 
 func ImageVersion() string {

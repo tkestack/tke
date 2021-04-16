@@ -29,4 +29,7 @@ const (
 	EtcdYamlFile                  = ManifestDir + "etcd/*.yaml"
 	TKEPlatformAPIYAMLFile        = ManifestDir + "tke-platform-api/*.yaml"
 	TKEPlatformControllerYAMLFile = ManifestDir + "tke-platform-controller/*.yaml"
+	DstDockerConfPath             = "/root/.docker/"
+	DockerConfName                = "config.json"
+	DockerConfigFile              = ManifestDir + "docker/config.json"
 )

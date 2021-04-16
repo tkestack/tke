@@ -74,7 +74,7 @@ export function getKubectlConfig({ caCert, token, host, clusterId, clientKey, cl
 apiVersion: v1
 clusters:
 - cluster:
-    certificate-authority-data: ${caCert}
+    ${caCert ? `certificate-authority-data: ${caCert}` : `insecure-skip-tls-verify: true`}
     server: ${host}
   name: ${clusterId}
 contexts:

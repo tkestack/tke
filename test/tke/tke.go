@@ -1,9 +1,13 @@
 package tke
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	corev1 "k8s.io/api/core/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
@@ -12,10 +16,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
-	"time"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/util/ssh"
+	"tkestack.io/tke/pkg/util/template"
+	"tkestack.io/tke/test/e2e"
 	"tkestack.io/tke/test/util"
 	"tkestack.io/tke/test/util/cloudprovider"
 	"tkestack.io/tke/test/util/env"
@@ -72,7 +78,41 @@ func (testTke *TestTKE) ClusterTemplate(nodes ...cloudprovider.Instance) *platfo
 			panic(fmt.Errorf("CreateInstance failed. %v", err))
 		}
 	}
+	if len(os.Getenv(env.DOCKERHUBACTIONAUTH)) == 0 {
+		panic(fmt.Errorf("can't get %v from env", env.DOCKERHUBACTIONAUTH))
+	}
+	dockerconf, err := template.ParseFile(e2e.DockerConfigFile,
+		map[string]interface{}{
+			"Auth": os.Getenv(env.DOCKERHUBACTIONAUTH),
+		})
+	if err != nil {
+		panic(fmt.Errorf("create docker config failed. %v", err))
+	}
 	for _, one := range nodes {
+		sshConfig := &ssh.Config{
+			User:        one.Username,
+			Host:        one.InternalIP,
+			Port:        int(one.Port),
+			Password:    one.Password,
+			DialTimeOut: 30 * time.Second,
+			Retry:       5,
+		}
+		s, err := ssh.New(sshConfig)
+		if err != nil {
+			panic(fmt.Errorf("create ssh failed: %v", err))
+		}
+		out, err := s.CombinedOutput("mkdir " + e2e.DstDockerConfPath)
+		if err != nil {
+			panic(fmt.Errorf("mkdir %v failed: %v, out: %v", e2e.DstDockerConfPath, err, string(out)))
+		}
+
+		err = s.WriteFile(bytes.NewReader(dockerconf), e2e.DstDockerConfPath+e2e.DockerConfName)
+		if err != nil {
+			panic(fmt.Errorf("copy docker config to %v:%v failed: %v",
+				one.InternalIP,
+				e2e.DstDockerConfPath+e2e.DockerConfName,
+				err))
+		}
 		cluster.Spec.Machines = append(cluster.Spec.Machines, platformv1.ClusterMachine{
 			IP:       one.InternalIP,
 			Port:     one.Port,
@@ -85,7 +125,16 @@ func (testTke *TestTKE) ClusterTemplate(nodes ...cloudprovider.Instance) *platfo
 
 func (testTke *TestTKE) CreateClusterInternal(cls *platformv1.Cluster) (cluster *platformv1.Cluster, err error) {
 	klog.Info("Create cluster: ", cls.String())
-	cluster, err = testTke.TkeClient.PlatformV1().Clusters().Create(context.Background(), cls, metav1.CreateOptions{})
+
+	err = wait.PollImmediate(30*time.Second, 5*time.Minute, func() (bool, error) {
+		cluster, err = testTke.TkeClient.PlatformV1().Clusters().Create(context.Background(), cls, metav1.CreateOptions{})
+		if err != nil {
+			klog.Warningf("Create cluster failed: %v", err)
+			return false, err
+		}
+		return true, nil
+	})
+
 	if err != nil {
 		return
 	}
