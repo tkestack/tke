@@ -19,9 +19,14 @@
 package tencent
 
 import (
+	"bytes"
 	"fmt"
-	"k8s.io/klog"
+	"os"
 	"time"
+
+	"k8s.io/klog"
+	"tkestack.io/tke/pkg/util/ssh"
+	"tkestack.io/tke/pkg/util/template"
 	"tkestack.io/tke/test/util/env"
 
 	clb "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/clb/v20180317"
@@ -31,6 +36,17 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"tkestack.io/tke/test/util/cloudprovider"
 )
+
+const DockerConfTmpl = `{
+    "auths": {
+        "https://index.docker.io/v1/": {
+            "auth": "{{ .Auth }}"
+        }
+    },
+    "HttpHeaders": {
+        "User-Agent": "Docker-Client/19.03.14 (linux)"
+    }
+}`
 
 func NewTencentProvider() cloudprovider.Provider {
 	p := &provider{}
@@ -110,6 +126,17 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 
 	for _, ins := range result {
 		p.instanceIds = append(p.instanceIds, ins.InstanceID)
+		err = p.CreateDockerConf(ssh.Config{
+			User:        ins.Username,
+			Host:        ins.InternalIP,
+			Port:        int(ins.Port),
+			Password:    ins.Password,
+			DialTimeOut: 30 * time.Second,
+			Retry:       5,
+		})
+		if err != nil {
+			return nil, err
+		}
 	}
 	time.Sleep(10 * time.Second)
 
@@ -317,4 +344,38 @@ func (p *provider) TearDown() error {
 		klog.Error(err)
 	}
 	return err
+}
+
+func (p *provider) CreateDockerConf(sshConfig ssh.Config) error {
+	if len(os.Getenv(env.DOCKERHUBACTIONAUTH)) == 0 {
+		klog.Warningf("can't get %v from env", env.DOCKERHUBACTIONAUTH)
+		return nil
+	}
+	dockerconfDir := "/root/.docker"
+	dockerconfPath := dockerconfDir + "/config.json"
+
+	dockerconf, err := template.ParseString(DockerConfTmpl,
+		map[string]interface{}{
+			"Auth": os.Getenv(env.DOCKERHUBACTIONAUTH),
+		})
+	if err != nil {
+		return fmt.Errorf("create docker config failed. %v", err)
+	}
+	s, err := ssh.New(&sshConfig)
+	if err != nil {
+		return fmt.Errorf("create ssh failed: %v", err)
+	}
+	out, err := s.CombinedOutput("mkdir " + dockerconfDir)
+	if err != nil {
+		return fmt.Errorf("mkdir %v failed: %v, out: %v", dockerconfDir, err, string(out))
+	}
+
+	err = s.WriteFile(bytes.NewReader(dockerconf), dockerconfPath)
+	if err != nil {
+		return fmt.Errorf("copy docker config to %v:%v failed: %v",
+			sshConfig.Host,
+			dockerconfPath,
+			err)
+	}
+	return nil
 }
