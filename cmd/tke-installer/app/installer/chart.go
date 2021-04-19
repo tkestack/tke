@@ -104,18 +104,15 @@ func (t *TKE) importCharts(ctx context.Context) error {
 		}
 
 		for _, f := range files {
-			existed, err := client.Push(&helmaction.PushOptions{
+			// push chart with force flag
+			_, err := client.Push(&helmaction.PushOptions{
 				ChartPathOptions: chartPathBasicOptions,
 				ChartFile:        f,
-				ForceUpload:      false,
+				ForceUpload:      true,
 			})
 			if err != nil {
-				if existed {
-					log.Warn(err.Error())
-				} else {
-					errs = append(errs, err)
-					continue
-				}
+				errs = append(errs, err)
+				continue
 			}
 		}
 	}
