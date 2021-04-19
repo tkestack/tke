@@ -83,7 +83,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
                 <Clip target="#installHelm" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="installHelm">{`curl https://raw.githubusercontent.com/helm/helm/master/scripts/get | sh`}</p>
+                <p id="installHelm">{`curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash`}</p>
               </code>
             </li>
             <li>
