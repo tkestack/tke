@@ -190,7 +190,7 @@ func (testTke *TestTKE) ScaleDown(clsName string, ipsToBeRemoved []string) (cls 
 
 func (testTke *TestTKE) WaitClusterToBeRunning(clusterName string) (cluster *platformv1.Cluster, err error) {
 	klog.Info("Wait cluster status to be running")
-	err = wait.Poll(5*time.Second, 10*time.Minute, func() (bool, error) {
+	err = wait.Poll(20*time.Second, 30*time.Minute, func() (bool, error) {
 		cluster, err = testTke.TkeClient.PlatformV1().Clusters().Get(context.Background(), clusterName, metav1.GetOptions{})
 		if err != nil {
 			klog.Error(err)
