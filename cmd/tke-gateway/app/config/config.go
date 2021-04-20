@@ -150,7 +150,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 }
 
 func setupAuthentication(genericAPIServerConfig *genericapiserver.Config) {
-	genericAPIServerConfig.Authentication.SupportsBasicAuth = false
 	genericAPIServerConfig.Authentication.Authenticator = anonymous.NewAuthenticator()
 }
 

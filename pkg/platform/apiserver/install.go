@@ -19,6 +19,9 @@
 package apiserver
 
 import (
+	"net/url"
+
+	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	runtimeutil "k8s.io/apimachinery/pkg/util/runtime"
@@ -184,5 +187,14 @@ func registerMeta(scheme *runtime.Scheme) error {
 		&metav1.CreateOptions{},
 		&metav1.UpdateOptions{})
 	metav1.AddToGroupVersion(scheme, metav1.SchemeGroupVersion)
+
+	// Add url values to PodExecOptions conversion
+	_ = scheme.AddConversionFunc((*url.Values)(nil), (*corev1.PodExecOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_url_Values_To_v1_PodExecOptions(a.(*url.Values), b.(*corev1.PodExecOptions), scope)
+	})
+	// Add url values to PodLogOptions conversion
+	_ = scheme.AddConversionFunc((*url.Values)(nil), (*corev1.PodLogOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_url_Values_To_v1_PodLogOptions(a.(*url.Values), b.(*corev1.PodLogOptions), scope)
+	})
 	return nil
 }

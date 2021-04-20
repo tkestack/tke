@@ -119,7 +119,7 @@ func (c *KubeClient) GetResource(resources kube.ResourceList) (map[string][]stri
 }
 
 func getResource(info *resource.Info) (runtime.Object, error) {
-	obj, err := resource.NewHelper(info.Client, info.Mapping).Get(info.Namespace, info.Name, false)
+	obj, err := resource.NewHelper(info.Client, info.Mapping).Get(info.Namespace, info.Name)
 	if err != nil {
 		return nil, err
 	}
