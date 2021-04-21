@@ -74,6 +74,31 @@ type ClusterMachine struct {
 	Taints []corev1.Taint `json:"taints,omitempty" protobuf:"bytes,8,opt,name=taints"`
 }
 
+// KubeVendorType describe the kubernetes provider of the cluster
+// ref https://github.com/open-cluster-management/multicloud-operators-foundation/blob/e94b719de6d5f3541e948dd70ad8f1ff748aa452/pkg/apis/internal.open-cluster-management.io/v1beta1/clusterinfo_types.go#L137
+type KubeVendorType string
+
+const (
+	// KubeVendorTKE TKE
+	KubeVendorTKE KubeVendorType = "TKE"
+	// KubeVendorOpenShift OpenShift
+	KubeVendorOpenShift KubeVendorType = "OpenShift"
+	// KubeVendorAKS Azure Kuberentes Service
+	KubeVendorAKS KubeVendorType = "AKS"
+	// KubeVendorEKS Elastic Kubernetes Service
+	KubeVendorEKS KubeVendorType = "EKS"
+	// KubeVendorGKE Google Kubernetes Engine
+	KubeVendorGKE KubeVendorType = "GKE"
+	// KubeVendorICP IBM Cloud Private
+	KubeVendorICP KubeVendorType = "ICP"
+	// KubeVendorIKS IBM Kubernetes Service
+	KubeVendorIKS KubeVendorType = "IKS"
+	// KubeVendorOSD OpenShiftDedicated
+	KubeVendorOSD KubeVendorType = "OpenShiftDedicated"
+	// KubeVendorOther other (unable to auto detect)
+	KubeVendorOther KubeVendorType = "Other"
+)
+
 // ClusterSpec is a description of a cluster.
 type ClusterSpec struct {
 	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
@@ -180,6 +205,8 @@ type ClusterStatus struct {
 	NodeCIDRMaskSizeIPv4 int32 `json:"nodeCIDRMaskSizeIPv4,omitempty" protobuf:"varint,18,opt,name=nodeCIDRMaskSizeIPv4"`
 	// +optional
 	NodeCIDRMaskSizeIPv6 int32 `json:"nodeCIDRMaskSizeIPv6,omitempty" protobuf:"varint,19,opt,name=nodeCIDRMaskSizeIPv6"`
+	// +optional
+	KubeVendor KubeVendorType `json:"kubeVendor" protobuf:"bytes,20,opt,name=kubeVendor"`
 }
 
 // FinalizerName is the name identifying a finalizer during cluster lifecycle.

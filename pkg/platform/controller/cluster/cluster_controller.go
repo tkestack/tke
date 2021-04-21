@@ -44,6 +44,7 @@ import (
 	"tkestack.io/tke/pkg/platform/controller/cluster/deletion"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/platform/util/vendor"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
@@ -481,6 +482,7 @@ func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) 
 		} else {
 			cluster.Status.Phase = platformv1.ClusterRunning
 			cluster.Status.Version = strings.TrimPrefix(version.String(), "v")
+			cluster.Status.KubeVendor = vendor.GetKubeVendor(cluster.Status.Version)
 
 			healthCheckCondition.Status = platformv1.ConditionTrue
 		}
@@ -490,6 +492,7 @@ func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) 
 
 	log.FromContext(ctx).Info("Update cluster health status",
 		"version", cluster.Status.Version,
+		"kubevendor", cluster.Status.KubeVendor,
 		"phase", cluster.Status.Phase)
 
 	return cluster

@@ -587,6 +587,9 @@ message ClusterStatus {
 
   // +optional
   optional int32 nodeCIDRMaskSizeIPv6 = 19;
+
+  // +optional
+  optional string kubeVendor = 20;
 }
 
 // ConfigMap holds configuration data for tke to consume.
