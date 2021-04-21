@@ -892,6 +892,9 @@ func (p *Provider) EnsureGalaxy(ctx context.Context, c *v1.Cluster) error {
 	if c.Status.Phase == platformv1.ClusterUpscaling {
 		return nil
 	}
+	if c.Cluster.Spec.Features.EnableCilium {
+		return nil
+	}
 	clientset, err := c.ClientsetForBootstrap()
 	if err != nil {
 		return err
@@ -1311,6 +1314,38 @@ func (p *Provider) EnsureMetricsServer(ctx context.Context, c *v1.Cluster) error
 	err = apiclient.CreateKAResourceWithFile(ctx, client, kaClient, constants.MetricsServerManifest, option)
 	if err != nil {
 		return errors.Wrap(err, "install metrics server error")
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureCilium(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
+	if !c.Cluster.Spec.Features.EnableCilium {
+		return nil
+	}
+	client, err := c.Clientset()
+	if err != nil {
+		return err
+	}
+	config, err := c.RESTConfig(&rest.Config{})
+	if err != nil {
+		return err
+	}
+	kaClient, err := kubeaggregatorclientset.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	option := map[string]interface{}{
+		"CiliumImage":         images.Get().Cilium.FullName(),
+		"CiliumOperatorImage": images.Get().CiliumOperator.FullName(),
+	}
+
+	err = apiclient.CreateKAResourceWithFile(ctx, client, kaClient, constants.CiliumManifest, option)
+	if err != nil {
+		return errors.Wrap(err, "install Cilium error")
 	}
 
 	return nil

@@ -110,6 +110,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureKubeadmInitPhaseAddon,
 
 			p.EnsureGalaxy,
+			p.EnsureCilium,
 
 			p.EnsureJoinPhasePreflight,
 			p.EnsureJoinPhaseControlPlanePrepare,
