@@ -44,68 +44,60 @@ User can manully set field "tunnel" "enable-policy" which cilium exposed.
 
 1. Deploy a TKEStack environment then create a new baremetal cluster with rebuid tke-platform-controller without galaxy. 
 ```
-root@VM-0-3-ubuntu:~/ipv6-test# kubectl create -f cluster-ipv6-ds.json 
-cluster.platform.tkestack.io/cls-7q46p7mt created
-root@VM-0-3-ubuntu:~/ipv6-test#
+root@VM-0-20-ubuntu:~# kubectl create -f clusterCilium.yaml
+cluster.platform.tkestack.io/cls-smt66nk6 created
 ```
 2. After cluster is ready, apply cilium network plug-in 
 ```
-root@VM-0-3-ubuntu:~/ipv6-test# kubectl get cluster 
+root@VM-0-20-ubuntu:~# kubectl get cluster
 NAME           TYPE        VERSION   STATUS    AGE
-cls-7q46p7mt   Baremetal   1.18.3    Running   3m51s
-global         Baremetal   1.18.3    Running   60m
-root@VM-0-3-ubuntu:~/ipv6-test#
+cls-smt66nk6   Baremetal   1.19.7    Running   3m46s
+global         Baremetal   1.19.7    Running   14d
+root@VM-0-20-ubuntu:~#
 ```
 ```
-root@VM-0-67-ubuntu:~/ipv6-test# kubectl get po -A
-NAMESPACE     NAME                                  READY   STATUS    RESTARTS   AGE
-kube-system   coredns-bbc9b5888-5lhtp               0/1     Pending   0          3m19s
-kube-system   coredns-bbc9b5888-hvb5v               0/1     Pending   0          3m19s
-kube-system   etcd-172.22.0.67                      1/1     Running   0          2m29s
-kube-system   kube-apiserver-172.22.0.67            1/1     Running   0          2m34s
-kube-system   kube-controller-manager-172.22.0.67   1/1     Running   0          3m17s
-kube-system   kube-proxy-q4v98                      1/1     Running   0          3m19s
-kube-system   kube-scheduler-172.22.0.67            1/1     Running   0          3m17s
-root@VM-0-67-ubuntu:~/ipv6-test# 
+root@VM-0-46-ubuntu:~# kubectl apply -f quick.yaml
+serviceaccount/cilium created
+serviceaccount/cilium-operator created
+configmap/cilium-config created
+clusterrole.rbac.authorization.k8s.io/cilium created
+clusterrole.rbac.authorization.k8s.io/cilium-operator created
+clusterrolebinding.rbac.authorization.k8s.io/cilium created
+clusterrolebinding.rbac.authorization.k8s.io/cilium-operator created
+daemonset.apps/cilium created
+deployment.apps/cilium-operator created
 ```
 ```
-root@VM-0-67-ubuntu:~/ipv6-test# kubectl create -f ../calico-v3.16/calicov6.yaml 
-configmap/calico-config created
-customresourcedefinition.apiextensions.k8s.io/bgpconfigurations.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/bgppeers.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/blockaffinities.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/clusterinformations.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/felixconfigurations.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/globalnetworkpolicies.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/globalnetworksets.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/hostendpoints.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/ipamblocks.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/ipamconfigs.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/ipamhandles.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/ippools.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/kubecontrollersconfigurations.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/networkpolicies.crd.projectcalico.org created
-customresourcedefinition.apiextensions.k8s.io/networksets.crd.projectcalico.org created
-clusterrole.rbac.authorization.k8s.io/calico-kube-controllers created
-clusterrolebinding.rbac.authorization.k8s.io/calico-kube-controllers created
-clusterrole.rbac.authorization.k8s.io/calico-node created
-clusterrolebinding.rbac.authorization.k8s.io/calico-node created
-daemonset.apps/calico-node created
-serviceaccount/calico-node created
-deployment.apps/calico-kube-controllers created
-serviceaccount/calico-kube-controllers created
+root@VM-0-46-ubuntu:~# kubectl get pods -n kube-system
+NAME                                     READY   STATUS    RESTARTS   AGE
+cilium-6lrvq                             1/1     Running   0          38s
+cilium-operator-654456485c-wvkxx         1/1     Running   0          38s
+coredns-745589f8f6-t5dj5                 1/1     Running   0          5m34s
+coredns-745589f8f6-wth5g                 1/1     Running   0          5m34s
+etcd-vm-0-46-ubuntu                      1/1     Running   0          6m11s
+kube-apiserver-vm-0-46-ubuntu            1/1     Running   0          6m5s
+kube-controller-manager-vm-0-46-ubuntu   1/1     Running   0          6m5s
+kube-proxy-xclms                         1/1     Running   0          5m34s
+kube-scheduler-vm-0-46-ubuntu            1/1     Running   0          6m5s
 ```
+3. Test Cilium can work
 ```
-root@VM-0-67-ubuntu:~# kubectl get po -A
-NAMESPACE     NAME                                       READY   STATUS    RESTARTS   AGE
-kube-system   calico-kube-controllers-866f6f96b5-28zpw   1/1     Running   0          78s
-kube-system   calico-node-tjgx9                          1/1     Running   0          78s
-kube-system   coredns-bbc9b5888-5lhtp                    1/1     Running   0          19m
-kube-system   coredns-bbc9b5888-hvb5v                    1/1     Running   0          19m
-kube-system   etcd-172.22.0.67                           1/1     Running   0          18m
-kube-system   kube-apiserver-172.22.0.67                 1/1     Running   0          18m
-kube-system   kube-controller-manager-172.22.0.67        1/1     Running   0          19m
-kube-system   kube-proxy-q4v98                           1/1     Running   0          19m
-kube-system   kube-scheduler-172.22.0.67                 1/1     Running   0          19m
-root@VM-0-67-ubuntu:~# 
+kubectl apply -f connectivity-check.yaml
+```
+Check the test result.
+```
+root@VM-0-55-ubuntu:~# kubectl get pods
+NAME                                                    READY   STATUS    RESTARTS   AGE
+echo-a-9c5d8bfcf-nml2k                                  1/1     Running   0          68m
+echo-b-79c6c76fb4-vmbbj                                 1/1     Running   0          68m
+host-to-b-multi-node-clusterip-78ffcc7449-2bjr5         0/1     Pending   0          68m
+host-to-b-multi-node-headless-6dcb4d494c-lflx4          0/1     Pending   0          68m
+pod-to-a-allowed-cnp-9f5cf94c4-jcqqd                    1/1     Running   0          68m
+pod-to-a-external-1111-76c557fc56-9htgk                 1/1     Running   0          68m
+pod-to-a-f747cbc86-mgkl9                                1/1     Running   0          68m
+pod-to-a-l3-denied-cnp-6f6c68d6d4-9h47d                 1/1     Running   0          68m
+pod-to-b-intra-node-fd66d747-7ms9l                      1/1     Running   0          68m
+pod-to-b-multi-node-clusterip-77cc47f747-zjm9g          0/1     Pending   0          68m
+pod-to-b-multi-node-headless-64b6d4fc95-9gz5q           0/1     Pending   0          68m
+pod-to-external-fqdn-allow-baidu-cnp-67568c4d96-2984d   1/1     Running   0          68m
 ```
