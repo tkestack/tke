@@ -5,7 +5,7 @@ import { Bubble, Text } from '@tea/component';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
-import { dateFormatter } from '../../../../../../helpers';
+import { dateFormatter, formatMemory } from '../../../../../../helpers';
 import { Clip, ListItem } from '../../../../common/components';
 import { DetailLayout } from '../../../../common/layouts';
 import { allActions } from '../../../actions';
@@ -246,7 +246,7 @@ export class ResourceNodeDetailPanel extends React.Component<RootProps, {}> {
         <Text verticalAlign="middle" theme="label">
           {t('内存: ')}
         </Text>
-        <Text verticalAlign="middle">{capacityConfig.memory ?? '-'}</Text>
+        <Text verticalAlign="middle">{formatMemory(capacity.memory ?? '0', 'Gi')}</Text>
         <Text verticalAlign="middle" theme="label">{`Pods: `}</Text>
         <Text verticalAlign="middle">{capacityConfig.pods || 0}</Text>
       </ListItem>

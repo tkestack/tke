@@ -17,6 +17,7 @@ import { Computer, DialogNameEnum } from '../../../models';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { ReduceRequest } from '../resourceDetail/ResourcePodPanel';
+import { formatMemory } from '@helper';
 
 export const ComputerStatus = {
   Running: 'success',
@@ -281,7 +282,7 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
             <React.Fragment>
               <Text verticalAlign="middle">cpu: {capacity.cpu ?? '-'} 核</Text>
               <br />
-              <Text verticalAlign="middle">内存: {capacity.memory ?? '-'}</Text>
+              <Text verticalAlign="middle">内存: {formatMemory(capacity.memory ?? '0', 'Gi')}</Text>
             </React.Fragment>
           );
         }
