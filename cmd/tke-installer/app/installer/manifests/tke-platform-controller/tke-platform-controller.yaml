@@ -54,6 +54,8 @@ spec:
               mountPath: /app/provider/baremetal/manifests/keepalived/
             - name: metrics-server-manifests-volume
               mountPath: /app/provider/baremetal/manifests/metrics-server/
+            - name: cilium-manifests-volume
+              mountPath: /app/provider/baremetal/manifests/cilium/
           ports:
             - containerPort: 9445
           livenessProbe:
@@ -103,6 +105,9 @@ spec:
         - name: metrics-server-manifests-volume
           configMap:
             name: metrics-server-manifests
+        - name: cilium-manifests-volume
+          configMap:
+            name: cilium-manifests
 ---
 kind: ConfigMap
 apiVersion: v1

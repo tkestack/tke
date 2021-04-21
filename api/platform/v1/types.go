@@ -362,6 +362,8 @@ type ClusterFeature struct {
 	EnableMetricsServer bool `json:"enableMetricsServer,omitempty" protobuf:"bytes,12,opt,name=enableMetricsServer"`
 	// +optional
 	IPv6DualStack bool `json:"ipv6DualStack,omitempty" protobuf:"bytes,13,opt,name=ipv6DualStack"`
+	// +optional
+	EnableCilium bool `json:"enableCilium,omitempty" protobuf:"bytes,14,opt,name=enableCilium"`
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
