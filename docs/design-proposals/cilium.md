@@ -84,7 +84,7 @@ kube-scheduler-vm-0-46-ubuntu            1/1     Running   0          6m5s
 ```
 kubectl apply -f connectivity-check.yaml
 ```
-Check the test result.
+Check the test results.
 ```
 root@VM-0-55-ubuntu:~# kubectl get pods
 NAME                                                    READY   STATUS    RESTARTS   AGE
