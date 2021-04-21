@@ -5,7 +5,7 @@ import { Bubble, Text } from '@tea/component';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
-import { dateFormatter } from '../../../../../../helpers';
+import { dateFormatter, formatMemory } from '../../../../../../helpers';
 import { Clip, ListItem } from '../../../../common/components';
 import { DetailLayout } from '../../../../common/layouts';
 import { allActions } from '../../../actions';
@@ -26,15 +26,15 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class ResourceNodeDetailPanel extends React.Component<RootProps, {}> {
   render() {
-    let { subRoot, route } = this.props,
+    const { subRoot, route } = this.props,
       { resourceDetailState } = subRoot,
       { resourceDetailInfo } = resourceDetailState;
 
     // 当前选中的node节点
-    let resourceIns = resourceDetailInfo.selection;
+    const resourceIns = resourceDetailInfo.selection;
 
     // 当前的地域
-    let regionId = route.queries['rid'];
+    const regionId = route.queries['rid'];
 
     // 获取当前机器的配置
 
@@ -114,9 +114,9 @@ export class ResourceNodeDetailPanel extends React.Component<RootProps, {}> {
 
   /** 处理节点的状态展示 */
   private _renderNodeStatus(conditions: any[]) {
-    let nodeCondition = conditions.find(item => item.type === 'Ready');
+    const nodeCondition = conditions.find(item => item.type === 'Ready');
 
-    let isNodeReady = nodeCondition.status === 'True' ? true : false;
+    const isNodeReady = nodeCondition.status === 'True' ? true : false;
 
     return (
       <ListItem label={t('状态')}>
@@ -168,7 +168,7 @@ export class ResourceNodeDetailPanel extends React.Component<RootProps, {}> {
    * @param label: string ListItem展示的数据
    */
   private _renderKvData(showData: any, label: string) {
-    let keys = Object.keys(showData);
+    const keys = Object.keys(showData);
 
     return (
       <ListItem label={label}>
@@ -208,7 +208,7 @@ export class ResourceNodeDetailPanel extends React.Component<RootProps, {}> {
    * @param allocatable:{}  需要处理的具体数据
    */
   private _renderAllocatableResource(allocatable: { cpu: string; memory: string }) {
-    let finalCpu = ReduceRequest('cpu', allocatable),
+    const finalCpu = ReduceRequest('cpu', allocatable),
       finalMem = (ReduceRequest('memory', allocatable) / 1024).toFixed(2);
 
     return (
@@ -231,26 +231,22 @@ export class ResourceNodeDetailPanel extends React.Component<RootProps, {}> {
 
   /** 展示机器的配置 */
   private _renderComputerConfig(capacityConfig: any) {
-    let capacity = {
+    const capacity = {
       cpu: capacityConfig.cpu,
       memory: capacityConfig.memory
     };
 
-    let finalCpu = ReduceRequest('cpu', capacity),
+    const finalCpu = ReduceRequest('cpu', capacity),
       finalMem = (ReduceRequest('memory', capacity) / 1024).toFixed(2);
 
     return (
       <ListItem label={t('配置')}>
         <Text verticalAlign="middle" theme="label">{`CPU: `}</Text>
-        <Text verticalAlign="middle">
-          {t('{{count}} 核，', {
-            count: finalCpu
-          })}
-        </Text>
+        <Text verticalAlign="middle">{capacityConfig.cpu ?? '-'} 核</Text>
         <Text verticalAlign="middle" theme="label">
           {t('内存: ')}
         </Text>
-        <Text verticalAlign="middle">{`${finalMem} GB，`}</Text>
+        <Text verticalAlign="middle">{formatMemory(capacity.memory ?? '0', 'Gi')}</Text>
         <Text verticalAlign="middle" theme="label">{`Pods: `}</Text>
         <Text verticalAlign="middle">{capacityConfig.pods || 0}</Text>
       </ListItem>
