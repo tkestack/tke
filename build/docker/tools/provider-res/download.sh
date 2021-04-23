@@ -58,8 +58,14 @@ function download::docker() {
 
 function download::kubernetes() {
   for version in ${K8S_VERSIONS}; do
-    wget -c "https://dl.k8s.io/${version}/kubernetes-node-${platform}.tar.gz" \
-      -O "kubernetes-node-${platform}-${version}.tar.gz"
+    result_tke=$(echo ${version} | grep "tke")
+    if [ -z "$result_tke" ]; then
+      wget -c "https://dl.k8s.io/${version}/kubernetes-node-${platform}.tar.gz" \
+        -O "kubernetes-node-${platform}-${version}.tar.gz"
+    else
+      wget -c "https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/kubernetes-node-linux-amd64-${version}.tar.gz" \
+        -O "kubernetes-node-linux-amd64-${version}.tar.gz"
+    fi
   done
 }
 
