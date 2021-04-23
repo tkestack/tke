@@ -55,7 +55,7 @@ export class ResourceNodeDetailPanel extends React.Component<RootProps, {}> {
 
                 {this._renderNodeStatus(resourceIns.status.conditions)}
 
-                {this._renderComputerConfig(resourceIns.status.capacity)}
+                {this._renderComputerConfig(resourceIns?.status?.capacity)}
 
                 {this._renderIPAddress(resourceIns.status.addresses)}
 
@@ -232,23 +232,20 @@ export class ResourceNodeDetailPanel extends React.Component<RootProps, {}> {
   /** 展示机器的配置 */
   private _renderComputerConfig(capacityConfig: any) {
     const capacity = {
-      cpu: capacityConfig.cpu,
-      memory: capacityConfig.memory
+      cpu: capacityConfig?.cpu,
+      memory: capacityConfig?.memory
     };
-
-    const finalCpu = ReduceRequest('cpu', capacity),
-      finalMem = (ReduceRequest('memory', capacity) / 1024).toFixed(2);
 
     return (
       <ListItem label={t('配置')}>
         <Text verticalAlign="middle" theme="label">{`CPU: `}</Text>
-        <Text verticalAlign="middle">{capacityConfig.cpu ?? '-'} 核</Text>
+        <Text verticalAlign="middle">{capacityConfig?.cpu ?? '-'} 核</Text>
         <Text verticalAlign="middle" theme="label">
           {t('内存: ')}
         </Text>
-        <Text verticalAlign="middle">{formatMemory(capacity.memory ?? '0', 'Gi')}</Text>
+        <Text verticalAlign="middle">{formatMemory(capacity?.memory ?? '0', 'Gi')}</Text>
         <Text verticalAlign="middle" theme="label">{`Pods: `}</Text>
-        <Text verticalAlign="middle">{capacityConfig.pods || 0}</Text>
+        <Text verticalAlign="middle">{capacityConfig?.pods || 0}</Text>
       </ListItem>
     );
   }

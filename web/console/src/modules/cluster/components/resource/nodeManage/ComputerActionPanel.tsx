@@ -56,7 +56,7 @@ export class ComputerActionPanel extends React.Component<RootProps, State> {
         item.metadata.name,
         item.status.phase,
         item.metadata.role,
-        `cpu: ${item.status.capacity.cpu ?? '-'} 核; 内存: ${item.status.capacity.memory ?? '-'}`,
+        `cpu: ${item?.status?.capacity?.cpu ?? '-'} 核; 内存: ${item?.status?.capacity?.memory ?? '-'}`,
         this._reduceIp(item),
         item.spec.podCIDR,
         dateFormatter(new Date(item.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')
@@ -68,10 +68,10 @@ export class ComputerActionPanel extends React.Component<RootProps, State> {
   }
 
   _reduceCapacity(node: Computer) {
-    const capacity = node.status.capacity;
+    const capacity = node?.status?.capacity;
     const capacityInfo = {
-      cpu: capacity.cpu,
-      memory: capacity.memory
+      cpu: capacity?.cpu,
+      memory: capacity?.memory
     };
     const finalCpu = ReduceRequest('cpu', capacityInfo),
       finalmem = (ReduceRequest('memory', capacity) / 1024).toFixed(2);

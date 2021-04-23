@@ -15,7 +15,7 @@ export const formatMemory = (
   memory: string,
   finalUnit: 'K' | 'M' | 'G' | 'T' | 'P' | 'E' | 'Ki' | 'Mi' | 'Gi' | 'Ti' | 'Pi' | 'Ei'
 ) => {
-  const unit = memory.toUpperCase().match(/[KMGTPEI]+/)[0] ?? 'MI';
+  const unit = memory.toUpperCase().match(/[KMGTPEI]+/)?.[0] ?? 'MI';
 
   const memoryNum = parseInt(memory);
 
