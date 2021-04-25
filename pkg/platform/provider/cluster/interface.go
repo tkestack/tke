@@ -50,7 +50,7 @@ const (
 )
 
 var (
-	// Expansion
+	// ErrorWaitingForExpansionOperator // Expansion
 	ErrorWaitingForExpansionOperator = fmt.Errorf("installer is waiting for *Expansion operator* to do this step")
 )
 

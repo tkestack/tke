@@ -118,7 +118,7 @@ type TKE struct {
 	applicationClient applicationv1client.ApplicationV1Interface
 	servers           []string
 	namespace         string
-	expansionDriver   *expansion.ExpansionDriver
+	expansionDriver   *expansion.Driver
 }
 
 func New(config *config.Config) *TKE {
@@ -157,7 +157,7 @@ func New(config *config.Config) *TKE {
 	}
 
 	// Expansion
-	c.expansionDriver, err = expansion.NewExpansionDriver(log.WithName("tke-expansions"))
+	c.expansionDriver, _ = expansion.NewExpansionDriver(log.WithName("tke-expansions"))
 	// TODO: ignore the error
 	return c
 }

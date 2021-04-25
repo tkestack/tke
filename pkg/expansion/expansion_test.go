@@ -6,7 +6,7 @@ import (
 )
 
 func Test_expansionDriver_readConfig(t *testing.T) {
-	a := &ExpansionDriver{}
+	a := &Driver{}
 	err := yaml.Unmarshal([]byte(testContent), a)
 	if err != nil {
 		t.Fatal(err)

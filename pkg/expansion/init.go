@@ -48,17 +48,16 @@ const expansionFilePathSeparator = "__"
 const fileSuffixYaml = ".yaml"
 
 // scan looks up for all files/charts/images that specified in expansion.yaml, verifies them and generate flat-named files.
-func (d *ExpansionDriver) scan() error {
+func (d *Driver) scan() error {
 	// check dir
 	_, err := os.Stat(defaultExpansionBase)
 	if err != nil {
 		if os.IsNotExist(err) {
 			d.log.Info("defaultExpansionBase not exists, skip loading expansions")
 			return nil
-		} else {
-			d.log.Errorf("scan defaultExpansionBase failed %v", err)
-			return err
 		}
+		d.log.Errorf("scan defaultExpansionBase failed %v", err)
+		return err
 	}
 	err = d.readConfig()
 	if err != nil {
@@ -115,7 +114,7 @@ func (d *ExpansionDriver) scan() error {
 }
 
 // readConfig
-func (d *ExpansionDriver) readConfig() error {
+func (d *Driver) readConfig() error {
 	_, err := os.Stat(defaultExpansionConf)
 	if err != nil {
 		if !os.IsNotExist(err) {
@@ -138,7 +137,7 @@ func (d *ExpansionDriver) readConfig() error {
 	return nil
 }
 
-func (d *ExpansionDriver) verify() error {
+func (d *Driver) verify() error {
 	// TODO: verify files,charts,hooks,provider,images
 
 	// verify application files
@@ -154,12 +153,14 @@ func (d *ExpansionDriver) verify() error {
 	return nil
 }
 
-func (d *ExpansionDriver) filter() error {
+//nolint
+func (d *Driver) filter() error {
 	// TODO: filter files,charts,hooks,provider,images
 	return nil
 }
 
-func (d *ExpansionDriver) backup() error {
+//nolint
+func (d *Driver) backup() error {
 	// TODO: backup expansion config file
 	return nil
 }

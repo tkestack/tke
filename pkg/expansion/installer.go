@@ -60,7 +60,7 @@ const InstallerPostClusterReadyHookName = "post-cluster-ready"
 const InstallerPostInstallHookName = "post-install"
 
 // MergeProvider overrides provider files in TKEStack installer by expansion specifying
-func (d *ExpansionDriver) MergeProvider() error {
+func (d *Driver) MergeProvider() error {
 	if !d.enableProvider() {
 		return nil
 	}
@@ -76,7 +76,7 @@ func (d *ExpansionDriver) MergeProvider() error {
 }
 
 // MergeInstallerSkipSteps sets up install skip steps of TKEStack-installer by expansion specifying
-func (d *ExpansionDriver) MergeInstallerSkipSteps(skipSteps []string) []string {
+func (d *Driver) MergeInstallerSkipSteps(skipSteps []string) []string {
 	// merge skip steps
 	if !d.enableSkipSteps() {
 		return skipSteps
@@ -97,7 +97,7 @@ func (d *ExpansionDriver) MergeInstallerSkipSteps(skipSteps []string) []string {
 // 2. sets up create-cluster skip steps by expansion specifying
 // 3. sets up create-cluster delegation steps by expansion specifying
 // 4. passes through kubernetes args from expansion specifying to TKEStack config.
-func (d *ExpansionDriver) MergeCluster(cluster *v1.Cluster) {
+func (d *Driver) MergeCluster(cluster *v1.Cluster) {
 	// merge file hook config
 	if d.enableFiles() {
 		if len(cluster.Spec.Features.Hooks) == 0 {
@@ -141,9 +141,9 @@ func (d *ExpansionDriver) MergeCluster(cluster *v1.Cluster) {
 	}
 
 	// merge extra args
-	mergeMap(&cluster.Spec.APIServerExtraArgs, &d.CreateClusterExtraArgs.ApiServerExtraArgs)
+	mergeMap(&cluster.Spec.APIServerExtraArgs, &d.CreateClusterExtraArgs.APIServerExtraArgs)
 	d.log.Infof("APIServerExtraArgs %+v", cluster.Spec.APIServerExtraArgs)
-	d.log.Infof("d.APIServerExtraArgs %+v", d.CreateClusterExtraArgs.ApiServerExtraArgs)
+	d.log.Infof("d.APIServerExtraArgs %+v", d.CreateClusterExtraArgs.APIServerExtraArgs)
 	mergeMap(&cluster.Spec.ControllerManagerExtraArgs, &d.CreateClusterExtraArgs.ControllerManagerExtraArgs)
 	mergeMap(&cluster.Spec.SchedulerExtraArgs, &d.CreateClusterExtraArgs.SchedulerExtraArgs)
 	mergeMap(&cluster.Spec.KubeletExtraArgs, &d.CreateClusterExtraArgs.KubeletExtraArgs)
@@ -154,7 +154,7 @@ func (d *ExpansionDriver) MergeCluster(cluster *v1.Cluster) {
 }
 
 // PatchPlatformWithExpansion forms configmaps up and mount them to TKEStack-platform deployments
-func (d *ExpansionDriver) PatchPlatformWithExpansion(ctx context.Context, client kubernetes.Interface, app string) error {
+func (d *Driver) PatchPlatformWithExpansion(ctx context.Context, client kubernetes.Interface, app string) error {
 	var supportedApps = map[string]bool{
 		"tke-platform-api":        true,
 		"tke-platform-controller": true,
@@ -183,17 +183,15 @@ func (d *ExpansionDriver) PatchPlatformWithExpansion(ctx context.Context, client
 }
 
 // MergeExpansionImages merges expansion image list into tkeImages, and then let TKEStack-installer tag them
-func (d *ExpansionDriver) MergeExpansionImages(tkeImages *[]string) {
+func (d *Driver) MergeExpansionImages(tkeImages *[]string) {
 	if !d.enableImages() {
 		return
 	}
-	for _, image := range d.Images {
-		*tkeImages = append(*tkeImages, image)
-	}
+	*tkeImages = append(*tkeImages, d.Images...)
 }
 
 // CopyChartsToDst copies expansion charts to a dstDir and let TKEStack-installer upload them
-func (d *ExpansionDriver) CopyChartsToDst(group string, dstDir string) error {
+func (d *Driver) CopyChartsToDst(group string, dstDir string) error {
 	if !d.enableCharts() {
 		return nil
 	}
@@ -211,7 +209,7 @@ func (d *ExpansionDriver) CopyChartsToDst(group string, dstDir string) error {
 }
 
 // LoadOperatorImage loads expansion operator image from expansion package
-func (d *ExpansionDriver) LoadOperatorImage(ctx context.Context) error {
+func (d *Driver) LoadOperatorImage(ctx context.Context) error {
 
 	// TODO:
 	d.log.Errorf("mocked! loadOperatorImage not implement")
@@ -220,7 +218,7 @@ func (d *ExpansionDriver) LoadOperatorImage(ctx context.Context) error {
 }
 
 // PatchHookFiles copies installer hook files from expansion to TKEStack-installer
-func (d *ExpansionDriver) PatchHookFiles(ctx context.Context) error {
+func (d *Driver) PatchHookFiles(ctx context.Context) error {
 	if !d.enableHooks() {
 		d.log.Info("expansion hooks disabled")
 		return nil
@@ -249,7 +247,7 @@ func (d *ExpansionDriver) PatchHookFiles(ctx context.Context) error {
 }
 
 // StartOperator
-func (d *ExpansionDriver) StartOperator(ctx context.Context) error {
+func (d *Driver) StartOperator(ctx context.Context) error {
 	if !d.enableOperator() {
 		return nil
 	}
@@ -257,7 +255,7 @@ func (d *ExpansionDriver) StartOperator(ctx context.Context) error {
 }
 
 // LoadExpansionImages loads expansion images into local docker daemon
-func (d *ExpansionDriver) LoadExpansionImages(ctx context.Context, docker *docker.Docker) error {
+func (d *Driver) LoadExpansionImages(ctx context.Context, docker *docker.Docker) error {
 
 	if !d.enableImages() {
 		return nil
@@ -273,12 +271,12 @@ func (d *ExpansionDriver) LoadExpansionImages(ctx context.Context, docker *docke
 }
 
 // WriteKubeconfigFile sends a copy of kubeconfig for sharing to expansion operator
-func (d *ExpansionDriver) WriteKubeconfigFile(ctx context.Context, data []byte) error {
+func (d *Driver) WriteKubeconfigFile(ctx context.Context, data []byte) error {
 	return ioutil.WriteFile(expansionConfPath+"/"+KubeconfigFileBaseName, data, 0644)
 }
 
 // InstallApplications installs all application crs into global cluster
-func (d *ExpansionDriver) InstallApplications(ctx context.Context, applicationClient applicationv1client.ApplicationV1Interface, tkeValues map[string]string) error {
+func (d *Driver) InstallApplications(ctx context.Context, applicationClient applicationv1client.ApplicationV1Interface, tkeValues map[string]string) error {
 	if !d.enableApplications() {
 		return nil
 	}
@@ -322,21 +320,21 @@ func (d *ExpansionDriver) InstallApplications(ctx context.Context, applicationCl
 	return nil
 }
 
-func (d *ExpansionDriver) EnableImages() bool {
+func (d *Driver) EnableImages() bool {
 	return d.enableImages()
 }
 
-func (d *ExpansionDriver) HasNewK8sVersion() bool {
+func (d *Driver) HasNewK8sVersion() bool {
 	// TODO: verify version
 	return d.K8sVersion != ""
 }
 
-func (d *ExpansionDriver) NewK8sVersion() (string, error) {
+func (d *Driver) NewK8sVersion() (string, error) {
 	// TODO: verify version
 	return d.K8sVersion, nil
 }
 
-func (d *ExpansionDriver) createExpansionConfigmap(ctx context.Context, client kubernetes.Interface) (*types.NamespacedName, error) {
+func (d *Driver) createExpansionConfigmap(ctx context.Context, client kubernetes.Interface) (*types.NamespacedName, error) {
 	files := make([]string, 0)
 
 	for _, f := range []string{
@@ -359,7 +357,7 @@ func (d *ExpansionDriver) createExpansionConfigmap(ctx context.Context, client k
 	return nn, nil
 }
 
-func (d *ExpansionDriver) createExpansionFilesConfigmap(ctx context.Context, client kubernetes.Interface) (*types.NamespacedName, error) {
+func (d *Driver) createExpansionFilesConfigmap(ctx context.Context, client kubernetes.Interface) (*types.NamespacedName, error) {
 	files := make([]string, 0)
 	if d.enableFiles() {
 		for _, f := range d.Files {
@@ -378,7 +376,7 @@ func (d *ExpansionDriver) createExpansionFilesConfigmap(ctx context.Context, cli
 	return nn, nil
 }
 
-func (d *ExpansionDriver) makeFlatFiles() error {
+func (d *Driver) makeFlatFiles() error {
 	if !d.enableFiles() {
 		return nil
 	}
@@ -402,11 +400,11 @@ func (d *ExpansionDriver) makeFlatFiles() error {
 	return nil
 }
 
-func (d *ExpansionDriver) toFlatPath(f string) string {
+func (d *Driver) toFlatPath(f string) string {
 	return strings.Replace(f, string(os.PathSeparator), expansionFilePathSeparator, -1)
 }
 
-func (d *ExpansionDriver) isHookScript(fp string) (platformv1.HookType, bool) {
+func (d *Driver) isHookScript(fp string) (platformv1.HookType, bool) {
 	var createClusterHookFileTypes = map[platformv1.HookType]bool{
 		platformv1.HookPreInstall:         true,
 		platformv1.HookPostInstall:        true,

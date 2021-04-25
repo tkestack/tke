@@ -23,8 +23,8 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 )
 
-// ExpansionDriver is the model to handle expansion layout.
-type ExpansionDriver struct {
+// Driver is the model to handle expansion layout.
+type Driver struct {
 	log               log.Logger
 	ExpansionName     string `json:"expansion_name" yaml:"expansion_name"`
 	ExpansionVersion  string `json:"expansion_version" yaml:"expansion_version"`
@@ -40,7 +40,7 @@ type ExpansionDriver struct {
 	// TODO: support application expansion
 	Applications                    []string `json:"applications" yaml:"applications"`
 	Images                          []string `json:"images" yaml:"images"`
-	globalKubeconfig                []byte
+	globalKubeconfig                []byte   //nolint
 	InstallerSkipSteps              []string `json:"installer_skip_steps" yaml:"installer_skip_steps"`
 	CreateClusterSkipConditions     []string `json:"create_cluster_skip_conditions" yaml:"create_cluster_skip_conditions"`
 	CreateClusterDelegateConditions []string `json:"create_cluster_delegate_conditions" yaml:"create_cluster_delegate_conditions"`
@@ -55,51 +55,52 @@ type ExpansionDriver struct {
 type CreateClusterExtraArgs struct {
 	DockerExtraArgs            map[string]string `json:"dockerExtraArgs" yaml:"dockerExtraArgs"`
 	KubeletExtraArgs           map[string]string `json:"kubeletExtraArgs" yaml:"kubeletExtraArgs"`
-	ApiServerExtraArgs         map[string]string `json:"apiServerExtraArgs" yaml:"apiServerExtraArgs"`
+	APIServerExtraArgs         map[string]string `json:"apiServerExtraArgs" yaml:"apiServerExtraArgs"`
 	ControllerManagerExtraArgs map[string]string `json:"controllerManagerExtraArgs" yaml:"controllerManagerExtraArgs"`
 	SchedulerExtraArgs         map[string]string `json:"schedulerExtraArgs" yaml:"schedulerExtraArgs"`
 	Etcd                       *platformv1.Etcd  `json:"etcd" yaml:"etcd"`
 }
 
-func (d *ExpansionDriver) enableOperator() bool {
+func (d *Driver) enableOperator() bool {
 	return d.Operator != ""
 }
-func (d *ExpansionDriver) enableApplications() bool {
+func (d *Driver) enableApplications() bool {
 	return len(d.Applications) > 0
 }
-func (d *ExpansionDriver) enableCharts() bool {
+func (d *Driver) enableCharts() bool {
 	return len(d.Charts) > 0
 }
-func (d *ExpansionDriver) enableFiles() bool {
+func (d *Driver) enableFiles() bool {
 	return len(d.Files) > 0
 }
-func (d *ExpansionDriver) enableHooks() bool {
+func (d *Driver) enableHooks() bool {
 	return len(d.Hooks) > 0
 }
-func (d *ExpansionDriver) enableProvider() bool {
+func (d *Driver) enableProvider() bool {
 	return len(d.Provider) > 0
 }
-func (d *ExpansionDriver) enableImages() bool {
+func (d *Driver) enableImages() bool {
 	return len(d.Images) > 0
 }
-func (d *ExpansionDriver) enableSkipSteps() bool {
+func (d *Driver) enableSkipSteps() bool {
 	return len(d.InstallerSkipSteps) > 0
 }
-func (d *ExpansionDriver) enableSkipConditions() bool {
+func (d *Driver) enableSkipConditions() bool {
 	return len(d.CreateClusterSkipConditions) > 0
 }
-func (d *ExpansionDriver) enableDelegateConditions() bool {
+func (d *Driver) enableDelegateConditions() bool {
 	return len(d.CreateClusterDelegateConditions) > 0
 }
 
 // TODO: not designed yet
-func (d *ExpansionDriver) isGlobalKubeconfigReady() bool {
+//nolint
+func (d *Driver) isGlobalKubeconfigReady() bool {
 	return len(d.globalKubeconfig) > 0
 }
 
 // NewExpansionDriver returns an expansionDriver instance which has all expansion layout items loaded.
-func NewExpansionDriver(logger log.Logger) (*ExpansionDriver, error) {
-	driver := &ExpansionDriver{
+func NewExpansionDriver(logger log.Logger) (*Driver, error) {
+	driver := &Driver{
 		log:                             logger,
 		Values:                          make(map[string]string),
 		Charts:                          make([]string, 0),
@@ -112,7 +113,7 @@ func NewExpansionDriver(logger log.Logger) (*ExpansionDriver, error) {
 		CreateClusterExtraArgs: &CreateClusterExtraArgs{
 			DockerExtraArgs:            make(map[string]string),
 			KubeletExtraArgs:           make(map[string]string),
-			ApiServerExtraArgs:         make(map[string]string),
+			APIServerExtraArgs:         make(map[string]string),
 			ControllerManagerExtraArgs: make(map[string]string),
 			SchedulerExtraArgs:         make(map[string]string),
 			//Etcd:                       &platformv1.Etcd{},
