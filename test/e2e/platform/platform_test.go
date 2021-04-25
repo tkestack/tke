@@ -21,6 +21,8 @@ package platform_test
 import (
 	"context"
 	"errors"
+	"k8s.io/klog"
+	"os"
 	"time"
 	"tkestack.io/tke/pkg/platform/apiserver/cluster"
 	"tkestack.io/tke/test/e2e/tke"
@@ -70,8 +72,11 @@ var _ = AfterSuite(func() {
 })
 
 var _ = Describe("Platform Test", func() {
+	It("test", func() {
+		klog.Info(os.Getenv("REGISTRY_USERNAME"))
+	})
 
-	Context("Baremetal cluster", func() {
+	PContext("Baremetal cluster", func() {
 		var cls *platformv1.Cluster
 
 		BeforeEach(func() {
@@ -224,7 +229,7 @@ var _ = Describe("Platform Test", func() {
 		})
 	})
 
-	Context("Imported cluster", func() {
+	PContext("Imported cluster", func() {
 		var cls *platformv1.Cluster
 		var credential *platformv1.ClusterCredential
 
