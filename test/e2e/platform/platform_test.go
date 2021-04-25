@@ -74,6 +74,7 @@ var _ = AfterSuite(func() {
 var _ = Describe("Platform Test", func() {
 	It("test", func() {
 		klog.Info(os.Getenv("REGISTRY_USERNAME"))
+		klog.Info(os.Getenv("DOCKER_HUB_ACTION_AUTH"))
 	})
 
 	PContext("Baremetal cluster", func() {
