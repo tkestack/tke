@@ -57,6 +57,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).To(BeNil())
 	tkeClient := tkeclientset.NewForConfigOrDie(restConf)
 	testTKE = tke2.Init(tkeClient, provider)
+
+	klog.Info(os.Getenv("REGISTRY_USERNAME"))
+	klog.Info(os.Getenv("DOCKER_HUB_ACTION_AUTH"))
 })
 
 var _ = AfterSuite(func() {
@@ -72,12 +75,8 @@ var _ = AfterSuite(func() {
 })
 
 var _ = Describe("Platform Test", func() {
-	It("test", func() {
-		klog.Info(os.Getenv("REGISTRY_USERNAME"))
-		klog.Info(os.Getenv("DOCKER_HUB_ACTION_AUTH"))
-	})
 
-	PContext("Baremetal cluster", func() {
+	Context("Baremetal cluster", func() {
 		var cls *platformv1.Cluster
 
 		BeforeEach(func() {
@@ -230,7 +229,7 @@ var _ = Describe("Platform Test", func() {
 		})
 	})
 
-	PContext("Imported cluster", func() {
+	Context("Imported cluster", func() {
 		var cls *platformv1.Cluster
 		var credential *platformv1.ClusterCredential
 
