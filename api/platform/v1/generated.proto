@@ -377,6 +377,9 @@ message ClusterFeature {
   // +optional
   optional bool ipv6DualStack = 13;
 
+  // +optional
+  optional bool enableCilium = 14;
+
   // Upgrade control upgrade process.
   // +optional
   optional Upgrade upgrade = 22;

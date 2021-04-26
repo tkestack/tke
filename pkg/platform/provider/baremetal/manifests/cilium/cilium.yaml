@@ -111,7 +111,7 @@ data:
   #   - geneve
   tunnel: {{ .BackendType }}
   # Enables L7 proxy for L7 policy enforcement and visibility
-  enable-l7-proxy: "true"
+  enable-l7-proxy: "false"
 
   # wait-bpf-mount makes init container wait until bpf filesystem is mounted
   wait-bpf-mount: "false"
@@ -137,7 +137,7 @@ data:
   enable-remote-node-identity: "true"
   operator-api-serve-addr: "127.0.0.1:9234"
   # Enable Hubble gRPC service.
-  enable-hubble: "true"
+  enable-hubble: "{{ .EnableHubble }}"
   # UNIX domain socket for Hubble server to listen to.
   hubble-socket-path:  "/var/run/cilium/hubble.sock"
   # An additional address for Hubble server to listen to (e.g. ":4244").
@@ -149,9 +149,9 @@ data:
   # https://docs.cilium.io/en/stable/concepts/networking/ipam/
   ipam: "cluster-pool"
   # IPv4 CIDR Range for Pods in cluster. Requires 'ipam=cluster-pool' and 'enable-ipv4=true'
-  cluster-pool-ipv4-cidr: "10.0.0.0/8"
+  cluster-pool-ipv4-cidr: "{{ .ClusterCIDR }}"
   # Mask size for each IPv4 podCIDR per node. Requires 'ipam=cluster-pool' and 'enable-ipv4=true' (default 24)
-  cluster-pool-ipv4-mask-size: "24"
+  cluster-pool-ipv4-mask-size: "{{ .MaskSize }}"
   disable-cnp-status-updates: "true"
 ---
 # Source: cilium/templates/cilium-agent-clusterrole.yaml

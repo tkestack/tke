@@ -90,6 +90,25 @@ func RunNodeChecks(s ssh.Interface) error {
 	return RunChecks(checks)
 }
 
+// RunKernelChecks checks for node to install Cilium
+func RunKernelChecks(s ssh.Interface) error {
+	kernelParameter := []string{
+		"CONFIG_BPF", "CONFIG_BPF_SYSCALL", "CONFIG_NET_CLS_BPF", "CONFIG_BPF_JIT",
+		"CONFIG_NET_CLS_ACT", "CONFIG_NET_SCH_INGRESS", "CONFIG_CRYPTO_SHA1",
+		"CONFIG_CRYPTO_USER_API_HASH", "CONFIG_CGROUPS", "CONFIG_CGROUP_BPF",
+	}
+	checks := []Checker{CiliumCheck{KernelParameter: kernelParameter}}
+	checks = append(checks, []Checker{
+		KernelCheck{Interface: s, MinKernelVersion: 4, MinMajorVersion: 11},
+		PortOpenCheck{Interface: s, port: 4240},
+		PortOpenCheck{Interface: s, port: 9876},
+		PortOpenCheck{Interface: s, port: 9890},
+		PortOpenCheck{Interface: s, port: 9891},
+	}...)
+
+	return RunChecks(checks)
+}
+
 // RunChecks runs each check, displays it's warnings/errors, and once all
 // are processed will exit if any errors occurred.
 func RunChecks(checks []Checker) error {
@@ -366,6 +385,33 @@ func (dac DirAvailableCheck) Name() string {
 func (dac DirAvailableCheck) Check() (warnings, errorList []error) {
 	if ok, err := dac.Exist(dac.Path); err == nil && ok {
 		errorList = append(errorList, errors.Errorf("%s already exists", dac.Path))
+	}
+
+	return nil, errorList
+}
+
+// Check the kernel version and kernel parameter for Cilium installation.
+type CiliumCheck struct {
+	ssh.Interface
+	KernelParameter  []string
+}
+
+// Name returns label for KernelCheck
+func (cc CiliumCheck) Name() string {
+	return fmt.Sprintf("KernelParameter-%s", cc.KernelParameter)
+}
+
+// Check validates kernel version and parameter.
+func (cc CiliumCheck) Check() (warnings, errorList []error) {
+	for _, kp := range cc.KernelParameter {
+		_, _, exit, err := cc.Exec(fmt.Sprintf("cat /boot/config-$(uname -r) | grep '%s='", kp))
+		if err != nil {
+			errorList = append(errorList, err)
+			return
+		}
+		if exit != 0 {
+			errorList = append(errorList, errors.Errorf("Parameter %s is not set", kp))
+		}
 	}
 
 	return nil, errorList
