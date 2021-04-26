@@ -45,7 +45,7 @@ func Rollback(ctx context.Context,
 	err = client.Rollback(&helmaction.RollbackOptions{
 		Namespace:   app.Namespace,
 		ReleaseName: app.Spec.Name,
-		Revision:    app.Status.Revision,
+		Revision:    app.Status.RollbackRevision,
 	})
 	if updateStatusFunc != nil {
 		newStatus := app.Status.DeepCopy()
