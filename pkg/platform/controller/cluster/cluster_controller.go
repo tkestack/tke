@@ -97,12 +97,26 @@ func NewController(
 	}
 
 	clusterInformer.Informer().AddEventHandlerWithResyncPeriod(
-		cache.ResourceEventHandlerFuncs{
-			AddFunc:    c.addCluster,
-			UpdateFunc: c.updateCluster,
+		cache.FilteringResourceEventHandler{
+			Handler: cache.ResourceEventHandlerFuncs{
+				AddFunc:    c.addCluster,
+				UpdateFunc: c.updateCluster,
+			},
+			FilterFunc: func(obj interface{}) bool {
+				cluster, ok := obj.(*platformv1.Cluster)
+				if !ok {
+					return false
+				}
+				provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
+				if err != nil {
+					return false
+				}
+				return provider.OnFilter(context.TODO(), cluster)
+			},
 		},
 		resyncPeriod,
 	)
+
 	c.lister = clusterInformer.Lister()
 	c.listerSynced = clusterInformer.Informer().HasSynced
 
@@ -287,7 +301,6 @@ func (c *Controller) onCreate(ctx context.Context, cluster *platformv1.Cluster) 
 	if err != nil {
 		return fmt.Errorf("ensureCreateClusterCredential error: %w", err)
 	}
-
 	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
 	if err != nil {
 		return err

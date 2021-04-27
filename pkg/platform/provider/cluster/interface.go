@@ -63,7 +63,13 @@ type ControllerProvider interface {
 	OnCreate(ctx context.Context, cluster *v1.Cluster) error
 	OnUpdate(ctx context.Context, cluster *v1.Cluster) error
 	OnDelete(ctx context.Context, cluster *v1.Cluster) error
-
+	// OnFilter called by cluster controller informer for plugin
+	// do the filter on the cluster obj for specific case:
+	// return bool:
+	//  false: drop the object to the queue
+	//  true: add the object to queue, AddFunc and UpdateFunc will
+	//  go through later
+	OnFilter(ctx context.Context, cluster *platformv1.Cluster) bool
 	// OnRunning call on first running.
 	OnRunning(ctx context.Context, cluster *v1.Cluster) error
 }
@@ -315,6 +321,10 @@ func (p *DelegateProvider) OnDelete(ctx context.Context, cluster *v1.Cluster) er
 
 func (p *DelegateProvider) OnRunning(ctx context.Context, cluster *v1.Cluster) error {
 	return nil
+}
+
+func (p *DelegateProvider) OnFilter(ctx context.Context, cluster *platformv1.Cluster) (pass bool) {
+	return true
 }
 
 func (p *DelegateProvider) getNextConditionType(conditionType string, handlers []Handler) string {
