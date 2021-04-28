@@ -145,26 +145,7 @@ func (p *Provider) EnsurePreflight(ctx context.Context, c *v1.Cluster) error {
 			return err
 		}
 
-		err = preflight.RunMasterChecks(machineSSH)
-		if err != nil {
-			return errors.Wrap(err, machine.IP)
-		}
-	}
-
-	return nil
-}
-
-func (p *Provider) EnsureCheckKernel(ctx context.Context, c *v1.Cluster) error {
-	machines := map[bool][]platformv1.ClusterMachine{
-		true:  c.Spec.ScalingMachines,
-		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
-	for _, machine := range machines {
-		machineSSH, err := machine.SSH()
-		if err != nil {
-			return err
-		}
-
-		err = preflight.RunKernelChecks(machineSSH)
+		err = preflight.RunMasterChecks(c, machineSSH)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -911,9 +892,6 @@ func (p *Provider) EnsureGalaxy(ctx context.Context, c *v1.Cluster) error {
 	if c.Status.Phase == platformv1.ClusterUpscaling {
 		return nil
 	}
-	if c.Cluster.Spec.Features.EnableCilium {
-		return nil
-	}
 	clientset, err := c.ClientsetForBootstrap()
 	if err != nil {
 		return err
@@ -1345,10 +1323,6 @@ func (p *Provider) EnsureCilium(ctx context.Context, c *v1.Cluster) error {
 	if !c.Cluster.Spec.Features.EnableCilium {
 		return nil
 	}
-	err := p.EnsureCheckKernel(ctx, c)
-	if err != nil {
-		return errors.Wrap(err, "install cilium error")
-	}
 	client, err := c.Clientset()
 	if err != nil {
 		return err
@@ -1365,24 +1339,16 @@ func (p *Provider) EnsureCilium(ctx context.Context, c *v1.Cluster) error {
 	backendType := "vxlan"
 	debugMode := "false"
 	enableHubble := "true"
-	maskSize := "24"
 	clusterSpec := c.Cluster.Spec
 	if clusterSpec.NetworkArgs != nil {
-		backendTypeArg, ok := clusterSpec.NetworkArgs["backendType"]
-		if ok {
+		if backendTypeArg, ok := clusterSpec.NetworkArgs["backendType"]; ok {
 			backendType = backendTypeArg
 		}
-		debugModeArg, ok := clusterSpec.NetworkArgs["debugMode"]
-		if ok {
+		if debugModeArg, ok := clusterSpec.NetworkArgs["debugMode"]; ok {
 			debugMode = debugModeArg
 		}
-		enableHubbleArg, ok := clusterSpec.NetworkArgs["enableHubble"]
-		if ok {
+		if enableHubbleArg, ok := clusterSpec.NetworkArgs["enableHubble"]; ok {
 			enableHubble = enableHubbleArg
-		}
-		maskSizeArg, ok := clusterSpec.NetworkArgs["maskSize"]
-		if ok {
-			maskSize = maskSizeArg
 		}
 	}
 	option := map[string]interface{}{
@@ -1392,7 +1358,7 @@ func (p *Provider) EnsureCilium(ctx context.Context, c *v1.Cluster) error {
 		"DebugMode":           debugMode,
 		"ClusterCIDR":         c.Cluster.Spec.ClusterCIDR,
 		"EnableHubble":        enableHubble,
-		"MaskSize":            maskSize,
+		"MaskSize":            c.Cluster.Status.NodeCIDRMaskSize,
 	}
 
 	err = apiclient.CreateKAResourceWithFile(ctx, client, kaClient, constants.CiliumManifest, option)

@@ -24,15 +24,18 @@ import (
 	"net"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/platform"
 
 	netutils "k8s.io/utils/net"
 	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	"tkestack.io/tke/pkg/platform/types"
 	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/platform/util/vendor"
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/ipallocator"
 	"tkestack.io/tke/pkg/util/validation"
@@ -77,6 +80,19 @@ func ValidateClusterSpecVersion(platformClient platformv1client.PlatformV1Interf
 	if phase == platform.ClusterInitializing {
 		allErrs = utilvalidation.ValidateEnum(version, fldPath, k8sValidVersions)
 	}
+	if phase == platform.ClusterUpgrading {
+		c, err := platformClient.Clusters().Get(context.Background(), clsName, metav1.GetOptions{})
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(fldPath, err))
+			return allErrs
+		}
+		dstKubevendor := vendor.GetKubeVendor(version)
+		if err := validateKubevendor(c.Status.KubeVendor, dstKubevendor); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath,
+				err,
+				"current kubevendor is not supported to upgrade to input version"))
+		}
+	}
 
 	return allErrs
 }
@@ -93,6 +109,23 @@ func getK8sValidVersions(platformClient platformv1client.PlatformV1Interface, cl
 	_, k8sValidVersions, err = util.GetPlatformVersionsFromClusterInfo(context.Background(), client)
 
 	return k8sValidVersions, err
+}
+
+func validateKubevendor(srcKubevendor, dstKubevendor platformv1.KubeVendorType) (err error) {
+	notSupportUpgradeMessage := "not support upgrade from vendor %v to vendor %v"
+	switch srcKubevendor {
+	case platformv1.KubeVendorTKE:
+		if dstKubevendor != platformv1.KubeVendorTKE {
+			return fmt.Errorf(notSupportUpgradeMessage, srcKubevendor, dstKubevendor)
+		}
+	case platformv1.KubeVendorOther:
+		if dstKubevendor != platformv1.KubeVendorOther && dstKubevendor != platformv1.KubeVendorTKE {
+			return fmt.Errorf(notSupportUpgradeMessage, srcKubevendor, dstKubevendor)
+		}
+	default:
+		return fmt.Errorf(notSupportUpgradeMessage, srcKubevendor, dstKubevendor)
+	}
+	return nil
 }
 
 // ValidateCIDRs validates clusterCIDR and serviceCIDR.

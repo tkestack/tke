@@ -46468,6 +46468,12 @@ func schema_tke_api_platform_v1_ClusterStatus(ref common.ReferenceCallback) comm
 							Format: "int32",
 						},
 					},
+					"kubeVendor": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 			},
 		},
