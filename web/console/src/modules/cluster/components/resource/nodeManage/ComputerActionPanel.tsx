@@ -22,25 +22,25 @@ interface State {
   showOsTips?: boolean;
   selectCluster?: any;
 }
-const mapDispatchToProps = (dispatch) =>
+const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect((state) => state, mapDispatchToProps)
+@connect(state => state, mapDispatchToProps)
 export class ComputerActionPanel extends React.Component<RootProps, State> {
   state = {
     monitorPanelProps: null,
     showOsTips: false,
-    selectCluster: null,
+    selectCluster: null
   };
   componentDidMount() {
-    let { actions, route } = this.props;
-    let { rid, clusterId } = route.queries;
+    const { actions, route } = this.props;
+    const { rid, clusterId } = route.queries;
     actions.computer.poll({ clusterId, regionId: +rid });
 
     actions.computer.pollMachine({ clusterId, regionId: +rid });
   }
   componentWillUnmount() {
-    let { actions } = this.props;
+    const { actions } = this.props;
     actions.computer.performSearch('');
     actions.computer.clearPolling();
     actions.computer.machine.clearPolling();
@@ -48,18 +48,18 @@ export class ComputerActionPanel extends React.Component<RootProps, State> {
   }
 
   downloadHandle(computers: Computer[]) {
-    let rows = [],
+    const rows = [],
       head = ['ID', t('状态'), t('角色'), t('配置'), t('ip地址'), t('PodCIDR'), t('创建时间')];
 
     computers.forEach((item: Computer) => {
-      let row = [
+      const row = [
         item.metadata.name,
         item.status.phase,
         item.metadata.role,
-        this._reduceCapacity(item),
+        `cpu: ${item?.status?.capacity?.cpu ?? '-'} 核; 内存: ${item?.status?.capacity?.memory ?? '-'}`,
         this._reduceIp(item),
         item.spec.podCIDR,
-        dateFormatter(new Date(item.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss'),
+        dateFormatter(new Date(item.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')
       ];
       rows.push(row);
     });
@@ -68,26 +68,26 @@ export class ComputerActionPanel extends React.Component<RootProps, State> {
   }
 
   _reduceCapacity(node: Computer) {
-    let capacity = node.status.capacity;
-    let capacityInfo = {
-      cpu: capacity.cpu,
-      memory: capacity.memory,
+    const capacity = node?.status?.capacity;
+    const capacityInfo = {
+      cpu: capacity?.cpu,
+      memory: capacity?.memory
     };
-    let finalCpu = ReduceRequest('cpu', capacityInfo),
+    const finalCpu = ReduceRequest('cpu', capacityInfo),
       finalmem = (ReduceRequest('memory', capacity) / 1024).toFixed(2);
     return finalCpu + '核,' + finalmem + 'GB';
   }
 
   _reduceIp(node: Computer) {
-    let finalIPInfo = node.status.addresses.filter((item) => item.type !== 'Hostname');
-    let ips = finalIPInfo.map((item, index) => item.address);
+    const finalIPInfo = node.status.addresses.filter(item => item.type !== 'Hostname');
+    const ips = finalIPInfo.map((item, index) => item.address);
     return ips.join('、');
   }
 
   /** 处理 封锁 和 取消封锁的按钮的信息提示 */
   handleNodeErrTips(nodeArr) {
     if (nodeArr.length <= 3) {
-      return nodeArr.map((item) => item.instanceId).join('、');
+      return nodeArr.map(item => item.instanceId).join('、');
     } else {
       return (
         '' +
@@ -191,9 +191,9 @@ export class ComputerActionPanel extends React.Component<RootProps, State> {
   }
   /** 处理监控的相关操作 */
   private _handleMonitor(monitorType?: string, nodeName?: string) {
-    let { computerState } = this.props.subRoot;
+    const { computerState } = this.props.subRoot;
 
-    let monitorPanelProps =
+    const monitorPanelProps =
       monitorType === 'nodeMonitor'
         ? {
             tables: [
@@ -201,26 +201,26 @@ export class ComputerActionPanel extends React.Component<RootProps, State> {
                 table: 'k8s_node',
                 conditions: [
                   ['tke_cluster_instance_id', '=', this.props.route.queries.clusterId],
-                  ['node_role', '=', 'Node'],
+                  ['node_role', '=', 'Node']
                 ],
-                fields: nodeMonitorFields,
-              },
+                fields: nodeMonitorFields
+              }
             ],
             groupBy: [{ value: 'node' }],
             instance: {
               columns: [
                 {
                   key: 'node',
-                  name: t('节点名'),
-                },
+                  name: t('节点名')
+                }
               ],
-              list: computerState.computer.list.data.records.map((d) => ({
+              list: computerState.computer.list.data.records.map(d => ({
                 node: d.metadata.name,
                 isChecked:
                   !computerState.computer.selections.length ||
-                  computerState.computer.selections.find((ins) => ins.metadata.name === d.metadata.name),
-              })),
-            },
+                  computerState.computer.selections.find(ins => ins.metadata.name === d.metadata.name)
+              }))
+            }
           }
         : {
             tables: [
@@ -234,22 +234,22 @@ export class ComputerActionPanel extends React.Component<RootProps, State> {
                     nodeName ||
                       (computerState.computer.list.data.records[0]
                         ? computerState.computer.list.data.records[0].metadata.name
-                        : ''),
-                  ],
+                        : '')
+                  ]
                 ],
-                fields: podMonitorFields,
-              },
+                fields: podMonitorFields
+              }
             ],
             groupBy: [{ value: 'pod_name' }],
             instance: {
               columns: [
                 {
                   key: 'pod_name',
-                  name: t('Pod名称'),
-                },
+                  name: t('Pod名称')
+                }
               ],
-              list: [],
-            },
+              list: []
+            }
           };
 
     this.setState({
@@ -267,11 +267,11 @@ export class ComputerActionPanel extends React.Component<RootProps, State> {
                   <div className="tc-15-rich-radio" role="radiogroup">
                     {[
                       { label: t('节点'), key: 'nodeMonitor' },
-                      { label: 'Pod', key: 'podMonitor' },
-                    ].map((item) => (
+                      { label: 'Pod', key: 'podMonitor' }
+                    ].map(item => (
                       <button
                         key={item.key}
-                        onClick={(e) => this._handleMonitor(item.key)}
+                        onClick={e => this._handleMonitor(item.key)}
                         className={'tc-15-btn m ' + (monitorType === item.key ? 'checked' : '')}
                         role="radio"
                       >
@@ -291,11 +291,11 @@ export class ComputerActionPanel extends React.Component<RootProps, State> {
                   <div className="form-unit">
                     <select
                       className="tc-15-select m"
-                      onChange={(e) => {
+                      onChange={e => {
                         this._handleMonitor(monitorType, e.target.value);
                       }}
                     >
-                      {computerState.computer.list.data.records.map((item) => (
+                      {computerState.computer.list.data.records.map(item => (
                         <option key={item.metadata.name} value={item.metadata.name}>{`${item.metadata.name}`}</option>
                       ))}
                     </select>
@@ -304,8 +304,8 @@ export class ComputerActionPanel extends React.Component<RootProps, State> {
               </li>
             )}
           </ul>
-        ),
-      },
+        )
+      }
     });
   }
 }

@@ -10,6 +10,7 @@ on:
       - master
 env:
   VERSION: ${{ github.sha }}
+  BUILDER: ${{ secrets.BUILDER }}
   KUBECONFIG: ${{ secrets.KUBECONFIG }}
   REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
   REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}

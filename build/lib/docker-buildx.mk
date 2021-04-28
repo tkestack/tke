@@ -61,8 +61,21 @@ docker.buildx.%: docker.verify
 	DOCKER_CLI_EXPERIMENTAL=enabled $(DOCKER) buildx build --pull --platform $(IMAGE_PLAT) --load \
 	  -t $(IMAGE_NAME) $(_DOCKER_BUILD_EXTRA_ARGS) $(WORK_DIR)
 
+.PHONY: docker.build.%
+docker.build.%:  docker.verify
+	$(eval IMAGE := $(word 2,$(subst ., ,$*)))
+	$(eval PLATFORM := $(word 1,$(subst ., ,$*)))
+	$(eval OS := $(word 1,$(subst _, ,$(PLATFORM))))
+	$(eval ARCH := $(word 2,$(subst _, ,$(PLATFORM))))
+	$(eval IMAGE_PLAT := $(subst _,/,$(PLATFORM)))
+	$(eval IMAGE_NAME := $(REGISTRY_PREFIX)/$(IMAGE)-$(ARCH):$(VERSION))
+	@echo "===========> Building docker image $(IMAGE) $(VERSION) for $(IMAGE_PLAT)"
+
+	$(eval BUILD_SUFFIX := $(_DOCKER_BUILD_EXTRA_ARGS) --pull -t $(REGISTRY_PREFIX)/$(IMAGE)-$(ARCH):$(VERSION) $(WORK_DIR))
+	$(DOCKER) build --platform $(IMAGE_PLAT) $(BUILD_SUFFIX)
+
 .PHONY: docker.push.%
-docker.push.%: docker.buildx.%
+docker.push.%: docker.build.%
 	@echo "===========> Pushing image $(IMAGE_NAME)"
 	$(DOCKER) push $(IMAGE_NAME)
 

@@ -46,8 +46,7 @@ mkdir "${tmp}" && cd "${tmp}"                                   || die
 
 tailNum=`sed -n '/^#real installing packages append below/{=;q;}' ${me}`
 tailNum=$((tailNum +1))
-tail -n +${tailNum} "${me}" >package.tgz    || die
-tar -zxf package.tgz                        || die
+tail -n +${tailNum} "${me}" | tar -zxf -    || die
 
 ./install.sh $@                             || die
 cd "${cwd}"                                 || die

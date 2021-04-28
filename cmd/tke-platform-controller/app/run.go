@@ -95,7 +95,7 @@ func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 
 	// add a uniquifier so that two processes on the same host don't accidentally both become active
 	id = id + "_" + string(uuid.NewUUID())
-	rl := resourcelock.NewPlatform("tke-platform-controller",
+	rl := resourcelock.NewPlatform(cfg.ServerName,
 		cfg.LeaderElectionClient.PlatformV1(),
 		resourcelock.Config{
 			Identity: id,
@@ -113,7 +113,7 @@ func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 			},
 		},
 		WatchDog: electionChecker,
-		Name:     "tke-platform-controller",
+		Name:     cfg.ServerName,
 	})
 	panic("unreachable")
 }

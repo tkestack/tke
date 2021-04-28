@@ -22,12 +22,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/apiserver/pkg/registry/generic/registry"
-	"k8s.io/apiserver/pkg/registry/rest"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -35,9 +29,16 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apiserver/pkg/registry/rest"
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
-	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/localtrust"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
+	"tkestack.io/tke/pkg/platform/proxy"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -46,6 +47,8 @@ type ProxyREST struct {
 	rest.Storage
 	store *registry.Store
 	host  string
+
+	platformClient platforminternalclient.PlatformInterface
 }
 
 // ConnectMethods returns the list of HTTP methods that can be proxied
@@ -59,7 +62,7 @@ func (r *ProxyREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 // Connect returns a handler for the native api proxy
-func (r *ProxyREST) Connect(ctx context.Context, clusterName string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (r *ProxyREST) Connect(ctx context.Context, clusterName string, opts runtime.Object, _ rest.Responder) (http.Handler, error) {
 	clusterObject, err := r.store.Get(ctx, clusterName, &metav1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -78,22 +81,21 @@ func (r *ProxyREST) Connect(ctx context.Context, clusterName string, opts runtim
 		return nil, errors.NewBadRequest("cycle dispatch")
 	}
 
-	u, ok := request.UserFrom(ctx)
-	if !ok {
-		return nil, errors.NewUnauthorized("unknown user")
-	}
-	token, err := localtrust.GenerateToken(u)
+	config, err := proxy.GetConfig(ctx, r.platformClient)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
+	if config.BearerToken == "" {
+		return nil, errors.NewInternalError(fmt.Errorf("%s has NO BearerToken", clusterName))
+	}
 
-	uri, err := makeURL(r.host, proxyOpts.Path)
+	uri, err := makeURL(config.Host, proxyOpts.Path)
 	if err != nil {
 		return nil, errors.NewBadRequest(err.Error())
 	}
 
 	return &httputil.ReverseProxy{
-		Director: makeDirector(cluster.ObjectMeta.Name, uri, token),
+		Director: makeDirector(cluster.ObjectMeta.Name, uri, config.BearerToken),
 		Transport: &http.Transport{
 			DialContext: (&net.Dialer{
 				Timeout:   30 * time.Second,
@@ -124,17 +126,16 @@ func makeDirector(clusterName string, uri *url.URL, token string) func(req *http
 func makeURL(host, path string) (*url.URL, error) {
 	var port int64
 	hostSegment := strings.Split(host, ":")
-	if len(hostSegment) == 0 {
-		port = 443
-	} else {
-		var err error
-		port, err = strconv.ParseInt(hostSegment[len(hostSegment)-1], 10, 32)
-		if err != nil {
-			port = 443
-		}
+	if len(hostSegment) != 2 {
+		return nil, fmt.Errorf("invalid host %s", host)
+	}
+	var err error
+	port, err = strconv.ParseInt(hostSegment[1], 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("invalid host port %s", hostSegment[1])
 	}
 
 	p := strings.TrimPrefix(path, "/")
 
-	return url.Parse(fmt.Sprintf("https://127.0.0.1:%d/%s", port, p))
+	return url.Parse(fmt.Sprintf("https://%s:%d/%s", hostSegment[0], port, p))
 }

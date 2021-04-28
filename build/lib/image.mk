@@ -79,12 +79,8 @@ image.build.%: go.build.%
 	@cp $(OUTPUT_DIR)/$(IMAGE_PLAT)/$(IMAGE) $(TMP_DIR)/$(IMAGE)/
 	@DST_DIR=$(TMP_DIR)/$(IMAGE) $(ROOT_DIR)/build/docker/$(IMAGE)/build.sh 2>/dev/null || true
 	$(eval BUILD_SUFFIX := $(_DOCKER_BUILD_EXTRA_ARGS) --pull -t $(REGISTRY_PREFIX)/$(IMAGE)-$(ARCH):$(VERSION) $(TMP_DIR)/$(IMAGE))
-	@if [ $(shell $(GO) env GOARCH) != $(ARCH) ] ; then \
-		$(MAKE) image.daemon.verify ;\
-		$(DOCKER) build --platform $(IMAGE_PLAT) $(BUILD_SUFFIX) ; \
-	else \
-		$(DOCKER) build $(BUILD_SUFFIX) ; \
-	fi
+	$(MAKE) image.daemon.verify
+	$(DOCKER) build --platform $(IMAGE_PLAT) $(BUILD_SUFFIX)
 	@rm -rf $(TMP_DIR)/$(IMAGE)
 
 .PHONY: image.push

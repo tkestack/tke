@@ -5265,6 +5265,13 @@ func (m *ClusterStatus) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	i -= len(m.KubeVendor)
+	copy(dAtA[i:], m.KubeVendor)
+	i = encodeVarintGenerated(dAtA, i, uint64(len(m.KubeVendor)))
+	i--
+	dAtA[i] = 0x1
+	i--
+	dAtA[i] = 0xa2
 	i = encodeVarintGenerated(dAtA, i, uint64(m.NodeCIDRMaskSizeIPv6))
 	i--
 	dAtA[i] = 0x1
@@ -9662,6 +9669,8 @@ func (m *ClusterStatus) Size() (n int) {
 	n += 2 + l + sovGenerated(uint64(l))
 	n += 2 + sovGenerated(uint64(m.NodeCIDRMaskSizeIPv4))
 	n += 2 + sovGenerated(uint64(m.NodeCIDRMaskSizeIPv6))
+	l = len(m.KubeVendor)
+	n += 2 + l + sovGenerated(uint64(l))
 	return n
 }
 
@@ -11534,6 +11543,7 @@ func (this *ClusterStatus) String() string {
 		`SecondaryClusterCIDR:` + fmt.Sprintf("%v", this.SecondaryClusterCIDR) + `,`,
 		`NodeCIDRMaskSizeIPv4:` + fmt.Sprintf("%v", this.NodeCIDRMaskSizeIPv4) + `,`,
 		`NodeCIDRMaskSizeIPv6:` + fmt.Sprintf("%v", this.NodeCIDRMaskSizeIPv6) + `,`,
+		`KubeVendor:` + fmt.Sprintf("%v", this.KubeVendor) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -19917,6 +19927,38 @@ func (m *ClusterStatus) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		case 20:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KubeVendor", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenerated
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenerated
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenerated
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.KubeVendor = KubeVendorType(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipGenerated(dAtA[iNdEx:])
