@@ -17,6 +17,7 @@ import { Computer, DialogNameEnum } from '../../../models';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { ReduceRequest } from '../resourceDetail/ResourcePodPanel';
+import { formatMemory } from '@helper';
 
 export const ComputerStatus = {
   Running: 'success',
@@ -127,10 +128,10 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
         width: '8%',
         render: x => (
           <React.Fragment>
-            <Text theme={ComputerStatus[x.status.phase]} verticalAlign="middle" parent={'p'}>
-              {x.status.phase || '-'}
+            <Text theme={ComputerStatus[x?.status?.phase]} verticalAlign="middle" parent={'p'}>
+              {x?.status?.phase || '-'}
             </Text>
-            {x.status.phase === 'Initializing' && (
+            {x?.status?.phase === 'Initializing' && (
               <Button
                 type="link"
                 onClick={() => {
@@ -249,8 +250,8 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
         width: '8%',
         render: x => (
           <React.Fragment>
-            <Text theme={ComputerStatus[x.status.phase]} verticalAlign="middle" parent={'p'}>
-              {x.status.phase || '-'}
+            <Text theme={ComputerStatus[x?.status?.phase]} verticalAlign="middle" parent={'p'}>
+              {x?.status?.phase ?? '-'}
             </Text>
             <div className="sl-editor-name">
               {x.spec.unschedulable && (
@@ -275,22 +276,13 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
         header: t('配置'),
         width: '12%',
         render: x => {
-          const capacity = x.status.capacity;
-          const capacityInfo = {
-            cpu: capacity ? capacity.cpu : '0',
-            memory: capacity ? capacity.memory : '0'
-          };
-          const finalCpu = ReduceRequest('cpu', capacityInfo),
-            finalmem = (ReduceRequest('memory', capacity) / 1024).toFixed(2);
+          const capacity = x?.status?.capacity;
 
           return (
             <React.Fragment>
-              <Text verticalAlign="middle">
-                {t('{{count}} 核, ', {
-                  count: finalCpu
-                })}
-              </Text>
-              <Text verticalAlign="middle">{`${finalmem} GB`}</Text>
+              <Text verticalAlign="middle">cpu: {capacity?.cpu ?? '-'} 核</Text>
+              <br />
+              <Text verticalAlign="middle">内存: {formatMemory(capacity?.memory ?? '0', 'Gi')}</Text>
             </React.Fragment>
           );
         }
@@ -300,7 +292,7 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
         header: t('IP地址'),
         width: '15%',
         render: x => {
-          const finalIPInfo = x.status.addresses.filter(item => item.type !== 'Hostname');
+          const finalIPInfo = x?.status?.addresses?.filter(item => item.type !== 'Hostname') ?? [];
 
           return (
             <React.Fragment>
@@ -472,7 +464,7 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
    * @param mode:unSchedule|turn on scheduling    判断是否可进行操作
    */
   private getCanUnSchedule(computer: Computer, mode: 'unSchedule' | 'turnOnScheduling' = 'turnOnScheduling') {
-    const computerStatus = computer.status.phase === 'Running';
+    const computerStatus = computer?.status?.phase === 'Running';
 
     if (mode === 'unSchedule') {
       return computerStatus && (computer.spec.unschedulable == null || computer.spec.unschedulable === false);

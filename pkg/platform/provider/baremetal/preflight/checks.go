@@ -393,7 +393,7 @@ func (dac DirAvailableCheck) Check() (warnings, errorList []error) {
 // Check the kernel version and kernel parameter for Cilium installation.
 type CiliumCheck struct {
 	ssh.Interface
-	KernelParameter  []string
+	KernelParameter []string
 }
 
 // Name returns label for KernelCheck

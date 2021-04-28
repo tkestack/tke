@@ -44,6 +44,7 @@ import (
 	"tkestack.io/tke/pkg/platform/controller/cluster/deletion"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/platform/util/vendor"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
@@ -96,12 +97,26 @@ func NewController(
 	}
 
 	clusterInformer.Informer().AddEventHandlerWithResyncPeriod(
-		cache.ResourceEventHandlerFuncs{
-			AddFunc:    c.addCluster,
-			UpdateFunc: c.updateCluster,
+		cache.FilteringResourceEventHandler{
+			Handler: cache.ResourceEventHandlerFuncs{
+				AddFunc:    c.addCluster,
+				UpdateFunc: c.updateCluster,
+			},
+			FilterFunc: func(obj interface{}) bool {
+				cluster, ok := obj.(*platformv1.Cluster)
+				if !ok {
+					return false
+				}
+				provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
+				if err != nil {
+					return false
+				}
+				return provider.OnFilter(context.TODO(), cluster)
+			},
 		},
 		resyncPeriod,
 	)
+
 	c.lister = clusterInformer.Lister()
 	c.listerSynced = clusterInformer.Informer().HasSynced
 
@@ -286,7 +301,6 @@ func (c *Controller) onCreate(ctx context.Context, cluster *platformv1.Cluster) 
 	if err != nil {
 		return fmt.Errorf("ensureCreateClusterCredential error: %w", err)
 	}
-
 	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
 	if err != nil {
 		return err
@@ -481,6 +495,7 @@ func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) 
 		} else {
 			cluster.Status.Phase = platformv1.ClusterRunning
 			cluster.Status.Version = strings.TrimPrefix(version.String(), "v")
+			cluster.Status.KubeVendor = vendor.GetKubeVendor(cluster.Status.Version)
 
 			healthCheckCondition.Status = platformv1.ConditionTrue
 		}
@@ -490,6 +505,7 @@ func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) 
 
 	log.FromContext(ctx).Info("Update cluster health status",
 		"version", cluster.Status.Version,
+		"kubevendor", cluster.Status.KubeVendor,
 		"phase", cluster.Status.Phase)
 
 	return cluster
