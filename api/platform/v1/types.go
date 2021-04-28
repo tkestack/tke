@@ -392,7 +392,7 @@ type ClusterFeature struct {
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
-	// Expansion
+	// For creating-cluster to delegate conditions by an external operator. (Expansion Framework)
 	// +optional
 	DelegateConditions []string `json:"delegateConditions,omitempty" protobuf:"bytes,14,opt,name=delegateConditions"`
 }

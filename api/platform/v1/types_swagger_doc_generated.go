@@ -226,9 +226,10 @@ func (ClusterCredentialList) SwaggerDoc() map[string]string {
 }
 
 var map_ClusterFeature = map[string]string{
-	"":                 "ClusterFeature records the features that are enabled by the cluster.",
-	"authzWebhookAddr": "For kube-apiserver authorization webhook",
-	"upgrade":          "Upgrade control upgrade process.",
+	"":                   "ClusterFeature records the features that are enabled by the cluster.",
+	"authzWebhookAddr":   "For kube-apiserver authorization webhook",
+	"upgrade":            "Upgrade control upgrade process.",
+	"delegateConditions": "For creating-cluster to delegate conditions by an external operator. (Expansion Framework)",
 }
 
 func (ClusterFeature) SwaggerDoc() map[string]string {

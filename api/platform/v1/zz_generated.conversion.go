@@ -1655,6 +1655,7 @@ func autoConvert_v1_ClusterFeature_To_platform_ClusterFeature(in *ClusterFeature
 	if err := Convert_v1_Upgrade_To_platform_Upgrade(&in.Upgrade, &out.Upgrade, s); err != nil {
 		return err
 	}
+	out.DelegateConditions = *(*[]string)(unsafe.Pointer(&in.DelegateConditions))
 	return nil
 }
 
@@ -1680,6 +1681,7 @@ func autoConvert_platform_ClusterFeature_To_v1_ClusterFeature(in *platform.Clust
 	if err := Convert_platform_Upgrade_To_v1_Upgrade(&in.Upgrade, &out.Upgrade, s); err != nil {
 		return err
 	}
+	out.DelegateConditions = *(*[]string)(unsafe.Pointer(&in.DelegateConditions))
 	return nil
 }
 

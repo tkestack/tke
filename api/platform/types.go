@@ -386,6 +386,8 @@ type ClusterFeature struct {
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade
+	// +optional
+	DelegateConditions []string
 }
 
 type HA struct {

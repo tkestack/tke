@@ -668,6 +668,11 @@ func (in *ClusterFeature) DeepCopyInto(out *ClusterFeature) {
 		(*in).DeepCopyInto(*out)
 	}
 	in.Upgrade.DeepCopyInto(&out.Upgrade)
+	if in.DelegateConditions != nil {
+		in, out := &in.DelegateConditions, &out.DelegateConditions
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

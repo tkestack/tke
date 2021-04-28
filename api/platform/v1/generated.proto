@@ -380,6 +380,10 @@ message ClusterFeature {
   // Upgrade control upgrade process.
   // +optional
   optional Upgrade upgrade = 22;
+
+  // For creating-cluster to delegate conditions by an external operator. (Expansion Framework)
+  // +optional
+  repeated string delegateConditions = 14;
 }
 
 // ClusterList is the whole list of all clusters which owned by a tenant.

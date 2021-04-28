@@ -45836,6 +45836,20 @@ func schema_tke_api_platform_v1_ClusterFeature(ref common.ReferenceCallback) com
 							Ref:         ref("tkestack.io/tke/api/platform/v1.Upgrade"),
 						},
 					},
+					"delegateConditions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "For creating-cluster to delegate conditions by an external operator. (Expansion Framework)",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
