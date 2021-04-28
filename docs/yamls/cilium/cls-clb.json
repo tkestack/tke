@@ -1,0 +1,54 @@
+{
+    "apiVersion": "platform.tkestack.io/v1",
+    "kind": "Cluster",
+    "metadata": {
+        "generateName": "cls"
+    },
+    "spec": {
+        "displayName": "test-clb",
+        "clusterCIDR": "10.244.0.0/16",
+        "networkDevice": "eth0",
+        "features": {
+            "ha": {
+                "thirdParty": {
+                    "vip": "***.***.***.***",
+                    "vport": 6443
+                }
+            },
+            "enableMetricsServer": true,
+            "skipConditions": [
+                "EnsureGalaxy"
+            ]
+        },
+        "properties": {
+            "maxClusterServiceNum": 256,
+            "maxNodePodNum": 256
+        },
+        "tenantID": "default",
+        "type": "Baremetal",
+        "version": "1.20.4-tke.1",
+        "machines": [
+            {
+                "ip": "***.***.***.***",
+                "port": 22,
+                "username": "root",
+                "privateKey": "***",
+                "labels": {}
+            },
+            {
+                "ip": "***.***.***.***",
+                "port": 22,
+                "username": "root",
+                "privateKey": "***",
+                "labels": {}
+            },
+            {
+                "ip": "***.***.***.***",
+                "port": 22,
+                "username": "root",
+                "privateKey": "***",
+                "labels": {}
+            }
+        ]
+    }
+}

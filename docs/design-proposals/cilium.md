@@ -212,3 +212,50 @@ The error log:
 ```
 install cilium error: 10.0.0.46: [preflight] Some fatal errors occurred: [ERROR KernelCheck-4-10]: kernel version(4.10.0-118-generic) must not lower than 4.11
 ```
+
+### Case 4
+
+1. Create cluster with build-in HA(keepalived + vip + TencentOS 3.1)
+
+> This case depends on ARP function, please make sure it is able in your router.
+
+Create cluster in global:
+
+```sh
+wget https://github.com/tkestack/tke/blob/master/docs/yamls/cilium/cls-vip.json
+## edit json to fulfill your vip, machine ip and ssh info
+kubectl -f cls-vip.json
+```
+
+2. After HA cluster is running, create cillium in HA cluster:
+
+```sh
+kubectl apply -f https://github.com/tkestack/tke/blob/master/docs/yamls/cilium/cilium-ha.yaml
+```
+
+Check pod status through `kubectl get pod -A`, all pods will be running status.
+
+3. Confirm HA is working. Shutdown the node which is binding vip, will find vip is binded on another node, everthing wokrs fine through UI and kubectl.
+
+
+### Case 5
+
+1. Create cluster with third-party HA(CLB + TencentOS 3.1)
+
+Create cluster in global:
+
+```sh
+wget https://github.com/tkestack/tke/blob/master/docs/yamls/cilium/cls-clb.json
+## edit json to fulfill your clb ip, machine ip and ssh info
+kubectl -f cls-clb.json
+```
+
+2. After HA cluster is running, create cillium in HA cluster:
+
+```sh
+kubectl apply -f https://github.com/tkestack/tke/blob/master/docs/yamls/cilium/cilium-ha.yaml
+```
+
+Check pod status through `kubectl get pod -A`, all pods will be running status.
+
+3. Confirm HA is working. Shutdown any one node, everthing wokrs fine through UI and kubectl.
