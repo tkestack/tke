@@ -23,16 +23,33 @@ import (
 	"reflect"
 	"sort"
 
+	"tkestack.io/tke/pkg/util/addon"
 	"tkestack.io/tke/pkg/util/containerregistry"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
-	// LatestVersion is latest version of addon.
-	LatestVersion = "v1.0.0"
+	DefaultVersion = "v1.0.0"
+	AddonName      = "lbcf-controller"
 )
+
+var defaultComponents = Components{struct {
+	Name string
+	Tag  string
+}{Name: "lbcf-controller", Tag: "v1.4.0.beta.2"}}
 
 type Components struct {
 	LBCFController containerregistry.Image
+}
+
+// GetLatestVersion returns latest version
+func GetLatestVersion() string {
+	version, err := addon.GetLatestVersion(AddonName)
+	if err != nil {
+		log.Errorf("%v", err)
+		return DefaultVersion
+	}
+	return version
 }
 
 func (c Components) Get(name string) *containerregistry.Image {
@@ -46,13 +63,12 @@ func (c Components) Get(name string) *containerregistry.Image {
 	return nil
 }
 
-var versionMap = map[string]Components{
-	LatestVersion: {
-		LBCFController: containerregistry.Image{Name: "lbcf-controller", Tag: "v1.0.0.rc.2"},
-	},
-}
-
 func List() []string {
+	versionMap, err := addon.GetVersionMap(AddonName)
+	if err != nil {
+		log.Errorf("get version map error: %v", err)
+		return []string{DefaultVersion}
+	}
 	items := make([]string, 0, len(versionMap))
 	keys := make([]string, 0, len(versionMap))
 	for key := range versionMap {
@@ -66,11 +82,14 @@ func List() []string {
 			items = append(items, v.BaseName())
 		}
 	}
-
 	return items
 }
 
 func Validate(version string) error {
+	versionMap, err := addon.GetVersionMap(AddonName)
+	if err != nil {
+		return err
+	}
 	_, ok := versionMap[version]
 	if !ok {
 		return fmt.Errorf("the component version definition corresponding to version %s could not be found", version)
@@ -79,9 +98,15 @@ func Validate(version string) error {
 }
 
 func Get(version string) Components {
+	versionMap, err := addon.GetVersionMap(AddonName)
+	if err != nil {
+		log.Errorf("get version map error: %v", err)
+		return defaultComponents
+	}
 	cv, ok := versionMap[version]
 	if !ok {
-		panic(fmt.Sprintf("the component version definition corresponding to version %s could not be found", version))
+		log.Errorf("the component version definition corresponding to version %s could not be found，return default(%+v) instead", version, defaultComponents)
+		return defaultComponents
 	}
-	return cv
+	return Components{LBCFController: cv}
 }

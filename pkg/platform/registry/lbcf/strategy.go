@@ -86,7 +86,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	}
 
 	if lbcf.Spec.Version == "" {
-		lbcf.Spec.Version = images.LatestVersion
+		lbcf.Spec.Version = images.GetLatestVersion()
 	}
 }
 

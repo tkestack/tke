@@ -84,7 +84,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	}
 
 	if logCollector.Spec.Version == "" {
-		logCollector.Spec.Version = images.LatestVersion
+		logCollector.Spec.Version = images.GetLatestVersion()
 	}
 }
 

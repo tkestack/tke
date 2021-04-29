@@ -82,7 +82,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	}
 
 	if ipam.Spec.Version == "" {
-		ipam.Spec.Version = images.LatestVersion
+		ipam.Spec.Version = images.GetLatestVersion()
 	}
 
 	if ipam.Status.Phase == "" {
