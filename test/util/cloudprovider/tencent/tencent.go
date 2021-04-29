@@ -73,6 +73,7 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 	result := make([]cloudprovider.Instance, count)
 
 	request := cvm.NewRunInstancesRequest()
+	klog.Info("json: ", env.CreateInstancesParam())
 	err := request.FromJsonString(env.CreateInstancesParam())
 	if err != nil {
 		klog.Error(err)
