@@ -41,6 +41,7 @@ func CreateServerChain(cfg *config.Config) (*genericapiserver.GenericAPIServer, 
 
 	apiServer.GenericAPIServer.AddPostStartHookOrDie("start-auth-api-server-informers", func(context genericapiserver.PostStartHookContext) error {
 		cfg.VersionedSharedInformerFactory.Start(context.StopCh)
+		cfg.K8sSharedInformerFactory.Start(context.StopCh)
 		return nil
 	})
 
