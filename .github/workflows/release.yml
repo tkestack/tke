@@ -28,6 +28,7 @@ env:
   PASSWORD: ${{ secrets.PASSWORD }}
   NEED_DELETE: ${{ secrets.NEED_DELETE }}
   DOCKER_HUB_ACTION_AUTH: ${{ secrets.DOCKER_HUB_ACTION_AUTH }}
+  INSTANCE_TYPES: ${{ secrets.INSTANCE_TYPES }}
 
 jobs:
   image:
