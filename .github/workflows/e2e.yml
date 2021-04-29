@@ -23,7 +23,6 @@ env:
   DOCKER_HUB_ACTION_AUTH: ${{ secrets.DOCKER_HUB_ACTION_AUTH }}
   INSTANCE_TYPES: ${{ secrets.INSTANCE_TYPES }}
   TEST1: ${{ secrets.TEST1 }}
-  TEST2: ${{ env.TEST2 }}
 jobs:
   image:
     name: build tke image
