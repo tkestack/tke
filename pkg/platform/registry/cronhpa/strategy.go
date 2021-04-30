@@ -84,7 +84,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	}
 
 	if cronHPA.Spec.Version == "" {
-		cronHPA.Spec.Version = images.LatestVersion
+		cronHPA.Spec.Version = images.GetLatestVersion()
 	}
 }
 

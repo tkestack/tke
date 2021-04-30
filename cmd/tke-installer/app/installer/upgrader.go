@@ -347,14 +347,14 @@ func (t *TKE) loginRegistry(ctx context.Context) error {
 }
 
 func (t *TKE) upgradeTAPP(ctx context.Context) error {
-	t.log.Infof("start to upgrade TAPPControllers, TAPPControllers latest version is %s", tappimage.LatestVersion)
+	t.log.Infof("start to upgrade TAPPControllers, TAPPControllers latest version is %s", tappimage.GetLatestVersion())
 	tapps, err := t.platformClient.TappControllers().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 	for _, tapp := range tapps.Items {
-		t.log.Infof("upgrade %s from %s to %s", tapp.Name, tapp.Spec.Version, tappimage.LatestVersion)
-		tapp.Spec.Version = tappimage.LatestVersion
+		t.log.Infof("upgrade %s from %s to %s", tapp.Name, tapp.Spec.Version, tappimage.GetLatestVersion())
+		tapp.Spec.Version = tappimage.GetLatestVersion()
 		_, err = t.platformClient.TappControllers().Update(ctx, &tapp, metav1.UpdateOptions{})
 		if err != nil {
 			return err
@@ -366,14 +366,14 @@ func (t *TKE) upgradeTAPP(ctx context.Context) error {
 }
 
 func (t *TKE) upgradeCronHPA(ctx context.Context) error {
-	t.log.Infof("start to upgrade CronHPAs, CronHPAs latest version is %s", cronhpaimage.LatestVersion)
+	t.log.Infof("start to upgrade CronHPAs, CronHPAs latest version is %s", cronhpaimage.GetLatestVersion())
 	cronhpas, err := t.platformClient.CronHPAs().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
 	for _, cronhpa := range cronhpas.Items {
-		t.log.Infof("upgrade %s from %s to %s", cronhpa.Name, cronhpa.Spec.Version, cronhpaimage.LatestVersion)
-		cronhpa.Spec.Version = cronhpaimage.LatestVersion
+		t.log.Infof("upgrade %s from %s to %s", cronhpa.Name, cronhpa.Spec.Version, cronhpaimage.GetLatestVersion())
+		cronhpa.Spec.Version = cronhpaimage.GetLatestVersion()
 		_, err = t.platformClient.CronHPAs().Update(ctx, &cronhpa, metav1.UpdateOptions{})
 		if err != nil {
 			return err

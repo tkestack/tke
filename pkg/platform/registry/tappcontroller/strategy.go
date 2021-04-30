@@ -84,7 +84,7 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	}
 
 	if tappController.Spec.Version == "" {
-		tappController.Spec.Version = images.LatestVersion
+		tappController.Spec.Version = images.GetLatestVersion()
 	}
 }
 
