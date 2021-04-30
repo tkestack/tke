@@ -5,7 +5,7 @@ on:
     branches:
       - master
 
-  pull_request:
+  pull_request_target:
     branches:
       - master
 env:
@@ -33,12 +33,12 @@ jobs:
       || contains(github.event.head_commit.message, 'gateway')
       || contains(github.event.head_commit.message, 'addon')
       || contains(github.event.head_commit.message, 'registry')
-      || contains(github.event.pull_request.title, 'installer')
-      || contains(github.event.pull_request.title, 'platform')
-      || contains(github.event.pull_request.title, 'cluster')
-      || contains(github.event.pull_request.title, 'gateway')
-      || contains(github.event.pull_request.title, 'addon')
-      || contains(github.event.pull_request.title, 'registry')
+      || contains(github.event.pull_request_target.title, 'installer')
+      || contains(github.event.pull_request_target.title, 'platform')
+      || contains(github.event.pull_request_target.title, 'cluster')
+      || contains(github.event.pull_request_target.title, 'gateway')
+      || contains(github.event.pull_request_target.title, 'addon')
+      || contains(github.event.pull_request_target.title, 'registry')
     steps:
       - name: checkout
         uses: actions/checkout@v2
@@ -54,7 +54,7 @@ jobs:
     steps:
       - name: printversion
         env:
-          LABELNAME_CONTEXT: ${{ toJson(github.event.pull_request.labels.*.name) }}
+          LABELNAME_CONTEXT: ${{ toJson(github.event.pull_request_target.labels.*.name) }}
         run: |
           echo "$LABELNAME_CONTEXT"
       - name: e2e test
