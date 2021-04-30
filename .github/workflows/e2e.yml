@@ -27,18 +27,6 @@ jobs:
   image:
     name: build tke image
     runs-on: self-hosted
-    if: contains(github.event.head_commit.message, 'installer')
-      || contains(github.event.head_commit.message, 'platform')
-      || contains(github.event.head_commit.message, 'cluster')
-      || contains(github.event.head_commit.message, 'gateway')
-      || contains(github.event.head_commit.message, 'addon')
-      || contains(github.event.head_commit.message, 'registry')
-      || contains(github.event.pull_request_target.title, 'installer')
-      || contains(github.event.pull_request_target.title, 'platform')
-      || contains(github.event.pull_request_target.title, 'cluster')
-      || contains(github.event.pull_request_target.title, 'gateway')
-      || contains(github.event.pull_request_target.title, 'addon')
-      || contains(github.event.pull_request_target.title, 'registry')
     steps:
       - name: checkout
         uses: actions/checkout@v2
