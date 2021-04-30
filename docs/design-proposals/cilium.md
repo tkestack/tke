@@ -245,6 +245,7 @@ Check pod status through `kubectl get pod -A`, all pods will be running status.
 Create cluster in global:
 
 ```sh
+
 wget https://github.com/tkestack/tke/blob/master/docs/yamls/cilium/cls-clb.json
 ## edit json to fulfill your clb ip, machine ip and ssh info
 kubectl -f cls-clb.json
