@@ -1,0 +1,84 @@
+{
+ "para": {
+  "Config": {
+   "skipSteps": [
+    "Prepare push images to TKE registry",
+    "Push images to registry",
+    "Push images",
+    "Setup local registry"
+   ]
+  }
+ },
+ "cluster": {
+  "spec": {
+   "features": {
+    "skipConditions": [
+     "EnsureDocker",
+     "EnsureRegistryHosts",
+     "EnsureKubelet",
+     "EnsureCNIPlugins",
+     "EnsureConntrackTools",
+     "EnsureKubeadm"
+    ],
+    "files": [
+     {
+      "src": "/tmp/expansions/files_generated/etc__modules-load.d__demo.conf",
+      "dst": "/etc/modules-load.d/demo.conf"
+     },
+     {
+      "src": "/tmp/expansions/files_generated/etc__sysctl.d__90-demo.conf",
+      "dst": "/etc/sysctl.d/90-demo.conf"
+     },
+     {
+      "src": "/tmp/expansions/files_generated/data__demo__hooks__PostInstall",
+      "dst": "/data/demo/hooks/PostInstall"
+     },
+     {
+      "src": "/tmp/expansions/files_generated/data__demo__hooks__PreClusterInstall",
+      "dst": "/data/demo/hooks/PreClusterInstall"
+     },
+     {
+      "src": "/tmp/expansions/files_generated/data__demo__hooks__PostClusterInstall",
+      "dst": "/data/demo/hooks/PostClusterInstall"
+     },
+     {
+      "src": "/tmp/expansions/files_generated/data__demo__hooks__PreInstall",
+      "dst": "/data/demo/hooks/PreInstall"
+     }
+    ],
+    "hooks": {
+     "PostClusterInstall": "/data/demo/hooks/PostClusterInstall",
+     "PostInstall": "/data/demo/hooks/PostInstall",
+     "PreClusterInstall": "/data/demo/hooks/PreClusterInstall",
+     "PreInstall": "/data/demo/hooks/PreInstall"
+    }
+   },
+   "dockerExtraArgs": {
+    "data-root": "/data/demo/data/docker"
+   },
+   "kubeletExtraArgs": {
+    "feature-gates": "ServiceTopology=true,EndpointSlice=true",
+    "max-pods": "256"
+   },
+   "apiServerExtraArgs": {
+    "enable-admission-plugins": "NodeRestriction",
+    "feature-gates": "ServiceTopology=true,EndpointSlice=true",
+    "service-node-port-range": "80-32767"
+   },
+   "controllerManagerExtraArgs": {
+    "feature-gates": "ServiceTopology=true,EndpointSlice=true"
+   },
+   "schedulerExtraArgs": {
+    "feature-gates": "ServiceTopology=true,EndpointSlice=true"
+   },
+   "etcd": {
+    "local": {
+     "dataDir": "/data/demo/data/etcd",
+     "extraArgs": {
+      "data-dir": "/data/demo/data/etcd"
+     }
+    }
+   }
+  }
+ }
+}

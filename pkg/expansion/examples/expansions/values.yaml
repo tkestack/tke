@@ -1,0 +1,7 @@
+global:
+  RegistryPrefix: registry.tke.com/library
+  DNSDomain: "d99.demo.com"
+charts:
+  demo:
+    image: "busybox"
+    version: "latest"

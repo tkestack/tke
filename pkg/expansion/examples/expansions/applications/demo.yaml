@@ -1,0 +1,16 @@
+apiVersion: application.tkestack.io/v1
+kind: App
+metadata:
+  clusterName: global
+  name: demo
+  namespace: demo
+spec:
+  chart:
+    chartGroupName: public
+    chartName: demo
+    chartVersion: 0.1.0
+    tenantID: "default"
+  name: demo
+  targetCluster: global
+  tenantID: admin
+  type: HelmV3

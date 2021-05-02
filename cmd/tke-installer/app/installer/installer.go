@@ -35,6 +35,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"tkestack.io/tke/pkg/expansion"
 
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"
@@ -110,11 +111,12 @@ type TKE struct {
 
 	docker *docker.Docker
 
-	globalClient   kubernetes.Interface
-	platformClient tkeclientset.PlatformV1Interface
-	registryClient registryclientset.RegistryV1Interface
-	servers        []string
-	namespace      string
+	globalClient    kubernetes.Interface
+	platformClient  tkeclientset.PlatformV1Interface
+	registryClient  registryclientset.RegistryV1Interface
+	servers         []string
+	namespace       string
+	expansionDriver *expansion.Driver
 }
 
 func New(config *config.Config) *TKE {
@@ -151,7 +153,9 @@ func New(config *config.Config) *TKE {
 			c.progress.Status = types.StatusDoing
 		}
 	}
-
+	// Expansion
+	_ = c.newExpansionDriver()
+	// TODO: ignore the error
 	return c
 }
 
@@ -1000,6 +1004,12 @@ func (t *TKE) findClusterProgress(request *restful.Request, response *restful.Re
 
 func (t *TKE) do() {
 	ctx := t.log.WithContext(context.Background())
+
+	// Expansion
+	err := t.mergeExpansionTKEConfig()
+	if err != nil {
+		t.log.Errorf("mergeExpansionTKEConfig failed %v", err)
+	}
 
 	var taskType string
 	if t.Config.Upgrade {

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+echo "PostInstall of create cluster, by DEMO"

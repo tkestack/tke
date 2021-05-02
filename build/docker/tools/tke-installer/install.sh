@@ -32,12 +32,14 @@ VERSION=latest
 
 INSTALL_DIR=/opt/tke-installer
 DATA_DIR=$INSTALL_DIR/data
+EXPANSION_DIR=${INSTALL_DIR}/expansions
 OPTIONS="--name tke-installer -d --privileged --net=host --restart=always
 -v /etc/hosts:/app/hosts
 -v /etc/docker:/etc/docker
 -v /var/run/docker.sock:/var/run/docker.sock
 -v $DATA_DIR:/app/data
 -v $INSTALL_DIR/conf:/app/conf
+-v ${EXPANSION_DIR}:/app/data/expansions
 -v registry-certs:/app/certs
 -v tke-installer-bin:/app/bin
 "
@@ -166,7 +168,7 @@ function check_installer() {
   done
   echo "check installer status error"
   docker logs tke-installer
-  exit 1 
+  exit 1
 }
 
 prefight

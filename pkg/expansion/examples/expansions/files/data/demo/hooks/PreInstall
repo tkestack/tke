@@ -1,0 +1,3 @@
+#!/bin/bash
+
+echo "PreInstall of create cluster, by DEMO"

@@ -1,0 +1,40 @@
+applications:
+  - "demo"
+charts:
+  - "public/demo-0.1.0.tgz"
+files:
+  - etc/modules-load.d/tcnp.conf
+  - etc/sysctl.d/90-tcnp.conf
+  - data/demo/hooks/PostInstall
+  - data/demo/hooks/PreClusterInstall
+  - data/demo/hooks/PostClusterInstall
+  - data/demo/hooks/PreInstall
+images:
+  - "demo/alpine:3.10"
+  - "demo/blpine:3.10"
+hooks:
+  - pre-install
+  - post-cluster-ready
+  - post-install
+provider:
+  - baremetal/manifests/metrics-server/metrics-server.yaml
+  - baremetal/conf/docker/daemon.json
+  - baremetal/conf/sysctl.conf
+manifests:
+  - demo.namespace.yaml
+installer_skip_steps:
+  - "Prepare push images to TKE registry"
+  - "Push images to registry"
+  #  - "Tag images"
+  #  - "Load images"
+  - "Push images"
+  - "Setup local registry"
+create_cluster_skip_conditions:
+  - EnsureDocker
+  - EnsureRegistryHosts
+  - EnsureKubelet
+  - EnsureCNIPlugins
+  - EnsureConntrackTools
+  - EnsureKubeadm
+create_cluster_delegate_conditions:
+#  - EnsurePreClusterInstallHook
