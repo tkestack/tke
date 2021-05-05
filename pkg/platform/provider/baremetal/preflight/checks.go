@@ -26,6 +26,7 @@ import (
 
 	"github.com/pkg/errors"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
@@ -34,9 +35,25 @@ const (
 )
 
 var tools = []string{"sysctl", "swapoff", "sed", "getconf", "ss", "grep", "id", "uname", "modinfo", "ip", "awk", "iptables"}
+var kernelParemeter = []string{
+	"CONFIG_BPF", "CONFIG_BPF_SYSCALL", "CONFIG_NET_CLS_BPF", "CONFIG_BPF_JIT",
+	"CONFIG_NET_CLS_ACT", "CONFIG_NET_SCH_INGRESS", "CONFIG_CRYPTO_SHA1",
+	"CONFIG_CRYPTO_USER_API_HASH", "CONFIG_CGROUPS", "CONFIG_CGROUP_BPF",
+}
 
-func newCommonChecks(s ssh.Interface) []Checker {
-	return []Checker{
+func newCommonChecks(c *v1.Cluster, s ssh.Interface) []Checker {
+	var checks []Checker
+	if c.Cluster.Spec.Features.EnableCilium {
+		checks = append(checks, []Checker{
+			KernelParameterCheck{KernelParameter: kernelParemeter},
+			KernelCheck{Interface: s, MinKernelVersion: 4, MinMajorVersion: 11},
+			PortOpenCheck{Interface: s, port: 4240},
+			PortOpenCheck{Interface: s, port: 9876},
+			PortOpenCheck{Interface: s, port: 9890},
+			PortOpenCheck{Interface: s, port: 9891},
+		}...)
+	}
+	checks = append(checks, []Checker{
 		IsPrivilegedUserCheck{Interface: s},
 		CPUArchCeck{Interface: s, Arch: 64},
 		KernelCheck{Interface: s, MinKernelVersion: 3, MinMajorVersion: 10},
@@ -53,12 +70,13 @@ func newCommonChecks(s ssh.Interface) []Checker {
 		PortOpenCheck{Interface: s, port: constants.ProxyHealthzPort},
 		PortOpenCheck{Interface: s, port: constants.ProxyStatusPort},
 		PortOpenCheck{Interface: s, port: constants.KubeletPort},
-	}
+	}...)
+	return checks
 }
 
 // RunMasterChecks checks for master
-func RunMasterChecks(s ssh.Interface) error {
-	checks := newCommonChecks(s)
+func RunMasterChecks(c *v1.Cluster, s ssh.Interface) error {
+	checks := newCommonChecks(c, s)
 	checks = append(checks, []Checker{
 		NumCPUCheck{Interface: s, NumCPU: constants.MinNumCPU},
 		DirAvailableCheck{Interface: s, Path: constants.EtcdDataDir},
@@ -79,8 +97,8 @@ func RunMasterChecks(s ssh.Interface) error {
 }
 
 // RunNodeChecks checks for node
-func RunNodeChecks(s ssh.Interface) error {
-	checks := newCommonChecks(s)
+func RunNodeChecks(c *v1.Cluster, s ssh.Interface) error {
+	checks := newCommonChecks(c, s)
 	checks = append(checks, []Checker{}...)
 
 	for _, tool := range tools {
@@ -366,6 +384,33 @@ func (dac DirAvailableCheck) Name() string {
 func (dac DirAvailableCheck) Check() (warnings, errorList []error) {
 	if ok, err := dac.Exist(dac.Path); err == nil && ok {
 		errorList = append(errorList, errors.Errorf("%s already exists", dac.Path))
+	}
+
+	return nil, errorList
+}
+
+// Check the kernel version and kernel parameter for Cilium installation.
+type KernelParameterCheck struct {
+	ssh.Interface
+	KernelParameter []string
+}
+
+// Name returns label for KernelCheck
+func (kc KernelParameterCheck) Name() string {
+	return fmt.Sprintf("KernelParameter-%s", kc.KernelParameter)
+}
+
+// Check validates kernel version and parameter.
+func (kc KernelParameterCheck) Check() (warnings, errorList []error) {
+	for _, kp := range kc.KernelParameter {
+		_, _, exit, err := kc.Exec(fmt.Sprintf("cat /boot/config-$(uname -r) | grep '%s='", kp))
+		if err != nil {
+			errorList = append(errorList, err)
+			return
+		}
+		if exit != 0 {
+			errorList = append(errorList, errors.Errorf("Parameter %s is not set", kp))
+		}
 	}
 
 	return nil, errorList

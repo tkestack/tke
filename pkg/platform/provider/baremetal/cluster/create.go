@@ -145,7 +145,7 @@ func (p *Provider) EnsurePreflight(ctx context.Context, c *v1.Cluster) error {
 			return err
 		}
 
-		err = preflight.RunMasterChecks(machineSSH)
+		err = preflight.RunMasterChecks(c, machineSSH)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -1311,6 +1311,59 @@ func (p *Provider) EnsureMetricsServer(ctx context.Context, c *v1.Cluster) error
 	err = apiclient.CreateKAResourceWithFile(ctx, client, kaClient, constants.MetricsServerManifest, option)
 	if err != nil {
 		return errors.Wrap(err, "install metrics server error")
+	}
+
+	return nil
+}
+
+func (p *Provider) EnsureCilium(ctx context.Context, c *v1.Cluster) error {
+	if c.Status.Phase == platformv1.ClusterUpscaling {
+		return nil
+	}
+	if !c.Cluster.Spec.Features.EnableCilium {
+		return nil
+	}
+	client, err := c.Clientset()
+	if err != nil {
+		return err
+	}
+	config, err := c.RESTConfig(&rest.Config{})
+	if err != nil {
+		return err
+	}
+	kaClient, err := kubeaggregatorclientset.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	// default backendType vxlan
+	backendType := "vxlan"
+	debugMode := "false"
+	enableHubble := "true"
+	clusterSpec := c.Cluster.Spec
+	if clusterSpec.NetworkArgs != nil {
+		if backendTypeArg, ok := clusterSpec.NetworkArgs["backendType"]; ok {
+			backendType = backendTypeArg
+		}
+		if debugModeArg, ok := clusterSpec.NetworkArgs["debugMode"]; ok {
+			debugMode = debugModeArg
+		}
+		if enableHubbleArg, ok := clusterSpec.NetworkArgs["enableHubble"]; ok {
+			enableHubble = enableHubbleArg
+		}
+	}
+	option := map[string]interface{}{
+		"CiliumImage":         images.Get().Cilium.FullName(),
+		"CiliumOperatorImage": images.Get().CiliumOperator.FullName(),
+		"BackendType":         backendType,
+		"DebugMode":           debugMode,
+		"ClusterCIDR":         c.Cluster.Spec.ClusterCIDR,
+		"EnableHubble":        enableHubble,
+		"MaskSize":            c.Cluster.Status.NodeCIDRMaskSize,
+	}
+
+	err = apiclient.CreateKAResourceWithFile(ctx, client, kaClient, constants.CiliumManifest, option)
+	if err != nil {
+		return errors.Wrap(err, "install Cilium error")
 	}
 
 	return nil
