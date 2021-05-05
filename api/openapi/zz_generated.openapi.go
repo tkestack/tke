@@ -45830,6 +45830,12 @@ func schema_tke_api_platform_v1_ClusterFeature(ref common.ReferenceCallback) com
 							Format: "",
 						},
 					},
+					"enableCilium": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
 					"upgrade": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Upgrade control upgrade process.",

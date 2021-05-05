@@ -1502,6 +1502,10 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 			Name: "metrics-server-manifests",
 			File: baremetalconstants.ManifestsDir + "/metrics-server/*",
 		},
+		{
+			Name: "cilium-manifests",
+			File: baremetalconstants.ManifestsDir + "/cilium/*",
+		},
 	}
 	for _, one := range configMaps {
 		err := apiclient.CreateOrUpdateConfigMapFromFile(ctx, t.globalClient,

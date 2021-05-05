@@ -382,6 +382,8 @@ type ClusterFeature struct {
 	// +optional
 	EnableMetricsServer bool
 	// +optional
+	EnableCilium bool
+	// +optional
 	IPv6DualStack bool
 	// Upgrade control upgrade process.
 	// +optional
