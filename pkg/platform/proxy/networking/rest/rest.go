@@ -19,7 +19,7 @@
 package rest
 
 import (
-	"k8s.io/api/networking/v1"
+	v1 "k8s.io/api/networking/v1"
 	"k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -81,7 +81,9 @@ func (s *StorageProvider) v1Beta1Storage(restOptionsGetter generic.RESTOptionsGe
 	networkPolicyStore := ingressstorage.NewStorageV1Beta1(restOptionsGetter, platformClient)
 
 	storageMap := map[string]rest.Storage{
-		"ingresses": networkPolicyStore.Ingress,
+		"ingresses":        networkPolicyStore.Ingress,
+		"ingresses/status": networkPolicyStore.Status,
+		"ingresses/events": networkPolicyStore.Events,
 	}
 
 	return storageMap
