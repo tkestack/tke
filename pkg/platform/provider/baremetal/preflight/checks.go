@@ -45,7 +45,7 @@ func newCommonChecks(c *v1.Cluster, s ssh.Interface) []Checker {
 	var checks []Checker
 	if c.Cluster.Spec.Features.EnableCilium {
 		checks = append(checks, []Checker{
-			KernelParameterCheck{KernelParameter: kernelParemeter},
+			KernelParameterCheck{Interface: s, KernelParameter: kernelParemeter},
 			KernelCheck{Interface: s, MinKernelVersion: 4, MinMajorVersion: 11},
 			PortOpenCheck{Interface: s, port: 4240},
 			PortOpenCheck{Interface: s, port: 9876},

@@ -204,6 +204,9 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 		cluster.Spec.NetworkDevice = "eth0"
 
 	}
+	if !cluster.Spec.Features.EnableCilium {
+		cluster.Spec.Features.EnableCilium = true
+	}
 
 	if cluster.Spec.Features.CSIOperator != nil {
 		if cluster.Spec.Features.CSIOperator.Version == "" {
@@ -231,8 +234,14 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 	if cluster.Spec.Properties.MaxNodePodNum == nil {
 		cluster.Spec.Properties.MaxNodePodNum = pointer.ToInt32(256)
 	}
-	if cluster.Spec.Features.EnableCilium && !ContainsString(cluster.Spec.Features.SkipConditions, "EnsureGalaxy") {
+	// append SkipConditions when disable the cluster features.
+	if cluster.Spec.Features.EnableCilium {
 		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureGalaxy")
+	} else {
+		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureCilium")
+	}
+	if !cluster.Spec.Features.EnableMetricsServer {
+		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureMetricsServer")
 	}
 	if p.config.Feature.SkipConditions != nil {
 		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, p.config.Feature.SkipConditions...)
