@@ -233,6 +233,8 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 	}
 	if cluster.Spec.Features.EnableCilium && !ContainsString(cluster.Spec.Features.SkipConditions, "EnsureGalaxy") {
 		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureGalaxy")
+	} else {
+		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureCilium")
 	}
 	if p.config.Feature.SkipConditions != nil {
 		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, p.config.Feature.SkipConditions...)
