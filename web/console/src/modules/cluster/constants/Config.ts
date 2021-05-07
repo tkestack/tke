@@ -740,6 +740,11 @@ export const CreateICVipTypeOptions = [
   { text: 'TKE提供', value: CreateICVipType.tke }
 ];
 
+export const CreateICCiliumOptions = [
+  { text: 'Galaxy', value: 'Galaxy' },
+  { text: 'Cilium', value: 'Cilium' }
+];
+
 export enum MachineStatus {
   Running = 'Running',
   Initializing = 'Initializing',

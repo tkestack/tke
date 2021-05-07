@@ -81,6 +81,13 @@ export const createICAction = {
     };
   },
 
+  useCilium: (cilium: string): ReduxAction<string> => {
+    return {
+      type: ActionType.v_IC_Cilium,
+      payload: cilium
+    };
+  },
+
   inputGPUType: (type: string): ReduxAction<string> => {
     return {
       type: ActionType.v_IC_GpuType,
