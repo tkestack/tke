@@ -135,7 +135,8 @@ export async function createIC(clusters: CreateIC[]) {
       vipType,
       gpu,
       gpuType,
-      merticsServer
+      merticsServer,
+      cilium
     } = clusters[0];
 
     const resourceInfo = resourceConfig()['cluster'];
@@ -207,7 +208,8 @@ export async function createIC(clusters: CreateIC[]) {
                 }
               : undefined,
 
-          enableMetricsServer: merticsServer
+          enableMetricsServer: merticsServer,
+          enableCilium: cilium === 'Galaxy' ? false : true
         },
         properties: {
           maxClusterServiceNum: maxClusterServiceNum,

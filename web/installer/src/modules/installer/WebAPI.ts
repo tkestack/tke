@@ -168,7 +168,8 @@ export async function createCluster(edits: Array<EditState>) {
           spec: {
             networkDevice: edits[0].networkDevice,
             features: {
-              enableMetricsServer: true
+              enableMetricsServer: true,
+              enableCilium: false
             },
             dockerExtraArgs: edits[0].dockerExtraArgs.reduce((prev, next) => {
               if (next.key) {
