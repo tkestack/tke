@@ -20,6 +20,11 @@ package options
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,10 +33,6 @@ import (
 	"k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/healthz"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
 )
 
 const (
@@ -208,15 +209,7 @@ func (f *StorageFactoryRESTOptionsFactory) GetRESTOptions(resource schema.GroupR
 		CountMetricPollPeriod:   f.Options.CountMetricPollPeriod,
 	}
 	if f.Options.EnableWatchCache {
-		sizes, err := ParseWatchCacheSizes(f.Options.WatchCacheSizes)
-		if err != nil {
-			return generic.RESTOptions{}, err
-		}
-		cacheSize, ok := sizes[resource]
-		if !ok {
-			cacheSize = f.Options.DefaultWatchCacheSize
-		}
-		ret.Decorator = genericregistry.StorageWithCacher(cacheSize)
+		ret.Decorator = genericregistry.StorageWithCacher()
 	}
 
 	return ret, nil
