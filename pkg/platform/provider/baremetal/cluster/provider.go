@@ -204,10 +204,6 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 		cluster.Spec.NetworkDevice = "eth0"
 
 	}
-	if !cluster.Spec.Features.EnableCilium {
-		cluster.Spec.Features.EnableCilium = true
-	}
-
 	if cluster.Spec.Features.CSIOperator != nil {
 		if cluster.Spec.Features.CSIOperator.Version == "" {
 			cluster.Spec.Features.CSIOperator.Version = csioperatorimage.LatestVersion
