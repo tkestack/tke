@@ -173,15 +173,14 @@ func (i *clusterInspector) Inspect(handler http.Handler, c *genericapiserver.Con
 			return
 		}
 		username, tenantID := authentication.UsernameAndTenantID(ctx)
-		// rbac mode use tenantID as suffix of username
+		// serviceaccount need label to mark tenantID
+		const tenantIDContextKey = "tenantID"
 		if tenantID == "" {
 			strList := strings.Split(username, ":")
 			if len(strList) == 4 && strList[0] == "system" && strList[1] == "serviceaccount" {
-				tenantidStr := strList[len(strList)-1]
-				index := strings.Index(tenantidStr, "-tenant-")
-				if index > 0 {
-					tenantID = tenantidStr[index+8:]
-				}
+				ns := strList[2]
+				sa, _ := i.k8sClient.CoreV1().ServiceAccounts(ns).Get(ctx, strList[3], metav1.GetOptions{})
+				tenantID = sa.Labels[tenantIDContextKey]
 			}
 		}
 		log.Infof(" clusterNames: %+v, username: %+v, tenant: %+v, "+
