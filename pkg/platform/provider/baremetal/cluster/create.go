@@ -1323,6 +1323,10 @@ func (p *Provider) EnsureCilium(ctx context.Context, c *v1.Cluster) error {
 	if !c.Cluster.Spec.Features.EnableCilium {
 		return nil
 	}
+	// old cilium interface should be deleted
+	if err := util.CleanFlannelInterfaces("cilium"); err != nil {
+		return err
+	}
 	client, err := c.Clientset()
 	if err != nil {
 		return err
