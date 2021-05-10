@@ -21,8 +21,6 @@ package galaxy
 import (
 	"context"
 	"io"
-	"net"
-	"os/exec"
 	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -33,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -59,7 +58,7 @@ type Option struct {
 // Install to install the galaxy workload
 func Install(ctx context.Context, clientset kubernetes.Interface, option *Option) error {
 	// old flannel interface should be deleted
-	if err := cleanFlannelInterfaces(); err != nil {
+	if err := util.CleanFlannelInterfaces("flannel"); err != nil {
 		return err
 	}
 	// in private cloud, flannel must be installed
@@ -130,23 +129,6 @@ func Install(ctx context.Context, clientset kubernetes.Interface, option *Option
 	}
 
 	return nil
-}
-
-func cleanFlannelInterfaces() error {
-	var err error
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		return err
-	}
-	for _, iface := range ifaces {
-		if strings.Contains(iface.Name, "flannel") {
-			cmd := exec.Command("ip", "link", "delete", iface.Name)
-			if err := cmd.Run(); err != nil {
-				log.Errorf("fail to delete link %s : %v", iface.Name, err)
-			}
-		}
-	}
-	return err
 }
 
 func configMapFlannel(clusterCIDR, backendType string) (*corev1.ConfigMap, error) {
