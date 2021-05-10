@@ -44,19 +44,9 @@ metadata:
     kubernetes.io/cluster-service: "true"
     kubernetes.io/name: thanos-receive-nodeport
   name: thanos-receive-nodeport
-  namespace: kube-system
+  namespace: tke
 spec:
   ports:
-    - name: grpc
-      port: 10901
-      protocol: TCP
-      targetPort: 10901
-      nodePort: 31139
-    - name: http
-      port: 10902
-      protocol: TCP
-      targetPort: 10902
-      nodePort: 31140
     - name: remote-write
       port: 19291
       protocol: TCP

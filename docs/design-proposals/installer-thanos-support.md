@@ -30,7 +30,7 @@
   | Store    | global集群                        | 10901 : <br>10902 : <br>                              |
   | Compact  | global集群                        | 10902 : <br>                                          |
   | Rule     | global集群                        | 10901 : <br/>10902 : <br/>                            |
-  | Receiver | 业务集群，Prometheus Remote Write | 10901 : 31139<br/>10902 : 31140<br/>19291 : 31141<br> |
+  | Receiver | 业务集群，Prometheus Remote Write | 19291 : 31141<br> |
 
 - 配置tke-monitor/tke-platform-controller为thanos对应组件地址
 
