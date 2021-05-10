@@ -23,26 +23,28 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"os/exec"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/rand"
 	platformv1 "tkestack.io/tke/api/platform/v1"
-	tkev1 "tkestack.io/tke/api/platform/v1"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/util/log"
 )
 
-func GetMasterEndpoint(addresses []tkev1.ClusterAddress) (string, error) {
-	var advertise, internal []*tkev1.ClusterAddress
+func GetMasterEndpoint(addresses []platformv1.ClusterAddress) (string, error) {
+	var advertise, internal []*platformv1.ClusterAddress
 	for _, one := range addresses {
-		if one.Type == tkev1.AddressAdvertise {
+		if one.Type == platformv1.AddressAdvertise {
 			advertise = append(advertise, &one)
 		}
-		if one.Type == tkev1.AddressReal {
+		if one.Type == platformv1.AddressReal {
 			internal = append(internal, &one)
 		}
 	}
 
-	var address *tkev1.ClusterAddress
+	var address *platformv1.ClusterAddress
 	if advertise != nil {
 		address = advertise[rand.Intn(len(advertise))]
 	} else {
@@ -90,4 +92,21 @@ func ExcuteCustomizedHook(ctx context.Context, c *v1.Cluster, htype platformv1.H
 		}
 	}
 	return nil
+}
+
+func CleanFlannelInterfaces(cni string) error {
+	var err error
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return err
+	}
+	for _, iface := range ifaces {
+		if strings.Contains(iface.Name, cni) {
+			cmd := exec.Command("ip", "link", "delete", iface.Name)
+			if err := cmd.Run(); err != nil {
+				log.Errorf("fail to delete link %s : %v", iface.Name, err)
+			}
+		}
+	}
+	return err
 }
