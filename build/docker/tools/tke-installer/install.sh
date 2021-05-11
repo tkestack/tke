@@ -52,8 +52,8 @@ if [ -z ${archMap[$(arch)]+unset} ]; then
 fi
 ARCH=${archMap[$(arch)]}
 
-function prefight() {
-  echo "Step.1 prefight"
+function preflight() {
+  echo "Step.1 preflight"
 
   check::root
   check::disk '/opt' 30
@@ -82,7 +82,7 @@ function check::disk() {
 }
 
 function ensure_docker() {
-  echo "Step.2 ensure docker is ok"
+  echo "Step.2 check docker status"
 
   if ! [ -x "$(command -v docker)" ]; then
     echo "command docker not find"
@@ -95,7 +95,7 @@ function ensure_docker() {
 }
 
 function install_docker() {
-  echo "install docker [doing]"
+  echo "install docker [in process]"
 
   tar xvaf "res/docker.tgz" -C /usr/bin --strip-components=1
   cp -v res/docker.service /etc/systemd/system
@@ -118,33 +118,35 @@ function install_docker() {
     exit 1
   fi
 
-  echo "install docker [ok]"
+  echo "install docker [done]"
 }
 
 function load_image() {
-  echo "Step.3 load tke-installer image [doing]"
+  echo "Step.3 load tke-installer image [in process]"
 
   docker load -i res/tke-installer.tgz
 
-  echo "Step.3 load tke-installer image [ok]"
+  echo "Step.3 load tke-installer image [done]"
 }
 
 function clean_old_data() {
-  echo "Step.4 clean old data [doing]"
+  echo "Step.4 clean old data [in process]"
 
-  find $DATA_DIR/* |egrep -v "(custom_upgrade_resource)" | xargs rm -rf  >/dev/null 2>&1 || :
+  if  [ -d  "$DATA_DIR" ]; then
+    find $DATA_DIR/* |egrep -v "(custom_upgrade_resource)" | xargs rm -rf  >/dev/null 2>&1 || :
+  fi
   docker rm -f tke-installer >/dev/null 2>&1 || :
   docker volume prune -f >/dev/null 2>&1 || :
 
-  echo "Step.4 clean old data [ok]"
+  echo "Step.4 clean old data [done]"
 }
 
 function start_installer() {
-  echo "Step.5 start tke-installer [doing]"
+  echo "Step.5 start tke-installer [in process]"
 
   docker run $OPTIONS "tkestack/tke-installer-${ARCH}:$VERSION" $@
 
-  echo "Step.5 start tke-installer [ok]"
+  echo "Step.5 start tke-installer [done]"
 }
 
 
@@ -152,15 +154,15 @@ function check_installer() {
   s=10
   for i in $(seq 1 $s)
   do
-    echo "Step.6 check tke-installer status [doing]"
+    echo "Step.6 check tke-installer status [in process]"
     url="http://127.0.0.1:8080/index.html"
-    if ! curl -sSf "$url" >/dev/null; then
+    if ! curl -sSf "$url" >/dev/null 2>&1; then
       sleep 3
       echo "Step.6 retries left $(($s-$i))"
       continue
     else
-      echo "Step.6 check tke-installer status [ok]"
-      echo "Please use your browser which can connect this machine to open $url for install TKE!"
+      echo "Step.6 check tke-installer status [done]"
+      echo "Please use your browser which can connect this machine to open http://{YOUR_HOST}:8080/index.html for install TKE!"
       exit 0
     fi
   done
@@ -169,7 +171,7 @@ function check_installer() {
   exit 1 
 }
 
-prefight
+preflight
 ensure_docker
 load_image
 clean_old_data
