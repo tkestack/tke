@@ -21,6 +21,7 @@ package installer
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -33,6 +34,7 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	platformutil "tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/spec"
+	"tkestack.io/tke/pkg/util/file"
 	"tkestack.io/tke/pkg/util/template"
 
 	// import platform schema
@@ -268,4 +270,49 @@ func getFilesFromDir(path string) (files []os.FileInfo, err error) {
 	}
 	files, err = ioutil.ReadDir(path)
 	return files, err
+}
+
+func (t *TKE) prepareCustomChartsSteps() {
+	if !t.Para.Config.Registry.IsOfficial() {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Push custom charts to registry",
+				Func: t.pushCustomCharts,
+			},
+		}...)
+	}
+
+	t.steps = append(t.steps, []types.Handler{}...)
+
+	t.steps = funk.Filter(t.steps, func(step types.Handler) bool {
+		return !funk.ContainsString(t.Para.Config.SkipSteps, step.Name)
+	}).([]types.Handler)
+
+	t.log.Info("Steps:")
+	for i, step := range t.steps {
+		t.log.Infof("%d %s", i, step.Name)
+	}
+}
+
+func (t *TKE) prepareForPrepareCustomCharts(ctx context.Context) error {
+	err := t.prepareForUpgrade(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *TKE) doPrepareCustomCharts() {
+	ctx := t.log.WithContext(context.Background())
+	taskType := "prepare custom charts"
+	t.prepareCustomChartsSteps()
+	t.doSteps(ctx, taskType)
+}
+
+func (t *TKE) pushCustomCharts(ctx context.Context) error {
+	if !file.IsFile(t.Config.CustomChartsName) {
+		return fmt.Errorf("%s is not file, cannot be loaded as charts packge", t.Config.CustomChartsName)
+	}
+	t.log.Infof("load charts from %s", t.Config.CustomChartsName)
+	return t.pushCharts(ctx, constants.DataDir+t.Config.CustomChartsName, constants.DefaultTeantID, defaultChartGroups[0])
 }

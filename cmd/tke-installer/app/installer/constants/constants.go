@@ -24,6 +24,7 @@ const (
 	ClusterLogFile = DataDir + "tke.log"
 
 	DefaultCustomResourceDir  = DataDir + "custom_upgrade_resource"
+	DefaultCustomChartsName   = "custom.charts.tar.gz"
 	CustomK8sImageDirName     = "images/"
 	CustomK8sBinaryDirName    = "bins/"
 	CustomK8sBinaryAmdDirName = "bins/linux-amd64/"

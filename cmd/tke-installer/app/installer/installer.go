@@ -517,6 +517,12 @@ func (t *TKE) runWithUI() error {
 			return err
 		}
 		go t.doPrepareCustomImages()
+	case t.Config.PrepareCustomCharts:
+		err := t.prepareForPrepareCustomCharts(context.Background())
+		if err != nil {
+			return err
+		}
+		go t.doPrepareCustomCharts()
 	case t.Config.Upgrade:
 		err := t.prepareForUpgrade(context.Background())
 		if err != nil {
