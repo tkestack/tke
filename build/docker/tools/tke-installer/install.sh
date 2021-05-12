@@ -132,11 +132,13 @@ function load_image() {
 function clean_old_data() {
   echo "Step.4 clean old data [in process]"
 
-  if  [ -d  "$DATA_DIR" ]; then
-    find $DATA_DIR/* |egrep -v "(custom_upgrade_resource)" | xargs rm -rf  >/dev/null 2>&1 || :
-  fi
   docker rm -f tke-installer >/dev/null 2>&1 || :
   docker volume prune -f >/dev/null 2>&1 || :
+
+  if  [ -d  "$DATA_DIR" ]; then
+    rm -f $DATA_DIR/tke.json >/dev/null 2>&1 || :
+    rm -f $DATA_DIR/tke.log >/dev/null 2>&1 || :
+  fi
 
   echo "Step.4 clean old data [done]"
 }
