@@ -132,11 +132,11 @@ function load_image() {
 function clean_old_data() {
   echo "Step.4 clean old data [in process]"
 
-  if  [ -d  "$DATA_DIR" ]; then
-    find $DATA_DIR/* |egrep -v "(custom_upgrade_resource)" | xargs rm -rf  >/dev/null 2>&1 || :
-  fi
   docker rm -f tke-installer >/dev/null 2>&1 || :
   docker volume prune -f >/dev/null 2>&1 || :
+  if  [ -d "$DATA_DIR" ]; then
+    find $DATA_DIR/* |egrep -v "(custom_upgrade_resource|expansions)" | xargs rm -rf  >/dev/null 2>&1 || :
+  fi
 
   echo "Step.4 clean old data [done]"
 }
@@ -168,7 +168,7 @@ function check_installer() {
   done
   echo "check installer status error"
   docker logs tke-installer
-  exit 1 
+  exit 1
 }
 
 preflight

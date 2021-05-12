@@ -524,6 +524,9 @@ message ClusterSpec {
 
   // +optional
   repeated ClusterMachine scalingMachines = 25;
+
+  // +optional
+  repeated VersionedApplication customizedApplications = 26;
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -1487,6 +1490,13 @@ message UpgradeStrategy {
   // If your pod can not accept be expelled from current node, this value should be false.
   // +optional
   optional bool drainNodeBeforeUpgrade = 2;
+}
+
+// VersionedApplication is the description of application with version
+message VersionedApplication {
+  optional string name = 1;
+
+  optional string version = 2;
 }
 
 // VolumeDecorator is a controller to manage PVC information.

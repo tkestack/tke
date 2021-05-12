@@ -34,18 +34,20 @@ type CreateClusterPara struct {
 
 // Config is the installer config
 type Config struct {
-	Basic       *Basic       `json:"basic"`
-	Auth        Auth         `json:"auth"`
-	Registry    Registry     `json:"registry"`
-	Business    *Business    `json:"business,omitempty"`
-	Monitor     *Monitor     `json:"monitor,omitempty"`
-	Logagent    *Logagent    `json:"logagent,omitempty"`
-	HA          *HA          `json:"ha,omitempty"`
-	Gateway     *Gateway     `json:"gateway,omitempty"`
-	Audit       *Audit       `json:"audit,omitempty"`
-	Application *Application `json:"application,omitempty"`
-	Mesh        *Mesh        `json:"mesh,omitempty"`
-	SkipSteps   []string     `json:"skipSteps,omitempty"`
+	Basic            *Basic       `json:"basic"`
+	Auth             Auth         `json:"auth"`
+	Registry         Registry     `json:"registry"`
+	Business         *Business    `json:"business,omitempty"`
+	Monitor          *Monitor     `json:"monitor,omitempty"`
+	Logagent         *Logagent    `json:"logagent,omitempty"`
+	HA               *HA          `json:"ha,omitempty"`
+	Gateway          *Gateway     `json:"gateway,omitempty"`
+	Audit            *Audit       `json:"audit,omitempty"`
+	Application      *Application `json:"application,omitempty"`
+	Mesh             *Mesh        `json:"mesh,omitempty"`
+	SkipSteps        []string     `json:"skipSteps,omitempty"`
+	CustomizedImages []string     `json:"customized_images,omitempty"`
+	CustomizedCharts []string     `json:"customized_charts,omitempty"`
 }
 
 type Basic struct {

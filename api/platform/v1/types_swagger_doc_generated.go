@@ -884,6 +884,14 @@ func (UpgradeStrategy) SwaggerDoc() map[string]string {
 	return map_UpgradeStrategy
 }
 
+var map_VersionedApplication = map[string]string{
+	"": "VersionedApplication is the description of application with version",
+}
+
+func (VersionedApplication) SwaggerDoc() map[string]string {
+	return map_VersionedApplication
+}
+
 var map_VolumeDecorator = map[string]string{
 	"":     "VolumeDecorator is a controller to manage PVC information.",
 	"spec": "Spec defines the desired identities of volume decorator.",

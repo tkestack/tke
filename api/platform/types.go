@@ -93,6 +93,12 @@ const (
 	KubeVendorOther KubeVendorType = "Other"
 )
 
+// VersionedApplication is a description of application with version
+type VersionedApplication struct {
+	Name    string
+	Version string
+}
+
 // ClusterSpec is a description of a cluster.
 type ClusterSpec struct {
 	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
@@ -150,6 +156,8 @@ type ClusterSpec struct {
 	HostnameAsNodename bool
 	// +optional
 	NetworkArgs map[string]string
+	// +optional
+	CustomizedApplications []VersionedApplication
 }
 
 // ClusterStatus represents information about the status of a cluster.

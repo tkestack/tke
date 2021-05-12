@@ -74,6 +74,12 @@ type ClusterMachine struct {
 	Taints []corev1.Taint `json:"taints,omitempty" protobuf:"bytes,8,opt,name=taints"`
 }
 
+// VersionedApplication is the description of application with version
+type VersionedApplication struct {
+	Name    string `json:"name" protobuf:"bytes,1,opt,name=name"`
+	Version string `json:"version" protobuf:"bytes,2,opt,name=version"`
+}
+
 // KubeVendorType describe the kubernetes provider of the cluster
 // ref https://github.com/open-cluster-management/multicloud-operators-foundation/blob/e94b719de6d5f3541e948dd70ad8f1ff748aa452/pkg/apis/internal.open-cluster-management.io/v1beta1/clusterinfo_types.go#L137
 type KubeVendorType string
@@ -156,6 +162,8 @@ type ClusterSpec struct {
 	NetworkArgs map[string]string `json:"networkArgs,omitempty" protobuf:"bytes,24,name=networkArgs"`
 	// +optional
 	ScalingMachines []ClusterMachine `json:"scalingMachines,omitempty" protobuf:"bytes,25,opt,name=scalingMachines"`
+	// +optional
+	CustomizedApplications []VersionedApplication `json:"customizedApplications,omitempty" protobuf:"bytes,26,opt,name=customizedApplications"`
 }
 
 // ClusterStatus represents information about the status of a cluster.

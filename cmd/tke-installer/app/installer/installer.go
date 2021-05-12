@@ -152,6 +152,8 @@ func New(config *config.Config) *TKE {
 		}
 	}
 
+	c.log.Infof("TKE expansion enabled: %v", c.isExpansionEnabled())
+
 	return c
 }
 
@@ -170,6 +172,13 @@ func (t *TKE) loadTKEData() error {
 }
 
 func (t *TKE) initSteps() {
+	t.steps = append(t.steps, []types.Handler{
+		{
+			Name: "Prepare expansion files",
+			Func: t.prepareExpansionFiles,
+		},
+	}...)
+
 	t.steps = append(t.steps, []types.Handler{
 		{
 			Name: "Execute pre install hook",
@@ -2598,8 +2607,12 @@ func (t *TKE) writeKubeconfig(ctx context.Context) error {
 		return err
 	}
 	_ = ioutil.WriteFile(constants.KubeconfigFile, data, 0644)
-	_ = os.MkdirAll("/root/.kube", 0755)
-	return ioutil.WriteFile("/root/.kube/config", data, 0644)
+	home := os.Getenv("HOME")
+	if home == "" {
+		home = "/root"
+	}
+	_ = os.MkdirAll(fmt.Sprintf("%s/.kube", home), 0755)
+	return ioutil.WriteFile(fmt.Sprintf("%s/.kube/config", home), data, 0644)
 }
 
 func (t *TKE) patchPlatformVersion(ctx context.Context) error {
