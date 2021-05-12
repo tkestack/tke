@@ -43,6 +43,10 @@ type Config struct {
 	RegistryNamespace          string
 	CustomUpgradeResourceDir   string
 	CustomChartsName           string
+	// EnableCustomExpansion will enable expansion. default false
+	EnableCustomExpansion bool
+	// CustomExpansionDir path to expansions. default `data/expansions`
+	CustomExpansionDir string
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
