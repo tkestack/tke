@@ -170,6 +170,22 @@ func (t *TKE) loadTKEData() error {
 }
 
 func (t *TKE) initSteps() {
+
+	if t.Config.EnableCustomExpansion {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Init expansion",
+				Func: t.initExpansion,
+			},
+		}...)
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Prepare expansion files",
+				Func: t.prepareExpansionFiles,
+			},
+		}...)
+	}
+
 	t.steps = append(t.steps, []types.Handler{
 		{
 			Name: "Execute pre install hook",
