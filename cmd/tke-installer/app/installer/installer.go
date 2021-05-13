@@ -2633,7 +2633,11 @@ func (t *TKE) patchPlatformVersion(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Infof("current platform version is %s, installer version is %s", tkeVersion, spec.TKEVersion)
+	if len(tkeVersion) == 0 {
+		log.Infof("set platform version to %s", spec.TKEVersion)
+	} else {
+		log.Infof("patch platform version from %s to %s", tkeVersion, spec.TKEVersion)
+	}
 	if tkeVersion == spec.TKEVersion {
 		log.Info("skip patch platform version, current installer version is equal to platform version")
 		return nil
