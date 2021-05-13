@@ -53,7 +53,9 @@ spec:
       targetPort: 19291
       nodePort: 31141
   selector:
-    kubernetes.io/name: thanos-receive
+    app.kubernetes.io/component: database-write-hashring
+    app.kubernetes.io/instance: thanos-receive
+    app.kubernetes.io/name: thanos-receive
   type: NodePort
 
 ---
