@@ -19,6 +19,16 @@ spec:
         tke.prometheus.io/scrape: "true"
         prometheus.io/scheme: https
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
       containers:
         - name: tke-mesh-controller
           image: {{ .Image }}
