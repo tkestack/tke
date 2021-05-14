@@ -1120,6 +1120,7 @@ type AddonSpec struct {
 	Version     string `json:"version,omitempty" protobuf:"bytes,3,opt,name=version"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // TappControllerProxyOptions is the query options to a kube-apiserver proxy call.
@@ -1565,6 +1566,7 @@ type MachineList struct {
 	Items []Machine `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CronHPAProxyOptions is the query options to a kube-apiserver proxy call.
