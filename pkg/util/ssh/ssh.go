@@ -271,7 +271,11 @@ func (s *SSH) writeFile(src io.Reader, dst string) error {
 		return err
 	}
 
-	_, err = s.CombinedOutput(fmt.Sprintf("mkdir -p $(dirname %s); mv %s %s; rm -rf $(dirname %s)", realDst, dst, realDst, dst))
+	if err := dstFile.Close(); err != nil {
+		return err
+	}
+
+	_, err = s.CombinedOutput(fmt.Sprintf("mkdir -p $(dirname %s) && mv %s %s && rm -rf $(dirname %s)", realDst, dst, realDst, dst))
 	if err != nil {
 		return err
 	}
