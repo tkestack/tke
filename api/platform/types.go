@@ -798,6 +798,7 @@ type StorageBackEndES struct {
 	ReserveDays int32
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // HelmProxyOptions is the query options to a Helm-api proxy call.
@@ -1096,6 +1097,7 @@ type AddonSpec struct {
 	Version     string
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // TappControllerProxyOptions is the query options to a kube-apiserver proxy call.
@@ -1536,6 +1538,7 @@ type MachineList struct {
 	Items []Machine
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CronHPAProxyOptions is the query options to a kube-apiserver proxy call.

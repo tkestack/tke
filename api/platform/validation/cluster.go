@@ -227,7 +227,11 @@ func ValidateHooks(hooks map[platform.HookType]string, fldPath *field.Path, file
 	filesMap := make(map[string]string)
 
 	for _, f := range files {
-		s, _ := os.Stat(f.Src)
+		s, err := os.Stat(f.Src)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(filesFldPath, f.Src, fmt.Sprintf("get %s status failed: %v", f.Src, err)))
+			continue
+		}
 		if s.Mode().IsRegular() {
 			hookMap[f.Dst] = true
 		} else {

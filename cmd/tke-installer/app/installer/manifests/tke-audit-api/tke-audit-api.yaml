@@ -70,6 +70,16 @@ spec:
       labels:
         app: tke-audit-api
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
       serviceAccountName: tke-audit-api
       containers:
         - name: tke-audit-api
