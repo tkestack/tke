@@ -37,27 +37,33 @@ var (
 	Stop  ServiceOperation = "stop"
 )
 
-func Install(s ssh.Interface, version string) (err error) {
+func Install(s ssh.Interface, version string) error {
 	dstFile, err := res.KubernetesNode.CopyToNode(s, version)
 	if err != nil {
 		return err
 	}
 
+	var backupFiles []string
+	defer func() {
+		if err == nil {
+			return
+		}
+		for _, file := range backupFiles {
+			if err = ssh.RestoreFile(s, file); err != nil {
+				err = fmt.Errorf("restore file %q error: %w", file, err)
+			}
+		}
+	}()
+
 	for _, file := range []string{"kubelet", "kubectl"} {
 		file = path.Join(constants.DstBinDir, file)
-		if ok, err := s.Exist(file); err == nil && ok {
+		ok := false
+		if ok, err = s.Exist(file); err == nil && ok {
 			backupFile, err := ssh.BackupFile(s, file)
+			backupFiles = append(backupFiles, backupFile)
 			if err != nil {
 				return fmt.Errorf("backup file %q error: %w", file, err)
 			}
-			defer func() {
-				if err == nil {
-					return
-				}
-				if err = ssh.RestoreFile(s, backupFile); err != nil {
-					err = fmt.Errorf("restore file %q error: %w", backupFile, err)
-				}
-			}()
 		}
 	}
 
