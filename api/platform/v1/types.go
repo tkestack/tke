@@ -813,6 +813,7 @@ type StorageBackEndES struct {
 	ReserveDays int32  `json:"reserveDays,omitempty" protobuf:"varint,7,opt,name=reserveDays"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // HelmProxyOptions is the query options to a Helm-api proxy call.
