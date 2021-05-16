@@ -3,11 +3,10 @@ module tkestack.io/tke
 go 1.12
 
 replace (
-	github.com/Azure/go-autorest => github.com/Azure/go-autorest v14.0.0+incompatible
-	github.com/NetEase-Object-Storage/nos-golang-sdk => github.com/karuppiah7890/nos-golang-sdk v0.0.0-20191116042345-0792ba35abcc
-	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.5.1-0.20200507034031-d025b446aa0b
+	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.5.1-0.20210412121305-660c0e91489b
 	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
-	go.etcd.io/etcd => github.com/eddycjy/etcd v0.5.0-alpha.5.0.20200218102753-4258cdd2efdf
+	go.etcd.io/etcd => go.etcd.io/etcd v0.5.0-alpha.5.0.20200401174654-e694b7bb0875
+	google.golang.org/grpc => google.golang.org/grpc v1.26.0
 	helm.sh/helm/v3 => helm.sh/helm/v3 v3.2.0
 	k8s.io/client-go => k8s.io/client-go v0.18.2
 )
