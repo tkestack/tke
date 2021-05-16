@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	corev1 "k8s.io/api/core/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
@@ -12,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
-	"time"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -85,7 +86,16 @@ func (testTke *TestTKE) ClusterTemplate(nodes ...cloudprovider.Instance) *platfo
 
 func (testTke *TestTKE) CreateClusterInternal(cls *platformv1.Cluster) (cluster *platformv1.Cluster, err error) {
 	klog.Info("Create cluster: ", cls.String())
-	cluster, err = testTke.TkeClient.PlatformV1().Clusters().Create(context.Background(), cls, metav1.CreateOptions{})
+
+	err = wait.PollImmediate(30*time.Second, 5*time.Minute, func() (bool, error) {
+		cluster, err = testTke.TkeClient.PlatformV1().Clusters().Create(context.Background(), cls, metav1.CreateOptions{})
+		if err != nil {
+			klog.Warningf("Create cluster failed: %v", err)
+			return false, err
+		}
+		return true, nil
+	})
+
 	if err != nil {
 		return
 	}
@@ -180,7 +190,7 @@ func (testTke *TestTKE) ScaleDown(clsName string, ipsToBeRemoved []string) (cls 
 
 func (testTke *TestTKE) WaitClusterToBeRunning(clusterName string) (cluster *platformv1.Cluster, err error) {
 	klog.Info("Wait cluster status to be running")
-	err = wait.Poll(5*time.Second, 10*time.Minute, func() (bool, error) {
+	err = wait.Poll(20*time.Second, 30*time.Minute, func() (bool, error) {
 		cluster, err = testTke.TkeClient.PlatformV1().Clusters().Get(context.Background(), clusterName, metav1.GetOptions{})
 		if err != nil {
 			klog.Error(err)

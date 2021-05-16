@@ -74,6 +74,31 @@ type ClusterMachine struct {
 	Taints []corev1.Taint `json:"taints,omitempty" protobuf:"bytes,8,opt,name=taints"`
 }
 
+// KubeVendorType describe the kubernetes provider of the cluster
+// ref https://github.com/open-cluster-management/multicloud-operators-foundation/blob/e94b719de6d5f3541e948dd70ad8f1ff748aa452/pkg/apis/internal.open-cluster-management.io/v1beta1/clusterinfo_types.go#L137
+type KubeVendorType string
+
+const (
+	// KubeVendorTKE TKE
+	KubeVendorTKE KubeVendorType = "TKE"
+	// KubeVendorOpenShift OpenShift
+	KubeVendorOpenShift KubeVendorType = "OpenShift"
+	// KubeVendorAKS Azure Kuberentes Service
+	KubeVendorAKS KubeVendorType = "AKS"
+	// KubeVendorEKS Elastic Kubernetes Service
+	KubeVendorEKS KubeVendorType = "EKS"
+	// KubeVendorGKE Google Kubernetes Engine
+	KubeVendorGKE KubeVendorType = "GKE"
+	// KubeVendorICP IBM Cloud Private
+	KubeVendorICP KubeVendorType = "ICP"
+	// KubeVendorIKS IBM Kubernetes Service
+	KubeVendorIKS KubeVendorType = "IKS"
+	// KubeVendorOSD OpenShiftDedicated
+	KubeVendorOSD KubeVendorType = "OpenShiftDedicated"
+	// KubeVendorOther other (unable to auto detect)
+	KubeVendorOther KubeVendorType = "Other"
+)
+
 // ClusterSpec is a description of a cluster.
 type ClusterSpec struct {
 	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
@@ -180,6 +205,8 @@ type ClusterStatus struct {
 	NodeCIDRMaskSizeIPv4 int32 `json:"nodeCIDRMaskSizeIPv4,omitempty" protobuf:"varint,18,opt,name=nodeCIDRMaskSizeIPv4"`
 	// +optional
 	NodeCIDRMaskSizeIPv6 int32 `json:"nodeCIDRMaskSizeIPv6,omitempty" protobuf:"varint,19,opt,name=nodeCIDRMaskSizeIPv6"`
+	// +optional
+	KubeVendor KubeVendorType `json:"kubeVendor" protobuf:"bytes,20,opt,name=kubeVendor"`
 }
 
 // FinalizerName is the name identifying a finalizer during cluster lifecycle.
@@ -362,6 +389,8 @@ type ClusterFeature struct {
 	EnableMetricsServer bool `json:"enableMetricsServer,omitempty" protobuf:"bytes,12,opt,name=enableMetricsServer"`
 	// +optional
 	IPv6DualStack bool `json:"ipv6DualStack,omitempty" protobuf:"bytes,13,opt,name=ipv6DualStack"`
+	// +optional
+	EnableCilium bool `json:"enableCilium,omitempty" protobuf:"bytes,14,opt,name=enableCilium"`
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
@@ -784,6 +813,7 @@ type StorageBackEndES struct {
 	ReserveDays int32  `json:"reserveDays,omitempty" protobuf:"varint,7,opt,name=reserveDays"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // HelmProxyOptions is the query options to a Helm-api proxy call.
@@ -1090,6 +1120,7 @@ type AddonSpec struct {
 	Version     string `json:"version,omitempty" protobuf:"bytes,3,opt,name=version"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // TappControllerProxyOptions is the query options to a kube-apiserver proxy call.
@@ -1535,6 +1566,7 @@ type MachineList struct {
 	Items []Machine `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CronHPAProxyOptions is the query options to a kube-apiserver proxy call.

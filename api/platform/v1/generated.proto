@@ -377,6 +377,9 @@ message ClusterFeature {
   // +optional
   optional bool ipv6DualStack = 13;
 
+  // +optional
+  optional bool enableCilium = 14;
+
   // Upgrade control upgrade process.
   // +optional
   optional Upgrade upgrade = 22;
@@ -587,6 +590,9 @@ message ClusterStatus {
 
   // +optional
   optional int32 nodeCIDRMaskSizeIPv6 = 19;
+
+  // +optional
+  optional string kubeVendor = 20;
 }
 
 // ConfigMap holds configuration data for tke to consume.

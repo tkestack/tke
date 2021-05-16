@@ -58,69 +58,65 @@ func init() {
 
 func (t *TKE) importCharts(ctx context.Context) error {
 	var errs []error
-	client := applicationutil.NewHelmClientWithoutRESTClient()
 	for _, chartGroup := range needImportedChartGroups {
-		dest, err := ioutil.TempDir("", "chartpath-")
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-		defer os.RemoveAll(dest)
+		err := t.pushCharts(ctx, chartGroup+chartFilesSuffix, constants.DefaultTeantID, chartGroup)
+		errs = append(errs, err)
+	}
+	return utilerrors.NewAggregate(errs)
+}
 
-		err = compress.ExtractTarGz(chartGroup+chartFilesSuffix, dest)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
+func (t *TKE) pushCharts(ctx context.Context, chartsPath, tenantID, chartGroup string) error {
+	var errs []error
+	client := applicationutil.NewHelmClientWithoutRESTClient()
+	dest, err := ioutil.TempDir("", "chartpath-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(dest)
 
-		files, err := files.GetAllFiles(dest)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
+	err = compress.ExtractTarGz(chartsPath, dest)
+	if err != nil {
+		return err
+	}
 
-		cgs, err := t.registryClient.ChartGroups().List(ctx, metav1.ListOptions{
-			FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", constants.DefaultTeantID, chartGroup),
+	files, err := files.GetAllFiles(dest)
+	if err != nil {
+		return err
+	}
+
+	cgs, err := t.registryClient.ChartGroups().List(ctx, metav1.ListOptions{
+		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", tenantID, chartGroup),
+	})
+	if err != nil {
+		return err
+	}
+	if len(cgs.Items) == 0 {
+		return fmt.Errorf("cannot find %s chartgroup", chartGroup)
+	}
+	conf := config.RepoConfiguration{
+		Scheme:        "http",
+		DomainSuffix:  t.Para.Config.Registry.Domain(),
+		Admin:         t.Para.Config.Registry.Username(),
+		AdminPassword: string(t.Para.Config.Registry.Password()),
+	}
+
+	chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(conf, cgs.Items[0])
+	if err != nil {
+		return err
+	}
+
+	for _, f := range files {
+		// push chart with force flag
+		_, err := client.Push(&helmaction.PushOptions{
+			ChartPathOptions: chartPathBasicOptions,
+			ChartFile:        f,
+			ForceUpload:      true,
 		})
 		if err != nil {
 			errs = append(errs, err)
-			continue
-		}
-		if len(cgs.Items) == 0 {
-			errs = append(errs, fmt.Errorf("cannot find %s chartgroup", chartGroup))
-			continue
-		}
-		conf := config.RepoConfiguration{
-			Scheme:        "http",
-			DomainSuffix:  t.Para.Config.Registry.Domain(),
-			Admin:         t.Para.Config.Registry.Username(),
-			AdminPassword: string(t.Para.Config.Registry.Password()),
-		}
-
-		chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(conf, cgs.Items[0])
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-
-		for _, f := range files {
-			existed, err := client.Push(&helmaction.PushOptions{
-				ChartPathOptions: chartPathBasicOptions,
-				ChartFile:        f,
-				ForceUpload:      false,
-			})
-			if err != nil {
-				if existed {
-					log.Warn(err.Error())
-				} else {
-					errs = append(errs, err)
-					continue
-				}
-			}
 		}
 	}
 	return utilerrors.NewAggregate(errs)
-
 }
 
 func (t *TKE) checkNeedImportedChartgroups(ctx context.Context) error {

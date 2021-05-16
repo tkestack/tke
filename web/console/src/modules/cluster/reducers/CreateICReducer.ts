@@ -40,6 +40,8 @@ const TempReducer = combineReducers({
 
   merticsServer: reduceToPayload(ActionType.v_IC_Mertics_server, true),
 
+  cilium: reduceToPayload(ActionType.v_IC_Cilium, 'Galaxy'),
+
   gpuType: reduceToPayload(ActionType.v_IC_GpuType, GPUTYPE.PGPU)
 });
 

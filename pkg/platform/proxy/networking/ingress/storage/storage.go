@@ -19,9 +19,13 @@
 package storage
 
 import (
+	"context"
+
 	networkingV1Beta1 "k8s.io/api/networking/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/pkg/platform/proxy"
 )
@@ -29,6 +33,8 @@ import (
 // Storage includes storage for resources.
 type Storage struct {
 	Ingress *REST
+	Status  *StatusREST
+	Events  *EventREST
 }
 
 // REST implements pkg/api/rest.StandardStorage.
@@ -45,7 +51,50 @@ func NewStorageV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platf
 		PlatformClient: platformClient,
 	}
 
+	statusStore := *networkPolicyStore
+
 	return &Storage{
 		Ingress: &REST{networkPolicyStore},
+		Status: &StatusREST{
+			store: &statusStore,
+		},
+		Events: &EventREST{
+			platformClient: platformClient,
+		},
 	}
+}
+
+// Implement ShortNamesProvider
+var _ rest.ShortNamesProvider = &REST{}
+
+// ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
+func (r *REST) ShortNames() []string {
+	return []string{"ing"}
+}
+
+// StatusREST implements the REST endpoint for changing the status of a replication controller
+type StatusREST struct {
+	rest.Storage
+	store *proxy.Store
+}
+
+// StatusREST implements Patcher
+var _ = rest.Patcher(&StatusREST{})
+
+// New returns an empty object that can be used with Create and Update after
+// request data has been put into it.
+func (r *StatusREST) New() runtime.Object {
+	return r.store.New()
+}
+
+// Get retrieves the object from the storage. It is required to support Patch.
+func (r *StatusREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return r.store.Get(ctx, name, options)
+}
+
+// Update alters the status subset of an object.
+func (r *StatusREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	// We are explicitly setting forceAllowCreate to false in the call to the underlying storage because
+	// subresources should never allow create on update.
+	return r.store.Update(ctx, name, objInfo, createValidation, updateValidation, false, options)
 }

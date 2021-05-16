@@ -1,5 +1,5 @@
 import Request from './request';
-import { compare } from 'compare-versions';
+import { compareVersion } from '@helper/version';
 
 function transObjToelector(obj: { [key: string]: string | number }) {
   return Object.entries(obj)
@@ -90,7 +90,7 @@ export const checkClusterIsNeedUpdate = async ({
 
   // checkversion
   const canUpdateVersions = await getK8sValidVersions();
-  if (canUpdateVersions.findIndex(v => compare(v, clusterVersion, '>')) < 0) {
+  if (canUpdateVersions.findIndex(v => compareVersion(v, clusterVersion) === 1) < 0) {
     return {
       master: {
         isNeed: false,

@@ -35,12 +35,18 @@ type Config struct {
 	Replicas                   int
 	Upgrade                    bool
 	PrepareCustomK8sImages     bool
+	PrepareCustomCharts        bool
 	Kubeconfig                 string
 	RegistryUsername           string
 	RegistryPassword           string
 	RegistryDomain             string
 	RegistryNamespace          string
 	CustomUpgradeResourceDir   string
+	CustomChartsName           string
+	// EnableCustomExpansion will enable expansion. default false
+	EnableCustomExpansion bool
+	// CustomExpansionDir path to expansions. default `data/expansions`
+	CustomExpansionDir string
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -58,11 +64,13 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		Replicas:                   *opts.Replicas,
 		Upgrade:                    *opts.Upgrade,
 		PrepareCustomK8sImages:     *opts.PrepareCustomK8sImages,
+		PrepareCustomCharts:        *opts.PrepareCustomCharts,
 		Kubeconfig:                 *opts.Kubeconfig,
 		RegistryUsername:           *opts.RegistryUsername,
 		RegistryPassword:           *opts.RegistryPassword,
 		RegistryDomain:             *opts.RegistryDomain,
 		RegistryNamespace:          *opts.RegistryNamespace,
 		CustomUpgradeResourceDir:   *opts.CustomUpgradeResourceDir,
+		CustomChartsName:           *opts.CustomChartsName,
 	}, nil
 }

@@ -127,7 +127,7 @@ func (p *Provider) EnsurePreflight(ctx context.Context, machine *platformv1.Mach
 		return err
 	}
 
-	err = preflight.RunNodeChecks(machineSSH)
+	err = preflight.RunNodeChecks(cluster, machineSSH)
 	if err != nil {
 		return err
 	}

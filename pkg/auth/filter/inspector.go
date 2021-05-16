@@ -22,7 +22,9 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
+
 	"tkestack.io/tke/pkg/apiserver/util"
 
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
@@ -172,6 +174,17 @@ func (i *clusterInspector) Inspect(handler http.Handler, c *genericapiserver.Con
 			return
 		}
 		username, tenantID := authentication.UsernameAndTenantID(ctx)
+		// rbac mode use tenantID as suffix of username
+		if tenantID == "" {
+			strList := strings.Split(username, ":")
+			if len(strList) == 4 && strList[0] == "system" && strList[1] == "serviceaccount" {
+				tenantidStr := strList[len(strList)-1]
+				index := strings.Index(tenantidStr, "-tenant-")
+				if index > 0 {
+					tenantID = tenantidStr[index+8:]
+				}
+			}
+		}
 		log.Infof(" clusterNames: %+v, username: %+v, tenant: %+v, "+
 			"action: %+v, resource: %+v, name: %+v",
 			clusterNames, username, tenantID, tkeAttributes.GetVerb(),

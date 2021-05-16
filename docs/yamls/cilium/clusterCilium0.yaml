@@ -1,0 +1,31 @@
+{
+    "apiVersion": "platform.tkestack.io/v1",
+    "kind": "Cluster",
+    "spec": {
+	"hostnameAsNodename": true,
+	"displayName": "cilium",
+        "networkDevice": "eth0",
+        "tenantID": "default",
+        "type": "Baremetal",
+        "version": "1.19.7",
+        "networkArgs": {
+           "backendType": "geneve",
+           "debugMode": "true"
+	},
+        "features": {
+	  "ipvs": false,
+	  "enableMetricsServer": false,
+          "enableCilium": true,
+          "enableMasterSchedule": true,
+	  "skipConditions": ["EnsureGalaxy"]
+	},
+        "machines": [
+            {
+                "ip": "10.0.0.33",
+                "port": 22,
+                "username": "root",
+                "password": "xxxx"
+            }
+        ]
+    }
+}

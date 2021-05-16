@@ -32,6 +32,16 @@ spec:
       labels:
         app: tke-mesh-api
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
       containers:
         - name: tke-mesh-api
           image: {{ .Image }}
@@ -85,11 +95,9 @@ metadata:
 data:
   tke-mesh-api.toml: |
     mesh_config = "/app/conf/tke-mesh-config.yaml"
-
     [secure_serving]
     tls_cert_file = "/app/certs/server.crt"
     tls_private_key_file = "/app/certs/server.key"
-
     [etcd]
     servers = [
       "https://etcd.kube-system:2379"
@@ -97,15 +105,12 @@ data:
     cafile = "/app/certs/etcd-ca.crt"
     certfile = "/app/certs/etcd.crt"
     keyfile = "/app/certs/etcd.key"
-
     [generic]
     external_hostname = "tke-mesh-api"
     external_port = 443
-
     [authentication]
     token_auth_file = "/app/certs/token.csv"
     client_ca_file = "/app/certs/ca.crt"
-
       [authentication.oidc]
 {{- if .EnableAuth }}
       client_id = "default"
@@ -161,7 +166,6 @@ data:
         cluster: tke
         user: admin-cert
       name: tke
-
   tke-platform-config.yaml: |
     apiVersion: v1
     kind: Config
@@ -181,7 +185,6 @@ data:
           cluster: tke
           user: admin-cert
         name: tke
-
   tke-mesh-config.yaml: |
     apiVersion: mesh.config.tkestack.io/v1
     kind: MeshConfiguration
@@ -195,7 +198,6 @@ data:
     components:
       meshManager:
         address: http://mesh-manager:10072
-
 {{- if .EnableAudit }}
   audit-policy.yaml: |
     apiVersion: audit.k8s.io/v1
@@ -210,7 +212,6 @@ data:
         resources: ["configmaps", "*/status"]
     - level: RequestResponse
       verbs: ["create", "update", "patch", "delete", "deletecollection"]
-
   audit-api-client-config.yaml: |
     apiVersion: v1
     kind: Config
@@ -224,5 +225,4 @@ data:
       - context:
           cluster: tke
         name: tke
-
   {{- end }}

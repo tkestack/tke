@@ -7,7 +7,7 @@ metadata:
   name: tke-mesh-controller
   namespace: tke
 spec:
-  replicas: {{ .Replicas }}
+  replicas: { { .Replicas } }
   selector:
     matchLabels:
       app: tke-mesh-controller
@@ -19,9 +19,19 @@ spec:
         tke.prometheus.io/scrape: "true"
         prometheus.io/scheme: https
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: Exists
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/master
+                    operator: Exists
       containers:
         - name: tke-mesh-controller
-          image: {{ .Image }}
+          image: { { .Image } }
           args:
             - -C=/app/conf/tke-mesh-controller.toml
           volumeMounts:
@@ -61,25 +71,19 @@ metadata:
 data:
   tke-mesh-controller.toml: |
     mesh_config = "/app/conf/tke-mesh-config.yaml"
-
     [secure_serving]
     tls_cert_file = "/app/certs/server.crt"
     tls_private_key_file = "/app/certs/server.key"
-
     [client]
-
       [client.mesh]
       api_server = "https://tke-mesh-api"
       api_server_client_config = "/app/conf/tke-mesh-api-config.yaml"
-
       [client.platform]
       api_server = "https://tke-platform-api"
       api_server_client_config = "/app/conf/tke-platform-config.yaml"
-
     [registry]
     container_domain = "{{ .RegistryDomain }}"
     container_namespace = "{{ .RegistryNamespace }}"
-
   tke-mesh-api-config.yaml: |
     apiVersion: v1
     kind: Config
@@ -99,7 +103,6 @@ data:
           cluster: tke
           user: admin-cert
         name: tke
-
   tke-platform-config.yaml: |
     apiVersion: v1
     kind: Config
@@ -119,7 +122,6 @@ data:
           cluster: tke
           user: admin-cert
         name: tke
-
   tke-mesh-config.yaml: |
     apiVersion: mesh.config.tkestack.io/v1
     kind: MeshConfiguration

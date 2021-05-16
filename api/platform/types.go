@@ -68,6 +68,31 @@ type ClusterMachine struct {
 	Taints     []corev1.Taint
 }
 
+// KubeVendorType describe the kubernetes provider of the cluster
+// ref https://github.com/open-cluster-management/multicloud-operators-foundation/blob/e94b719de6d5f3541e948dd70ad8f1ff748aa452/pkg/apis/internal.open-cluster-management.io/v1beta1/clusterinfo_types.go#L137
+type KubeVendorType string
+
+const (
+	// KubeVendorTKE TKE
+	KubeVendorTKE KubeVendorType = "TKE"
+	// KubeVendorOpenShift OpenShift
+	KubeVendorOpenShift KubeVendorType = "OpenShift"
+	// KubeVendorAKS Azure Kuberentes Service
+	KubeVendorAKS KubeVendorType = "AKS"
+	// KubeVendorEKS Elastic Kubernetes Service
+	KubeVendorEKS KubeVendorType = "EKS"
+	// KubeVendorGKE Google Kubernetes Engine
+	KubeVendorGKE KubeVendorType = "GKE"
+	// KubeVendorICP IBM Cloud Private
+	KubeVendorICP KubeVendorType = "ICP"
+	// KubeVendorIKS IBM Kubernetes Service
+	KubeVendorIKS KubeVendorType = "IKS"
+	// KubeVendorOSD OpenShiftDedicated
+	KubeVendorOSD KubeVendorType = "OpenShiftDedicated"
+	// KubeVendorOther other (unable to auto detect)
+	KubeVendorOther KubeVendorType = "Other"
+)
+
 // ClusterSpec is a description of a cluster.
 type ClusterSpec struct {
 	// Finalizers is an opaque list of values that must be empty to permanently remove object from storage.
@@ -174,6 +199,8 @@ type ClusterStatus struct {
 	NodeCIDRMaskSizeIPv4 int32
 	// +optional
 	NodeCIDRMaskSizeIPv6 int32
+	// +optional
+	KubeVendor KubeVendorType
 }
 
 // FinalizerName is the name identifying a finalizer during cluster lifecycle.
@@ -355,6 +382,8 @@ type ClusterFeature struct {
 	// +optional
 	EnableMetricsServer bool
 	// +optional
+	EnableCilium bool
+	// +optional
 	IPv6DualStack bool
 	// Upgrade control upgrade process.
 	// +optional
@@ -367,7 +396,7 @@ type HA struct {
 }
 
 type TKEHA struct {
-	VIP string
+	VIP  string
 	VRID *int32
 }
 
@@ -760,15 +789,16 @@ type StorageBackEndCLS struct {
 // StorageBackEndES records the attributes required when the backend storage
 // type is ElasticSearch.
 type StorageBackEndES struct {
-	IP        string
-	Port      int32
-	Scheme    string
-	IndexName string
-	User      string
-	Password  string
+	IP          string
+	Port        int32
+	Scheme      string
+	IndexName   string
+	User        string
+	Password    string
 	ReserveDays int32
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // HelmProxyOptions is the query options to a Helm-api proxy call.
@@ -1067,6 +1097,7 @@ type AddonSpec struct {
 	Version     string
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // TappControllerProxyOptions is the query options to a kube-apiserver proxy call.
@@ -1507,6 +1538,7 @@ type MachineList struct {
 	Items []Machine
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CronHPAProxyOptions is the query options to a kube-apiserver proxy call.

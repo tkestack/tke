@@ -1,0 +1,3 @@
+#!/bin/bash
+
+echo "post-install is override by expansion~"

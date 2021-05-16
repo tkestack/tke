@@ -41,7 +41,7 @@ func BuildHandlerChain(ignoreAuthPathPrefixes []string, ignoreAuthzPathPrefixes 
 		handler = genericfilters.WithMaxInFlightLimit(handler, c.MaxRequestsInFlight, c.MaxMutatingRequestsInFlight, c.LongRunningFunc)
 		handler = genericapifilters.WithImpersonation(handler, c.Authorization.Authorizer, c.Serializer)
 		handler = genericapifilters.WithAudit(handler, c.AuditBackend, c.AuditPolicyChecker, c.LongRunningFunc)
-		failedHandler := genericapifilters.Unauthorized(c.Serializer, c.Authentication.SupportsBasicAuth)
+		failedHandler := genericapifilters.Unauthorized(c.Serializer)
 		failedHandler = genericapifilters.WithFailedAuthenticationAudit(failedHandler, c.AuditBackend, c.AuditPolicyChecker)
 		handler = apiserverfilter.WithAuthentication(handler, c.Authentication.Authenticator, failedHandler, c.Authentication.APIAudiences, ignoreAuthPathPrefixes)
 

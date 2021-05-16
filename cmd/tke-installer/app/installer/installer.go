@@ -170,6 +170,22 @@ func (t *TKE) loadTKEData() error {
 }
 
 func (t *TKE) initSteps() {
+
+	if t.Config.EnableCustomExpansion {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Init expansion",
+				Func: t.initExpansion,
+			},
+		}...)
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Prepare expansion files",
+				Func: t.prepareExpansionFiles,
+			},
+		}...)
+	}
+
 	t.steps = append(t.steps, []types.Handler{
 		{
 			Name: "Execute pre install hook",
@@ -517,6 +533,12 @@ func (t *TKE) runWithUI() error {
 			return err
 		}
 		go t.doPrepareCustomImages()
+	case t.Config.PrepareCustomCharts:
+		err := t.prepareForPrepareCustomCharts(context.Background())
+		if err != nil {
+			return err
+		}
+		go t.doPrepareCustomCharts()
 	case t.Config.Upgrade:
 		err := t.prepareForUpgrade(context.Background())
 		if err != nil {
@@ -1501,6 +1523,10 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 		{
 			Name: "metrics-server-manifests",
 			File: baremetalconstants.ManifestsDir + "/metrics-server/*",
+		},
+		{
+			Name: "cilium-manifests",
+			File: baremetalconstants.ManifestsDir + "/cilium/*",
 		},
 	}
 	for _, one := range configMaps {
@@ -2607,7 +2633,11 @@ func (t *TKE) patchPlatformVersion(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	log.Infof("current platform version is %s, installer version is %s", tkeVersion, spec.TKEVersion)
+	if len(tkeVersion) == 0 {
+		log.Infof("set platform version to %s", spec.TKEVersion)
+	} else {
+		log.Infof("patch platform version from %s to %s", tkeVersion, spec.TKEVersion)
+	}
 	if tkeVersion == spec.TKEVersion {
 		log.Info("skip patch platform version, current installer version is equal to platform version")
 		return nil

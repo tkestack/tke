@@ -10,6 +10,7 @@ on:
       - master
 env:
   VERSION: ${{ github.sha }}
+  BUILDER: ${{ secrets.BUILDER }}
   KUBECONFIG: ${{ secrets.KUBECONFIG }}
   REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
   REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
@@ -19,6 +20,9 @@ env:
   CREATE_INSTANCES_PARAM: ${{ secrets.CREATE_INSTANCES_PARAM }}
   PASSWORD: ${{ secrets.PASSWORD }}
   NEED_DELETE: ${{ secrets.NEED_DELETE }}
+  DOCKER_HUB_ACTION_AUTH: ${{ secrets.DOCKER_HUB_ACTION_AUTH }}
+  INSTANCE_TYPES: ${{ secrets.INSTANCE_TYPES }}
+  TEST1: ${{ secrets.TEST.TEST1 }}
 jobs:
   image:
     name: build tke image

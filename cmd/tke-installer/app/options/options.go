@@ -35,12 +35,14 @@ type Options struct {
 	Replicas                   *int
 	Upgrade                    *bool
 	PrepareCustomK8sImages     *bool
+	PrepareCustomCharts        *bool
 	Kubeconfig                 *string
 	RegistryUsername           *string
 	RegistryPassword           *string
 	RegistryDomain             *string
 	RegistryNamespace          *string
 	CustomUpgradeResourceDir   *string
+	CustomChartsName           *string
 }
 
 // NewOptions creates a new Options with a default config.
@@ -62,12 +64,14 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Replicas = fs.Int("replicas", 2, "tke components replicas")
 	o.Upgrade = fs.Bool("upgrade", false, "upgrade")
 	o.PrepareCustomK8sImages = fs.Bool("prepare-custom-images", false, "prepare images for custom K8s version")
+	o.PrepareCustomCharts = fs.Bool("prepare-custom-charts", false, "prepare custom charts")
 	o.Kubeconfig = fs.String("kubeconfig", "conf/kubeconfig", "specify kubeconfig for upgrade")
 	o.RegistryUsername = fs.String("username", "", "specify registry username for upgrade")
 	o.RegistryPassword = fs.String("password", "", "specify registry password for upgrade")
 	o.RegistryDomain = fs.String("domain", "", "specify registry domain for upgrade")
 	o.RegistryNamespace = fs.String("namespace", "", "specify registry namespace for upgrade")
 	o.CustomUpgradeResourceDir = fs.String("upgrade-resource-dir", constants.DefaultCustomResourceDir, "specify custom upgrade resource dir for prepare custom K8s images")
+	o.CustomChartsName = fs.String("custom-charts-name", constants.DefaultCustomChartsName, "specify custom chart name under your host /opt/tke-installer/data/ path")
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
