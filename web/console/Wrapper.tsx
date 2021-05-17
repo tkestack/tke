@@ -11,7 +11,6 @@ import { resourceConfig } from './config';
 import { isEmpty } from './src/modules/common/utils';
 import * as classnames from 'classnames';
 import { Button, Icon, Text, Bubble, NavMenu, List, ExternalLink } from '@tencent/tea-component';
-import 'antd/dist/antd.css';
 import zhCN from 'antd/lib/locale/zh_CN';
 import { ConfigProvider } from 'antd';
 import { TkeVersion } from '@/src/modules/common/components/tke-version';
@@ -560,7 +559,9 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     }
     return (
       <PlatformContext.Provider value={{ type: this.props.platformType }}>
-        <ConfigProvider locale={zhCN}>{finalContent}</ConfigProvider>
+        <ConfigProvider locale={zhCN}>
+          <React.Suspense fallback={'加载...'}>{finalContent}</React.Suspense>
+        </ConfigProvider>
       </PlatformContext.Provider>
     );
   }
