@@ -247,6 +247,10 @@ func (p *Provider) getControllerManagerExtraArgs(c *v1.Cluster) map[string]strin
 		args["node-cidr-mask-size"] = fmt.Sprintf("%v", c.Status.NodeCIDRMaskSize)
 		args["service-cluster-ip-range"] = c.Status.ServiceCIDR
 	}
+	if c.Spec.Features.EnableCilium {
+		args["configure-cloud-routes"] = "false"
+		args["allocate-node-cidrs"] = "false"
+	}
 	for k, v := range c.Spec.ControllerManagerExtraArgs {
 		args[k] = v
 	}

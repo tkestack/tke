@@ -35,7 +35,7 @@ data:
   cilium-endpoint-gc-interval: "5m0s"
 
   # If you want to run cilium in debug mode change this value to true
-  debug: "{{ .DebugMode }}"
+  debug: "false"
   # The agent can be put into the following three policy enforcement modes
   # default, always and never.
   # https://docs.cilium.io/en/latest/policy/intro/#policy-enforcement-modes
@@ -104,23 +104,30 @@ data:
   # in the range of 1 and 255. Only relevant when building a mesh of clusters.
   cluster-id: ""
 
-  # Encapsulation mode for communication between nodes
-  # Possible values:
-  #   - disabled
-  #   - vxlan (default)
-  #   - geneve
-  tunnel: {{ .BackendType }}
   # Enables L7 proxy for L7 policy enforcement and visibility
   enable-l7-proxy: "false"
 
   # wait-bpf-mount makes init container wait until bpf filesystem is mounted
   wait-bpf-mount: "false"
 
-  masquerade: "true"
-  enable-bpf-masquerade: "true"
+  masquerade: "false"
+  enable-bpf-masquerade: "false"
+  {{ if eq .NetworkMode "underlay" }}
+  enable-endpoint-routes: "true"
+  auto-create-cilium-node-resource: "true"
+  {{ end }}
 
+  {{ if eq .NetworkMode "overlay" }}
+  enable-local-node-route: "true"
+  ipam: "kubernetes"
+  tunnel: vxlan
+  {{ else }}
+  enable-local-node-route: "false"
+  ipam: "crd"
+  tunnel: disabled
+  {{ end }}
   enable-xt-socket-fallback: "true"
-  install-iptables-rules: "true"
+  install-iptables-rules: "false"
 
   auto-direct-node-routes: "false"
   enable-bandwidth-manager: "false"
@@ -137,7 +144,7 @@ data:
   enable-remote-node-identity: "true"
   operator-api-serve-addr: "127.0.0.1:9234"
   # Enable Hubble gRPC service.
-  enable-hubble: "{{ .EnableHubble }}"
+  enable-hubble: "true"
   # UNIX domain socket for Hubble server to listen to.
   hubble-socket-path:  "/var/run/cilium/hubble.sock"
   # An additional address for Hubble server to listen to (e.g. ":4244").
@@ -146,12 +153,6 @@ data:
   hubble-tls-cert-file: /var/lib/cilium/tls/hubble/server.crt
   hubble-tls-key-file: /var/lib/cilium/tls/hubble/server.key
   hubble-tls-client-ca-files: /var/lib/cilium/tls/hubble/client-ca.crt
-  # https://docs.cilium.io/en/stable/concepts/networking/ipam/
-  ipam: "cluster-pool"
-  # IPv4 CIDR Range for Pods in cluster. Requires 'ipam=cluster-pool' and 'enable-ipv4=true'
-  cluster-pool-ipv4-cidr: "{{ .ClusterCIDR }}"
-  # Mask size for each IPv4 podCIDR per node. Requires 'ipam=cluster-pool' and 'enable-ipv4=true' (default 24)
-  cluster-pool-ipv4-mask-size: "{{ .MaskSize }}"
   disable-cnp-status-updates: "true"
 ---
 # Source: cilium/templates/cilium-agent-clusterrole.yaml
@@ -442,6 +443,10 @@ spec:
             successThreshold: 1
             timeoutSeconds: 5
           env:
+            - name: KUBERNETES_SERVICE_PORT
+              value: "6443"
+            - name: KUBERNETES_SERVICE_HOST
+              value: 10.32.0.13
             - name: K8S_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -676,6 +681,10 @@ spec:
           command:
             - cilium-operator-generic
           env:
+            - name: KUBERNETES_SERVICE_PORT
+              value: "6443"
+            - name: KUBERNETES_SERVICE_HOST
+              value: 10.32.0.13
             - name: K8S_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -720,4 +729,3 @@ spec:
         - configMap:
             name: cilium-config
           name: cilium-config-path
-

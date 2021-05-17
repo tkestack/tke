@@ -1,0 +1,186 @@
+{{ if eq .NetworkMode "underlay" }}
+---
+# Source: cilium-router/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cilium-router
+  namespace: default
+---
+# Source: cilium-router/templates/clusterrole.yaml
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cilium-router
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - list
+      - watch
+      - get
+---
+# Source: cilium-router/templates/clusterrolebinding.yaml
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cilium-router
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cilium-router
+subjects:
+  - kind: ServiceAccount
+    name: cilium-router
+    namespace: default
+---
+# Source: cilium-router/templates/bmp-daemonset.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    k8s-app: bmp
+  name: bmp
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      k8s-app: bmp
+  template:
+    metadata:
+      labels:
+        k8s-app: bmp
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: networking.infra.tce.io/bmp-server
+                    operator: In
+                    values:
+                      - "true"
+      containers:
+        - args:
+            - -bmp-port=11019
+            - -bmp-event-file=/var/lib/bmp/events
+          image: {{ .BmpImage }}
+          imagePullPolicy: IfNotPresent
+          name: bmp
+          resources:
+            limits:
+              cpu: 500m
+              memory: 200Mi
+          volumeMounts:
+            - mountPath: /var/lib/bmp
+              name: bmp
+      hostNetwork: true
+      nodeSelector:
+        beta.kubernetes.io/os: linux
+      priorityClassName: system-node-critical
+      volumes:
+        - hostPath:
+            path: /data/infra.tce.io/bmp
+            type: ""
+          name: bmp
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+---
+# Source: cilium-router/templates/daemonset.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: cilium-router
+  namespace: default
+  labels:
+    app: cilium-router
+spec:
+  selector:
+    matchLabels:
+      app: cilium-router
+  template:
+    metadata:
+      labels:
+        app: cilium-router
+        infra.tce.io/product: tcs
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+              - key: node.infra.tce.io/lifecycle
+                operator: NotIn
+                values:
+                - maintain
+      containers:
+        - args:
+            - -iface=$(HOST_IP)
+            - -node-name=$(NODE_NAME)
+            - -cluster-ip-range=192.168.0.0/16
+            - -network-mode=bgp
+            - -bgp-peer-auth=
+            - -bgp-restart-time=300
+            - -bgp-keepalive-time=60
+            - -cidr-getter=tke-annotation
+          command:
+            - /cilium-router
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.hostIP
+          image: {{ .CiliumRouterImage }}
+          imagePullPolicy: IfNotPresent
+          name: cilium-router
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+            privileged: false
+      hostNetwork: true
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      serviceAccount: cilium-router
+      terminationGracePeriodSeconds: 30
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
+{{ end }}
