@@ -1,22 +1,3 @@
-const { entry, output, rules, alias, plugins, extensions, stats } = require('./webpack.base');
+const baseConfig = require('./webpack.base');
 
-module.exports = {
-  mode: 'production',
-
-  entry,
-
-  output,
-
-  module: {
-    rules
-  },
-
-  resolve: {
-    extensions,
-    alias
-  },
-
-  plugins,
-
-  stats
-};
+module.exports = ({ version }) => baseConfig({ version, mode: 'production' });

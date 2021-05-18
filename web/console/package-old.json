@@ -7,16 +7,29 @@
     "node": ">=10.3.0"
   },
   "scripts": {
-    "preinstall": "rm -rf node_modules",
-    "postinstall": "unzip -n -q -d ./node_modules ../../third_party/fe_node_modules.zip",
-    "prestart": "npm  install",
+    "common_pre": "rm -rf node_modules && npm i && npm run unzip_third_party",
+    "unzip_third_party": "unzip -n -q -d ./node_modules ../../third_party/fe_node_modules.zip",
+    "predev": "npm run common_pre",
+    "dev": "cross-env NODE_ENV=development Version=tke node ./develop/index.ts",
+    "cp_public": "mkdir -p build && cp -r public/* build",
+    "prebuild_console": "npm run cp_public && npm run common_pre",
+    "build_console": "cross-env NODE_ENV=production Version=tke webpack --config webpack/webpack.prod.js",
+    "predev_project": "npm run common_pre",
+    "dev_project": "cross-env NODE_ENV=development node ./develop/index.ts project zh",
+    "prebuild_project": "npm run cp_public && npm run common_pre",
+    "build_project": "cross-env NODE_ENV=production  webpack --config webpack/webpack.prod.js --version=project --lng=zh --filename=project",
+    "build": "npm run build_console && npm run build_project",
+    "eslint": "eslint ./ --ext .ts,.tsx --quiet",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pretsc-check": "npm run common_pre",
+    "tsc-check": "tsc -p  tsconfig.json --noEmit",
+    "prenewbuild": "npm run common_pre",
+    "newbuild": "webpack --config ./webpack-config/webpack.prod.js --progress --color",
+    "prestart": "npm run common_pre",
     "start": "webpack server  --config ./webpack-config/webpack.dev.js --progress --color --env version=tke",
-    "prestart-project": "npm install",
+    "prestart-project": "npm run common_pre",
     "start-project": "webpack server  --config ./webpack-config/webpack.dev.js --progress --color --env version=project",
-    "build-tke": "webpack --config ./webpack-config/webpack.prod.js --progress --color --env version=tke",
-    "build-project": "webpack --config ./webpack-config/webpack.prod.js --progress --color --env version=tke --env version=project",
-    "prebuild": "rm -rf build && npm install",
-    "build": "npm run build-tke && npm run build-project"
+    "build": ""
   },
   "husky": {
     "hooks": {

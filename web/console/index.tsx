@@ -1,7 +1,6 @@
 import './i18n';
 import * as React from 'react';
 import { Entry, insertCSS } from '@tencent/ff-redux';
-import { Cluster } from './src/modules/cluster';
 import { Project } from './src/modules/project';
 import { Registry } from './src/modules/registry';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
@@ -24,6 +23,8 @@ import { Init_Forbiddent_Config } from './helpers/reduceNetwork';
 import '@tencent/tchart/build/ChartsComponents';
 import { BlankPage } from './blankPage';
 import { Overview } from '@src/modules/overview';
+
+const Cluster = React.lazy(() => import('./src/modules/cluster'));
 
 insertCSS(
   'hidden-checkbox',
