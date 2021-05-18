@@ -28,8 +28,10 @@ import (
 )
 
 // AppHistoryLister helps list AppHistories.
+// All objects returned here must be treated as read-only.
 type AppHistoryLister interface {
 	// List lists all AppHistories in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*application.AppHistory, err error)
 	// AppHistories returns an object that can list and get AppHistories.
 	AppHistories(namespace string) AppHistoryNamespaceLister
@@ -60,10 +62,13 @@ func (s *appHistoryLister) AppHistories(namespace string) AppHistoryNamespaceLis
 }
 
 // AppHistoryNamespaceLister helps list and get AppHistories.
+// All objects returned here must be treated as read-only.
 type AppHistoryNamespaceLister interface {
 	// List lists all AppHistories in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*application.AppHistory, err error)
 	// Get retrieves the AppHistory from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*application.AppHistory, error)
 	AppHistoryNamespaceListerExpansion
 }

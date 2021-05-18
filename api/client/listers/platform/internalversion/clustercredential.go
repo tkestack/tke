@@ -28,10 +28,13 @@ import (
 )
 
 // ClusterCredentialLister helps list ClusterCredentials.
+// All objects returned here must be treated as read-only.
 type ClusterCredentialLister interface {
 	// List lists all ClusterCredentials in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*platform.ClusterCredential, err error)
 	// Get retrieves the ClusterCredential from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*platform.ClusterCredential, error)
 	ClusterCredentialListerExpansion
 }

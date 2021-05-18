@@ -28,8 +28,10 @@ import (
 )
 
 // NsEmigrationLister helps list NsEmigrations.
+// All objects returned here must be treated as read-only.
 type NsEmigrationLister interface {
 	// List lists all NsEmigrations in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*business.NsEmigration, err error)
 	// NsEmigrations returns an object that can list and get NsEmigrations.
 	NsEmigrations(namespace string) NsEmigrationNamespaceLister
@@ -60,10 +62,13 @@ func (s *nsEmigrationLister) NsEmigrations(namespace string) NsEmigrationNamespa
 }
 
 // NsEmigrationNamespaceLister helps list and get NsEmigrations.
+// All objects returned here must be treated as read-only.
 type NsEmigrationNamespaceLister interface {
 	// List lists all NsEmigrations in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*business.NsEmigration, err error)
 	// Get retrieves the NsEmigration from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*business.NsEmigration, error)
 	NsEmigrationNamespaceListerExpansion
 }

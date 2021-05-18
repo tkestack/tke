@@ -28,10 +28,13 @@ import (
 )
 
 // MessageLister helps list Messages.
+// All objects returned here must be treated as read-only.
 type MessageLister interface {
 	// List lists all Messages in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*notify.Message, err error)
 	// Get retrieves the Message from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*notify.Message, error)
 	MessageListerExpansion
 }

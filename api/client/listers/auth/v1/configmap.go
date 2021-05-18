@@ -28,10 +28,13 @@ import (
 )
 
 // ConfigMapLister helps list ConfigMaps.
+// All objects returned here must be treated as read-only.
 type ConfigMapLister interface {
 	// List lists all ConfigMaps in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.ConfigMap, err error)
 	// Get retrieves the ConfigMap from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.ConfigMap, error)
 	ConfigMapListerExpansion
 }

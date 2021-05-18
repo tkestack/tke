@@ -28,8 +28,10 @@ import (
 )
 
 // ImageNamespaceLister helps list ImageNamespaces.
+// All objects returned here must be treated as read-only.
 type ImageNamespaceLister interface {
 	// List lists all ImageNamespaces in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.ImageNamespace, err error)
 	// ImageNamespaces returns an object that can list and get ImageNamespaces.
 	ImageNamespaces(namespace string) ImageNamespaceNamespaceLister
@@ -60,10 +62,13 @@ func (s *imageNamespaceLister) ImageNamespaces(namespace string) ImageNamespaceN
 }
 
 // ImageNamespaceNamespaceLister helps list and get ImageNamespaces.
+// All objects returned here must be treated as read-only.
 type ImageNamespaceNamespaceLister interface {
 	// List lists all ImageNamespaces in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.ImageNamespace, err error)
 	// Get retrieves the ImageNamespace from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.ImageNamespace, error)
 	ImageNamespaceNamespaceListerExpansion
 }

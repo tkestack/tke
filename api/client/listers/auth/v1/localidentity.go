@@ -28,10 +28,13 @@ import (
 )
 
 // LocalIdentityLister helps list LocalIdentities.
+// All objects returned here must be treated as read-only.
 type LocalIdentityLister interface {
 	// List lists all LocalIdentities in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.LocalIdentity, err error)
 	// Get retrieves the LocalIdentity from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.LocalIdentity, error)
 	LocalIdentityListerExpansion
 }

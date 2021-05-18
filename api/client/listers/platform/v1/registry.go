@@ -28,10 +28,13 @@ import (
 )
 
 // RegistryLister helps list Registries.
+// All objects returned here must be treated as read-only.
 type RegistryLister interface {
 	// List lists all Registries in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.Registry, err error)
 	// Get retrieves the Registry from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.Registry, error)
 	RegistryListerExpansion
 }

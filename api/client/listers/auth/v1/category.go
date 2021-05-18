@@ -28,10 +28,13 @@ import (
 )
 
 // CategoryLister helps list Categories.
+// All objects returned here must be treated as read-only.
 type CategoryLister interface {
 	// List lists all Categories in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.Category, err error)
 	// Get retrieves the Category from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.Category, error)
 	CategoryListerExpansion
 }

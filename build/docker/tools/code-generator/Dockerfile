@@ -14,7 +14,7 @@
 # WARRANTIES OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 
-FROM golang:1.14-alpine
+FROM golang:1.15-alpine
 
 RUN apk add --update --no-cache autoconf automake libtool zlib-dev build-base curl git
 
@@ -33,7 +33,7 @@ ENV GOPATH=/go
 ENV GO111MODULE=off
 
 # Clone the kubernetes
-ENV KUBERNETES_VERSION 1.18.2
+ENV KUBERNETES_VERSION 1.19.7
 RUN mkdir -p $GOPATH/src/k8s.io \
   && git clone -b v$KUBERNETES_VERSION --single-branch https://github.com/kubernetes/kubernetes.git $GOPATH/src/k8s.io/kubernetes
 RUN apk add --update --no-cache rsync file patch

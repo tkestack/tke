@@ -28,8 +28,10 @@ import (
 )
 
 // ChartGroupLister helps list ChartGroups.
+// All objects returned here must be treated as read-only.
 type ChartGroupLister interface {
 	// List lists all ChartGroups in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*business.ChartGroup, err error)
 	// ChartGroups returns an object that can list and get ChartGroups.
 	ChartGroups(namespace string) ChartGroupNamespaceLister
@@ -60,10 +62,13 @@ func (s *chartGroupLister) ChartGroups(namespace string) ChartGroupNamespaceList
 }
 
 // ChartGroupNamespaceLister helps list and get ChartGroups.
+// All objects returned here must be treated as read-only.
 type ChartGroupNamespaceLister interface {
 	// List lists all ChartGroups in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*business.ChartGroup, err error)
 	// Get retrieves the ChartGroup from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*business.ChartGroup, error)
 	ChartGroupNamespaceListerExpansion
 }

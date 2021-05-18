@@ -28,8 +28,10 @@ import (
 )
 
 // RepositoryLister helps list Repositories.
+// All objects returned here must be treated as read-only.
 type RepositoryLister interface {
 	// List lists all Repositories in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*registry.Repository, err error)
 	// Repositories returns an object that can list and get Repositories.
 	Repositories(namespace string) RepositoryNamespaceLister
@@ -60,10 +62,13 @@ func (s *repositoryLister) Repositories(namespace string) RepositoryNamespaceLis
 }
 
 // RepositoryNamespaceLister helps list and get Repositories.
+// All objects returned here must be treated as read-only.
 type RepositoryNamespaceLister interface {
 	// List lists all Repositories in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*registry.Repository, err error)
 	// Get retrieves the Repository from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*registry.Repository, error)
 	RepositoryNamespaceListerExpansion
 }
