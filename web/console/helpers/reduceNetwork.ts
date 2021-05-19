@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { OperationResult } from '@tencent/ff-redux';
 import { RequestParams, ResourceInfo } from '../src/modules/common/models';
-import { changeForbiddentConfig } from '../index';
+import { changeForbiddentConfig } from '../index.tke';
 import { parseQueryString } from './urlUtil';
 import { getProjectName } from './appUtil';
 
@@ -77,7 +77,7 @@ export const reduceNetworkRequest = async (
   userParams: RequestParams,
   clusterId?: string,
   projectId?: string,
-  keyword?: string,
+  keyword?: string
 ) => {
   let {
     method,

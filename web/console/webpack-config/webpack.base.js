@@ -5,10 +5,10 @@ const webpack = require('webpack');
 module.exports = ({ version, mode }) => ({
   mode,
 
-  entry: './index.tsx',
+  entry: `./index.${version}.tsx`,
 
   output: {
-    filename: `index.${version}.js`,
+    filename: `index.${version}.[fullhash].js`,
     path: path.resolve(__dirname, '../build')
   },
 

@@ -1,5 +1,7 @@
 const fs = require('fs');
 
+const currentEntry = '';
+
 module.exports = function (source) {
   this.cacheable && this.cacheable();
   const options = this.getOptions();

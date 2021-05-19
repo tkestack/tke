@@ -1,4 +1,4 @@
-import { changeForbiddentConfig } from '@/index';
+import { changeForbiddentConfig } from '@/index.tke';
 import { Method } from '@helper';
 import Axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
