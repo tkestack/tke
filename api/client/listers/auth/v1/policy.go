@@ -28,10 +28,13 @@ import (
 )
 
 // PolicyLister helps list Policies.
+// All objects returned here must be treated as read-only.
 type PolicyLister interface {
 	// List lists all Policies in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.Policy, err error)
 	// Get retrieves the Policy from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.Policy, error)
 	PolicyListerExpansion
 }

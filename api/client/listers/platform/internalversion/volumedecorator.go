@@ -28,10 +28,13 @@ import (
 )
 
 // VolumeDecoratorLister helps list VolumeDecorators.
+// All objects returned here must be treated as read-only.
 type VolumeDecoratorLister interface {
 	// List lists all VolumeDecorators in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*platform.VolumeDecorator, err error)
 	// Get retrieves the VolumeDecorator from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*platform.VolumeDecorator, error)
 	VolumeDecoratorListerExpansion
 }

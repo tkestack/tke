@@ -28,10 +28,13 @@ import (
 )
 
 // CronHPALister helps list CronHPAs.
+// All objects returned here must be treated as read-only.
 type CronHPALister interface {
 	// List lists all CronHPAs in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*platform.CronHPA, err error)
 	// Get retrieves the CronHPA from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*platform.CronHPA, error)
 	CronHPAListerExpansion
 }

@@ -28,10 +28,13 @@ import (
 )
 
 // RoleLister helps list Roles.
+// All objects returned here must be treated as read-only.
 type RoleLister interface {
 	// List lists all Roles in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.Role, err error)
 	// Get retrieves the Role from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.Role, error)
 	RoleListerExpansion
 }

@@ -28,10 +28,13 @@ import (
 )
 
 // PersistentEventLister helps list PersistentEvents.
+// All objects returned here must be treated as read-only.
 type PersistentEventLister interface {
 	// List lists all PersistentEvents in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.PersistentEvent, err error)
 	// Get retrieves the PersistentEvent from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.PersistentEvent, error)
 	PersistentEventListerExpansion
 }

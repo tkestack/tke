@@ -28,10 +28,13 @@ import (
 )
 
 // ChartGroupLister helps list ChartGroups.
+// All objects returned here must be treated as read-only.
 type ChartGroupLister interface {
 	// List lists all ChartGroups in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*registry.ChartGroup, err error)
 	// Get retrieves the ChartGroup from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*registry.ChartGroup, error)
 	ChartGroupListerExpansion
 }

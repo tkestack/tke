@@ -28,10 +28,13 @@ import (
 )
 
 // LogAgentLister helps list LogAgents.
+// All objects returned here must be treated as read-only.
 type LogAgentLister interface {
 	// List lists all LogAgents in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*logagent.LogAgent, err error)
 	// Get retrieves the LogAgent from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*logagent.LogAgent, error)
 	LogAgentListerExpansion
 }

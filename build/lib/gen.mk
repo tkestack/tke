@@ -22,7 +22,7 @@ K8S_API_DIR = $(shell go list -f '{{ .Dir }}' -m k8s.io/api)
 GOGO_PROTOBUF_DIR = $(shell go list -f '{{ .Dir }}' -m github.com/gogo/protobuf)
 EXT_PB_APIS = "k8s.io/api/core/v1 k8s.io/api/apps/v1"
 # set the code generator image version
-CODE_GENERATOR_VERSION := v1.18.2
+CODE_GENERATOR_VERSION := v1.19.7
 FIND := find . ! -path './pkg/platform/provider/baremetal/apis/*'
 
 .PHONY: gen.run
