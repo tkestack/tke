@@ -9,7 +9,7 @@ module.exports = ({ version, mode }) => ({
 
   output: {
     filename: `index.${version}.[fullhash].js`,
-    path: path.resolve(__dirname, '../build')
+    path: path.resolve(__dirname, '../build/static/js')
   },
 
   module: {

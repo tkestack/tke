@@ -2,34 +2,57 @@ const { src, dest, series, parallel } = require('gulp');
 const uglifyjs = require('gulp-uglify');
 const { pipeline } = require('readable-stream');
 const cleanCSS = require('gulp-clean-css');
-const htmlmin = require('gulp-htmlmin');
+const htmlmin = require('gulp-html-minifier-terser');
 const ejs = require('gulp-ejs');
 const fg = require('fast-glob');
 
 // 从public压缩复制文件到build
 function minifyJs() {
-  return pipeline(src('public/static/js/*.js'), uglifyjs(), dest('build/static/js'));
+  return pipeline(src('public/**/*.js'), uglifyjs(), dest('build'));
 }
 
 function minifyCss() {
-  return src('public/static/css/**/*.css').pipe(cleanCSS()).pipe(dest('build/static/css'));
+  return src('public/**/*.css').pipe(cleanCSS()).pipe(dest('build'));
 }
 
 // 将打包好的js添加到html中
-async function minifyHtmlWithInjectJs() {
-  const [{ name: TKE_JS_NAME }, { name: PROJECT_JS_NAME }] = await fg(
-    ['build/index.tke.*.js', 'build/index.project.*.js'],
-    {
-      objectMode: true
-    }
-  );
+async function minifyIndexHtmlWithInjectJs() {
+  const [[{ name: TKE_JS_NAME }], [{ name: PROJECT_JS_NAME }]] = await Promise.all([
+    fg('build/static/js/index.tke.*.js', { objectMode: true }),
+    fg('build/static/js/index.project.*.js', { objectMode: true })
+  ]);
 
-  return src('public/index.html').pipe(ejs({ TKE_JS_NAME, PROJECT_JS_NAME })).pipe(dest('build'));
+  console.log(TKE_JS_NAME, PROJECT_JS_NAME);
+
+  return src('public/index.html')
+    .pipe(ejs({ TKE_JS_NAME, PROJECT_JS_NAME }))
+    .pipe(
+      htmlmin({
+        removeComments: true,
+        collapseWhitespace: true,
+        minifyJS: true,
+        minifyCSS: true
+      })
+    )
+    .pipe(dest('build'));
+}
+
+function minifyHtml() {
+  return src(['public/**/*.html', '!public/index.html'])
+    .pipe(
+      htmlmin({
+        removeComments: true,
+        collapseWhitespace: true,
+        minifyJS: true,
+        minifyCSS: true
+      })
+    )
+    .pipe(dest('build'));
 }
 
 // 复制其他不处理的文件
 function copyAnother() {
-  return src(['public/static/**/*', '!public/static/**/*.js', '!public/static/**/*.css']).pipe(dest('build/static'));
+  return src(['public/**/*', '!public/**/*.js', '!public/**/*.css', '!public/**/*.html']).pipe(dest('build'));
 }
 
-exports.default = parallel(minifyHtmlWithInjectJs);
+exports.default = parallel(minifyJs, minifyCss, minifyHtml, minifyIndexHtmlWithInjectJs, copyAnother);

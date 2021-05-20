@@ -135,7 +135,7 @@
     "gulp": "^4.0.2",
     "gulp-clean-css": "^4.3.0",
     "gulp-ejs": "^5.1.0",
-    "gulp-htmlmin": "^5.0.1",
+    "gulp-html-minifier-terser": "^6.0.1",
     "gulp-uglify": "^3.0.2",
     "happypack": "^5.0.0",
     "html-webpack-plugin": "^5.3.1",
