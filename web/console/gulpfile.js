@@ -17,12 +17,10 @@ function minifyCss() {
 
 // 将打包好的js添加到html中
 async function minifyIndexHtmlWithInjectJs() {
-  const [[{ name: TKE_JS_NAME }], [{ name: PROJECT_JS_NAME }]] = await Promise.all([
-    fg('build/static/js/index.tke.*.js', { objectMode: true }),
-    fg('build/static/js/index.project.*.js', { objectMode: true })
-  ]);
+  const rsp = await fg('static/js/index.(tke|project).*.js', { cwd: 'build' });
 
-  console.log(TKE_JS_NAME, PROJECT_JS_NAME);
+  const TKE_JS_NAME = rsp.find(p => p.includes('tke'));
+  const PROJECT_JS_NAME = rsp.find(p => p.includes('project'));
 
   return src('public/index.html')
     .pipe(ejs({ TKE_JS_NAME, PROJECT_JS_NAME }))

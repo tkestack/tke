@@ -24,7 +24,7 @@ import '@tencent/tchart/build/ChartsComponents';
 import { BlankPage } from './blankPage';
 import { Overview } from '@src/modules/overview';
 
-const Cluster = React.lazy(() => import('./src/modules/cluster'));
+const Cluster = React.lazy(() => import(/* webpackPrefetch: true */ './src/modules/cluster'));
 
 insertCSS(
   'hidden-checkbox',

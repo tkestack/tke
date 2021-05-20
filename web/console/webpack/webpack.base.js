@@ -1,6 +1,7 @@
 const path = require('path');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = ({ version, mode }) => ({
   mode,
@@ -8,8 +9,8 @@ module.exports = ({ version, mode }) => ({
   entry: `./index.${version}.tsx`,
 
   output: {
-    filename: `index.${version}.[fullhash].js`,
-    path: path.resolve(__dirname, '../build/static/js')
+    filename: `static/js/index.${version}.[fullhash].js`,
+    path: path.resolve(__dirname, '../build')
   },
 
   module: {
@@ -112,7 +113,24 @@ module.exports = ({ version, mode }) => ({
       Buffer: ['buffer', 'Buffer']
     }),
 
-    ...(mode === 'production' ? [] : [new BundleAnalyzerPlugin()])
+    ...(mode === 'production'
+      ? []
+      : [
+          new BundleAnalyzerPlugin(),
+          new HtmlWebpackPlugin({
+            template: path.resolve(__dirname, '../public/index.html'),
+            inject: false,
+            templateParameters: (_, { js: [targetJs] }) => {
+              console.log('html webpack plugin=====>>', targetJs);
+              return version === 'tke'
+                ? { TKE_JS_NAME: targetJs, PROJECT_JS_NAME: '' }
+                : {
+                    TKE_JS_NAME: '',
+                    PROJECT_JS_NAME: targetJs
+                  };
+            }
+          })
+        ])
   ],
 
   stats: {
