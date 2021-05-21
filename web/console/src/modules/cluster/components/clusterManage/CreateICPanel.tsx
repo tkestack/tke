@@ -8,7 +8,13 @@ import { Bubble, Button, ContentView, Icon, Justify } from '@tencent/tea-compone
 
 import { getWorkflowError, InputField, TipInfo } from '../../../../modules/common';
 import { allActions } from '../../actions';
-import { GPUTYPE, CreateICVipTypeOptions, CreateICVipType, CreateICCiliumOptions } from '../../constants/Config';
+import {
+  GPUTYPE,
+  CreateICVipTypeOptions,
+  CreateICVipType,
+  CreateICCiliumOptions,
+  NetworkModeOptions
+} from '../../constants/Config';
 import { ICComponter } from '../../models';
 import { router } from '../../router';
 import { RootProps } from '../ClusterApp';
@@ -103,7 +109,8 @@ export class CreateICPanel extends React.Component<RootProps, State> {
         gpu,
         gpuType,
         merticsServer,
-        cilium
+        cilium,
+        networkMode
       } = createIC;
 
     const hasEditing = computerList.filter(c => c.isEditing).length > 0 || this.state.isAdding;
@@ -264,6 +271,17 @@ export class CreateICPanel extends React.Component<RootProps, State> {
                 onChange: value => actions.createIC.useCilium(value)
               }}
             />
+
+            {cilium === 'Cilium' && (
+              <FormPanel.Item
+                label={t('networkMode')}
+                select={{
+                  options: NetworkModeOptions,
+                  value: networkMode,
+                  onChange: value => actions.createIC.setNetWorkMode(value)
+                }}
+              />
+            )}
 
             <FormPanel.Item label="GPU" text>
               <FormPanel.Checkbox value={gpu} onChange={actions.createIC.useGPU} />

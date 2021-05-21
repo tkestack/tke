@@ -42,6 +42,8 @@ const TempReducer = combineReducers({
 
   cilium: reduceToPayload(ActionType.v_IC_Cilium, 'Galaxy'),
 
+  networkMode: reduceToPayload(ActionType.v_IC_NetworkMode, 'overlay'),
+
   gpuType: reduceToPayload(ActionType.v_IC_GpuType, GPUTYPE.PGPU)
 });
 
