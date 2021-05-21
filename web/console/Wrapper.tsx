@@ -14,6 +14,7 @@ import { Button, Icon, Text, Bubble, NavMenu, List, ExternalLink } from '@tencen
 import zhCN from 'antd/lib/locale/zh_CN';
 import { ConfigProvider } from 'antd';
 import { TkeVersion } from '@/src/modules/common/components/tke-version';
+import 'antd/dist/antd.css';
 
 const routerSea = seajs.require('router');
 

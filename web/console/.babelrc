@@ -4,19 +4,12 @@
     [
       "@babel/preset-env",
       {
-        "modules": "commonjs"
+        "targets": {
+          "chrome": "58",
+          "ie": "11"
+        }
       }
     ]
   ],
-  "plugins": [
-    "@babel/plugin-transform-runtime",
-    [
-      "import",
-      {
-        "libraryName": "antd", // 包名
-        "libraryDirectory": "lib", // 目录，默认 lib
-        "style": true // 是否引入 style
-      }
-    ]
-  ]
+  "plugins": ["@babel/plugin-transform-runtime"]
 }
