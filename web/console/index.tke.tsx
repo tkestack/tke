@@ -1,20 +1,12 @@
 import './i18n';
 import * as React from 'react';
 import { Entry, insertCSS } from '@tencent/ff-redux';
-import { Project } from './src/modules/project';
-import { Registry } from './src/modules/registry';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Wrapper, PlatformTypeEnum } from './Wrapper';
 import { Addon } from './src/modules/addon';
-import { Uam } from './src/modules/uam';
 import { PersistentEvent } from './src/modules/persistentEvent';
 import { Audit } from './src/modules/audit';
-import { AlarmPolicy } from './src/modules/alarmPolicy';
 import { AlarmRecord } from './src/modules/alarmRecord';
-import { Notify } from './src/modules/notify';
-import { LogStash } from './src/modules/logStash';
-import { Helm } from './src/modules/helm';
-import { Application } from './src/modules/application';
 import { TipDialog } from './src/modules/common';
 import { Button, Alert, Text } from '@tencent/tea-component';
 import { Init_Forbiddent_Config } from './helpers/reduceNetwork';
@@ -23,8 +15,33 @@ import { Init_Forbiddent_Config } from './helpers/reduceNetwork';
 import '@tencent/tchart/build/ChartsComponents';
 import { BlankPage } from './blankPage';
 import { Overview } from '@src/modules/overview';
+
 const ClusterPromise = import(/* webpackPrefetch: true */ './src/modules/cluster');
 const Cluster = React.lazy(() => ClusterPromise);
+
+const UamPromise = import(/* webpackPrefetch: true */ './src/modules/uam');
+const Uam = React.lazy(() => UamPromise);
+
+const RegistryPromise = import(/* webpackPrefetch: true */ './src/modules/registry');
+const Registry = React.lazy(() => RegistryPromise);
+
+const LogStashPromise = import(/* webpackPrefetch: true */ './src/modules/logStash');
+const LogStash = React.lazy(() => LogStashPromise);
+
+const ProjectPromise = import(/* webpackPrefetch: true */ './src/modules/project');
+const Project = React.lazy(() => ProjectPromise);
+
+const HelmPromise = import(/* webpackPrefetch: true */ './src/modules/helm');
+const Helm = React.lazy(() => HelmPromise);
+
+const ApplicationPromise = import(/* webpackPrefetch: true */ './src/modules/application');
+const Application = React.lazy(() => ApplicationPromise);
+
+const AlarmPolicyPromise = import(/* webpackPrefetch: true */ './src/modules/alarmPolicy');
+const AlarmPolicy = React.lazy(() => AlarmPolicyPromise);
+
+const NotifyPromise = import(/* webpackPrefetch: true */ './src/modules/notify');
+const Notify = React.lazy(() => NotifyPromise);
 
 insertCSS(
   'hidden-checkbox',
