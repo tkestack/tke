@@ -17,8 +17,9 @@ import { Application as App } from '@src/modules/application';
 // 公有云的图表组件为异步加载，这里为了减少路径配置，还是保留为同步加载，预先import即可变成不split
 import '@tencent/tchart/build/ChartsComponents';
 import { Project } from '@src/modules/project';
+const ApplicationPromise = import(/* webpackPrefetch: true */ './src/modules/cluster//index.project');
 
-const Application = React.lazy(() => import(/* webpackPrefetch: true */ './src/modules/cluster//index.project'));
+const Application = React.lazy(() => ApplicationPromise);
 
 insertCSS(
   'myTagSearchBox',

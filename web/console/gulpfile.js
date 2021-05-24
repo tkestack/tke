@@ -18,13 +18,14 @@ function minifyCss() {
 
 // 将打包好的js添加到html中
 async function minifyIndexHtmlWithInjectJs() {
-  const rsp = await fg('static/js/index.(tke|project).*.js', { cwd: 'build' });
+  const rsp = await fg(['static/js/index.(tke|project).main.*.js', 'static/js/common-vendor.*.js'], { cwd: 'build' });
 
   const TKE_JS_NAME = rsp.find(p => p.includes('tke'));
   const PROJECT_JS_NAME = rsp.find(p => p.includes('project'));
+  const COMMON_VENDOR_JS_NAME = rsp.find(p => p.includes('common-vendor'));
 
   return src('public/index.html')
-    .pipe(ejs({ TKE_JS_NAME, PROJECT_JS_NAME }))
+    .pipe(ejs({ TKE_JS_NAME, PROJECT_JS_NAME, COMMON_VENDOR_JS_NAME }))
     .pipe(
       htmlmin({
         removeComments: true,

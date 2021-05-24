@@ -76,6 +76,7 @@
     "@typescript-eslint/parser": "^4.7.0",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.0.0",
+    "babel-plugin-import": "^1.13.3",
     "css-loader": "^5.2.5",
     "eslint": "^7.13.0",
     "eslint-config-react-app": "^6.0.0",

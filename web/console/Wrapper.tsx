@@ -10,11 +10,10 @@ import { ResourceInfo, RequestParams } from './src/modules/common/models';
 import { resourceConfig } from './config';
 import { isEmpty } from './src/modules/common/utils';
 import * as classnames from 'classnames';
-import { Button, Icon, Text, Bubble, NavMenu, List, ExternalLink } from '@tencent/tea-component';
+import { Icon, Text, Bubble, NavMenu, List, ExternalLink } from '@tencent/tea-component';
 import zhCN from 'antd/lib/locale/zh_CN';
 import { ConfigProvider, Spin } from 'antd';
 import { TkeVersion } from '@/src/modules/common/components/tke-version';
-import 'antd/dist/antd.css';
 
 const routerSea = seajs.require('router');
 
@@ -572,7 +571,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
                   alignItems: 'center'
                 }}
               >
-                <Spin />
+                <Spin delay={500} />
               </div>
             }
           >

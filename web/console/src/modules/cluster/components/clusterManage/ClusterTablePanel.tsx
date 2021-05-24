@@ -201,7 +201,7 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
           当前集群列表为空，您可以
           <a
             href="javascript:void(0);"
-            onClick={() => router.navigate({ sub: 'createIC' }, { rid: region.selection.value + '' })}
+            onClick={() => router.navigate({ sub: 'createIC' }, { rid: region?.selection?.value + '' })}
           >
             [新建一个集群]
           </a>
@@ -294,7 +294,7 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
 
     // 进行路由的跳转
     const routeQueries = {
-      rid: region.selection.value + '',
+      rid: region?.selection?.value + '',
       clusterId: cluster.metadata.name
     };
     router.navigate({ sub: 'sub', mode: 'list', type: 'resource', resourceName: 'deployment' }, routeQueries);
@@ -311,7 +311,7 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
     const isDisabledButon = cluster.status.phase === 'Terminating';
 
     const routeQueries = {
-      rid: region.selection.value + '',
+      rid: region?.selection?.value + '',
       clusterId: cluster.metadata.name
     };
 

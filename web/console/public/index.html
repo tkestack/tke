@@ -33,6 +33,7 @@
   </head>
 
   <body>
+    <script src="/<%= COMMON_VENDOR_JS_NAME %>"></script>
     <!-- <div id="pageWrapper"></div> -->
     <div id="appArea"></div>
 
@@ -199,13 +200,16 @@
                 T(a, b);
               }, 1),
               void 0)
-            : ((a.onload = a.onerror = a.onreadystatechange = function () {
-                N.test(a.readyState) &&
-                  ((a.onload = a.onerror = a.onreadystatechange = null),
-                  c || d.debug || K.removeChild(a),
-                  (a = null),
-                  b());
-              }),
+            : ((a.onload =
+                a.onerror =
+                a.onreadystatechange =
+                  function () {
+                    N.test(a.readyState) &&
+                      ((a.onload = a.onerror = a.onreadystatechange = null),
+                      c || d.debug || K.removeChild(a),
+                      (a = null),
+                      b());
+                  }),
               void 0);
         }
 
@@ -289,9 +293,10 @@
           bb,
           db;
         a.seajs ||
-          ((c = a.seajs = {
-            version: '2.1.1'
-          }),
+          ((c = a.seajs =
+            {
+              version: '2.1.1'
+            }),
           (d = c.data = {}),
           (f = e('Object')),
           (g = e('String')),
@@ -311,12 +316,13 @@
               else delete l[a];
             return c;
           }),
-          (m = c.emit = function (a, b) {
-            var e,
-              d = l[a];
-            if (d) for (d = d.slice(); (e = d.shift()); ) e(b);
-            return c;
-          }),
+          (m = c.emit =
+            function (a, b) {
+              var e,
+                d = l[a];
+              if (d) for (d = d.slice(); (e = d.shift()); ) e(b);
+              return c;
+            }),
           (n = /[^?#]*\//),
           (o = /\/\.\//g),
           (p = /\/[^/]+\/\.\.\//),
@@ -335,20 +341,22 @@
           (M = /\.css(?:\?|$)/i),
           (N = /^(?:loaded|complete|undefined)$/),
           (Q = 1 * navigator.userAgent.replace(/.*AppleWebKit\/(\d+)\..*/, '$1') < 536),
-          (V = /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^\/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*require|(?:^|[^$])\brequire\s*\(\s*(["'])(.+?)\1\s*\)/g),
+          (V =
+            /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^\/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*require|(?:^|[^$])\brequire\s*\(\s*(["'])(.+?)\1\s*\)/g),
           (W = /\\\\/g),
           (Y = c.cache = {}),
           ($ = {}),
           (_ = {}),
           (ab = {}),
-          (bb = cb.STATUS = {
-            FETCHING: 1,
-            SAVED: 2,
-            LOADING: 3,
-            LOADED: 4,
-            EXECUTING: 5,
-            EXECUTED: 6
-          }),
+          (bb = cb.STATUS =
+            {
+              FETCHING: 1,
+              SAVED: 2,
+              LOADING: 3,
+              LOADED: 4,
+              EXECUTING: 5,
+              EXECUTED: 6
+            }),
           (cb.prototype.resolve = function () {
             var d,
               e,

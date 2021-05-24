@@ -23,8 +23,8 @@ import { Init_Forbiddent_Config } from './helpers/reduceNetwork';
 import '@tencent/tchart/build/ChartsComponents';
 import { BlankPage } from './blankPage';
 import { Overview } from '@src/modules/overview';
-
-const Cluster = React.lazy(() => import(/* webpackPrefetch: true */ './src/modules/cluster'));
+const ClusterPromise = import(/* webpackPrefetch: true */ './src/modules/cluster');
+const Cluster = React.lazy(() => ClusterPromise);
 
 insertCSS(
   'hidden-checkbox',

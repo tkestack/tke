@@ -9,8 +9,21 @@ module.exports = ({ version, mode }) => ({
   entry: `./index.${version}.tsx`,
 
   output: {
-    filename: `static/js/index.${version}.[fullhash].js`,
+    filename: `static/js/index.${version}.[name].[contenthash].js`,
     path: path.resolve(__dirname, '../build')
+  },
+
+  optimization: {
+    splitChunks: {
+      cacheGroups: {
+        commonVendor: {
+          test: /[\\/]node_modules[\\/](react|react-dom|lodash|codemirror|validator|@tencent|esprima|validator)[\\/]/,
+          filename: 'static/js/common-vendor.[contenthash].js',
+          chunks: 'initial',
+          priority: -10
+        }
+      }
+    }
   },
 
   module: {
@@ -36,6 +49,8 @@ module.exports = ({ version, mode }) => ({
         test: /\.tsx?$/,
         use: [
           'thread-loader',
+
+          'babel-loader',
 
           {
             loader: 'ts-loader',
@@ -120,13 +135,16 @@ module.exports = ({ version, mode }) => ({
           new HtmlWebpackPlugin({
             template: path.resolve(__dirname, '../public/index.html'),
             inject: false,
-            templateParameters: (_, { js: [targetJs] }) => {
-              console.log('html webpack plugin=====>>', targetJs);
+            templateParameters: (_, { js }) => {
+              console.log('html webpack plugin=====>>', js);
+              const index = js.find(path => path.includes('index'));
+              const commonVendor = js.find(path => path.includes('common-vendor'));
               return version === 'tke'
-                ? { TKE_JS_NAME: targetJs, PROJECT_JS_NAME: '' }
+                ? { TKE_JS_NAME: index, PROJECT_JS_NAME: '', COMMON_VENDOR_JS_NAME: commonVendor }
                 : {
                     TKE_JS_NAME: '',
-                    PROJECT_JS_NAME: targetJs
+                    PROJECT_JS_NAME: index,
+                    COMMON_VENDOR_JS_NAME: commonVendor
                   };
             }
           })
