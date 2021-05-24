@@ -12,7 +12,7 @@ import { isEmpty } from './src/modules/common/utils';
 import * as classnames from 'classnames';
 import { Button, Icon, Text, Bubble, NavMenu, List, ExternalLink } from '@tencent/tea-component';
 import zhCN from 'antd/lib/locale/zh_CN';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, Spin } from 'antd';
 import { TkeVersion } from '@/src/modules/common/components/tke-version';
 import 'antd/dist/antd.css';
 
@@ -561,7 +561,23 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     return (
       <PlatformContext.Provider value={{ type: this.props.platformType }}>
         <ConfigProvider locale={zhCN}>
-          <React.Suspense fallback={'加载...'}>{finalContent}</React.Suspense>
+          <React.Suspense
+            fallback={
+              <div
+                style={{
+                  width: '100vw',
+                  height: '100vh',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}
+              >
+                <Spin />
+              </div>
+            }
+          >
+            {finalContent}
+          </React.Suspense>
         </ConfigProvider>
       </PlatformContext.Provider>
     );

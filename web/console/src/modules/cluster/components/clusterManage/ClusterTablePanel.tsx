@@ -149,7 +149,7 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
                     router.navigate(
                       { sub: 'sub', mode: 'list', type: 'nodeManage', resourceName: 'node' },
                       {
-                        rid: region.selection.value + '',
+                        rid: region?.selection?.value + '',
                         clusterId: x.metadata.name
                       }
                     );
