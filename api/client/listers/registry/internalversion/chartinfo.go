@@ -28,8 +28,10 @@ import (
 )
 
 // ChartInfoLister helps list ChartInfos.
+// All objects returned here must be treated as read-only.
 type ChartInfoLister interface {
 	// List lists all ChartInfos in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*registry.ChartInfo, err error)
 	// ChartInfos returns an object that can list and get ChartInfos.
 	ChartInfos(namespace string) ChartInfoNamespaceLister
@@ -60,10 +62,13 @@ func (s *chartInfoLister) ChartInfos(namespace string) ChartInfoNamespaceLister 
 }
 
 // ChartInfoNamespaceLister helps list and get ChartInfos.
+// All objects returned here must be treated as read-only.
 type ChartInfoNamespaceLister interface {
 	// List lists all ChartInfos in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*registry.ChartInfo, err error)
 	// Get retrieves the ChartInfo from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*registry.ChartInfo, error)
 	ChartInfoNamespaceListerExpansion
 }

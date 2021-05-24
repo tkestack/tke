@@ -28,10 +28,13 @@ import (
 )
 
 // PrometheusLister helps list Prometheuses.
+// All objects returned here must be treated as read-only.
 type PrometheusLister interface {
 	// List lists all Prometheuses in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*platform.Prometheus, err error)
 	// Get retrieves the Prometheus from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*platform.Prometheus, error)
 	PrometheusListerExpansion
 }

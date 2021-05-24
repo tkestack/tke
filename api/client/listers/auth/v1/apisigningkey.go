@@ -28,10 +28,13 @@ import (
 )
 
 // APISigningKeyLister helps list APISigningKeys.
+// All objects returned here must be treated as read-only.
 type APISigningKeyLister interface {
 	// List lists all APISigningKeys in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.APISigningKey, err error)
 	// Get retrieves the APISigningKey from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.APISigningKey, error)
 	APISigningKeyListerExpansion
 }

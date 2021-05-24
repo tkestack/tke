@@ -28,10 +28,13 @@ import (
 )
 
 // LogCollectorLister helps list LogCollectors.
+// All objects returned here must be treated as read-only.
 type LogCollectorLister interface {
 	// List lists all LogCollectors in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*platform.LogCollector, err error)
 	// Get retrieves the LogCollector from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*platform.LogCollector, error)
 	LogCollectorListerExpansion
 }

@@ -28,10 +28,13 @@ import (
 )
 
 // APIKeyLister helps list APIKeys.
+// All objects returned here must be treated as read-only.
 type APIKeyLister interface {
 	// List lists all APIKeys in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*auth.APIKey, err error)
 	// Get retrieves the APIKey from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*auth.APIKey, error)
 	APIKeyListerExpansion
 }

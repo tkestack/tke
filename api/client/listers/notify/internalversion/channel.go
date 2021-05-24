@@ -28,10 +28,13 @@ import (
 )
 
 // ChannelLister helps list Channels.
+// All objects returned here must be treated as read-only.
 type ChannelLister interface {
 	// List lists all Channels in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*notify.Channel, err error)
 	// Get retrieves the Channel from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*notify.Channel, error)
 	ChannelListerExpansion
 }

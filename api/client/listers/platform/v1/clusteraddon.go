@@ -28,10 +28,13 @@ import (
 )
 
 // ClusterAddonLister helps list ClusterAddons.
+// All objects returned here must be treated as read-only.
 type ClusterAddonLister interface {
 	// List lists all ClusterAddons in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.ClusterAddon, err error)
 	// Get retrieves the ClusterAddon from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.ClusterAddon, error)
 	ClusterAddonListerExpansion
 }

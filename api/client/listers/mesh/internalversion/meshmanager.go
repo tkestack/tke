@@ -28,10 +28,13 @@ import (
 )
 
 // MeshManagerLister helps list MeshManagers.
+// All objects returned here must be treated as read-only.
 type MeshManagerLister interface {
 	// List lists all MeshManagers in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*mesh.MeshManager, err error)
 	// Get retrieves the MeshManager from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*mesh.MeshManager, error)
 	MeshManagerListerExpansion
 }

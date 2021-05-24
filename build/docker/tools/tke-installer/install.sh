@@ -164,7 +164,7 @@ function check_installer() {
       continue
     else
       echo "Step.6 check tke-installer status [done]"
-      echo "Please use your browser which can connect this machine to open http://{YOUR_HOST}:8080/index.html for install TKE!"
+      echo "Please use your browser which can connect this machine to open $url for install TKE!"
       exit 0
     fi
   done

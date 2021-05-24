@@ -28,8 +28,10 @@ import (
 )
 
 // TemplateLister helps list Templates.
+// All objects returned here must be treated as read-only.
 type TemplateLister interface {
 	// List lists all Templates in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*notify.Template, err error)
 	// Templates returns an object that can list and get Templates.
 	Templates(namespace string) TemplateNamespaceLister
@@ -60,10 +62,13 @@ func (s *templateLister) Templates(namespace string) TemplateNamespaceLister {
 }
 
 // TemplateNamespaceLister helps list and get Templates.
+// All objects returned here must be treated as read-only.
 type TemplateNamespaceLister interface {
 	// List lists all Templates in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*notify.Template, err error)
 	// Get retrieves the Template from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*notify.Template, error)
 	TemplateNamespaceListerExpansion
 }

@@ -28,8 +28,10 @@ import (
 )
 
 // NamespaceLister helps list Namespaces.
+// All objects returned here must be treated as read-only.
 type NamespaceLister interface {
 	// List lists all Namespaces in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.Namespace, err error)
 	// Namespaces returns an object that can list and get Namespaces.
 	Namespaces(namespace string) NamespaceNamespaceLister
@@ -60,10 +62,13 @@ func (s *namespaceLister) Namespaces(namespace string) NamespaceNamespaceLister 
 }
 
 // NamespaceNamespaceLister helps list and get Namespaces.
+// All objects returned here must be treated as read-only.
 type NamespaceNamespaceLister interface {
 	// List lists all Namespaces in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.Namespace, err error)
 	// Get retrieves the Namespace from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.Namespace, error)
 	NamespaceNamespaceListerExpansion
 }

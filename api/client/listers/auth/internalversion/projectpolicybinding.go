@@ -28,10 +28,13 @@ import (
 )
 
 // ProjectPolicyBindingLister helps list ProjectPolicyBindings.
+// All objects returned here must be treated as read-only.
 type ProjectPolicyBindingLister interface {
 	// List lists all ProjectPolicyBindings in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*auth.ProjectPolicyBinding, err error)
 	// Get retrieves the ProjectPolicyBinding from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*auth.ProjectPolicyBinding, error)
 	ProjectPolicyBindingListerExpansion
 }

@@ -28,10 +28,13 @@ import (
 )
 
 // LocalGroupLister helps list LocalGroups.
+// All objects returned here must be treated as read-only.
 type LocalGroupLister interface {
 	// List lists all LocalGroups in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*auth.LocalGroup, err error)
 	// Get retrieves the LocalGroup from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*auth.LocalGroup, error)
 	LocalGroupListerExpansion
 }

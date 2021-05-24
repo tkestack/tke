@@ -28,10 +28,13 @@ import (
 )
 
 // UserLister helps list Users.
+// All objects returned here must be treated as read-only.
 type UserLister interface {
 	// List lists all Users in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*auth.User, err error)
 	// Get retrieves the User from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*auth.User, error)
 	UserListerExpansion
 }

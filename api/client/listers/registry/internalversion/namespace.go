@@ -28,10 +28,13 @@ import (
 )
 
 // NamespaceLister helps list Namespaces.
+// All objects returned here must be treated as read-only.
 type NamespaceLister interface {
 	// List lists all Namespaces in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*registry.Namespace, err error)
 	// Get retrieves the Namespace from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*registry.Namespace, error)
 	NamespaceListerExpansion
 }
