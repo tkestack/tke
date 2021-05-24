@@ -28,8 +28,10 @@ import (
 )
 
 // MessageRequestLister helps list MessageRequests.
+// All objects returned here must be treated as read-only.
 type MessageRequestLister interface {
 	// List lists all MessageRequests in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.MessageRequest, err error)
 	// MessageRequests returns an object that can list and get MessageRequests.
 	MessageRequests(namespace string) MessageRequestNamespaceLister
@@ -60,10 +62,13 @@ func (s *messageRequestLister) MessageRequests(namespace string) MessageRequestN
 }
 
 // MessageRequestNamespaceLister helps list and get MessageRequests.
+// All objects returned here must be treated as read-only.
 type MessageRequestNamespaceLister interface {
 	// List lists all MessageRequests in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.MessageRequest, err error)
 	// Get retrieves the MessageRequest from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.MessageRequest, error)
 	MessageRequestNamespaceListerExpansion
 }

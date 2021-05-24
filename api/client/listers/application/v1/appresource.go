@@ -28,8 +28,10 @@ import (
 )
 
 // AppResourceLister helps list AppResources.
+// All objects returned here must be treated as read-only.
 type AppResourceLister interface {
 	// List lists all AppResources in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.AppResource, err error)
 	// AppResources returns an object that can list and get AppResources.
 	AppResources(namespace string) AppResourceNamespaceLister
@@ -60,10 +62,13 @@ func (s *appResourceLister) AppResources(namespace string) AppResourceNamespaceL
 }
 
 // AppResourceNamespaceLister helps list and get AppResources.
+// All objects returned here must be treated as read-only.
 type AppResourceNamespaceLister interface {
 	// List lists all AppResources in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.AppResource, err error)
 	// Get retrieves the AppResource from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.AppResource, error)
 	AppResourceNamespaceListerExpansion
 }

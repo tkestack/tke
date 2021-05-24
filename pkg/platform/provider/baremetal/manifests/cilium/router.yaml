@@ -1,13 +1,5 @@
 {{ if eq .NetworkMode "underlay" }}
 ---
-# Source: cilium-router/templates/serviceaccount.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: cilium-router
-  namespace: default
----
-# Source: cilium-router/templates/clusterrole.yaml
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -28,7 +20,6 @@ rules:
       - watch
       - get
 ---
-# Source: cilium-router/templates/clusterrolebinding.yaml
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -40,70 +31,21 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: cilium-router
-    namespace: default
+    namespace: kube-system
 ---
-# Source: cilium-router/templates/bmp-daemonset.yaml
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  labels:
-    k8s-app: bmp
-  name: bmp
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      k8s-app: bmp
-  template:
-    metadata:
-      labels:
-        k8s-app: bmp
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: networking.infra.tce.io/bmp-server
-                    operator: In
-                    values:
-                      - "true"
-      containers:
-        - args:
-            - -bmp-port=11019
-            - -bmp-event-file=/var/lib/bmp/events
-          image: {{ .BmpImage }}
-          imagePullPolicy: IfNotPresent
-          name: bmp
-          resources:
-            limits:
-              cpu: 500m
-              memory: 200Mi
-          volumeMounts:
-            - mountPath: /var/lib/bmp
-              name: bmp
-      hostNetwork: true
-      nodeSelector:
-        beta.kubernetes.io/os: linux
-      priorityClassName: system-node-critical
-      volumes:
-        - hostPath:
-            path: /data/infra.tce.io/bmp
-            type: ""
-          name: bmp
-  updateStrategy:
-    rollingUpdate:
-      maxUnavailable: 1
-    type: RollingUpdate
----
-# Source: cilium-router/templates/daemonset.yaml
-apiVersion: apps/v1
-kind: DaemonSet
+apiVersion: v1
+kind: ServiceAccount
 metadata:
   name: cilium-router
-  namespace: default
+  namespace: kube-system
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
   labels:
     app: cilium-router
+  name: cilium-router
+  namespace: kube-system
 spec:
   selector:
     matchLabels:
@@ -118,22 +60,25 @@ spec:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
-            - matchExpressions:
-              - key: kubernetes.io/os
-                operator: In
-                values:
-                - linux
-              - key: node.infra.tce.io/lifecycle
-                operator: NotIn
-                values:
-                - maintain
+              - matchExpressions:
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+                  - key: node.infra.tce.io/lifecycle
+                    operator: NotIn
+                    values:
+                      - maintain
+                  - key: testing.infra.tce.io/node-type
+                    operator: NotIn
+                    values:
+                      - hollow
       containers:
         - args:
             - -iface=$(HOST_IP)
             - -node-name=$(NODE_NAME)
-            - -cluster-ip-range=192.168.0.0/16
+            - -cluster-ip-range={{ .ClusterCIDR }}
             - -network-mode=bgp
-            - -bgp-peer-auth=
             - -bgp-restart-time=300
             - -bgp-keepalive-time=60
             - -cidr-getter=tke-annotation
@@ -173,14 +118,23 @@ spec:
                 - NET_ADMIN
                 - NET_RAW
             privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
       hostNetwork: true
       priorityClassName: system-node-critical
       restartPolicy: Always
+      schedulerName: default-scheduler
       serviceAccount: cilium-router
+      serviceAccountName: cilium-router
       terminationGracePeriodSeconds: 30
       tolerations:
         - effect: NoSchedule
           operator: Exists
         - effect: NoExecute
           operator: Exists
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
 {{ end }}

@@ -28,10 +28,13 @@ import (
 )
 
 // LBCFLister helps list LBCFs.
+// All objects returned here must be treated as read-only.
 type LBCFLister interface {
 	// List lists all LBCFs in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.LBCF, err error)
 	// Get retrieves the LBCF from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.LBCF, error)
 	LBCFListerExpansion
 }

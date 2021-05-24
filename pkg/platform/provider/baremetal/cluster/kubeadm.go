@@ -61,6 +61,14 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubead
 	} else {
 		kubeletExtraArgs["node-labels"] = apiclient.GetNodeIPV6Label(machineIP)
 	}
+	if c.Cluster.Spec.Features.EnableCilium && c.Cluster.Spec.NetworkArgs["networkMode"] == "underlay" {
+		if asn, ok := c.Cluster.Spec.NetworkArgs["asn"]; ok {
+			kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s=%s", apiclient.LabelASNCilium, asn)
+		}
+		if switchIP, ok := c.Cluster.Spec.NetworkArgs["switch-ip"]; ok {
+			kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s=%s", apiclient.LabelSwitchIPCilium, switchIP)
+		}
+	}
 	if _, ok := kubeletExtraArgs["hostname-override"]; !ok {
 		if !c.Spec.HostnameAsNodename {
 			nodeRegistration.Name = machineIP
@@ -247,7 +255,7 @@ func (p *Provider) getControllerManagerExtraArgs(c *v1.Cluster) map[string]strin
 		args["node-cidr-mask-size"] = fmt.Sprintf("%v", c.Status.NodeCIDRMaskSize)
 		args["service-cluster-ip-range"] = c.Status.ServiceCIDR
 	}
-	if c.Spec.Features.EnableCilium {
+	if c.Spec.Features.EnableCilium && c.Spec.NetworkArgs["networkMode"] == "overlay" {
 		args["configure-cloud-routes"] = "false"
 		args["allocate-node-cidrs"] = "false"
 	}

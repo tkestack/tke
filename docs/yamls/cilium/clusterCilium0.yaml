@@ -9,7 +9,8 @@
         "type": "Baremetal",
         "version": "1.19.7",
         "networkArgs": {
-           "networkMode": "overlay"
+           "backendType": "geneve",
+           "debugMode": "true"
 	},
         "features": {
 	  "ipvs": false,

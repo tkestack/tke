@@ -28,10 +28,13 @@ import (
 )
 
 // ClientLister helps list Clients.
+// All objects returned here must be treated as read-only.
 type ClientLister interface {
 	// List lists all Clients in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*auth.Client, err error)
 	// Get retrieves the Client from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*auth.Client, error)
 	ClientListerExpansion
 }

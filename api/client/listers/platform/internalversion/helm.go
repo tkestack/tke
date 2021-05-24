@@ -28,10 +28,13 @@ import (
 )
 
 // HelmLister helps list Helms.
+// All objects returned here must be treated as read-only.
 type HelmLister interface {
 	// List lists all Helms in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*platform.Helm, err error)
 	// Get retrieves the Helm from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*platform.Helm, error)
 	HelmListerExpansion
 }

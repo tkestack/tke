@@ -443,10 +443,6 @@ spec:
             successThreshold: 1
             timeoutSeconds: 5
           env:
-            - name: KUBERNETES_SERVICE_PORT
-              value: "6443"
-            - name: KUBERNETES_SERVICE_HOST
-              value: 10.32.0.13
             - name: K8S_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -681,10 +677,6 @@ spec:
           command:
             - cilium-operator-generic
           env:
-            - name: KUBERNETES_SERVICE_PORT
-              value: "6443"
-            - name: KUBERNETES_SERVICE_HOST
-              value: 10.32.0.13
             - name: K8S_NODE_NAME
               valueFrom:
                 fieldRef:

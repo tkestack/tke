@@ -28,10 +28,13 @@ import (
 )
 
 // PlatformLister helps list Platforms.
+// All objects returned here must be treated as read-only.
 type PlatformLister interface {
 	// List lists all Platforms in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*business.Platform, err error)
 	// Get retrieves the Platform from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*business.Platform, error)
 	PlatformListerExpansion
 }

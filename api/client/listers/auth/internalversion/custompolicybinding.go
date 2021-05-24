@@ -28,8 +28,10 @@ import (
 )
 
 // CustomPolicyBindingLister helps list CustomPolicyBindings.
+// All objects returned here must be treated as read-only.
 type CustomPolicyBindingLister interface {
 	// List lists all CustomPolicyBindings in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*auth.CustomPolicyBinding, err error)
 	// CustomPolicyBindings returns an object that can list and get CustomPolicyBindings.
 	CustomPolicyBindings(namespace string) CustomPolicyBindingNamespaceLister
@@ -60,10 +62,13 @@ func (s *customPolicyBindingLister) CustomPolicyBindings(namespace string) Custo
 }
 
 // CustomPolicyBindingNamespaceLister helps list and get CustomPolicyBindings.
+// All objects returned here must be treated as read-only.
 type CustomPolicyBindingNamespaceLister interface {
 	// List lists all CustomPolicyBindings in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*auth.CustomPolicyBinding, err error)
 	// Get retrieves the CustomPolicyBinding from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*auth.CustomPolicyBinding, error)
 	CustomPolicyBindingNamespaceListerExpansion
 }

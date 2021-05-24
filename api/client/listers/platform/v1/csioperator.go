@@ -28,10 +28,13 @@ import (
 )
 
 // CSIOperatorLister helps list CSIOperators.
+// All objects returned here must be treated as read-only.
 type CSIOperatorLister interface {
 	// List lists all CSIOperators in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.CSIOperator, err error)
 	// Get retrieves the CSIOperator from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.CSIOperator, error)
 	CSIOperatorListerExpansion
 }

@@ -1344,11 +1344,11 @@ func (p *Provider) EnsureCilium(ctx context.Context, c *v1.Cluster) error {
 		"CiliumOperatorImage": images.Get().CiliumOperator.FullName(),
 		"IpamdImage":          images.Get().Ipamd.FullName(),
 		"MasqImage":           images.Get().Masq.FullName(),
-		"BmpImage":            images.Get().Bmp.FullName(),
 		"CiliumRouterImage":   images.Get().CiliumRouter.FullName(),
 		"NetworkMode":         networkMode,
 		"ClusterCIDR":         c.Cluster.Spec.ClusterCIDR,
 		"MaskSize":            c.Cluster.Status.NodeCIDRMaskSize,
+		"MaxNodePodNum":       c.Cluster.Spec.Properties.MaxNodePodNum,
 	}
 
 	err = apiclient.CreateResourceWithDir(ctx, client, constants.CiliumManifest, option)

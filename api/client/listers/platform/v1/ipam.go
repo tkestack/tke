@@ -28,10 +28,13 @@ import (
 )
 
 // IPAMLister helps list IPAMs.
+// All objects returned here must be treated as read-only.
 type IPAMLister interface {
 	// List lists all IPAMs in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.IPAM, err error)
 	// Get retrieves the IPAM from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.IPAM, error)
 	IPAMListerExpansion
 }

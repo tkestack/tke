@@ -28,10 +28,13 @@ import (
 )
 
 // TappControllerLister helps list TappControllers.
+// All objects returned here must be treated as read-only.
 type TappControllerLister interface {
 	// List lists all TappControllers in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.TappController, err error)
 	// Get retrieves the TappController from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.TappController, error)
 	TappControllerListerExpansion
 }

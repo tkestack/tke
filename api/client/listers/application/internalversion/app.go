@@ -28,8 +28,10 @@ import (
 )
 
 // AppLister helps list Apps.
+// All objects returned here must be treated as read-only.
 type AppLister interface {
 	// List lists all Apps in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*application.App, err error)
 	// Apps returns an object that can list and get Apps.
 	Apps(namespace string) AppNamespaceLister
@@ -60,10 +62,13 @@ func (s *appLister) Apps(namespace string) AppNamespaceLister {
 }
 
 // AppNamespaceLister helps list and get Apps.
+// All objects returned here must be treated as read-only.
 type AppNamespaceLister interface {
 	// List lists all Apps in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*application.App, err error)
 	// Get retrieves the App from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*application.App, error)
 	AppNamespaceListerExpansion
 }

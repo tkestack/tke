@@ -23,11 +23,19 @@ The above features enable Cilium to be highly scalable, visualized, and secure i
 
 TKEStack can support CNI Cilium.
 
+User can manully set the following configurations when install Cilium on TKEStack:
+```
+cluster-pool-ipv4-cidr: "10.0.0.0/8"
+cluster-pool-ipv4-mask-size: "24"
+enable-hubble: "true"
+tunnel: vxlan
+debug: "false"
+```
+
 ## Scope
 
 **In-Scope**:
-- Support Cilium on TencentOS Server 3.1.
-- Support Cilium overlay deploy.
+- Support Cilium on TencentOS Server 3.1
 - Install Cilium on TKEStack baremetal clusters when user enabledCilium,otherwise default CNI is galaxy.
 - Only support install cilium to store all required state using Kubernetes custom resource definitions (CRDs).
 - Support tkestack HA topology include CLB and VIP.
@@ -38,6 +46,7 @@ TKEStack can support CNI Cilium.
 - Not support IPV6.
 - Cilium can not replace the kube-proxy.
 - Not support cluster mesh.
+- Not support install from UI.
 - Not support "enable-l7-proxy".
 
 ### System Requirements
@@ -66,12 +75,9 @@ CONFIG_CGROUP_BPF=y
 
 ## Main proposal
 
-1. Set the controller-manager flags: `--configure-cloud-routes=false`,`--allocate-node-cidrs=false` to disable the cloud provider set pod CIDR for nodes.Use ipam to allocate  pod CIDR to nodes.
-2. Create EnsureCilium function to install Cilium.
-3. Check the linux kernel version when the verison does not meet the requirement then installation will finished and throw a message for users. 
-4. Pass the Cilium configuration args by clusterSpec.NetworkArgs, then use go-template to overwrite the Cilium yaml.
-5. Pass configuration args `cluster-cidrs`and `base-pod-number` for ipamd deployment.
-6. Pass configuration args `NonMasqueradeCIDRs` for ip-masq-agent.
+1. Create EnsureCilium function to install Cilium.
+2. Check the linux kernel version when the verison does not meet the requirement then installation will finished and throw a message for users. 
+2. Pass the Cilium configuration args by clusterSpec.NetworkArgs, then use go-template to overwrite the Cilium yaml.
 3. Add EnsuerCilium switch that indicate CNI is cilium or Galaxy in cluster object and make Galaxy as default CNI. 
 
 ## User cases

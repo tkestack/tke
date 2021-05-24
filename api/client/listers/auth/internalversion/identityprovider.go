@@ -28,10 +28,13 @@ import (
 )
 
 // IdentityProviderLister helps list IdentityProviders.
+// All objects returned here must be treated as read-only.
 type IdentityProviderLister interface {
 	// List lists all IdentityProviders in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*auth.IdentityProvider, err error)
 	// Get retrieves the IdentityProvider from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*auth.IdentityProvider, error)
 	IdentityProviderListerExpansion
 }

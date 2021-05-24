@@ -28,10 +28,13 @@ import (
 )
 
 // GroupLister helps list Groups.
+// All objects returned here must be treated as read-only.
 type GroupLister interface {
 	// List lists all Groups in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*auth.Group, err error)
 	// Get retrieves the Group from the index for a given name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*auth.Group, error)
 	GroupListerExpansion
 }

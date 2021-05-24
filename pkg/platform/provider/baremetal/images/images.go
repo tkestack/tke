@@ -37,12 +37,10 @@ type Components struct {
 
 	MetricsServer  containerregistry.Image
 	AddonResizer   containerregistry.Image
-
 	Cilium         containerregistry.Image
 	CiliumOperator containerregistry.Image
 	Ipamd          containerregistry.Image
 	Masq           containerregistry.Image
-	Bmp            containerregistry.Image
 	CiliumRouter   containerregistry.Image
 }
 
@@ -73,11 +71,10 @@ var components = Components{
 	AddonResizer:  containerregistry.Image{Name: "addon-resizer", Tag: "1.8.11"},
 
 	Cilium:         containerregistry.Image{Name: "cilium", Tag: "v1.9.5"},
-	CiliumOperator: containerregistry.Image{Name: "cilium-operator", Tag: "v1.9.5"},
-	Ipamd:          containerregistry.Image{Name: "tke-eni-ipamd", Tag: "v3.2.5-133-gf4708c9"},
-	Masq:           containerregistry.Image{Name: "ip-masq-agent", Tag: "latest"},
-	Bmp:            containerregistry.Image{Name: "bmp", Tag: "v0.1.0-28-gc52e39c"},
-	CiliumRouter:   containerregistry.Image{Name: "cilium-router", Tag: "v0.1.0-28-gc52e39c"},
+	CiliumOperator: containerregistry.Image{Name: "cilium-operator-generic", Tag: "v1.9.5"},
+	Ipamd:          containerregistry.Image{Name: "tke-eni-ipamd", Tag: "v3.2.6"},
+	Masq:           containerregistry.Image{Name: "ip-masq-agent", Tag: "v1.0.0"},
+	CiliumRouter:   containerregistry.Image{Name: "cilium-router", Tag: "v0.1.0"},
 }
 
 func List() []string {

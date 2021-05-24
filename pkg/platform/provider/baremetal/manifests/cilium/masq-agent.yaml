@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - image: {{ .MasqImage }}
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           name: ip-masq-agent
           resources: {}
           securityContext:
