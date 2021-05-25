@@ -95,6 +95,20 @@ export const createICAction = {
     };
   },
 
+  setAsNumber: (asNumber: string) => {
+    return {
+      type: ActionType.IC_AS,
+      payload: asNumber
+    };
+  },
+
+  setSwitchIp: (ip: string) => {
+    return {
+      type: ActionType.IC_SwitchIp,
+      payload: ip
+    };
+  },
+
   inputGPUType: (type: string): ReduxAction<string> => {
     return {
       type: ActionType.v_IC_GpuType,

@@ -137,7 +137,9 @@ export async function createIC(clusters: CreateIC[]) {
       gpuType,
       merticsServer,
       cilium,
-      networkMode
+      networkMode,
+      asNumber,
+      switchIp
     } = clusters[0];
 
     const resourceInfo = resourceConfig()['cluster'];
@@ -192,7 +194,14 @@ export async function createIC(clusters: CreateIC[]) {
         ...(cilium === 'Cilium'
           ? {
               networkArgs: {
-                networkMode
+                networkMode,
+
+                ...(networkMode === 'underlay'
+                  ? {
+                      asn: asNumber,
+                      'switch-ip': switchIp
+                    }
+                  : {})
               }
             }
           : {}),

@@ -110,7 +110,11 @@ export class CreateICPanel extends React.Component<RootProps, State> {
         gpuType,
         merticsServer,
         cilium,
-        networkMode
+        networkMode,
+        asNumber,
+        switchIp,
+        v_asNumber,
+        v_switchIp
       } = createIC;
 
     const hasEditing = computerList.filter(c => c.isEditing).length > 0 || this.state.isAdding;
@@ -133,6 +137,8 @@ export class CreateICPanel extends React.Component<RootProps, State> {
       showExistVipUnuseTip = nodeNum > 1 ? false : true;
     } else if (vipType === CreateICVipType.tke) {
       canSave = canSave && v_vipAddress.status === 1;
+    } else if (cilium === 'Cilium' && networkMode === 'underlay') {
+      canSave = canSave && v_asNumber.status === 1 && v_switchIp.status === 1;
     }
 
     const workflow = createICWorkflow;
@@ -274,13 +280,37 @@ export class CreateICPanel extends React.Component<RootProps, State> {
 
             {cilium === 'Cilium' && (
               <FormPanel.Item
-                label={t('networkMode')}
+                label={t('网络模式')}
                 select={{
                   options: NetworkModeOptions,
                   value: networkMode,
                   onChange: value => actions.createIC.setNetWorkMode(value)
                 }}
               />
+            )}
+
+            {cilium === 'Cilium' && networkMode === 'underlay' && (
+              <>
+                <FormPanel.Item
+                  validator={v_asNumber}
+                  label={t('自治系统号')}
+                  input={{
+                    value: asNumber,
+                    onChange: value => actions.createIC.setAsNumber(value),
+                    onBlur: actions.validate.createIC.validateAsNumber
+                  }}
+                />
+
+                <FormPanel.Item
+                  validator={v_switchIp}
+                  label={t('交换机IP')}
+                  input={{
+                    value: switchIp,
+                    onChange: value => actions.createIC.setSwitchIp(value),
+                    onBlur: actions.validate.createIC.validateSwitchIp
+                  }}
+                />
+              </>
             )}
 
             <FormPanel.Item label="GPU" text>
