@@ -1,0 +1,58 @@
+{{ if eq .NetworkMode "overlay" }}
+---
+apiVersion: v1
+data:
+  config: '{"NonMasqueradeCIDRs":["{{ .ClusterCIDR }}"],"MasqLinkLocal":true,"ResyncInterval":"1m0s"}'
+kind: ConfigMap
+metadata:
+  name: ip-masq-agent-config
+  namespace: kube-system
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ip-masq-agent
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      name: ip-masq-agent
+  template:
+    metadata:
+      labels:
+        name: ip-masq-agent
+    spec:
+      containers:
+        - image: {{ .MasqImage }}
+          imagePullPolicy: IfNotPresent
+          name: ip-masq-agent
+          resources: {}
+          securityContext:
+            privileged: true
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /etc/config
+              name: config
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      tolerations:
+        - operator: Exists
+      volumes:
+        - configMap:
+            defaultMode: 420
+            items:
+              - key: config
+                path: ip-masq-agent
+            name: ip-masq-agent-config
+            optional: true
+          name: config
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+{{ end }}

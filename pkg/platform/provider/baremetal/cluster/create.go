@@ -1331,41 +1331,27 @@ func (p *Provider) EnsureCilium(ctx context.Context, c *v1.Cluster) error {
 	if err != nil {
 		return err
 	}
-	config, err := c.RESTConfig(&rest.Config{})
-	if err != nil {
-		return err
-	}
-	kaClient, err := kubeaggregatorclientset.NewForConfig(config)
-	if err != nil {
-		return err
-	}
-	// default backendType vxlan
-	backendType := "vxlan"
-	debugMode := "false"
-	enableHubble := "true"
+	// default networkMode is overlay
+	networkMode := "overlay"
 	clusterSpec := c.Cluster.Spec
 	if clusterSpec.NetworkArgs != nil {
-		if backendTypeArg, ok := clusterSpec.NetworkArgs["backendType"]; ok {
-			backendType = backendTypeArg
-		}
-		if debugModeArg, ok := clusterSpec.NetworkArgs["debugMode"]; ok {
-			debugMode = debugModeArg
-		}
-		if enableHubbleArg, ok := clusterSpec.NetworkArgs["enableHubble"]; ok {
-			enableHubble = enableHubbleArg
+		if networkTypeArg, ok := clusterSpec.NetworkArgs["networkMode"]; ok {
+			networkMode = networkTypeArg
 		}
 	}
 	option := map[string]interface{}{
 		"CiliumImage":         images.Get().Cilium.FullName(),
 		"CiliumOperatorImage": images.Get().CiliumOperator.FullName(),
-		"BackendType":         backendType,
-		"DebugMode":           debugMode,
+		"IpamdImage":          images.Get().Ipamd.FullName(),
+		"MasqImage":           images.Get().Masq.FullName(),
+		"CiliumRouterImage":   images.Get().CiliumRouter.FullName(),
+		"NetworkMode":         networkMode,
 		"ClusterCIDR":         c.Cluster.Spec.ClusterCIDR,
-		"EnableHubble":        enableHubble,
 		"MaskSize":            c.Cluster.Status.NodeCIDRMaskSize,
+		"MaxNodePodNum":       c.Cluster.Spec.Properties.MaxNodePodNum,
 	}
 
-	err = apiclient.CreateKAResourceWithFile(ctx, client, kaClient, constants.CiliumManifest, option)
+	err = apiclient.CreateResourceWithDir(ctx, client, constants.CiliumManifest, option)
 	if err != nil {
 		return errors.Wrap(err, "install Cilium error")
 	}
