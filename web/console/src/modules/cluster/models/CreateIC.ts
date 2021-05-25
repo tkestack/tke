@@ -58,4 +58,12 @@ export interface CreateIC extends Identifiable {
   merticsServer?: boolean;
 
   cilium?: string;
+
+  networkMode?: string;
+
+  asNumber?: string;
+  v_asNumber: Validation;
+
+  switchIp?: string;
+  v_switchIp: Validation;
 }

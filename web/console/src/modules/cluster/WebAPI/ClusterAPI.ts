@@ -14,7 +14,7 @@ import { CreateResource } from '../../common/models/CreateResource';
 import { authTypeMapping, CreateICVipType } from '../constants/Config';
 import { CreateIC } from '../models';
 import { deleteResourceIns } from './K8sResourceAPI';
-import {getK8sValidVersions} from '@src/webApi/cluster'
+import { getK8sValidVersions } from '@src/webApi/cluster';
 
 /**
  * 集群列表的查询
@@ -136,7 +136,10 @@ export async function createIC(clusters: CreateIC[]) {
       gpu,
       gpuType,
       merticsServer,
-      cilium
+      cilium,
+      networkMode,
+      asNumber,
+      switchIp
     } = clusters[0];
 
     const resourceInfo = resourceConfig()['cluster'];
@@ -187,6 +190,22 @@ export async function createIC(clusters: CreateIC[]) {
         displayName: name,
         clusterCIDR: cidr,
         networkDevice: networkDevice,
+
+        ...(cilium === 'Cilium'
+          ? {
+              networkArgs: {
+                networkMode,
+
+                ...(networkMode === 'underlay'
+                  ? {
+                      asn: asNumber,
+                      'switch-ip': switchIp
+                    }
+                  : {})
+              }
+            }
+          : {}),
+
         features: {
           gpuType: gpu ? gpuType : undefined,
           ha:
@@ -276,10 +295,8 @@ export async function modifyClusterName(clusters: CreateResource[]) {
  * @param regionId: number 地域的id
  */
 export async function fetchCreateICK8sVersion() {
-  const list = await getK8sValidVersions()
-  return list
-    .map(_ => ({text: _, value: _}))
-  
+  const list = await getK8sValidVersions();
+  return list.map(_ => ({ text: _, value: _ }));
 }
 
 /**

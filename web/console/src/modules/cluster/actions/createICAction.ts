@@ -17,7 +17,7 @@ export const createICAction = {
 
   fetchK8sVersion: () => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let response = await WebAPI.fetchCreateICK8sVersion();
+      const response = await WebAPI.fetchCreateICK8sVersion();
       dispatch({
         type: ActionType.IC_FetchK8SVersion,
         payload: response
@@ -85,6 +85,27 @@ export const createICAction = {
     return {
       type: ActionType.v_IC_Cilium,
       payload: cilium
+    };
+  },
+
+  setNetWorkMode: (networkMode: string) => {
+    return {
+      type: ActionType.v_IC_NetworkMode,
+      payload: networkMode
+    };
+  },
+
+  setAsNumber: (asNumber: string) => {
+    return {
+      type: ActionType.IC_AS,
+      payload: asNumber
+    };
+  },
+
+  setSwitchIp: (ip: string) => {
+    return {
+      type: ActionType.IC_SwitchIp,
+      payload: ip
     };
   },
 
