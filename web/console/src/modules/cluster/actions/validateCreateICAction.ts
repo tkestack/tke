@@ -1,5 +1,6 @@
 import * as ActionType from '../constants/ActionType';
 import { RootState, NamespaceEdit } from '../models';
+import validatorJs from 'validator';
 
 type GetState = () => RootState;
 
@@ -28,7 +29,7 @@ export const validateCreateICAction = {
 
   validateClusterName() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { name } = getState().createIC;
+      const { name } = getState().createIC;
       const result = await validateCreateICAction._validateClusterName(name);
       dispatch({
         type: ActionType.v_IC_Name,
@@ -40,7 +41,7 @@ export const validateCreateICAction = {
   _validateNetworkDevice(networkDevice: string) {
     let status = 0,
       message = '';
-    let reg = /^[a-z]([-a-z0-9]*[a-z0-9])?$/;
+    const reg = /^[a-z]([-a-z0-9]*[a-z0-9])?$/;
     //验证集群网卡模式
     if (!networkDevice) {
       status = 2;
@@ -60,7 +61,7 @@ export const validateCreateICAction = {
   },
   validateNetworkDevice() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { networkDevice } = getState().createIC;
+      const { networkDevice } = getState().createIC;
       const result = await validateCreateICAction._validateNetworkDevice(networkDevice);
       dispatch({
         type: ActionType.v_IC_NetworkDevice,
@@ -91,8 +92,8 @@ export const validateCreateICAction = {
 
   validatePort() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { vipPort } = getState().createIC;
-      let result = validateCreateICAction._validatePort(vipPort);
+      const { vipPort } = getState().createIC;
+      const result = validateCreateICAction._validatePort(vipPort);
       dispatch({
         type: ActionType.v_IC_VipPort,
         payload: result
@@ -106,7 +107,8 @@ export const validateCreateICAction = {
   _validateVIPServer(name: string) {
     let status = 0,
       message = '',
-      ipReg = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/;
+      ipReg =
+        /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/;
     // hostReg = /^([\w-]+\.)+[\w-]+(\/[\w- .\/?%&=]*)?$/;
     //验证集群名称
 
@@ -124,11 +126,83 @@ export const validateCreateICAction = {
   },
   validateVIPServer() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { vipAddress } = getState().createIC;
+      const { vipAddress } = getState().createIC;
       const result = await validateCreateICAction._validateVIPServer(vipAddress);
 
       dispatch({
         type: ActionType.v_IC_VipAddress,
+        payload: result
+      });
+    };
+  },
+
+  _validateAsNumber(asNumber: string) {
+    let status = 0,
+      message = '';
+
+    if (!asNumber) {
+      status = 2;
+      message = '自治系统号不能为空';
+    } else if (!validatorJs.isInt(asNumber, { min: 0 })) {
+      status = 2;
+      message = '自治系统号必须为正整数';
+    } else {
+      status = 1;
+      message = '';
+    }
+
+    return { status, message };
+  },
+  validateAsNumber() {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      const { cilium, networkMode, asNumber } = getState().createIC;
+      let result = {
+        status: 0,
+        message: ''
+      };
+
+      if (cilium === 'Cilium' && networkMode === 'underlay') {
+        result = await validateCreateICAction._validateAsNumber(asNumber);
+      }
+
+      dispatch({
+        type: ActionType.v_IC_AS,
+        payload: result
+      });
+    };
+  },
+
+  _validateSwitchIp(ip: string) {
+    let status = 0,
+      message = '';
+
+    if (!ip) {
+      status = 2;
+      message = '交换机IP不能为空';
+    } else if (!validatorJs.isIP(ip)) {
+      status = 2;
+      message = '交换机IP格式不正确';
+    } else {
+      status = 1;
+      message = '';
+    }
+
+    return { status, message };
+  },
+  validateSwitchIp() {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      const { cilium, networkMode, switchIp } = getState().createIC;
+      let result = {
+        status: 0,
+        message: ''
+      };
+
+      if (cilium === 'Cilium' && networkMode === 'underlay') {
+        result = await validateCreateICAction._validateSwitchIp(switchIp);
+      }
+
+      dispatch({
+        type: ActionType.v_IC_SwitchIp,
         payload: result
       });
     };

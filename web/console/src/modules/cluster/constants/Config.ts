@@ -745,6 +745,11 @@ export const CreateICCiliumOptions = [
   { text: 'Cilium', value: 'Cilium' }
 ];
 
+export const NetworkModeOptions = [
+  { text: 'Overlay', value: 'overlay' },
+  { text: 'Underlay', value: 'underlay' }
+];
+
 export enum MachineStatus {
   Running = 'Running',
   Initializing = 'Initializing',
