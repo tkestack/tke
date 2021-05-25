@@ -1,0 +1,140 @@
+{{ if eq .NetworkMode "underlay" }}
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cilium-router
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+    verbs:
+      - list
+      - watch
+      - get
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: cilium-router
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cilium-router
+subjects:
+  - kind: ServiceAccount
+    name: cilium-router
+    namespace: kube-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cilium-router
+  namespace: kube-system
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: cilium-router
+  name: cilium-router
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: cilium-router
+  template:
+    metadata:
+      labels:
+        app: cilium-router
+        infra.tce.io/product: tcs
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/os
+                    operator: In
+                    values:
+                      - linux
+                  - key: node.infra.tce.io/lifecycle
+                    operator: NotIn
+                    values:
+                      - maintain
+                  - key: testing.infra.tce.io/node-type
+                    operator: NotIn
+                    values:
+                      - hollow
+      containers:
+        - args:
+            - -iface=$(HOST_IP)
+            - -node-name=$(NODE_NAME)
+            - -cluster-ip-range={{ .ClusterCIDR }}
+            - -network-mode=bgp
+            - -bgp-restart-time=300
+            - -bgp-keepalive-time=60
+            - -cidr-getter=tke-annotation
+          command:
+            - /cilium-router
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.namespace
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.hostIP
+          image: {{ .CiliumRouterImage }}
+          imagePullPolicy: IfNotPresent
+          name: cilium-router
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      serviceAccount: cilium-router
+      serviceAccountName: cilium-router
+      terminationGracePeriodSeconds: 30
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+        - effect: NoExecute
+          operator: Exists
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+{{ end }}

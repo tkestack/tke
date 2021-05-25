@@ -59,14 +59,18 @@ const (
 	PatchNodeTimeout = 2 * time.Minute
 	// UpdateNodeTimeout specifies how long should wait for updating node with the initial remote configuration of kubelet before timing out
 	UpdateNodeTimeout = 2 * time.Minute
-	// LabelHostname specifies the lable in node.
+	// LabelHostname specifies the label in node.
 	LabelHostname = "kubernetes.io/hostname"
-	// LabelMachineIPV4 specifies the lable in node.
+	// LabelMachineIPV4 specifies the label in node.
 	LabelMachineIPV4 PlatformLabel = "platform.tkestack.io/machine-ip"
-	// LabelMachineIPV6Head specifies the lable in node.
+	// LabelMachineIPV6Head specifies the label in node.
 	LabelMachineIPV6Head PlatformLabel = "platform.tkestack.io/machine-ipv6-head"
-	// LabelMachineIPV6Tail specifies the lable in node.
+	// LabelMachineIPV6Tail specifies the label in node.
 	LabelMachineIPV6Tail PlatformLabel = "platform.tkestack.io/machine-ipv6-tail"
+	// LabelASNForCilium specifies the label in node when enable Cilium.
+	LabelASNCilium PlatformLabel = "infra.tce.io/as"
+	// LabelSwitchIPForCilium specifies the label in node when enable Cilium.
+	LabelSwitchIPCilium PlatformLabel = "infra.tce.io/switch-ip"
 )
 
 // CreateOrUpdateConfigMap creates a ConfigMap if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
