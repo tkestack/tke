@@ -118,6 +118,9 @@ const (
 	GPUManagerManifest    = ManifestsDir + "gpu-manager/gpu-manager.yaml"
 	CSIOperatorManifest   = ManifestsDir + "csi-operator/csi-operator.yaml"
 	MetricsServerManifest = ManifestsDir + "metrics-server/metrics-server.yaml"
+	GalaxyManifest        = ManifestsDir + "galaxy/galaxy.yaml"
+	FlannelManifest       = ManifestsDir + "flannel/flannel.yaml"
+	CalicoManifest        = ManifestsDir + "calico/calico.yaml"
 
 	KUBERNETES                   = 1
 	DNSIPIndex                   = 10

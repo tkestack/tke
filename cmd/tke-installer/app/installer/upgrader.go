@@ -30,7 +30,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
@@ -262,7 +261,7 @@ func (t *TKE) prepareForUpgrade(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	t.globalClient, err = kubernetes.NewForConfig(config)
+	t.globalClient, err = apiclient.NewForConfig(config)
 	if err != nil {
 		return err
 	}

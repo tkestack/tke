@@ -20,13 +20,9 @@ package apiclient
 
 import (
 	"context"
-	"io/ioutil"
-	"path/filepath"
-	"reflect"
-	"strings"
-
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	admissionv1beta1 "k8s.io/api/admissionregistration/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -34,11 +30,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	kuberuntime "k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes"
 	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	kubeaggregator "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+	"path/filepath"
+	"reflect"
+	"strings"
 	"tkestack.io/tke/pkg/util/template"
 )
 
@@ -47,12 +46,12 @@ type object struct {
 }
 
 var (
-	handlers   map[string]func(context.Context, kubernetes.Interface, []byte) error
+	handlers   map[string]func(context.Context, KubeInterfaces, []byte) error
 	kaHandlers map[string]func(context.Context, kubeaggregator.Interface, []byte) error
 )
 
 func init() {
-	handlers = make(map[string]func(context.Context, kubernetes.Interface, []byte) error)
+	handlers = make(map[string]func(context.Context, KubeInterfaces, []byte) error)
 	kaHandlers = make(map[string]func(context.Context, kubeaggregator.Interface, []byte) error)
 
 	// apiregistration
@@ -69,7 +68,7 @@ func init() {
 	}
 
 	// core
-	handlers["ConfigMap"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["ConfigMap"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(corev1.ConfigMap)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -80,7 +79,7 @@ func init() {
 		}
 		return nil
 	}
-	handlers["Endpoints"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["Endpoints"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(corev1.Endpoints)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -91,7 +90,7 @@ func init() {
 		}
 		return nil
 	}
-	handlers["Namespace"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["Namespace"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(corev1.Namespace)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -102,7 +101,7 @@ func init() {
 		}
 		return nil
 	}
-	handlers["Secret"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["Secret"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(corev1.Secret)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -113,7 +112,7 @@ func init() {
 		}
 		return nil
 	}
-	handlers["Service"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["Service"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(corev1.Service)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -124,7 +123,7 @@ func init() {
 		}
 		return nil
 	}
-	handlers["ServiceAccount"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["ServiceAccount"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(corev1.ServiceAccount)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -136,7 +135,7 @@ func init() {
 		return nil
 	}
 	// batch
-	handlers["Job"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["Job"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(batchv1.Job)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -148,7 +147,7 @@ func init() {
 		return nil
 	}
 	// batchv1beta1
-	handlers["CronJob"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["CronJob"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(batchv1beta1.CronJob)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -160,7 +159,7 @@ func init() {
 		return nil
 	}
 	// apps
-	handlers["DaemonSet"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["DaemonSet"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(appsv1.DaemonSet)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -171,7 +170,7 @@ func init() {
 		}
 		return nil
 	}
-	handlers["Pod"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["Pod"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(corev1.Pod)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -182,7 +181,7 @@ func init() {
 		}
 		return nil
 	}
-	handlers["Deployment"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["Deployment"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(appsv1.Deployment)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -193,7 +192,7 @@ func init() {
 		}
 		return nil
 	}
-	handlers["StatefulSet"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["StatefulSet"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(appsv1.StatefulSet)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -206,7 +205,7 @@ func init() {
 	}
 
 	// extentions
-	handlers["Ingress"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["Ingress"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(extensionsv1beta1.Ingress)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -219,7 +218,7 @@ func init() {
 	}
 
 	// rbac
-	handlers["Role"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["Role"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(rbacv1.Role)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -230,7 +229,7 @@ func init() {
 		}
 		return nil
 	}
-	handlers["RoleBinding"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["RoleBinding"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(rbacv1.RoleBinding)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -241,7 +240,7 @@ func init() {
 		}
 		return nil
 	}
-	handlers["ClusterRole"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["ClusterRole"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(rbacv1.ClusterRole)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -252,7 +251,7 @@ func init() {
 		}
 		return nil
 	}
-	handlers["ClusterRoleBinding"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["ClusterRoleBinding"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(rbacv1.ClusterRoleBinding)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -264,7 +263,7 @@ func init() {
 		return nil
 	}
 	// admissionregistration
-	handlers["ValidatingWebhookConfiguration"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["ValidatingWebhookConfiguration"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(admissionv1beta1.ValidatingWebhookConfiguration)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -275,7 +274,7 @@ func init() {
 		}
 		return nil
 	}
-	handlers["MutatingWebhookConfiguration"] = func(ctx context.Context, client kubernetes.Interface, data []byte) error {
+	handlers["MutatingWebhookConfiguration"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
 		obj := new(admissionv1beta1.MutatingWebhookConfiguration)
 		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
@@ -286,10 +285,21 @@ func init() {
 		}
 		return nil
 	}
+	handlers["CustomResourceDefinition"] = func(ctx context.Context, client KubeInterfaces, data []byte) error {
+		obj := new(apiextensionsv1.CustomResourceDefinition)
+		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
+			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
+		}
+		err := CreateOrUpdateCustomResourceDefinition(ctx, client, obj)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 }
 
 // CreateResourceWithDir create k8s resource with dir
-func CreateResourceWithDir(ctx context.Context, client kubernetes.Interface, pattern string, option interface{}) error {
+func CreateResourceWithDir(ctx context.Context, client KubeInterfaces, pattern string, option interface{}) error {
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
 		return err
@@ -307,7 +317,7 @@ func CreateResourceWithDir(ctx context.Context, client kubernetes.Interface, pat
 	return nil
 }
 
-func CreateResourceWiteContent(ctx context.Context, client kubernetes.Interface, content string,
+func CreateResourceWiteContent(ctx context.Context, client KubeInterfaces, content string,
 	option interface{}) error {
 	var (
 		data []byte
@@ -348,7 +358,7 @@ func CreateResourceWiteContent(ctx context.Context, client kubernetes.Interface,
 }
 
 // CreateResourceWithFile create k8s resource with file
-func CreateResourceWithFile(ctx context.Context, client kubernetes.Interface, filename string, option interface{}) error {
+func CreateResourceWithFile(ctx context.Context, client KubeInterfaces, filename string, option interface{}) error {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err
@@ -358,7 +368,7 @@ func CreateResourceWithFile(ctx context.Context, client kubernetes.Interface, fi
 }
 
 // CreateKAResourceWithFile create k8s and kube-aggregator resource with file
-func CreateKAResourceWithFile(ctx context.Context, client kubernetes.Interface, kaClient kubeaggregator.Interface, filename string, option interface{}) error {
+func CreateKAResourceWithFile(ctx context.Context, client KubeInterfaces, kaClient kubeaggregator.Interface, filename string, option interface{}) error {
 	var (
 		data []byte
 		err  error

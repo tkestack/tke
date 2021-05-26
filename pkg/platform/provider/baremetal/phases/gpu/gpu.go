@@ -19,13 +19,11 @@ package gpu
 import (
 	"context"
 	"fmt"
-
 	"tkestack.io/tke/pkg/platform/provider/baremetal/res"
 
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/util/ssh"
 
-	clientset "k8s.io/client-go/kubernetes"
 	"tkestack.io/tke/pkg/util/apiclient"
 )
 
@@ -87,7 +85,7 @@ type NvidiaDevicePluginOption struct {
 	Image string
 }
 
-func InstallNvidiaDevicePlugin(ctx context.Context, clientset clientset.Interface, option *NvidiaDevicePluginOption) error {
+func InstallNvidiaDevicePlugin(ctx context.Context, clientset apiclient.KubeInterfaces, option *NvidiaDevicePluginOption) error {
 	err := apiclient.CreateResourceWithFile(ctx, clientset, constants.ManifestsDir+"gpu/nvidia-device-plugin.yaml", option)
 	if err != nil {
 		return err

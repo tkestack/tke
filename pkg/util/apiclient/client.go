@@ -22,6 +22,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	apiextensionsclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1"
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset/typed/apiextensions/v1beta1"
+	"k8s.io/client-go/discovery"
 	"net/http"
 	"time"
 
@@ -36,6 +40,35 @@ import (
 	"k8s.io/client-go/tools/cache"
 	toolswatch "k8s.io/client-go/tools/watch"
 )
+
+type apiextClientset = *apiextensionsclientset.Clientset
+
+type clientsets struct {
+	*kubernetes.Clientset
+	apiextClientset
+}
+
+func NewForConfig(config *rest.Config) (KubeInterfaces, error) {
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	apiextClientset, err := apiextensionsclientset.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	return &clientsets{clientset, apiextClientset}, nil
+}
+
+func (c *clientsets) Discovery() discovery.DiscoveryInterface {
+	return c.apiextClientset.Discovery()
+}
+
+type KubeInterfaces interface {
+	kubernetes.Interface
+	ApiextensionsV1beta1() apiextensionsv1beta1.ApiextensionsV1beta1Interface
+	ApiextensionsV1() apiextensionsv1.ApiextensionsV1Interface
+}
 
 func BuildKubeClient() (*kubernetes.Clientset, error) {
 	config, err := rest.InClusterConfig()
