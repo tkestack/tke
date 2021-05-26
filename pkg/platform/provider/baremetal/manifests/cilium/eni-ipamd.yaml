@@ -151,7 +151,7 @@ spec:
             {{ if eq .NetworkMode "overlay" }}
             - --enable-cilium-node-controller=false
             - --enable-cilium-overlay=true
-            - --desired-pod-number="{{ .MaxNodePodNum }}"
+            - --desired-pod-number={{ .MaxNodePodNum }}
             {{ else }}
             - --enable-cilium-node-controller=true
             - --enable-cilium-overlay=false
