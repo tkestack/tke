@@ -63,10 +63,10 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubead
 	}
 	if c.Cluster.Spec.Features.EnableCilium && c.Cluster.Spec.NetworkArgs["networkMode"] == "underlay" {
 		if asn, ok := c.Cluster.Spec.NetworkArgs["asn"]; ok {
-			kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s=%s", apiclient.LabelASNCilium, asn)
+			kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s,%s=%s", kubeletExtraArgs["node-labels"], apiclient.LabelASNCilium, asn)
 		}
 		if switchIP, ok := c.Cluster.Spec.NetworkArgs["switch-ip"]; ok {
-			kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s=%s", apiclient.LabelSwitchIPCilium, switchIP)
+			kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s,%s=%s", kubeletExtraArgs["node-labels"], apiclient.LabelSwitchIPCilium, switchIP)
 		}
 	}
 	if _, ok := kubeletExtraArgs["hostname-override"]; !ok {
@@ -103,7 +103,14 @@ func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfi
 	} else {
 		kubeletExtraArgs["node-labels"] = apiclient.GetNodeIPV6Label(machineIP)
 	}
-
+	if c.Cluster.Spec.Features.EnableCilium && c.Cluster.Spec.NetworkArgs["networkMode"] == "underlay" {
+		if asn, ok := c.Cluster.Spec.NetworkArgs["asn"]; ok {
+			kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s,%s=%s", kubeletExtraArgs["node-labels"], apiclient.LabelASNCilium, asn)
+		}
+		if switchIP, ok := c.Cluster.Spec.NetworkArgs["switch-ip"]; ok {
+			kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s,%s=%s", kubeletExtraArgs["node-labels"], apiclient.LabelSwitchIPCilium, switchIP)
+		}
+	}
 	// add node ip for single stack ipv6 clusters.
 	if _, ok := kubeletExtraArgs["node-ip"]; !ok {
 		kubeletExtraArgs["node-ip"] = machineIP
