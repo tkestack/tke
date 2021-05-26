@@ -125,11 +125,6 @@ spec:
     matchLabels:
       k8s-app: tke-eni-ipamd
       qcloud-app: tke-eni-ipamd
-  strategy:
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
   template:
     metadata:
       creationTimestamp: null
@@ -139,15 +134,14 @@ spec:
     spec:
       affinity:
         nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - preference:
-                - matchExpressions:
-                  - key: node-role.kubernetes.io/control-plane
-                    operator: Exists
-                - matchExpressions:
-                  - key: node-role.kubernetes.io/master
-                    operator: Exists
-              weight: 100
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
       containers:
         - args:
             - --clusterid
