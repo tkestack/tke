@@ -104,6 +104,7 @@ function build::installer() {
     docker save "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" | gzip -c > "${INSTALLER_DIR}/res/tke-installer.tgz"
 
     sed -i "s;VERSION=.*;VERSION=$VERSION;g" "${INSTALLER_DIR}/install.sh"
+    sed -i "s;REGISTRY_PREFIX=.*;REGISTRY_PREFIX=$REGISTRY_PREFIX;g" "${INSTALLER_DIR}/install.sh"
 
     "${INSTALLER_DIR}/build.sh" "${installer}"
     cp -v "${INSTALLER_DIR}/${installer}" $OUTPUT_DIR

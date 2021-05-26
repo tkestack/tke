@@ -40,11 +40,7 @@ const (
 
 	DefaultTeantID = "default"
 
-	DevRegistryDomain    = "docker.io"
-	DevRegistryNamespace = "tkestack"
 	ImagesFile           = "images.tar.gz"
-	ImagesPattern        = DevRegistryNamespace + "/*"
-
 	OIDCClientSecretFile = DataDir + "oidc_client_secret"
 	CACrtFile            = DataDir + "ca.crt"
 	CAKeyFile            = DataDir + "ca.key"

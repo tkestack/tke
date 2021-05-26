@@ -41,6 +41,7 @@ type Config struct {
 	RegistryDomain             string
 	RegistryNamespace          string
 	CustomUpgradeResourceDir   string
+	DevRegistryPrefix          string
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -64,5 +65,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		RegistryDomain:             *opts.RegistryDomain,
 		RegistryNamespace:          *opts.RegistryNamespace,
 		CustomUpgradeResourceDir:   *opts.CustomUpgradeResourceDir,
+		DevRegistryPrefix:          *opts.DevRegistryPrefix,
 	}, nil
 }
