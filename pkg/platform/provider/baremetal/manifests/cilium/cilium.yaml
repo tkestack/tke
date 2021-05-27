@@ -110,29 +110,27 @@ data:
   # wait-bpf-mount makes init container wait until bpf filesystem is mounted
   wait-bpf-mount: "false"
 
-  masquerade: "false"
-  enable-bpf-masquerade: "false"
-  {{ if eq .NetworkMode "underlay" }}
-  enable-endpoint-routes: "true"
-  auto-create-cilium-node-resource: "true"
-  {{ end }}
-
   {{ if eq .NetworkMode "overlay" }}
+  masquerade: "true"
+  install-iptables-rules: "true"
   enable-local-node-route: "true"
   ipam: "kubernetes"
   tunnel: vxlan
   {{ else }}
+  masquerade: "false"
+  install-iptables-rules: "false"
   enable-local-node-route: "false"
   ipam: "crd"
   tunnel: disabled
+  enable-endpoint-routes: "true"
+  auto-create-cilium-node-resource: "true"
   {{ end }}
+  kube-proxy-replacement:  "partial"
+  enable-bpf-masquerade: "false"
   enable-xt-socket-fallback: "true"
-  install-iptables-rules: "false"
-
   auto-direct-node-routes: "false"
   enable-bandwidth-manager: "false"
   enable-local-redirect-policy: "false"
-  kube-proxy-replacement:  "probe"
   kube-proxy-replacement-healthz-bind-address: ""
   enable-health-check-nodeport: "true"
   node-port-bind-protection: "true"
