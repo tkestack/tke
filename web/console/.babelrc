@@ -4,9 +4,15 @@
     [
       "@babel/preset-env",
       {
-        "modules": "commonjs"
+        "targets": {
+          "chrome": "58",
+          "ie": "11"
+        }
       }
     ]
   ],
-  "plugins": ["@babel/plugin-transform-runtime"]
+  "plugins": [
+    "@babel/plugin-transform-runtime",
+    ["import", { "libraryName": "antd", "libraryDirectory": "es", "style": "css" }]
+  ]
 }

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "moduleResolution": "node",
     "jsx": "react",
-    "module": "commonjs",
+    "module": "esnext",
     "outDir": "./tsbuild",
     "preserveConstEnums": true,
     "removeComments": true,

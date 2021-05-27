@@ -11,7 +11,7 @@ import {
   applicationServerVersion
 } from '../../apiServerVersion';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { ConsoleModuleEnum } from '../../../Wrapper';
+import { ConsoleModuleEnum } from '../../platform';
 
 export type ApiVersionKeyName = keyof ApiVersion;
 
