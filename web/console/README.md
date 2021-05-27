@@ -1,5 +1,4 @@
 # tke-stack 控制台开发指南
-tke-stack开发阶段调试主要方式是将浏览器环境中的js请求代理到本地来实现的
 ## 配置`server.config.js` 
 - 配置Host为已安装的控制台的访问地址;
 - 配置Cookie为已安装的控制台的登录后的cookie；
