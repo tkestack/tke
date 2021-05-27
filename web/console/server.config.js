@@ -1,4 +1,4 @@
 module.exports = {
-  Host: '',
+  Host: 'http://www.example.com',
   Cookie: ''
 };

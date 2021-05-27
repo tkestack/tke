@@ -1,11 +1,10 @@
-const { src, dest, series, parallel } = require('gulp');
+const { src, dest, parallel } = require('gulp');
 const uglifyjs = require('gulp-uglify');
 const { pipeline } = require('readable-stream');
 const cleanCSS = require('gulp-clean-css');
 const htmlmin = require('gulp-html-minifier-terser');
 const ejs = require('gulp-ejs');
 const fg = require('fast-glob');
-const gzip = require('gulp-gzip');
 
 // 从public压缩复制文件到build
 function minifyJs() {
@@ -55,9 +54,4 @@ function copyAnother() {
   return src(['public/**/*', '!public/**/*.js', '!public/**/*.css', '!public/**/*.html']).pipe(dest('build'));
 }
 
-// 统一做gzip处理
-function gzipAll() {
-  return src('build/**/*').pipe(gzip()).pipe(dest('build'));
-}
-
-exports.default = series(parallel(minifyJs, minifyCss, minifyHtml, minifyIndexHtmlWithInjectJs, copyAnother), gzipAll);
+exports.default = parallel(minifyJs, minifyCss, minifyHtml, minifyIndexHtmlWithInjectJs, copyAnother);
