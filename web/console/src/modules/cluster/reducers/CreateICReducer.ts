@@ -50,7 +50,9 @@ const TempReducer = combineReducers({
   switchIp: reduceToPayload(ActionType.IC_SwitchIp, ''),
   v_switchIp: reduceToPayload(ActionType.v_IC_SwitchIp, initValidator),
 
-  gpuType: reduceToPayload(ActionType.v_IC_GpuType, GPUTYPE.PGPU)
+  gpuType: reduceToPayload(ActionType.v_IC_GpuType, GPUTYPE.PGPU),
+
+  serviceCIDR: reduceToPayload(ActionType.IC_ServiceCIDR, '')
 });
 
 export const CreateICReducer = (state, action) => {

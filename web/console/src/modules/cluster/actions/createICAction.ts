@@ -109,6 +109,13 @@ export const createICAction = {
     };
   },
 
+  setServerCIDR: (cidr: string) => {
+    return {
+      type: ActionType.IC_ServiceCIDR,
+      payload: cidr
+    };
+  },
+
   inputGPUType: (type: string): ReduxAction<string> => {
     return {
       type: ActionType.v_IC_GpuType,

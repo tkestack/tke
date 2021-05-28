@@ -114,7 +114,8 @@ export class CreateICPanel extends React.Component<RootProps, State> {
         asNumber,
         switchIp,
         v_asNumber,
-        v_switchIp
+        v_switchIp,
+        serviceCIDR
       } = createIC;
 
     const hasEditing = computerList.filter(c => c.isEditing).length > 0 || this.state.isAdding;
@@ -333,6 +334,16 @@ export class CreateICPanel extends React.Component<RootProps, State> {
                 ]}
               />
             </FormPanel.Item>
+
+            <FormPanel.Item
+              label={t('service CIDR')}
+              input={{
+                value: serviceCIDR,
+                onChange: value => actions.createIC.setServerCIDR(value),
+               
+              }}
+            />
+
             <CIDR
               parts={['192', '172', '10']}
               minMaskCode="8"

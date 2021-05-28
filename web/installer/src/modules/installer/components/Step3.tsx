@@ -137,6 +137,14 @@ export class Step3 extends React.Component<RootProps> {
               onChange={value => actions.installer.updateEdit({ gpuType: value })}
             />
           </Form.Item>
+
+          <Form.Item label="service CIDR">
+            <Input
+              value={editState.serviceCIDR}
+              onChange={value => actions.installer.updateEdit({ serviceCIDR: value })}
+            />
+          </Form.Item>
+
           <Form.Item label="容器网络">
             <div className="run-docker-box cidr">
               <div className="edit-param-list">

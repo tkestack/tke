@@ -207,6 +207,7 @@ export async function createCluster(edits: Array<EditState>) {
               }
             }, {}),
             clusterCIDR: edits[0].cidr,
+            serviceCIDR: edits[0].serviceCIDR,
             properties: {
               maxClusterServiceNum: +edits[0].serviceNumLimit,
               maxNodePodNum: +edits[0].podNumLimit

@@ -51,6 +51,7 @@ export interface EditState extends Identifiable {
   gpuType?: string;
   machines?: Array<Machine>;
   cidr?: string;
+  serviceCIDR?: string;
   podNumLimit?: number;
   serviceNumLimit?: number;
 

@@ -51,6 +51,9 @@ export class Step9 extends React.Component<RootProps> {
           <Form.Item label="GPU类型">
             <Form.Text>{editState.gpuType === 'none' ? '不使用' : editState.gpuType}</Form.Text>
           </Form.Item>
+          <Form.Item label="service CIDR">
+            <Form.Text>{editState.serviceCIDR}</Form.Text>
+          </Form.Item>
           <Form.Item label="容器网络">
             <Form.Text>{editState.cidr}</Form.Text>
           </Form.Item>

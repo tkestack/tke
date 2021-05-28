@@ -139,7 +139,8 @@ export async function createIC(clusters: CreateIC[]) {
       cilium,
       networkMode,
       asNumber,
-      switchIp
+      switchIp,
+      serviceCIDR
     } = clusters[0];
 
     const resourceInfo = resourceConfig()['cluster'];
@@ -189,6 +190,7 @@ export async function createIC(clusters: CreateIC[]) {
       spec: {
         displayName: name,
         clusterCIDR: cidr,
+        serviceCIDR,
         networkDevice: networkDevice,
 
         ...(cilium === 'Cilium'

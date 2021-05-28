@@ -50,6 +50,7 @@ export const initEdit: EditState = {
   networkDevice: 'eth0',
   v_networkDevice: initValidation,
   gpuType: 'none',
+  serviceCIDR: '',
   machines: [Object.assign({}, initMachine, { id: uuid() })],
   cidr: '192.168.0.0/16',
   podNumLimit: 256,
