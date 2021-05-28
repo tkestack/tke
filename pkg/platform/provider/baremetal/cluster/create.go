@@ -896,19 +896,26 @@ func (p *Provider) EnsureGalaxy(ctx context.Context, c *v1.Cluster) error {
 	if err != nil {
 		return err
 	}
-	backendType := "vxlan"
+	backendProvider := galaxy.BackendProviderFlannel
+	backendType := galaxy.BackendTypeVxLAN
 	clusterSpec := c.Cluster.Spec
 	if clusterSpec.NetworkArgs != nil {
+		backendProviderArg, ok := clusterSpec.NetworkArgs["backendProvider"]
+		if ok {
+			backendProvider = backendProviderArg
+		}
 		backendTypeArg, ok := clusterSpec.NetworkArgs["backendType"]
 		if ok {
 			backendType = backendTypeArg
 		}
 	}
 	return galaxy.Install(ctx, clientset, &galaxy.Option{
-		Version:     galaxyimages.LatestVersion,
-		NodeCIDR:    clusterSpec.ClusterCIDR,
-		NetDevice:   clusterSpec.NetworkDevice,
-		BackendType: backendType,
+		Version:          galaxyimages.LatestVersion,
+		NodeCIDR:         clusterSpec.ClusterCIDR,
+		NetDevice:        clusterSpec.NetworkDevice,
+		BackendProvider:  backendProvider,
+		BackendType:      backendType,
+		NodeCIDRMaskSize: c.Cluster.Status.NodeCIDRMaskSize,
 	})
 }
 

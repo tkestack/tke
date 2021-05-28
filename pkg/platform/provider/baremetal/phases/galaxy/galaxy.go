@@ -20,116 +20,77 @@ package galaxy
 
 import (
 	"context"
-	"io"
+	errs "errors"
+	"fmt"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"net"
 	"os/exec"
 	"strings"
-
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/client-go/kubernetes"
+	"time"
+	baremetalconstants "tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
+	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
-	daemonsetFlannelName = "flannel"
-	cmFlannel            = "kube-flannel-cfg"
-	svcAccounFlannelName = "flannel"
-	crFlannelName        = "flannel"
-	crbFlannelName       = "flannel"
-	daemonsetGalaxyName  = "galaxy-daemonset"
-	cmGalaxy             = "galaxy-etc"
-	svcAccountName       = "galaxy"
-	crbName              = "galaxy"
+	BackendProviderFlannel = "flannel"
+	BackendProviderCalico  = "calico"
+	BackendTypeVxLAN       = "vxlan"
 )
 
-// Option for coredns
+// Option for galaxy
 type Option struct {
-	Version     string
-	NodeCIDR    string
-	NetDevice   string
-	BackendType string
+	Version          string
+	NodeCIDR         string
+	NetDevice        string
+	BackendType      string
+	BackendProvider  string
+	NodeCIDRMaskSize int32
 }
 
 // Install to install the galaxy workload
-func Install(ctx context.Context, clientset kubernetes.Interface, option *Option) error {
+func Install(ctx context.Context, clientset apiclient.KubeInterfaces, option *Option) error {
+
+	if err := installNetworkProvider(ctx, clientset, option); err != nil {
+		return err
+	}
+	return installGalaxy(ctx, clientset, option)
+}
+
+func installNetworkProvider(ctx context.Context, clientset apiclient.KubeInterfaces, option *Option) error {
+	switch provider := option.BackendProvider; provider {
+	case BackendProviderFlannel:
+		return installFlannel(ctx, clientset, option)
+	case BackendProviderCalico:
+		return installCalico(ctx, clientset, option)
+	default:
+		return errs.New(fmt.Sprintf("unknown network provider: %s", provider))
+	}
+}
+
+func installFlannel(ctx context.Context, clientset apiclient.KubeInterfaces, option *Option) error {
 	// old flannel interface should be deleted
 	if err := cleanFlannelInterfaces(); err != nil {
 		return err
 	}
-	// in private cloud, flannel must be installed
-	if _, err := clientset.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccountFlannel(), metav1.CreateOptions{}); err != nil {
-		if !errors.IsAlreadyExists(err) {
-			// flannel service account will create automatically
-			return err
-		}
-	}
-	if _, err := clientset.RbacV1().ClusterRoles().Create(ctx, crFlannel(), metav1.CreateOptions{}); err != nil {
-		return err
-	}
-	if _, err := clientset.RbacV1().ClusterRoleBindings().Create(ctx, crbFlannel(), metav1.CreateOptions{}); err != nil {
-		return err
-	}
-	if _, err := clientset.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, cmFlannel, metav1.GetOptions{}); err != nil {
-		if !errors.IsNotFound(err) {
-			return err
-		}
-		cm, err := configMapFlannel(option.NodeCIDR, option.BackendType)
-		if err != nil {
-			return err
-		}
-		if _, err := clientset.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(ctx, cm, metav1.CreateOptions{}); err != nil {
-			return err
-		}
-	}
-	// Daemonset Flannel
-	flannelObj, err := daemonsetFlannel(option.Version)
-	if err != nil {
-		return err
-	}
-	if _, err := clientset.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(ctx, flannelObj, metav1.CreateOptions{}); err != nil {
-		log.Errorf("create daemonset with err: %v", err)
-		return err
-	}
-	// flannel installation finished, begin to install galaxy-daemon
-	if _, err := clientset.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccountGalaxy(), metav1.CreateOptions{}); err != nil {
-		return err
-	}
-	// ClusterRoleBinding Galaxy
-	if _, err := clientset.RbacV1().ClusterRoleBindings().Create(ctx, crbGalaxy(), metav1.CreateOptions{}); err != nil {
-		return err
-	}
-	// init galaxy configMap
-	if _, err := clientset.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, cmGalaxy, metav1.GetOptions{}); err != nil {
-		if !errors.IsNotFound(err) {
-			return err
-		}
-		cms, err := configMapGalaxy(option.NetDevice)
-		if err != nil {
-			return err
-		}
-		for _, cm := range cms {
-			if _, err := clientset.CoreV1().ConfigMaps(metav1.NamespaceSystem).Create(ctx, cm, metav1.CreateOptions{}); err != nil {
-				return err
-			}
-		}
-	}
-	// Daemonset Galaxy
-	galaxyObj, err := daemonsetGalaxy(option.Version)
-	if err != nil {
-		return err
-	}
-	if _, err := clientset.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(ctx, galaxyObj, metav1.CreateOptions{}); err != nil {
-		log.Errorf("create daemonset with err: %v", err)
-		return err
-	}
 
-	return nil
+	err := apiclient.CreateResourceWithDir(ctx, clientset, baremetalconstants.FlannelManifest,
+		map[string]interface{}{
+			"BackendType":  option.BackendType,
+			"Network":      option.NodeCIDR,
+			"FlannelImage": images.Get(option.Version).Flannel.FullName(),
+		})
+	if err != nil {
+		return err
+	}
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDaemonset(ctx, clientset, "kube-system", "flannel")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
 }
 
 func cleanFlannelInterfaces() error {
@@ -149,162 +110,44 @@ func cleanFlannelInterfaces() error {
 	return err
 }
 
-func configMapFlannel(clusterCIDR, backendType string) (*corev1.ConfigMap, error) {
-	flannelCM := strings.Replace(FlannelCM, "{{ .Network }}", clusterCIDR, 1)
-	flannelCM = strings.Replace(flannelCM, "{{ .Type }}", backendType, 1)
-	reader := strings.NewReader(flannelCM)
-	decoder := yaml.NewYAMLOrJSONDecoder(reader, 4096)
-	payload := &corev1.ConfigMap{}
-	err := decoder.Decode(payload)
+func installCalico(ctx context.Context, clientset apiclient.KubeInterfaces, option *Option) error {
+	err := apiclient.CreateResourceWithDir(ctx, clientset, baremetalconstants.CalicoManifest,
+		map[string]interface{}{
+			"CalicoCNIImage":            images.Get(option.Version).CalicoCNI.FullName(),
+			"CalicoNodeImage":           images.Get(option.Version).CalicoNode.FullName(),
+			"CalicoFlexvolDriverImage":  images.Get(option.Version).CalicoFlexvolDriver.FullName(),
+			"CalicoKubeControllerImage": images.Get(option.Version).CalicoKubeControllers.FullName(),
+			"ClusterCIDR":               option.NodeCIDR,
+			"BackendType":               option.BackendType,
+			"NodeCIDRMaskSize":          option.NodeCIDRMaskSize,
+		})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	payload.Name = cmFlannel
-	return payload, nil
-}
-
-func configMapGalaxy(netDevice string) ([]*corev1.ConfigMap, error) {
-	reader := strings.NewReader(strings.Replace(GalaxyCM, "{{ .DeviceName }}", netDevice, -1))
-	var payloads []*corev1.ConfigMap
-	decoder := yaml.NewYAMLOrJSONDecoder(reader, 4096)
-	for {
-		payload := &corev1.ConfigMap{}
-		err := decoder.Decode(&payload)
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDaemonset(ctx, clientset, "kube-system", "calico-node")
 		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return nil, err
+			return false, nil
 		}
-		payloads = append(payloads, payload)
-	}
-
-	return payloads, nil
+		return ok, nil
+	})
 }
 
-func daemonsetFlannel(version string) (*appsv1.DaemonSet, error) {
-	imageName := images.Get(version).Flannel.FullName()
-	reader := strings.NewReader(strings.Replace(FlannelDaemonset, "{{ .Image }}", imageName, -1))
-	payload := &appsv1.DaemonSet{}
-	err := yaml.NewYAMLOrJSONDecoder(reader, 4096).Decode(payload)
+func installGalaxy(ctx context.Context, clientset apiclient.KubeInterfaces, option *Option) error {
+	err := apiclient.CreateResourceWithDir(ctx, clientset, baremetalconstants.GalaxyManifest,
+		map[string]interface{}{
+			"BackendProvider":   option.BackendProvider,
+			"DeviceName":        option.NetDevice,
+			"GalaxyDaemonImage": images.Get(option.Version).GalaxyDaemon.FullName(),
+		})
 	if err != nil {
-		return nil, err
+		return err
 	}
-	payload.Name = daemonsetFlannelName
-	return payload, nil
-}
-
-func daemonsetGalaxy(version string) (*appsv1.DaemonSet, error) {
-	reader := strings.NewReader(GalaxyDaemonsetTemplate)
-	payload := &appsv1.DaemonSet{}
-	err := yaml.NewYAMLOrJSONDecoder(reader, 4096).Decode(payload)
-	if err != nil {
-		return nil, err
-	}
-	payload.Name = daemonsetGalaxyName
-	payload.Spec.Template.Spec.Containers[0].Image = images.Get(version).GalaxyDaemon.FullName()
-	return payload, nil
-}
-
-func serviceAccountFlannel() *corev1.ServiceAccount {
-	return &corev1.ServiceAccount{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ServiceAccount",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      svcAccounFlannelName,
-			Namespace: metav1.NamespaceSystem,
-		},
-	}
-}
-
-func serviceAccountGalaxy() *corev1.ServiceAccount {
-	return &corev1.ServiceAccount{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ServiceAccount",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      svcAccountName,
-			Namespace: metav1.NamespaceSystem,
-		},
-	}
-}
-
-func crFlannel() *rbacv1.ClusterRole {
-	return &rbacv1.ClusterRole{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ClusterRole",
-			APIVersion: "rbac.authorization.k8s.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: crFlannelName,
-		},
-		Rules: []rbacv1.PolicyRule{
-			{
-				APIGroups: []string{""},
-				Resources: []string{"pods"},
-				Verbs:     []string{"get"},
-			},
-			{
-				APIGroups: []string{""},
-				Resources: []string{"nodes"},
-				Verbs:     []string{"list", "watch"},
-			},
-			{
-				APIGroups: []string{""},
-				Resources: []string{"nodes/status"},
-				Verbs:     []string{"patch"},
-			},
-		},
-	}
-}
-
-func crbFlannel() *rbacv1.ClusterRoleBinding {
-	return &rbacv1.ClusterRoleBinding{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ClusterRoleBinding",
-			APIVersion: "rbac.authorization.k8s.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: crbFlannelName,
-		},
-		RoleRef: rbacv1.RoleRef{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "ClusterRole",
-			Name:     "cluster-admin",
-		},
-		Subjects: []rbacv1.Subject{
-			{
-				Kind:      "ServiceAccount",
-				Name:      svcAccounFlannelName,
-				Namespace: metav1.NamespaceSystem,
-			},
-		},
-	}
-}
-
-func crbGalaxy() *rbacv1.ClusterRoleBinding {
-	return &rbacv1.ClusterRoleBinding{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ClusterRoleBinding",
-			APIVersion: "rbac.authorization.k8s.io/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: crbName,
-		},
-		RoleRef: rbacv1.RoleRef{
-			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "ClusterRole",
-			Name:     "cluster-admin",
-		},
-		Subjects: []rbacv1.Subject{
-			{
-				Kind:      "ServiceAccount",
-				Name:      svcAccountName,
-				Namespace: metav1.NamespaceSystem,
-			},
-		},
-	}
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDaemonset(ctx, clientset, "kube-system", "galaxy")
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
 }

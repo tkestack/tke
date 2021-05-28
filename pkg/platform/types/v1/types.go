@@ -25,6 +25,7 @@ import (
 	"net"
 	"path"
 	"time"
+	"tkestack.io/tke/pkg/util/apiclient"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -81,21 +82,20 @@ func Clientset(cluster *platformv1.Cluster, credential *platformv1.ClusterCreden
 	return (&Cluster{Cluster: cluster, ClusterCredential: credential}).Clientset()
 }
 
-func (c *Cluster) Clientset() (kubernetes.Interface, error) {
+func (c *Cluster) Clientset() (apiclient.KubeInterfaces, error) {
 	config, err := c.RESTConfig(&rest.Config{})
 	if err != nil {
 		return nil, err
 	}
-
-	return kubernetes.NewForConfig(config)
+	return apiclient.NewForConfig(config)
 }
 
-func (c *Cluster) ClientsetForBootstrap() (kubernetes.Interface, error) {
+func (c *Cluster) ClientsetForBootstrap() (apiclient.KubeInterfaces, error) {
 	config, err := c.RESTConfigForBootstrap(&rest.Config{})
 	if err != nil {
 		return nil, err
 	}
-	return kubernetes.NewForConfig(config)
+	return apiclient.NewForConfig(config)
 }
 
 func (c *Cluster) PlatformClientsetForBootstrap() (platformversionedclient.PlatformV1Interface, error) {

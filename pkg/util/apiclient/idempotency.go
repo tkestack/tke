@@ -23,6 +23,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"math"
 	"path/filepath"
 	"strings"
@@ -675,4 +677,22 @@ func GetNodeIPV6Label(ip string) string {
 	lableipv6Head := fmt.Sprintf("%s=%s", LabelMachineIPV6Head, strings.Replace(ip[0:splitLength], ":", "a", -1))
 	lableipv6Tail := fmt.Sprintf("%s=%s", LabelMachineIPV6Tail, strings.Replace(ip[splitLength:], ":", "a", -1))
 	return lableipv6Head + "," + lableipv6Tail
+}
+
+func CreateOrUpdateCustomResourceDefinition(ctx context.Context, client apiextensionsclient.Interface, obj *apiextensionsv1.CustomResourceDefinition) error {
+	if _, err := client.ApiextensionsV1().CustomResourceDefinitions().Create(ctx, obj, metav1.CreateOptions{}); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			return errors.Wrap(err, "unable to create CustomResourceDefinition")
+		}
+		oldObj, err := client.ApiextensionsV1().CustomResourceDefinitions().Get(ctx, obj.Name, metav1.GetOptions{})
+		if err != nil {
+			return errors.Wrap(err, fmt.Sprintf("unable to get CustomResourceDefinition %s", obj.Name))
+		}
+		obj.ObjectMeta = oldObj.ObjectMeta
+		if _, err := client.ApiextensionsV1().CustomResourceDefinitions().Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
+			return errors.Wrap(err, "unable to update CustomResourceDefinition")
+		}
+	}
+
+	return nil
 }

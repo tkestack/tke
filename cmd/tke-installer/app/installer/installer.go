@@ -52,7 +52,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd/api"
 	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
@@ -61,6 +60,7 @@ import (
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
+	_ "tkestack.io/tke/api/platform/install"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/config"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/certs"
@@ -85,9 +85,6 @@ import (
 	utilnet "tkestack.io/tke/pkg/util/net"
 	"tkestack.io/tke/pkg/util/pkiutil"
 	"tkestack.io/tke/pkg/util/ssh"
-
-	// import platform schema
-	_ "tkestack.io/tke/api/platform/install"
 )
 
 const namespace = "tke"
@@ -109,7 +106,7 @@ type TKE struct {
 
 	docker *docker.Docker
 
-	globalClient   kubernetes.Interface
+	globalClient   apiclient.KubeInterfaces
 	platformClient tkeclientset.PlatformV1Interface
 	servers        []string
 	namespace      string

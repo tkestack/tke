@@ -32,8 +32,12 @@ const (
 )
 
 type Components struct {
-	GalaxyDaemon containerregistry.Image
-	Flannel      containerregistry.Image
+	GalaxyDaemon          containerregistry.Image
+	Flannel               containerregistry.Image
+	CalicoCNI             containerregistry.Image
+	CalicoNode            containerregistry.Image
+	CalicoFlexvolDriver   containerregistry.Image
+	CalicoKubeControllers containerregistry.Image
 }
 
 func (c Components) Get(name string) *containerregistry.Image {
@@ -49,8 +53,12 @@ func (c Components) Get(name string) *containerregistry.Image {
 
 var versionMap = map[string]Components{
 	LatestVersion: {
-		GalaxyDaemon: containerregistry.Image{Name: "galaxy", Tag: "v1.0.6"},
-		Flannel:      containerregistry.Image{Name: "flannel", Tag: "v0.10.0"},
+		GalaxyDaemon:          containerregistry.Image{Name: "galaxy", Tag: "v1.0.6"},
+		Flannel:               containerregistry.Image{Name: "flannel", Tag: "v0.10.0"},
+		CalicoCNI:             containerregistry.Image{Name: "calico-cni", Tag: "v3.19.1"},
+		CalicoNode:            containerregistry.Image{Name: "calico-node", Tag: "v3.19.1"},
+		CalicoFlexvolDriver:   containerregistry.Image{Name: "calico-flexvol", Tag: "v3.19.1"},
+		CalicoKubeControllers: containerregistry.Image{Name: "calico-kube-controllers", Tag: "v3.19.1"},
 	},
 }
 
