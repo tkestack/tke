@@ -19,9 +19,12 @@
 package assets
 
 import (
+	"compress/gzip"
+	"io"
 	"net/http"
 	"path"
 	"regexp"
+	"strings"
 
 	"golang.org/x/oauth2"
 	"k8s.io/apiserver/pkg/server/mux"
@@ -36,6 +39,29 @@ const (
 var (
 	indexReg = regexp.MustCompile(`/tkestack.*`)
 )
+
+type gzipResponseWriter struct {
+	io.Writer
+	http.ResponseWriter
+}
+
+func (w gzipResponseWriter) Write(b []byte) (int, error) {
+	return w.Writer.Write(b)
+}
+
+func gzipHandler(fn http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			fn(w, r)
+			return
+		}
+		w.Header().Set("Content-Encoding", "gzip")
+		gz := gzip.NewWriter(w)
+		defer gz.Close()
+		gzr := gzipResponseWriter{Writer: gz, ResponseWriter: w}
+		fn(gzr, r)
+	}
+}
 
 func RegisterRoute(m *mux.PathRecorderMux, oauthConfig *oauth2.Config, disableOIDCProxy bool) {
 	handler := func() http.HandlerFunc {
@@ -58,5 +84,5 @@ func RegisterRoute(m *mux.PathRecorderMux, oauthConfig *oauth2.Config, disableOI
 		}
 	}
 
-	m.HandlePrefix("/", handler())
+	m.HandlePrefix("/", gzipHandler(handler()))
 }
