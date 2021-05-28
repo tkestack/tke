@@ -1176,18 +1176,15 @@ func (t *TKE) loadImages(ctx context.Context) error {
 }
 
 func (t *TKE) tagImages(ctx context.Context) error {
-	tkeImages, err := t.docker.GetImages(constants.ImagesPattern)
+	tkeImages, err := t.docker.GetImages(t.Config.DevRegistryPrefix + "/*")
 	if err != nil {
 		return err
 	}
 
 	for _, image := range tkeImages {
 		imageNames := strings.Split(image, "/")
-		if len(imageNames) != 2 {
-			t.log.Infof("invalid image name:name=%s", image)
-			continue
-		}
-		name, _, _, err := t.docker.GetNameArchTag(imageNames[1])
+		nameAndTag := imageNames[len(imageNames)-1]
+		name, _, _, err := t.docker.GetNameArchTag(nameAndTag)
 		if err != nil {
 			t.log.Infof("skip invalid image: %s", image)
 			continue
@@ -1196,11 +1193,13 @@ func (t *TKE) tagImages(ctx context.Context) error {
 			continue
 		}
 
-		target := fmt.Sprintf("%s/%s/%s", t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace(), imageNames[1])
+		target := fmt.Sprintf("%s/%s/%s", t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace(), nameAndTag)
 
-		err = t.docker.TagImage(image, target)
-		if err != nil {
-			return err
+		if image != target {
+			err = t.docker.TagImage(image, target)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

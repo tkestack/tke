@@ -41,6 +41,7 @@ type Options struct {
 	RegistryDomain             *string
 	RegistryNamespace          *string
 	CustomUpgradeResourceDir   *string
+	DevRegistryPrefix          *string
 }
 
 // NewOptions creates a new Options with a default config.
@@ -60,6 +61,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Force = fs.Bool("force", false, "force run as clean")
 	o.SyncProjectsWithNamespaces = fs.Bool("sync-projects-with-namespaces", false, "Enable creating/deleting the corresponding namespace when creating/deleting a project.")
 	o.Replicas = fs.Int("replicas", 2, "tke components replicas")
+	o.DevRegistryPrefix = fs.String("dev-registry-prefix", "tkestack", "registry prefix of packed images")
 	o.Upgrade = fs.Bool("upgrade", false, "upgrade")
 	o.PrepareCustomK8sImages = fs.Bool("prepare-custom-images", false, "prepare images for custom K8s version")
 	o.Kubeconfig = fs.String("kubeconfig", "conf/kubeconfig", "specify kubeconfig for upgrade")

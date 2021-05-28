@@ -29,6 +29,7 @@ unset LD_LIBRARY_PATH
 export PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 
 VERSION=latest
+REGISTRY_PREFIX=tkestack
 
 INSTALL_DIR=/opt/tke-installer
 DATA_DIR=$INSTALL_DIR/data
@@ -142,7 +143,7 @@ function clean_old_data() {
 function start_installer() {
   echo "Step.5 start tke-installer [doing]"
 
-  docker run $OPTIONS "tkestack/tke-installer-${ARCH}:$VERSION" $@
+  docker run $OPTIONS "$REGISTRY_PREFIX/tke-installer-${ARCH}:$VERSION" --dev-registry-prefix=$REGISTRY_PREFIX $@
 
   echo "Step.5 start tke-installer [ok]"
 }
