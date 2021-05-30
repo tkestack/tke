@@ -3,9 +3,10 @@ module tkestack.io/tke
 go 1.12
 
 replace (
-	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.0.0-20200507092433-6aea2df34764
+	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.5.1-0.20210412121305-660c0e91489b
 	github.com/containerd/containerd => github.com/containerd/containerd v1.4.3
 	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
+	go.etcd.io/etcd => go.etcd.io/etcd v0.5.0-alpha.5.0.20200819165624-17cef6e3e9d5
 	google.golang.org/grpc => google.golang.org/grpc v1.26.0
 	k8s.io/api => k8s.io/api v0.19.7
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.19.7
