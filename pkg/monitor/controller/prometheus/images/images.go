@@ -66,7 +66,7 @@ var versionMap = map[string]Components{
 		PrometheusConfigReloaderWorkload: containerregistry.Image{Name: "prometheus-config-reloader", Tag: "v0.31.1"},
 		PrometheusBeatWorkLoad:           containerregistry.Image{Name: "prometheusbeat", Tag: "6.4.1"},
 		NodeProblemDetector:              containerregistry.Image{Name: "node-problem-detector", Tag: "v0.8.2"},
-		PrometheusAdapter:                containerregistry.Image{Name: "k8s-prometheus-adapter", Tag: "4c67353"},
+		PrometheusAdapter:                containerregistry.Image{Name: "k8s-prometheus-adapter", Tag: "v0.8.2"},
 	},
 }
 
