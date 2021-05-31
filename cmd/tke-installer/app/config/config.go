@@ -41,12 +41,30 @@ type Config struct {
 	RegistryPassword           string
 	RegistryDomain             string
 	RegistryNamespace          string
-	CustomUpgradeResourceDir   string
-	CustomChartsName           string
+
+	// TODO: refactor core/addon apps installation by charts
+	// ApplicationChartsArchive the archive file path of core + addon application charts. default data/charts.tar.gz
+	// core charts (defined by HARDCODE) must exist, addon chart list depends on what are in the archive file.
+	ApplicationChartsArchive string
+	// EnabledApplications addon application charts will be installed
+	EnabledApplications []string
+	// ApplicationValuesFile file of values to rend core + addon application charts. It will be generated from ${ApplicationValuesFile}.tpl by tke.json. default data/values.yaml
+	ApplicationValuesFile string
+
+	CustomUpgradeResourceDir string
+	CustomChartsName         string
 	// EnableCustomExpansion will enable expansion. default false
 	EnableCustomExpansion bool
 	// CustomExpansionDir path to expansions. default `data/expansions`
 	CustomExpansionDir string
+
+	// CustomApplicationChartsArchive the archive file path of custom application charts. default data/expansions/expansion.charts.tar.gz
+	// custom application chart list depends on what are in the archive file.
+	CustomApplicationChartsArchive string
+	// CustomApplicationChartValuesFile file of values to rend custom application charts.
+	CustomApplicationChartValuesFile string
+	// EnabledCustomApplications custom application charts will be installed
+	EnabledCustomApplications []string
 }
 
 // CreateConfigFromOptions creates a running configuration instance based

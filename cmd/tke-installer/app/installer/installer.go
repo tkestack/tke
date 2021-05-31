@@ -412,6 +412,22 @@ func (t *TKE) initSteps() {
 
 	// others
 
+	t.steps = append(t.steps, []types.Handler{
+		{
+			Name: "Install TKE applications",
+			Func: t.installTKEApplications,
+		},
+	}...)
+
+	if t.Config.EnableCustomExpansion {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Install expansion applications",
+				Func: t.installExpansionApplications,
+			},
+		}...)
+	}
+
 	// Add more tke component before THIS!!!
 	if t.Para.Config.Gateway != nil {
 		if t.IncludeSelf {
@@ -2663,4 +2679,17 @@ func (t *TKE) patchClusterInfo(ctx context.Context, patchData interface{}) error
 	}
 	_, err = t.globalClient.CoreV1().ConfigMaps("kube-public").Patch(ctx, "cluster-info", k8stypes.MergePatchType, patchByte, metav1.PatchOptions{})
 	return err
+}
+
+func (t *TKE) installTKEApplications(ctx context.Context) error {
+
+	// TODO:
+	// 1. pick t.coreApplications list from HARDCODE
+	// 2. pick t.addonApplications list from .config.EnabledApplications(@tke.json)
+	// 3. merge the two list by order of an order list
+	// 4. extract charts from .config.ApplicationChartsArchive(@tke.json)
+	// 5. rend .config.ApplicationValuesFile(@tke.json) tpl file into .config.ApplicationValuesFile(@tke.json) by values of tke.json
+	// 6. local install charts in order, by taking values from .config.ApplicationValuesFile(@tke.json)
+
+	return nil
 }

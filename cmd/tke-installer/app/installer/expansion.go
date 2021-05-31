@@ -71,6 +71,15 @@ func (t *TKE) prepareExpansionFiles(ctx context.Context) error {
 	return nil
 }
 
+func (t *TKE) installExpansionApplications(ctx context.Context) error {
+
+	// TODO:
+	// 1. pick custom application chart list from .config.EnabledCustomApplications(@tke.json)
+	// 2. extract charts from .config.CustomApplicationChartsArchive(@tke.json)
+	// 3. local install charts in order, by taking values from .config.CustomApplicationChartValuesFile(@tke.json)
+	return nil
+}
+
 func (t *TKE) verifyExpansionFiles() error {
 
 	// TODO: verify tke.json with expansion specified files and paths
