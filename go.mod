@@ -3,8 +3,10 @@ module tkestack.io/tke
 go 1.12
 
 replace (
-	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.0.0-20200507092433-6aea2df34764
+	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.5.1-0.20210412121305-660c0e91489b
+	github.com/containerd/containerd => github.com/containerd/containerd v1.4.3
 	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
+	go.etcd.io/etcd => go.etcd.io/etcd v0.5.0-alpha.5.0.20200819165624-17cef6e3e9d5
 	google.golang.org/grpc => google.golang.org/grpc v1.26.0
 	helm.sh/helm/v3 => helm.sh/helm/v3 v3.2.0
 	k8s.io/client-go => k8s.io/client-go v0.18.2
@@ -82,6 +84,7 @@ require (
 	gopkg.in/square/go-jose.v2 v2.4.1
 	gopkg.in/yaml.v2 v2.3.0
 	gotest.tools v2.2.0+incompatible
+	gotest.tools/v3 v3.0.3 // indirect
 	helm.sh/chartmuseum v0.12.0
 	helm.sh/helm/v3 v3.3.4
 	istio.io/api v0.0.0-20200715212100-dbf5277541ef
