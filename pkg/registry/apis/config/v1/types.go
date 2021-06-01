@@ -47,7 +47,18 @@ type Storage struct {
 	// +optional
 	S3 *S3Storage `json:"s3,omitempty" yaml:"s3,omitempty"`
 	// +optional
+	Etcd *EtcdStorage `json:"etcd,omitempty" yaml:"etcd,omitempty"`
+	// +optional
 	Delete *Delete `json:"delete,omitempty" yaml:"delete,omitempty"`
+}
+
+type EtcdStorage struct {
+	CAFile    string   `json:"cafile" yaml:"cafile"`
+	CertFile  string   `json:"certfile" yaml:"certfile"`
+	KeyFile   string   `json:"keyfile" yaml:"keyfile"`
+	EndPoints []string `json:"endpoints" yaml:"endpoints"`
+	// +optional
+	Prefix string `json:"prefix,omitempty" yaml:"prefix,omitempty"`
 }
 
 type FileSystemStorage struct {

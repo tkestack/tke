@@ -184,6 +184,13 @@ data:
     apiVersion: registry.config.tkestack.io/v1
     kind: RegistryConfiguration
     storage:
+      etcd:
+        cafile: "/app/certs/etcd-ca.crt"
+        certfile: "/app/certs/etcd.crt"
+        keyfile: "/app/certs/etcd.key"
+        endpoints:
+        - "https://etcd.kube-system:2379"
+        prefix: "/chart_backend_bucket"
       fileSystem:
         rootDirectory: /storage
       delete:

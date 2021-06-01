@@ -34,9 +34,9 @@ type RegistryConfiguration struct {
 	Redis         *Redis
 	DefaultTenant string
 	// +optional
-	DomainSuffix string
+	DomainSuffix  string
 	HarborEnabled bool
-	HarborCAFile string
+	HarborCAFile  string
 }
 
 type Storage struct {
@@ -47,7 +47,17 @@ type Storage struct {
 	// +optional
 	S3 *S3Storage
 	// +optional
+	Etcd *EtcdStorage
+	// +optional
 	Delete *Delete
+}
+type EtcdStorage struct {
+	CAFile    string
+	CertFile  string
+	KeyFile   string
+	EndPoints []string
+	// +optional
+	Prefix string
 }
 
 type FileSystemStorage struct {
