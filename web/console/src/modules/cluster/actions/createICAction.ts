@@ -109,6 +109,13 @@ export const createICAction = {
     };
   },
 
+  setUseBGP: (useBGP: boolean) => {
+    return {
+      type: ActionType.IC_UseBGP,
+      payload: useBGP
+    };
+  },
+
   inputGPUType: (type: string): ReduxAction<string> => {
     return {
       type: ActionType.v_IC_GpuType,
