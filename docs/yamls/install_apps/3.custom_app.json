@@ -1,0 +1,55 @@
+{
+    "config": {
+        // load chart through your chart packge name
+        "CustomChartsName": "Your charts packge name",
+        "PlatformApps": [
+            {
+                "Name": "eks",
+                "Enable": true,
+                "Chart": {
+                    "Name": "tke-resilience",
+                    "TenantID": "default",
+                    "ChartGroupName": "public",
+                    "Version": "1.0.0",
+                    "TargetCluster": "global",
+                    "TargetNamespace": "tke",
+                    "Values": {
+                        "values.yaml": "cloud:\n  appID: \"\"\n  ownerUIN: \"\"\n  secretID: \"\"\n  secretKey: \"\"\n  vpcID: \"\"\n  regionShort: cq\n  regionLong: ap-chongqing\n  apiDomain: tencentcloudapi.com\n  subnets:\n    - id: \"subnet-xx\"\n      zone: \"ap-chongqing-1\"\n    - id: \"subnet-yy\"\n      zone: \"ap-chongqing-1\"\n\neklet:\n  waitSandboxRunningTimeout: 24h\n  podUsedApiserver: https://172.1.2.3:6443\n  replicaCount: 1\n  image:\n    ref: ccr.ccs.tencentyun.com/tkeimages/eklet-amd64:v2.4.3\n    pullPolicy: IfNotPresent\n  service:\n    type: NodePort\n  nodeSelector:\n    kubernetes.io/os: linux\n    kubernetes.io/arch: amd64\n  resources:\n    limits:\n      cpu: \"1\"\n      memory: 1Gi\n    requests:\n      cpu: 200m\n      memory: 200Mi\n\nscheduler:\n  replicaCount: 1\n  image:\n    ref: ccr.ccs.tencentyun.com/tkeimages/kube-scheduler:v1.20.4-tke.1\n    pullPolicy: IfNotPresent\n  nodeSelector:\n    kubernetes.io/os: linux\n    kubernetes.io/arch: amd64\n  resources:\n    requests:\n      cpu: 100m\n\neksAdmission:\n  replicaCount: 1\n  autoScaleEKS: \"\\\"true\\\"\"\n  image:\n    ref: ccr.ccs.tencentyun.com/tkeimages/eks-admission-controller:v0.1.0\n    pullPolicy: IfNotPresent\n  nodeSelector:\n    kubernetes.io/os: linux\n    kubernetes.io/arch: amd64\n  resources:\n    limits:\n      cpu: 500m\n      memory: 500M\n    requests:\n      cpu: 300m\n      memory: 300M"
+                    }
+                }
+            },
+            // init your platform app data after loading custom charts
+            {
+                "Name": "your app",
+                "Enable": true,
+                "Chart": {
+                    "Name": "your app",
+                    "TenantID": "default",
+                    "ChartGroupName": "public",
+                    "Version": "version",
+                    "TargetCluster": "global",
+                    "TargetNamespace": "ns",
+                    // chartutil hase decode/encode func
+                    "Values": {
+                        "values.yaml": "xxxxxx"
+                    }
+                }
+            }
+        ],
+        "ServerName": "tke-installer",
+        "ListenAddr": ":8080",
+        "NoUI": false,
+        "Config": "conf/tke.json",
+        "Force": false,
+        "SyncProjectsWithNamespaces": false,
+        "Replicas": 2,
+        "Upgrade": false,
+        "PrepareCustomK8sImages": false,
+        "Kubeconfig": "conf/kubeconfig",
+        "RegistryUsername": "",
+        "RegistryPassword": "",
+        "RegistryDomain": "",
+        "RegistryNamespace": "",
+        "CustomUpgradeResourceDir": "data/custom_upgrade_resource"
+    }
+}

@@ -1,0 +1,123 @@
+{
+    "config": {
+        "PlatformApps": [
+            {
+                "Chart": {
+                    "Values": {
+                        // modify this
+                        "values.schema.json": {
+                            "cloud": {
+                                // modify appID
+                                "appID": "your id",
+                                "ownerUIN": "",
+                                "secretID": "",
+                                "secretKey": "",
+                                "vpcID": "",
+                                "regionShort": "cq",
+                                "regionLong": "ap-chongqing",
+                                "apiDomain": "tencentcloudapi.com",
+                                "subnets": [
+                                    {
+                                        "id": "subnet-xx",
+                                        "zone": "ap-chongqing-1"
+                                    },
+                                    {
+                                        "id": "subnet-yy",
+                                        "zone": "ap-chongqing-1"
+                                    }
+                                ]
+                            },
+                            "eklet": {
+                                "waitSandboxRunningTimeout": "24h",
+                                "podUsedApiserver": "https://172.1.2.3:6443",
+                                "replicaCount": 1,
+                                "image": {
+                                    "ref": "ccr.ccs.tencentyun.com/tkeimages/eklet-amd64:v2.4.3",
+                                    "pullPolicy": "IfNotPresent"
+                                },
+                                "service": {
+                                    "type": "NodePort"
+                                },
+                                "nodeSelector": {
+                                    "kubernetes.io/os": "linux",
+                                    "kubernetes.io/arch": "amd64"
+                                },
+                                "resources": {
+                                    "limits": {
+                                        "cpu": "1",
+                                        "memory": "1Gi"
+                                    },
+                                    "requests": {
+                                        "cpu": "200m",
+                                        "memory": "200Mi"
+                                    }
+                                }
+                            },
+                            "scheduler": {
+                                "replicaCount": 1,
+                                "image": {
+                                    "ref": "ccr.ccs.tencentyun.com/tkeimages/kube-scheduler:v1.20.4-tke.1",
+                                    "pullPolicy": "IfNotPresent"
+                                },
+                                "nodeSelector": {
+                                    "kubernetes.io/os": "linux",
+                                    "kubernetes.io/arch": "amd64"
+                                },
+                                "resources": {
+                                    "requests": {
+                                        "cpu": "100m"
+                                    }
+                                }
+                            },
+                            "eksAdmission": {
+                                "replicaCount": 1,
+                                "autoScaleEKS": "\"true\"",
+                                "image": {
+                                    "ref": "ccr.ccs.tencentyun.com/tkeimages/eks-admission-controller:v0.1.0",
+                                    "pullPolicy": "IfNotPresent"
+                                },
+                                "nodeSelector": {
+                                    "kubernetes.io/os": "linux",
+                                    "kubernetes.io/arch": "amd64"
+                                },
+                                "resources": {
+                                    "limits": {
+                                        "cpu": "500m",
+                                        "memory": "500M"
+                                    },
+                                    "requests": {
+                                        "cpu": "300m",
+                                        "memory": "300M"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "Name": "tke-resilience",
+                    "TenantID": "default",
+                    "ChartGroupName": "public",
+                    "Version": "1.0.0",
+                    "TargetCluster": "global",
+                    "TargetNamespace": "tke"
+                },
+                "Name": "eks",
+                "Enable": true
+            }
+        ],
+        "ServerName": "tke-installer",
+        "ListenAddr": ":8080",
+        "NoUI": false,
+        "Config": "conf/tke.json",
+        "Force": false,
+        "SyncProjectsWithNamespaces": false,
+        "Replicas": 2,
+        "Upgrade": false,
+        "PrepareCustomK8sImages": false,
+        "Kubeconfig": "conf/kubeconfig",
+        "RegistryUsername": "",
+        "RegistryPassword": "",
+        "RegistryDomain": "",
+        "RegistryNamespace": "",
+        "CustomUpgradeResourceDir": "data/custom_upgrade_resource"
+    }
+}
