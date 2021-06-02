@@ -60,6 +60,8 @@ const (
 	decisionAllow  = "allow"
 	decisionForbid = "forbid"
 	reasonError    = "internal error"
+
+	kubePublicNS = "kube-public"
 )
 
 var (
@@ -179,6 +181,11 @@ func UnprotectedAuthorized(attributes authorizer.Attributes) authorizer.Decision
 
 	verb := attributes.GetVerb()
 	if unprotectedVerbSets.Has(verb) {
+		return authorizer.DecisionAllow
+	}
+
+	// https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+	if attributes.GetNamespace() == kubePublicNS && isGetVerb(verb) {
 		return authorizer.DecisionAllow
 	}
 
@@ -322,4 +329,8 @@ func splitPath(path string) []string {
 		return []string{}
 	}
 	return strings.Split(path, "/")
+}
+
+func isGetVerb(verb string) bool {
+	return strings.HasPrefix(verb, "get")
 }
