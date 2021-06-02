@@ -31,6 +31,24 @@ func ValidateRegistryConfiguration(rc *registryconfig.RegistryConfiguration) err
 	storageCount := 0
 	storageFld := field.NewPath("storage")
 
+	if rc.Storage.Etcd != nil {
+		storageCount++
+		subFld := storageFld.Child("etcd")
+
+		if rc.Storage.Etcd.CAFile == "" {
+			allErrors = append(allErrors, field.Required(subFld.Child("cafile"), "must be specify"))
+		}
+		if rc.Storage.Etcd.CertFile == "" {
+			allErrors = append(allErrors, field.Required(subFld.Child("certfile"), "must be specify"))
+		}
+		if rc.Storage.Etcd.KeyFile == "" {
+			allErrors = append(allErrors, field.Required(subFld.Child("keyfile"), "must be specify"))
+		}
+		if len(rc.Storage.Etcd.EndPoints) == 0 {
+			allErrors = append(allErrors, field.Required(subFld.Child("endpoints"), "must be specify"))
+		}
+	}
+
 	if rc.Storage.S3 != nil {
 		storageCount++
 		subFld := storageFld.Child("s3")
