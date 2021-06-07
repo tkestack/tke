@@ -189,8 +189,8 @@ type Mesh struct {
 
 type ESMonitor struct {
 	URL      string `json:"url" validate:"required"`
-	Username string `json:"username" validate:"required"`
-	Password []byte `json:"password" validate:"required"`
+	Username string `json:"username"`
+	Password []byte `json:"password"`
 }
 
 type InfluxDBMonitor struct {
