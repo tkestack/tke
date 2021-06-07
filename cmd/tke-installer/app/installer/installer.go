@@ -1978,14 +1978,14 @@ func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 			options["StorageType"] = "es"
 			options["StorageAddress"] = t.Para.Config.Monitor.ESMonitor.URL
 			options["StorageUsername"] = t.Para.Config.Monitor.ESMonitor.Username
-			options["StoragePassword"] = t.Para.Config.Monitor.ESMonitor.Password
+			options["StoragePassword"] = string(t.Para.Config.Monitor.ESMonitor.Password)
 		} else if t.Para.Config.Monitor.InfluxDBMonitor != nil {
 			options["StorageType"] = "influxDB"
 
 			if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor != nil {
 				options["StorageAddress"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.URL
 				options["StorageUsername"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username
-				options["StoragePassword"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password
+				options["StoragePassword"] = string(t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password)
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
 				// todo
 				options["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.servers[0])
@@ -2026,7 +2026,7 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 			params["StorageType"] = "es"
 			params["StorageAddress"] = address
 			params["StorageUsername"] = t.Para.Config.Monitor.ESMonitor.Username
-			params["StoragePassword"] = t.Para.Config.Monitor.ESMonitor.Password
+			params["StoragePassword"] = string(t.Para.Config.Monitor.ESMonitor.Password)
 			params["MonitorStorageType"] = "elasticsearch"
 			if t.Para.Config.Monitor.ESMonitor.Username != "" {
 				address = address + "&u=" + t.Para.Config.Monitor.ESMonitor.Username
@@ -2042,7 +2042,7 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 				address := t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.URL
 				params["StorageAddress"] = address
 				params["StorageUsername"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username
-				params["StoragePassword"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password
+				params["StoragePassword"] = string(t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password)
 				if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username != "" {
 					address = address + "&u=" + t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username
 				}

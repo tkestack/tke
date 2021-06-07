@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	v1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/config"
@@ -236,14 +237,14 @@ func (t *TKE) TKEMonitorAPI() (option Options) {
 			option["StorageType"] = "es"
 			option["StorageAddress"] = t.Para.Config.Monitor.ESMonitor.URL
 			option["StorageUsername"] = t.Para.Config.Monitor.ESMonitor.Username
-			option["StoragePassword"] = t.Para.Config.Monitor.ESMonitor.Password
+			option["StoragePassword"] = string(t.Para.Config.Monitor.ESMonitor.Password)
 		} else if t.Para.Config.Monitor.InfluxDBMonitor != nil {
 			option["StorageType"] = "influxDB"
 
 			if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor != nil {
 				option["StorageAddress"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.URL
 				option["StorageUsername"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username
-				option["StoragePassword"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password
+				option["StoragePassword"] = string(t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password)
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
 				// todo
 				option["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.Servers[0])
@@ -265,14 +266,14 @@ func (t *TKE) TKEMonitorController() (option Options) {
 			option["StorageType"] = "es"
 			option["StorageAddress"] = t.Para.Config.Monitor.ESMonitor.URL
 			option["StorageUsername"] = t.Para.Config.Monitor.ESMonitor.Username
-			option["StoragePassword"] = t.Para.Config.Monitor.ESMonitor.Password
+			option["StoragePassword"] = string(t.Para.Config.Monitor.ESMonitor.Password)
 		} else if t.Para.Config.Monitor.InfluxDBMonitor != nil {
 			option["StorageType"] = "influxDB"
 
 			if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor != nil {
 				option["StorageAddress"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.URL
 				option["StorageUsername"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username
-				option["StoragePassword"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password
+				option["StoragePassword"] = string(t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password)
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
 				option["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.Servers[0])
 			}
