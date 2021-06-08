@@ -39,7 +39,8 @@ const (
 
 	DockerCertsDir = "/etc/docker/certs.d"
 
-	DefaultTeantID = "default"
+	DefaultTeantID        = "default"
+	DefaultChartGroupName = "public"
 
 	DevRegistryDomain    = "docker.io"
 	DevRegistryNamespace = "tkestack"
