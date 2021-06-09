@@ -11,6 +11,7 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/config"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	applicationutil "tkestack.io/tke/pkg/application/util"
+	"tkestack.io/tke/pkg/mesh/util/json"
 	registryConfig "tkestack.io/tke/pkg/registry/config"
 	chartpath "tkestack.io/tke/pkg/registry/util/chartpath/v1"
 	"tkestack.io/tke/pkg/util/log"
@@ -50,30 +51,41 @@ func TestTKE_installApplication(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	name := "keydb"
+	name := "demo"
 	chart := &config.Chart{
 		Name:            name,
 		TenantID:        "default",
 		ChartGroupName:  "public",
-		Version:         "5.3.3",
+		Version:         "1.0.0",
 		TargetCluster:   "global",
-		TargetNamespace: "tcnp",
-		Values: chartutil.Values{
-			"test_value": []string{
-				"value1",
-				"value2",
-			},
-		},
+		TargetNamespace: "default",
+		Values:          chartutil.Values{},
 	}
-
-	err = tke.installApplication(context.Background(), config.PlatformApp{
+	platformApp := config.PlatformApp{
 		Name:   name,
 		Enable: true,
 		Chart:  *chart,
-	}, apps.Items)
+	}
+
+	if tke.applicationAlreadyInstalled(platformApp, apps.Items) {
+		t.Log("already installed")
+	} else {
+		err = tke.installApplication(context.Background(), platformApp)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	b, err := json.MarshalIndent([]config.PlatformApp{
+		{
+			Name:   name,
+			Enable: true,
+			Chart:  *chart,
+		},
+	}, "", "    ")
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Log(string(b))
 
 	// TODO: test if application installation is successful
 }

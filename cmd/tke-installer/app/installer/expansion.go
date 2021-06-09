@@ -143,12 +143,15 @@ func (t *TKE) importExpansionCharts(ctx context.Context) error {
 
 	// TODO: (workaround ) client init will only be called in createCluster.
 	// If we SKIP createCluster step, all client call will be panic
-	err := t.initDataForDeployTKE()
-	if err != nil {
-		return err
+	if t.registryClient == nil {
+		err := t.initDataForDeployTKE()
+		if err != nil {
+			return err
+		}
 	}
 	// TODO: now we only support chartGroup: "public"
-	err = t.pushCharts(ctx, chartPath, constants.DefaultTeantID, constants.DefaultChartGroupName)
+
+	err := t.pushCharts(ctx, chartPath, constants.DefaultTeantID, constants.DefaultChartGroupName)
 	if err != nil {
 		return err
 	}

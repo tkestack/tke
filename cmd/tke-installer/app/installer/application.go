@@ -27,15 +27,6 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 )
 
-const (
-	applicationInstallNamespaceDefault      = "default"
-	applicationInstallClusterDefault        = "global"
-	applicationInstallTenantIDDefault       = constants.DefaultTeantID
-	applicationInstallChartGroupNameDefault = constants.DefaultChartGroupName
-	applicationInstallDriverTypeDefault     = "HelmV3"
-	applicationInstallValueTypeDefault      = "yaml"
-)
-
 func (t *TKE) completePlatformApps() error {
 
 	if len(t.Config.PlatformApps) == 0 {
@@ -71,16 +62,16 @@ func (t *TKE) completeChart(chart *config.Chart) error {
 		return fmt.Errorf("chart value empty")
 	}
 	if chart.TenantID == "" {
-		chart.TenantID = applicationInstallTenantIDDefault
+		chart.TenantID = constants.DefaultTeantID
 	}
 	if chart.ChartGroupName == "" {
-		chart.ChartGroupName = applicationInstallChartGroupNameDefault
+		chart.ChartGroupName = constants.DefaultChartGroupName
 	}
 	if chart.TargetCluster == "" {
-		chart.TargetCluster = applicationInstallClusterDefault
+		chart.TargetCluster = constants.GlobalClusterName
 	}
 	if chart.TargetNamespace == "" {
-		chart.TargetCluster = applicationInstallNamespaceDefault
+		chart.TargetNamespace = metav1.NamespaceDefault
 	}
 
 	return nil
@@ -94,9 +85,11 @@ func (t *TKE) installApplications(ctx context.Context) error {
 
 	// TODO: (workaround ) client init will only be called in createCluster.
 	// If we SKIP createCluster step, all client calls will be panic
-	err := t.initDataForDeployTKE()
-	if err != nil {
-		return err
+	if t.applicationClient == nil {
+		err := t.initDataForDeployTKE()
+		if err != nil {
+			return err
+		}
 	}
 
 	apps, err := t.applicationClient.Apps("").List(context.Background(), metav1.ListOptions{})
@@ -108,7 +101,11 @@ func (t *TKE) installApplications(ctx context.Context) error {
 		if !platformApp.Enable {
 			continue
 		}
-		err := t.installApplication(ctx, platformApp, apps.Items)
+		if t.applicationAlreadyInstalled(platformApp, apps.Items) {
+			t.log.Infof("application already exists. we don't override applications while installing. %v/%v", platformApp.Chart.TargetNamespace, platformApp.Chart.Name)
+			continue
+		}
+		err := t.installApplication(ctx, platformApp)
 		if err != nil {
 			return fmt.Errorf("install application failed. %v, %v", platformApp.Name, err)
 		}
@@ -118,31 +115,20 @@ func (t *TKE) installApplications(ctx context.Context) error {
 	return nil
 }
 
-func (t *TKE) installApplication(ctx context.Context, platformApp config.PlatformApp, installedApps []applicationv1.App) error {
+func (t *TKE) applicationAlreadyInstalled(platformApp config.PlatformApp, installedApps []applicationv1.App) bool {
 
-	chart := platformApp.Chart
-
-	var found bool
-	var duplicated bool
 	for _, installedApp := range installedApps {
 		// if there's an existed application with the same namespace+name, we consider it as already exists
-		if chart.Name == installedApp.Spec.Name && chart.TargetNamespace == installedApp.Namespace {
-			found = true
-			break
-		}
-		// if there's an existed application with different name/namespace but with same chart name+version, we consider it as duplicated
-		if chart.Name == installedApp.Spec.Chart.ChartName && chart.Version == installedApp.Spec.Chart.ChartVersion {
-			duplicated = true
-			break
+		if platformApp.Name == installedApp.Spec.Name && platformApp.Chart.TargetNamespace == installedApp.Namespace {
+			return true
 		}
 	}
-	if found {
-		t.log.Infof("application already exists. we don't override applications while installing. %v/%v", chart.TargetNamespace, chart.Name)
-		return nil
-	}
-	if duplicated {
-		return fmt.Errorf("duplicate chart detecated. %v, %v", chart.Name, chart.Version)
-	}
+	return false
+}
+
+func (t *TKE) installApplication(ctx context.Context, platformApp config.PlatformApp) error {
+
+	chart := platformApp.Chart
 
 	rawValues, err := chart.Values.YAML()
 	if err != nil {
@@ -155,7 +141,7 @@ func (t *TKE) installApplication(ctx context.Context, platformApp config.Platfor
 			ClusterName: chart.TargetCluster,
 		},
 		Spec: applicationv1.AppSpec{
-			Type:          applicationInstallDriverTypeDefault,
+			Type:          constants.DefaultApplicationInstallDriverType,
 			TenantID:      chart.TenantID,
 			Name:          platformApp.Name,
 			TargetCluster: chart.TargetCluster,
@@ -166,7 +152,7 @@ func (t *TKE) installApplication(ctx context.Context, platformApp config.Platfor
 				ChartVersion:   chart.Version,
 			},
 			Values: applicationv1.AppValues{
-				RawValuesType: applicationInstallValueTypeDefault,
+				RawValuesType: constants.DefaultApplicationInstallValueType,
 				RawValues:     rawValues,
 			},
 		},
