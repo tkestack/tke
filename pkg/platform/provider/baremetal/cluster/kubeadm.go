@@ -253,6 +253,7 @@ func (p *Provider) getControllerManagerExtraArgs(c *v1.Cluster) map[string]strin
 	args := map[string]string{
 		"allocate-node-cidrs": "true",
 		"cluster-cidr":        c.Spec.ClusterCIDR,
+		"bind-address":        "0.0.0.0",
 	}
 	if c.Spec.Features.IPv6DualStack {
 		args["node-cidr-mask-size-ipv4"] = fmt.Sprintf("%v", c.Status.NodeCIDRMaskSizeIPv4)
@@ -280,6 +281,7 @@ func (p *Provider) getSchedulerExtraArgs(c *v1.Cluster) map[string]string {
 	args := map[string]string{
 		"use-legacy-policy-config": "true",
 		"policy-config-file":       constants.KubernetesSchedulerPolicyConfigFile,
+		"bind-address":             "0.0.0.0",
 	}
 	for k, v := range c.Spec.SchedulerExtraArgs {
 		args[k] = v
