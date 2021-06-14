@@ -681,7 +681,7 @@ groups:
     expr: max(kube_node_status_condition{condition="Ready", status="true"} * on (node) group_left(node_role, device_type)  kube_node_labels)  without(condition, status)
 
   - record: k8s_node_status_ready
-    expr: max(kube_node_status_condition{condition="Ready", status="true"})  without(condition, status)
+    expr: max(kube_node_status_condition{condition="Ready", status="true"} * on (node) group_left(node_role, device_type)  kube_node_labels)  without(condition, status)
 
   - record: k8s_node_not_ready
     expr: max(kube_node_status_condition{condition="Ready", status="false"})  without(condition, status)
