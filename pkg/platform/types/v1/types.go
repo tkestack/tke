@@ -30,6 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	applicationversiondclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -113,6 +114,14 @@ func (c *Cluster) RegistryClientsetForBootstrap() (registryversionedclient.Regis
 		return nil, err
 	}
 	return registryversionedclient.NewForConfig(config)
+}
+
+func (c *Cluster) RegistryApplicationForBootstrap() (applicationversiondclient.ApplicationV1Interface, error) {
+	config, err := c.RESTConfigForBootstrap(&rest.Config{})
+	if err != nil {
+		return nil, err
+	}
+	return applicationversiondclient.NewForConfig(config)
 }
 
 func (c *Cluster) RESTConfigForBootstrap(config *rest.Config) (*rest.Config, error) {

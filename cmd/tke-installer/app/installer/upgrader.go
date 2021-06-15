@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"os/exec"
 	"time"
+	applicationversiondclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 
 	"github.com/pkg/errors"
 	"github.com/thoas/go-funk"
@@ -286,6 +287,10 @@ func (t *TKE) prepareForUpgrade(ctx context.Context) error {
 		return err
 	}
 	t.registryClient, err = registryversionedclient.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	t.applicationClient, err = applicationversiondclient.NewForConfig(config)
 	if err != nil {
 		return err
 	}

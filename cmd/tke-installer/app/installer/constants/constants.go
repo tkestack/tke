@@ -39,7 +39,9 @@ const (
 
 	DockerCertsDir = "/etc/docker/certs.d"
 
-	DefaultTeantID = "default"
+	DefaultTeantID        = "default"
+	DefaultChartGroupName = "public"
+	GlobalClusterName     = "global"
 
 	DevRegistryDomain    = "docker.io"
 	DevRegistryNamespace = "tkestack"
@@ -69,6 +71,9 @@ const (
 	KubeconfigFileBaseName = "admin.kubeconfig"
 
 	AuthzWebhookNodePort = 31138
+
+	DefaultApplicationInstallDriverType = "HelmV3"
+	DefaultApplicationInstallValueType  = "yaml"
 )
 
 const (

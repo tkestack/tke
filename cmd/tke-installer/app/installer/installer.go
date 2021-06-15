@@ -59,6 +59,7 @@ import (
 	certutil "k8s.io/client-go/util/cert"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+	applicationclientset "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryclientset "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	"tkestack.io/tke/api/platform"
@@ -110,11 +111,12 @@ type TKE struct {
 
 	docker *docker.Docker
 
-	globalClient   kubernetes.Interface
-	platformClient tkeclientset.PlatformV1Interface
-	registryClient registryclientset.RegistryV1Interface
-	servers        []string
-	namespace      string
+	globalClient      kubernetes.Interface
+	platformClient    tkeclientset.PlatformV1Interface
+	registryClient    registryclientset.RegistryV1Interface
+	applicationClient applicationclientset.ApplicationV1Interface
+	servers           []string
+	namespace         string
 }
 
 func New(config *config.Config) *TKE {
@@ -468,6 +470,19 @@ func (t *TKE) initSteps() {
 				Name: "Import charts",
 				Func: t.importCharts,
 			},
+			{
+				Name: "Import Expansion Charts",
+				Func: t.importExpansionCharts,
+			},
+		}...)
+	}
+
+	if len(t.Config.PlatformApps) > 0 {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Install Applications",
+				Func: t.installApplications,
+			},
 		}...)
 	}
 
@@ -654,6 +669,11 @@ func (t *TKE) prepare() apierrors.APIStatus {
 			t.IncludeSelf = true
 			break
 		}
+	}
+
+	err = t.completePlatformApps()
+	if err != nil {
+		return apierrors.NewInternalError(err)
 	}
 	t.backup()
 
@@ -1322,6 +1342,11 @@ func (t *TKE) initDataForDeployTKE() error {
 	}
 
 	t.registryClient, err = t.Cluster.RegistryClientsetForBootstrap()
+	if err != nil {
+		return err
+	}
+
+	t.applicationClient, err = t.Cluster.RegistryApplicationForBootstrap()
 	if err != nil {
 		return err
 	}
