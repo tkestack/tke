@@ -2,6 +2,7 @@ const path = require('path');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 module.exports = ({ version, mode }) => ({
   mode,
@@ -55,7 +56,8 @@ module.exports = ({ version, mode }) => ({
           {
             loader: 'ts-loader',
             options: {
-              happyPackMode: true
+              happyPackMode: true,
+              transpileOnly: true
             }
           },
 
@@ -124,6 +126,20 @@ module.exports = ({ version, mode }) => ({
   },
 
   plugins: [
+    new ForkTsCheckerWebpackPlugin({
+      eslint: {
+        files: './src/**/*.{ts,tsx,js,jsx}'
+      },
+
+      issue: {
+        // 排除eslint warning的打印
+        exclude: {
+          origin: 'eslint',
+          severity: 'warning'
+        }
+      }
+    }),
+
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer']
     }),
@@ -136,7 +152,6 @@ module.exports = ({ version, mode }) => ({
             template: path.resolve(__dirname, '../public/index.html'),
             inject: false,
             templateParameters: (_, { js }) => {
-              console.log('html webpack plugin=====>>', js);
               const index = js.find(path => path.includes('index'));
               const commonVendor = js.find(path => path.includes('common-vendor'));
               return version === 'tke'
