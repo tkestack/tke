@@ -56,8 +56,6 @@ const (
 	KeyLister                ContextKey = iota
 	conditionTypeHealthCheck            = "HealthCheck"
 	failedHealthCheckReason             = "FailedHealthCheck"
-
-	resyncInternal = 5 * time.Minute
 )
 
 // Controller is responsible for performing actions dependent upon a cluster phase.
@@ -66,9 +64,10 @@ type Controller struct {
 	lister       platformv1lister.ClusterLister
 	listerSynced cache.InformerSynced
 
-	log            log.Logger
-	platformClient platformversionedclient.PlatformV1Interface
-	deleter        deletion.ClusterDeleterInterface
+	log               log.Logger
+	platformClient    platformversionedclient.PlatformV1Interface
+	deleter           deletion.ClusterDeleterInterface
+	healthCheckPeriod time.Duration
 }
 
 // NewController creates a new Controller object.
@@ -76,7 +75,8 @@ func NewController(
 	platformClient platformversionedclient.PlatformV1Interface,
 	clusterInformer platformv1informer.ClusterInformer,
 	resyncPeriod time.Duration,
-	finalizerToken platformv1.FinalizerName) *Controller {
+	finalizerToken platformv1.FinalizerName,
+	healthCheckPeriod time.Duration) *Controller {
 
 	rand.Seed(time.Now().Unix())
 
@@ -104,6 +104,7 @@ func NewController(
 	)
 	c.lister = clusterInformer.Lister()
 	c.listerSynced = clusterInformer.Informer().HasSynced
+	c.healthCheckPeriod = healthCheckPeriod
 
 	return c
 }
@@ -156,7 +157,7 @@ func (c *Controller) needsUpdate(old *platformv1.Cluster, new *platformv1.Cluste
 	if healthCondition == nil {
 		return true
 	}
-	if time.Since(healthCondition.LastProbeTime.Time) > resyncInternal {
+	if time.Since(healthCondition.LastProbeTime.Time) > c.healthCheckPeriod {
 		return true
 	}
 
