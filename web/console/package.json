@@ -17,15 +17,12 @@
     "build-project": "webpack --config ./webpack/webpack.prod.js --progress --color --env version=tke --env version=project",
     "prebuild": "rm -rf build && npm install",
     "build": "npm run build-tke && npm run build-project",
-    "postbuild": "gulp"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
+    "postbuild": "gulp",
+    "prepare": "cd ../../ && husky install ./web/console/.husky",
+    "pre-commit": "lint-staged"
   },
   "lint-staged": {
-    "./src/**/*.{ts,tsx,js,jsx}": "eslint"
+    "./**/*.{ts,tsx,js,jsx}": "eslint"
   },
   "license": "Apache-2.0",
   "dependencies": {
