@@ -21,21 +21,30 @@ The above features enable Cilium to be highly scalable, visualized, and secure i
 
 ## Motivation
 
-TKEStack can support CNI Cilium.
+TKEStack can support Cilium on network mode overlay and underlay.
 
-User can manully set the following configurations when install Cilium on TKEStack:
+User can manully set the following configurations when install Cilium on TKEStack from UI:
+
+### Install Cilium network mode overlay
+
 ```
-cluster-pool-ipv4-cidr: "10.0.0.0/8"
-cluster-pool-ipv4-mask-size: "24"
-enable-hubble: "true"
-tunnel: vxlan
-debug: "false"
+CNI      Cilium
+网络模式 Overlay
+```
+
+### Install Cilium network mode underlay
+
+```
+CNI        Cilium
+网络模式   Underlay
+自治系统号(输入自制系统号) 
+交换机IP(输入交换机IP)
 ```
 
 ## Scope
 
 **In-Scope**:
-- Support Cilium on TencentOS Server 3.1
+- Support Cilium on TencentOS Server 3.1 for network mode overlay and underlay.
 - Install Cilium on TKEStack baremetal clusters when user enabledCilium,otherwise default CNI is galaxy.
 - Only support install cilium to store all required state using Kubernetes custom resource definitions (CRDs).
 - Support tkestack HA topology include CLB and VIP.
@@ -46,7 +55,6 @@ debug: "false"
 - Not support IPV6.
 - Cilium can not replace the kube-proxy.
 - Not support cluster mesh.
-- Not support install from UI.
 - Not support "enable-l7-proxy".
 
 ### System Requirements
@@ -75,14 +83,17 @@ CONFIG_CGROUP_BPF=y
 
 ## Main proposal
 
-1. Create EnsureCilium function to install Cilium.
-2. Check the linux kernel version when the verison does not meet the requirement then installation will finished and throw a message for users. 
-2. Pass the Cilium configuration args by clusterSpec.NetworkArgs, then use go-template to overwrite the Cilium yaml.
-3. Add EnsuerCilium switch that indicate CNI is cilium or Galaxy in cluster object and make Galaxy as default CNI. 
+1. Add EnsuerCilium switch that indicate CNI is cilium or Galaxy in cluster object and make Galaxy as default CNI.
+2. Create EnsureCilium function to install Cilium.
+3. Check the linux kernel version when the verison does not meet the requirement then installation will finished and throw a message for users.
+4. Pass the Cilium configuration args `networkMode` by clusterSpec.NetworkArgs, then use go-template to overwrite the Cilium yaml.
+5. Set the controller-manager flags: `--configure-cloud-routes=false`,`--allocate-node-cidrs=false` to disable the cloud provider set pod CIDR for nodes when deploy cilium on overlay network mode. Use ipam to allocate pod CIDR to nodes.
+6. Add node labels: `infra.tce.io/as`, `infra.tce.io/switch-ip` on the first master for underlay network mode.Pass the label configuration args by clusterSpec.NetworkArgs.
+7. Pass configuration args `cluster-cidrs`and `base-pod-number` for ipamd deployment.Pass configuration args `NonMasqueradeCIDRs` for ip-masq-agent.
 
 ## User cases
 
-### Case 1
+### Case 1 Deploy Cilium on overlay network mode
 
 1. Deploy a TKEStack environment then create a new baremetal cluster with rebuid tke-platform-controller without galaxy. 
 ```
@@ -98,7 +109,7 @@ global         Baremetal   1.19.7    Running   14d
 root@VM-0-20-ubuntu:~#
 ```
 ```
-root@VM-0-46-ubuntu:~# kubectl apply -f quick.yaml
+root@VM-0-16-ubuntu:~# kubectl apply -f quick.yaml
 serviceaccount/cilium created
 serviceaccount/cilium-operator created
 configmap/cilium-config created
@@ -110,21 +121,23 @@ daemonset.apps/cilium created
 deployment.apps/cilium-operator created
 ```
 ```
-root@VM-0-46-ubuntu:~# kubectl get pods -n kube-system
+root@VM-0-16-ubuntu:~# kubectl get pods -n kube-system
 NAME                                     READY   STATUS    RESTARTS   AGE
-cilium-6lrvq                             1/1     Running   0          38s
-cilium-operator-654456485c-wvkxx         1/1     Running   0          38s
-coredns-745589f8f6-t5dj5                 1/1     Running   0          5m34s
-coredns-745589f8f6-wth5g                 1/1     Running   0          5m34s
-etcd-vm-0-46-ubuntu                      1/1     Running   0          6m11s
-kube-apiserver-vm-0-46-ubuntu            1/1     Running   0          6m5s
-kube-controller-manager-vm-0-46-ubuntu   1/1     Running   0          6m5s
-kube-proxy-xclms                         1/1     Running   0          5m34s
-kube-scheduler-vm-0-46-ubuntu            1/1     Running   0          6m5s
+cilium-92mx2                             1/1     Running   0          3m11s
+cilium-operator-59df9b5857-vmzf7         1/1     Running   0          3m11s
+coredns-ccc77fb9d-jq7b8                  1/1     Running   0          3m11s
+coredns-ccc77fb9d-khtn4                  1/1     Running   0          3m11s
+etcd-10.0.0.16                           1/1     Running   0          83s
+kube-apiserver-10.0.0.16                 1/1     Running   0          77s
+kube-controller-manager-10.0.0.16        1/1     Running   0          109s
+kube-proxy-cvhb2                         1/1     Running   0          3m11s
+kube-scheduler-10.0.0.16                 1/1     Running   0          88s
+metrics-server-v0.3.6-794ccd69c8-nr8g2   2/2     Running   0          54s
+tke-eni-ipamd-98f6f5d55-bhf6s            1/1     Running   0          3m11s
 ```
 3. Test Cilium can work. It will deploy a series of deployments which will use various connectivity paths to connect to each other. Connectivity paths include with and without service load-balancing and various network policy combinations. The pod name indicates the connectivity variant and the readiness and liveness gate indicates success or failure of the test. Make sure you have at least two avaliable nodes to use.
 ```
-root@VM-0-46-ubuntu:~# kubectl apply -f connectivity-check.yaml
+root@VM-0-16-ubuntu:~# kubectl apply -f connectivity-check.yaml
 service/echo-a created
 deployment.apps/echo-a created
 service/echo-b created
@@ -146,7 +159,7 @@ ciliumnetworkpolicy.cilium.io/pod-to-external-fqdn-allow-baidu-cnp created
 ```
 Check the test results.
 ```
-root@VM-0-46-ubuntu:~# kubectl get pods
+root@VM-0-16-ubuntu:~# kubectl get pods
 NAME                                                    READY   STATUS    RESTARTS   AGE
 echo-a-9c5d8bfcf-65vhk                                  1/1     Running   0          106s
 echo-b-79c6c76fb4-qn9v6                                 1/1     Running   0          106s
@@ -162,8 +175,8 @@ pod-to-b-multi-node-headless-64b6d4fc95-568rc           1/1     Running   1     
 pod-to-external-fqdn-allow-baidu-cnp-67568c4d96-xqx8j   1/1     Running   0          104s
 ```
 
-### Case 2
-1. Create a cluster with NetworkArgs{backendType:geneve;debugMode:true}
+### Case 2 deploy Cilium on underlay network mode
+1. Create a cluster with NetworkArgs{ans:64512;switch-ip:192.168.60.2}
 
 ```
 root@VM-0-20-ubuntu:~#kubectl create -f clusterCilium0.yaml
@@ -175,32 +188,30 @@ cls-jz7clcth   Baremetal   1.19.7    Running   51m
 cls-kz8xchfx   Baremetal   1.19.7    Running   22m
 global         Baremetal   1.19.7    Running   15d
 ```
-2. Check the Cilium pods and NetworkArgs which we set:
+2. Check the Cilium pods and labels:
 ```
-root@VM-0-33-ubuntu:~# kubectl get pods -n kube-system
+[root@TENCENT64 ~]# kubectl get pods -n kube-system
 NAME                                     READY   STATUS    RESTARTS   AGE
-cilium-4hk7d                             1/1     Running   0          11m
-cilium-operator-55c567457-wz8br          1/1     Running   0          11m
-coredns-745589f8f6-7pz5z                 1/1     Running   0          14m
-coredns-745589f8f6-x2sgx                 1/1     Running   0          14m
-etcd-vm-0-33-ubuntu                      1/1     Running   0          9m43s
-kube-apiserver-vm-0-33-ubuntu            1/1     Running   0          11m
-kube-controller-manager-vm-0-33-ubuntu   1/1     Running   0          11m
-kube-proxy-6tptz                         1/1     Running   0          14m
-kube-scheduler-vm-0-33-ubuntu            1/1     Running   0          11m
-metrics-server-v0.3.6-794ccd69c8-wk46k   2/2     Running   0          6m19s
+cilium-ksg69                             1/1     Running   1          9m52s
+cilium-operator-59df9b5857-hxbxn         1/1     Running   1          9m52s
+cilium-router-vvggb                      1/1     Running   0          63s
+coredns-ccc77fb9d-444pp                  1/1     Running   0          9m52s
+coredns-ccc77fb9d-q8bcm                  1/1     Running   0          9m52s
+etcd-192.168.50.6                        1/1     Running   3          7m21s
+kube-apiserver-192.168.50.6              1/1     Running   4          6m18s
+kube-controller-manager-192.168.50.6     1/1     Running   3          7m29s
+kube-proxy-lx8pr                         1/1     Running   0          9m52s
+kube-scheduler-192.168.50.6              1/1     Running   3          9m23s
+metrics-server-v0.3.6-794ccd69c8-2nsqg   2/2     Running   0          4m
+tke-eni-ipamd-5c6bb5f777-75j4g           1/1     Running   0          5m46s
 ```
+Check the node labels:
 ```
-root@VM-0-33-ubuntu:~# kubectl get cm cilium-config -n kube-system -o yaml | grep debug
-  debug: "true"
-        f:debug: {}
+[root@TENCENT64 ~]# kubectl get nodes 192.168.50.6 --show-labels
+NAME           STATUS   ROLES    AGE     VERSION         LABELS
+192.168.50.6   Ready    master   8m40s   v1.20.4-tke.1   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,infra.tce.io/as=64512,infra.tce.io/switch-ip=192.168.60.2,kubernetes.io/arch=amd64,kubernetes.io/hostname=192.168.50.6,kubernetes.io/os=linux,node-role.kubernetes.io/master=,platform.tkestack.io/machine-ip=192.168.50.6
 ```
-```
-root@VM-0-33-ubuntu:~# kubectl get cm cilium-config -n kube-system -o yaml | grep tunnel
-  tunnel: geneve
-        f:tunnel: {}
-```
-Through the results the NetworkArgs has passed into cilium configmap successfully.
+Through the results the NetworkArgs has passed into kubernetes node labels.
 
 ### Case 3
 1. Install Cilium on linux kernel version 4.10:
@@ -258,4 +269,4 @@ kubectl apply -f https://github.com/tkestack/tke/blob/master/docs/yamls/cilium/c
 
 Check pod status through `kubectl get pod -A`, all pods will be running status.
 
-3. Confirm HA is working. Shutdown any one node, everthing wokrs fine through UI and kubectl.
+3. Confirm HA is working. Shutdown any one node, everthing works fine through UI and kubectl.
