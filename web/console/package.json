@@ -17,7 +17,12 @@
     "build-project": "webpack --config ./webpack/webpack.prod.js --progress --color --env version=tke --env version=project",
     "prebuild": "rm -rf build && npm install",
     "build": "npm run build-tke && npm run build-project",
-    "postbuild": "gulp"
+    "postbuild": "gulp",
+    "prepare": "cd ../../ && husky install ./web/console/.husky",
+    "pre-commit": "lint-staged"
+  },
+  "lint-staged": {
+    "./**/*.{ts,tsx,js,jsx}": "eslint"
   },
   "license": "Apache-2.0",
   "dependencies": {
@@ -65,6 +70,7 @@
     "@babel/plugin-transform-runtime": "^7.12.1",
     "@babel/preset-env": "^7.0.0",
     "@babel/preset-react": "^7.0.0",
+    "@types/jquery": "^3.5.5",
     "@types/marked": "^0.6.3",
     "@types/node": "^11.11.1",
     "@types/react": "^16.9.56",
@@ -87,12 +93,15 @@
     "eslint-plugin-react-hooks": "^4.2.0",
     "expose-loader": "^2.0.0",
     "fast-glob": "^3.2.5",
+    "fork-ts-checker-webpack-plugin": "^6.2.10",
     "gulp": "^4.0.2",
     "gulp-clean-css": "^4.3.0",
     "gulp-ejs": "^5.1.0",
     "gulp-html-minifier-terser": "^6.0.1",
     "gulp-uglify": "^3.0.2",
     "html-webpack-plugin": "^5.3.1",
+    "husky": "^6.0.0",
+    "lint-staged": "^11.0.0",
     "readable-stream": "^3.6.0",
     "speed-measure-webpack-plugin": "^1.5.0",
     "style-loader": "^2.0.0",

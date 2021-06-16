@@ -11,6 +11,7 @@ module.exports = ({ version }) =>
     devServer: {
       contentBase: path.resolve(__dirname, '../public'),
       historyApiFallback: true,
+      compress: true,
       open: true,
       proxy: {
         '/api': {

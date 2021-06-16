@@ -1,5 +1,12 @@
 # tke-stack 控制台开发指南
 ## 配置`server.config.js` 
+`package.json`同级目录新建`server.config.js` ，内容如下：
+```js
+module.exports = {
+  Host: 'http://www.example.com',
+  Cookie: ''
+};
+```
 - 配置Host为已安装的控制台的访问地址;
 - 配置Cookie为已安装的控制台的登录后的cookie；
 
