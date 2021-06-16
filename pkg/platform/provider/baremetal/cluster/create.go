@@ -1092,23 +1092,28 @@ func (p *Provider) EnsurePatchAnnotation(ctx context.Context, c *v1.Cluster) err
 	machines := map[bool][]platformv1.ClusterMachine{
 		true:  c.Spec.ScalingMachines,
 		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
-	client, err := c.Clientset()
-	if err != nil {
-		return err
-	}
+
 	// from k8s 1.18, kubeadm will add built-in annotations to etcd and kube-apiserver
 	// we should handle such case when add tkestack annotations according to different case
-	prefix := ""
-	lineIndex := "5"
-	if apiclient.ClusterVersionIsBefore118(client) {
-		prefix = `  annotations:\n`
-		lineIndex = "3"
-	}
+	prefix := `  annotations:\n`
+	cmdTpl := `
+		idx=3
+		yaml='%s'
+		annotations='%s'
+		if line=$(grep "annotations" -n ${yaml});then
+			if grep -q "tke.prometheus.io/scrape" ${yaml};then
+				exit
+			else
+				idx=$(echo $line | cut -d":" -f1)
+				annotations='%s'
+			fi
+		fi
+		sed -i "${idx}a\\${annotations}" ${yaml}`
 	fileData := map[string]string{
-		constants.EtcdPodManifestFile:                  prefix + `    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "https"\n    prometheus.io/port: "2379"`,
-		constants.KubeAPIServerPodManifestFile:         prefix + `    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "https"\n    prometheus.io/port: "6443"`,
-		constants.KubeControllerManagerPodManifestFile: prefix + `    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "http"\n    prometheus.io/port: "10252"`,
-		constants.KubeSchedulerPodManifestFile:         prefix + `    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "http"\n    prometheus.io/port: "10251"`,
+		constants.EtcdPodManifestFile:                  `    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "https"\n    prometheus.io/port: "2379"`,
+		constants.KubeAPIServerPodManifestFile:         `    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "https"\n    prometheus.io/port: "6443"`,
+		constants.KubeControllerManagerPodManifestFile: `    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "https"\n    prometheus.io/port: "10257"`,
+		constants.KubeSchedulerPodManifestFile:         `    scheduler.alpha.kubernetes.io/critical-pod: ""\n    tke.prometheus.io/scrape: "true"\n    prometheus.io/scheme: "https"\n    prometheus.io/port: "10259"`,
 	}
 	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
@@ -1117,7 +1122,7 @@ func (p *Provider) EnsurePatchAnnotation(ctx context.Context, c *v1.Cluster) err
 		}
 
 		for file, data := range fileData {
-			cmd := fmt.Sprintf(`grep 'prometheus.io/port' %s || sed -i '%sa\%s' %s`, file, lineIndex, data, file)
+			cmd := fmt.Sprintf(cmdTpl, file, prefix+data, data)
 			_, stderr, exit, err := machineSSH.Exec(cmd)
 			if err != nil || exit != 0 {
 				return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
