@@ -356,6 +356,7 @@ const (
 	ScopeTypeProject string = "project"
 )
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ChartProxyOptions is the query options to a ChartInfo proxy call.
