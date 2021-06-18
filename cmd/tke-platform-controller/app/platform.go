@@ -62,6 +62,7 @@ func startClusterController(ctx ControllerContext) (http.Handler, bool, error) {
 		ctx.InformerFactory.Platform().V1().Clusters(),
 		ctx.Config.ClusterController.ClusterSyncPeriod,
 		platformv1.ClusterFinalize,
+		ctx.Config.ClusterController.HealthCheckPeriod,
 	)
 
 	go func() {

@@ -28,4 +28,6 @@ type ClusterControllerConfiguration struct {
 	// concurrentClusterSyncs is the number of cluster objects that are
 	// allowed to sync concurrently.
 	ConcurrentClusterSyncs int
+	// HealthCheckPeriod is the period for cluster health check
+	HealthCheckPeriod time.Duration
 }
