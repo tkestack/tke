@@ -39,9 +39,11 @@ const (
 
 	DockerCertsDir = "/etc/docker/certs.d"
 
-	DefaultTeantID        = "default"
-	DefaultChartGroupName = "public"
-	GlobalClusterName     = "global"
+	DefaultTeantID                 = "default"
+	DefaultChartGroupName          = "public"
+	DefaultExpansionChartGroupName = "expansion"
+	DefaultCustomChartGroupName    = "custom"
+	GlobalClusterName              = "global"
 
 	DevRegistryDomain    = "docker.io"
 	DevRegistryNamespace = "tkestack"

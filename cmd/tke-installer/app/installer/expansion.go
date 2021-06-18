@@ -25,6 +25,7 @@ import (
 	"os"
 	"path"
 	"strings"
+
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 )
 
@@ -149,9 +150,8 @@ func (t *TKE) importExpansionCharts(ctx context.Context) error {
 			return err
 		}
 	}
-	// TODO: now we only support chartGroup: "public"
 
-	err := t.pushCharts(ctx, chartPath, constants.DefaultTeantID, constants.DefaultChartGroupName)
+	err := t.pushCharts(ctx, chartPath, constants.DefaultTeantID, constants.DefaultExpansionChartGroupName)
 	if err != nil {
 		return err
 	}

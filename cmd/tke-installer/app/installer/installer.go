@@ -463,10 +463,6 @@ func (t *TKE) initSteps() {
 				Func: t.setGlobalClusterHosts,
 			},
 			{
-				Name: "Check need imported chart groups",
-				Func: t.checkNeedImportedChartgroups,
-			},
-			{
 				Name: "Import charts",
 				Func: t.importCharts,
 			},
