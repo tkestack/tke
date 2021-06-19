@@ -20,8 +20,6 @@ package image
 
 import (
 	"fmt"
-	"strings"
-
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	"tkestack.io/tke/pkg/util/ssh"
 )
@@ -38,17 +36,9 @@ func PullKubernetesImages(s ssh.Interface, option *Option) error {
 	}
 
 	for _, image := range images {
-		cmd := fmt.Sprintf("docker pull %s", image)
+		cmd := fmt.Sprintf("crictl pull %s", image)
 		_, err := s.CombinedOutput(cmd)
 		if err != nil {
-			if strings.Contains(err.Error(), "502 Bad Gateway") {
-				cmd = " docker info | grep Proxy"
-				output, _ := s.CombinedOutput(cmd)
-				return fmt.Errorf(`pull image fail: %s. maybe set no_proxy for registry(%s,*.%s) in docker dameon.
-					docker info:%s. see: https://docs.docker.com/config/daemon/systemd/#httphttps-proxy`,
-					err, option.RegistryDomain, option.RegistryDomain, output)
-			}
-
 			return err
 		}
 	}
