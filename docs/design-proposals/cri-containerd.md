@@ -41,16 +41,16 @@ CRI（Container runtime interface）是Kubernetes容器运行时接口,是Kubern
 
 ## Motivation
 
-TKEStack支持配置CRI标准兼容容器引擎：
+TKEStack支持配置CRI标准兼容容器引擎docker和containerd，用户在安装global集群和用户的业务集群时可以自由选择使用docker或者containerd：
 
 **版本需求**
-  * TKEStack版本：
-  * 支持的Kubernetes版本:（v1.18.3, v1.19.7, v1.20.4, v1.20.4-tke.1）
+  * TKEStack版本：v1.7.0
+  * 支持的Kubernetes版本:（v1.19.7, v1.20.4, v1.20.4-tke.1）
   * containerd版本：v1.5.2
   * crictl版本：v0.1.0
   * ctr版本：v1.5.2
-  * 支持的操作系统类型
-  * 支持的操作系统架构：
+  * 支持的操作系统类型: ≥ Ubuntu 16.04/18.04 LTS (64-bit);≥ CentOS Linux 7.6 (64-bit);≥ Tencent Linux 2.2
+  * 支持的操作系统架构：amd64
 
 根据TKEStack在不同阶段使用功能的差异，我们把支持CRI接口容器引擎分为四个阶段：
 
@@ -72,8 +72,11 @@ TKEStack支持配置CRI标准兼容容器引擎：
 
 ### 阶段1 完成Running阶段的改造
 
-该阶段容器引擎的调用者是Kubelet，只使用CRI标准定义的接口，所以只需要引入Containerd，不需要引入其他第三方组件。该阶段包含2个部分：
-
+该阶段容器引擎的调用者是Kubelet，只使用CRI标准定义的接口，所以只需要引入Containerd，不需要引入其他第三方组件，通过暴露参数`Cluster.Spec.Features.EnableContainerRuntime`为判断容器引擎选择的开关，该阶段包含2个部分：
+通过UI暴露选项：
+```
+容器引擎： docker   containerd
+```
 **1. 安装Cluster**
 
  *  Install过程中安装Global Cluster
@@ -106,15 +109,20 @@ TKEStack支持配置CRI标准兼容容器引擎：
 
 * pkg/platform/provider/baremetal/conf/critools/crictl.yaml
 
-**目前存在的未明确问题**：
- * 目前Global集群创建过程中，是否有必要自定义容器引擎参数，通过修改配置文件是否足够？ 如果后续支持多种容器引擎且都支持自定义参数，会显得很乱。
- * IncludeSelf=true时，installer会使用global cluster的一个节点，这时候需要容器引擎需要满足Install阶段的要求，在install节点上需要使用docker build,docker tag,是否还需要部署docker？
- * 目前CRI-O和Containerd均支持配置default oci runtime hook，可以替代 EnsureNvidiaContainerRuntime的功能，减少组件的数量，目前是否有必要替代?
-### 阶段2 完成install阶段的改造
-  如果使用第三方镜像仓库，在安装过程中需要搭建临时镜像仓库，并将多种体系架构的镜像push到临时仓库中完成安装。由于Docker 镜像格式原生不支持需要多体系架构，需要额外引入流程解决，过程如下：
+### 阶段2 install阶段的改造 暂时无法完全支持containerd，需要配合docker进行改造
+  目前的install步骤：
+  * Execute pre install hook
+  * Load images（docker load）
+  * Tag images (docker tag)
+  * Setup local registry(docker run)
+  * Push images(docker manifest, docker push)
+  * Generate certificates for TKE components
+  * Create global cluster
+  install过程中需要创建registry镜像仓库，在安装过程中需要搭建临时镜像仓库，并将多种体系架构的镜像push到临时仓库中完成安装。由于Docker 镜像格式原生不支持需要多体系架构，需要额外引入流程解决，过程如下：
 ![install过程镜像](../images/cri-image-old.svg)
 
-存在步骤2和步骤3的根本原因是Docker的镜像格式不支持多体系架构，image.tar.gz 也同样无法包含同名的不同架构镜像。所以此类镜像加载到容器镜像后，还需要通过docker的manifest命令进行适配。
+存在步骤2和步骤3的根本原因是Docker的镜像格式不支持多体系架构，image.tar.gz 必须包含同名的不同架构的镜像，所以首先需要load不同架构的同名镜像，镜像加载到容器镜像后，还需要通过docker的manifest命令build multi-arch的镜像，最终push到本地创建的registry。
+此步骤需要花费大量的时间。
 
 ![install过程镜像](../images/cri-image-new.svg)
 
@@ -129,7 +137,9 @@ ctr images export kube-apiserver.tar docker.io/tkestack/kube-apiserver:v1.20.4-t
 ```
 ctr images import kube-apiserver.tar docker.io/tkestack/kube-apiserver:v1.20.4-tke.1 --all-platforms
 ```
-### 阶段3 完成构建阶段的改造
+在install阶段，需要使用`docker run`命令创建installer容器和registry-http容器和registry-https容器，目前`ctr run`和`nerdctl run`都无法完全取代`docker run`命令，因为ctr不支持暴露容器端口，ctr和nerdctl都不支持volume mount.
+所以此阶段仍然需要安装docker.
+### 阶段3 完成构建阶段的改造  暂时无法完全支持containerd，需要配合docker进行改造
   该阶段容器引擎的使用者不是Kubernetes，所以不受Kubelet移除dockershim的影响。改造优先级较低。
   随着社区的发展，容器基础工具集开始符合Unix的设计哲学：一个工具只做好一个事情。镜像制作领域也出现了一系列工具：
 
@@ -138,11 +148,11 @@ BuildKit是Docker出品的一款镜像制作工具，目的是分担Docker Engin
  * nerdctl[10]
 nerdctl是一款完全兼容docker的工具，是containerd的子项目之一，可以弥补ctr无法build image的缺陷，nerdctl结合buildKit实现image build。
 
+此阶段仍然需要安装docker.
 ### 阶段4 用户场景容器引擎的切换
 
 用户已有集群从docker切换到containerd：
- * 新安装的节点container runtime使用containerd
- * 现存节点通过重装节点的方式切换到containerd
+ * 现存节点不支持自动迁移到containerd,通过升级到新支持containerd的集群或者提供手动的步骤的方式切换到containerd
 
 
 ## refereneces:
