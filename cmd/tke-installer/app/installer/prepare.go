@@ -314,5 +314,5 @@ func (t *TKE) pushCustomCharts(ctx context.Context) error {
 		return fmt.Errorf("%s is not file, cannot be loaded as charts packge", t.Config.CustomChartsName)
 	}
 	t.log.Infof("load charts from %s", t.Config.CustomChartsName)
-	return t.pushCharts(ctx, constants.DataDir+t.Config.CustomChartsName, constants.DefaultTeantID, defaultChartGroups[0])
+	return t.pushCharts(ctx, constants.DataDir+t.Config.CustomChartsName, constants.DefaultTeantID, constants.DefaultCustomChartGroupName)
 }

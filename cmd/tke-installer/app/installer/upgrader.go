@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"os/exec"
 	"time"
+
 	applicationversiondclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 
 	"github.com/pkg/errors"
@@ -119,10 +120,6 @@ func (t *TKE) upgradeSteps() {
 	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
 		t.Para.Config.Registry.TKERegistry != nil {
 		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Check need imported chart groups",
-				Func: t.checkNeedImportedChartgroups,
-			},
 			{
 				Name: "Import charts",
 				Func: t.importCharts,
