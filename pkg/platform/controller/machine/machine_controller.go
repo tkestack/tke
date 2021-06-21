@@ -252,6 +252,9 @@ func (c *Controller) onCreate(ctx context.Context, machine *platformv1.Machine) 
 		return err
 	}
 
+	// set cluster OwnerReferences to machine on create
+	c.ensureClusterOwnerReferences(ctx, machine, cluster)
+
 	for machine.Status.Phase == platformv1.MachineInitializing {
 		err = provider.OnCreate(ctx, machine, cluster)
 		if err != nil {
@@ -278,6 +281,9 @@ func (c *Controller) onUpdate(ctx context.Context, machine *platformv1.Machine) 
 	if err != nil {
 		return err
 	}
+
+	// Compatible with inventory cluster, tkestack 1.8 will be removed
+	c.ensureClusterOwnerReferences(ctx, machine, cluster)
 
 	err = provider.OnUpdate(ctx, machine, cluster)
 	machine = c.checkHealth(ctx, machine)
@@ -377,4 +383,18 @@ func (c *Controller) ensureSyncMachineNodeLabel(ctx context.Context, machine *pl
 	if err != nil {
 		log.FromContext(ctx).Error(err, "sync Machine node label error")
 	}
+}
+
+// ensureClusterOwnerReferences set owner references to master
+func (c *Controller) ensureClusterOwnerReferences(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) {
+	clusterOwnerReferences := *metav1.NewControllerRef(cluster, platformv1.SchemeGroupVersion.WithKind("Cluster"))
+
+	// if exist, not set anymore
+	for _, or := range machine.ObjectMeta.OwnerReferences {
+		if reflect.DeepEqual(or, clusterOwnerReferences) {
+			return
+		}
+	}
+
+	machine.ObjectMeta.OwnerReferences = append(machine.ObjectMeta.OwnerReferences, clusterOwnerReferences)
 }

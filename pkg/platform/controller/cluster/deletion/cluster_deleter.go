@@ -245,7 +245,6 @@ var deleteResourceFuncs = []deleteResourceFunc{
 	deleteIPAM,
 	deleteTappControllers,
 	deleteClusterProvider,
-	deleteMachine,
 }
 
 // deleteAllContent will use the client to delete each resource identified in cluster.
