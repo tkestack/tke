@@ -84,6 +84,7 @@ After `tke-application` enabled, Tkestack has the ability to use `helm chart` as
 
  1. Tkestack built-in component helm chart support
  2. Define apps in `global cluster` object (temporarily)
+ 3. Transform `tke coms` to `build-in charts` and `build-in apps` (temporarily)
 
 ## Limitation
 
@@ -91,22 +92,38 @@ After `tke-application` enabled, Tkestack has the ability to use `helm chart` as
 
 ## Main proposal
 
-1. Enable `tke-application` installed as default during Tkestack installation
-2. `helm push` sdk will used to push all charts tgz package from `bootstrap` container to chart repo during tkestack
-3. Label the chart so that distinguish system built-in addon chart and other charts,  `chart list` API will retrieval the chart instead of  `clusteraddontypes`
-4. Tkestack `tke-application` controller will handle cross tenant request validation, below pr should get revert:
- - `https://github.com/tkestack/tke/pull/978`
- - `https://github.com/tkestack/tke/pull/1007`
-5. `tke-installer` will push build-in/expansion charts to registry:
+1. Enable `tke-application` installed as default during Tkestack installation (done)
+
+2. `helm push` sdk will used to push all charts tgz package from `bootstrap` container to chart repo during tkestack (done):
 - `https://github.com/tkestack/tke/pull/1182`
+
+3. Label the chart so that distinguish system built-in addon chart and other charts,  `chart list` API will retrieval the chart instead of  `clusteraddontypes`:
+- `https://github.com/tkestack/tke/issues/1357`
+
+4. Tkestack `tke-application` controller will handle cross tenant request validation, below pr should get revert (done):
+- `https://github.com/tkestack/tke/pull/978`
+- `https://github.com/tkestack/tke/pull/1007`
+
+5. `tke-installer` will push build-in/expansion charts to registry (done):
 - `https://github.com/tkestack/tke/pull/1284`
 - `https://github.com/tkestack/tke/pull/1375`
-6. `tke-installer` will install build-in/expansion applications:
+
+6. `tke-installer` will install build-in/expansion applications (done):
 - `https://github.com/tkestack/tke/pull/1350`
-7. Tkestack `platform` will create applications defined in `cluster` object during creating business cluster(s):
+
+7. Add label `build-in` for `build-in apps` if they are installed by `tke-installer` and their charts are `build-in charts` 
+which are default charts in `tke-installer` release package:
+- `https://github.com/tkestack/tke/issues/1359`
+
+8. Support upgrade apps with `build-in` label during `tke-installer` upgrading Tkestack:
+- `https://github.com/tkestack/tke/issues/1358`
+
+9. Tkestack `platform` will create applications defined in `cluster` object during creating business cluster:
 - `https://github.com/tkestack/tke/pull/1372`
 
-8. UI enhance `tke-installer` and `tkestack platform` 
+10. Transform `addons` to `build-in charts` and install them through `tke-application`
+
+11. Enhance `tke-installer` and `tkestack-gateway` UI
 
 ![enter image description here](../../docs/images/addon-charts.png)
 
@@ -114,7 +131,7 @@ After `tke-application` enabled, Tkestack has the ability to use `helm chart` as
 
 1. Define apps in `global cluster` object, and install apps during creating `global cluster`
 2. Transform `tke coms` to helm charts
-3. Define `tke coms` as apps in `global cluster` object
+3. Define `tke coms` as `build-in apps` in `global cluster` object
 
 ## User case
 
@@ -209,7 +226,11 @@ Use `tke.json` with expansions apps:
 }
 ```
 
-#### Case 3. Define apps in cluster object and install apps during createing cluster
+#### Case 3. tke-installer upgrade build-in apps
+
+Download next minor version of current version `tke-installer` and upgrade through `tke-installerxxx --upgrade`.
+
+#### Case 4. Define apps in cluster object and install apps during createing cluster
 
 Define apps in cluster object:
 
