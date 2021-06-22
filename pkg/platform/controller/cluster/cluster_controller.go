@@ -30,11 +30,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
@@ -45,10 +43,8 @@ import (
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/platform/util/vendor"
-	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
-	"tkestack.io/tke/pkg/util/strategicpatch"
 )
 
 type ContextKey int
@@ -269,9 +265,6 @@ func (c *Controller) syncCluster(key string) error {
 func (c *Controller) reconcile(ctx context.Context, key string, cluster *platformv1.Cluster) error {
 	var err error
 
-	c.ensureSyncCredentialClusterName(ctx, cluster)
-	c.ensureSyncClusterMachineNodeLabel(ctx, cluster)
-
 	switch cluster.Status.Phase {
 	case platformv1.ClusterInitializing:
 		err = c.onCreate(ctx, cluster)
@@ -433,36 +426,6 @@ func (c *Controller) ensureCreateClusterCredential(ctx context.Context, cluster 
 	return cluster, nil
 }
 
-func (c *Controller) ensureSyncCredentialClusterName(ctx context.Context, cluster *platformv1.Cluster) {
-	if cluster.Spec.ClusterCredentialRef == nil {
-		return
-	}
-
-	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		credential, err := c.platformClient.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-		oldCredential := credential.DeepCopy()
-		if credential.ClusterName != cluster.Name {
-			credential.ClusterName = cluster.Name
-
-			patchBytes, err := strategicpatch.GetPatchBytes(oldCredential, credential)
-			if err != nil {
-				return fmt.Errorf("GetPatchBytes for credential error: %w", err)
-			}
-			_, err = c.platformClient.ClusterCredentials().Patch(ctx, credential.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		log.FromContext(ctx).Error(err, "sync ClusterCredential.ClusterName error")
-	}
-}
-
 func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) *typesv1.Cluster {
 	if !(cluster.Status.Phase == platformv1.ClusterRunning ||
 		cluster.Status.Phase == platformv1.ClusterFailed) {
@@ -509,53 +472,4 @@ func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) 
 		"phase", cluster.Status.Phase)
 
 	return cluster
-}
-
-func (c *Controller) ensureSyncClusterMachineNodeLabel(ctx context.Context, cluster *platformv1.Cluster) {
-
-	clusterWrapper, err := typesv1.GetCluster(ctx, c.platformClient, cluster)
-	if err != nil {
-		log.FromContext(ctx).Error(err, "Get cluster error")
-		return
-	}
-
-	client, err := clusterWrapper.Clientset()
-	if err != nil {
-		log.FromContext(ctx).Error(err, "get client set error")
-		return
-	}
-
-	for _, machine := range cluster.Spec.Machines {
-		err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-			node, err := client.CoreV1().Nodes().Get(ctx, machine.IP, metav1.GetOptions{})
-			if err != nil {
-				if apierrors.IsNotFound(err) {
-					return nil
-				}
-				return err
-			}
-
-			labels := node.GetLabels()
-			_, ok := labels[string(apiclient.LabelMachineIPV4)]
-			if ok {
-				return nil
-			}
-
-			oldNode := node.DeepCopy()
-			labels[string(apiclient.LabelMachineIPV4)] = machine.IP
-			node.SetLabels(labels)
-
-			patchBytes, err := strategicpatch.GetPatchBytes(oldNode, node)
-			if err != nil {
-				return fmt.Errorf("GetPatchBytes for node error: %w", err)
-			}
-
-			_, err = client.CoreV1().Nodes().Patch(ctx, node.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
-			return err
-		})
-
-		if err != nil {
-			log.FromContext(ctx).Error(err, "sync ClusterMachine node label error")
-		}
-	}
 }
