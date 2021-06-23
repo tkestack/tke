@@ -61,15 +61,15 @@ func Send(channel *v1.ChannelSMTP, template *v1.TemplateText, email string, vari
 	log.Debug("msg", log.String("msg", msg[:]))
 
 	err = sendMail(fmt.Sprintf("%s:%d", channel.SMTPHost, channel.SMTPPort),
-		auth, channel.Email, []string{email}, []byte(msg))
+		auth, channel.Email, []string{email}, []byte(msg), channel.TLS)
 	if err != nil {
 		log.Errorf("sendMail error: %v", err)
 	}
 	return header, body, err
 }
 
-func sendMail(addr string, a smtp.Auth, from string, to []string, msg []byte) error {
-	host, port, err := net.SplitHostPort(addr)
+func sendMail(addr string, a smtp.Auth, from string, to []string, msg []byte, tlsEnabled bool) error {
+	host, _, err := net.SplitHostPort(addr)
 	if err != nil {
 		return fmt.Errorf("invalid address: %s", err)
 	}
@@ -79,7 +79,7 @@ func sendMail(addr string, a smtp.Auth, from string, to []string, msg []byte) er
 	}
 	var c *smtp.Client
 
-	if port == "465" {
+	if tlsEnabled {
 		//via TLS
 		conn, err := tls.Dial("tcp", addr, tlsConfig)
 		if err != nil {
@@ -101,7 +101,7 @@ func sendMail(addr string, a smtp.Auth, from string, to []string, msg []byte) er
 		return err
 	}
 
-	if port != "465" {
+	if !tlsEnabled {
 		if ok, _ := c.Extension("STARTTLS"); ok {
 			if err := c.StartTLS(tlsConfig); err != nil {
 				return err
