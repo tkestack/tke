@@ -84,7 +84,7 @@ After `tke-application` enabled, Tkestack has the ability to use `helm chart` as
 
  1. Tkestack built-in component helm chart support
  2. Define apps in `global cluster` object (temporarily)
- 3. Transform `tke coms` to `build-in charts` and `build-in apps` (temporarily)
+ 3. Transform `tke coms` to `built-in charts` and `built-in apps` (temporarily)
 
 ## Limitation
 
@@ -104,24 +104,24 @@ After `tke-application` enabled, Tkestack has the ability to use `helm chart` as
 - `https://github.com/tkestack/tke/pull/978`
 - `https://github.com/tkestack/tke/pull/1007`
 
-5. `tke-installer` will push build-in/expansion charts to registry (done):
+5. `tke-installer` will push built-in/expansion charts to registry (done):
 - `https://github.com/tkestack/tke/pull/1284`
 - `https://github.com/tkestack/tke/pull/1375`
 
-6. `tke-installer` will install build-in/expansion applications (done):
+6. `tke-installer` will install built-in/expansion applications (done):
 - `https://github.com/tkestack/tke/pull/1350`
 
-7. Add label `build-in` for `build-in apps` if they are installed by `tke-installer` and their charts are `build-in charts` 
+7. Add label `built-in` for `built-in apps` if they are installed by `tke-installer` and their charts are `built-in charts` 
 which are default charts in `tke-installer` release package:
 - `https://github.com/tkestack/tke/issues/1359`
 
-8. Support upgrade apps with `build-in` label during `tke-installer` upgrading Tkestack:
+8. Support upgrade apps with `built-in` label during `tke-installer` upgrading Tkestack:
 - `https://github.com/tkestack/tke/issues/1358`
 
 9. Tkestack `platform` will create applications defined in `cluster` object during creating business cluster:
 - `https://github.com/tkestack/tke/pull/1372`
 
-10. Transform `addons` to `build-in charts` and install them through `tke-application`
+10. Transform `addons` to `built-in charts` and install them through `tke-application`
 
 11. Enhance `tke-installer` and `tkestack-gateway` UI
 
@@ -131,13 +131,13 @@ which are default charts in `tke-installer` release package:
 
 1. Define apps in `global cluster` object, and install apps during creating `global cluster`
 2. Transform `tke coms` to helm charts
-3. Define `tke coms` as `build-in apps` in `global cluster` object
+3. Define `tke coms` as `built-in apps` in `global cluster` object
 
 ## User case
 
-#### Case 1. Installer install build-in apps during creating global cluster
+#### Case 1. Installer install built-in apps during creating global cluster
 
-Before UI support tke-installer to set apps in `global cluster` object, hardcode some `build-in apps` in `tke-installer` and use `tke.json` with empty `PlatformApps`:
+Before UI support tke-installer to set apps in `global cluster` object, hardcode some `built-in apps` in `tke-installer` and use `tke.json` with empty `PlatformApps`:
 
 ```json
 {
@@ -168,9 +168,9 @@ Before UI support tke-installer to set apps in `global cluster` object, hardcode
 }
 ```
 
-`build-in apps` will fullfill `PlatformApps` during installing.
+`built-in apps` will fullfill `PlatformApps` during installing.
 
-Tkestack will manage `build-in` apps life-cycle through `build-in` labels. It means that `build-in apps` will be upgraded if Tkestack platform is upgraded.
+Tkestack will manage `built-in` apps life-cycle through `built-in` labels. It means that `built-in apps` will be upgraded if Tkestack platform is upgraded.
 
 #### Case 2. Installer install expansion apps during creating global cluster
 
@@ -226,7 +226,7 @@ Use `tke.json` with expansions apps:
 }
 ```
 
-#### Case 3. tke-installer upgrade build-in apps
+#### Case 3. tke-installer upgrade built-in apps
 
 Download next minor version of current version `tke-installer` and upgrade through `tke-installerxxx --upgrade`.
 
