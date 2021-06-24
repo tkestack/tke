@@ -83,7 +83,11 @@ After `tke-application` enabled, Tkestack has the ability to use `helm chart` as
 **Out-Of-Scope**: 
 
  1. Tkestack built-in component helm chart support
- 2. Define apps in `global cluster` object (temporarily)
+
+ 2. Define apps in `global cluster` object (temporarily): `tke-application` is 
+ installed after `global cluster` is created, but define apps is is 
+ dependent on `tke-application`
+
  3. Transform `tke coms` to `built-in charts` and `built-in apps` (temporarily)
 
 ## Limitation
@@ -200,9 +204,11 @@ Use `tke.json` with expansions apps:
 		"CustomExpansionDir": "data/expansions/",
 		// expansion apps
 		"PlatformApps": [
-			{
+			// use app type and chart
+			{ 
 				// app name
 				"Name": "demo",
+				// 添加优先级字段
 				// if enabled, for UI
 				"Enable": true,
 				"Chart": {
@@ -228,7 +234,9 @@ Use `tke.json` with expansions apps:
 
 #### Case 3. tke-installer upgrade built-in apps
 
-Download next minor version of current version `tke-installer` and upgrade through `tke-installerxxx --upgrade`.
+Download next minor version of current version `tke-installer` and upgrade through `tke-installerxxx --upgrade`. This work need enable first `built-in app` in tke-installer.
+
+`https://github.com/tkestack/tke/issues/1358`
 
 #### Case 4. Define apps in cluster object and install apps during createing cluster
 
@@ -271,8 +279,33 @@ spec:
     password:
     labels: {}
 ```
+// framework aftercreate
 
 
-## PR
+## Sync app/cluster controller
+
+![Sync app controller design](../../docs/images/tkestack-sync-app-controller.png)
+
+### syncAppToCls controller
+
+监听App对象的create/update/delete事件，通过platformclient使用最新的App数据更新到Cls对象，如果发生冲突，重新尝试更新，直到更新为期望状态。
+
+### syncClsToApp controller
+
+监听Cls对象的update事件，通过applicationclient将cls对象中需要更新/创建的app信息进行更新/创建，如果发生冲突，重新尝试更新，直到更新为期望状态。
 
 ## Reference
+
+addons和tke组件helm化及集群声明app会议讨论记录及结论：
+1、集群声明App暂时不考虑global cluster，原因是global cluster在创建前还没有platform-api和application-api，存在“鸡生蛋蛋生鸡问题”
+2、关于app声明是在cluser下还是cluster之上新建超集的结论是，app声明在cluster对象下，但是要复用当前app type尽量保持一致
+3、在声明app时需要可以对app设置安装优先级，安装顺序以优先级顺序执行
+4、tke-installer upgrade需要支持upgrade installer安装的built-in app，但由于暂时没有built-in app，先创建issue记录
+5、在所有type cluster的porvider的基础provider上新声明一个公共的方法并实现安装app功能，并在provider的AfterCreatefunc后调用，确保所有provider都可以正常调用安装app功能
+
+公有云方面需求
+
+1、tke-application需要健康检查功能，探测app/addon状态
+2、设计一个在deadline时间点自动升级addon的功能，暂时可以先不实现
+3、升级失败自动回滚，需要考虑，可以不实现
+4、两套方案同时跑，迁移工具开发
