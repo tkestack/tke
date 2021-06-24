@@ -78,6 +78,10 @@ spec:
               mountPath: /app/provider/baremetal/manifests/metrics-server/
             - name: cilium-manifests-volume
               mountPath: /app/provider/baremetal/manifests/cilium/
+            - name: containerd-volume
+              mountPath: /app/provider/baremetal/conf/containerd/
+            - name: critools-volume
+              mountPath: /app/provider/baremetal/conf/critools/
           ports:
             - containerPort: 9443
           readinessProbe:
@@ -116,6 +120,12 @@ spec:
         - name: docker-volume
           configMap:
             name: docker
+        - name: containerd-volume
+            configMap:
+              name: containerd
+        - name: critools-volume
+            configMap:
+              name: critools
         - name: kubelet-volume
           configMap:
             name: kubelet

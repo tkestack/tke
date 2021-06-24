@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	"tkestack.io/tke/pkg/util/ssh"
+	v1 "tkestack.io/tke/pkg/platform/types/v1"
 )
 
 type Option struct {
@@ -29,14 +30,19 @@ type Option struct {
 	RegistryDomain string
 }
 
-func PullKubernetesImages(s ssh.Interface, option *Option) error {
+func PullKubernetesImages(c *v1.Cluster, s ssh.Interface, option *Option) error {
 	images := images.ListKubernetesImageFullNamesWithVerion(option.Version)
 	if len(images) == 0 {
 		return fmt.Errorf("images is empty")
 	}
 
 	for _, image := range images {
-		cmd := fmt.Sprintf("crictl pull %s", image)
+		cmd := ""
+		if c.Cluster.Spec.Features.EnableContainerRuntime == "containerd" {
+			cmd = fmt.Sprintf("crictl pull %s", image)
+		} else {
+			cmd = fmt.Sprintf("docker pull %s", image)
+		}
 		_, err := s.CombinedOutput(cmd)
 		if err != nil {
 			return err

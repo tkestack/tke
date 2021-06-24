@@ -463,10 +463,6 @@ func (t *TKE) initSteps() {
 				Func: t.setGlobalClusterHosts,
 			},
 			{
-				Name: "Check need imported chart groups",
-				Func: t.checkNeedImportedChartgroups,
-			},
-			{
 				Name: "Import charts",
 				Func: t.importCharts,
 			},
@@ -1520,6 +1516,14 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 		{
 			Name: "docker",
 			File: baremetalconstants.ConfDir + "docker/*",
+		},
+		{
+			Name: "containerd",
+			File: baremetalconstants.ConfDir + "containerd/*",
+		},
+		{
+			Name: "critools",
+			File: baremetalconstants.ConfDir + "critools/*",
 		},
 		{
 			Name: "kubelet",

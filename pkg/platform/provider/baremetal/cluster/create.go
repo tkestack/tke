@@ -595,7 +595,7 @@ func (p *Provider) EnsureKubernetesImages(ctx context.Context, c *v1.Cluster) er
 		if err != nil {
 			return err
 		}
-		err = image.PullKubernetesImages(machineSSH, option)
+		err = image.PullKubernetesImages(c, machineSSH, option)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}

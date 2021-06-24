@@ -74,7 +74,7 @@ func (p *Provider) EnsureRenewCerts(ctx context.Context, c *v1.Cluster) error {
 		}
 
 		logger.Info("RenewCerts doing")
-		err = kubeadm.RenewCerts(s)
+		err = kubeadm.RenewCerts(c, s)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}

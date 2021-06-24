@@ -52,6 +52,10 @@ spec:
               mountPath: /app/provider/baremetal/conf/
             - name: docker-volume
               mountPath: /app/provider/baremetal/conf/docker/
+            - name: containerd-volume
+              mountPath: /app/provider/baremetal/conf/containerd/
+            - name: critools-volume
+                mountPath: /app/provider/baremetal/conf/critools/
             - name: kubelet-volume
               mountPath: /app/provider/baremetal/conf/kubelet/
             - name: kubeadm-volume
@@ -97,6 +101,12 @@ spec:
         - name: docker-volume
           configMap:
             name: docker
+        - name: containerd-volume
+          configMap:
+            name: containerd
+        - name: critools-volume
+          configMap:
+            name: critools
         - name: kubelet-volume
           configMap:
             name: kubelet

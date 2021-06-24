@@ -236,6 +236,11 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 	} else {
 		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureCilium")
 	}
+	if cluster.Spec.Features.EnableContainerRuntime == "containerd"{
+		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureDocker")
+	} else {
+		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureContainerd")
+	}
 	if !cluster.Spec.Features.EnableMetricsServer {
 		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureMetricsServer")
 	}

@@ -177,7 +177,7 @@ func Reset(s ssh.Interface, phase string) error {
 	return nil
 }
 
-func RenewCerts(s ssh.Interface) error {
+func RenewCerts(c *v1.Cluster, s ssh.Interface) error {
 	err := fixKubeadmBug1753(s)
 	if err != nil {
 		return fmt.Errorf("fixKubeadmBug1753(https://github.com/kubernetes/kubeadm/issues/1753) error: %w", err)
@@ -189,7 +189,7 @@ func RenewCerts(s ssh.Interface) error {
 		return err
 	}
 
-	err = RestartControlPlane(s)
+	err = RestartControlPlane(c, s)
 	if err != nil {
 		return err
 	}
@@ -248,10 +248,10 @@ func fixKubeadmBug88811(client kubernetes.Interface) error {
 	return nil
 }
 
-func RestartControlPlane(s ssh.Interface) error {
+func RestartControlPlane(c *v1.Cluster, s ssh.Interface) error {
 	targets := []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler"}
 	for _, one := range targets {
-		err := RestartContainerByLabel(s, ContainerLabelOfControlPlane(one))
+		err := RestartContainerByLabel(c, s, ContainerLabelOfControlPlane(one))
 		if err != nil {
 			return err
 		}
@@ -264,15 +264,25 @@ func ContainerLabelOfControlPlane(name string) string {
 	return fmt.Sprintf("label=io.kubernetes.container.name=%s", name)
 }
 
-func RestartContainerByLabel(s ssh.Interface, label string) error {
-	cmd := fmt.Sprintf("crictl rm -f $(crictl ps -q --label '%s')", label)
+func RestartContainerByLabel(c *v1.Cluster,s ssh.Interface, label string) error {
+	cmd := ""
+	if c.Cluster.Spec.Features.EnableContainerRuntime == "containerd" {
+		cmd = fmt.Sprintf("crictl rm -f $(crictl ps -q --label '%s')", label)
+	} else {
+		cmd = fmt.Sprintf("docker rm -f $(docker ps -q -f '%s')", label)
+	}
 	_, err := s.CombinedOutput(cmd)
 	if err != nil {
 		return err
 	}
 
 	err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		cmd = fmt.Sprintf("crictl ps -q -f '%s'", label)
+		cmd := ""
+		if c.Cluster.Spec.Features.EnableContainerRuntime == "containerd" {
+			cmd = fmt.Sprintf("crictl ps -q -f '%s'", label)
+		} else {
+			cmd = fmt.Sprintf("docker ps -q -f '%s'", label)
+		}
 		output, err := s.CombinedOutput(cmd)
 		if err != nil {
 			return false, nil

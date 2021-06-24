@@ -29,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
+	registryv1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	applicationutil "tkestack.io/tke/pkg/application/util"
@@ -85,6 +86,7 @@ func (t *TKE) pushCharts(ctx context.Context, chartsPath, tenantID, chartGroup s
 		return err
 	}
 
+	var cg registryv1.ChartGroup
 	cgs, err := t.registryClient.ChartGroups().List(ctx, metav1.ListOptions{
 		FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", tenantID, chartGroup),
 	})
@@ -92,7 +94,14 @@ func (t *TKE) pushCharts(ctx context.Context, chartsPath, tenantID, chartGroup s
 		return err
 	}
 	if len(cgs.Items) == 0 {
-		return fmt.Errorf("cannot find %s chartgroup", chartGroup)
+		t.log.Infof("%s chart group doesn't exist, try to create", chartGroup)
+		cg, err = t.createChartgroup(ctx, tenantID, chartGroup)
+		if err != nil {
+			return fmt.Errorf("create chartgroup failed: %v", err)
+		}
+		t.log.Info("%s chart group is created", chartGroup)
+	} else {
+		cg = cgs.Items[0]
 	}
 	conf := config.RepoConfiguration{
 		Scheme:        "http",
@@ -101,7 +110,7 @@ func (t *TKE) pushCharts(ctx context.Context, chartsPath, tenantID, chartGroup s
 		AdminPassword: string(t.Para.Config.Registry.Password()),
 	}
 
-	chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(conf, cgs.Items[0])
+	chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(conf, cg)
 	if err != nil {
 		return err
 	}
@@ -120,19 +129,28 @@ func (t *TKE) pushCharts(ctx context.Context, chartsPath, tenantID, chartGroup s
 	return utilerrors.NewAggregate(errs)
 }
 
-func (t *TKE) checkNeedImportedChartgroups(ctx context.Context) error {
-	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		for _, chartGroup := range needImportedChartGroups {
-			cgs, err := t.registryClient.ChartGroups().List(ctx, metav1.ListOptions{
-				FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", constants.DefaultTeantID, chartGroup),
-			})
-			if err != nil {
-				return false, err
-			}
-			if len(cgs.Items) == 0 {
-				return false, fmt.Errorf("cannot find %s chartgroup", chartGroup)
-			}
+func (t *TKE) createChartgroup(ctx context.Context, tenantID, name string) (registryv1.ChartGroup, error) {
+	cg, err := t.registryClient.ChartGroups().Create(ctx, &registryv1.ChartGroup{
+		Spec: registryv1.ChartGroupSpec{
+			Name:     name,
+			TenantID: tenantID,
+		},
+	},
+		metav1.CreateOptions{})
+	if err != nil {
+		return *cg, err
+	}
+	err = wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		cgs, err := t.registryClient.ChartGroups().List(ctx, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", tenantID, name),
+		})
+		if err != nil {
+			return false, err
+		}
+		if len(cgs.Items) == 0 {
+			return false, fmt.Errorf("create chargroup failed, cannot find %s chartgroup", name)
 		}
 		return true, nil
 	})
+	return *cg, err
 }

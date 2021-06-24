@@ -315,7 +315,11 @@ func (p *Provider) EnsureNvidiaContainerRuntime(ctx context.Context, machine *pl
 }
 
 func (p *Provider) EnsureContainerRuntime(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	return p.EnsureContainerd(ctx, machine, cluster)
+	if cluster.Cluster.Spec.Features.EnableContainerRuntime == "containerd" {
+		return p.EnsureContainerd(ctx, machine, cluster)
+	} else {
+		return p.EnsureDocker(ctx, machine, cluster)
+	}
 }
 
 func (p *Provider) EnsureContainerd(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {

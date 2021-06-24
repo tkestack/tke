@@ -384,6 +384,8 @@ type ClusterFeature struct {
 	// +optional
 	EnableCilium bool
 	// +optional
+	EnableContainerRuntime string
+	// +optional
 	IPv6DualStack bool
 	// Upgrade control upgrade process.
 	// +optional

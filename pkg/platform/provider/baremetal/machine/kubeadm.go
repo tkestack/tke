@@ -25,6 +25,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	utilsnet "k8s.io/utils/net"
 	kubeadmv1beta2 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeadm/v1beta2"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
 )
@@ -77,7 +78,12 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubead
 
 func (p *Provider) getKubeletExtraArgs(c *v1.Cluster) map[string]string {
 	args := map[string]string{}
-	// for cri runtimes, no need to set pod-infra-container-image
+	if c.Cluster.Spec.Features.EnableContainerRuntime == "docker" {
+		args = map[string]string{
+			"pod-infra-container-image": images.Get().Pause.FullName(),
+		}
+	}
+	// for containerd runtimes, no need to set pod-infra-container-image
 
 	utilruntime.Must(mergo.Merge(&args, c.Spec.KubeletExtraArgs))
 	utilruntime.Must(mergo.Merge(&args, p.config.Kubelet.ExtraArgs))
