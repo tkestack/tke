@@ -315,11 +315,10 @@ func (p *Provider) EnsureNvidiaContainerRuntime(ctx context.Context, machine *pl
 }
 
 func (p *Provider) EnsureContainerRuntime(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	if cluster.Cluster.Spec.Features.EnableContainerRuntime == "containerd" {
+	if cluster.Cluster.Spec.Features.ContainerRuntime == platformv1.Containerd {
 		return p.EnsureContainerd(ctx, machine, cluster)
-	} else {
-		return p.EnsureDocker(ctx, machine, cluster)
 	}
+	return p.EnsureDocker(ctx, machine, cluster)
 }
 
 func (p *Provider) EnsureContainerd(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
@@ -437,7 +436,10 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, machine *platformv1.Machin
 		return err
 	}
 
-	err = kubeadm.Install(machineSSH, cluster.Spec.Version)
+	option := &kubeadm.Option{
+		RuntimeType: cluster.Spec.Features.ContainerRuntime,
+	}
+	err = kubeadm.Install(machineSSH, cluster.Spec.Version, option)
 	if err != nil {
 		return err
 	}

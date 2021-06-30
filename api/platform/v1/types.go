@@ -233,6 +233,13 @@ const (
 	GPUVirtual GPUType = "Virtual"
 )
 
+type ContainerRuntimeType = string
+
+const (
+	Containerd ContainerRuntimeType = "containerd"
+	Docker     ContainerRuntimeType = "docker"
+)
+
 // ClusterPhase defines the phase of cluster constructor.
 type ClusterPhase string
 
@@ -392,7 +399,7 @@ type ClusterFeature struct {
 	// +optional
 	EnableCilium bool `json:"enableCilium,omitempty" protobuf:"bytes,14,opt,name=enableCilium"`
 	// +optional
-	EnableContainerRuntime string `json:"skipConditions,omitempty" protobuf:"bytes,15,opt,name=EnableContainerRuntime"`
+	ContainerRuntime ContainerRuntimeType `json:"containerRuntime,omitempty" protobuf:"bytes,15,opt,name=containerRuntime"`
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`

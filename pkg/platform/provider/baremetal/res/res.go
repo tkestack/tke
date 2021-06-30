@@ -41,7 +41,7 @@ var (
 	}
 
 	CriTools = Package{
-		Name:     "cri-tools",
+		Name:     "critools",
 		Versions: spec.CriToolsVersions,
 	}
 	CNIPlugins = Package{

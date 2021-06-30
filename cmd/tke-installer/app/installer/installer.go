@@ -1522,10 +1522,6 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 			File: baremetalconstants.ConfDir + "containerd/*",
 		},
 		{
-			Name: "critools",
-			File: baremetalconstants.ConfDir + "critools/*",
-		},
-		{
 			Name: "kubelet",
 			File: baremetalconstants.ConfDir + "kubelet/*",
 		},

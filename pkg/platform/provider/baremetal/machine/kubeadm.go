@@ -24,6 +24,7 @@ import (
 	"github.com/imdario/mergo"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	utilsnet "k8s.io/utils/net"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	kubeadmv1beta2 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeadm/v1beta2"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -78,7 +79,7 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubead
 
 func (p *Provider) getKubeletExtraArgs(c *v1.Cluster) map[string]string {
 	args := map[string]string{}
-	if c.Cluster.Spec.Features.EnableContainerRuntime == "docker" {
+	if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
 		args = map[string]string{
 			"pod-infra-container-image": images.Get().Pause.FullName(),
 		}

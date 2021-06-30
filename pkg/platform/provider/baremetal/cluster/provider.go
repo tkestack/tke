@@ -85,10 +85,10 @@ func NewProvider() (*Provider, error) {
 			// install packages
 			p.EnsureNvidiaDriver,
 			p.EnsureNvidiaContainerRuntime,
-			p.EnsureCNIPlugins,
 			p.EnsureContainerRuntime,
 			p.EnsureKubernetesImages,
 			p.EnsureKubelet,
+			p.EnsureCNIPlugins,
 			p.EnsureConntrackTools,
 			p.EnsureKubeadm,
 			p.EnsureKeepalivedInit,
@@ -235,11 +235,6 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureGalaxy")
 	} else {
 		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureCilium")
-	}
-	if cluster.Spec.Features.EnableContainerRuntime == "containerd"{
-		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureDocker")
-	} else {
-		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureContainerd")
 	}
 	if !cluster.Spec.Features.EnableMetricsServer {
 		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureMetricsServer")

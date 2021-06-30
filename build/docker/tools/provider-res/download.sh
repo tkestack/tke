@@ -58,9 +58,9 @@ function download::docker() {
 
 function download::containerd() {
   if [ "${arch}" == "amd64" ]; then
-    containerd_arch=x86_64
+    containerd_arch=amd64
   elif [ "${arch}" == "arm64" ]; then
-    containerd_arch=aarch64
+    containerd_arch=amd64
   else
     echo "[ERROR] Fail to get containerd ${arch} on ${platform} platform."
     exit 255

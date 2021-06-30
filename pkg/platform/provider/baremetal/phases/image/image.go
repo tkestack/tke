@@ -20,9 +20,10 @@ package image
 
 import (
 	"fmt"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
-	"tkestack.io/tke/pkg/util/ssh"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/util/ssh"
 )
 
 type Option struct {
@@ -38,7 +39,7 @@ func PullKubernetesImages(c *v1.Cluster, s ssh.Interface, option *Option) error 
 
 	for _, image := range images {
 		cmd := ""
-		if c.Cluster.Spec.Features.EnableContainerRuntime == "containerd" {
+		if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Containerd {
 			cmd = fmt.Sprintf("crictl pull %s", image)
 		} else {
 			cmd = fmt.Sprintf("docker pull %s", image)
