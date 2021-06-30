@@ -41,7 +41,7 @@ CRI（Container runtime interface）是Kubernetes容器运行时接口,是Kubern
 
 ## Motivation
 
-TKEStack支持配置CRI标准兼容容器引擎docker和containerd，用户在安装global集群和用户的业务集群时可以自由选择使用docker或者containerd：
+TKEStack支持配置CRI标准兼容容器引擎docker和containerd，用户在安装业务集群时可以自由选择使用docker或者containerd：
 
 **版本需求**
   * TKEStack版本：v1.7.0
@@ -109,7 +109,7 @@ TKEStack支持配置CRI标准兼容容器引擎docker和containerd，用户在�
 
 * pkg/platform/provider/baremetal/conf/critools/crictl.yaml
 
-### 阶段2 install阶段的改造 暂时无法完全支持containerd，需要配合docker进行改造
+### 阶段2 install阶段的改造 完全支持containerd，需要配合nerdctl工具进行改造
   目前的install步骤：
   * Execute pre install hook
   * Load images（docker load）
@@ -118,6 +118,24 @@ TKEStack支持配置CRI标准兼容容器引擎docker和containerd，用户在�
   * Push images(docker manifest, docker push)
   * Generate certificates for TKE components
   * Create global cluster
+    在install阶段，需要使用`nerdctl run`命令创建installer容器，registry-http容器和registry-https容器，
+```
+nerdctl run  -d --privileged --net=host --restart=always -v /etc/hosts:/app/hosts -v /run/containerd:/run/containerd -v /var/lib/containerd:/var/lib/containerd -v /var/lib/nerdctl:/var/lib/nerdctl -v /opt/cni/bin:/opt/cni/bin -v /run/containerd/containerd.sock:/run/containerd/containerd.sock -v /opt/tke-installer/data:/app/data -v /opt/tke-installer/conf:/app/conf -v registry-certs:/app/certs -v tke-installer-bin:/app/bin docker.io/library/test:20 tke-installer
+```
+```
+nerdctl run -d  --name registry-http -p 80:5000 -v /opt/tke-installer/registry:/var/lib/registry  registry.tke.com/library/registry-amd64:2.7.1
+```
+```
+nerdctl run -d --name registry-https --restart always -p 443:443 -v /opt/tke-installer/registry:/var/lib/registry -v registry-certs:/certs -e REGISTRY_HTTP_ADDR=0.0.0.0:443 -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.crt -e REGISTRY_HTTP_TLS_KEY=/certs/server.key registry.tke.com/library/registry-amd64:2.7.1
+```
+使用nerdctl 查看创建的容器：
+```
+nerdctl ps -a
+```
+查看容器日志：
+```
+nerdctl logs
+```
   install过程中需要创建registry镜像仓库，在安装过程中需要搭建临时镜像仓库，并将多种体系架构的镜像push到临时仓库中完成安装。由于Docker 镜像格式原生不支持需要多体系架构，需要额外引入流程解决，过程如下：
 ![install过程镜像](../images/cri-image-old.svg)
 
@@ -137,9 +155,12 @@ ctr images export kube-apiserver.tar docker.io/tkestack/kube-apiserver:v1.20.4-t
 ```
 ctr images import kube-apiserver.tar docker.io/tkestack/kube-apiserver:v1.20.4-tke.1 --all-platforms
 ```
-在install阶段，需要使用`docker run`命令创建installer容器和registry-http容器和registry-https容器，目前`ctr run`和`nerdctl run`都无法完全取代`docker run`命令，因为ctr不支持暴露容器端口，ctr和nerdctl都不支持volume mount.
-所以此阶段仍然需要安装docker.
-### 阶段3 完成构建阶段的改造  暂时无法完全支持containerd，需要配合docker进行改造
+ctr 可以通过朴实命令将所有的架构的image push到本地的registry中：
+```
+ctr images push docker.io/tkestack/kube-apiserver:v1.20.4-tke.1
+```
+
+### 阶段3 完成构建阶段的改造  （优先级较低暂时不做改造）
   该阶段容器引擎的使用者不是Kubernetes，所以不受Kubelet移除dockershim的影响。改造优先级较低。
   随着社区的发展，容器基础工具集开始符合Unix的设计哲学：一个工具只做好一个事情。镜像制作领域也出现了一系列工具：
 

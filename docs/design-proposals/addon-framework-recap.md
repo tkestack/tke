@@ -77,33 +77,201 @@ After `tke-application` enabled, Tkestack has the ability to use `helm chart` as
  1. (**P1**) Porting 2 types of addons to helm charts
  2. (**P1**) Enable CI to build all addon charts
  3. (**P1**) UI enhance to use new API manage addon
- 4. (**P2**) Nice to have: Support hook mechanism to pick up `used-defined` charts and push them to chart repo during Tkestack installation for day 2 install: 
+ 4. (**P2**) Nice to have: Support hook mechanism to pick up `user-defined` charts and push them to chart repo during Tkestack installation for day 2 install
+ 3. (**P2**) Define apps in `cluster` object, and create apps during creating business cluster(s)
 
 **Out-Of-Scope**: 
 
- 1.  Tkestack built-in component helm chart support
+ 1. Tkestack built-in component helm chart support
+ 2. Define apps in `global cluster` object (temporarily)
+ 3. Transform `tke coms` to `built-in charts` and `built-in apps` (temporarily)
 
 ## Limitation
 
+1. Enable `tke-application` when creating `global cluster`
 
 ## Main proposal
 
-1. Enable `tke-application` installed as default during Tkestack installation
-2. `helm push` sdk will used to push all charts tgz package from `bootstrap` container to chart repo during tkestack
-3. Label the chart so that distinguish system built-in addon chart and other charts,  `chart list` API will retrieval the chart instead of  `clusteraddontypes`
-4. Tkestack `tke-application` controller will handle cross tenant request validation, below pr should get revert:
- - `https://github.com/tkestack/tke/pull/978`
- - `https://github.com/tkestack/tke/pull/1007`
-4. TODO
-5. TODO
+1. Enable `tke-application` installed as default during Tkestack installation (done)
+
+2. `helm push` sdk will used to push all charts tgz package from `bootstrap` container to chart repo during tkestack (done):
+- `https://github.com/tkestack/tke/pull/1182`
+
+3. Label the chart so that distinguish system built-in addon chart and other charts,  `chart list` API will retrieval the chart instead of  `clusteraddontypes`:
+- `https://github.com/tkestack/tke/issues/1357`
+
+4. Tkestack `tke-application` controller will handle cross tenant request validation, below pr should get revert (done):
+- `https://github.com/tkestack/tke/pull/978`
+- `https://github.com/tkestack/tke/pull/1007`
+
+5. `tke-installer` will push built-in/expansion charts to registry (done):
+- `https://github.com/tkestack/tke/pull/1284`
+- `https://github.com/tkestack/tke/pull/1375`
+
+6. `tke-installer` will install built-in/expansion applications (done):
+- `https://github.com/tkestack/tke/pull/1350`
+
+7. Add label `built-in` for `built-in apps` if they are installed by `tke-installer` and their charts are `built-in charts` 
+which are default charts in `tke-installer` release package:
+- `https://github.com/tkestack/tke/issues/1359`
+
+8. Support upgrade apps with `built-in` label during `tke-installer` upgrading Tkestack:
+- `https://github.com/tkestack/tke/issues/1358`
+
+9. Tkestack `platform` will create applications defined in `cluster` object during creating business cluster:
+- `https://github.com/tkestack/tke/pull/1372`
+
+10. Transform `addons` to `built-in charts` and install them through `tke-application`
+
+11. Enhance `tke-installer` and `tkestack-gateway` UI
 
 ![enter image description here](../../docs/images/addon-charts.png)
 
 ## Future work
 
+1. Define apps in `global cluster` object, and install apps during creating `global cluster`
+2. Transform `tke coms` to helm charts
+3. Define `tke coms` as `built-in apps` in `global cluster` object
+
 ## User case
 
-#### Case 1. xx
+#### Case 1. Installer install built-in apps during creating global cluster
+
+Before UI support tke-installer to set apps in `global cluster` object, hardcode some `built-in apps` in `tke-installer` and use `tke.json` with empty `PlatformApps`:
+
+```json
+{
+	"config": {
+		"ServerName": "tke-installer",
+		"ListenAddr": ":8080",
+		"NoUI": false,
+		"Config": "conf/tke.json",
+		"Force": false,
+		"SyncProjectsWithNamespaces": false,
+		"Replicas": 2,
+		"Upgrade": false,
+		"PrepareCustomK8sImages": false,
+		"PrepareCustomCharts": false,
+		"Kubeconfig": "conf/kubeconfig",
+		"RegistryUsername": "",
+		"RegistryPassword": "",
+		"RegistryDomain": "",
+		"RegistryNamespace": "",
+		"CustomUpgradeResourceDir": "data/custom_upgrade_resource",
+		"CustomChartsName": "custom.charts.tar.gz",
+		"EnableCustomExpansion": true,
+		"CustomExpansionDir": "data/expansions/",
+		// empty
+		"PlatformApps": []
+	},
+........
+}
+```
+
+`built-in apps` will fullfill `PlatformApps` during installing.
+
+Tkestack will manage `built-in` apps life-cycle through `built-in` labels. It means that `built-in apps` will be upgraded if Tkestack platform is upgraded.
+
+#### Case 2. Installer install expansion apps during creating global cluster
+
+Use `tke.json` with expansions apps:
+
+```json
+{
+	"config": {
+		"ServerName": "tke-installer",
+		"ListenAddr": ":8080",
+		"NoUI": false,
+		"Config": "conf/tke.json",
+		"Force": false,
+		"SyncProjectsWithNamespaces": false,
+		"Replicas": 2,
+		"Upgrade": false,
+		"PrepareCustomK8sImages": false,
+		"PrepareCustomCharts": false,
+		"Kubeconfig": "conf/kubeconfig",
+		"RegistryUsername": "",
+		"RegistryPassword": "",
+		"RegistryDomain": "",
+		"RegistryNamespace": "",
+		"CustomUpgradeResourceDir": "data/custom_upgrade_resource",
+		"CustomChartsName": "custom.charts.tar.gz",
+		"EnableCustomExpansion": true,
+		"CustomExpansionDir": "data/expansions/",
+		// expansion apps
+		"PlatformApps": [
+			{
+				// app name
+				"Name": "demo",
+				// if enabled, for UI
+				"Enable": true,
+				"Chart": {
+					// chart name
+					"Name": "demo",
+					"TenantID": "default",
+					// repo
+					"ChartGroupName": "public",
+					"Version": "1.0.0",
+					"TargetCluster": "global",
+					"TargetNamespace": "default",
+					// helm chart values
+					"Values": {
+						"key2": "val2-override"
+					}
+				}
+			}
+		]
+	},
+......
+}
+```
+
+#### Case 3. tke-installer upgrade built-in apps
+
+Download next minor version of current version `tke-installer` and upgrade through `tke-installerxxx --upgrade`.
+
+#### Case 4. Define apps in cluster object and install apps during createing cluster
+
+Define apps in cluster object:
+
+```yaml
+---
+apiVersion: platform.tkestack.io/v1
+kind: Cluster
+metadata:
+  generateName: cls
+spec:
+  displayName: test
+  tenantID: default
+  clusterCIDR: 10.244.0.0/16
+  networkDevice: eth0
+  features:
+    enableMetricsServer: true
+    enableCilium: false
+    platformApps:     # define apps in cluster
+    - name: demo      # app name
+      enable: true    # if enabled, for UI
+      chart:
+        name: demo    # chart name
+        tenantID: default
+        chartGroupName: public
+        version: 1.0.0
+        targetNamespace: default
+        values: 'key2: val2-override' # helm chart values
+  properties:
+    maxClusterServiceNum: 256
+    maxNodePodNum: 256
+  type: Baremetal
+  version: 1.20.4-tke.1
+  machines:
+  - ip: your_ip
+    port: 22
+    username: root
+    privateKey:
+    password:
+    labels: {}
+```
+
 
 ## PR
 
