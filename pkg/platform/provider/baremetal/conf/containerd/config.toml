@@ -1,0 +1,25 @@
+version = 2
+root = "/var/lib/containerd"
+state = "/run/containerd"
+
+[grpc]
+  address = "/var/run/cri-runtime.sock"
+
+[plugins]
+  [plugins."io.containerd.grpc.v1.cri"]
+    sandbox_image = "{{.SandboxImage}}"
+    [plugins."io.containerd.grpc.v1.cri".containerd]
+      {{ if .IsGPU}}
+       default_runtime_name=nvidia
+       [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]
+          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]
+            Runtime="/usr/bin/nvidia-container-runtime"
+      {{else}}
+       default_runtime_name="runc"
+      {{end}}
+    [plugins."io.containerd.grpc.v1.cri".registry]
+      [plugins."io.containerd.grpc.v1.cri".registry.configs]
+        {{range .InsecureRegistries}}
+        [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.}}".tls]
+          insecure_skip_verify=true
+        {{end}}

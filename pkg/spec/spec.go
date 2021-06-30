@@ -37,6 +37,8 @@ var (
 	}).([]string)
 
 	DockerVersions                 = []string{"19.03.14"}
+	ContainerdVersions             = []string{"1.4.3"}
+	CriToolsVersions               = []string{"1.19.0"}
 	CNIPluginsVersions             = []string{"v0.8.6"}
 	ConntrackToolsVersions         = []string{"1.4.4"}
 	NvidiaDriverVersions           = []string{"440.31"}
