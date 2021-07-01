@@ -1,6 +1,7 @@
 import { deepClone, ReduxAction, uuid } from '@tencent/ff-redux';
 
 import * as ActionType from '../constants/ActionType';
+import { ContainerRuntimeEnum } from '../constants/Config';
 import { ICComponter, LabelsKeyValue, RootState } from '../models';
 import * as WebAPI from '../WebAPI';
 
@@ -143,6 +144,13 @@ export const createICAction = {
     return {
       type: ActionType.IC_ComputerEdit,
       payload: computerEdit
+    };
+  },
+
+  setEnableContainerRuntime: (runtime: ContainerRuntimeEnum) => {
+    return {
+      type: ActionType.IC_EnableContainerRuntime,
+      payload: runtime
     };
   },
 

@@ -1,6 +1,7 @@
 import { Identifiable } from '@tencent/ff-redux';
 
 import { Validation } from '../../common/models';
+import { ContainerRuntimeEnum } from '../constants/Config';
 
 export interface LabelsKeyValue {
   key?: string;
@@ -66,4 +67,6 @@ export interface CreateIC extends Identifiable {
 
   switchIp?: string;
   v_switchIp: Validation;
+
+  enableContainerRuntime: ContainerRuntimeEnum;
 }

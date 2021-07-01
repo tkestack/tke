@@ -325,6 +325,7 @@ export const CreateIC = 'CreateIC';
 export const IC_FetchK8SVersion = 'IC_FetchK8SVersion';
 export const IC_MaxClusterServiceNum = 'IC_MaxClusterServiceNum';
 export const IC_MaxNodePodNum = 'IC_MaxNodePodNum';
+export const IC_EnableContainerRuntime = 'IC_EnableContainerRuntime';
 /** ============================== end 创建独立集群相关 =============================== */
 
 /** ============================== start 新增节点相关 =============================== */

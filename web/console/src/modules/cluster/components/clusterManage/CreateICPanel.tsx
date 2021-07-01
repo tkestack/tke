@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { FormPanel } from '@tencent/ff-component';
 import { bindActionCreators, isSuccessWorkflow, OperationState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Bubble, Button, ContentView, Icon, Justify } from '@tencent/tea-component';
+import { Bubble, Button, ContentView, Icon, Justify, List } from '@tencent/tea-component';
 
 import { getWorkflowError, InputField, TipInfo } from '../../../../modules/common';
 import { allActions } from '../../actions';
@@ -13,7 +13,9 @@ import {
   CreateICVipTypeOptions,
   CreateICVipType,
   CreateICCiliumOptions,
-  NetworkModeOptions
+  NetworkModeOptions,
+  ContainerRuntimeOptions,
+  ContainerRuntimeTips
 } from '../../constants/Config';
 import { ICComponter } from '../../models';
 import { router } from '../../router';
@@ -114,7 +116,8 @@ export class CreateICPanel extends React.Component<RootProps, State> {
         asNumber,
         switchIp,
         v_asNumber,
-        v_switchIp
+        v_switchIp,
+        enableContainerRuntime
       } = createIC;
 
     const hasEditing = computerList.filter(c => c.isEditing).length > 0 || this.state.isAdding;
@@ -197,6 +200,38 @@ export class CreateICPanel extends React.Component<RootProps, State> {
                 onChange: value => actions.createIC.selectK8SVersion(value)
               }}
             />
+
+            <FormPanel.Item label="运行时组件" text message={ContainerRuntimeTips[enableContainerRuntime]}>
+              <FormPanel.Segment
+                value={enableContainerRuntime}
+                options={ContainerRuntimeOptions}
+                onChange={actions.createIC.setEnableContainerRuntime}
+              />
+
+              <Bubble
+                trigger="click"
+                placement="right"
+                content={
+                  <>
+                    <p>TKEStack 支持用户选择 containerd 和 docker 作为运行时组件：</p>
+                    <p>containerd 调用链更短，组件更少，更稳定，占用节点资源更少。 建议选择 containerd。</p>
+                    <p>以下情况，请选择 docker 作为运行时组件：</p>
+
+                    <List type="bullet">
+                      <List.Item>如需使用 docker in docker</List.Item>
+                      <List.Item>如需在 TKE 节点使用 docker build/push/save/load 等命令</List.Item>
+                      <List.Item>如需调用 docker API</List.Item>
+                      <List.Item>如需 docker compose 或 docker swarm</List.Item>
+                    </List>
+                  </>
+                }
+              >
+                <Button type="link" style={{ marginLeft: 10 }}>
+                  如何选择
+                </Button>
+              </Bubble>
+            </FormPanel.Item>
+
             <FormPanel.Item
               validator={v_networkDevice}
               message={t(
