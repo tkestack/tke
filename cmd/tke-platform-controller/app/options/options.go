@@ -28,9 +28,11 @@ import (
 )
 
 const (
-	defaultSyncPeriod        = 1 * time.Minute
-	defaultHealthCheckPeriod = 5 * time.Minute
-	defaultConcurrentSyncs   = 10
+	defaultSyncPeriod             = 1 * time.Minute
+	defaultHealthCheckPeriod      = 5 * time.Minute
+	defaultConcurrentSyncs        = 10
+	defaultBucketRateLimiterLimit = 10
+	defaultBucketRateLimiterBurst = 100
 )
 
 // Options is the main context object for the TKE controller manager.
