@@ -73,6 +73,7 @@ require (
 	golang.org/x/crypto v0.0.0-20200414173820-0848c9571904
 	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
+	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1
 	google.golang.org/grpc v1.26.0
 	gopkg.in/go-playground/validator.v9 v9.29.1
 	gopkg.in/ldap.v2 v2.5.1

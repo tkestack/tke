@@ -28,4 +28,8 @@ type MachineControllerConfiguration struct {
 	// concurrentMachineSyncs is the number of machine objects that are
 	// allowed to sync concurrently.
 	ConcurrentMachineSyncs int
+	// BucketRateLimiterLimit allows events up to rate r and permits.
+	BucketRateLimiterLimit int
+	// BucketRateLimiterBurst bursts of at most b tokens.
+	BucketRateLimiterBurst int
 }
