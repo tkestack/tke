@@ -26,13 +26,17 @@ import (
 )
 
 const (
-	flagMachineSyncPeriod      = "machine-sync-period"
-	flagConcurrentMachineSyncs = "concurrent-machine-syncs"
+	flagMachineSyncPeriod       = "machine-sync-period"
+	flagConcurrentMachineSyncs  = "concurrent-machine-syncs"
+	flagMachineRateLimiterLimit = "machine-rate-limiter-limit"
+	flagMachineRateLimiterBurst = "machine-rate-limiter-burst"
 )
 
 const (
-	configMachineSyncPeriod      = "controller.machine_sync_period"
-	configConcurrentMachineSyncs = "controller.concurrent_machine_syncs"
+	configMachineSyncPeriod       = "controller.machine_sync_period"
+	configConcurrentMachineSyncs  = "controller.concurrent_machine_syncs"
+	configMachineRateLimiterLimit = "controller.machine_rate_limiter_limit"
+	configMachineRateLimiterBurst = "controller.machine_rate_limiter_burst"
 )
 
 // MachineControllerOptions holds the MachineController options.
@@ -46,6 +50,8 @@ func NewMachineControllerOptions() *MachineControllerOptions {
 		&machineconfig.MachineControllerConfiguration{
 			MachineSyncPeriod:      defaultSyncPeriod,
 			ConcurrentMachineSyncs: defaultConcurrentSyncs,
+			BucketRateLimiterLimit: defaultBucketRateLimiterLimit,
+			BucketRateLimiterBurst: defaultBucketRateLimiterBurst,
 		},
 	}
 }
@@ -60,6 +66,10 @@ func (o *MachineControllerOptions) AddFlags(fs *pflag.FlagSet) {
 	_ = viper.BindPFlag(configMachineSyncPeriod, fs.Lookup(flagMachineSyncPeriod))
 	fs.IntVar(&o.ConcurrentMachineSyncs, flagConcurrentMachineSyncs, o.ConcurrentMachineSyncs, "The number of machine objects that are allowed to sync concurrently. Larger number = more responsive machine termination, but more CPU (and network) load")
 	_ = viper.BindPFlag(configConcurrentMachineSyncs, fs.Lookup(flagConcurrentMachineSyncs))
+	fs.IntVar(&o.BucketRateLimiterLimit, flagMachineRateLimiterLimit, o.BucketRateLimiterLimit, "The number of allows events up to rate r and permits.")
+	_ = viper.BindPFlag(configMachineRateLimiterLimit, fs.Lookup(flagMachineRateLimiterLimit))
+	fs.IntVar(&o.BucketRateLimiterBurst, flagMachineRateLimiterBurst, o.BucketRateLimiterBurst, "The number of bursts of at most b tokens.")
+	_ = viper.BindPFlag(configMachineRateLimiterBurst, fs.Lookup(flagMachineRateLimiterBurst))
 }
 
 // ApplyTo fills up MachineController config with options.
@@ -70,6 +80,8 @@ func (o *MachineControllerOptions) ApplyTo(cfg *machineconfig.MachineControllerC
 
 	cfg.MachineSyncPeriod = o.MachineSyncPeriod
 	cfg.ConcurrentMachineSyncs = o.ConcurrentMachineSyncs
+	cfg.BucketRateLimiterLimit = o.BucketRateLimiterLimit
+	cfg.BucketRateLimiterBurst = o.BucketRateLimiterBurst
 
 	return nil
 }
@@ -89,5 +101,7 @@ func (o *MachineControllerOptions) Validate() []error {
 func (o *MachineControllerOptions) ApplyFlags() []error {
 	o.MachineSyncPeriod = viper.GetDuration(configMachineSyncPeriod)
 	o.ConcurrentMachineSyncs = viper.GetInt(configConcurrentMachineSyncs)
+	o.BucketRateLimiterLimit = viper.GetInt(configMachineRateLimiterLimit)
+	o.BucketRateLimiterBurst = viper.GetInt(configMachineRateLimiterBurst)
 	return nil
 }

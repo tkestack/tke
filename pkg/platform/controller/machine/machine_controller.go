@@ -24,6 +24,7 @@ import (
 	"reflect"
 	"time"
 
+	"golang.org/x/time/rate"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -37,6 +38,7 @@ import (
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
+	machineconfig "tkestack.io/tke/pkg/platform/controller/machine/config"
 	"tkestack.io/tke/pkg/platform/controller/machine/deletion"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -69,10 +71,14 @@ type Controller struct {
 func NewController(
 	platformclient platformversionedclient.PlatformV1Interface,
 	machineInformer platformv1informer.MachineInformer,
-	resyncPeriod time.Duration,
+	configuration machineconfig.MachineControllerConfiguration,
 	finalizerToken platformv1.FinalizerName) *Controller {
+	rateLimit := workqueue.NewMaxOfRateLimiter(
+		workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 1000*time.Second),
+		&workqueue.BucketRateLimiter{Limiter: rate.NewLimiter(rate.Limit(configuration.BucketRateLimiterLimit), configuration.BucketRateLimiterBurst)},
+	)
 	c := &Controller{
-		queue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "machine"),
+		queue: workqueue.NewNamedRateLimitingQueue(rateLimit, "machine"),
 
 		log:            log.WithName("MachineController"),
 		platformClient: platformclient,
@@ -88,7 +94,7 @@ func NewController(
 			AddFunc:    c.addMachine,
 			UpdateFunc: c.updateMachine,
 		},
-		resyncPeriod,
+		configuration.MachineSyncPeriod,
 	)
 	c.lister = machineInformer.Lister()
 	c.listerSynced = machineInformer.Informer().HasSynced

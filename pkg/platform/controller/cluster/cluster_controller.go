@@ -21,12 +21,12 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"reflect"
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/util/rand"
-
+	"golang.org/x/time/rate"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,6 +39,7 @@ import (
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
+	clusterconfig "tkestack.io/tke/pkg/platform/controller/cluster/config"
 	"tkestack.io/tke/pkg/platform/controller/cluster/deletion"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -71,14 +72,15 @@ type Controller struct {
 func NewController(
 	platformClient platformversionedclient.PlatformV1Interface,
 	clusterInformer platformv1informer.ClusterInformer,
-	resyncPeriod time.Duration,
-	finalizerToken platformv1.FinalizerName,
-	healthCheckPeriod time.Duration) *Controller {
-
+	configuration clusterconfig.ClusterControllerConfiguration,
+	finalizerToken platformv1.FinalizerName) *Controller {
 	rand.Seed(time.Now().Unix())
-
+	rateLimit := workqueue.NewMaxOfRateLimiter(
+		workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 1000*time.Second),
+		&workqueue.BucketRateLimiter{Limiter: rate.NewLimiter(rate.Limit(configuration.BucketRateLimiterLimit), configuration.BucketRateLimiterBurst)},
+	)
 	c := &Controller{
-		queue: workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "cluster"),
+		queue: workqueue.NewNamedRateLimitingQueue(rateLimit, "cluster"),
 
 		log:            log.WithName("ClusterController"),
 		platformClient: platformClient,
@@ -110,12 +112,12 @@ func NewController(
 				return provider.OnFilter(context.TODO(), cluster)
 			},
 		},
-		resyncPeriod,
+		configuration.ClusterSyncPeriod,
 	)
 
 	c.lister = clusterInformer.Lister()
 	c.listerSynced = clusterInformer.Informer().HasSynced
-	c.healthCheckPeriod = healthCheckPeriod
+	c.healthCheckPeriod = configuration.HealthCheckPeriod
 
 	return c
 }

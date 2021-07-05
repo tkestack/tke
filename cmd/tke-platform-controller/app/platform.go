@@ -60,9 +60,8 @@ func startClusterController(ctx ControllerContext) (http.Handler, bool, error) {
 	ctrl := clustercontroller.NewController(
 		ctx.ClientBuilder.ClientOrDie("cluster-controller").PlatformV1(),
 		ctx.InformerFactory.Platform().V1().Clusters(),
-		ctx.Config.ClusterController.ClusterSyncPeriod,
+		ctx.Config.ClusterController,
 		platformv1.ClusterFinalize,
-		ctx.Config.ClusterController.HealthCheckPeriod,
 	)
 
 	go func() {
@@ -80,7 +79,7 @@ func startMachineController(ctx ControllerContext) (http.Handler, bool, error) {
 	ctrl := machine.NewController(
 		ctx.ClientBuilder.ClientOrDie("machine-controller").PlatformV1(),
 		ctx.InformerFactory.Platform().V1().Machines(),
-		ctx.Config.MachineController.MachineSyncPeriod,
+		ctx.Config.MachineController,
 		platformv1.MachineFinalize,
 	)
 
