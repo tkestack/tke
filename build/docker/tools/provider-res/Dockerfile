@@ -29,6 +29,9 @@ COPY linux-arm64/conntrack-tools-*.tar.gz          res/linux-arm64/
 COPY linux-amd64/docker-*.tar.gz       res/linux-amd64/
 COPY linux-arm64/docker-*.tar.gz       res/linux-arm64/
 
+COPY linux-amd64/nerdctl-*.tar.gz       res/linux-amd64/
+COPY linux-arm64/nerdctl-*.tar.gz       res/linux-arm64/
+
 COPY linux-amd64/kubernetes-*.tar.gz   res/linux-amd64/
 COPY linux-arm64/kubernetes-*.tar.gz   res/linux-arm64/
 

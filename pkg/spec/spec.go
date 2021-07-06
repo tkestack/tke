@@ -38,6 +38,7 @@ var (
 
 	DockerVersions                 = []string{"19.03.14"}
 	CNIPluginsVersions             = []string{"v0.8.6"}
+	NerdctlVersions                = []string{"0.10.0"}
 	ConntrackToolsVersions         = []string{"1.4.4"}
 	NvidiaDriverVersions           = []string{"440.31"}
 	NvidiaContainerRuntimeVersions = []string{"3.1.4"}

@@ -25,7 +25,9 @@ BUILDER=${BUILDER:-default}
 VERSION=${VERSION:-$(git describe --dirty --always --tags | sed 's/-/./g')}
 PROVIDER_RES_VERSION=v1.20.4-1
 K8S_VERSION=${PROVIDER_RES_VERSION%-*}
-DOCKER_VERSION=19.03.14
+DOCKER_VERSION=20.10.7
+NERDCTL_VERSION=0.10.0
+CONTAINERD_VERSION=1.5.2
 OSS=(linux)
 ARCHS=(amd64 arm64)
 OUTPUT_DIR=_output
@@ -102,8 +104,15 @@ function build::installer() {
           "${INSTALLER_DIR}/res/docker.tgz"
     cp -v pkg/platform/provider/baremetal/conf/docker/docker.service "${INSTALLER_DIR}/res/"
     cp -v build/docker/tools/tke-installer/daemon.json "${INSTALLER_DIR}/res/"
+    cp -v "${DST_DIR}/provider/baremetal/res/${target_platform}/containerd-${target_platform}-${CONTAINERD_VERSION}.tar.gz" \
+          "${INSTALLER_DIR}/res/containerd.tar.gz"
+    cp -v "${DST_DIR}/provider/baremetal/res/${target_platform}/nerdctl-${NERDCTL_VERSION}-${target_platform}.tar.gz" \
+          "${INSTALLER_DIR}/res/nerdctl.tar.gz"
+    cp -v pkg/platform/provider/baremetal/conf/containerd/containerd.service "${INSTALLER_DIR}/res/"
+    cp -v pkg/platform/provider/baremetal/conf/containerd/config.toml "${INSTALLER_DIR}/res/"
 
-    docker save "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" | gzip -c > "${INSTALLER_DIR}/res/tke-installer.tgz"
+    docker save "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" -o "${INSTALLER_DIR}/res/tke-installer.tar"
+    docker save "${REGISTRY_PREFIX}/registry-${arch}:$VERSION" -o "${INSTALLER_DIR}/res/registry.tar"
 
     sed -i "s;VERSION=.*;VERSION=$VERSION;g" "${INSTALLER_DIR}/install.sh"
 
@@ -128,6 +137,9 @@ function prepare::images() {
   $GENERATE_IMAGES_BIN
   $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | xargs -n1 -I{} sh -c "docker pull {} || exit 255"
   $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | xargs docker save | gzip -c >"${DST_DIR}"/images.tar.gz
+  $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | sed "s;-amd64;;" | sed "s;-arm64;;" | xargs -n1 -I{} sh -c "ctr images pull docker.io/{} --all-platforms || exit 255"
+  $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | sort -u | xargs -n1 -I{} sh -c "ctr images tag  docker.io/{} {}"
+  $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | xargs -i ctr images export images.tar {} --all-platforms
 }
 
 pwd
