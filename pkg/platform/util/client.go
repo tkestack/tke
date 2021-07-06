@@ -543,18 +543,18 @@ func GetClusterCredential(ctx context.Context, client platforminternalclient.Pla
 
 	if cluster.Spec.ClusterCredentialRef != nil {
 		credential, err = client.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			return nil, err
+		if err != nil {
+			return credential, err
 		}
-	} else {
+	} else if client != nil {
 		clusterName := cluster.Name
 		fieldSelector := fields.OneTermEqualSelector("clusterName", clusterName).String()
 		clusterCredentials, err := client.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
-		if err != nil {
-			return nil, err
+		if err != nil && !errors.IsNotFound(err) {
+			return credential, err
 		}
-		if len(clusterCredentials.Items) == 0 {
-			return nil, errors.NewNotFound(platform.Resource("ClusterCredential"), clusterName)
+		if clusterCredentials == nil || clusterCredentials.Items == nil || len(clusterCredentials.Items) == 0 {
+			return credential, errors.NewNotFound(platform.Resource("ClusterCredential"), clusterName)
 		}
 		credential = &clusterCredentials.Items[0]
 	}
@@ -572,17 +572,17 @@ func GetClusterCredentialV1(ctx context.Context, client platformversionedclient.
 	if cluster.Spec.ClusterCredentialRef != nil {
 		credential, err = client.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
 		if err != nil && !errors.IsNotFound(err) {
-			return nil, err
+			return credential, err
 		}
-	} else {
+	} else if client != nil {
 		clusterName := cluster.Name
 		fieldSelector := fields.OneTermEqualSelector("clusterName", clusterName).String()
 		clusterCredentials, err := client.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
 		if err != nil {
-			return nil, err
+			return credential, err
 		}
-		if len(clusterCredentials.Items) == 0 {
-			return nil, errors.NewNotFound(platform.Resource("ClusterCredential"), clusterName)
+		if clusterCredentials == nil || clusterCredentials.Items == nil || len(clusterCredentials.Items) == 0 {
+			return credential, errors.NewNotFound(platform.Resource("ClusterCredential"), clusterName)
 		}
 		credential = &clusterCredentials.Items[0]
 	}

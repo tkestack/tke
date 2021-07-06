@@ -25,11 +25,13 @@ import (
 	"net"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/pkg/platform/util"
 )
 
 const (
@@ -64,21 +66,11 @@ func GetClusterByName(ctx context.Context, platformClient internalversion.Platfo
 func GetCluster(ctx context.Context, platformClient internalversion.PlatformInterface, cluster *platform.Cluster) (*Cluster, error) {
 	result := new(Cluster)
 	result.Cluster = cluster
-	if cluster.Spec.ClusterCredentialRef != nil {
-		clusterCredential, err := platformClient.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("get cluster's credential error: %w", err)
-		}
-		result.ClusterCredential = clusterCredential
-	} else if platformClient != nil {
-		clusterCredentials, err := platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fmt.Sprintf("clusterName=%s", cluster.Name)})
-		if err != nil {
-			return nil, fmt.Errorf("get cluster's credential error: %w", err)
-		}
-		if clusterCredentials != nil && clusterCredentials.Items != nil && len(clusterCredentials.Items) > 0 {
-			result.ClusterCredential = &clusterCredentials.Items[0]
-		}
+	clusterCredential, err := util.GetClusterCredential(ctx, platformClient, cluster)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return result, err
 	}
+	result.ClusterCredential = clusterCredential
 
 	return result, nil
 }
