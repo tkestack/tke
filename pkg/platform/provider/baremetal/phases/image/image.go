@@ -20,9 +20,9 @@ package image
 
 import (
 	"fmt"
-	"strings"
-
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
+	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
@@ -31,24 +31,21 @@ type Option struct {
 	RegistryDomain string
 }
 
-func PullKubernetesImages(s ssh.Interface, option *Option) error {
+func PullKubernetesImages(c *v1.Cluster, s ssh.Interface, option *Option) error {
 	images := images.ListKubernetesImageFullNamesWithVerion(option.Version)
 	if len(images) == 0 {
 		return fmt.Errorf("images is empty")
 	}
 
 	for _, image := range images {
-		cmd := fmt.Sprintf("docker pull %s", image)
+		cmd := ""
+		if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
+			cmd = fmt.Sprintf("docker pull %s", image)
+		} else {
+			cmd = fmt.Sprintf("nerdctl --insecure-registry --namespace k8s.io pull %s", image)
+		}
 		_, err := s.CombinedOutput(cmd)
 		if err != nil {
-			if strings.Contains(err.Error(), "502 Bad Gateway") {
-				cmd = " docker info | grep Proxy"
-				output, _ := s.CombinedOutput(cmd)
-				return fmt.Errorf(`pull image fail: %s. maybe set no_proxy for registry(%s,*.%s) in docker dameon.
-					docker info:%s. see: https://docs.docker.com/config/daemon/systemd/#httphttps-proxy`,
-					err, option.RegistryDomain, option.RegistryDomain, output)
-			}
-
 			return err
 		}
 	}

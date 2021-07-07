@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations under the License.
 
 IMAGE = provider-res
-VERSION = v1.20.4-1
+VERSION = v1.20.4-2
 REGISTRY_PREFIX ?= tkestack
 
 COMMON_SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
@@ -34,6 +34,7 @@ include $(ROOT_DIR)/build/lib/docker-buildx.mk
 .PHONY: per.build
 per.build: download
 	@cp "$(ROOT_DIR)/build/docker/tools/$(IMAGE)/Dockerfile" "$(WORK_DIR)/Dockerfile"
+	@cp -r "$(ROOT_DIR)/pkg/platform/provider/baremetal/conf/containerd" "$(WORK_DIR)/containerd"
 
 .PHONY: download
 download:
@@ -64,7 +65,7 @@ manifest.multiarch: per.build
 	#@rm -rf "$(WORK_DIR)"
 	@echo "===========> Pushing manifest $(REGISTRY_PREFIX)/$(IMAGE):$(VERSION) and then remove the local manifest list"
 	REGISTRY_PREFIX=$(REGISTRY_PREFIX) PLATFROMS="$(PLATFORMS)" IMAGE=$(IMAGE) VERSION=$(VERSION) \
-	  DOCKER_CLI_EXPERIMENTAL=enabled $(ROOT_DIR)/build/lib/create-manifest.sh 
+	  DOCKER_CLI_EXPERIMENTAL=enabled $(ROOT_DIR)/build/lib/create-manifest.sh
 
 ## help: Show this help info.
 .PHONY: help

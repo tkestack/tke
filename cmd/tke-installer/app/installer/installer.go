@@ -1572,7 +1572,7 @@ func (t *TKE) prepareImages(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		cmdString := fmt.Sprintf("docker pull %s", images.Get().TKEGateway.FullName())
+		cmdString := fmt.Sprintf("nerdctl --insecure-registry --namespace k8s.io pull %s", images.Get().TKEGateway.FullName())
 		_, err = machineSSH.CombinedOutput(cmdString)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
