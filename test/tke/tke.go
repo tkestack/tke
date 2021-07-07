@@ -16,10 +16,15 @@ import (
 	"k8s.io/klog"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1 "tkestack.io/tke/api/platform/v1"
-	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/test/util"
 	"tkestack.io/tke/test/util/cloudprovider"
 	"tkestack.io/tke/test/util/env"
+
+	// import platform provider
+	_ "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
+	_ "tkestack.io/tke/pkg/platform/provider/imported/cluster"
+	_ "tkestack.io/tke/pkg/platform/provider/registered/cluster"
 )
 
 type TestTKE struct {
@@ -37,7 +42,7 @@ func Init(tkeClient tkeclientset.Interface, provider cloudprovider.Provider) *Te
 }
 
 func (testTke *TestTKE) K8sClient(cls *platformv1.Cluster) kubernetes.Interface {
-	clusterWrapper, err := typesv1.GetCluster(context.Background(), testTke.TkeClient.PlatformV1(), cls)
+	clusterWrapper, err := clusterprovider.GetV1Cluster(context.Background(), testTke.TkeClient.PlatformV1(), cls)
 	if err != nil {
 		panic(err)
 	}

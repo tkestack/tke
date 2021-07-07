@@ -36,6 +36,12 @@ import (
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	"tkestack.io/tke/test/util/cloudprovider"
+
+	// import platform schema
+	_ "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
+	_ "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
+	_ "tkestack.io/tke/pkg/platform/provider/imported/cluster"
+	_ "tkestack.io/tke/pkg/platform/provider/registered/cluster"
 )
 
 func quickConfig(nodes []cloudprovider.Instance) []byte {

@@ -536,6 +536,7 @@ func CheckClusterHealthzWithTimeout(ctx context.Context, platformClient platform
 
 // GetClusterCredential returns the cluster's credential
 func GetClusterCredential(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster) (*platform.ClusterCredential, error) {
+	// provider := clusterprovider.GetProvider(cluster.Spec.Type)
 	var (
 		credential *platform.ClusterCredential
 		err        error

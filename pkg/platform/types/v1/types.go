@@ -19,7 +19,6 @@
 package v1
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"net"
@@ -27,15 +26,12 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	applicationversiondclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
-	"tkestack.io/tke/pkg/platform/util"
 )
 
 const (
@@ -48,27 +44,6 @@ type Cluster struct {
 	*platformv1.Cluster
 	ClusterCredential   *platformv1.ClusterCredential
 	IsCredentialChanged bool
-}
-
-func GetClusterByName(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, name string) (*Cluster, error) {
-	cluster, err := platformClient.Clusters().Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return GetCluster(ctx, platformClient, cluster)
-}
-
-func GetCluster(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster) (*Cluster, error) {
-	result := new(Cluster)
-	result.Cluster = cluster
-	result.IsCredentialChanged = false
-	clusterCredential, err := util.GetClusterCredentialV1(ctx, platformClient, cluster)
-	if err != nil && !apierrors.IsNotFound(err) {
-		return result, err
-	}
-	result.ClusterCredential = clusterCredential
-
-	return result, nil
 }
 
 func Clientset(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) (kubernetes.Interface, error) {

@@ -22,10 +22,11 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"k8s.io/klog"
 	"net"
 	"os"
 	"path/filepath"
+
+	"k8s.io/klog"
 
 	"tkestack.io/tke/pkg/util/files"
 

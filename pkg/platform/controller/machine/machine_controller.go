@@ -40,8 +40,8 @@ import (
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	machineconfig "tkestack.io/tke/pkg/platform/controller/machine/config"
 	"tkestack.io/tke/pkg/platform/controller/machine/deletion"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
-	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
@@ -253,7 +253,7 @@ func (c *Controller) onCreate(ctx context.Context, machine *platformv1.Machine) 
 	if err != nil {
 		return err
 	}
-	cluster, err := typesv1.GetClusterByName(ctx, c.platformClient, machine.Spec.ClusterName)
+	cluster, err := clusterprovider.GetV1ClusterByName(ctx, c.platformClient, machine.Spec.ClusterName)
 	if err != nil {
 		return err
 	}
@@ -280,7 +280,7 @@ func (c *Controller) onUpdate(ctx context.Context, machine *platformv1.Machine) 
 		return err
 	}
 
-	cluster, err := typesv1.GetClusterByName(ctx, c.platformClient, machine.Spec.ClusterName)
+	cluster, err := clusterprovider.GetV1ClusterByName(ctx, c.platformClient, machine.Spec.ClusterName)
 	if err != nil {
 		return err
 	}
@@ -340,7 +340,7 @@ func (c *Controller) checkHealth(ctx context.Context, machine *platformv1.Machin
 
 func (c *Controller) ensureSyncMachineNodeLabel(ctx context.Context, machine *platformv1.Machine) {
 
-	cluster, err := typesv1.GetClusterByName(ctx, c.platformClient, machine.Spec.ClusterName)
+	cluster, err := clusterprovider.GetV1ClusterByName(ctx, c.platformClient, machine.Spec.ClusterName)
 	if err != nil {
 		log.FromContext(ctx).Error(err, "sync Machine node label error")
 		return

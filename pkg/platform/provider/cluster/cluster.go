@@ -19,11 +19,20 @@
 package cluster
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"sync"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/server/mux"
+	"tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	"tkestack.io/tke/api/platform"
+	platformv1 "tkestack.io/tke/api/platform/v1"
+	"tkestack.io/tke/pkg/platform/types"
+	v1 "tkestack.io/tke/pkg/platform/types/v1"
 )
 
 var (
@@ -98,4 +107,53 @@ func GetProvider(name string) (Provider, error) {
 	}
 
 	return provider, nil
+}
+
+func GetCluster(ctx context.Context, platformClient internalversion.PlatformInterface, cluster *platform.Cluster) (*types.Cluster, error) {
+	result := new(types.Cluster)
+	result.Cluster = cluster
+	provider, err := GetProvider(cluster.Spec.Type)
+	if err != nil {
+		return nil, err
+	}
+	clusterCredential, err := provider.GetClusterCredential(ctx, platformClient, cluster)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return result, err
+	}
+	result.ClusterCredential = clusterCredential
+
+	return result, nil
+}
+
+func GetClusterByName(ctx context.Context, platformClient internalversion.PlatformInterface, name string) (*types.Cluster, error) {
+	cluster, err := platformClient.Clusters().Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return GetCluster(ctx, platformClient, cluster)
+}
+
+func GetV1Cluster(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster) (*v1.Cluster, error) {
+	result := new(v1.Cluster)
+	result.Cluster = cluster
+	result.IsCredentialChanged = false
+	provider, err := GetProvider(cluster.Spec.Type)
+	if err != nil {
+		return nil, err
+	}
+	clusterCredential, err := provider.GetClusterCredentialV1(ctx, platformClient, cluster)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return result, err
+	}
+	result.ClusterCredential = clusterCredential
+
+	return result, nil
+}
+
+func GetV1ClusterByName(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, name string) (*v1.Cluster, error) {
+	cluster, err := platformClient.Clusters().Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return GetV1Cluster(ctx, platformClient, cluster)
 }
