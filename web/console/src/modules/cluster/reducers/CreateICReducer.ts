@@ -52,7 +52,7 @@ const TempReducer = combineReducers({
 
   gpuType: reduceToPayload(ActionType.v_IC_GpuType, GPUTYPE.PGPU),
 
-  enableContainerRuntime: reduceToPayload(ActionType.IC_EnableContainerRuntime, ContainerRuntimeEnum.CONTAINERD)
+  containerRuntime: reduceToPayload(ActionType.IC_EnableContainerRuntime, ContainerRuntimeEnum.DOCKER)
 });
 
 export const CreateICReducer = (state, action) => {

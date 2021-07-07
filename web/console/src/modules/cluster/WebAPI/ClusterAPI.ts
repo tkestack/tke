@@ -140,7 +140,7 @@ export async function createIC(clusters: CreateIC[]) {
       networkMode,
       asNumber,
       switchIp,
-      enableContainerRuntime
+      containerRuntime
     } = clusters[0];
 
     const resourceInfo = resourceConfig()['cluster'];
@@ -209,7 +209,7 @@ export async function createIC(clusters: CreateIC[]) {
 
         features: {
           gpuType: gpu ? gpuType : undefined,
-          enableContainerRuntime,
+          containerRuntime,
           ha:
             vipType !== CreateICVipType.unuse
               ? {

@@ -117,7 +117,7 @@ export class CreateICPanel extends React.Component<RootProps, State> {
         switchIp,
         v_asNumber,
         v_switchIp,
-        enableContainerRuntime
+        containerRuntime
       } = createIC;
 
     const hasEditing = computerList.filter(c => c.isEditing).length > 0 || this.state.isAdding;
@@ -201,9 +201,9 @@ export class CreateICPanel extends React.Component<RootProps, State> {
               }}
             />
 
-            <FormPanel.Item label="运行时组件" text message={ContainerRuntimeTips[enableContainerRuntime]}>
+            <FormPanel.Item label="运行时组件" text message={ContainerRuntimeTips[containerRuntime]}>
               <FormPanel.Segment
-                value={enableContainerRuntime}
+                value={containerRuntime}
                 options={ContainerRuntimeOptions}
                 onChange={actions.createIC.setEnableContainerRuntime}
               />

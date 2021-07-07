@@ -68,5 +68,5 @@ export interface CreateIC extends Identifiable {
   switchIp?: string;
   v_switchIp: Validation;
 
-  enableContainerRuntime: ContainerRuntimeEnum;
+  containerRuntime: ContainerRuntimeEnum;
 }
