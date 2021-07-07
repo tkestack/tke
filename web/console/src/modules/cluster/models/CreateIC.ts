@@ -66,4 +66,6 @@ export interface CreateIC extends Identifiable {
 
   switchIp?: string;
   v_switchIp: Validation;
+
+  useBGP: boolean;
 }

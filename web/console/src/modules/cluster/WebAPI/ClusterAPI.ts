@@ -139,7 +139,8 @@ export async function createIC(clusters: CreateIC[]) {
       cilium,
       networkMode,
       asNumber,
-      switchIp
+      switchIp,
+      useBGP
     } = clusters[0];
 
     const resourceInfo = resourceConfig()['cluster'];
@@ -196,7 +197,7 @@ export async function createIC(clusters: CreateIC[]) {
               networkArgs: {
                 networkMode,
 
-                ...(networkMode === 'underlay'
+                ...(networkMode === 'underlay' && useBGP
                   ? {
                       asn: asNumber,
                       'switch-ip': switchIp

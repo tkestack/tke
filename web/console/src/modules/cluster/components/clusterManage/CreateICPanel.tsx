@@ -114,7 +114,8 @@ export class CreateICPanel extends React.Component<RootProps, State> {
         asNumber,
         switchIp,
         v_asNumber,
-        v_switchIp
+        v_switchIp,
+        useBGP
       } = createIC;
 
     const hasEditing = computerList.filter(c => c.isEditing).length > 0 || this.state.isAdding;
@@ -137,7 +138,7 @@ export class CreateICPanel extends React.Component<RootProps, State> {
       showExistVipUnuseTip = nodeNum > 1 ? false : true;
     } else if (vipType === CreateICVipType.tke) {
       canSave = canSave && v_vipAddress.status === 1;
-    } else if (cilium === 'Cilium' && networkMode === 'underlay') {
+    } else if (cilium === 'Cilium' && networkMode === 'underlay' && useBGP) {
       canSave = canSave && v_asNumber.status === 1 && v_switchIp.status === 1;
     }
 
@@ -290,6 +291,12 @@ export class CreateICPanel extends React.Component<RootProps, State> {
             )}
 
             {cilium === 'Cilium' && networkMode === 'underlay' && (
+              <FormPanel.Item label="BGP" text>
+                <FormPanel.Checkbox value={useBGP} onChange={actions.createIC.setUseBGP} />
+              </FormPanel.Item>
+            )}
+
+            {cilium === 'Cilium' && networkMode === 'underlay' && useBGP && (
               <>
                 <FormPanel.Item
                   validator={v_asNumber}

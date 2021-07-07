@@ -316,6 +316,7 @@ export const v_IC_AS = 'v_IC_AS';
 export const IC_AS = 'IC_AS';
 export const v_IC_SwitchIp = 'v_IC_SwitchIp';
 export const IC_SwitchIp = 'IC_SwitchIp';
+export const IC_UseBGP = 'IC_UseBGP';
 
 export const IC_K8SVersion = 'IC_K8SVersion';
 export const IC_Cidr = 'IC_Cidr';
