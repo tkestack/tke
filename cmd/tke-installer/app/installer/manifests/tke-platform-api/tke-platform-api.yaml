@@ -119,8 +119,8 @@ spec:
           configMap:
             name: docker
         - name: containerd-volume
-            configMap:
-              name: containerd
+          configMap:
+            name: containerd
         - name: kubelet-volume
           configMap:
             name: kubelet
