@@ -35,6 +35,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1 "tkestack.io/tke/api/platform/v1"
+	_ "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
+	_ "tkestack.io/tke/pkg/platform/provider/imported/cluster"
+	_ "tkestack.io/tke/pkg/platform/provider/registered/cluster"
 	"tkestack.io/tke/test/util/cloudprovider"
 )
 

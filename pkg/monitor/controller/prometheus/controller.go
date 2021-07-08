@@ -60,6 +60,7 @@ import (
 	"tkestack.io/tke/pkg/monitor/controller/prometheus/images"
 	esutil "tkestack.io/tke/pkg/monitor/storage/es/client"
 	monitorutil "tkestack.io/tke/pkg/monitor/util"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	platformutil "tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/apiclient"
 	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
@@ -736,8 +737,12 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 	prometheus.Status.SubVersion[AlertManagerService] = components.AlertManagerService.Tag
 
 	log.Infof("Start to create prometheus")
+	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
+	if err != nil {
+		return fmt.Errorf("get provider failed: %v", err)
+	}
 	// Secret for prometheus-etcd
-	credential, err := platformutil.GetClusterCredentialV1(ctx, c.platformClient, cluster)
+	credential, err := provider.GetClusterCredentialV1(ctx, c.platformClient, cluster)
 	if err != nil {
 		return fmt.Errorf("get credential failed: %v", err)
 	}

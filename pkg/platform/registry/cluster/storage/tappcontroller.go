@@ -44,6 +44,7 @@ import (
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -92,7 +93,12 @@ func (r *TappControllerREST) Connect(ctx context.Context, clusterName string, op
 	if err != nil {
 		return nil, err
 	}
-	credential, err := util.GetClusterCredential(ctx, r.platformClient, cluster)
+	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	credential, err := provider.GetClusterCredential(ctx, r.platformClient, cluster)
 	if err != nil {
 		return nil, err
 	}

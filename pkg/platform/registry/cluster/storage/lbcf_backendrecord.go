@@ -44,6 +44,7 @@ import (
 	"tkestack.io/tke/api/platform"
 	apiplatformv1 "tkestack.io/tke/api/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -88,7 +89,12 @@ func (r *LBCFBackendRecordREST) Connect(ctx context.Context, clusterName string,
 	if err != nil {
 		return nil, err
 	}
-	credential, err := util.GetClusterCredential(ctx, r.platformClient, cluster)
+	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
+	if err != nil {
+		return nil, err
+	}
+
+	credential, err := provider.GetClusterCredential(ctx, r.platformClient, cluster)
 	if err != nil {
 		return nil, err
 	}
