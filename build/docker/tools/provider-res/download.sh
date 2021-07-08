@@ -67,7 +67,7 @@ function download::containerd() {
   fi
 
   for version in ${CONTAINERD_VERSIONS}; do
-    wget -c "https://github.com/containerd/containerd/releases/download/v${version}/containerd-${version}-linux-${containerd_arch}.tar.gz" \
+    wget -c "https://github.com/containerd/containerd/releases/download/v${version}/cri-containerd-cni-${version}-linux-${containerd_arch}.tar.gz" \
       -O "containerd-${platform}-${version}.tar.gz"
   done
 }
