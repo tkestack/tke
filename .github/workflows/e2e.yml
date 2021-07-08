@@ -59,4 +59,4 @@ jobs:
           echo "$LABELNAME_CONTEXT"
       - name: e2e test
         run: |
-          ginkgo -nodes=3 -v test/e2e/platform
+          mkdir -p provider/baremetal/ && cp -r pkg/platform/provider/baremetal/conf provider/baremetal/ && ginkgo -nodes=3 -v test/e2e/platform
