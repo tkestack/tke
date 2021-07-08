@@ -23,9 +23,12 @@ set -o pipefail
 REGISTRY_PREFIX=${REGISTRY_PREFIX:-tkestack}
 BUILDER=${BUILDER:-default}
 VERSION=${VERSION:-$(git describe --dirty --always --tags | sed 's/-/./g')}
+REGISTRY_VERSION=2.7.1
 PROVIDER_RES_VERSION=v1.20.4-2
 K8S_VERSION=${PROVIDER_RES_VERSION%-*}
-DOCKER_VERSION=19.03.14
+DOCKER_VERSION=20.10.7
+NERDCTL_VERSION=0.10.0
+CONTAINERD_VERSION=1.5.2
 OSS=(linux)
 ARCHS=(amd64 arm64)
 OUTPUT_DIR=_output
@@ -102,10 +105,20 @@ function build::installer() {
           "${INSTALLER_DIR}/res/docker.tgz"
     cp -v pkg/platform/provider/baremetal/conf/docker/docker.service "${INSTALLER_DIR}/res/"
     cp -v build/docker/tools/tke-installer/daemon.json "${INSTALLER_DIR}/res/"
+    cp -v "${DST_DIR}/provider/baremetal/res/${target_platform}/containerd-${target_platform}-${CONTAINERD_VERSION}.tar.gz" \
+          "${INSTALLER_DIR}/res/containerd.tar.gz"
+    cp -v "${DST_DIR}/provider/baremetal/res/${target_platform}/nerdctl-${target_platform}-${NERDCTL_VERSION}.tar.gz" \
+          "${INSTALLER_DIR}/res/nerdctl.tar.gz"
+    cp -v pkg/platform/provider/baremetal/conf/containerd/containerd.service "${INSTALLER_DIR}/res/"
+    cp -v pkg/platform/provider/baremetal/conf/containerd/config.toml "${INSTALLER_DIR}/res/"
 
-    docker save "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" | gzip -c > "${INSTALLER_DIR}/res/tke-installer.tgz"
+    docker save "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" -o "${INSTALLER_DIR}/res/tke-installer.tar"
+    ctr images pull "docker.io/${REGISTRY_PREFIX}/registry-${arch}:$REGISTRY_VERSION"
+    ctr images tag "docker.io/${REGISTRY_PREFIX}/registry-${arch}:$REGISTRY_VERSION" "${REGISTRY_PREFIX}/registry-${arch}:$REGISTRY_VERSION"
+    ctr images export "${INSTALLER_DIR}/res/registry.tar" "${REGISTRY_PREFIX}/registry-${arch}:$REGISTRY_VERSION"
 
     sed -i "s;VERSION=.*;VERSION=$VERSION;g" "${INSTALLER_DIR}/install.sh"
+    sed -i "s;REGISTRY_VERSION=.*;REGISTRY_VERSION=$REGISTRY_VERSION;g" "${INSTALLER_DIR}/install.sh"
 
     "${INSTALLER_DIR}/build.sh" "${installer}"
     cp -v "${INSTALLER_DIR}/${installer}" $OUTPUT_DIR
@@ -126,8 +139,21 @@ function prepare::images() {
   make build BINS=generate-images VERSION="$VERSION"
 
   $GENERATE_IMAGES_BIN
-  $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | xargs -n1 -I{} sh -c "docker pull {} || exit 255"
-  $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | xargs docker save | gzip -c >"${DST_DIR}"/images.tar.gz
+#  $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | xargs -n1 -I{} sh -c "docker pull {} || exit 255"
+#  $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | xargs docker save | gzip -c >"${DST_DIR}"/images.tar.gz
+  for((retrynum = 1; retrynum <= 50; retrynum++))
+  do
+      ctr images pull docker.io/${REGISTRY_PREFIX}/provider-res:${PROVIDER_RES_VERSION} --all-platforms
+      if [ $? -eq 0 ]; then
+        echo "ctr pull provider-res image succeed!"
+        break
+      else
+        echo "ctr pull provider-res image failed retry pull again..."
+      fi
+  done
+  $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | sed "s;-amd64;;" | sed "s;-arm64;;" | sort -u | xargs -n1 -I{} sh -c "ctr images pull docker.io/{} --all-platforms || exit 255"
+  $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | sed "s;-amd64;;" | sed "s;-arm64;;" | sort -u | xargs -n1 -I{} sh -c "ctr images tag  docker.io/{} {}" || true
+  ctr images export "${DST_DIR}"/images.tar `$GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | sed "s;-amd64;;" | sed "s;-arm64;;" | sort -u` --all-platforms || exit 255
 }
 
 pwd
@@ -165,3 +191,5 @@ done
 
 rm -rf "${DST_DIR}"
 rm -rf "${INSTALLER_DIR}"
+
+

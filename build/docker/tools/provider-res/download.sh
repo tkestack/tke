@@ -72,6 +72,22 @@ function download::containerd() {
   done
 }
 
+function download::nerdctl() {
+  if [ "${arch}" == "amd64" ]; then
+    nerdctl_arch=x86_64
+  elif [ "${arch}" == "arm64" ]; then
+    nerdctl_arch=arm64
+  else
+    echo "[ERROR] Fail to get nerdctl ${arch} on ${platform} platform."
+    exit 255
+  fi
+
+  for version in ${NERDCTL_VERSIONS}; do
+    wget -c "https://github.com/containerd/nerdctl/releases/download/v${version}/nerdctl-${version}-linux-${arch}.tar.gz" \
+      -O "nerdctl-${platform}-${version}.tar.gz"
+  done
+}
+
 function download::critools() {
   if [ "${arch}" == "amd64" ]; then
     critools_arch=amd64
@@ -148,6 +164,7 @@ for os in ${OSS}; do
     download::cni_plugins
     download::docker
     download::containerd
+    download::nerdctl
     download::critools
     download::kubernetes
     download::nvidia_driver
