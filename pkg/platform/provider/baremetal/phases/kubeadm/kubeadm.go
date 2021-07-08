@@ -270,10 +270,10 @@ func ContainerLabelOfControlPlane(name string) string {
 
 func RestartContainerByLabel(c *v1.Cluster, s ssh.Interface, label string) error {
 	cmd := ""
-	if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Containerd {
-		cmd = fmt.Sprintf("crictl rm -f $(crictl ps -q --label '%s')", label)
-	} else {
+	if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
 		cmd = fmt.Sprintf("docker rm -f $(docker ps -q -f '%s')", label)
+	} else {
+		cmd = fmt.Sprintf("crictl rm -f $(crictl ps -q --label '%s')", label)
 	}
 	_, err := s.CombinedOutput(cmd)
 	if err != nil {
@@ -282,10 +282,10 @@ func RestartContainerByLabel(c *v1.Cluster, s ssh.Interface, label string) error
 
 	err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
 		cmd := ""
-		if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Containerd {
-			cmd = fmt.Sprintf("crictl ps -q -f '%s'", label)
-		} else {
+		if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
 			cmd = fmt.Sprintf("docker ps -q -f '%s'", label)
+		} else {
+			cmd = fmt.Sprintf("crictl ps -q -f '%s'", label)
 		}
 		output, err := s.CombinedOutput(cmd)
 		if err != nil {

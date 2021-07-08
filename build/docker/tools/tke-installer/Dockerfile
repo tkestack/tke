@@ -14,7 +14,7 @@
 # WARRANTIES OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 
-FROM alpine:3.10
+FROM alpine:3.14.0
 
 RUN echo "hosts: files dns" >> /etc/nsswitch.conf
 
@@ -29,9 +29,16 @@ RUN apk add --no-cache \
     curl \
     tcpdump \
     docker \
-    ansible
+    ansible \
+    containerd
 
 RUN apk --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ --allow-untrusted add lrzsz
+RUN wget https://github.com/containerd/nerdctl/releases/download/v0.10.0/nerdctl-0.10.0-linux-amd64.tar.gz \
+    && tar -zvxf nerdctl-0.10.0-linux-amd64.tar.gz -C /usr/local/bin/ \
+    && rm -rf nerdctl-0.10.0-linux-amd64.tar.gz \
+    && wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.20.0/crictl-v1.20.0-linux-amd64.tar.gz \
+    && tar -zvxf crictl-v1.20.0-linux-amd64.tar.gz -C /usr/local/bin/ \
+    && rm -rf crictl-v1.20.0-linux-amd64.tar.gz
 
 ADD . /app
 

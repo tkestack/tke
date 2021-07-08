@@ -29,17 +29,29 @@ unset LD_LIBRARY_PATH
 export PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 
 VERSION=latest
+REGISTRY_VERSION=2.7.1
 
 INSTALL_DIR=/opt/tke-installer
 DATA_DIR=$INSTALL_DIR/data
+REGISTRY_DIR=$INSTALL_DIR/registry
 OPTIONS="--name tke-installer -d --privileged --net=host --restart=always
 -v /etc/hosts:/app/hosts
--v /etc/docker:/etc/docker
--v /var/run/docker.sock:/var/run/docker.sock
+-v /var/run/containerd/containerd.sock:/var/run/containerd/containerd.sock
+-v /run/containerd/containerd.sock:/run/containerd/containerd.sock
 -v $DATA_DIR:/app/data
 -v $INSTALL_DIR/conf:/app/conf
 -v registry-certs:/app/certs
 -v tke-installer-bin:/app/bin
+"
+RegistryHTTPOptions="--name registry-http -d --net=host --restart=always -p 80:5000
+-v $REGISTRY_DIR:/var/lib/registry
+"
+RegistryHTTPSOptions="--name registry-https -d --net=host --restart=always -p 443:443
+-v $REGISTRY_DIR:/var/lib/registry
+-v registry-certs:/certs
+-e REGISTRY_HTTP_ADDR=0.0.0.0:443
+-e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.crt
+-e REGISTRY_HTTP_TLS_KEY=/certs/server.key
 "
 
 declare -A archMap=(
@@ -81,59 +93,60 @@ function check::disk() {
   echo "available disk space($path):  $disk_avail GiB"
 }
 
-function ensure_docker() {
-  echo "Step.2 check docker status"
+function ensure_containerd() {
+  echo "Step.2 check containerd status"
 
-  if ! [ -x "$(command -v docker)" ]; then
-    echo "command docker not find"
-    install_docker
+  if ! [ -x "$(command -v nerdctl)" ]; then
+    echo "command nerdctl not find"
+    install_containerd
   fi
-  if ! systemctl is-active --quiet docker; then
-    echo "docker status is not running"
-    install_docker
+  if ! systemctl is-active --quiet containerd; then
+    echo "containerd status is not running"
+    install_containerd
   fi
 }
 
-function install_docker() {
-  echo "install docker [in process]"
+function install_containerd() {
+  echo "install containerd [in process]"
 
-  tar xvaf "res/docker.tgz" -C /usr/bin --strip-components=1
-  cp -v res/docker.service /etc/systemd/system
-  mkdir -p /etc/docker
-  cp -v res/daemon.json /etc/docker/
+  tar xvaf "res/containerd.tar.gz" -C /
+  tar xvaf "res/nerdctl.tar.gz" -C /usr/local/bin/
 
   systemctl daemon-reload
 
   # becuase first start docker may be restart some times
-  systemctl start docker || :
+  systemctl start containerd || :
   maxSecond=60
   for i in $(seq 1 $maxSecond); do
-    if systemctl is-active --quiet docker; then
+    if systemctl is-active --quiet containerd; then
       break
     fi
     sleep 1
   done
   if ((i == maxSecond)); then
-    echo "start docker failed, please check docker service."
+    echo "start containerd failed, please check containerd service."
     exit 1
   fi
 
-  echo "install docker [done]"
+  echo "install containerd [done]"
 }
 
 function load_image() {
   echo "Step.3 load tke-installer image [in process]"
 
-  docker load -i res/tke-installer.tgz
-
+  nerdctl load -i res/tke-installer.tar
+  nerdctl load -i res/registry.tar
   echo "Step.3 load tke-installer image [done]"
 }
 
 function clean_old_data() {
   echo "Step.4 clean old data [in process]"
 
-  docker rm -f tke-installer >/dev/null 2>&1 || :
-  docker volume prune -f >/dev/null 2>&1 || :
+  nerdctl stop tke-installer && nerdctl rm tke-installer >/dev/null 2>&1 || :
+  nerdctl stop registry-http && nerdctl rm registry-http >/dev/null 2>&1 || :
+  nerdctl stop registry-https && nerdctl rm registry-https >/dev/null 2>&1 || :
+  nerdctl volume rm  tke-installer-bin >/dev/null 2>&1 || :
+  nerdctl volume rm  registry-certs >/dev/null 2>&1 || :
 
   if  [ -d  "$DATA_DIR" ]; then
     rm -f $DATA_DIR/tke.json >/dev/null 2>&1 || :
@@ -145,10 +158,20 @@ function clean_old_data() {
 
 function start_installer() {
   echo "Step.5 start tke-installer [in process]"
-
-  docker run $OPTIONS "tkestack/tke-installer-${ARCH}:$VERSION" $@
+  mkdir -p $DATA_DIR
+  mkdir -p $INSTALL_DIR/conf
+  nerdctl run $OPTIONS "tkestack/tke-installer-${ARCH}:$VERSION" $@
 
   echo "Step.5 start tke-installer [done]"
+}
+
+function start_registry() {
+  echo "Step.6 start regisry [in process]"
+
+  mkdir -p $REGISTRY_DIR
+  nerdctl run $RegistryHTTPOptions "tkestack/registry-${ARCH}:$REGISTRY_VERSION" $@
+  nerdctl run $RegistryHTTPSOptions "tkestack/registry-${ARCH}:$REGISTRY_VERSION" $@
+  echo "Step.6 start registry [done]"
 }
 
 
@@ -156,26 +179,27 @@ function check_installer() {
   s=10
   for i in $(seq 1 $s)
   do
-    echo "Step.6 check tke-installer status [in process]"
+    echo "Step.7 check tke-installer status [in process]"
     url="http://127.0.0.1:8080/index.html"
     if ! curl -sSf "$url" >/dev/null 2>&1; then
       sleep 3
-      echo "Step.6 retries left $(($s-$i))"
+      echo "Step.7 retries left $(($s-$i))"
       continue
     else
-      echo "Step.6 check tke-installer status [done]"
+      echo "Step.7 check tke-installer status [done]"
       echo "Please use your browser which can connect this machine to open $url for install TKE!"
       exit 0
     fi
   done
   echo "check installer status error"
-  docker logs tke-installer
-  exit 1 
+  nerdctl logs tke-installer
+  exit 1
 }
 
 preflight
-ensure_docker
+ensure_containerd
 load_image
 clean_old_data
 start_installer $@
+start_registry $@
 check_installer

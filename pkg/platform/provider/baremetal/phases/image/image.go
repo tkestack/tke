@@ -39,10 +39,10 @@ func PullKubernetesImages(c *v1.Cluster, s ssh.Interface, option *Option) error 
 
 	for _, image := range images {
 		cmd := ""
-		if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Containerd {
-			cmd = fmt.Sprintf("crictl pull %s", image)
-		} else {
+		if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
 			cmd = fmt.Sprintf("docker pull %s", image)
+		} else {
+			cmd = fmt.Sprintf("crictl pull %s", image)
 		}
 		_, err := s.CombinedOutput(cmd)
 		if err != nil {
