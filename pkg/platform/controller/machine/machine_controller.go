@@ -253,7 +253,7 @@ func (c *Controller) onCreate(ctx context.Context, machine *platformv1.Machine) 
 	if err != nil {
 		return err
 	}
-	cluster, err := clusterprovider.GetV1ClusterByName(ctx, c.platformClient, machine.Spec.ClusterName)
+	cluster, err := clusterprovider.GetV1ClusterByName(ctx, c.platformClient, machine.Spec.ClusterName, clusterprovider.AdminUsername)
 	if err != nil {
 		return err
 	}
@@ -280,7 +280,7 @@ func (c *Controller) onUpdate(ctx context.Context, machine *platformv1.Machine) 
 		return err
 	}
 
-	cluster, err := clusterprovider.GetV1ClusterByName(ctx, c.platformClient, machine.Spec.ClusterName)
+	cluster, err := clusterprovider.GetV1ClusterByName(ctx, c.platformClient, machine.Spec.ClusterName, clusterprovider.AdminUsername)
 	if err != nil {
 		return err
 	}
@@ -340,7 +340,7 @@ func (c *Controller) checkHealth(ctx context.Context, machine *platformv1.Machin
 
 func (c *Controller) ensureSyncMachineNodeLabel(ctx context.Context, machine *platformv1.Machine) {
 
-	cluster, err := clusterprovider.GetV1ClusterByName(ctx, c.platformClient, machine.Spec.ClusterName)
+	cluster, err := clusterprovider.GetV1ClusterByName(ctx, c.platformClient, machine.Spec.ClusterName, clusterprovider.AdminUsername)
 	if err != nil {
 		log.FromContext(ctx).Error(err, "sync Machine node label error")
 		return

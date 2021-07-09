@@ -742,7 +742,7 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 		return fmt.Errorf("get provider failed: %v", err)
 	}
 	// Secret for prometheus-etcd
-	credential, err := provider.GetClusterCredentialV1(ctx, c.platformClient, cluster)
+	credential, err := provider.GetClusterCredentialV1(ctx, c.platformClient, cluster, clusterprovider.AdminUsername)
 	if err != nil {
 		return fmt.Errorf("get credential failed: %v", err)
 	}

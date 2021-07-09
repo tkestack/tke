@@ -36,6 +36,7 @@ import (
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	v1platform "tkestack.io/tke/api/platform/v1"
+	"tkestack.io/tke/pkg/apiserver/authentication"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -86,7 +87,8 @@ func APIServerLocationByCluster(ctx context.Context, clusterName string, platfor
 	if err != nil {
 		return nil, nil, "", err
 	}
-	credential, err := provider.GetClusterCredentialV1(ctx, platformClient, cluster)
+	username, _ := authentication.UsernameAndTenantID(ctx)
+	credential, err := provider.GetClusterCredentialV1(ctx, platformClient, cluster, username)
 	if err != nil {
 		log.Errorf("unable to get credential %v", err)
 		return nil, nil, "", err

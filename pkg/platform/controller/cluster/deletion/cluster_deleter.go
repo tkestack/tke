@@ -388,7 +388,7 @@ func deleteClusterProvider(ctx context.Context, deleter *clusterDeleter, cluster
 	if err != nil {
 		panic(err)
 	}
-	clusterWrapper, err := clusterprovider.GetV1Cluster(ctx, deleter.platformClient, cluster)
+	clusterWrapper, err := clusterprovider.GetV1Cluster(ctx, deleter.platformClient, cluster, clusterprovider.AdminUsername)
 	if err != nil {
 		return err
 	}

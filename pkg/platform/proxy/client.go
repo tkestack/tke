@@ -71,12 +71,12 @@ func GetConfig(ctx context.Context, platformClient platforminternalclient.Platfo
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
 	}
 
-	_, tenantID := authentication.UsernameAndTenantID(ctx)
+	username, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) > 0 && cluster.Spec.TenantID != tenantID {
 		return nil, errors.NewNotFound(platform.Resource("clusters"), cluster.ObjectMeta.Name)
 	}
 
-	clusterWrapper, err := clusterprovider.GetCluster(ctx, platformClient, cluster)
+	clusterWrapper, err := clusterprovider.GetCluster(ctx, platformClient, cluster, username)
 	if err != nil {
 		return nil, err
 	}

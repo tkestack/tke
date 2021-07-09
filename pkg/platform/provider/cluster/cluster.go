@@ -40,6 +40,8 @@ var (
 	providers   = make(map[string]Provider)
 )
 
+const AdminUsername = "admin"
+
 // Register makes a provider available by the provided name.
 // If Register is called twice with the same name or if provider is nil,
 // it panics.
@@ -109,14 +111,14 @@ func GetProvider(name string) (Provider, error) {
 	return provider, nil
 }
 
-func GetCluster(ctx context.Context, platformClient internalversion.PlatformInterface, cluster *platform.Cluster) (*types.Cluster, error) {
+func GetCluster(ctx context.Context, platformClient internalversion.PlatformInterface, cluster *platform.Cluster, username string) (*types.Cluster, error) {
 	result := new(types.Cluster)
 	result.Cluster = cluster
 	provider, err := GetProvider(cluster.Spec.Type)
 	if err != nil {
 		return nil, err
 	}
-	clusterCredential, err := provider.GetClusterCredential(ctx, platformClient, cluster)
+	clusterCredential, err := provider.GetClusterCredential(ctx, platformClient, cluster, username)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return result, err
 	}
@@ -125,15 +127,15 @@ func GetCluster(ctx context.Context, platformClient internalversion.PlatformInte
 	return result, nil
 }
 
-func GetClusterByName(ctx context.Context, platformClient internalversion.PlatformInterface, name string) (*types.Cluster, error) {
-	cluster, err := platformClient.Clusters().Get(ctx, name, metav1.GetOptions{})
+func GetClusterByName(ctx context.Context, platformClient internalversion.PlatformInterface, clsname, username string) (*types.Cluster, error) {
+	cluster, err := platformClient.Clusters().Get(ctx, clsname, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	return GetCluster(ctx, platformClient, cluster)
+	return GetCluster(ctx, platformClient, cluster, username)
 }
 
-func GetV1Cluster(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster) (*v1.Cluster, error) {
+func GetV1Cluster(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*v1.Cluster, error) {
 	result := new(v1.Cluster)
 	result.Cluster = cluster
 	result.IsCredentialChanged = false
@@ -141,7 +143,7 @@ func GetV1Cluster(ctx context.Context, platformClient platformversionedclient.Pl
 	if err != nil {
 		return nil, err
 	}
-	clusterCredential, err := provider.GetClusterCredentialV1(ctx, platformClient, cluster)
+	clusterCredential, err := provider.GetClusterCredentialV1(ctx, platformClient, cluster, username)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return result, err
 	}
@@ -150,10 +152,10 @@ func GetV1Cluster(ctx context.Context, platformClient platformversionedclient.Pl
 	return result, nil
 }
 
-func GetV1ClusterByName(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, name string) (*v1.Cluster, error) {
-	cluster, err := platformClient.Clusters().Get(ctx, name, metav1.GetOptions{})
+func GetV1ClusterByName(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, clsname, username string) (*v1.Cluster, error) {
+	cluster, err := platformClient.Clusters().Get(ctx, clsname, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	return GetV1Cluster(ctx, platformClient, cluster)
+	return GetV1Cluster(ctx, platformClient, cluster, username)
 }

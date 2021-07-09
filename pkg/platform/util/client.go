@@ -58,7 +58,7 @@ const (
 )
 
 func DynamicClientByCluster(ctx context.Context, cluster *platform.Cluster, platformClient platforminternalclient.PlatformInterface) (dynamic.Interface, error) {
-	_, tenantID := authentication.UsernameAndTenantID(ctx)
+	username, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) > 0 && cluster.Spec.TenantID != tenantID {
 		return nil, errors.NewNotFound(platform.Resource("clusters"), cluster.ObjectMeta.Name)
 	}
@@ -68,7 +68,7 @@ func DynamicClientByCluster(ctx context.Context, cluster *platform.Cluster, plat
 		return nil, err
 	}
 
-	credential, err := provider.GetClusterCredential(ctx, platformClient, cluster)
+	credential, err := provider.GetClusterCredential(ctx, platformClient, cluster, username)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func DynamicClientByCluster(ctx context.Context, cluster *platform.Cluster, plat
 
 // ClientSetByCluster returns the backend kubernetes clientSet by given cluster object
 func ClientSetByCluster(ctx context.Context, cluster *platform.Cluster, platformClient platforminternalclient.PlatformInterface) (*kubernetes.Clientset, error) {
-	_, tenantID := authentication.UsernameAndTenantID(ctx)
+	username, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) > 0 && cluster.Spec.TenantID != tenantID {
 		return nil, errors.NewNotFound(platform.Resource("clusters"), cluster.ObjectMeta.Name)
 	}
@@ -88,7 +88,7 @@ func ClientSetByCluster(ctx context.Context, cluster *platform.Cluster, platform
 		return nil, err
 	}
 
-	credential, err := provider.GetClusterCredential(ctx, platformClient, cluster)
+	credential, err := provider.GetClusterCredential(ctx, platformClient, cluster, username)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +279,7 @@ func BuildExternalClientSet(ctx context.Context, cluster *platformv1.Cluster, cl
 		return nil, err
 	}
 
-	credential, err := provider.GetClusterCredentialV1(ctx, client, cluster)
+	credential, err := provider.GetClusterCredentialV1(ctx, client, cluster, clusterprovider.AdminUsername)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +313,7 @@ func BuildExternalExtensionClientSetNoStatus(ctx context.Context, cluster *platf
 		return nil, err
 	}
 
-	credential, err := provider.GetClusterCredentialV1(ctx, client, cluster)
+	credential, err := provider.GetClusterCredentialV1(ctx, client, cluster, clusterprovider.AdminUsername)
 	if err != nil {
 		return nil, err
 	}
@@ -343,7 +343,7 @@ func BuildKubeAggregatorClientSetNoStatus(ctx context.Context, cluster *platform
 		return nil, err
 	}
 
-	credential, err := provider.GetClusterCredentialV1(ctx, client, cluster)
+	credential, err := provider.GetClusterCredentialV1(ctx, client, cluster, clusterprovider.AdminUsername)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +373,7 @@ func BuildExternalMonitoringClientSetNoStatus(ctx context.Context, cluster *plat
 		return nil, err
 	}
 
-	credential, err := provider.GetClusterCredentialV1(ctx, client, cluster)
+	credential, err := provider.GetClusterCredentialV1(ctx, client, cluster, clusterprovider.AdminUsername)
 	if err != nil {
 		return nil, err
 	}

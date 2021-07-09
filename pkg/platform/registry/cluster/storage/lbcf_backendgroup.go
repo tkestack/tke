@@ -28,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/util/log"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -90,7 +91,8 @@ func (r *LBCFBackendGroupREST) Connect(ctx context.Context, clusterName string, 
 		return nil, err
 	}
 
-	credential, err := provider.GetClusterCredential(ctx, r.platformClient, cluster)
+	username, _ := authentication.UsernameAndTenantID(ctx)
+	credential, err := provider.GetClusterCredential(ctx, r.platformClient, cluster, username)
 	if err != nil {
 		return nil, err
 	}

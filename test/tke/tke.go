@@ -22,6 +22,7 @@ import (
 	"tkestack.io/tke/test/util/env"
 
 	// import platform provider
+	_ "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	_ "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
 	_ "tkestack.io/tke/pkg/platform/provider/imported/cluster"
 	_ "tkestack.io/tke/pkg/platform/provider/registered/cluster"
@@ -42,7 +43,7 @@ func Init(tkeClient tkeclientset.Interface, provider cloudprovider.Provider) *Te
 }
 
 func (testTke *TestTKE) K8sClient(cls *platformv1.Cluster) kubernetes.Interface {
-	clusterWrapper, err := clusterprovider.GetV1Cluster(context.Background(), testTke.TkeClient.PlatformV1(), cls)
+	clusterWrapper, err := clusterprovider.GetV1Cluster(context.Background(), testTke.TkeClient.PlatformV1(), cls, clusterprovider.AdminUsername)
 	if err != nil {
 		panic(err)
 	}

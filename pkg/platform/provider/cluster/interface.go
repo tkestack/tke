@@ -81,8 +81,8 @@ type ControllerProvider interface {
 }
 
 type CredentialProvider interface {
-	GetClusterCredential(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster) (*platform.ClusterCredential, error)
-	GetClusterCredentialV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster) (*platformv1.ClusterCredential, error)
+	GetClusterCredential(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster, username string) (*platform.ClusterCredential, error)
+	GetClusterCredentialV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*platformv1.ClusterCredential, error)
 }
 
 // Provider defines a set of response interfaces for specific cluster
@@ -421,7 +421,7 @@ func (p *DelegateProvider) getCurrentCondition(c *v1.Cluster, phase platformv1.C
 }
 
 // GetClusterCredential returns the cluster's credential
-func (p *DelegateProvider) GetClusterCredential(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster) (*platform.ClusterCredential, error) {
+func (p *DelegateProvider) GetClusterCredential(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster, username string) (*platform.ClusterCredential, error) {
 	var (
 		credential *platform.ClusterCredential
 		err        error
@@ -449,7 +449,7 @@ func (p *DelegateProvider) GetClusterCredential(ctx context.Context, client plat
 }
 
 // GetClusterCredentialV1 returns the versioned cluster's credential
-func (p *DelegateProvider) GetClusterCredentialV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster) (*platformv1.ClusterCredential, error) {
+func (p *DelegateProvider) GetClusterCredentialV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*platformv1.ClusterCredential, error) {
 	var (
 		credential *platformv1.ClusterCredential
 		err        error

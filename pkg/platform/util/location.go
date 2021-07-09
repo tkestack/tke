@@ -39,7 +39,7 @@ import (
 // APIServerLocationByCluster returns a URL and transport which one can use to
 // send traffic for the specified cluster api server.
 func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, platformClient platforminternalclient.PlatformInterface) (*url.URL, http.RoundTripper, string, error) {
-	_, tenantID := authentication.UsernameAndTenantID(ctx)
+	username, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) > 0 && cluster.Spec.TenantID != tenantID {
 		return nil, nil, "", errors.NewNotFound(platform.Resource("clusters"), cluster.ObjectMeta.Name)
 	}
@@ -56,7 +56,7 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, 
 		return nil, nil, "", errors.NewInternalError(err)
 	}
 
-	clusterCredential, err := provider.GetClusterCredential(ctx, platformClient, cluster)
+	clusterCredential, err := provider.GetClusterCredential(ctx, platformClient, cluster, username)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}

@@ -273,7 +273,7 @@ func deleteMachineProvider(ctx context.Context, deleter *machineDeleter, machine
 	if err != nil {
 		panic(err)
 	}
-	cluster, err := clusterprovider.GetV1ClusterByName(context.Background(), deleter.platformClient, machine.Spec.ClusterName)
+	cluster, err := clusterprovider.GetV1ClusterByName(context.Background(), deleter.platformClient, machine.Spec.ClusterName, clusterprovider.AdminUsername)
 	if err != nil {
 		return err
 	}
@@ -291,7 +291,7 @@ func deleteMachineProvider(ctx context.Context, deleter *machineDeleter, machine
 func deleteNode(ctx context.Context, deleter *machineDeleter, machine *v1.Machine) error {
 	log.FromContext(ctx).Info("deleteNode doing")
 
-	cluster, err := clusterprovider.GetV1ClusterByName(context.Background(), deleter.platformClient, machine.Spec.ClusterName)
+	cluster, err := clusterprovider.GetV1ClusterByName(context.Background(), deleter.platformClient, machine.Spec.ClusterName, clusterprovider.AdminUsername)
 	if err != nil {
 		return err
 	}

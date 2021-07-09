@@ -316,7 +316,7 @@ func (t *TKE) prepareForUpgrade(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	t.Cluster, err = clusterprovider.GetV1ClusterByName(ctx, t.platformClient, "global")
+	t.Cluster, err = clusterprovider.GetV1ClusterByName(ctx, t.platformClient, "global", clusterprovider.AdminUsername)
 	if err != nil {
 		return err
 	}

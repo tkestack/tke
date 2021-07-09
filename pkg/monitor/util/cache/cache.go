@@ -285,7 +285,7 @@ func (c *cacher) getMetricServerClientSet(ctx context.Context, cls *platformv1.C
 	if err != nil {
 		return nil, err
 	}
-	cc, err := provider.GetClusterCredentialV1(ctx, c.platformClient, cls)
+	cc, err := provider.GetClusterCredentialV1(ctx, c.platformClient, cls, clusterprovider.AdminUsername)
 	if err != nil {
 		log.Error("query cluster credential failed", log.Any("cluster", cls.GetName()), log.Err(err))
 		return nil, err

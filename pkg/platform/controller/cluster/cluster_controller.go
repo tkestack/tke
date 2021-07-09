@@ -301,7 +301,7 @@ func (c *Controller) onCreate(ctx context.Context, cluster *platformv1.Cluster) 
 	if err != nil {
 		return err
 	}
-	clusterWrapper, err := clusterprovider.GetV1Cluster(ctx, c.platformClient, cluster)
+	clusterWrapper, err := clusterprovider.GetV1Cluster(ctx, c.platformClient, cluster, clusterprovider.AdminUsername)
 	if err != nil {
 		return err
 	}
@@ -332,7 +332,7 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 	if err != nil {
 		return err
 	}
-	clusterWrapper, err := clusterprovider.GetV1Cluster(ctx, c.platformClient, cluster)
+	clusterWrapper, err := clusterprovider.GetV1Cluster(ctx, c.platformClient, cluster, clusterprovider.AdminUsername)
 	if err != nil {
 		return err
 	}
