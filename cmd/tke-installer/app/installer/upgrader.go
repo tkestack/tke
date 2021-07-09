@@ -21,6 +21,7 @@ package installer
 import (
 	"context"
 	"fmt"
+	"log"
 	"os/exec"
 	"time"
 
@@ -58,16 +59,30 @@ const (
 	registryCmKey  = "tke-registry-config.yaml"
 )
 
+var upgradeProviderResImage string
+
 func (t *TKE) upgradeSteps() {
-	if !t.Para.Config.Registry.IsOfficial() {
-		t.steps = append(t.steps, []types.Handler{
+	containerregistry.Init(t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace())
+	tkeVersion, k8sValidVersions, err := util.GetPlatformVersionsFromClusterInfo(context.Background(), t.globalClient)
+	if err != nil {
+		log.Fatalf("get platform version from cluster info failed: %v", err)
+	}
+	result := version.Compare(tkeVersion, spec.TKEVersion)
+
+	switch {
+	// current platform version is higher than installer version
+	case result > 0:
+		log.Fatalf("can't upgrade, platform's version %s is higher than installer's version %s", tkeVersion, spec.TKEVersion)
+	// current platform version is euaql to installer version
+	case result == 0:
+		if len(k8sValidVersions) == len(spec.K8sVersions) {
+			log.Fatalf("can't upgrade, platform's version %s is equal to installer's version %s, please prepare your custom upgrade images before upgrade", tkeVersion, spec.TKEVersion)
+		}
+		upgradeProviderResImage = containerregistry.GetImagePrefix(images.Get().ProviderRes.Name + ":" + k8sValidVersions[len(k8sValidVersions)-1])
+		t.steps = []types.Handler{
 			{
 				Name: "Login registry",
 				Func: t.loginRegistry,
-			},
-			{
-				Name: "Load images",
-				Func: t.loadImages,
 			},
 			{
 				Name: "Tag images",
@@ -77,54 +92,80 @@ func (t *TKE) upgradeSteps() {
 				Name: "Push images",
 				Func: t.pushImages,
 			},
-		}...)
-	}
-
-	t.steps = append(t.steps, []types.Handler{
-		{
-			Name: "Upgrade tke-platform-api",
-			Func: t.upgradeTKEPlatformAPI,
-		},
-		{
-			Name: "Upgrade tke-platform-controller",
-			Func: t.upgradeTKEPlatformController,
-		},
-		{
-			Name: "Upgrade tke-monitor-api",
-			Func: t.upgradeTKEMonitorAPI,
-		},
-		{
-			Name: "Upgrade tke-monitor-controller",
-			Func: t.upgradeTKEMonitorController,
-		},
-	}...)
-
-	t.steps = append(t.steps, []types.Handler{
-		{
-			Name: "Patch platform versions in cluster info",
-			Func: t.patchPlatformVersion,
-		},
-	}...)
-
-	t.steps = append(t.steps, []types.Handler{
-		{
-			Name: "Upgrade TAPP",
-			Func: t.upgradeTAPP,
-		},
-		{
-			Name: "Upgrade CronHPA",
-			Func: t.upgradeCronHPA,
-		},
-	}...)
-
-	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
-		t.Para.Config.Registry.TKERegistry != nil {
+			{
+				Name: "Upgrade tke-platform-controller",
+				Func: t.upgradeTKEPlatformController,
+			},
+		}
+	// installer version is higher than current platform version
+	case result < 0:
+		upgradeProviderResImage = images.Get().ProviderRes.FullName()
+		if !t.Para.Config.Registry.IsOfficial() {
+			t.steps = append(t.steps, []types.Handler{
+				{
+					Name: "Login registry",
+					Func: t.loginRegistry,
+				},
+				{
+					Name: "Load images",
+					Func: t.loadImages,
+				},
+				{
+					Name: "Tag images",
+					Func: t.tagImages,
+				},
+				{
+					Name: "Push images",
+					Func: t.pushImages,
+				},
+			}...)
+		}
 		t.steps = append(t.steps, []types.Handler{
 			{
-				Name: "Import charts",
-				Func: t.importCharts,
+				Name: "Upgrade tke-platform-api",
+				Func: t.upgradeTKEPlatformAPI,
+			},
+			{
+				Name: "Upgrade tke-platform-controller",
+				Func: t.upgradeTKEPlatformController,
+			},
+			{
+				Name: "Upgrade tke-monitor-api",
+				Func: t.upgradeTKEMonitorAPI,
+			},
+			{
+				Name: "Upgrade tke-monitor-controller",
+				Func: t.upgradeTKEMonitorController,
 			},
 		}...)
+
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Patch platform versions in cluster info",
+				Func: t.patchPlatformVersion,
+			},
+		}...)
+
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Upgrade TAPP",
+				Func: t.upgradeTAPP,
+			},
+			{
+				Name: "Upgrade CronHPA",
+				Func: t.upgradeCronHPA,
+			},
+		}...)
+
+		if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
+			t.Para.Config.Registry.TKERegistry != nil {
+			t.steps = append(t.steps, []types.Handler{
+				{
+					Name: "Import charts",
+					Func: t.importCharts,
+				},
+			}...)
+		}
 	}
 
 	t.steps = funk.Filter(t.steps, func(step types.Handler) bool {
@@ -179,23 +220,7 @@ func (t *TKE) upgradeTKEPlatformController(ctx context.Context) error {
 		return fmt.Errorf("%s has no initContainers", com)
 	}
 
-	tkeVersion, k8sValidVersions, err := util.GetPlatformVersionsFromClusterInfo(ctx, t.globalClient)
-	if err != nil {
-		return err
-	}
-	result := version.Compare(tkeVersion, spec.TKEVersion)
-
-	switch {
-	case result > 0:
-		return errors.Errorf("can't upgrade, platform's version %s is higher than installer's version %s", tkeVersion, spec.TKEVersion)
-	case result == 0:
-		if len(k8sValidVersions) == len(spec.K8sVersions) {
-			return errors.Errorf("can't upgrade, platform's version %s is equal to installer's version %s, please prepare your custom upgrade images before upgrade", tkeVersion, spec.TKEVersion)
-		}
-		depl.Spec.Template.Spec.InitContainers[0].Image = containerregistry.GetImagePrefix(images.Get().ProviderRes.Name + ":" + k8sValidVersions[len(k8sValidVersions)-1])
-	case result < 0:
-		depl.Spec.Template.Spec.InitContainers[0].Image = images.Get().ProviderRes.FullName()
-	}
+	depl.Spec.Template.Spec.InitContainers[0].Image = upgradeProviderResImage
 
 	_, err = t.globalClient.AppsV1().Deployments(t.namespace).Update(ctx, depl, metav1.UpdateOptions{})
 	if err != nil {
