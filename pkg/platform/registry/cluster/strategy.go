@@ -137,7 +137,7 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	if err != nil {
 		panic(err)
 	}
-	err = clusterProvider.PreCreate(clusterWrapper)
+	err = clusterProvider.PreCreate(ctx, clusterWrapper)
 	if err != nil {
 		panic(err)
 	}
@@ -170,7 +170,7 @@ func (s *Strategy) Validate(ctx context.Context, obj runtime.Object) field.Error
 	if err != nil {
 		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
 	}
-	return validation.ValidateCluster(clusterWrapper)
+	return validation.ValidateCluster(ctx, clusterWrapper)
 }
 
 // AllowCreateOnUpdate is false for clusters
@@ -201,7 +201,7 @@ func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) 
 	if err != nil {
 		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
 	}
-	return validation.ValidateClusterUpdate(clusterWrapper, oldClusterWrapper)
+	return validation.ValidateClusterUpdate(ctx, clusterWrapper, oldClusterWrapper)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
