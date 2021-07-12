@@ -30,7 +30,6 @@ import (
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
-	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -389,7 +388,7 @@ func deleteClusterProvider(ctx context.Context, deleter *clusterDeleter, cluster
 	if err != nil {
 		panic(err)
 	}
-	clusterWrapper, err := typesv1.GetCluster(ctx, deleter.platformClient, cluster)
+	clusterWrapper, err := clusterprovider.GetV1Cluster(ctx, deleter.platformClient, cluster, clusterprovider.AdminUsername)
 	if err != nil {
 		return err
 	}

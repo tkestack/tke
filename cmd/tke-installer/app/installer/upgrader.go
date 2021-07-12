@@ -41,7 +41,7 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	cronhpaimage "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
 	tappimage "tkestack.io/tke/pkg/platform/controller/addon/tappcontroller/images"
-	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/platform/util"
 	configv1 "tkestack.io/tke/pkg/registry/apis/config/v1"
 	"tkestack.io/tke/pkg/spec"
@@ -316,7 +316,7 @@ func (t *TKE) prepareForUpgrade(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	t.Cluster, err = typesv1.GetClusterByName(ctx, t.platformClient, "global")
+	t.Cluster, err = clusterprovider.GetV1ClusterByName(ctx, t.platformClient, "global", clusterprovider.AdminUsername)
 	if err != nil {
 		return err
 	}

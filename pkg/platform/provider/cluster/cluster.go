@@ -19,17 +19,28 @@
 package cluster
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"sync"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/server/mux"
+	"tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	"tkestack.io/tke/api/platform"
+	platformv1 "tkestack.io/tke/api/platform/v1"
+	"tkestack.io/tke/pkg/platform/types"
+	v1 "tkestack.io/tke/pkg/platform/types/v1"
 )
 
 var (
 	providersMu sync.RWMutex
 	providers   = make(map[string]Provider)
 )
+
+const AdminUsername = "admin"
 
 // Register makes a provider available by the provided name.
 // If Register is called twice with the same name or if provider is nil,
@@ -98,4 +109,53 @@ func GetProvider(name string) (Provider, error) {
 	}
 
 	return provider, nil
+}
+
+func GetCluster(ctx context.Context, platformClient internalversion.PlatformInterface, cluster *platform.Cluster, username string) (*types.Cluster, error) {
+	result := new(types.Cluster)
+	result.Cluster = cluster
+	provider, err := GetProvider(cluster.Spec.Type)
+	if err != nil {
+		return nil, err
+	}
+	clusterCredential, err := provider.GetClusterCredential(ctx, platformClient, cluster, username)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return result, err
+	}
+	result.ClusterCredential = clusterCredential
+
+	return result, nil
+}
+
+func GetClusterByName(ctx context.Context, platformClient internalversion.PlatformInterface, clsname, username string) (*types.Cluster, error) {
+	cluster, err := platformClient.Clusters().Get(ctx, clsname, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return GetCluster(ctx, platformClient, cluster, username)
+}
+
+func GetV1Cluster(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*v1.Cluster, error) {
+	result := new(v1.Cluster)
+	result.Cluster = cluster
+	result.IsCredentialChanged = false
+	provider, err := GetProvider(cluster.Spec.Type)
+	if err != nil {
+		return nil, err
+	}
+	clusterCredential, err := provider.GetClusterCredentialV1(ctx, platformClient, cluster, username)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return result, err
+	}
+	result.ClusterCredential = clusterCredential
+
+	return result, nil
+}
+
+func GetV1ClusterByName(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, clsname, username string) (*v1.Cluster, error) {
+	cluster, err := platformClient.Clusters().Get(ctx, clsname, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return GetV1Cluster(ctx, platformClient, cluster, username)
 }

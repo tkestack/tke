@@ -52,6 +52,7 @@ import (
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -453,7 +454,11 @@ func (c *Controller) uninstallLBCF(ctx context.Context, lbcf *v1.LBCF) error {
 	if err != nil {
 		return err
 	}
-	credential, err := util.GetClusterCredentialV1(ctx, c.client.PlatformV1(), cluster)
+	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
+	if err != nil {
+		return err
+	}
+	credential, err := provider.GetClusterCredentialV1(ctx, c.client.PlatformV1(), cluster, clusterprovider.AdminUsername)
 	if err != nil {
 		return err
 	}

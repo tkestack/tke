@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/klog"
 	"net/http"
 	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/klog"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	"tkestack.io/tke/pkg/util/ssh"
