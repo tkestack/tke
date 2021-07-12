@@ -22,7 +22,10 @@
     "pre-commit": "lint-staged"
   },
   "lint-staged": {
-    "./**/*.{ts,tsx,js,jsx}": "eslint"
+    "./**/*.{ts,tsx,js,jsx}": [
+      "eslint",
+      "prettier --write"
+    ]
   },
   "license": "Apache-2.0",
   "dependencies": {
@@ -103,6 +106,7 @@
     "html-webpack-plugin": "^5.3.1",
     "husky": "^6.0.0",
     "lint-staged": "^11.0.0",
+    "prettier": "^2.3.2",
     "readable-stream": "^3.6.0",
     "speed-measure-webpack-plugin": "^1.5.0",
     "style-loader": "^2.0.0",
