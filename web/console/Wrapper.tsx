@@ -10,12 +10,12 @@ import { ResourceInfo, RequestParams } from './src/modules/common/models';
 import { resourceConfig } from './config';
 import { isEmpty } from './src/modules/common/utils';
 import * as classnames from 'classnames';
-import { Icon, Text, Bubble, NavMenu, List, ExternalLink } from '@tencent/tea-component';
-import zhCN from 'antd/lib/locale/zh_CN';
-import { ConfigProvider, Spin } from 'antd';
+import { Icon, Text, Bubble, NavMenu, List, ExternalLink, StatusTip } from 'tea-component';
 import { TkeVersion } from '@/src/modules/common/components/tke-version';
 import { ConsoleModuleEnum } from '@config/platform';
-import "tea-component/dist/tea.css";
+import 'tea-component/dist/tea.css';
+
+const { LoadingTip } = StatusTip;
 
 const routerSea = seajs.require('router');
 
@@ -531,25 +531,23 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     }
     return (
       <PlatformContext.Provider value={{ type: this.props.platformType }}>
-        <ConfigProvider locale={zhCN}>
-          <React.Suspense
-            fallback={
-              <div
-                style={{
-                  width: '100vw',
-                  height: '100vh',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}
-              >
-                <Spin delay={500} />
-              </div>
-            }
-          >
-            {finalContent}
-          </React.Suspense>
-        </ConfigProvider>
+        <React.Suspense
+          fallback={
+            <div
+              style={{
+                width: '100vw',
+                height: '100vh',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+            >
+              <LoadingTip />
+            </div>
+          }
+        >
+          {finalContent}
+        </React.Suspense>
       </PlatformContext.Provider>
     );
   }

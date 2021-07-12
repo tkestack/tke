@@ -3,11 +3,31 @@ import { enablePromethus, EnablePromethusParams } from '@/src/webApi/promethus';
 import { RootProps } from '../ClusterApp';
 import { AntdLayout } from '@src/modules/common/layouts';
 import { Button, Form, InputNumber, Checkbox, Input } from 'tea-component';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useField } from 'react-final-form-hooks';
 
 type LocalConfigType = Omit<EnablePromethusParams, 'clusterName'>;
 
+function getStatus(meta, validating) {
+  if (meta.active && validating) {
+    return 'validating';
+  }
+  if (!meta.touched) {
+    return null;
+  }
+  return meta.error ? 'error' : 'success';
+}
+
 export function ConfigPromethus({ route, actions }: RootProps) {
+  async function submit(values) {
+    await enablePromethus({ clusterName: route.queries.clusterId, ...values });
+    actions.cluster.applyFilter({});
+    cancelBack();
+  }
+
+  function cancelBack() {
+    history.back();
+  }
+
   const initialConfig = (): LocalConfigType => ({
     resources: {
       limits: {
@@ -20,13 +40,31 @@ export function ConfigPromethus({ route, actions }: RootProps) {
       }
     },
     runOnMaster: false,
-    notifyWebhook: '1234',
+    notifyWebhook: '',
     alertRepeatInterval: 20
   });
 
-  const { control, handleSubmit } = useForm<LocalConfigType>({
-    defaultValues: initialConfig()
+  const { form, handleSubmit, validating } = useForm({
+    onSubmit: submit,
+
+    initialValues: {
+      cpuLimit: 4,
+      memoryLimit: 8096,
+      cpuRequest: 0.1,
+      memoryRequest: 128,
+      runOnMaster: false,
+      notifyWebhook: '',
+      alertRepeatInterval: 20
+    },
+
+    validate({ notifyWebhook }) {
+      return {
+        notifyWebhook: notifyWebhook ? undefined : '不能为空'
+      };
+    }
   });
+
+  const notifyWebhook = useField('notifyWebhook', form);
 
   return (
     <AntdLayout
@@ -61,15 +99,13 @@ export function ConfigPromethus({ route, actions }: RootProps) {
           <Checkbox>runOnMaster</Checkbox>
         </Form.Item>
 
-        <Controller
-          name="notifyWebhook"
-          control={control}
-          render={() => (
-            <Form.Item label="指定告警webhook地址">
-              <Input />
-            </Form.Item>
-          )}
-        />
+        <Form.Item
+          label="指定告警webhook地址"
+          status={getStatus(notifyWebhook.meta, validating)}
+          message={getStatus(notifyWebhook.meta, validating) === 'error' ? notifyWebhook.meta.error : ''}
+        >
+          <Input {...notifyWebhook.input} />
+        </Form.Item>
 
         <Form.Item label="重复告警的间隔">
           <InputNumber min={0} precision={0} unit="m" />
