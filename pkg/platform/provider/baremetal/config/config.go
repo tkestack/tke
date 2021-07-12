@@ -45,17 +45,18 @@ func New(filename string) (*Config, error) {
 }
 
 type Config struct {
-	PlatformAPIClientConfig string            `yaml:"platformAPIClientConfig"`
-	Registry                Registry          `yaml:"registry"`
-	Audit                   Audit             `yaml:"audit"`
-	Feature                 Feature           `yaml:"feature"`
-	Docker                  Docker            `yaml:"docker"`
-	Kubelet                 Kubelet           `yaml:"kubelet"`
-	APIServer               APIServer         `yaml:"apiServer"`
-	ControllerManager       ControllerManager `yaml:"controllerManager"`
-	Scheduler               Scheduler         `yaml:"scheduler"`
-	AuthzWebhook            AuthzWebhook      `yaml:"authzWebhook"`
-	Business                Business          `yaml:"business"`
+	PlatformAPIClientConfig    string            `yaml:"platformAPIClientConfig"`
+	ApplicationAPIClientConfig string            `yaml:"applicationAPIClientConfig"`
+	Registry                   Registry          `yaml:"registry"`
+	Audit                      Audit             `yaml:"audit"`
+	Feature                    Feature           `yaml:"feature"`
+	Docker                     Docker            `yaml:"docker"`
+	Kubelet                    Kubelet           `yaml:"kubelet"`
+	APIServer                  APIServer         `yaml:"apiServer"`
+	ControllerManager          ControllerManager `yaml:"controllerManager"`
+	Scheduler                  Scheduler         `yaml:"scheduler"`
+	AuthzWebhook               AuthzWebhook      `yaml:"authzWebhook"`
+	Business                   Business          `yaml:"business"`
 }
 
 func (c *Config) Save(filename string) error {

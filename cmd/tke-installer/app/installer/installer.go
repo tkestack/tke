@@ -1492,6 +1492,7 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 		providerConfig.Business.Enabled = true
 	}
 	providerConfig.PlatformAPIClientConfig = "conf/tke-platform-config.yaml"
+	providerConfig.ApplicationAPIClientConfig = "conf/tke-application-config.yaml"
 	// todo using ingress to expose authz service for ha.(
 	//  users do not known nodeport when assigned vport in third party loadbalance)
 	providerConfig.AuthzWebhook.Endpoint = t.authzWebhookBuiltinEndpoint()

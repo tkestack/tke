@@ -28,6 +28,7 @@ import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 import "k8s.io/apimachinery/pkg/util/intstr/generated.proto";
+import "tkestack.io/tke/api/application/v1/generated.proto";
 
 // Package-wide variables from generator "generated".
 option go_package = "v1";
@@ -39,6 +40,19 @@ message AddonSpec {
   optional string clusterName = 2;
 
   optional string version = 3;
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+message App {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // Spec defines the desired identities of bootstrap in this set.
+  // +optional
+  optional tkestack.io.tke.api.application.v1.AppSpec spec = 2;
+
+  // +optional
+  optional tkestack.io.tke.api.application.v1.AppStatus status = 3;
 }
 
 message AuthzWebhookAddr {
@@ -224,6 +238,14 @@ message ClusterAddress {
   optional string path = 4;
 }
 
+message ClusterApp {
+  optional App app = 1;
+
+  optional string appNamespace = 2;
+
+  optional int32 priority = 3;
+}
+
 // ClusterApplyOptions is the query options to a kube-apiserver proxy call for cluster object.
 message ClusterApplyOptions {
   // +optional
@@ -382,6 +404,10 @@ message ClusterFeature {
 
   // +optional
   optional string containerRuntime = 15;
+
+  // ClusterApps will install apps during creating cluster
+  // +optional
+  repeated ClusterApp clusterApps = 16;
 
   // Upgrade control upgrade process.
   // +optional
