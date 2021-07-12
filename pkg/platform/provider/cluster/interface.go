@@ -36,6 +36,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/server/mux"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	applicationv1client "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -109,7 +110,8 @@ func (h Handler) Name() string {
 }
 
 type DelegateProvider struct {
-	ProviderName string
+	ProviderName      string
+	ApplicationClient applicationv1client.ApplicationV1Interface
 
 	ValidateFunc    func(cluster *types.Cluster) field.ErrorList
 	PreCreateFunc   func(cluster *types.Cluster) error

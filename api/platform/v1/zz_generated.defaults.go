@@ -24,12 +24,14 @@ package v1
 
 import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 )
 
 // RegisterDefaults adds defaulters functions to the given scheme.
 // Public to allow building arbitrary schemes.
 // All generated defaulters are covering - they call all nested defaulters.
 func RegisterDefaults(scheme *runtime.Scheme) error {
+	scheme.AddTypeDefaultingFunc(&App{}, func(obj interface{}) { SetObjectDefaults_App(obj.(*App)) })
 	scheme.AddTypeDefaultingFunc(&CSIOperator{}, func(obj interface{}) { SetObjectDefaults_CSIOperator(obj.(*CSIOperator)) })
 	scheme.AddTypeDefaultingFunc(&CSIOperatorList{}, func(obj interface{}) { SetObjectDefaults_CSIOperatorList(obj.(*CSIOperatorList)) })
 	scheme.AddTypeDefaultingFunc(&Cluster{}, func(obj interface{}) { SetObjectDefaults_Cluster(obj.(*Cluster)) })
@@ -59,6 +61,11 @@ func RegisterDefaults(scheme *runtime.Scheme) error {
 	return nil
 }
 
+func SetObjectDefaults_App(in *App) {
+	applicationv1.SetDefaults_AppSpec(&in.Spec)
+	applicationv1.SetDefaults_AppStatus(&in.Status)
+}
+
 func SetObjectDefaults_CSIOperator(in *CSIOperator) {
 	SetDefaults_CSIOperatorStatus(&in.Status)
 }
@@ -72,6 +79,10 @@ func SetObjectDefaults_CSIOperatorList(in *CSIOperatorList) {
 
 func SetObjectDefaults_Cluster(in *Cluster) {
 	SetDefaults_ClusterSpec(&in.Spec)
+	for i := range in.Spec.ClusterApps {
+		a := &in.Spec.ClusterApps[i]
+		SetObjectDefaults_App(&a.App)
+	}
 	SetDefaults_ClusterStatus(&in.Status)
 }
 

@@ -37,13 +37,14 @@ const (
 
 // Options is the main context object for the TKE controller manager.
 type Options struct {
-	Log               *log.Options
-	Debug             *apiserveroptions.DebugOptions
-	SecureServing     *apiserveroptions.SecureServingOptions
-	Component         *controlleroptions.ComponentOptions
-	PlatformAPIClient *controlleroptions.APIServerClientOptions
-	Registry          *apiserveroptions.RegistryOptions
-	FeatureOptions    *FeatureOptions
+	Log                  *log.Options
+	Debug                *apiserveroptions.DebugOptions
+	SecureServing        *apiserveroptions.SecureServingOptions
+	Component            *controlleroptions.ComponentOptions
+	ApplicationAPIClient *controlleroptions.APIServerClientOptions
+	PlatformAPIClient    *controlleroptions.APIServerClientOptions
+	Registry             *apiserveroptions.RegistryOptions
+	FeatureOptions       *FeatureOptions
 
 	ClusterController *ClusterControllerOptions
 	MachineController *MachineControllerOptions
@@ -52,13 +53,14 @@ type Options struct {
 // NewOptions creates a new Options with a default config.
 func NewOptions(serverName string, allControllers []string, disabledByDefaultControllers []string) *Options {
 	return &Options{
-		Log:               log.NewOptions(),
-		Debug:             apiserveroptions.NewDebugOptions(),
-		SecureServing:     apiserveroptions.NewSecureServingOptions(serverName, 9445),
-		Component:         controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
-		PlatformAPIClient: controlleroptions.NewAPIServerClientOptions("platform", true),
-		Registry:          apiserveroptions.NewRegistryOptions(),
-		FeatureOptions:    NewFeatureOptions(),
+		Log:                  log.NewOptions(),
+		Debug:                apiserveroptions.NewDebugOptions(),
+		SecureServing:        apiserveroptions.NewSecureServingOptions(serverName, 9445),
+		Component:            controlleroptions.NewComponentOptions(allControllers, disabledByDefaultControllers),
+		PlatformAPIClient:    controlleroptions.NewAPIServerClientOptions("platform", true),
+		ApplicationAPIClient: controlleroptions.NewAPIServerClientOptions("application", false),
+		Registry:             apiserveroptions.NewRegistryOptions(),
+		FeatureOptions:       NewFeatureOptions(),
 
 		ClusterController: NewClusterControllerOptions(),
 		MachineController: NewMachineControllerOptions(),
@@ -72,6 +74,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.SecureServing.AddFlags(fs)
 	o.Component.AddFlags(fs)
 	o.PlatformAPIClient.AddFlags(fs)
+	o.ApplicationAPIClient.AddFlags(fs)
 	o.Registry.AddFlags(fs)
 	o.FeatureOptions.AddFlags(fs)
 	o.ClusterController.AddFlags(fs)
@@ -88,6 +91,7 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.SecureServing.ApplyFlags()...)
 	errs = append(errs, o.Component.ApplyFlags()...)
 	errs = append(errs, o.PlatformAPIClient.ApplyFlags()...)
+	errs = append(errs, o.ApplicationAPIClient.ApplyFlags()...)
 	errs = append(errs, o.Registry.ApplyFlags()...)
 	errs = append(errs, o.FeatureOptions.ApplyFlags()...)
 	errs = append(errs, o.ClusterController.ApplyFlags()...)

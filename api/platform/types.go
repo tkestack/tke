@@ -23,7 +23,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 )
+
+const NeedInitAppsAnnotation = "platform.tkestack.io/need-init-apps"
 
 // +genclient
 // +genclient:nonNamespaced
@@ -150,6 +153,9 @@ type ClusterSpec struct {
 	HostnameAsNodename bool
 	// +optional
 	NetworkArgs map[string]string
+	// ClusterApps will install apps during creating cluster
+	// +optional
+	ClusterApps ClusterApps
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -231,7 +237,7 @@ type ContainerRuntimeType = string
 
 const (
 	Containerd ContainerRuntimeType = "containerd"
-	Docker ContainerRuntimeType = "docker"
+	Docker     ContainerRuntimeType = "docker"
 )
 
 // ClusterPhase defines the phase of cluster constructor.
@@ -398,6 +404,17 @@ type ClusterFeature struct {
 	// +optional
 	Upgrade Upgrade
 }
+
+type ClusterApps []ClusterApp
+
+type ClusterApp struct {
+	App          App
+	AppNamespace string
+	Priority     int32
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type App applicationv1.App
 
 type HA struct {
 	TKEHA        *TKEHA

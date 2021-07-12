@@ -952,6 +952,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/notify/v1.TemplateText":                                  schema_tke_api_notify_v1_TemplateText(ref),
 		"tkestack.io/tke/api/notify/v1.TemplateWechat":                                schema_tke_api_notify_v1_TemplateWechat(ref),
 		"tkestack.io/tke/api/platform/v1.AddonSpec":                                   schema_tke_api_platform_v1_AddonSpec(ref),
+		"tkestack.io/tke/api/platform/v1.App":                                         schema_tke_api_platform_v1_App(ref),
 		"tkestack.io/tke/api/platform/v1.AuthzWebhookAddr":                            schema_tke_api_platform_v1_AuthzWebhookAddr(ref),
 		"tkestack.io/tke/api/platform/v1.BuiltinAuthzWebhookAddr":                     schema_tke_api_platform_v1_BuiltinAuthzWebhookAddr(ref),
 		"tkestack.io/tke/api/platform/v1.CSIOperator":                                 schema_tke_api_platform_v1_CSIOperator(ref),
@@ -968,6 +969,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.ClusterAddonType":                            schema_tke_api_platform_v1_ClusterAddonType(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterAddonTypeList":                        schema_tke_api_platform_v1_ClusterAddonTypeList(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterAddress":                              schema_tke_api_platform_v1_ClusterAddress(ref),
+		"tkestack.io/tke/api/platform/v1.ClusterApp":                                  schema_tke_api_platform_v1_ClusterApp(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterApplyOptions":                         schema_tke_api_platform_v1_ClusterApplyOptions(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterComponent":                            schema_tke_api_platform_v1_ClusterComponent(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterComponentReplicas":                    schema_tke_api_platform_v1_ClusterComponentReplicas(ref),
@@ -45882,6 +45884,50 @@ func schema_tke_api_platform_v1_AddonSpec(ref common.ReferenceCallback) common.O
 	}
 }
 
+func schema_tke_api_platform_v1_App(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec defines the desired identities of bootstrap in this set.",
+							Ref:         ref("tkestack.io/tke/api/application/v1.AppSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/application/v1.AppStatus"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/application/v1.AppSpec", "tkestack.io/tke/api/application/v1.AppStatus"},
+	}
+}
+
 func schema_tke_api_platform_v1_AuthzWebhookAddr(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -46520,6 +46566,37 @@ func schema_tke_api_platform_v1_ClusterAddress(ref common.ReferenceCallback) com
 				Required: []string{"type", "host", "port", "path"},
 			},
 		},
+	}
+}
+
+func schema_tke_api_platform_v1_ClusterApp(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"app": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/platform/v1.App"),
+						},
+					},
+					"appNamespace": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"priority": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int32",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/platform/v1.App"},
 	}
 }
 
@@ -47424,12 +47501,25 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							},
 						},
 					},
+					"clusterApps": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ClusterApps will install apps during creating cluster",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/platform/v1.ClusterApp"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"tenantID", "type", "version"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.LocalObjectReference", "tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty", "tkestack.io/tke/api/platform/v1.Etcd"},
+			"k8s.io/api/core/v1.LocalObjectReference", "tkestack.io/tke/api/platform/v1.ClusterApp", "tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty", "tkestack.io/tke/api/platform/v1.Etcd"},
 	}
 }
 

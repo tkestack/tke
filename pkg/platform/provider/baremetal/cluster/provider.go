@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/server/mux"
 	"k8s.io/client-go/tools/clientcmd"
+	applicationv1client "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
@@ -174,6 +175,18 @@ func NewProvider() (*Provider, error) {
 			log.Errorf("read PlatformAPIClientConfig error: %w", err)
 		} else {
 			p.platformClient, err = platformv1client.NewForConfig(restConfig)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if cfg.ApplicationAPIClientConfig != "" {
+		restConfig, err := clientcmd.BuildConfigFromFlags("", cfg.ApplicationAPIClientConfig)
+		if err != nil {
+			log.Errorf("read ApplicationAPIClientConfig error: %w", err)
+		} else {
+			p.ApplicationClient, err = applicationv1client.NewForConfig(restConfig)
 			if err != nil {
 				return nil, err
 			}

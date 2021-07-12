@@ -24,6 +24,7 @@ import (
 	"regexp"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,6 +37,7 @@ import (
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/api/platform/validation"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	helmutil "tkestack.io/tke/pkg/application/helm/util"
 	clusterutil "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/util"
@@ -92,6 +94,16 @@ func (Strategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 		cluster.Status.Phase = platform.ClusterDownscaling
 		cluster.Spec.ScalingMachines, _ = clusterutil.PrepareClusterScale(cluster, oldCluster)
 	}
+	for i, app := range cluster.Spec.ClusterApps {
+		if len(app.App.Spec.Values.RawValues) != 0 {
+			app.App.Spec.Values.RawValues = helmutil.SafeEncodeValue(app.App.Spec.Values.RawValues)
+		}
+		if len(app.AppNamespace) == 0 {
+			app.AppNamespace = metav1.NamespaceDefault
+		}
+		app.App.Spec.TargetCluster = cluster.Name
+		cluster.Spec.ClusterApps[i] = app
+	}
 }
 
 // NamespaceScoped is false for clusters
@@ -140,6 +152,16 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	err = clusterProvider.PreCreate(clusterWrapper)
 	if err != nil {
 		panic(err)
+	}
+	for i, app := range cluster.Spec.ClusterApps {
+		if len(app.App.Spec.Values.RawValues) != 0 {
+			app.App.Spec.Values.RawValues = helmutil.SafeEncodeValue(app.App.Spec.Values.RawValues)
+		}
+		if len(app.AppNamespace) == 0 {
+			app.AppNamespace = metav1.NamespaceDefault
+		}
+		app.App.Spec.TargetCluster = cluster.Name
+		cluster.Spec.ClusterApps[i] = app
 	}
 }
 

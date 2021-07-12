@@ -23,7 +23,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 )
+
+const NeedInitAppsAnnotation = "platform.tkestack.io/need-init-apps"
 
 // +genclient
 // +genclient:nonNamespaced
@@ -156,6 +159,9 @@ type ClusterSpec struct {
 	NetworkArgs map[string]string `json:"networkArgs,omitempty" protobuf:"bytes,24,name=networkArgs"`
 	// +optional
 	ScalingMachines []ClusterMachine `json:"scalingMachines,omitempty" protobuf:"bytes,25,opt,name=scalingMachines"`
+	// ClusterApps will install apps during creating cluster
+	// +optional
+	ClusterApps ClusterApps `json:"clusterApps,omitempty" protobuf:"bytes,26,opt,name=clusterApps"`
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -404,6 +410,17 @@ type ClusterFeature struct {
 	// +optional
 	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
 }
+
+type ClusterApps []ClusterApp
+
+type ClusterApp struct {
+	App          App    `json:"app,omitempty" protobuf:"bytes,1,opt,name=app"`
+	AppNamespace string `json:"appNamespace,omitempty" protobuf:"bytes,2,opt,name=appNamespace"`
+	Priority     int32  `json:"priority,omitempty" protobuf:"varint,3,opt,name=priority"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type App applicationv1.App
 
 type HA struct {
 	TKEHA        *TKEHA        `json:"tke,omitempty" protobuf:"bytes,1,opt,name=tke"`

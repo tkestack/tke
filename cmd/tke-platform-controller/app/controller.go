@@ -60,6 +60,8 @@ func NewControllerInitializers() map[string]InitFunc {
 	controllers["prometheus"] = startPrometheusController
 	controllers["ipam"] = startIPAMController
 	controllers["lbcf"] = startLBCFControllerController
+	controllers["syncClsToApp"] = startSyncClsToAppController
+	controllers["syncAppToCls"] = startSyncAppToClsController
 	return controllers
 }
 
