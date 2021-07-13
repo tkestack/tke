@@ -65,7 +65,7 @@ export function ConfigPromethus({ route, actions }: RootProps) {
           name="notifyWebhook"
           control={control}
           render={() => (
-            <Form.Item label="指定告警webhook地址">
+            <Form.Item>
               <Input />
             </Form.Item>
           )}
