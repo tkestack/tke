@@ -414,17 +414,6 @@ const Hpa = React.memo((props: { selectedHpa?: any }) => {
                           return (
                             <li key={item.id} className="hpa-edit-strategy-li">
                               <Controller
-                                render={({ field }) => (
-                                  <Input
-                                    {...field}
-                                    placeholder="Crontab"
-                                    className={
-                                      errors.strategy && errors.strategy[index] && errors.strategy[index].key
-                                        ? 'is-error'
-                                        : ''
-                                    }
-                                  />
-                                )}
                                 name={`strategy.${index}.key`}
                                 control={control}
                                 defaultValue={item.key}
@@ -436,6 +425,17 @@ const Hpa = React.memo((props: { selectedHpa?: any }) => {
                                     message: t('执行策略格式不正确')
                                   }
                                 }}
+                                render={({ field }) => (
+                                  <Input
+                                    {...field}
+                                    placeholder="Crontab"
+                                    className={
+                                      errors.strategy && errors.strategy[index] && errors.strategy[index].key
+                                        ? 'is-error'
+                                        : ''
+                                    }
+                                  />
+                                )}
                               />
                               <Text style={{ fontSize: '14px' }}> </Text>
                               <Controller

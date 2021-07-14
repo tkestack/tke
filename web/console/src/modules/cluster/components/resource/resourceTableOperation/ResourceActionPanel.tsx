@@ -1,7 +1,19 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Button, Dropdown, List, Modal, Select, Switch, Table, TagSearchBox, Text, Tooltip } from '@tea/component';
+import {
+  Button,
+  Dropdown,
+  List,
+  Modal,
+  Select,
+  Switch,
+  Table,
+  TagSearchBox,
+  Text,
+  Tooltip,
+  AttributeValue
+} from 'tea-component';
 // import { TagSearchBox } from '../../../../common/components/tagsearchbox';
 import { bindActionCreators, FetchState, insertCSS } from '@tencent/ff-redux';
 import { ChartInstancesPanel } from '@tencent/tchart';
@@ -253,7 +265,7 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
     // const namespaceValues = namespaceList.data.recordCount? namespaceList.data.records.map((namespace, index) => { return { key: namespace.id, name: namespace.name }; }) : [];
 
     // tagSearch的过滤选项
-    const attributes = [
+    const attributes: AttributeValue[] = [
       {
         type: 'input',
         key: 'resourceName',

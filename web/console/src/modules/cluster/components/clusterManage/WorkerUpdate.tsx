@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AntdLayout } from '@src/modules/common/layouts';
 import { RootProps } from '../ClusterApp';
 import { getNodes, updateWorkers } from '@src/webApi/cluster';
-import { Button, Form, Text, Checkbox, InputNumber, Transfer, Table } from 'tea-component';
+import { Button, Form, Text, Checkbox, InputNumber, Transfer, Table, TableColumn } from 'tea-component';
 
 const { selectable, removeable, scrollable } = Table.addons;
 
@@ -100,7 +100,7 @@ export function WorkerUpdate({ route }: RootProps) {
   );
 }
 
-const transferColumns = [
+const transferColumns: TableColumn[] = [
   {
     key: 'name',
     header: 'ID/名称'
@@ -109,7 +109,7 @@ const transferColumns = [
   {
     key: 'phase',
     header: '状态',
-    render(phase) {
+    render({ phase }) {
       return <Text theme={phase === 'Running' ? 'success' : 'danger'}>{phase}</Text>;
     }
   },
@@ -147,5 +147,5 @@ function SourceTable({ dataSource, targetKeys, onChange }) {
 }
 
 function TargetTable({ dataSource, onRemove }) {
-  return <Table records={dataSource} recordKey="name" columns={transferColumns} addons={[removeable({ onRemove })]} />;
+  return <Table records={dataSource} recordKey="key" columns={transferColumns} addons={[removeable({ onRemove })]} />;
 }
