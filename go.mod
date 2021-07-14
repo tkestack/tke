@@ -78,6 +78,7 @@ require (
 	github.com/parnurzeal/gorequest v0.2.15
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.10.0
+	github.com/prashantv/gostub v1.0.0
 	github.com/prometheus/alertmanager v0.20.0
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.10.0
