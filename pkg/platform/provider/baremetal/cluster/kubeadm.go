@@ -206,10 +206,11 @@ func (p *Provider) getKubeProxyConfiguration(c *v1.Cluster) *kubeproxyv1alpha1.K
 			}
 		}
 	}
+
+	config.MetricsBindAddress = "0.0.0.0"
 	if utilsnet.IsIPv6CIDRString(c.Spec.ClusterCIDR) {
 		config.BindAddress = "::"
 	}
-
 	return config
 }
 
