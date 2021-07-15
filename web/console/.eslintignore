@@ -1,8 +1,5 @@
 node_modules/*
-dist/*
-loader/*
 ambient/*
-typings/*
 **.log
 **.lock
 tsconfig.json

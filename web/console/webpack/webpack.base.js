@@ -18,7 +18,7 @@ module.exports = ({ version, mode }) => ({
     splitChunks: {
       cacheGroups: {
         commonVendor: {
-          test: /[\\/]node_modules[\\/](react|react-dom|lodash|codemirror|validator|@tencent|esprima|validator)[\\/]/,
+          test: /[\\/]node_modules[\\/](react|react-dom|lodash|codemirror|validator|@tencent\/tea-app|@tencent\/tchart|esprima|validator)[\\/]/,
           filename: 'static/js/common-vendor.[contenthash].js',
           chunks: 'initial',
           priority: -10
@@ -80,8 +80,7 @@ module.exports = ({ version, mode }) => ({
       {
         test: /\.(js|jsx)$/,
         use: ['thread-loader', 'babel-loader'],
-        exclude: [path.resolve(__dirname, '../node_modules')],
-        include: [path.resolve(__dirname, '../node_modules/tchart')]
+        exclude: [path.resolve(__dirname, '../node_modules')]
       },
 
       {
@@ -121,7 +120,8 @@ module.exports = ({ version, mode }) => ({
       '@': path.resolve(__dirname, '../'),
       d3: path.resolve(__dirname, '../node_modules/d3'),
       moment: path.resolve(__dirname, '../node_modules/dayjs'),
-      '@tencent/tea-component': path.resolve(__dirname, '../node_modules/tea-component')
+      '@tencent/tea-component': path.resolve(__dirname, '../node_modules/tea-component'),
+      '@tencent/tea-component/*': path.resolve(__dirname, '../node_modules/tea-component/*')
     }
   },
 
