@@ -29,3 +29,12 @@ func (ca ClusterApps) Swap(i, j int) {
 func (ca ClusterApps) Less(i, j int) bool {
 	return ca[i].Priority < ca[j].Priority
 }
+
+func (ca ClusterApps) HasApp(appNamespace, appName string) bool {
+	for _, app := range ca {
+		if app.AppNamespace == appNamespace && app.App.Name == appName {
+			return true
+		}
+	}
+	return false
+}

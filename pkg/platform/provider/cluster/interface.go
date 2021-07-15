@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"reflect"
 	"runtime"
-	"sort"
 	"strings"
 	"time"
 
@@ -36,7 +35,6 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/server/mux"
-	applicationv1 "tkestack.io/tke/api/application/v1"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	applicationv1client "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
@@ -118,7 +116,6 @@ type DelegateProvider struct {
 	ValidateFunc    func(cluster *types.Cluster) field.ErrorList
 	PreCreateFunc   func(cluster *types.Cluster) error
 	AfterCreateFunc func(cluster *types.Cluster) error
-	// PublicAfterCreateFunc func(cluster *types.Cluster) error
 
 	CreateHandlers    []Handler
 	DeleteHandlers    []Handler
@@ -170,14 +167,6 @@ func (p *DelegateProvider) AfterCreate(cluster *types.Cluster) error {
 	return nil
 }
 
-// func (p *DelegateProvider) PublicCreate(cluster *types.Cluster) error {
-// 	var versionedcluster platformv1.Cluster
-// 	if err := platformv1.Convert_platform_Cluster_To_v1_Cluster(cluster.Cluster, &versionedcluster, nil); err != nil {
-// 		return err
-// 	}
-// 	return p.InstallClusterApps(&versionedcluster)
-// }
-
 func (p *DelegateProvider) getUpdateReason(c *v1.Cluster) (reason string) {
 	if c.Status.Phase == platformv1.ClusterUpgrading {
 		return fmt.Sprintf("%s to kubernetes %s", platformv1.ClusterUpgrading, c.Spec.Version)
@@ -193,7 +182,6 @@ func (p *DelegateProvider) getUpdateReason(c *v1.Cluster) (reason string) {
 }
 
 func (p *DelegateProvider) OnCreate(ctx context.Context, cluster *v1.Cluster) error {
-	p.CreateHandlers = append(p.CreateHandlers, p.InstallClusterApps)
 	condition, err := p.getCurrentCondition(cluster, platformv1.ClusterInitializing, p.CreateHandlers)
 	if err != nil {
 		return err
@@ -488,54 +476,4 @@ func (p *DelegateProvider) GetClusterCredentialV1(ctx context.Context, client pl
 	}
 
 	return credential, nil
-}
-
-func (p *DelegateProvider) InstallClusterApps(ctx context.Context, c *v1.Cluster) error {
-	logger := log.FromContext(ctx)
-	if p.ApplicationClient == nil {
-		logger.Info("application client is nil, skip EnsureInstallApps")
-		return nil
-	}
-	apps, err := p.ApplicationClient.Apps("").List(ctx, metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("spec.targetCluster=%s", c.Name),
-	})
-	if err != nil {
-		return fmt.Errorf("get applications failed %v", err)
-	}
-	clusterApps := c.Spec.Features.ClusterApps
-	sort.Sort(clusterApps)
-	for _, clusterApp := range clusterApps {
-		if p.applicationAlreadyInstalled(*clusterApp, apps.Items) {
-			logger.Infof("application already exists. we don't override applications while installing. %v/%v", clusterApp.App.Namespace, clusterApp.App.Spec.Chart.ChartName)
-			continue
-		}
-		clusterApp.App.Spec.TargetCluster = c.Name
-		err := p.installApplication(ctx, *clusterApp)
-		if err != nil {
-			return fmt.Errorf("install application failed. %v, %v", clusterApp.App.Name, err)
-		}
-		logger.Infof("finish application installation %v", clusterApp.App.Name)
-	}
-
-	return nil
-}
-
-func (p *DelegateProvider) applicationAlreadyInstalled(clusterApp platformv1.ClusterApp, installedApps []applicationv1.App) bool {
-	for _, installedApp := range installedApps {
-		if clusterApp.App.Spec.Name == installedApp.Spec.Name &&
-			clusterApp.AppNamespace == installedApp.Namespace &&
-			clusterApp.App.Spec.TargetCluster == installedApp.Spec.TargetCluster {
-			return true
-		}
-	}
-	return false
-}
-
-func (p *DelegateProvider) installApplication(ctx context.Context, clusterApp platformv1.ClusterApp) error {
-	app := applicationv1.App(clusterApp.App)
-	_, err := p.ApplicationClient.Apps(clusterApp.AppNamespace).Create(ctx, &app, metav1.CreateOptions{})
-	if err != nil {
-		return fmt.Errorf("create application failed %v,%v", clusterApp.App.Spec.Chart.ChartName, err)
-	}
-	return nil
 }
