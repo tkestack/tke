@@ -406,7 +406,7 @@ export class ClusterTablePanel extends React.Component<RootProps, State> {
 
             <List.Item>
               <LinkButton
-                // disabled={!cluster.spec.updateInfo.worker.isNeed || cluster.status.phase !== 'Running'}
+                disabled={!cluster.spec.updateInfo.worker.isNeed || cluster.status.phase !== 'Running'}
                 errorTip={cluster.spec.updateInfo.worker.message}
                 onClick={() => {
                   router.navigate(
