@@ -49,6 +49,7 @@ func NewControllerInitializers() map[string]InitFunc {
 	controllers := map[string]InitFunc{}
 
 	controllers["cluster"] = startClusterController
+	controllers["clusterapp"] = startClusterAppsController
 	controllers["machine"] = startMachineController
 	controllers["persistentevent"] = startPersistentEventController
 	controllers["helm"] = startHelmController

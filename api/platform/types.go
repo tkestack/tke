@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 )
 
 // +genclient
@@ -394,10 +395,24 @@ type ClusterFeature struct {
 	ContainerRuntime ContainerRuntimeType
 	// +optional
 	IPv6DualStack bool
+	// ClusterApps will install apps during creating cluster
+	// +optional
+	ClusterApps ClusterApps
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade
 }
+
+type ClusterApps []*ClusterApp
+
+type ClusterApp struct {
+	App
+	AppNamespace string
+	Priority     int32
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type App applicationv1.App
 
 type HA struct {
 	TKEHA        *TKEHA
