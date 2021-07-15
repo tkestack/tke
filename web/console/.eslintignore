@@ -4,3 +4,4 @@ ambient/*
 **.lock
 tsconfig.json
 build/*
+tencent
