@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { TagSearchBox, TagSearchBoxProps } from '@tencent/tea-component';
+import { TagSearchBox, TagSearchBoxProps } from 'tea-component';
 import { FFListAction, FFListModel } from '@tencent/ff-redux';
 
 interface TablePanelTagSearchProps<TResource> extends TagSearchBoxProps {
@@ -11,7 +11,7 @@ interface TablePanelTagSearchProps<TResource> extends TagSearchBoxProps {
 }
 
 function TablePanelTagSearchBox<TResource = any>({ ...props }: TablePanelTagSearchProps<TResource>) {
-  let {
+  const {
     action,
     model: {
       query: { searchFilter }
@@ -26,10 +26,13 @@ function TablePanelTagSearchBox<TResource = any>({ ...props }: TablePanelTagSear
           .filter(key => attributes.findIndex(attr => attr.key === key) !== -1 && searchFilter[key] !== null)
           .map(key => ({
             attr: {
-              key: key
+              key: key,
+              name: key,
+              type: 'input'
             },
             values: [
               {
+                key: key,
                 name: searchFilter[key]
               }
             ]
@@ -38,7 +41,7 @@ function TablePanelTagSearchBox<TResource = any>({ ...props }: TablePanelTagSear
   props.onChange = props.onChange
     ? props.onChange
     : value => {
-        let attrMap = {};
+        const attrMap = {};
         value.forEach(item => {
           if (item.attr) {
             attrMap[item.attr.key] = item.values[0].name;
@@ -52,7 +55,7 @@ function TablePanelTagSearchBox<TResource = any>({ ...props }: TablePanelTagSear
           }
         });
 
-        let nextFilter = Object.assign({}, searchFilter, attrMap);
+        const nextFilter = Object.assign({}, searchFilter, attrMap);
         action.applySearchFilter(nextFilter);
       };
 

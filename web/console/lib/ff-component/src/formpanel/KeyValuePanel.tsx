@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Button, Input, InputAdorment, InputAdornmentProps, SelectOptionWithGroup } from '@tencent/tea-component';
+import { Button, Input, InputAdorment, InputAdornmentProps, SelectOptionWithGroup } from 'tea-component';
 
 import { FormPanel } from './FormPanel';
 import { FormPanelInputProps } from './Input';
@@ -26,7 +26,7 @@ interface FormPanelKeyValuePanelProps {
 }
 
 function FormPanelKeyValuePanel({ ...props }: FormPanelKeyValuePanelProps) {
-  let kvs = props.value || [];
+  const kvs = props.value || [];
   return (
     <React.Fragment>
       {kvs.map((kv, index) => {
@@ -36,14 +36,14 @@ function FormPanelKeyValuePanel({ ...props }: FormPanelKeyValuePanelProps) {
               options={props.options}
               value={kvs[index].key}
               onChange={value => {
-                let config = props.options.find(o => o.value === kvs[index].key);
+                const config = props.options.find(o => o.value === kvs[index].key);
                 kvs[index].key = value;
                 props.onChange && props.onChange(kvs.slice(0), config);
               }}
             />
             <FormPanel.InlineText style={{ marginLeft: 5, marginRight: 5 }}>=</FormPanel.InlineText>
             {(() => {
-              let config = props.options.find(o => o.value === kvs[index].key);
+              const config = props.options.find(o => o.value === kvs[index].key);
               if (!config) return;
               if (config.select) {
                 return (
@@ -51,7 +51,7 @@ function FormPanelKeyValuePanel({ ...props }: FormPanelKeyValuePanelProps) {
                     {...config.select}
                     value={kvs[index].value}
                     onChange={value => {
-                      let config = props.options.find(o => o.value === kvs[index].key);
+                      const config = props.options.find(o => o.value === kvs[index].key);
                       kvs[index].value = value;
                       props.onChange && props.onChange(kvs.slice(0), config);
                     }}
@@ -63,7 +63,7 @@ function FormPanelKeyValuePanel({ ...props }: FormPanelKeyValuePanelProps) {
                     {...config.segment}
                     value={kvs[index].value}
                     onChange={value => {
-                      let config = props.options.find(o => o.value === kvs[index].key);
+                      const config = props.options.find(o => o.value === kvs[index].key);
                       kvs[index].value = value;
                       props.onChange && props.onChange(kvs.slice(0), config);
                     }}
@@ -75,7 +75,7 @@ function FormPanelKeyValuePanel({ ...props }: FormPanelKeyValuePanelProps) {
                     {...config.input}
                     value={kvs[index].value}
                     onChange={value => {
-                      let config = props.options.find(o => o.value === kvs[index].key);
+                      const config = props.options.find(o => o.value === kvs[index].key);
                       kvs[index].value = value;
                       props.onChange && props.onChange(kvs.slice(0), config);
                     }}
@@ -87,7 +87,7 @@ function FormPanelKeyValuePanel({ ...props }: FormPanelKeyValuePanelProps) {
             <Button
               icon="close"
               onClick={() => {
-                let config = props.options.find(o => o.value === kvs[index].key);
+                const config = props.options.find(o => o.value === kvs[index].key);
                 kvs.splice(index, 1);
                 props.onChange && props.onChange(kvs.slice(0), config);
               }}
@@ -100,7 +100,7 @@ function FormPanelKeyValuePanel({ ...props }: FormPanelKeyValuePanelProps) {
         <Button
           type="link"
           onClick={() => {
-            let config = props.options[0];
+            const config = props.options[0];
             kvs.push({ key: props.options && props.options[0].value, value: '' });
             props.onChange && props.onChange(kvs.slice(0), config);
           }}

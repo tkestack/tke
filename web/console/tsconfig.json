@@ -39,6 +39,7 @@
       "@tencent/qcloud-redux-query": ["./lib/ff-redux/libs/qcloud-redux-query/"],
       "@tencent/qcloud-redux-workflow": ["./lib/ff-redux/libs/qcloud-redux-workflow/"],
       "@/*": ["./*"],
+      "@tencent/tea-component": ["./node_modules/tea-component"]
     }
   },
   "exclude": ["node_modules", "dist", "build", "develop", "loader", "public", "webpack"],
