@@ -18,7 +18,7 @@ module.exports = ({ version, mode }) => ({
     splitChunks: {
       cacheGroups: {
         commonVendor: {
-          test: /[\\/]node_modules[\\/](react|react-dom|lodash|codemirror|validator|@tencent\/tea-app|@tencent\/tchart|esprima|validator)[\\/]/,
+          test: /[\\/]node_modules[\\/](react|react-dom|lodash|codemirror|validator|@tencent|esprima)[\\/]/,
           filename: 'static/js/common-vendor.[contenthash].js',
           chunks: 'initial',
           priority: -10
@@ -99,8 +99,7 @@ module.exports = ({ version, mode }) => ({
       '@i18n/translation_en': path.resolve(__dirname, `../i18n/translation/en.js`),
       '@tea/app': path.resolve(__dirname, '../node_modules/@tencent/tea-app'),
       '@tea/app/*': path.resolve(__dirname, '../node_modules/@tencent/tea-app/lib/*'),
-      '@tea/component': path.resolve(__dirname, '../node_modules/tea-component/lib'),
-      '@tea/component/*': path.resolve(__dirname, '../node_modules/tea-component/lib/*'),
+      '@tea/component': path.resolve(__dirname, '../node_modules/tea-component/es'),
       '@paas/paas-lib': path.resolve(__dirname, '../lib'),
       '@helper': path.resolve(__dirname, '../helpers'),
       '@helper/*': path.resolve(__dirname, '../helpers/*'),
@@ -121,7 +120,7 @@ module.exports = ({ version, mode }) => ({
       d3: path.resolve(__dirname, '../node_modules/d3'),
       moment: path.resolve(__dirname, '../node_modules/dayjs'),
       '@tencent/tea-component': path.resolve(__dirname, '../node_modules/tea-component'),
-      '@tencent/tea-component/*': path.resolve(__dirname, '../node_modules/tea-component/*')
+      '@tencent/tea-component/lib': path.resolve(__dirname, '../node_modules/tea-component/es')
     }
   },
 
@@ -145,7 +144,7 @@ module.exports = ({ version, mode }) => ({
     }),
 
     ...(mode === 'production'
-      ? []
+      ? [new BundleAnalyzerPlugin()]
       : [
           new BundleAnalyzerPlugin(),
           new HtmlWebpackPlugin({

@@ -21,7 +21,7 @@
       "@tea/app": ["./node_modules/@tencent/tea-app"],
       "@tea/app/*": ["./node_modules/@tencent/tea-app/lib/*"],
       "@tea/component": ["./node_modules/tea-component/lib"],
-      "@tea/component/*": ["./node_modules/tea-component/lib/*"],
+      "@tea/component/*": ["./node_modules/tea-component/es/*"],
       "d3": ["./node_modules/d3"],
       "@helper": ["./helpers"],
       "@helper/*": ["./helpers/*"],
