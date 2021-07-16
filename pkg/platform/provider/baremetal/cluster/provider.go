@@ -19,6 +19,7 @@
 package cluster
 
 import (
+	"context"
 	"path"
 	"strings"
 
@@ -33,6 +34,7 @@ import (
 	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/validation"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
+	delegatecluster "tkestack.io/tke/pkg/platform/provider/delegate/cluster"
 	"tkestack.io/tke/pkg/platform/types"
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/containerregistry"
@@ -53,7 +55,7 @@ func init() {
 }
 
 type Provider struct {
-	*clusterprovider.DelegateProvider
+	*delegatecluster.DelegateProvider
 
 	config         *config.Config
 	platformClient platformv1client.PlatformV1Interface
@@ -64,10 +66,10 @@ var _ clusterprovider.Provider = &Provider{}
 func NewProvider() (*Provider, error) {
 	p := new(Provider)
 
-	p.DelegateProvider = &clusterprovider.DelegateProvider{
+	p.DelegateProvider = &delegatecluster.DelegateProvider{
 		ProviderName: name,
 
-		CreateHandlers: []clusterprovider.Handler{
+		CreateHandlers: []delegatecluster.Handler{
 			p.EnsureCopyFiles,
 			p.EnsurePreClusterInstallHook,
 			p.EnsurePreInstallHook,
@@ -135,24 +137,24 @@ func NewProvider() (*Provider, error) {
 			p.EnsurePostInstallHook,
 			p.EnsurePostClusterInstallHook,
 		},
-		UpdateHandlers: []clusterprovider.Handler{
+		UpdateHandlers: []delegatecluster.Handler{
 			p.EnsureAPIServerCert,
 			p.EnsureRenewCerts,
 			p.EnsureStoreCredential,
 			p.EnsureKeepalivedWithLBOption,
 			p.EnsureThirdPartyHA,
 		},
-		UpgradeHandlers: []clusterprovider.Handler{
+		UpgradeHandlers: []delegatecluster.Handler{
 			p.EnsurePreClusterUpgradeHook,
 			p.EnsureUpgradeCoreDNS,
 			p.EnsureUpgradeControlPlaneNode,
 			p.EnsurePostClusterUpgradeHook,
 		},
-		ScaleDownHandlers: []clusterprovider.Handler{
+		ScaleDownHandlers: []delegatecluster.Handler{
 			p.EnsureRemoveETCDMember,
 			p.EnsureRemoveNode,
 		},
-		DeleteHandlers: []clusterprovider.Handler{
+		DeleteHandlers: []delegatecluster.Handler{
 			p.EnsureCleanClusterMark,
 		},
 	}
@@ -189,11 +191,23 @@ func (p *Provider) RegisterHandler(mux *mux.PathRecorderMux) {
 	mux.HandleFunc(path.Join(prefix, "ping"), p.ping)
 }
 
-func (p *Provider) Validate(cluster *types.Cluster) field.ErrorList {
-	return validation.ValidateCluster(p.platformClient, cluster)
+func (p *Provider) Validate(ctx context.Context, cluster *types.Cluster) field.ErrorList {
+	allErrs := field.ErrorList{}
+	allErrs = append(allErrs, p.DelegateProvider.Validate(ctx, cluster)...)
+	allErrs = append(allErrs, validation.ValidateCluster(p.platformClient, cluster)...)
+
+	return allErrs
 }
 
-func (p *Provider) PreCreate(cluster *types.Cluster) error {
+func (p *Provider) ValidateUpdate(ctx context.Context, cluster *types.Cluster, oldCluster *types.Cluster) field.ErrorList {
+	allErrs := field.ErrorList{}
+	allErrs = append(allErrs, p.DelegateProvider.ValidateUpdate(ctx, cluster, oldCluster)...)
+	allErrs = append(allErrs, ValidateClusterScale(cluster.Cluster, oldCluster.Cluster, field.NewPath("spec"))...)
+
+	return allErrs
+}
+
+func (p *Provider) PreCreate(ctx context.Context, cluster *types.Cluster) error {
 	if cluster.Spec.Version == "" {
 		cluster.Spec.Version = spec.K8sVersions[0]
 	}
@@ -254,4 +268,26 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 	}
 
 	return nil
+}
+
+// ValidateClusterScale tests if master scale up/down to a cluster is valid.
+func ValidateClusterScale(cluster *platform.Cluster, oldCluster *platform.Cluster, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if len(cluster.Spec.Machines) == len(oldCluster.Spec.Machines) {
+		return allErrs
+	}
+	ha := cluster.Spec.Features.HA
+	if ha == nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, "HA configuration should enabled for master scale"))
+		return allErrs
+	}
+	if ha.TKEHA == nil && ha.ThirdPartyHA == nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, "tkestack HA or third party HA should enabled for master scale"))
+		return allErrs
+	}
+	_, err := PrepareClusterScale(cluster, oldCluster)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, err.Error()))
+	}
+	return allErrs
 }

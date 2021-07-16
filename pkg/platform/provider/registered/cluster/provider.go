@@ -23,6 +23,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
+	delegatecluster "tkestack.io/tke/pkg/platform/provider/delegate/cluster"
 	"tkestack.io/tke/pkg/platform/provider/registered/validation"
 	"tkestack.io/tke/pkg/platform/types"
 	"tkestack.io/tke/pkg/util/log"
@@ -38,7 +39,7 @@ func init() {
 }
 
 type Provider struct {
-	*clusterprovider.DelegateProvider
+	*delegatecluster.DelegateProvider
 }
 
 var _ clusterprovider.Provider = &Provider{}
@@ -46,19 +47,23 @@ var _ clusterprovider.Provider = &Provider{}
 func NewProvider() (*Provider, error) {
 	p := new(Provider)
 
-	p.DelegateProvider = &clusterprovider.DelegateProvider{
+	p.DelegateProvider = &delegatecluster.DelegateProvider{
 		ProviderName: "Registered",
-		CreateHandlers: []clusterprovider.Handler{
+		CreateHandlers: []delegatecluster.Handler{
 			p.EnsureGenerateAgentYaml,
 			p.EnsureClusterHost,
 		},
-		DeleteHandlers: []clusterprovider.Handler{
+		DeleteHandlers: []delegatecluster.Handler{
 			p.EnsureCleanClusterMark,
 		},
 	}
 	return p, nil
 }
 
-func (p *Provider) Validate(cluster *types.Cluster) field.ErrorList {
-	return validation.ValidateCluster(context.Background(), cluster)
+func (p *Provider) Validate(ctx context.Context, cluster *types.Cluster) field.ErrorList {
+	allErrs := field.ErrorList{}
+	allErrs = append(allErrs, p.DelegateProvider.Validate(ctx, cluster)...)
+	allErrs = append(allErrs, validation.ValidateCluster(ctx, cluster)...)
+
+	return allErrs
 }

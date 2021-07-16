@@ -19,6 +19,8 @@
 package machine
 
 import (
+	"context"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/tools/clientcmd"
 	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
@@ -26,6 +28,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/validation"
+	delegatemachine "tkestack.io/tke/pkg/platform/provider/delegate/machine"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
@@ -45,7 +48,7 @@ func init() {
 }
 
 type Provider struct {
-	*machineprovider.DelegateProvider
+	*delegatemachine.DelegateProvider
 
 	config         *config.Config
 	platformClient platformv1client.PlatformV1Interface
@@ -54,10 +57,10 @@ type Provider struct {
 func NewProvider() (*Provider, error) {
 	p := new(Provider)
 
-	p.DelegateProvider = &machineprovider.DelegateProvider{
+	p.DelegateProvider = &delegatemachine.DelegateProvider{
 		ProviderName: name,
 
-		CreateHandlers: []machineprovider.Handler{
+		CreateHandlers: []delegatemachine.Handler{
 			p.EnsureCopyFiles,
 			p.EnsurePreInstallHook,
 
@@ -89,7 +92,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureDisableOffloading, // will remove it when upgrade to k8s v1.18.5
 			p.EnsurePostInstallHook,
 		},
-		UpdateHandlers: []machineprovider.Handler{
+		UpdateHandlers: []delegatemachine.Handler{
 			p.EnsurePreUpgradeHook,
 			p.EnsureUpgrade,
 			p.EnsurePostUpgradeHook,
@@ -122,6 +125,10 @@ func NewProvider() (*Provider, error) {
 
 var _ machineprovider.Provider = &Provider{}
 
-func (p *Provider) Validate(machine *platform.Machine) field.ErrorList {
-	return validation.ValidateMachine(machine)
+func (p *Provider) Validate(ctx context.Context, machine *platform.Machine) field.ErrorList {
+	allErrs := field.ErrorList{}
+	allErrs = append(allErrs, p.DelegateProvider.Validate(ctx, machine)...)
+	allErrs = append(allErrs, validation.ValidateMachine(machine)...)
+
+	return allErrs
 }
