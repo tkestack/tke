@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Card, Form, Select, Text, DatePicker, TableColumn, Table, Button } from '@tea/component';
-import { TablePanel } from '@tencent/ff-component';
+import { Card, Form, Select, Text, DatePicker, Table, Button } from 'tea-component';
+import { TablePanel, TablePanelColumnProps } from '@tencent/ff-component';
 import { bindActionCreators, insertCSS } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { useModal } from '../../common/utils';
@@ -60,7 +60,7 @@ export const AuditPanel = () => {
   const [expandedKeys, setExpandedKeys] = useState([]);
   const [record, setRecord] = useState(undefined);
   const { isShowing, toggle } = useModal(false);
-  const [ settingDialogVisible, showSettingDialog ] = useState(false);
+  const [settingDialogVisible, showSettingDialog] = useState(false);
 
   useEffect(() => {
     actions.audit.getAuditFilterCondition.fetch();
@@ -77,7 +77,7 @@ export const AuditPanel = () => {
     });
   }, [cluster, namespace, resource, user, startTime, endTime]);
 
-  const columns: TableColumn<Audit>[] = [
+  const columns: TablePanelColumnProps<Audit>[] = [
     {
       key: 'stageTimestamp',
       header: t('时间'),
@@ -124,51 +124,63 @@ export const AuditPanel = () => {
 
   /** 导出数据 */
   const handleDownload = (resourceList: Audit[]) => {
-    const tableColumns = [{
-      key: 'stageTimestamp',
-      header: '时间',
-      render: (item) => dateFormatter(new Date(item.stageTimestamp), 'YYYY-MM-DD HH:mm:ss'),
-    }, {
-      key: 'userName',
-      header: '操作人',
-      render: (item) => item.userName,
-    }, {
-      key: 'verb',
-      header: '操作类型',
-      render: (item) => item.verb,
-    }, {
-      key: 'clusterName',
-      header: '集群',
-      render: (item) => item.clusterName,
-    }, {
-      key: 'namespace',
-      header: '命名空间',
-      render: (item) => item.namespace,
-    }, {
-      key: 'resource',
-      header: '资源类型',
-      render: (item) => item.resource,
-    }, {
-      key: 'name',
-      header: '操作对象',
-      render: (item) => item.name,
-    }, {
-      key: 'status',
-      header: '操作结果',
-      render: (item) => item.status,
-    }, {
-      key: 'requestURI',
-      header: '请求URI',
-      render: (item) => item.requestURI,
-    }, {
-      key: 'sourceIPs',
-      header: '源地址',
-      render: (item) => item.sourceIPs,
-    }, {
-      key: 'code',
-      header: 'HTTP Code',
-      render: (item) => item.code,
-    }];
+    const tableColumns = [
+      {
+        key: 'stageTimestamp',
+        header: '时间',
+        render: item => dateFormatter(new Date(item.stageTimestamp), 'YYYY-MM-DD HH:mm:ss')
+      },
+      {
+        key: 'userName',
+        header: '操作人',
+        render: item => item.userName
+      },
+      {
+        key: 'verb',
+        header: '操作类型',
+        render: item => item.verb
+      },
+      {
+        key: 'clusterName',
+        header: '集群',
+        render: item => item.clusterName
+      },
+      {
+        key: 'namespace',
+        header: '命名空间',
+        render: item => item.namespace
+      },
+      {
+        key: 'resource',
+        header: '资源类型',
+        render: item => item.resource
+      },
+      {
+        key: 'name',
+        header: '操作对象',
+        render: item => item.name
+      },
+      {
+        key: 'status',
+        header: '操作结果',
+        render: item => item.status
+      },
+      {
+        key: 'requestURI',
+        header: '请求URI',
+        render: item => item.requestURI
+      },
+      {
+        key: 'sourceIPs',
+        header: '源地址',
+        render: item => item.sourceIPs
+      },
+      {
+        key: 'code',
+        header: 'HTTP Code',
+        render: item => item.code
+      }
+    ];
     function getHeader() {
       // 生成csv需要的表头
       return tableColumns.map(aColumn => aColumn.header);
@@ -177,13 +189,13 @@ export const AuditPanel = () => {
       // 生成csv需要的内容
       return resourceList.reduce((accu, anAudit) => {
         let result;
-        let _row = tableColumns.map(acolumn => acolumn.render(anAudit));
+        const _row = tableColumns.map(acolumn => acolumn.render(anAudit));
         result = [...accu, _row];
         return result;
       }, []);
     }
     downloadCsv(getBody(), getHeader(), `tke_audit_${new Date().getTime()}.csv`);
-  }
+  };
 
   return (
     <>

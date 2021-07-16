@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Bubble, Button } from '@tea/component';
+import { Bubble, Button, TableColumn } from 'tea-component';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { router as addonRouter } from '../../addon/router';
@@ -18,7 +18,7 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
 
   getColumns() {
     const { actions, route } = this.props;
-    const columns: TablePanelColumnProps<AlarmPolicy>[] = [
+    const columns: TableColumn<AlarmPolicy>[] = [
       {
         key: 'alarmPolicyName',
         header: t('告警策略名称'),
@@ -49,7 +49,7 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
         header: t('触发条件'),
         width: '15%',
         render: x => {
-          let { content, hoverContent } = this._getAlarmMetricsContent(x.alarmMetrics, x);
+          const { content, hoverContent } = this._getAlarmMetricsContent(x.alarmMetrics, x);
           return (
             <Bubble placement="right" content={hoverContent || null}>
               {content}
@@ -73,7 +73,7 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
     const { actions, alarmPolicy, cluster } = this.props;
 
     const columns = this.getColumns();
-    let emptyTips: JSX.Element =
+    const emptyTips: JSX.Element =
       cluster.selection && cluster.selection.spec.hasPrometheus ? (
         <div className="text-center">
           <Trans>
@@ -137,8 +137,8 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
   }
 
   private renderPromTip() {
-    let { cluster } = this.props;
-    let showTip = cluster.selection && !cluster.selection.spec.hasPrometheus;
+    const { cluster } = this.props;
+    const showTip = cluster.selection && !cluster.selection.spec.hasPrometheus;
     return (
       showTip && (
         <TipInfo className="warning">
@@ -166,18 +166,18 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
   }
 
   private handleCreate() {
-    let { route, regionSelection, cluster } = this.props;
+    const { route, regionSelection, cluster } = this.props;
     //actions.mode.changeMode("expand");
-    let clusterId = route.queries['clusterId'] || (cluster.selection ? cluster.selection.metadata.name : '');
+    const clusterId = route.queries['clusterId'] || (cluster.selection ? cluster.selection.metadata.name : '');
     router.navigate({ sub: 'create' }, Object.assign({}, route.queries, { clusterId }));
   }
   private _getAlarmMetricsContent(alarmMetrics: MetricsObject[], alarmPolicy: AlarmPolicy) {
-    let len = alarmMetrics.length;
-    let hoverContent: JSX.Element[] = [];
-    let content: JSX.Element[] = [];
+    const len = alarmMetrics.length;
+    const hoverContent: JSX.Element[] = [];
+    const content: JSX.Element[] = [];
     for (let i = 0; i < len; ++i) {
-      let evaluator = alarmMetrics[i].type === 'boolean' ? '=' : alarmMetrics[i].evaluatorType === 'gt' ? '>' : '<';
-      let temp = (
+      const evaluator = alarmMetrics[i].type === 'boolean' ? '=' : alarmMetrics[i].evaluatorType === 'gt' ? '>' : '<';
+      const temp = (
         <p key={i}>
           <span className="text-overflow">
             {`${MetricNameMap[alarmMetrics[i].metricName] || alarmMetrics[i].metricName}${evaluator}${
@@ -202,7 +202,7 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
   }
 
   private _rendAlarmNotifyWay(alarmPolicy: AlarmPolicy) {
-    let { notifyWays, receiverGroups } = alarmPolicy;
+    const { notifyWays, receiverGroups } = alarmPolicy;
 
     return (
       <div>
@@ -224,27 +224,27 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
     );
   }
   private _handleDeleteAlarmPolicy(alarmPolicy: AlarmPolicy) {
-    let { actions } = this.props;
+    const { actions } = this.props;
     actions.alarmPolicy.selects([alarmPolicy]);
     actions.workflow.deleteAlarmPolicy.start([alarmPolicy]);
   }
 
   private _handleCopyAlarmPolicy(alarmPolicy: AlarmPolicy) {
-    let { actions, route } = this.props;
+    const { actions, route } = this.props;
     router.navigate({ sub: 'copy' }, Object.assign({}, route.queries, { alarmPolicyId: alarmPolicy.id }));
     actions.alarmPolicy.selects([alarmPolicy]);
   }
   private _handleCreate() {
-    let { route, regionSelection, cluster } = this.props;
+    const { route, regionSelection, cluster } = this.props;
     //actions.mode.changeMode("expand");
-    let rid = route.queries['rid'] || regionSelection.value + '',
+    const rid = route.queries['rid'] || regionSelection.value + '',
       clusterId = route.queries['clusterId'] || (cluster.selection ? cluster.selection.metadata.name : '');
     router.navigate({ sub: 'create' }, { rid, clusterId });
   }
   private getOperations(alarmPolicy: AlarmPolicy) {
     const { cluster, route } = this.props;
 
-    let clusterId = cluster.selection ? cluster.selection.metadata.name : route.queries['clusterId'] || '';
+    const clusterId = cluster.selection ? cluster.selection.metadata.name : route.queries['clusterId'] || '';
 
     const renderDeleteButton = () => {
       return (

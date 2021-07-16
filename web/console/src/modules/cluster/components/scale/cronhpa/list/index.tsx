@@ -12,8 +12,9 @@ import {
   TagSearchBox,
   Modal,
   Bubble,
-  Icon
-} from '@tencent/tea-component';
+  Icon,
+  AttributeValue
+} from 'tea-component';
 import { RecordSet } from '@tencent/ff-redux/src';
 import { router } from '@src/modules/cluster/router';
 import { downloadCsv } from '@helper/downloadCsv';
@@ -65,7 +66,7 @@ const List = React.memo((props: ListProps) => {
   /**
    * TagSearchBox和list数据的管理
    */
-  const attributes = [
+  const attributes: AttributeValue[] = [
     {
       type: 'input',
       key: 'resourceName',
@@ -93,7 +94,7 @@ const List = React.memo((props: ListProps) => {
   /**
    * 下载
    */
-  const downloadHandle = useCallback((resourceList) => {
+  const downloadHandle = useCallback(resourceList => {
     const head = ['名称', '关联工作负载', '触发策略/实例个数'];
     function getTriggerStrategys(crons) {
       return crons.map((item, index) => {
@@ -104,7 +105,11 @@ const List = React.memo((props: ListProps) => {
     const rows = resourceList.map(cronHpa => {
       const triggerStrategyArr = getTriggerStrategys(cronHpa.spec.crons);
       const triggerStrategyStr = isEmpty(triggerStrategyArr) ? '-' : triggerStrategyArr.join('');
-      return [cronHpa.metadata.name, `${cronHpa.spec.scaleTargetRef.kind}:${cronHpa.spec.scaleTargetRef.name}`, triggerStrategyStr];
+      return [
+        cronHpa.metadata.name,
+        `${cronHpa.spec.scaleTargetRef.kind}:${cronHpa.spec.scaleTargetRef.name}`,
+        triggerStrategyStr
+      ];
     });
     downloadCsv(rows, head, 'tke_cronhpa_' + new Date().getTime() + '.csv');
   }, []);
@@ -114,9 +119,12 @@ const List = React.memo((props: ListProps) => {
       <Body>
         <Content>
           <Content.Body>
-            {
-              isCronHpaInstalled === false && <TipInfo>该集群未安装CroHPA组件，请前往<a href={`/tkestack/addon?rid=1&clusterId=${clusterId}`}>扩展组件</a>进行安装</TipInfo>
-            }
+            {isCronHpaInstalled === false && (
+              <TipInfo>
+                该集群未安装CroHPA组件，请前往<a href={`/tkestack/addon?rid=1&clusterId=${clusterId}`}>扩展组件</a>
+                进行安装
+              </TipInfo>
+            )}
 
             <Table.ActionPanel>
               <Justify
@@ -132,33 +140,33 @@ const List = React.memo((props: ListProps) => {
                     <Trans>新建</Trans>
                   </Button>
                 }
-                right={(isCronHpaInstalled === true || !projectName) &&
-                    (
-                      <>
-                        <NamespaceSelect namespaces={namespaces} />
-                        <div style={{ width: 350, display: 'inline-block' }}>
-                          <TagSearchBox
-                            className="myTagSearchBox"
-                            attributes={attributes}
-                            value={tags}
-                            onChange={tags => {
-                              setTags(tags);
-                            }}
-                          />
-                        </div>
-                        <Button
-                          onClick={() => {
-                            triggerRefresh();
+                right={
+                  (isCronHpaInstalled === true || !projectName) && (
+                    <>
+                      <NamespaceSelect namespaces={namespaces} />
+                      <div style={{ width: 350, display: 'inline-block' }}>
+                        <TagSearchBox
+                          className="myTagSearchBox"
+                          attributes={attributes}
+                          value={tags}
+                          onChange={tags => {
+                            setTags(tags);
                           }}
-                          icon="refresh"
                         />
-                        <Button
-                          onClick={() => {
-                            downloadHandle(cronHpaList);
-                          }}
-                          icon="download"
-                        />
-                      </>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          triggerRefresh();
+                        }}
+                        icon="refresh"
+                      />
+                      <Button
+                        onClick={() => {
+                          downloadHandle(cronHpaList);
+                        }}
+                        icon="download"
+                      />
+                    </>
                   )
                 }
               />
@@ -173,33 +181,42 @@ const List = React.memo((props: ListProps) => {
                     header: t('名称'),
                     render: hpa => (
                       <>
-                        <LinkButton onClick={() => {
-                          router.navigate(
-                    { ...urlParams, mode: 'detail' },
-                    { ...route.queries, namespaceValue, HPAName: hpa.metadata.name });
-                        }}>
+                        <LinkButton
+                          onClick={() => {
+                            router.navigate(
+                              { ...urlParams, mode: 'detail' },
+                              { ...route.queries, namespaceValue, HPAName: hpa.metadata.name }
+                            );
+                          }}
+                        >
                           <Text id={'hpaName' + hpa.id}>{hpa.metadata.name}</Text>
                         </LinkButton>
                         <Clip target={'#hpaName' + hpa.id} />
                       </>
-                    ),
+                    )
                   },
                   {
                     key: 'workload',
                     header: t('关联工作负载'),
                     render: hpa => (
                       <>
-                        <Text id={'hpaWorkload' + hpa.id}>{hpa.spec.scaleTargetRef.kind}:{hpa.spec.scaleTargetRef.name}</Text>
+                        <Text id={'hpaWorkload' + hpa.id}>
+                          {hpa.spec.scaleTargetRef.kind}:{hpa.spec.scaleTargetRef.name}
+                        </Text>
                         <Clip target={'#hpaWorkload' + hpa.id} />
                       </>
-                    ),
+                    )
                   },
                   {
                     key: 'triggerStrategy',
                     header: (
                       <>
                         <Trans>触发策略/实例数</Trans>
-                        <Bubble content={t('根据设置的Crontab（Crontab语法格式，例如 "0 23 * * 5"表示每周五23:00）周期性地设置实例数量')}>
+                        <Bubble
+                          content={t(
+                            '根据设置的Crontab（Crontab语法格式，例如 "0 23 * * 5"表示每周五23:00）周期性地设置实例数量'
+                          )}
+                        >
                           <Icon
                             type="info"
                             style={{ marginLeft: '5px', cursor: 'pointer', verticalAlign: 'text-bottom' }}
@@ -212,19 +229,20 @@ const List = React.memo((props: ListProps) => {
                         const { schedule, targetReplicas } = item;
                         return <Text key={index} parent="div">{`${schedule} ${targetReplicas}个`}</Text>;
                       });
-                    },
+                    }
                   },
                   {
                     key: 'action',
                     header: t('操作'),
-                    render: (hpa) => (
+                    render: hpa => (
                       <>
                         <LinkButton
                           tipDirection="left"
                           onClick={() => {
-                    router.navigate(
-                        { ...urlParams, mode: 'modify-cronhpa' },
-                        { ...route.queries, namespaceValue, HPAName: hpa.metadata.name });
+                            router.navigate(
+                              { ...urlParams, mode: 'modify-cronhpa' },
+                              { ...route.queries, namespaceValue, HPAName: hpa.metadata.name }
+                            );
                           }}
                         >
                           <Trans>修改配置</Trans>
@@ -233,8 +251,9 @@ const List = React.memo((props: ListProps) => {
                           tipDirection="left"
                           onClick={() => {
                             router.navigate(
-                                { ...urlParams, mode: 'modify-yaml' },
-                                { ...route.queries, namespaceValue, HPAName: hpa.metadata.name });
+                              { ...urlParams, mode: 'modify-yaml' },
+                              { ...route.queries, namespaceValue, HPAName: hpa.metadata.name }
+                            );
                           }}
                         >
                           <Trans>编辑YAML</Trans>
@@ -256,24 +275,30 @@ const List = React.memo((props: ListProps) => {
                   autotip({
                     isLoading: loading,
                     emptyText: emptyText
-                  }),
+                  })
                 ]}
               />
-              <Pagination
-                recordCount={cronHpaList.length}
-                pageSizeVisible={false}
-              />
+              <Pagination recordCount={cronHpaList.length} pageSizeVisible={false} />
             </Card>
             <Modal visible={isShowing} caption="删除资源" onClose={toggle}>
-              <Modal.Body><Trans>您确定要删除CronHPA: {{ removeCronHpaName }}吗？</Trans></Modal.Body>
+              <Modal.Body>
+                <Trans>您确定要删除CronHPA: {{ removeCronHpaName }}吗？</Trans>
+              </Modal.Body>
               <Modal.Footer>
-                <Button type="primary" onClick={async () => {
-                  const isRemove = await deleteCronHpa({ namespace: namespaceValue, clusterId, name: removeCronHpaName });
-                  if (isRemove) {
-                    toggle();
-                    triggerRefresh();
-                  }
-                }}>
+                <Button
+                  type="primary"
+                  onClick={async () => {
+                    const isRemove = await deleteCronHpa({
+                      namespace: namespaceValue,
+                      clusterId,
+                      name: removeCronHpaName
+                    });
+                    if (isRemove) {
+                      toggle();
+                      triggerRefresh();
+                    }
+                  }}
+                >
                   确定
                 </Button>
                 <Button type="weak" onClick={toggle}>

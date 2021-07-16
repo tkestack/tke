@@ -1,4 +1,5 @@
 import { Validation } from 'src/modules/common';
+import { ControllerFieldState, UseFormStateReturn } from 'react-hook-form';
 
 export interface Rule {
   /**标签名 */
@@ -28,7 +29,7 @@ function validateRequired(value, rule: Rule) {
     return { status: 1, message: '' };
   }
 
-  let result = !!value;
+  const result = !!value;
   return {
     status: result ? 1 : 2,
     message: result ? '' : `${rule.label}不能为空`
@@ -36,7 +37,7 @@ function validateRequired(value, rule: Rule) {
 }
 
 function validateMinLength(value, rule: Rule) {
-  let result = value.length >= rule.minLength;
+  const result = value.length >= rule.minLength;
   return {
     status: result ? 1 : 2,
     message: result ? '' : `${rule.label}长度不能小于${rule.minLength}位`
@@ -44,7 +45,7 @@ function validateMinLength(value, rule: Rule) {
 }
 
 function validateMaxLength(value, rule: Rule) {
-  let result = value.length <= rule.maxLength;
+  const result = value.length <= rule.maxLength;
   return {
     status: result ? 1 : 2,
     message: result ? '' : `${rule.label}长度不能大于${rule.maxLength}位`
@@ -52,7 +53,7 @@ function validateMaxLength(value, rule: Rule) {
 }
 
 function validateMinValue(value, rule: Rule) {
-  let result = value >= rule.minValue;
+  const result = value >= rule.minValue;
   return {
     status: result ? 1 : 2,
     message: result ? '' : `${rule.label}值不能小于${rule.minValue}`
@@ -60,7 +61,7 @@ function validateMinValue(value, rule: Rule) {
 }
 
 function validateMaxValue(value, rule: Rule) {
-  let result = value <= rule.maxValue;
+  const result = value <= rule.maxValue;
   return {
     status: result ? 1 : 2,
     message: result ? '' : `${rule.label}值不能大于${rule.maxValue}`
@@ -68,7 +69,7 @@ function validateMaxValue(value, rule: Rule) {
 }
 
 function validateReg(value, rule: Rule) {
-  let result = rule.reg.test(value);
+  const result = rule.reg.test(value);
   return {
     status: result ? 1 : 2,
     message: result ? '' : `${rule.label}格式不正确`
@@ -129,4 +130,28 @@ export function isValidateSuccess(validates: Validation[]) {
     result = result && v.status !== 2;
   });
   return result;
+}
+
+export function getReactHookFormStatusWithMessage({
+  fieldState,
+  formState
+}: {
+  fieldState: ControllerFieldState;
+  formState: UseFormStateReturn<any>;
+}): {
+  status?: 'error' | 'success';
+  message?: string;
+} {
+  console.log('getReactHookFormStatus:', fieldState, formState);
+  if (!fieldState.isTouched && !fieldState.isDirty && !formState.isSubmitted) {
+    return {};
+  }
+  return fieldState.invalid
+    ? {
+        status: 'error',
+        message: fieldState?.error?.message ?? ''
+      }
+    : {
+        status: 'success'
+      };
 }

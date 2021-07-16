@@ -1,0 +1,5 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var _bridge_1 = require("../_bridge");
+exports.getAntiCSRFToken = function () { return String(_bridge_1._util.getACSRFToken()); };
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiY3NyZi5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uLy4uLy4uL3NyYy9icmlkZ2UvdXNlci9jc3JmLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7O0FBQUEsc0NBQW1DO0FBRXRCLFFBQUEsZ0JBQWdCLEdBQUcsY0FBTSxPQUFBLE1BQU0sQ0FBQyxlQUFLLENBQUMsYUFBYSxFQUFFLENBQUMsRUFBN0IsQ0FBNkIsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCB7IF91dGlsIH0gZnJvbSBcIi4uL19icmlkZ2VcIjtcblxuZXhwb3J0IGNvbnN0IGdldEFudGlDU1JGVG9rZW4gPSAoKSA9PiBTdHJpbmcoX3V0aWwuZ2V0QUNTUkZUb2tlbigpKTtcbiJdfQ==

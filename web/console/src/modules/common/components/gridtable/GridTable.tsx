@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Card, Pagination, Table, TableProps } from '@tea/component';
 import { FetchState, FFListAction, FFListModel } from '@tencent/ff-redux';
-import { autotip } from '@tencent/tea-component/lib/table/addons/autotip';
+import { autotip } from 'tea-component/es/table/addons/autotip';
 import { StatusTip } from '@tencent/tea-component/lib/tips';
 
 interface GridTableProps extends TableProps {
@@ -66,14 +66,14 @@ export class GridTable extends React.Component<GridTableProps, GridTableState> {
      * 4. query.search => 如果是有搜索关键词，则需要展示loadint
      * 5. this.state.isNeedLoadint => 结合4，清除搜索条件之后，也需要展示loading
      */
-    let isShowLoading: boolean =
+    const isShowLoading: boolean =
       (list.fetched !== true || list.fetchState === FetchState.Fetching) &&
       (list.data.recordCount === 0 || !!query.search || this.state.isNeedLoading);
 
     // 数据的来源，如果自己传了records，则采取传入的records，主要针对排序
-    let finalRecords = records ? records : list.data.records;
+    const finalRecords = records ? records : list.data.records;
 
-    let content: JSX.Element = (
+    const content: JSX.Element = (
       <React.Fragment>
         <Table
           columns={columns}

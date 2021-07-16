@@ -1,0 +1,17 @@
+.Tchart_filter-row {
+  display: flex;
+}
+
+.tab-status-panel {
+  display: flex;
+  width: 100%;
+  transition: margin-left .3s cubic-bezier(.645, .045, .355, 1);
+}
+
+.no-tab-status-panel {
+  width: 100%;
+  height: calc(100vh - 150px);
+  overflow-y: scroll;
+  padding-right: 20px; /* Increase/decrease this value for cross-browser compatibility */
+  box-sizing: content-box; /* So the width will be 100% + 17px */
+}

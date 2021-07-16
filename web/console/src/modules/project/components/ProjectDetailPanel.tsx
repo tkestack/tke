@@ -4,7 +4,7 @@ import { K8SUNIT, valueLabels1000, valueLabels1024 } from '@helper/k8sUnitUtil';
 import { Bubble, Button, Modal, StatusTip, Table, TableColumn, Text } from '@tea/component';
 import { FormPanel } from '@tencent/ff-component';
 import { t } from '@tencent/tea-app/lib/i18n';
-import { autotip } from '@tencent/tea-component/lib/table/addons';
+import { autotip } from 'tea-component/es/table/addons';
 
 import { dateFormatter } from '../../../../helpers';
 import { getWorkflowError } from '../../common';
@@ -18,14 +18,14 @@ import { ProjectDetailResourcePanel } from './ProjectDetailResourcePanel';
 
 export class ProjectDetailPanel extends React.Component<RootProps, {}> {
   componentDidMount() {
-    let { actions, cluster } = this.props;
+    const { actions, cluster } = this.props;
     if (cluster.list.data.recordCount === 0) {
       actions.cluster.applyFilter({});
     }
   }
 
   render() {
-    let { actions, projectDetail } = this.props;
+    const { actions, projectDetail } = this.props;
 
     return projectDetail ? (
       <FormPanel title={t('基本信息')}>

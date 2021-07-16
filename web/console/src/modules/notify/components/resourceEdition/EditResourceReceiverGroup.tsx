@@ -6,7 +6,7 @@ import { onChange } from '../../schema/schemaUtil';
 import { Radio, SearchBox, Table, Transfer, Text } from '@tencent/tea-component';
 import { EditResource } from './EditResource';
 import { receiverGroupSchema } from '../../schema/receiverGroupSchema';
-import { scrollable, selectable, removeable } from '@tencent/tea-component/lib/table/addons';
+import { scrollable, selectable, removeable } from 'tea-component/es/table/addons';
 import { LinkButton } from '../../../common';
 import { router } from '../../router';
 export class EditResourceReceiverGroup extends EditResource {
@@ -112,9 +112,8 @@ export class EditResourceReceiverGroup extends EditResource {
                   addons={[
                     removeable({
                       onRemove: key => {
-                        resource.properties.spec.properties.receivers.value = resource.properties.spec.properties.receivers.value.filter(
-                          i => i !== key
-                        );
+                        resource.properties.spec.properties.receivers.value =
+                          resource.properties.spec.properties.receivers.value.filter(i => i !== key);
                         this.setState({});
                       }
                     })

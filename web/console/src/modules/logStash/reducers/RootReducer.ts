@@ -1,13 +1,10 @@
-import { Namespace } from 'react-i18next';
 import { combineReducers } from 'redux';
 
-import {
-    createFFListReducer, generateWorkflowReducer, RecordSet, reduceToPayload
-} from '@tencent/ff-redux';
+import { createFFListReducer, generateWorkflowReducer, RecordSet, reduceToPayload } from '@tencent/ff-redux';
 import { generateFetcherReducer } from '@tencent/qcloud-redux-fetcher';
 import { generateQueryReducer } from '@tencent/qcloud-redux-query';
 
-import { Cluster, NamespaceFilter, Region } from '../../common/models';
+import { Cluster, Namespace, NamespaceFilter, Region } from '../../common/models';
 import * as ActionType from '../constants/ActionType';
 import { FFReduxActionName } from '../constants/Config';
 import { initLogDaemonsetStatus, initRegionInfo } from '../constants/initState';

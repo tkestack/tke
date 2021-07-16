@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Layout, PageHeader } from 'antd';
+import { Card, Layout } from 'tea-component';
 
 const { Content, Footer } = Layout;
 
@@ -13,12 +13,18 @@ export interface AntdLayoutProps {
 export function AntdLayout({ title, footer, children, goBack = () => history.back() }: AntdLayoutProps) {
   return (
     <Layout style={{ minHeight: '100%' }}>
-      <PageHeader onBack={goBack} title={title} style={{ backgroundColor: '#fff' }} />
-      <Content style={{ padding: '20px' }}>
-        <Card style={{ maxWidth: '1360px', margin: '0 auto' }}>{children}</Card>
+      <Content>
+        <Content.Header showBackButton onBackButtonClick={goBack} title={title} style={{ backgroundColor: '#fff' }} />
+        <Content.Body style={{ padding: '20px' }}>
+          <Card style={{ maxWidth: '1360px', margin: '0 auto' }}>
+            <Card.Body>{children}</Card.Body>
+          </Card>
+        </Content.Body>
       </Content>
       <Footer>
-        <Card style={{ maxWidth: '1360px', margin: '0 auto' }}>{footer}</Card>
+        <Card style={{ maxWidth: '1360px', margin: '0 auto' }}>
+          <Card.Body>{footer}</Card.Body>
+        </Card>
       </Footer>
     </Layout>
   );

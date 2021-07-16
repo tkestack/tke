@@ -13,6 +13,7 @@ module.exports = ({ version }) =>
       historyApiFallback: true,
       compress: true,
       open: true,
+      port: 8181,
       proxy: {
         '/api': {
           target: Host,

@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { bindActionCreators, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Bubble, Button, Icon, Modal, Table, TableColumn, Text } from '@tencent/tea-component';
-import { scrollable } from '@tencent/tea-component/lib/table/addons';
+import { scrollable } from 'tea-component/es/table/addons';
 
 import { dateFormatter } from '../../../../../helpers';
 import { ClusterCondition } from '../../../common';
@@ -30,13 +30,13 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class ClusterStatusDialog extends React.Component<RootProps, {}> {
   render() {
-    let { cluster, dialogState } = this.props;
+    const { cluster, dialogState } = this.props;
 
     if (!cluster.selection) return <noscript />;
 
-    let isShowDialog = dialogState[DialogNameEnum.clusterStatusDialog];
+    const isShowDialog = dialogState[DialogNameEnum.clusterStatusDialog];
 
-    let columns: TableColumn<ClusterCondition>[] = [
+    const columns: TableColumn<ClusterCondition>[] = [
       {
         key: 'type',
         header: t('类型'),
@@ -60,7 +60,7 @@ export class ClusterStatusDialog extends React.Component<RootProps, {}> {
         key: 'reason',
         header: t('原因'),
         render: x => {
-          let isFailed = x.status === 'False';
+          const isFailed = x.status === 'False';
 
           return (
             <React.Fragment>
@@ -107,7 +107,7 @@ export class ClusterStatusDialog extends React.Component<RootProps, {}> {
 
   /** 关闭按钮 */
   private _handleClose() {
-    let { actions } = this.props;
+    const { actions } = this.props;
     actions.dialog.updateDialogState(DialogNameEnum.clusterStatusDialog);
   }
 }

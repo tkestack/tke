@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+// 导出国际化模块，以及其类型
+var i18n_1 = require("./core/i18n");
+exports.i18n = i18n_1.i18n;
+// 导出 history，支持 React Router
+var history_context_1 = require("./core/history/history-context");
+exports.useHistory = history_context_1.useHistory;
+// 导出 useDocumentTitle Hooks
+var title_1 = require("./bridge/title");
+exports.useDocumentTitle = title_1.useDocumentTitle;
+// 导出 app 命名空间
+var app = require("./core/app");
+exports.app = app;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi9zcmMvaW5kZXgudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7QUFNQSxnQkFBZ0I7QUFDaEIsb0NBQXFFO0FBQTVELHNCQUFBLElBQUksQ0FBQTtBQUViLDZCQUE2QjtBQUM3QixrRUFBNEQ7QUFBbkQsdUNBQUEsVUFBVSxDQUFBO0FBRW5CLDRCQUE0QjtBQUM1Qix3Q0FBa0Q7QUFBekMsbUNBQUEsZ0JBQWdCLENBQUE7QUFFekIsY0FBYztBQUNkLGdDQUFrQztBQUN6QixrQkFBRyIsInNvdXJjZXNDb250ZW50IjpbIi8vIOWvvOWHuuWFpeWPo+aooeWdl+exu+Wei1xuZXhwb3J0IHsgQXBwRW50cnkgfSBmcm9tIFwiLi9jb3JlL2VudHJ5XCI7XG5cbi8vIOWvvOWHuui3r+eUseazqOWGjOaooeWdl+exu+Wei1xuZXhwb3J0IHsgQXBwUm91dGVNYXAgfSBmcm9tIFwiLi9jb3JlL3JvdXRlc1wiO1xuXG4vLyDlr7zlh7rlm73pmYXljJbmqKHlnZfvvIzku6Xlj4rlhbbnsbvlnotcbmV4cG9ydCB7IGkxOG4sIEkxOE5Jbml0T3B0aW9ucywgSTE4TlRyYW5zbGF0aW9uIH0gZnJvbSBcIi4vY29yZS9pMThuXCI7XG5cbi8vIOWvvOWHuiBoaXN0b3J577yM5pSv5oyBIFJlYWN0IFJvdXRlclxuZXhwb3J0IHsgdXNlSGlzdG9yeSB9IGZyb20gXCIuL2NvcmUvaGlzdG9yeS9oaXN0b3J5LWNvbnRleHRcIjtcblxuLy8g5a+85Ye6IHVzZURvY3VtZW50VGl0bGUgSG9va3NcbmV4cG9ydCB7IHVzZURvY3VtZW50VGl0bGUgfSBmcm9tIFwiLi9icmlkZ2UvdGl0bGVcIjtcblxuLy8g5a+85Ye6IGFwcCDlkb3lkI3nqbrpl7RcbmltcG9ydCAqIGFzIGFwcCBmcm9tIFwiLi9jb3JlL2FwcFwiO1xuZXhwb3J0IHsgYXBwIH07XG4iXX0=

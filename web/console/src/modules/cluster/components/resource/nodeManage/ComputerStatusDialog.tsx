@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { bindActionCreators, FFListModel, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Bubble, Button, Icon, Modal, Table, TableColumn, Text } from '@tencent/tea-component';
-import { scrollable } from '@tencent/tea-component/lib/table/addons';
+import { scrollable } from 'tea-component/es/table/addons';
 
 import { dateFormatter } from '../../../../../../helpers';
 import { Computer, ComputerFilter, DialogNameEnum, DialogState } from '../../../../../modules/cluster/models';
@@ -14,42 +14,42 @@ import { allActions } from '../../../actions';
 const conditionStatusMap = {
   True: '成功',
   Unknown: '待处理',
-  False: '失败',
+  False: '失败'
 };
 
 const conditionStatusType = {
   True: 'success',
   False: 'danger',
-  Unknown: 'text',
+  Unknown: 'text'
 };
 
-let nodeConditionStaus = ['OutOfDisk', 'MemoryPressure', 'DiskPressure', 'PIDPressure'];
+const nodeConditionStaus = ['OutOfDisk', 'MemoryPressure', 'DiskPressure', 'PIDPressure'];
 interface ComputerStatusDialogProps {
   machine: FFListModel<Computer, ComputerFilter>;
   dialogState: DialogState;
   actions?: typeof allActions;
 }
 
-const mapDispatchToProps = (dispatch) =>
+const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect((state) => state, mapDispatchToProps)
+@connect(state => state, mapDispatchToProps)
 export class ComputerStatusDialog extends React.Component<ComputerStatusDialogProps, {}> {
   render() {
-    let { machine, dialogState } = this.props;
+    const { machine, dialogState } = this.props;
 
     if (!machine.selection) return <noscript />;
-    let isShowDialog = dialogState[DialogNameEnum.computerStatusDialog];
-    let columns: TableColumn<ClusterCondition>[] = [
+    const isShowDialog = dialogState[DialogNameEnum.computerStatusDialog];
+    const columns: TableColumn<ClusterCondition>[] = [
       {
         key: 'type',
         header: t('类型'),
-        render: (x) => <Text>{x.type}</Text>,
+        render: x => <Text>{x.type}</Text>
       },
       {
         key: 'status',
         header: t('状态'),
-        render: (x) => {
+        render: x => {
           let status;
           if (nodeConditionStaus.indexOf(x.type) !== -1) {
             status = x.status === 'False' ? 'success' : 'danger';
@@ -57,19 +57,19 @@ export class ComputerStatusDialog extends React.Component<ComputerStatusDialogPr
             status = conditionStatusType[x.status];
           }
           return <Text theme={status}>{conditionStatusMap[x.status] ? conditionStatusMap[x.status] : '-'}</Text>;
-        },
+        }
       },
       {
         key: 'probeTime',
         header: t('最后探测时间'),
-        render: (x) => (
+        render: x => (
           <Text>{dateFormatter(new Date(x.lastProbeTime || x.lastHeartbeatTime), 'YYYY-MM-DD HH:mm:ss') || '-'}</Text>
-        ),
+        )
       },
       {
         key: 'reason',
         header: t('原因'),
-        render: (x) => {
+        render: x => {
           let isFailed;
           if (nodeConditionStaus.indexOf(x.type) !== -1) {
             isFailed = x.status !== 'False';
@@ -86,8 +86,8 @@ export class ComputerStatusDialog extends React.Component<ComputerStatusDialogPr
               )}
             </React.Fragment>
           );
-        },
-      },
+        }
+      }
     ];
 
     return (
@@ -105,8 +105,8 @@ export class ComputerStatusDialog extends React.Component<ComputerStatusDialogPr
             columns={columns}
             addons={[
               scrollable({
-                maxHeight: 600,
-              }),
+                maxHeight: 600
+              })
             ]}
           />
         </Modal.Body>
@@ -121,7 +121,7 @@ export class ComputerStatusDialog extends React.Component<ComputerStatusDialogPr
 
   /** 关闭按钮 */
   private _handleClose() {
-    let { actions } = this.props;
+    const { actions } = this.props;
     actions.dialog.updateDialogState(DialogNameEnum.computerStatusDialog);
   }
 }

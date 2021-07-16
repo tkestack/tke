@@ -5,7 +5,7 @@ import { FormPanel } from '@tencent/ff-component';
 import { bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 import { Alert, Button, Card, Col, Icon, Radio, Row, Table, TableColumn, Text } from '@tencent/tea-component';
-import { radioable, scrollable, stylize } from '@tencent/tea-component/lib/table/addons';
+import { radioable, scrollable, stylize } from 'tea-component/es/table/addons';
 
 import { resourceConfig } from '../../../../config';
 import {
@@ -40,8 +40,8 @@ const ReducePersistentEventJsonData = (options: { resourceInfo: ResourceInfo; cl
   let esInfo: EsInfo;
 
   // 处理es的相关数据
-  let [scheme, addressInfo = ''] = esAddress.split('://');
-  let [ipAddress, port] = addressInfo.split(':');
+  const [scheme, addressInfo = ''] = esAddress.split('://');
+  const [ipAddress, port] = addressInfo.split(':');
   esInfo = {
     ip: ipAddress,
     port: +port,
@@ -51,7 +51,7 @@ const ReducePersistentEventJsonData = (options: { resourceInfo: ResourceInfo; cl
     password: Base64.encode(esPassword)
   };
 
-  let jsonData: AddonEditPeJsonYaml = {
+  const jsonData: AddonEditPeJsonYaml = {
     kind: resourceInfo.headTitle,
     apiVersion: (resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
     metadata: {
@@ -72,8 +72,8 @@ const ReducePersistentEventJsonData = (options: { resourceInfo: ResourceInfo; cl
  * @param options
  */
 const ReduceUniversalJsonData = (options: { resourceInfo: ResourceInfo; clusterId: string }) => {
-  let { resourceInfo, clusterId } = options;
-  let jsonData: AddonEditUniversalJsonYaml = {
+  const { resourceInfo, clusterId } = options;
+  const jsonData: AddonEditUniversalJsonYaml = {
     kind: resourceInfo.headTitle,
     apiVersion: (resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
     metadata: {
@@ -139,13 +139,13 @@ export class EditAddonPanel extends React.Component<RootProps, EdtiAddonPanelSta
   }
 
   componentDidMount() {
-    let { actions, region } = this.props;
+    const { actions, region } = this.props;
     // 进行地域的拉取
     region.list.fetched !== true && actions.region.applyFilter({});
   }
 
   componentWillUnmount() {
-    let { actions } = this.props;
+    const { actions } = this.props;
     // 清除创建的相关内容
     actions.editAddon.clearCreateAddon();
   }
@@ -164,17 +164,17 @@ export class EditAddonPanel extends React.Component<RootProps, EdtiAddonPanelSta
     let { route, cluster, addon, applyResourceFlow, modifyResourceFlow, editAddon } = this.props,
       urlParams = router.resolve(route);
 
-    let { addonName } = editAddon;
+    const { addonName } = editAddon;
 
-    let { mode } = urlParams;
+    const { mode } = urlParams;
 
-    let { clusterId, rid } = route.queries;
+    const { clusterId, rid } = route.queries;
 
-    let isShowLoadingForAddonInfo =
+    const isShowLoadingForAddonInfo =
       addon.list.fetched !== true || addon.list.fetchState === FetchState.Fetching ? true : false;
 
     // 判断按钮是否能进行操作
-    let failed =
+    const failed =
       (applyResourceFlow.operationState === OperationState.Done && !isSuccessWorkflow(applyResourceFlow)) ||
       (modifyResourceFlow.operationState === OperationState.Done && !isSuccessWorkflow(modifyResourceFlow));
 
@@ -237,17 +237,19 @@ export class EditAddonPanel extends React.Component<RootProps, EdtiAddonPanelSta
       { addonName } = editAddon;
 
     const isAlreadyOpened = (record: Addon) => {
-      let finder = openAddon.list.data.records.find(item => item.spec.type.toLowerCase() === record.type.toLowerCase());
+      const finder = openAddon.list.data.records.find(
+        item => item.spec.type.toLowerCase() === record.type.toLowerCase()
+      );
       return finder ? true : false;
     };
 
-    let columns: TableColumn<Addon>[] = [
+    const columns: TableColumn<Addon>[] = [
       {
         key: 'name',
         header: t('组件'),
         render: x => {
           let content: React.ReactNode;
-          let type = x.type;
+          const type = x.type;
 
           if (isAlreadyOpened(x)) {
             content = (
@@ -302,7 +304,7 @@ export class EditAddonPanel extends React.Component<RootProps, EdtiAddonPanelSta
                 value: this.state.selected ? this.state.selected.id + '' : '',
                 rowSelect: true,
                 onChange: value => {
-                  let finder = addon.find(item => item.id === value);
+                  const finder = addon.find(item => item.id === value);
                   actions.editAddon.selectAddonName(finder.type);
                   this.setState({ selected: finder });
                 },
@@ -325,11 +327,11 @@ export class EditAddonPanel extends React.Component<RootProps, EdtiAddonPanelSta
 
   /** 展示右边的说明信息 */
   private _renderAddonInfo(addon: Addon[]) {
-    let { editAddon } = this.props,
+    const { editAddon } = this.props,
       { addonName } = editAddon;
 
     let content: React.ReactNode;
-    let addonInfo: Addon = addon.find(item => item.type === addonName);
+    const addonInfo: Addon = addon.find(item => item.type === addonName);
 
     if (addonName === '') {
       content = <Text>{t('请在左侧选择一个扩展组件')}</Text>;
@@ -351,10 +353,10 @@ export class EditAddonPanel extends React.Component<RootProps, EdtiAddonPanelSta
     actions.validator.validateAddonEdit();
 
     if (validatorActions._validateAddonEdit(editAddon)) {
-      let resourceName = ResourceNameMap[addonName] ? ResourceNameMap[addonName] : addonName;
-      let resourceInfo: ResourceInfo = resourceConfig(clusterVersion)[resourceName];
+      const resourceName = ResourceNameMap[addonName] ? ResourceNameMap[addonName] : addonName;
+      const resourceInfo: ResourceInfo = resourceConfig(clusterVersion)[resourceName];
 
-      let { clusterId, rid } = route.queries;
+      const { clusterId, rid } = route.queries;
 
       let finalJSON: string;
 
@@ -364,7 +366,7 @@ export class EditAddonPanel extends React.Component<RootProps, EdtiAddonPanelSta
         finalJSON = ReduceUniversalJsonData({ resourceInfo, clusterId });
       }
 
-      let resource: CreateResource = {
+      const resource: CreateResource = {
         id: uuid(),
         resourceInfo,
         mode: 'create',

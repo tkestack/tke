@@ -1,0 +1,4 @@
+"use strict";
+var i18n_1 = require("./core/i18n");
+module.exports = i18n_1.i18n;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaTE4bi5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb3VyY2VzIjpbIi4uL3NyYy9pMThuLnRzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7QUFBQSxvQ0FBbUM7QUFHbkMsaUJBQVMsV0FBSSxDQUFDIiwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgaTE4biB9IGZyb20gXCIuL2NvcmUvaTE4blwiO1xuXG4vLyDni6znq4vlr7zlh7ogaTE4biDkuK3kuJrliqHpnIDopoHkvb/nlKjliLDnmoTlhoXlrrlcbmV4cG9ydCA9IGkxOG47XG4iXX0=
