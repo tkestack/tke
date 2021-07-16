@@ -37,7 +37,7 @@ import {
   SortBy,
   stylize,
   StylizeOption
-} from 'tea-component/lib/table/addons';
+} from 'tea-component/es/table/addons';
 import { StatusTip } from 'tea-component';
 
 import { CamBox, isCamRefused } from '../cam';

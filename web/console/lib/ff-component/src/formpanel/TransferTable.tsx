@@ -2,10 +2,11 @@ import * as React from 'react';
 
 import { FetcherState, FetchState, FFListAction, FFListModel, RecordSet } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
-import { LoadingTip, Table, TableColumn, Transfer, TableProps } from '@tencent/tea-component';
-import { removeable } from '@tencent/tea-component/lib/table/addons';
+import { LoadingTip, Table, TableColumn, Transfer, TableProps } from 'tea-component';
 import { TablePanel, TablePanelTagSearchBox, TablePanelTagSearchProps } from '../tablepanel';
-import { StyledProps } from '@tencent/tea-component/lib/_type';
+import { StyledProps } from 'tea-component';
+
+const { removeable } = Table.addons;
 
 interface FormPanelTransferTableTableProps<TResource> extends StyledProps {
   /**列表项配置 */
@@ -55,8 +56,8 @@ function getFieldValue(record, recordKey) {
   }
 }
 function FormPanelTransferTable<TResource = any>({ ...props }: FormPanelTransferTableTableProps<TResource>) {
-  let [callbackFlag, setCallbackFlag] = React.useState(false);
-  let {
+  const [callbackFlag, setCallbackFlag] = React.useState(false);
+  const {
     className,
     style,
     columns,
@@ -84,7 +85,7 @@ function FormPanelTransferTable<TResource = any>({ ...props }: FormPanelTransfer
   let finallist: FetcherState<RecordSet<TResource>>;
   //如果是滚动更新，使用state里面的record否则是ffredux中的list
   if (isNeedScollLoding) {
-    let records: FetcherState<RecordSet<TResource>>[] = list.pages;
+    const records: FetcherState<RecordSet<TResource>>[] = list.pages;
     let allRecords = [];
 
     records.forEach(record => {
@@ -99,7 +100,7 @@ function FormPanelTransferTable<TResource = any>({ ...props }: FormPanelTransfer
     finallist = list;
   }
 
-  let scrollableOption = {
+  const scrollableOption = {
     maxHeight: 310,
     minHeight: 310
   };
@@ -149,12 +150,12 @@ function FormPanelTransferTable<TResource = any>({ ...props }: FormPanelTransfer
             selectable={{
               value: selections.map(selection => getFieldValue(selection, recordKey)),
               onChange: keys => {
-                let listSelection = finallist.data.records.filter(record => {
+                const listSelection = finallist.data.records.filter(record => {
                   return keys.indexOf(getFieldValue(record, recordKey)) !== -1;
                 });
                 keys.forEach(key => {
                   if (listSelection.findIndex(item => getFieldValue(item, recordKey) === key) === -1) {
-                    let finder = selections.find(item => getFieldValue(item, recordKey) === key);
+                    const finder = selections.find(item => getFieldValue(item, recordKey) === key);
                     finder && listSelection.push(finder);
                   }
                 });

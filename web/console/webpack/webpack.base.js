@@ -100,6 +100,7 @@ module.exports = ({ version, mode }) => ({
       '@tea/app': path.resolve(__dirname, '../node_modules/@tencent/tea-app'),
       '@tea/app/*': path.resolve(__dirname, '../node_modules/@tencent/tea-app/lib/*'),
       '@tea/component': path.resolve(__dirname, '../node_modules/tea-component/es'),
+      '@tea/component/*': path.resolve(__dirname, '../node_modules/tea-component/es/*'),
       '@paas/paas-lib': path.resolve(__dirname, '../lib'),
       '@helper': path.resolve(__dirname, '../helpers'),
       '@helper/*': path.resolve(__dirname, '../helpers/*'),
@@ -117,10 +118,9 @@ module.exports = ({ version, mode }) => ({
       '@tencent/qcloud-redux-query': path.resolve(__dirname, '../lib/ff-redux/libs/qcloud-redux-query/'),
       '@tencent/qcloud-redux-workflow': path.resolve(__dirname, '../lib/ff-redux/libs/qcloud-redux-workflow/'),
       '@': path.resolve(__dirname, '../'),
-      d3: path.resolve(__dirname, '../node_modules/d3'),
       moment: path.resolve(__dirname, '../node_modules/dayjs'),
       '@tencent/tea-component': path.resolve(__dirname, '../node_modules/tea-component'),
-      '@tencent/tea-component/lib': path.resolve(__dirname, '../node_modules/tea-component/es')
+      '@tencent/tea-component/lib/*': path.resolve(__dirname, '../node_modules/tea-component/es/*')
     }
   },
 
@@ -144,7 +144,7 @@ module.exports = ({ version, mode }) => ({
     }),
 
     ...(mode === 'production'
-      ? [new BundleAnalyzerPlugin()]
+      ? []
       : [
           new BundleAnalyzerPlugin(),
           new HtmlWebpackPlugin({

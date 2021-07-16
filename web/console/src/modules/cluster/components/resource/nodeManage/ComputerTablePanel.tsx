@@ -7,7 +7,7 @@ import { TablePanel, TablePanelColumnProps, FormPanel } from '@tencent/ff-compon
 import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Bubble } from '@tencent/tea-component';
-import { sortable, SortBy } from '@tencent/tea-component/lib/table/addons/sortable';
+import { sortable, SortBy } from 'tea-component/es/table/addons/sortable';
 
 import { dateFormatter } from '../../../../../../helpers';
 import { Clip, LinkButton } from '../../../../common/components';
