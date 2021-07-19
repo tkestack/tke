@@ -36,8 +36,8 @@ DATA_DIR=$INSTALL_DIR/data
 REGISTRY_DIR=$INSTALL_DIR/registry
 OPTIONS="--name tke-installer -d --privileged --net=host --restart=always
 -v /etc/hosts:/app/hosts
--v /var/run/containerd/containerd.sock:/var/run/containerd/containerd.sock
--v /run/containerd/containerd.sock:/run/containerd/containerd.sock
+-v /var/run/containerd/:/var/run/containerd/
+-v /run/containerd/:/run/containerd/
 -v $DATA_DIR:/app/data
 -v $INSTALL_DIR/conf:/app/conf
 -v registry-certs:/app/certs
@@ -109,8 +109,8 @@ function ensure_containerd() {
 function install_containerd() {
   echo "install containerd [in process]"
 
-  tar xvaf "res/containerd.tar.gz" -C /
-  tar xvaf "res/nerdctl.tar.gz" -C /usr/local/bin/
+  tar xvaf "res/containerd.tar.gz" -C / >/dev/null 2>&1
+  tar xvaf "res/nerdctl.tar.gz" -C /usr/local/bin/ >/dev/null 2>&1
 
   systemctl daemon-reload
 
@@ -129,6 +129,7 @@ function install_containerd() {
   fi
 
   echo "install containerd [done]"
+  rm -rf /etc/cni
 }
 
 function load_image() {

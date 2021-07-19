@@ -86,7 +86,7 @@ function prepare::tke_installer() {
 function build::installer_image() {
   local -r arch="$1"
 
-  docker build --platform="${arch}" --pull -t "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" -f "${SCRIPT_DIR}/Dockerfile" "${DST_DIR}"
+  docker build --platform="${arch}" --build-arg ENV_ARCH="${arch}" --pull -t "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" -f "${SCRIPT_DIR}/Dockerfile" "${DST_DIR}"
 }
 
 function build::installer() {
@@ -143,15 +143,20 @@ function prepare::images() {
 #  $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | xargs docker save | gzip -c >"${DST_DIR}"/images.tar.gz
   for((retrynum = 1; retrynum <= 50; retrynum++))
   do
-      ctr images pull docker.io/${REGISTRY_PREFIX}/provider-res:${PROVIDER_RES_VERSION} --all-platforms
+      set +e
+      echo "ctr start pulling all images..."
+      $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | sed "s;-amd64;;" | sed "s;-arm64;;" | sort -u | xargs -n1 -I{} sh -c "ctr images pull docker.io/{} --all-platforms"
       if [ $? -eq 0 ]; then
-        echo "ctr pull provider-res image succeed!"
+        echo "ctr pull image succeed!"
         break
       else
-        echo "ctr pull provider-res image failed retry pull again..."
+        echo "ctr pull image failed retry pull again..."
       fi
   done
-  $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | sed "s;-amd64;;" | sed "s;-arm64;;" | sort -u | xargs -n1 -I{} sh -c "ctr images pull docker.io/{} --all-platforms || exit 255"
+  if [ $retrynum -eq 51 ]; then
+    echo "pull image failed after retry"
+    exit 1
+  fi
   $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | sed "s;-amd64;;" | sed "s;-arm64;;" | sort -u | xargs -n1 -I{} sh -c "ctr images tag  docker.io/{} {}" || true
   ctr images export "${DST_DIR}"/images.tar `$GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | sed "s;-amd64;;" | sed "s;-arm64;;" | sort -u` --all-platforms || exit 255
 }
@@ -191,5 +196,3 @@ done
 
 rm -rf "${DST_DIR}"
 rm -rf "${INSTALLER_DIR}"
-
-

@@ -1,12 +1,8 @@
-*.md
-package.json
 node_modules/*
 dist/*
 .vscode/*
-loader/*
 ambient/*
-typings/*
 **.log
 **.lock
-tsconfig.json
 build/*
+tencent

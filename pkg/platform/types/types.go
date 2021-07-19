@@ -19,16 +19,13 @@
 package types
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 )
 
@@ -41,46 +38,6 @@ const (
 type Cluster struct {
 	*platform.Cluster
 	ClusterCredential *platform.ClusterCredential
-}
-
-func GetClusterByName(ctx context.Context, platformClient internalversion.PlatformInterface, name string) (*Cluster, error) {
-	result := new(Cluster)
-	cluster, err := platformClient.Clusters().Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	result.Cluster = cluster
-	if cluster.Spec.ClusterCredentialRef != nil {
-		clusterCredential, err := platformClient.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("get cluster's credential error: %w", err)
-		}
-		result.ClusterCredential = clusterCredential
-	}
-
-	return result, nil
-}
-
-func GetCluster(ctx context.Context, platformClient internalversion.PlatformInterface, cluster *platform.Cluster) (*Cluster, error) {
-	result := new(Cluster)
-	result.Cluster = cluster
-	if cluster.Spec.ClusterCredentialRef != nil {
-		clusterCredential, err := platformClient.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("get cluster's credential error: %w", err)
-		}
-		result.ClusterCredential = clusterCredential
-	} else if platformClient != nil {
-		clusterCredentials, err := platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fmt.Sprintf("clusterName=%s", cluster.Name)})
-		if err != nil {
-			return nil, fmt.Errorf("get cluster's credential error: %w", err)
-		}
-		if clusterCredentials != nil && clusterCredentials.Items != nil && len(clusterCredentials.Items) > 0 {
-			result.ClusterCredential = &clusterCredentials.Items[0]
-		}
-	}
-
-	return result, nil
 }
 
 func (c *Cluster) Clientset() (kubernetes.Interface, error) {

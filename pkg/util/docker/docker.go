@@ -231,13 +231,8 @@ func (d *Docker) RemoveImage(image string) error {
 
 // RemoveContainers forces to remove one or more running containers.
 func (d *Docker) RemoveContainers(containers ...string) error {
-	cmd := fmt.Sprintf("nerdctl stop tke-installer && nerdctl start tke-installer || true")
-	err := d.runCmd(cmd)
-	if err != nil {
-		return pkgerrors.Wrap(err, "nerdctl restart tke-installer error")
-	}
 	for _, one := range containers {
-		cmdString := fmt.Sprintf("nerdctl inspect %s >/dev/null 2>&1 && nerdctl stop %s && nerdctl rm %s || true", one, one, one)
+		cmdString := fmt.Sprintf("nerdctl stop %s && nerdctl rm %s || true", one, one)
 		err := d.runCmd(cmdString)
 		if err != nil {
 			return pkgerrors.Wrap(err, "nerdctl remove containers error")

@@ -31,6 +31,7 @@ import (
 	"tkestack.io/tke/api/monitor"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/monitor/util"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	platformutil "tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/log"
 
@@ -280,7 +281,11 @@ func (c *cacher) getClusters(ctx context.Context) {
 }
 
 func (c *cacher) getMetricServerClientSet(ctx context.Context, cls *platformv1.Cluster) (*metricsv.Clientset, error) {
-	cc, err := platformutil.GetClusterCredentialV1(ctx, c.platformClient, cls)
+	provider, err := clusterprovider.GetProvider(cls.Spec.Type)
+	if err != nil {
+		return nil, err
+	}
+	cc, err := provider.GetClusterCredentialV1(ctx, c.platformClient, cls, clusterprovider.AdminUsername)
 	if err != nil {
 		log.Error("query cluster credential failed", log.Any("cluster", cls.GetName()), log.Err(err))
 		return nil, err

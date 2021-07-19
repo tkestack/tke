@@ -8,7 +8,7 @@
   },
   "scripts": {
     "preinstall": "rm -rf node_modules",
-    "postinstall": "unzip -n -q -d ./node_modules ../../third_party/fe_node_modules.zip",
+    "postinstall": "cp -r ./tencent/ ./node_modules/@tencent",
     "prestart-tke": "npm  install",
     "start-tke": "webpack server  --config ./webpack/webpack.dev.js --progress --color --env version=tke",
     "prestart-project": "npm install",
@@ -22,11 +22,13 @@
     "pre-commit": "lint-staged"
   },
   "lint-staged": {
-    "./**/*.{ts,tsx,js,jsx}": "eslint"
+    "./**/*.{ts,tsx,js,jsx}": [
+      "eslint",
+      "prettier --write"
+    ]
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "antd": "^4.12.3",
     "axios": "^0.21.1",
     "buffer": "^6.0.3",
     "classnames": "2.2.6",
@@ -37,7 +39,10 @@
     "deep-equal": "^1.0.1",
     "deep-extend": "^0.6.0",
     "diff": "^4.0.2",
-    "final-form": "^4.19.1",
+    "final-form": "^4.20.2",
+    "hash-string": "^1.0.0",
+    "history": "^4.7.2",
+    "i18next": "^13.1.5",
     "ifvisible.js": "^1.0.6",
     "immer": "^7.0.8",
     "js-base64": "^3.4.5",
@@ -52,15 +57,16 @@
     "react-codemirror2": "^5.1.0",
     "react-dom": "^16.14.0",
     "react-final-form-hooks": "^2.0.2",
-    "react-hook-form": "^6.8.1",
+    "react-hook-form": "^7.10.1",
+    "react-i18next": "^9.0.2",
     "react-redux": "^7.1.3",
     "react-transition-group": "^2.5.2",
     "recoil": "^0.1.2",
     "redux": "^4.0.1",
     "redux-logger": "^3.0.6",
     "redux-thunk": "=2.0.1",
+    "tea-component": "^2.6.22",
     "ts-optchain": "^0.1.7",
-    "typescript": "^4.0.5",
     "use-immer": "^0.4.1",
     "uuid": "^8.3.1",
     "validator": "^13.5.2"
@@ -102,11 +108,13 @@
     "html-webpack-plugin": "^5.3.1",
     "husky": "^6.0.0",
     "lint-staged": "^11.0.0",
+    "prettier": "^2.3.2",
     "readable-stream": "^3.6.0",
     "speed-measure-webpack-plugin": "^1.5.0",
     "style-loader": "^2.0.0",
     "thread-loader": "^3.0.4",
     "ts-loader": "^9.2.1",
+    "typescript": "^4.3.5",
     "webpack": "^5.37.0",
     "webpack-bundle-analyzer": "^4.4.1",
     "webpack-cli": "^4.7.0",

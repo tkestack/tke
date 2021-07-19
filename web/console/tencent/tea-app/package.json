@@ -1,0 +1,73 @@
+{
+  "_args": [
+    [
+      "@tencent/tea-app@0.3.33",
+      "/Users/yacent/TencentCloud/tmp"
+    ]
+  ],
+  "_from": "@tencent/tea-app@0.3.33",
+  "_id": "@tencent/tea-app@0.3.33",
+  "_inBundle": false,
+  "_integrity": "sha1-IfltmtamxXswyQl+iZ2CA5auaRk=",
+  "_location": "/@tencent/tea-app",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "version",
+    "registry": true,
+    "raw": "@tencent/tea-app@0.3.33",
+    "name": "@tencent/tea-app",
+    "escapedName": "@tencent%2ftea-app",
+    "scope": "@tencent",
+    "rawSpec": "0.3.33",
+    "saveSpec": null,
+    "fetchSpec": "0.3.33"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "http://r.tnpm.oa.com/@tencent/tea-app/download/@tencent/tea-app-0.3.33.tgz",
+  "_spec": "0.3.33",
+  "_where": "/Users/yacent/TencentCloud/tmp",
+  "author": {
+    "name": "techirdliu@tencent.com"
+  },
+  "dependencies": {
+    "eventemitter3": "^4.0.0",
+    "hash-string": "=1.0.0",
+    "history": "=4.7.2",
+    "i18next": "=13.1.5",
+    "react-i18next": "=9.0.2",
+    "warning": "^4.0.3"
+  },
+  "description": "Tea app register and expose api",
+  "devDependencies": {
+    "@types/history": "^4.7.2",
+    "@types/i18next": "=12.1.0",
+    "@types/react": "=16.8.4",
+    "@types/react-dom": "=16.8.2",
+    "@types/react-i18next": "=8.1.0",
+    "@types/warning": "^3.0.0",
+    "typescript": "=3.3.3333"
+  },
+  "keywords": [
+    "tea"
+  ],
+  "license": "UNLICENSED",
+  "main": "lib/index.js",
+  "name": "@tencent/tea-app",
+  "peerDependencies": {
+    "react": "^16.8.2",
+    "react-dom": "^16.8.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.code.oa.com/CFETeam/tea2"
+  },
+  "scripts": {
+    "build": "rm -rf lib dts && npx tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "rm -rf lib dts && npx tsc -w"
+  },
+  "types": "lib/index.d.ts",
+  "version": "0.3.33"
+}

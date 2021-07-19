@@ -8,7 +8,7 @@ import { Transfer } from '@tea/component/transfer';
 import { FetcherState, FetchState, FFListAction, FFListModel, RecordSet } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 import { LoadingTip, StatusTip } from '@tencent/tea-component';
-import { autotip, scrollable } from '@tencent/tea-component/lib/table/addons';
+import { autotip, scrollable } from 'tea-component/es/table/addons';
 
 function SourceTable({
   dataSource,
@@ -21,7 +21,7 @@ function SourceTable({
   nextToPage,
   autotipOptions
 }) {
-  let scrollableOption = {
+  const scrollableOption = {
     maxHeight: 308,
     minHeight: 308
   };
@@ -115,7 +115,7 @@ export class TransferTable<T> extends React.Component<TransferTableProps<T>, Tra
     };
   }
   appendData(nextProps: TransferTableProps<T>) {
-    let {
+    const {
       recordKey,
       model: {
         query: {
@@ -178,7 +178,7 @@ export class TransferTable<T> extends React.Component<TransferTableProps<T>, Tra
     }
   }
   render() {
-    let {
+    const {
       columns,
       model: { list, query },
       recordKey,
@@ -193,8 +193,8 @@ export class TransferTable<T> extends React.Component<TransferTableProps<T>, Tra
     let finallist: FetcherState<RecordSet<T>>;
     //如果是滚动更新，使用state里面的record否则是ffredux中的list
     if (isNeedScollLoding) {
-      let records: FetcherState<RecordSet<T>>[] = this.state.records;
-      let lastRecord = records && records.length ? records[records.length - 1] : null;
+      const records: FetcherState<RecordSet<T>>[] = this.state.records;
+      const lastRecord = records && records.length ? records[records.length - 1] : null;
       let allRecords = [];
 
       records.forEach(record => {
@@ -221,7 +221,7 @@ export class TransferTable<T> extends React.Component<TransferTableProps<T>, Tra
      * 4. query.search => 如果是有搜索关键词，则需要展示loading
      * 5. this.state.isNeedLoading => 结合4，清除搜索条件之后，也需要展示loading
      */
-    let isShowLoading: boolean =
+    const isShowLoading: boolean =
       (list.fetched !== true || list.fetchState === FetchState.Fetching) &&
       (list.data.recordCount === 0 || !!query.search || this.state.isNeedLoading);
     return (
@@ -253,12 +253,12 @@ export class TransferTable<T> extends React.Component<TransferTableProps<T>, Tra
               targetKeys={selections.map(selection => selection[recordKey])}
               disabled={rowDisabled}
               onChange={keys => {
-                let listSelection = finallist.data.records.filter(record => {
+                const listSelection = finallist.data.records.filter(record => {
                   return keys.indexOf(record[recordKey] as string) !== -1;
                 });
                 keys.forEach(key => {
                   if (listSelection.findIndex(item => item[recordKey] === key) === -1) {
-                    let finder = selections.find(item => item[recordKey] === key);
+                    const finder = selections.find(item => item[recordKey] === key);
                     finder && listSelection.push(finder);
                   }
                 });
@@ -269,9 +269,7 @@ export class TransferTable<T> extends React.Component<TransferTableProps<T>, Tra
               bottomTip={
                 isNeedScollLoding && finallist.data.records.length < finallist.data.recordCount ? (
                   <LoadingTip />
-                ) : (
-                  undefined
-                )
+                ) : undefined
               }
               nextToPage={
                 isNeedScollLoding

@@ -20,7 +20,7 @@ import {
   Text,
   Button,
   ExternalLink
-} from '@tencent/tea-component';
+} from 'tea-component';
 import {
   expandable,
   ExpandableAddonOptions,
@@ -37,11 +37,12 @@ import {
   SortBy,
   stylize,
   StylizeOption
-} from '@tencent/tea-component/lib/table/addons';
-import { autotip } from '@tencent/tea-component/lib/table/addons/autotip';
-import { StatusTip } from '@tencent/tea-component/lib/tips';
+} from 'tea-component/es/table/addons';
+import { StatusTip } from 'tea-component';
 
 import { CamBox, isCamRefused } from '../cam';
+
+const { autotip } = Table.addons;
 
 insertCSS(
   '@tencent/ff-component/operationListButton',
@@ -159,18 +160,18 @@ function TablePanelBody({
 
   ...props
 }: TablePanelProps) {
-  let {
+  const {
     model: { list, query },
     action
   } = props;
-  let isCAMError = list.fetchState === FetchState.Failed && isCamRefused(list.error);
+  const isCAMError = list.fetchState === FetchState.Failed && isCamRefused(list.error);
 
-  let [isNeedLoading, setIsNeedLoading] = React.useState(false);
+  const [isNeedLoading, setIsNeedLoading] = React.useState(false);
 
   // query.search 为纯文本搜索， query.filter.searchBoxValues 为tagSearchbox  tagSearch 在searchFilter字段
-  let searchFilterKeys = query.searchFilter ? Object.keys(query.searchFilter) : [];
+  const searchFilterKeys = query.searchFilter ? Object.keys(query.searchFilter) : [];
 
-  let search =
+  const search =
     query.search ||
     (query.filter &&
       query.filter.searchBoxValues &&
@@ -191,7 +192,7 @@ function TablePanelBody({
    * 3. search => 如果是有搜索关键词，则需要展示loadint
    * 4. this.state.isNeedLoadint => 结合4，清除搜索条件之后，也需要展示loading
    */
-  let isShowLoading: boolean =
+  const isShowLoading: boolean =
     list.fetchState === FetchState.Fetching &&
     (list.data.recordCount === 0 ||
       !!(
@@ -208,10 +209,10 @@ function TablePanelBody({
 
   props.addons = props.addons || [];
 
-  let [sorts, setSorts] = React.useState([]);
-  let [filters, setFilters] = React.useState([]);
+  const [sorts, setSorts] = React.useState([]);
+  const [filters, setFilters] = React.useState([]);
 
-  let filteredRecords = list.data.records.slice();
+  const filteredRecords = list.data.records.slice();
   // 如果要在前端排序，可以用 sortable.comparer 生成默认的排序方法
   if (!props.onSort) {
     filteredRecords.sort(sortable.comparer(sorts));
@@ -222,7 +223,7 @@ function TablePanelBody({
   }
 
   if (props.columns) {
-    let { columns, addons } = formatColumn(props, {
+    const { columns, addons } = formatColumn(props, {
       sorts,
       filters,
       setSorts,
@@ -259,7 +260,7 @@ function TablePanelBody({
       })
     );
   }
-  let table = (
+  const table = (
     <Table
       {...props}
       records={filteredRecords}
@@ -283,7 +284,7 @@ function TablePanelBody({
                     action.applyFilter({ searchBoxValues: [] });
 
                   if (query.searchFilter && searchFilterKeys.some(key => query.searchFilter[key] !== null)) {
-                    let nextFilter = {};
+                    const nextFilter = {};
                     searchFilterKeys.forEach(key => {
                       nextFilter[key] = null;
                     });
@@ -327,11 +328,11 @@ function TablePanelBody({
 }
 
 function formatColumn<Record = any>({ columns, onSort, action }: TablePanelProps, stateObj) {
-  let columnsFormat: TableColumn<Record>[] = [],
+  const columnsFormat: TableColumn<Record>[] = [],
     addons = [],
     sortableColumns = [];
   columns.forEach((config, index) => {
-    let columnInfo = {
+    const columnInfo = {
       key: config.key,
       header: config.header,
       width: config.width,
@@ -425,15 +426,15 @@ function createOperationColumn<Record>(
   ) => React.ReactNode[],
   operationsWidth: number
 ) {
-  let column4Operations: TableColumn<Record> = {
+  const column4Operations: TableColumn<Record> = {
     key: 'operations',
     header: t('操作'),
     width: operationsWidth,
     render: (record: Record, rowKey: string, recordIndex: number, column: TableColumn<Record>) => {
       let ops = getOperations(record, rowKey, recordIndex, column);
       if (ops.length > 3) {
-        let nodes = ops.splice(0, 2);
-        let more = (
+        const nodes = ops.splice(0, 2);
+        const more = (
           <Dropdown button={t('更多')}>
             <List type="option">
               {ops.map((operation, index) => {
@@ -498,7 +499,7 @@ interface TablePanelPaginationProps {
 }
 
 function TablePanelPagination({ model, action, paginationProps }: TablePanelProps) {
-  let { query, list } = model,
+  const { query, list } = model,
     { pageIndex, pageSize } = query.paging;
 
   return (
@@ -519,16 +520,16 @@ function TablePanelPagination({ model, action, paginationProps }: TablePanelProp
 }
 
 function TablePanelContinuePagination({ model, action, paginationProps }: TablePanelProps) {
-  let { query, list } = model,
+  const { query, list } = model,
     { pageIndex, pageSize } = query.paging;
 
   let totalCount = 0;
-  let finalPages = list.pages ? list.pages : [];
+  const finalPages = list.pages ? list.pages : [];
   finalPages.forEach(listItem => {
     totalCount += listItem.data.recordCount;
   });
 
-  let stateText = (
+  const stateText = (
     <Text>
       <Text verticalAlign="middle">{t('第 {{pageIndex}} 页', { pageIndex: pageIndex })}</Text>
       {pageIndex > 1 && (

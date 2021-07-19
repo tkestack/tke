@@ -59,17 +59,20 @@ function download::docker() {
 function download::containerd() {
   if [ "${arch}" == "amd64" ]; then
     containerd_arch=amd64
+    for version in ${CONTAINERD_VERSIONS}; do
+      wget -c "https://github.com/containerd/containerd/releases/download/v${version}/cri-containerd-cni-${version}-linux-${containerd_arch}.tar.gz" \
+        -O "containerd-${platform}-${version}.tar.gz"
+    done
   elif [ "${arch}" == "arm64" ]; then
-    containerd_arch=amd64
+    containerd_arch=arm64
+    for version in ${CONTAINERD_VERSIONS}; do
+      wget -c https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/cri-containerd-cni-${version}-linux-{containerd_arch}.tar.gz \
+        -O "containerd-${platform}-${version}.tar.gz"
+    done
   else
     echo "[ERROR] Fail to get containerd ${arch} on ${platform} platform."
     exit 255
   fi
-
-  for version in ${CONTAINERD_VERSIONS}; do
-    wget -c "https://github.com/containerd/containerd/releases/download/v${version}/cri-containerd-cni-${version}-linux-${containerd_arch}.tar.gz" \
-      -O "containerd-${platform}-${version}.tar.gz"
-  done
 }
 
 function download::nerdctl() {

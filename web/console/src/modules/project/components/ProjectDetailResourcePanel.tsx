@@ -5,7 +5,7 @@ import { Bubble, Button, Modal, StatusTip, Table, TableColumn, Text, Alert } fro
 import { FormPanel } from '@tencent/ff-component';
 import { isSuccessWorkflow, OperationState, deepClone } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
-import { autotip } from '@tencent/tea-component/lib/table/addons';
+import { autotip } from 'tea-component/es/table/addons';
 
 import { getWorkflowError } from '../../common';
 import { resourceLimitTypeToText, resourceTypeToUnit, PlatformTypeEnum } from '../constants/Config';
@@ -21,8 +21,8 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
   };
 
   formatResourceLimit(resourceLimit) {
-    let resourceLimitKeys = resourceLimit ? Object.keys(resourceLimit) : [];
-    let content = resourceLimitKeys.map((item, index) => (
+    const resourceLimitKeys = resourceLimit ? Object.keys(resourceLimit) : [];
+    const content = resourceLimitKeys.map((item, index) => (
       <Text parent="p" key={index}>{`${resourceLimitTypeToText[item]}:${
         resourceTypeToUnit[item] === 'MiB'
           ? valueLabels1024(resourceLimit[item], K8SUNIT.Mi)
@@ -37,7 +37,7 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
   }
 
   render() {
-    let { actions } = this.props;
+    const { actions } = this.props;
 
     return (
       <>
@@ -51,16 +51,16 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
     );
   }
   private _renderTablePanel() {
-    let { actions, namespace, projectDetail, platformType, userManagedProjects } = this.props;
-    let clusterKeys = projectDetail && projectDetail.spec.clusters ? Object.keys(projectDetail.spec.clusters) : [];
-    let projectId = projectDetail && projectDetail.metadata.name;
-    let finalClusterList = clusterKeys.map(item => {
+    const { actions, namespace, projectDetail, platformType, userManagedProjects } = this.props;
+    const clusterKeys = projectDetail && projectDetail.spec.clusters ? Object.keys(projectDetail.spec.clusters) : [];
+    const projectId = projectDetail && projectDetail.metadata.name;
+    const finalClusterList = clusterKeys.map(item => {
       return {
         name: item,
         hard: projectDetail.spec.clusters[item].hard
       };
     });
-    let enableOp = platformType === PlatformTypeEnum.Manager;
+    const enableOp = platformType === PlatformTypeEnum.Manager;
     const columns: TableColumn<{ name: string; hard: any }>[] = [
       {
         key: 'name',
@@ -157,19 +157,19 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
 
   private _renderEditProjectLimitDialog() {
     const { actions, project, projectEdition, editProjecResourceLimit } = this.props;
-    let { currentClusterIndex } = this.state;
-    let item = projectEdition.clusters[currentClusterIndex];
+    const { currentClusterIndex } = this.state;
+    const item = projectEdition.clusters[currentClusterIndex];
     if (!item) {
       return <></>;
     }
-    let parentProjectSelection = projectEdition.parentProject
+    const parentProjectSelection = projectEdition.parentProject
       ? project.list.data.records.find(item => item.metadata.name === projectEdition.parentProject)
       : null;
 
-    let parentResourceLimits =
+    const parentResourceLimits =
       parentProjectSelection && item.name ? parentProjectSelection.spec.clusters[item.name].hard : {};
 
-    let failed =
+    const failed =
       editProjecResourceLimit.operationState === OperationState.Done && !isSuccessWorkflow(editProjecResourceLimit);
 
     const cancel = () => {
@@ -209,13 +209,13 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
 
   private _renderDeleteProjectLimitDialog() {
     const { actions, project, projectEdition, editProjecResourceLimit } = this.props;
-    let { currentClusterIndex } = this.state;
-    let clusterName =
+    const { currentClusterIndex } = this.state;
+    const clusterName =
       projectEdition.clusters.length && projectEdition.clusters[currentClusterIndex]
         ? projectEdition.clusters[currentClusterIndex].name
         : '-';
 
-    let failed =
+    const failed =
       editProjecResourceLimit.operationState === OperationState.Done && !isSuccessWorkflow(editProjecResourceLimit);
 
     const cancel = () => {
@@ -275,22 +275,22 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
   }
 
   private _renderAddProjectLimitDialog() {
-    let { projectEdition, actions, project, route, editProjecResourceLimit, cluster } = this.props;
+    const { projectEdition, actions, project, route, editProjecResourceLimit, cluster } = this.props;
 
-    let { currentClusterIndex, isShowAddDialog } = this.state;
+    const { currentClusterIndex, isShowAddDialog } = this.state;
 
-    let item = projectEdition.clusters[currentClusterIndex];
+    const item = projectEdition.clusters[currentClusterIndex];
     if (!item) {
       return <></>;
     }
-    let finalClusterList = deepClone(cluster);
+    const finalClusterList = deepClone(cluster);
 
-    let parentProjectSelection = projectEdition.parentProject
+    const parentProjectSelection = projectEdition.parentProject
       ? project.list.data.records.find(item => item.metadata.name === projectEdition.parentProject)
       : null;
     //筛选出project中的集群
     if (parentProjectSelection) {
-      let parentClusterList = parentProjectSelection.spec.clusters
+      const parentClusterList = parentProjectSelection.spec.clusters
         ? Object.keys(parentProjectSelection.spec.clusters)
         : [];
       finalClusterList.list.data.records = finalClusterList.list.data.records.filter(
@@ -299,10 +299,10 @@ export class ProjectDetailResourcePanel extends React.Component<RootProps, {}> {
       finalClusterList.list.data.recordCount = finalClusterList.list.data.records.length;
     }
 
-    let failed =
+    const failed =
       editProjecResourceLimit.operationState === OperationState.Done && !isSuccessWorkflow(editProjecResourceLimit);
 
-    let parentResourceLimits =
+    const parentResourceLimits =
       parentProjectSelection && item.name ? parentProjectSelection.spec.clusters[item.name].hard : {};
 
     const cancel = () => {

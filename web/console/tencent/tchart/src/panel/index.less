@@ -1,0 +1,89 @@
+/**
+ InstanceList
+ */
+& .table-box {
+  position: relative;
+  display: block;
+  width: 100%;
+  color: #666;
+  font-size: 12px;
+  margin-right: 0;
+  background-color: transparent;
+
+  tr {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    th {
+      position: relative;
+      padding-left: 10px;
+      padding-right: 10px;
+      text-align: left;
+      vertical-align: middle;
+      &:last-child {
+        flex: 1;
+        overflow: hidden;
+      }
+    }
+
+    th > div {
+      position: relative;
+      display: inline-block;
+      padding: 0;
+      height: 40px;
+      line-height: 40px;
+      width: 100%;
+      color: #888;
+      vertical-align: middle;
+      box-sizing: border-box;
+      word-wrap: break-word;
+    }
+  }
+
+  thead {
+    display: block;
+    width: 100%;
+    font-weight: 700;
+    font-size: 14px;
+    border-bottom: 1px solid #d1d5de;
+  }
+
+  tbody {
+    display: block;
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: calc(100vh - 243px);
+    height: 623px;
+    font-weight: 500;
+    tr:hover {
+      background-color: #F7F7F7;
+    }
+
+    th > div {
+      height: 45px;
+      line-height: 45px;
+      color: #444;
+      width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      p {
+        height: 20px;
+        line-height: 20px;
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        &:last-child {
+          color: #888 !important;
+          font-size: 10px;
+        }
+      }
+    }
+    th:last-child > div {
+      padding: 5px;
+      line-height: 35px;
+      box-sizing: border-box;
+    }
+  }
+}

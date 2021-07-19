@@ -1,5 +1,5 @@
 import { t } from '@tencent/tea-app/lib/i18n';
-import { Table } from '@tencent/tea-component';
+import { Table } from 'tea-component';
 import * as React from 'react';
 import { WorkflowDialog } from '../../common/components';
 import { AlarmPolicyTablePanel } from './AlarmPolicyTablePanel';

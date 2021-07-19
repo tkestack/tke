@@ -22,6 +22,7 @@ WORKDIR /app
 
 ENV PATH="/app/bin:$PATH"
 ENV DOCKER_CLI_EXPERIMENTAL=enabled
+ARG ENV_ARCH
 
 RUN apk add --no-cache \
     bash \
@@ -33,12 +34,12 @@ RUN apk add --no-cache \
     containerd
 
 RUN apk --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ --allow-untrusted add lrzsz
-RUN wget https://github.com/containerd/nerdctl/releases/download/v0.10.0/nerdctl-0.10.0-linux-amd64.tar.gz \
-    && tar -zvxf nerdctl-0.10.0-linux-amd64.tar.gz -C /usr/local/bin/ \
-    && rm -rf nerdctl-0.10.0-linux-amd64.tar.gz \
-    && wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.20.0/crictl-v1.20.0-linux-amd64.tar.gz \
-    && tar -zvxf crictl-v1.20.0-linux-amd64.tar.gz -C /usr/local/bin/ \
-    && rm -rf crictl-v1.20.0-linux-amd64.tar.gz
+RUN wget -O nerdctl-0.10.0-linux.tar.gz https://github.com/containerd/nerdctl/releases/download/v0.10.0/nerdctl-0.10.0-linux-"$ENV_ARCH".tar.gz \
+    && tar -zvxf nerdctl-0.10.0-linux.tar.gz -C /usr/local/bin/ \
+    && rm -rf nerdctl-0.10.0-linux.tar.gz \
+    && wget -O crictl-v1.20.0-linux.tar.gz https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.20.0/crictl-v1.20.0-linux-"$ENV_ARCH".tar.gz \
+    && tar -zvxf crictl-v1.20.0-linux.tar.gz -C /usr/local/bin/ \
+    && rm -rf crictl-v1.20.0-linux.tar.gz
 
 ADD . /app
 

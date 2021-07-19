@@ -72,7 +72,14 @@ export const AuditSetting = props => {
     return nextState;
   };
 
-  const { control, register, handleSubmit, setValue, watch, errors } = useForm({ mode: 'onTouched' });
+  const {
+    control,
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors }
+  } = useForm({ mode: 'onTouched' });
   const [auditSetting, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
@@ -98,7 +105,7 @@ export const AuditSetting = props => {
     console.log('data@onConnect = ', data);
     try {
       dispatch({ type: 'connectionState', payload: ConnectionState.CONNECTING });
-      let response = await configTest({
+      const response = await configTest({
         ...data,
         // ...auditSetting.elasticSearch,
         password: Base64.encode(data.password)
@@ -147,9 +154,10 @@ export const AuditSetting = props => {
           control={control}
           rules={{
             required: true,
-            pattern: /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/
+            pattern:
+              /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/
           }}
-          render={({ onChange, onBlur, value }) => (
+          render={({ field: { onChange, onBlur, value } }) => (
             <Form.Item
               label={'ES地址'}
               required
@@ -177,7 +185,7 @@ export const AuditSetting = props => {
           name="indices"
           control={control}
           rules={{ required: true }}
-          render={({ onChange, onBlur, value }) => (
+          render={({ field: { onChange, onBlur, value } }) => (
             <Form.Item
               label={'索引'}
               required
@@ -202,7 +210,7 @@ export const AuditSetting = props => {
           name="reserveDays"
           control={control}
           rules={{ required: true }}
-          render={({ onChange, value }) => (
+          render={({ field: { onChange, value } }) => (
             <Form.Item label={'保留数据时间'} required>
               <InputNumber
                 min={1}
@@ -222,7 +230,7 @@ export const AuditSetting = props => {
           name="username"
           control={control}
           defaultValue=""
-          render={({ onChange, value }) => (
+          render={({ field: { onChange, value } }) => (
             <Form.Item label={'用户名'} message={'仅需要用户验证的ES需要输入用户名和密码'}>
               <Input
                 value={value}
@@ -240,7 +248,7 @@ export const AuditSetting = props => {
           name="password"
           control={control}
           defaultValue=""
-          render={({ onChange, value }) => (
+          render={({ field: { onChange, value } }) => (
             <Form.Item label={'密码'}>
               <Input
                 type="password"
@@ -278,7 +286,7 @@ export const AuditSettingDialog = (props: { isShowing: boolean; toggle: () => vo
 
   const handleSubmitItem = async () => {
     try {
-      let response = await updateStoreConfig({
+      const response = await updateStoreConfig({
         ...editorState.elasticSearch,
         password: Base64.encode(editorState.elasticSearch['password'])
       });

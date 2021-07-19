@@ -21,11 +21,12 @@ package tke
 import (
 	"context"
 	"fmt"
-	"k8s.io/klog"
 	"net"
 	"net/url"
 	"os"
 	"time"
+
+	"k8s.io/klog"
 
 	"github.com/onsi/gomega"
 
@@ -129,6 +130,10 @@ func (t *TKE) createProviderConfigs(ctx context.Context) error {
 		{
 			Name: "kubeadm",
 			File: e2e.ConfDir + "kubeadm/*",
+		},
+		{
+			Name: "containerd",
+			File: e2e.ConfDir + "containerd/*",
 		},
 	}
 
