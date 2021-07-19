@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { isEmpty, cloneDeep, uniq } from 'lodash';
-import { Bubble, Button, Justify, Modal, Table, TagSearchBox } from '@tea/component';
+import { Bubble, Button, Justify, Modal, Table, TagSearchBox, AttributeValue } from 'tea-component';
 import { bindActionCreators, insertCSS, uuid } from '@tencent/ff-redux';
 import { ChartInstancesPanel } from '@tencent/tchart';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
@@ -136,11 +136,7 @@ export class ResourcePodActionPanel extends React.Component<RootProps, ResourceP
         >
           {t('删除')}
         </Button>
-        <Button
-          type="primary"
-          disabled={!podConsistent}
-          onClick={this._handleClickForUpdateGrayTapp.bind(this)}
-        >
+        <Button type="primary" disabled={!podConsistent} onClick={this._handleClickForUpdateGrayTapp.bind(this)}>
           {t('灰度升级')}
         </Button>
       </React.Fragment>
@@ -182,7 +178,14 @@ export class ResourcePodActionPanel extends React.Component<RootProps, ResourceP
     });
 
     // tagSearch的过滤选项
-    const attributes = [
+    const namespaceAttribute: AttributeValue = {
+      type: 'single',
+      key: 'namespace',
+      name: t('命名空间'),
+      values: namespaceValues
+    };
+
+    const attributes: AttributeValue[] = [
       {
         type: 'input',
         key: 'podName',
@@ -199,17 +202,9 @@ export class ResourcePodActionPanel extends React.Component<RootProps, ResourceP
         type: 'input',
         key: 'ip',
         name: t('实例IP')
-      }
-    ].concat(
-      isInNodeManage
-        ? {
-            type: 'single',
-            key: 'namespace',
-            name: t('命名空间'),
-            values: namespaceValues
-          }
-        : []
-    );
+      },
+      ...(isInNodeManage ? [namespaceAttribute] : [])
+    ];
 
     return (
       <div style={{ width: 600, float: 'right' }}>
@@ -362,14 +357,7 @@ export class ResourcePodActionPanel extends React.Component<RootProps, ResourceP
                 table: 'k8s_container',
                 conditions: [
                   ['tke_cluster_instance_id', '=', route.queries['clusterId']],
-                  [
-                    'pod_name',
-                    '=',
-                    pod_name ||
-                      (this.podRecords[0]
-                        ? this.podRecords[0].metadata.name
-                        : '')
-                  ],
+                  ['pod_name', '=', pod_name || (this.podRecords[0] ? this.podRecords[0].metadata.name : '')],
                   ...(isInNodeManage ? [] : [['namespace', '=', reduceNs(route.queries['np'] || 'default')]])
                 ],
                 fields: containerMonitorFields

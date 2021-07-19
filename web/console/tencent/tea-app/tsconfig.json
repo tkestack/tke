@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "lib": ["dom", "es2017"],
+    "jsx": "react",
+    "baseUrl": "./src",
+    "target": "es5",
+    "rootDir": "src",
+    "outDir": "lib",
+    "inlineSourceMap": true,
+    "inlineSources": true,
+    "declaration": true,
+    "pretty": true,
+    "charset": "utf8",
+    "downlevelIteration": true
+  }
+}

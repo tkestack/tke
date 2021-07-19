@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
-import { Space, Form, InputNumber, Button, Checkbox, Input } from 'antd';
+import React from 'react';
 import { enablePromethus, EnablePromethusParams } from '@/src/webApi/promethus';
 import { RootProps } from '../ClusterApp';
 import { AntdLayout } from '@src/modules/common/layouts';
+import { Button, Form, InputNumber, Checkbox, Input } from 'tea-component';
+import { useForm, Controller } from 'react-hook-form';
+import validatorjs from 'validator';
+import { getReactHookFormStatusWithMessage } from '@helper';
 
 type LocalConfigType = Omit<EnablePromethusParams, 'clusterName'>;
 
 export function ConfigPromethus({ route, actions }: RootProps) {
-  const inputStyle = { width: '300px' };
-
   const initialConfig = (): LocalConfigType => ({
     resources: {
       limits: {
@@ -25,16 +26,25 @@ export function ConfigPromethus({ route, actions }: RootProps) {
     alertRepeatInterval: 20
   });
 
-  const [config, setConfig] = useState(initialConfig);
+  const {
+    control,
+    handleSubmit,
+
+    getValues
+  } = useForm<LocalConfigType>({
+    defaultValues: initialConfig(),
+    mode: 'onBlur'
+  });
 
   const limitValidate = (type: 'cpu' | 'memory') => () => {
     const {
       resources: { limits, requests }
-    } = config;
-    return requests[type] > limits[type] ? Promise.reject(`${type}预留不能超过限制`) : Promise.resolve();
+    } = getValues();
+
+    if (requests[type] > limits[type]) return `${type}预留不能超过限制`;
   };
 
-  async function submit(values) {
+  async function onSubmit(values) {
     await enablePromethus({ clusterName: route.queries.clusterId, ...values });
     actions.cluster.applyFilter({});
     cancelBack();
@@ -48,75 +58,103 @@ export function ConfigPromethus({ route, actions }: RootProps) {
     <AntdLayout
       title="配置告警"
       footer={
-        <Space>
-          <Button type="primary" htmlType="submit" form="promethusConfigForm">
+        <>
+          <Button type="primary" style={{ marginRight: 10 }} onClick={handleSubmit(onSubmit)}>
             提交
           </Button>
           <Button onClick={cancelBack}>取消</Button>
-        </Space>
+        </>
       }
     >
-      <Form
-        labelAlign="left"
-        labelCol={{ span: 3 }}
-        size="middle"
-        validateTrigger="onBlur"
-        initialValues={initialConfig()}
-        onFinish={submit}
-        onValuesChange={(_, allConfig) => setConfig(allConfig)}
-        id="promethusConfigForm"
-      >
-        <Form.Item label="Promethus CPU限制">
-          <Space>
-            <Form.Item noStyle name={['resources', 'limits', 'cpu']} rules={[{ type: 'number', min: 0 }, {validator: limitValidate('cpu')}]}>
-              <InputNumber style={inputStyle} min={0} step={0.01} precision={2} />
+      <Form>
+        <Controller
+          control={control}
+          name="resources.limits.cpu"
+          rules={{
+            validate: limitValidate('cpu')
+          }}
+          render={({ field, ...others }) => (
+            <Form.Item label="Promethus CPU限制" {...getReactHookFormStatusWithMessage(others)}>
+              <InputNumber {...field} unit="核" min={0} step={0.01} precision={2} size="l" />
             </Form.Item>
-            核
-          </Space>
-        </Form.Item>
-        <Form.Item label="Promethus CPU预留">
-          <Space>
-            <Form.Item noStyle name={['resources', 'requests', 'cpu']} rules={[{ type: 'number', min: 0 }, {validator: limitValidate('cpu')}]}>
-              <InputNumber style={inputStyle} min={0} step={0.01} precision={2} />
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="resources.requests.cpu"
+          rules={{
+            validate: limitValidate('cpu')
+          }}
+          render={({ field, ...others }) => (
+            <Form.Item label="Promethus CPU预留" {...getReactHookFormStatusWithMessage(others)}>
+              <InputNumber {...field} unit="核" min={0} step={0.01} precision={2} size="l" />
             </Form.Item>
-            核
-          </Space>
-        </Form.Item>
-        <Form.Item label="Promethus 内存限制">
-          <Space>
-            <Form.Item noStyle name={['resources', 'limits', 'memory']} rules={[{ type: 'number', min: 4 }, {validator: limitValidate('memory')}]}>
-              <InputNumber style={inputStyle} min={4} precision={0} />
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="resources.limits.memory"
+          rules={{
+            validate: limitValidate('memory')
+          }}
+          render={({ field, ...others }) => (
+            <Form.Item label="Promethus 内存限制" {...getReactHookFormStatusWithMessage(others)}>
+              <InputNumber {...field} unit="Mi" min={4} precision={0} size="l" />
             </Form.Item>
-            Mi
-          </Space>
-        </Form.Item>
-        <Form.Item label="Promethus 内存预留">
-          <Space>
-            <Form.Item noStyle name={['resources', 'requests', 'memory']} rules={[{ type: 'number', min: 4 }, {validator: limitValidate('memory')}]}>
-              <InputNumber style={inputStyle} min={4} precision={0} />
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="resources.requests.memory"
+          rules={{
+            validate: limitValidate('memory')
+          }}
+          render={({ field, ...others }) => (
+            <Form.Item label="Promethus 内存预留" {...getReactHookFormStatusWithMessage(others)}>
+              <InputNumber {...field} unit="Mi" min={4} precision={0} size="l" />
             </Form.Item>
-            Mi
-          </Space>
-        </Form.Item>
-        <Form.Item label="Master节点上运行">
-          <Space>
-            <Form.Item noStyle name={['runOnMaster']} valuePropName="checked">
-              <Checkbox />
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="runOnMaster"
+          render={({ field }) => (
+            <Form.Item label="Master节点上运行">
+              <Checkbox {...field}>runOnMaster</Checkbox>
             </Form.Item>
-            runOnMaster
-          </Space>
-        </Form.Item>
-        <Form.Item label="指定告警webhook地址" name="notifyWebhook" rules={[{ type: 'url' }]}>
-          <Input style={inputStyle} />
-        </Form.Item>
-        <Form.Item label="重复告警的间隔">
-          <Space>
-            <Form.Item noStyle name={['alertRepeatInterval']} rules={[{ type: 'number', min: 0 }]}>
-              <InputNumber style={inputStyle} min={0} precision={0} />
+          )}
+        />
+
+        <Controller
+          name="notifyWebhook"
+          control={control}
+          rules={{
+            validate(value) {
+              if (value && !validatorjs.isURL(value)) {
+                return 'webhook 格式不正确!';
+              }
+            }
+          }}
+          render={({ field, ...others }) => (
+            <Form.Item label="指定告警webhook地址" {...getReactHookFormStatusWithMessage(others)}>
+              <Input {...field} />
             </Form.Item>
-            m
-          </Space>
-        </Form.Item>
+          )}
+        />
+
+        <Controller
+          control={control}
+          name="alertRepeatInterval"
+          render={({ field }) => (
+            <Form.Item label="重复告警的间隔">
+              <InputNumber {...field} min={0} precision={0} unit="m" size="l" />
+            </Form.Item>
+          )}
+        />
       </Form>
     </AntdLayout>
   );

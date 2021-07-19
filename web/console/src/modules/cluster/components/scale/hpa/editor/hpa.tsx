@@ -4,16 +4,7 @@
 import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import {
-  Layout,
-  Card,
-  Select,
-  Text,
-  Button,
-  Form,
-  Input,
-  InputNumber
-} from '@tencent/tea-component';
+import { Layout, Card, Select, Text, Button, Form, Input, InputNumber } from '@tencent/tea-component';
 import { LinkButton } from '@src/modules/common/components';
 import { Resource } from '@src/modules/common/models';
 import { useForm, useFieldArray, Controller, NestedValue } from 'react-hook-form';
@@ -37,8 +28,8 @@ import { RecordSet } from '@tencent/ff-redux';
  * 组件样式
  */
 insertCSS(
-    'hpa-editor-panel',
-    `
+  'hpa-editor-panel',
+  `
       .hpa-edit-strategy-ul { margin-bottom : 10px; }
       .hpa-edit-strategy-li + .hpa-edit-strategy-li { margin-top: 5px; }
     `
@@ -101,26 +92,32 @@ const ResourceTypeMap = {
 /**
  * 组件实现
  */
-const Hpa = React.memo((props: {
-  selectedHpa?: any;
-}) => {
-  const { route, addons } = useSelector((state) => ({ route: state.route, addons: state.subRoot.addons }));
+const Hpa = React.memo((props: { selectedHpa?: any }) => {
+  const { route, addons } = useSelector(state => ({ route: state.route, addons: state.subRoot.addons }));
   const urlParams = router.resolve(route);
   const { mode } = urlParams;
   const { clusterId, projectName, HPAName } = route.queries;
-  const { selectedHpa = {}} = props;
+  const { selectedHpa = {} } = props;
 
   const isModify = useMemo(() => mode === ModifyHpa, [mode]);
 
   /**
    * 表单初始化
    */
-  const { register, watch, handleSubmit, reset, control, errors, setValue } = useForm<{
+  const {
+    register,
+    watch,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    formState: { errors }
+  } = useForm<{
     name?: string;
     namespace?: string;
     resourceType: string;
     resource: string;
-    strategy: any;
+    strategy: { key: string; value: number }[];
     minReplicas: number;
     maxReplicas: number;
   }>({
@@ -148,7 +145,7 @@ const Hpa = React.memo((props: {
       const { name, namespace } = selectedHpa.metadata;
       const { minReplicas, maxReplicas, scaleTargetRef, metrics } = selectedHpa.spec;
       setSelectedHpaNamespace(namespace);
-      const selectedHPAStrategy =  metrics.map((item, index) => {
+      const selectedHPAStrategy = metrics.map((item, index) => {
         const { name, targetAverageValue, targetAverageUtilization } = item.resource;
         let theKey = '';
         if (name === 'cpu' || name === 'memory') {
@@ -178,15 +175,18 @@ const Hpa = React.memo((props: {
    * 设置【工作负载类型】数据
    */
   const resourceTypes = useMemo(() => {
-    const initialValue = [{
-      id: uuid(),
-      text: 'Deployment',
-      value: 'deployments'
-    }, {
-      id: uuid(),
-      text: 'StatefulSet',
-      value: 'statefulsets'
-    }];
+    const initialValue = [
+      {
+        id: uuid(),
+        text: 'Deployment',
+        value: 'deployments'
+      },
+      {
+        id: uuid(),
+        text: 'StatefulSet',
+        value: 'statefulsets'
+      }
+    ];
     let hasTapp = false;
     if (!isEmpty(addons) && !isEmpty(addons.TappController)) {
       hasTapp = true;
@@ -354,34 +354,37 @@ const Hpa = React.memo((props: {
                       showStatusIcon={false}
                       status={errors.name ? 'error' : 'success'}
                       message={
-                        errors.name ? errors.name.message : (isModify ? '' : t(
-                          '最长63个字符，只能包含小写字母、数字及分隔符("-")，且必须以小写字母开头，数字或小写字母结尾'
-                          ))
+                        errors.name
+                          ? errors.name.message
+                          : isModify
+                          ? ''
+                          : t(
+                              '最长63个字符，只能包含小写字母、数字及分隔符("-")，且必须以小写字母开头，数字或小写字母结尾'
+                            )
                       }
                     >
-                      {
-                        isModify ?
-                          <Text parent="div" align="left" reset>{selectedHpa.metadata ? selectedHpa.metadata.name : ''}</Text>
-                          :
-                          (
-                            <Controller
-                              as={Input}
-                              name="name"
-                              control={control}
-                              rules={{
-                                required: t('名称不能为空'),
-                                maxLength: {
-                                  value: 63,
-                                  message: t('名称不能超过63个字符')
-                                },
-                                pattern: {
-                                  value: /^[a-z]([-a-z0-9]*[a-z0-9])?$/,
-                                  message: t('名称格式不正确')
-                                }
-                              }}
-                            />
-                          )
-                      }
+                      {isModify ? (
+                        <Text parent="div" align="left" reset>
+                          {selectedHpa.metadata ? selectedHpa.metadata.name : ''}
+                        </Text>
+                      ) : (
+                        <Controller
+                          render={({ field }) => <Input {...field} />}
+                          name="name"
+                          control={control}
+                          rules={{
+                            required: t('名称不能为空'),
+                            maxLength: {
+                              value: 63,
+                              message: t('名称不能超过63个字符')
+                            },
+                            pattern: {
+                              value: /^[a-z]([-a-z0-9]*[a-z0-9])?$/,
+                              message: t('名称格式不正确')
+                            }
+                          }}
+                        />
+                      )}
                     </Form.Item>
                     <Form.Item
                       required
@@ -390,28 +393,28 @@ const Hpa = React.memo((props: {
                       status={errors.namespace ? 'error' : 'success'}
                       message={errors.namespace && errors.namespace.message}
                     >
-                      {
-                        isModify ?
-                          <Text parent="div" align="left" reset>{selectedHpa.metadata ? selectedHpa.metadata.namespace : ''}</Text>
-                          :
-                          (
-                            <Controller
-                              as={
-                                <Select
-                                  searchable
-                                  boxSizeSync
-                                  type="simulate"
-                                  appearence="button"
-                                  size="m"
-                                  options={isEmpty(namespaces) ? [] : namespaces.records}
-                                />
-                              }
-                              name="namespace"
-                              control={control}
-                              rules={{ required: t('命名空间不能为空') }}
+                      {isModify ? (
+                        <Text parent="div" align="left" reset>
+                          {selectedHpa.metadata ? selectedHpa.metadata.namespace : ''}
+                        </Text>
+                      ) : (
+                        <Controller
+                          render={({ field }) => (
+                            <Select
+                              {...field}
+                              searchable
+                              boxSizeSync
+                              type="simulate"
+                              appearence="button"
+                              size="m"
+                              options={isEmpty(namespaces) ? [] : namespaces.records}
                             />
-                         )
-                      }
+                          )}
+                          name="namespace"
+                          control={control}
+                          rules={{ required: t('命名空间不能为空') }}
+                        />
+                      )}
                     </Form.Item>
                     <Form.Item
                       required
@@ -421,8 +424,9 @@ const Hpa = React.memo((props: {
                       message={errors.resourceType && errors.resourceType.message}
                     >
                       <Controller
-                        as={
+                        render={({ field }) => (
                           <Select
+                            {...field}
                             searchable
                             boxSizeSync
                             type="simulate"
@@ -430,7 +434,7 @@ const Hpa = React.memo((props: {
                             size="m"
                             options={resourceTypes}
                           />
-                        }
+                        )}
                         name="resourceType"
                         control={control}
                         rules={{ required: t('工作负载类型不能为空') }}
@@ -444,8 +448,9 @@ const Hpa = React.memo((props: {
                       message={errors.resource && errors.resource.message}
                     >
                       <Controller
-                        as={
+                        render={({ field }) => (
                           <Select
+                            {...field}
                             searchable
                             boxSizeSync
                             type="simulate"
@@ -453,45 +458,46 @@ const Hpa = React.memo((props: {
                             size="m"
                             options={isEmpty(resources) ? [] : resources.records}
                           />
-                        }
+                        )}
                         name="resource"
                         control={control}
                         rules={{ required: t('关联工作负载不能为空') }}
                       />
                     </Form.Item>
-                    <Form.Item
-                      required
-                      label={t('触发策略')}
-                      showStatusIcon={false}
-                    >
+                    <Form.Item required label={t('触发策略')} showStatusIcon={false}>
                       <ul className="hpa-edit-strategy-ul">
-                        {
-                          fields.map((item, index) => {
-                            return (
-                              <li key={item.id} className="hpa-edit-strategy-li">
-                                <Controller
-                                  as={
-                                    <Select
-                                      boxSizeSync
-                                      type="simulate"
-                                      appearence="button"
-                                      size="m"
-                                      options={StrategyOptions}
-                                      className={errors.strategy && errors.strategy[index] && errors.strategy[index].key ? 'is-error' : ''}
-                                    />
-                                  }
-                                  name={`strategy[${index}].key`}
-                                  control={control}
-                                  defaultValue={item.key}
-                                  rules={{
-                                    required: t('请选择触发策略'),
-                                    validate: value => {
-                                      // 之前的选择在这个值对应的的[]中出现了，这里就要报错重复或者二者不能同时选择
-                                      const disabledSelectValue = DisabledResourceMap[value];
-                                      let tip = '',
-                                          repeatFlag = false,
-                                          similarFlag = false;
-                                      strategy && strategy.forEach((item, i) => {
+                        {fields.map((item, index) => {
+                          return (
+                            <li key={item.id} className="hpa-edit-strategy-li">
+                              <Controller
+                                name={`strategy.${index}.key`}
+                                render={({ field }) => (
+                                  <Select
+                                    {...field}
+                                    boxSizeSync
+                                    type="simulate"
+                                    appearence="button"
+                                    size="m"
+                                    options={StrategyOptions}
+                                    className={
+                                      errors.strategy && errors.strategy[index] && errors.strategy[index].key
+                                        ? 'is-error'
+                                        : ''
+                                    }
+                                  />
+                                )}
+                                control={control}
+                                defaultValue={item.key}
+                                rules={{
+                                  required: t('请选择触发策略'),
+                                  validate: value => {
+                                    // 之前的选择在这个值对应的的[]中出现了，这里就要报错重复或者二者不能同时选择
+                                    const disabledSelectValue = DisabledResourceMap[value];
+                                    let tip = '',
+                                      repeatFlag = false,
+                                      similarFlag = false;
+                                    strategy &&
+                                      strategy.forEach((item, i) => {
                                         // 非当前值中判断
                                         if (index !== i) {
                                           // 非当前值中有相同策略选择
@@ -504,89 +510,106 @@ const Hpa = React.memo((props: {
                                           }
                                         }
                                       });
-                                      if (repeatFlag) {
-                                        tip = '相同指标不能重复设置';
-                                      } else if (similarFlag) {
-                                        const element = value.replace('Utilization', '').replace('Average', '');
-                                        tip = (element === 'cpu' ? 'CPU' : '内存') + '的利用率和使用量不能同时设置';
-                                      }
-                                      console.log('触发策略select value： ', value, tip, strategy, repeatFlag, similarFlag);
-                                      if (tip) {
-                                        return tip;
-                                      }
+                                    if (repeatFlag) {
+                                      tip = '相同指标不能重复设置';
+                                    } else if (similarFlag) {
+                                      const element = value.replace('Utilization', '').replace('Average', '');
+                                      tip = (element === 'cpu' ? 'CPU' : '内存') + '的利用率和使用量不能同时设置';
                                     }
+                                    console.log(
+                                      '触发策略select value： ',
+                                      value,
+                                      tip,
+                                      strategy,
+                                      repeatFlag,
+                                      similarFlag
+                                    );
+                                    if (tip) {
+                                      return tip;
+                                    }
+                                  }
+                                }}
+                              />
+                              <Text style={{ fontSize: '14px' }}> </Text>
+                              {strategy &&
+                              strategy[index] &&
+                              strategy[index].key &&
+                              MetricsResourceMap[strategy[index].key].unit === '%' ? (
+                                <Controller
+                                  name={`strategy.${index}.value`}
+                                  render={({ field }) => (
+                                    <InputNumber
+                                      {...field}
+                                      step={1}
+                                      min={0}
+                                      max={100}
+                                      className={
+                                        errors.strategy && errors.strategy[index] && errors.strategy[index].value
+                                          ? 'is-error'
+                                          : ''
+                                      }
+                                      unit="%"
+                                    />
+                                  )}
+                                  control={control}
+                                  defaultValue={item.value}
+                                  rules={{
+                                    required: t('请输入0-100之间的整数')
                                   }}
                                 />
-                                <Text style={{ fontSize: '14px' }}> </Text>
-                                {
-                                  strategy && strategy[index] && strategy[index].key && MetricsResourceMap[strategy[index].key].unit === '%'
-                                    ?
-                                      <Controller
-                                        as={
-                                          <InputNumber
-                                            step={1}
-                                            min={0}
-                                            max={100}
-                                            className={errors.strategy && errors.strategy[index] && errors.strategy[index].value ? 'is-error' : ''}
-                                            unit="%"
-                                          />}
-                                        name={`strategy[${index}].value`}
-                                        size="s"
-                                        control={control}
-                                        defaultValue={item.value}
-                                        rules={{
-                                          required: t('请输入0-100之间的整数')
-                                        }}
-                                      />
-                                    :
-                                      <Controller
-                                        as={
-                                          <InputNumber
-                                            step={1}
-                                            min={0}
-                                            className={errors.strategy && errors.strategy[index] && errors.strategy[index].value ? 'is-error' : ''}
-                                            unit={
-                                              strategy && strategy[index] && strategy[index].key
-                                                  ?
-                                                MetricsResourceMap[strategy[index].key].unit
-                                                  :
-                                                ''
-                                            }
-                                          />}
-                                        name={`strategy[${index}].value`}
-                                        size="s"
-                                        control={control}
-                                        defaultValue={item.value}
-                                        rules={{
-                                          required: t('请输入大于等于0的数')
-                                        }}
-                                      />
-                                }
-                                {
-                                  strategy && strategy.length > 1 &&
-                                  <LinkButton onClick={(e) => {
+                              ) : (
+                                <Controller
+                                  name={`strategy.${index}.value`}
+                                  render={({ field }) => (
+                                    <InputNumber
+                                      {...field}
+                                      step={1}
+                                      min={0}
+                                      className={
+                                        errors.strategy && errors.strategy[index] && errors.strategy[index].value
+                                          ? 'is-error'
+                                          : ''
+                                      }
+                                      unit={
+                                        strategy && strategy[index] && strategy[index].key
+                                          ? MetricsResourceMap[strategy[index].key].unit
+                                          : ''
+                                      }
+                                    />
+                                  )}
+                                  control={control}
+                                  defaultValue={item.value}
+                                  rules={{
+                                    required: t('请输入大于等于0的数')
+                                  }}
+                                />
+                              )}
+                              {strategy && strategy.length > 1 && (
+                                <LinkButton
+                                  onClick={e => {
                                     e.preventDefault();
                                     remove(index);
-                                  }}>
-                                    <i className="icon-cancel-icon" />
-                                  </LinkButton>
-                                }
-                                {
-                                  errors.strategy && errors.strategy[index] &&
-                                    <Text parent="div" theme="danger" reset>
-                                      {errors.strategy[index].key ? errors.strategy[index].key.message : ''}
-                                    </Text>
-                                }
-                              </li>
-                            );
-                          })
-                        }
+                                  }}
+                                >
+                                  <i className="icon-cancel-icon" />
+                                </LinkButton>
+                              )}
+                              {errors.strategy && errors.strategy[index] && (
+                                <Text parent="div" theme="danger" reset>
+                                  {errors.strategy[index].key ? errors.strategy[index].key.message : ''}
+                                </Text>
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                       {/*{errors.strategy && <Text parent="div" theme="danger" reset><Trans>不能有空内容</Trans></Text>}*/}
-                      <LinkButton onClick={(e) => {
-                        e.preventDefault();
-                        append({ key: '', value: 0 });
-                      }}>
+                      <LinkButton
+                        onClick={e => {
+                          e.preventDefault();
+                          append({ key: '', value: 0 });
+                        }}
+                      >
                         <Trans>新增指标</Trans>
                       </LinkButton>
                     </Form.Item>
@@ -595,12 +618,14 @@ const Hpa = React.memo((props: {
                       label={t('实例范围')}
                       showStatusIcon={false}
                       status={errors.minReplicas || errors.maxReplicas ? 'error' : 'success'}
-                      message={(errors.minReplicas && errors.minReplicas.message) || (errors.maxReplicas && errors.maxReplicas.message)}
+                      message={
+                        (errors.minReplicas && errors.minReplicas.message) ||
+                        (errors.maxReplicas && errors.maxReplicas.message)
+                      }
                     >
                       <Controller
-                        as={<InputNumber step={1} min={0} />}
+                        render={({ field }) => <InputNumber {...field} step={1} min={0} />}
                         name="minReplicas"
-                        size="s"
                         control={control}
                         rules={{
                           required: t('最小值不能为空'),
@@ -612,9 +637,8 @@ const Hpa = React.memo((props: {
                       />
                       <Text style={{ fontSize: '14px', verticalAlign: 'middle' }}> ~ </Text>
                       <Controller
-                        as={<InputNumber step={1} min={0} />}
+                        render={({ field }) => <InputNumber {...field} step={1} min={0} />}
                         name="maxReplicas"
-                        size="s"
                         control={control}
                         rules={{
                           required: t('最大值不能为空'),
@@ -626,8 +650,17 @@ const Hpa = React.memo((props: {
                     </Form.Item>
                   </Form>
                   <Form.Action>
-                    <Button htmlType="submit" type="primary"><Trans>保存</Trans></Button>
-                    <Button htmlType="button" onClick={() => { history.back() }}><Trans>取消</Trans></Button>
+                    <Button htmlType="submit" type="primary">
+                      <Trans>保存</Trans>
+                    </Button>
+                    <Button
+                      htmlType="button"
+                      onClick={() => {
+                        history.back();
+                      }}
+                    >
+                      <Trans>取消</Trans>
+                    </Button>
                   </Form.Action>
                 </form>
               </Card.Body>

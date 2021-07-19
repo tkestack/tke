@@ -11,30 +11,31 @@ import {
   Select,
   SelectOptionWithGroup,
   SelectProps
-} from '@tencent/tea-component';
+} from 'tea-component';
 
 import { FormPanelValidatable, FormPanelValidatableProps } from '../';
 
-interface FormPanelSelectProps extends SelectProps, FormPanelValidatableProps {
-  model?: FFListModel;
-  displayField?: String | Function;
-  valueField?: String | Function;
-  groupKeyField?: String | Function;
-  action?: FFListAction;
-  filter?: any;
-  label?: String;
-  loading?: boolean;
-  disabledLoading?: boolean;
-  showRefreshBtn?: boolean;
+type FormPanelSelectProps = SelectProps &
+  FormPanelValidatableProps & {
+    model?: FFListModel;
+    displayField?: string | Function;
+    valueField?: string | Function;
+    groupKeyField?: string | Function;
+    action?: FFListAction;
+    filter?: any;
+    label?: string;
+    loading?: boolean;
+    disabledLoading?: boolean;
+    showRefreshBtn?: boolean;
 
-  inputAdornment?: InputAdornmentProps;
+    inputAdornment?: InputAdornmentProps;
 
-  beforeFormat?: (records: any[]) => any[];
+    beforeFormat?: (records: any[]) => any[];
 
-  emptyTip?: React.ReactNode;
-}
+    emptyTip?: React.ReactNode;
+  };
 
-function getFieldValue(record, field: String | Function) {
+function getFieldValue(record, field: string | Function) {
   if (typeof field === 'function') {
     return field(record);
   } else {
@@ -159,12 +160,14 @@ function FormPanelSelect({
     props.placeholder = t('请选择') + props.label;
   }
 
-  if (props.options.length > 10) {
+  if (props.options.length > 10 && props.type === 'simulate') {
     props.searchable = props.searchable === undefined ? true : props.searchable;
   }
   props.type = props.type || 'simulate';
-  props.appearence = props.appearence || 'button';
-  props.boxSizeSync = props.boxSizeSync === undefined ? false : props.boxSizeSync;
+  if (props.type === 'simulate') {
+    props.appearence = props.appearence || 'button';
+    props.boxSizeSync = props.boxSizeSync === undefined ? false : props.boxSizeSync;
+  }
   props.size = props.size || 'm';
   //根据size调整弹出层最小宽度
   let sizeWithMap = {
@@ -176,12 +179,15 @@ function FormPanelSelect({
     auto: 'auto'
   };
   let boxMinWitdh = sizeWithMap[props.size];
-  props.boxStyle = props.boxStyle
-    ? Object.assign({}, props.boxStyle, {
-        maxWidth: props.boxStyle.maxWidth ? props.boxStyle.maxWidth : '400px',
-        minWidth: props.boxStyle.minWidth ? props.boxStyle.minWidth : boxMinWitdh
-      })
-    : { maxWidth: '400px', minWidth: boxMinWitdh };
+
+  if (props.type === 'simulate') {
+    props.boxStyle = props.boxStyle
+      ? Object.assign({}, props.boxStyle, {
+          maxWidth: props.boxStyle.maxWidth ? props.boxStyle.maxWidth : '400px',
+          minWidth: props.boxStyle.minWidth ? props.boxStyle.minWidth : boxMinWitdh
+        })
+      : { maxWidth: '400px', minWidth: boxMinWitdh };
+  }
 
   let validatableProps = {
     validator,

@@ -20,8 +20,8 @@
       "@i18n/translation_en": ["i18n/translation/en.js"],
       "@tea/app": ["./node_modules/@tencent/tea-app"],
       "@tea/app/*": ["./node_modules/@tencent/tea-app/lib/*"],
-      "@tea/component": ["./node_modules/@tencent/tea-component/lib"],
-      "@tea/component/*": ["./node_modules/@tencent/tea-component/lib/*"],
+      "@tea/component": ["./node_modules/tea-component/lib"],
+      "@tea/component/*": ["./node_modules/tea-component/es/*"],
       "d3": ["./node_modules/d3"],
       "@helper": ["./helpers"],
       "@helper/*": ["./helpers/*"],
@@ -39,8 +39,10 @@
       "@tencent/qcloud-redux-query": ["./lib/ff-redux/libs/qcloud-redux-query/"],
       "@tencent/qcloud-redux-workflow": ["./lib/ff-redux/libs/qcloud-redux-workflow/"],
       "@/*": ["./*"],
+      "@tencent/tea-component": ["./node_modules/tea-component"],
+      "@tencent/tea-component/*": ["./node_modules/tea-component/*"]
     }
   },
-  "exclude": ["node_modules", "dist", "build", "develop", "loader", "public", "webpack"],
+  "exclude": ["node_modules", "dist", "build", "develop", "loader", "public", "webpack", "tencent"],
   "compileOnSave": false
 }

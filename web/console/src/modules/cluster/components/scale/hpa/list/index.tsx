@@ -10,8 +10,9 @@ import {
   Pagination,
   Text,
   TagSearchBox,
-  Modal
-} from '@tencent/tea-component';
+  Modal,
+  AttributeValue
+} from 'tea-component';
 import { RecordSet } from '@tencent/ff-redux/src';
 // import { router } from '@src/modules/cluster/router.project';
 import { router } from '@src/modules/cluster/router';
@@ -34,14 +35,13 @@ interface ListProps {
 }
 
 const List = React.memo((props: ListProps) => {
-  const route = useSelector((state) => state.route);
+  const route = useSelector(state => state.route);
   const urlParams = router.resolve(route);
   const { clusterId } = route.queries;
   const { namespaces, hpaData, triggerRefresh } = props;
   const { namespaceValue } = useContext(StateContext);
   const { isShowing, toggle } = useModal();
   const [removeHpaName, setRemoveHpaName] = useState();
-
 
   /**
    * 列表内容处理
@@ -64,7 +64,7 @@ const List = React.memo((props: ListProps) => {
   /**
    * TagSearchBox和list数据的管理
    */
-  const attributes = [
+  const attributes: AttributeValue[] = [
     {
       type: 'input',
       key: 'resourceName',
@@ -92,7 +92,7 @@ const List = React.memo((props: ListProps) => {
   /**
    * 下载
    */
-  const downloadHandle = useCallback((resourceList) => {
+  const downloadHandle = useCallback(resourceList => {
     const head = ['名称', '关联工作负载', '触发策略', '最小实例数', '最大实例数'];
     function getTriggerStrategys(metrics) {
       return metrics.map((item, index) => {
@@ -105,7 +105,13 @@ const List = React.memo((props: ListProps) => {
     const rows = resourceList.map(hpa => {
       const triggerStrategyArr = getTriggerStrategys(hpa.spec.metrics);
       const triggerStrategyStr = isEmpty(triggerStrategyArr) ? '-' : triggerStrategyArr.join(';');
-      return [hpa.metadata.name, `${hpa.spec.scaleTargetRef.kind}:${hpa.spec.scaleTargetRef.name}`, triggerStrategyStr, hpa.spec.minReplicas, hpa.spec.maxReplicas];
+      return [
+        hpa.metadata.name,
+        `${hpa.spec.scaleTargetRef.kind}:${hpa.spec.scaleTargetRef.name}`,
+        triggerStrategyStr,
+        hpa.spec.minReplicas,
+        hpa.spec.maxReplicas
+      ];
     });
     downloadCsv(rows, head, 'tke_hpa_' + new Date().getTime() + '.csv');
   }, []);
@@ -167,26 +173,31 @@ const List = React.memo((props: ListProps) => {
                     header: t('名称'),
                     render: hpa => (
                       <>
-                        <LinkButton onClick={() => {
-                          router.navigate(
-                    { ...urlParams, mode: 'detail' },
-                    { ...route.queries, namespaceValue, HPAName: hpa.metadata.name });
-                        }}>
+                        <LinkButton
+                          onClick={() => {
+                            router.navigate(
+                              { ...urlParams, mode: 'detail' },
+                              { ...route.queries, namespaceValue, HPAName: hpa.metadata.name }
+                            );
+                          }}
+                        >
                           <Text id={'hpaName' + hpa.id}>{hpa.metadata.name}</Text>
                         </LinkButton>
                         <Clip target={'#hpaName' + hpa.id} />
                       </>
-                    ),
+                    )
                   },
                   {
                     key: 'workload',
                     header: t('关联工作负载'),
                     render: hpa => (
                       <>
-                        <Text id={'hpaWorkload' + hpa.id}>{hpa.spec.scaleTargetRef.kind}:{hpa.spec.scaleTargetRef.name}</Text>
+                        <Text id={'hpaWorkload' + hpa.id}>
+                          {hpa.spec.scaleTargetRef.kind}:{hpa.spec.scaleTargetRef.name}
+                        </Text>
                         <Clip target={'#hpaWorkload' + hpa.id} />
                       </>
-                    ),
+                    )
                   },
                   {
                     key: 'triggerStrategy',
@@ -199,38 +210,47 @@ const List = React.memo((props: ListProps) => {
                         if (name === 'cpu' || name === 'memory') {
                           const target = targetAverageValue ? 'targetAverageValue' : 'targetAverageUtilization';
                           const { meaning, unit } = NestedMetricsResourceMap[name][target];
-                          content = (targetAverageValue ? meaning + targetAverageValue : meaning + targetAverageUtilization) + unit;
+                          content =
+                            (targetAverageValue ? meaning + targetAverageValue : meaning + targetAverageUtilization) +
+                            unit;
                         } else {
                           const { meaning, unit } = MetricsResourceMap[name];
-                          content = (targetAverageValue ? meaning + targetAverageValue : meaning + targetAverageUtilization) + unit;
+                          content =
+                            (targetAverageValue ? meaning + targetAverageValue : meaning + targetAverageUtilization) +
+                            unit;
                         }
-                        return <Text key={index} parent="div">{content}</Text>;
+                        return (
+                          <Text key={index} parent="div">
+                            {content}
+                          </Text>
+                        );
                       });
-                    },
+                    }
                   },
                   {
                     key: 'min',
                     header: t('最小实例数'),
                     width: '10%',
-                    render: hpa => <Text>{hpa.spec.minReplicas}</Text>,
+                    render: hpa => <Text>{hpa.spec.minReplicas}</Text>
                   },
                   {
                     key: 'max',
                     header: t('最大实例数'),
                     width: '10%',
-                    render: hpa => <Text>{hpa.spec.maxReplicas}</Text>,
+                    render: hpa => <Text>{hpa.spec.maxReplicas}</Text>
                   },
                   {
                     key: 'action',
                     header: t('操作'),
-                    render: (hpa) => (
+                    render: hpa => (
                       <>
                         <LinkButton
                           tipDirection="left"
                           onClick={() => {
-                    router.navigate(
-                        { ...urlParams, mode: 'modify-hpa' },
-                        { ...route.queries, namespaceValue, HPAName: hpa.metadata.name });
+                            router.navigate(
+                              { ...urlParams, mode: 'modify-hpa' },
+                              { ...route.queries, namespaceValue, HPAName: hpa.metadata.name }
+                            );
                           }}
                         >
                           <Trans>修改配置</Trans>
@@ -239,8 +259,9 @@ const List = React.memo((props: ListProps) => {
                           tipDirection="left"
                           onClick={() => {
                             router.navigate(
-                                { ...urlParams, mode: 'modify-yaml' },
-                                { ...route.queries, namespaceValue, HPAName: hpa.metadata.name });
+                              { ...urlParams, mode: 'modify-yaml' },
+                              { ...route.queries, namespaceValue, HPAName: hpa.metadata.name }
+                            );
                           }}
                         >
                           <Trans>编辑YAML</Trans>
@@ -262,24 +283,26 @@ const List = React.memo((props: ListProps) => {
                   autotip({
                     isLoading: loading,
                     emptyText: emptyText
-                  }),
+                  })
                 ]}
               />
-              <Pagination
-                recordCount={hpaList.length}
-                pageSizeVisible={false}
-              />
+              <Pagination recordCount={hpaList.length} pageSizeVisible={false} />
             </Card>
             <Modal visible={isShowing} caption="删除资源" onClose={toggle}>
-              <Modal.Body><Trans>您确定要删除HorizontalPodAutoscaler: {{ removeHpaName }}吗？</Trans></Modal.Body>
+              <Modal.Body>
+                <Trans>您确定要删除HorizontalPodAutoscaler: {{ removeHpaName }}吗？</Trans>
+              </Modal.Body>
               <Modal.Footer>
-                <Button type="primary" onClick={async () => {
-                  const isRemove = await removeHPA({ namespace: namespaceValue, clusterId, name: removeHpaName });
-                  if (isRemove) {
-                    toggle();
-                    triggerRefresh();
-                  }
-                }}>
+                <Button
+                  type="primary"
+                  onClick={async () => {
+                    const isRemove = await removeHPA({ namespace: namespaceValue, clusterId, name: removeHpaName });
+                    if (isRemove) {
+                      toggle();
+                      triggerRefresh();
+                    }
+                  }}
+                >
                   确定
                 </Button>
                 <Button type="weak" onClick={toggle}>

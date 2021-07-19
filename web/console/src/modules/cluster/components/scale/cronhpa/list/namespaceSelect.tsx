@@ -7,10 +7,7 @@ import { CHANGE_NAMESPACE, StateContext, DispatchContext } from '../context';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { isEmpty } from '@src/modules/common/utils';
 import { router } from '@src/modules/cluster/router';
-import {
-  Select,
-  Text
-} from '@tencent/tea-component';
+import { Select, Text } from '@tencent/tea-component';
 import { RecordSet } from '@tencent/ff-redux/src';
 import { Resource } from '@src/modules/common/models';
 
@@ -18,14 +15,12 @@ import { Resource } from '@src/modules/common/models';
 interface NamespaceSelectProps {
   namespaces: RecordSet<Resource>;
 }
-let i = 0;
-const NamespaceSelect = React.memo((props: {
-  namespaces: any;
-}) => {
-  const route = useSelector((state) => state.route);
+const i = 0;
+const NamespaceSelect = React.memo((props: { namespaces: any }) => {
+  const route = useSelector(state => state.route);
   const urlParams = router.resolve(route);
   const { clusterId, projectName } = route.queries;
-  const { namespaces = {}} = props;
+  const { namespaces = {} } = props;
   const hpaDispatch = useContext(DispatchContext);
   const hpaState = useContext(StateContext);
   const { namespaceValue } = hpaState;
@@ -59,7 +54,6 @@ const NamespaceSelect = React.memo((props: {
       </Text>
       <Select
         type="native"
-        appearence="button"
         size="s"
         options={namespaces.records}
         style={{ width: '130px', marginRight: '5px' }}

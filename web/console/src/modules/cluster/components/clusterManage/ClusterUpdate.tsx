@@ -1,16 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { Space, Button, Form, Select, Checkbox, InputNumber, Typography } from 'antd';
+import React, { useState, useEffect } from 'react';
 import { AntdLayout } from '@src/modules/common/layouts';
+import { Button, H5, Form, Select, Checkbox, InputNumber } from 'tea-component';
 import { getK8sValidVersions } from '@src/webApi/cluster';
 import { compareVersion } from '@helper/version';
 import { RootProps } from '../ClusterApp';
 import { updateCluster } from '@src/webApi/cluster';
+import { useForm, Controller } from 'react-hook-form';
+import { getReactHookFormStatusWithMessage } from '@helper';
 
 export function ClusterUpdate({ route, actions }: RootProps) {
-  const ItemStyle = () => ({
-    width: 120
-  });
-
   const defaultUpgradeConfig = {
     version: null,
     drainNodeBeforeUpgrade: true,
@@ -18,10 +16,12 @@ export function ClusterUpdate({ route, actions }: RootProps) {
     autoMode: true
   };
 
-  const [showMaxPodUnready, setShowMaxPodUnready] = useState(true);
+  const { handleSubmit, control, watch } = useForm({
+    mode: 'onBlur',
+    defaultValues: defaultUpgradeConfig
+  });
 
   const { clusterId, clusterVersion } = route.queries;
-  const [_, clusterVersionSecondPart] = clusterVersion.split('.');
 
   function goBack() {
     history.back();
@@ -29,7 +29,7 @@ export function ClusterUpdate({ route, actions }: RootProps) {
 
   async function perform(values) {
     await updateCluster({ ...values, clusterName: clusterId });
-    // actions.cluster.applyPolling();
+
     goBack();
   }
 
@@ -40,7 +40,11 @@ export function ClusterUpdate({ route, actions }: RootProps) {
   useEffect(() => {
     async function fetchK8sValidVersions() {
       const versions = await getK8sValidVersions();
-      setK8sValidVersions(versions);
+      const k8sValidVersions = versions.map(v => ({
+        value: v,
+        disabled: compareVersion(clusterVersion, v) >= 0
+      }));
+      setK8sValidVersions(k8sValidVersions);
     }
 
     fetchK8sValidVersions();
@@ -50,83 +54,73 @@ export function ClusterUpdate({ route, actions }: RootProps) {
     <AntdLayout
       title="升级Master"
       footer={
-        <Space>
-          <Button type="primary" htmlType="submit" form="clusterUpdateConfigForm">
+        <>
+          <Button type="primary" style={{ marginRight: 10 }} onClick={handleSubmit(perform)}>
             提交
           </Button>
+
           <Button onClick={goBack}>取消</Button>
-        </Space>
+        </>
       }
     >
-      <Typography.Title level={5} style={{ marginBottom: 35 }}>
-        更新集群的K8S版本{clusterVersion}至：
-      </Typography.Title>
+      <H5 style={{ marginBottom: 35 }}>更新集群的K8S版本{clusterVersion}至：</H5>
 
-      <Form
-        id="clusterUpdateConfigForm"
-        labelAlign="left"
-        labelCol={{ span: 3 }}
-        size="middle"
-        validateTrigger="onBlur"
-        initialValues={defaultUpgradeConfig}
-        onFinish={perform}
-      >
-        <Form.Item
-          label="升级目标版本"
-          extra="注意：master升级支持一个次版本升级到下一个次版本，或者同样次版本的补丁版。"
-          name={['version']}
-          rules={[
-            { required: true },
-            {
-              validator(_, value: string) {
-                const [__, targetSecond] = value.split('.');
-                return +targetSecond - +clusterVersionSecondPart <= 1 // 等于0 或者等于1
-                  ? Promise.resolve()
-                  : Promise.reject('不支持直接升级到该版本！');
-              }
-            }
-          ]}
-        >
-          <Select style={ItemStyle()}>
-            {k8sValidVersions.map(v => (
-              <Select.Option key={v} disabled={compareVersion(clusterVersion, v) >= 0} value={v}>
-                {v}
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
+      <Form>
+        <Controller
+          control={control}
+          name="version"
+          rules={{ required: '请选择将要升级的k8s版本！' }}
+          render={({ field, ...others }) => (
+            <Form.Item
+              label="升级目标版本"
+              extra="注意：master升级支持一个次版本升级到下一个次版本，或者同样次版本的补丁版。"
+              {...getReactHookFormStatusWithMessage(others)}
+            >
+              <Select {...field} options={k8sValidVersions} />
+            </Form.Item>
+          )}
+        />
 
-        <Form.Item
-          valuePropName="checked"
-          name={['autoMode']}
-          label="自动升级Worker"
-          extra="注意：启用自定升级Worker，在升级完Master后，将自动升级集群下所有Worker节点。"
-        >
-          <Checkbox onChange={e => setShowMaxPodUnready(e.target.checked)}>启用自动升级</Checkbox>
-        </Form.Item>
+        <Controller
+          control={control}
+          name="autoMode"
+          render={({ field }) => (
+            <Form.Item
+              label="自动升级Worker"
+              extra="注意：启用自定升级Worker，在升级完Master后，将自动升级集群下所有Worker节点。"
+            >
+              <Checkbox {...field}>启用自动升级</Checkbox>
+            </Form.Item>
+          )}
+        />
 
-        {showMaxPodUnready && (
+        {watch('autoMode') && (
           <>
-            <Form.Item
-              valuePropName="checked"
-              name={['drainNodeBeforeUpgrade']}
-              label="驱逐节点"
-              extra="若选择升级前驱逐节点，该节点所有pod将在升级前被驱逐，此时节点如有pod使用emptyDir类卷会导致驱逐失败而影响升级流程"
-            >
-              <Checkbox>驱逐节点</Checkbox>
-            </Form.Item>
-
-            <Form.Item
-              label="最大不可用Pod占比"
-              extra="注意如果节点过少，而设置比例过低，没有足够多的节点承载pod的迁移会导致升级卡死。如果业务对pod可用比例较高，请考虑选择升级前不驱逐节点。"
-            >
-              <Space>
-                <Form.Item name={['maxUnready']} noStyle rules={[{ type: 'number', required: true, min: 0, max: 100 }]}>
-                  <InputNumber style={ItemStyle()} min={0} max={100} />
+            <Controller
+              control={control}
+              name="drainNodeBeforeUpgrade"
+              render={({ field }) => (
+                <Form.Item
+                  label="驱逐节点"
+                  extra="若选择升级前驱逐节点，该节点所有pod将在升级前被驱逐，此时节点如有pod使用emptyDir类卷会导致驱逐失败而影响升级流程"
+                >
+                  <Checkbox {...field}>驱逐节点</Checkbox>
                 </Form.Item>
-                %
-              </Space>
-            </Form.Item>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="maxUnready"
+              render={({ field }) => (
+                <Form.Item
+                  label="最大不可用Pod占比"
+                  extra="注意如果节点过少，而设置比例过低，没有足够多的节点承载pod的迁移会导致升级卡死。如果业务对pod可用比例较高，请考虑选择升级前不驱逐节点。"
+                >
+                  <InputNumber {...field} min={0} max={100} unit="%" />
+                </Form.Item>
+              )}
+            />
           </>
         )}
       </Form>
