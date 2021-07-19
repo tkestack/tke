@@ -28,11 +28,28 @@ import (
 
 const (
 	// LatestVersion is latest version of addon.
+	// TODO: bump up to v1.0.3
 	LatestVersion = "v1.0.2"
+
+	// Provisioner and ... csi sidecar and controller images name
+	Provisioner      = "csi-provisioner"
+	Attacher         = "csi-attacher"
+	Snapshotter      = "csi-snapshotter"
+	CSINodeRegistrar = "csi-node-driver-registrar"
+	TencentCBSDriver = "csi-tencentcloud-cbs"
 )
 
 type Components struct {
 	CSIOperator containerregistry.Image
+
+	// csi sidecar images
+	ProvisionerV101   containerregistry.Image
+	AttacherV110      containerregistry.Image
+	SnapshotterV110   containerregistry.Image
+	NodeRegistrarV110 containerregistry.Image
+
+	// Tencent CBS V1 && V1P1
+	CbsDriverV100 containerregistry.Image // TODO: v1.0.0 is DEPRECATING
 }
 
 func (c Components) Get(name string) *containerregistry.Image {
@@ -48,7 +65,14 @@ func (c Components) Get(name string) *containerregistry.Image {
 
 var versionMap = map[string]Components{
 	LatestVersion: {
+		// TODO: bump up to v1.0.3
 		CSIOperator: containerregistry.Image{Name: "csi-operator", Tag: "v1.0.2"},
+
+		ProvisionerV101:   containerregistry.Image{Name: Provisioner, Tag: "v1.0.1"},
+		AttacherV110:      containerregistry.Image{Name: Attacher, Tag: "v1.1.0"},
+		SnapshotterV110:   containerregistry.Image{Name: Snapshotter, Tag: "v1.1.0"},
+		NodeRegistrarV110: containerregistry.Image{Name: CSINodeRegistrar, Tag: "v0.3.0"},
+		CbsDriverV100:     containerregistry.Image{Name: TencentCBSDriver, Tag: "v1.0.0"},
 	},
 }
 
