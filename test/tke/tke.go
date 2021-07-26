@@ -249,7 +249,16 @@ func (testTke *TestTKE) ImportCluster(host string, port int32, caCert []byte, to
 			},
 		},
 	}
-	cluster, err = testTke.TkeClient.PlatformV1().Clusters().Create(context.Background(), cluster, metav1.CreateOptions{})
+
+	// retry
+	err = wait.PollImmediate(30*time.Second, 5*time.Minute, func() (bool, error) {
+		cluster, err = testTke.TkeClient.PlatformV1().Clusters().Create(context.Background(), cluster, metav1.CreateOptions{})
+		if err != nil {
+			klog.Warningf("Create cluster failed: %v", err)
+			return false, err
+		}
+		return true, nil
+	})
 	if err != nil {
 		klog.Error(err)
 		return
