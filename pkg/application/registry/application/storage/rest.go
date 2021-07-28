@@ -344,7 +344,7 @@ func (rs *REST) dryRun(ctx context.Context, app *application.App) (*release.Rele
 		return nil, errors.NewInternalError(err)
 	}
 
-	client, err := util.NewHelmClient(ctx, rs.platformClient, app.Spec.TargetCluster, app.Namespace)
+	client, err := util.NewHelmClient(ctx, rs.platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
 	if err != nil {
 		return nil, errors.NewBadRequest(err.Error())
 	}
@@ -363,7 +363,7 @@ func (rs *REST) dryRun(ctx context.Context, app *application.App) (*release.Rele
 
 	chartPathBasicOptions.ExistedFile = destfile
 	rel, err := client.Install(&helmaction.InstallOptions{
-		Namespace:        app.Namespace,
+		Namespace:        app.Spec.TargetNamespace,
 		ReleaseName:      app.Spec.Name,
 		DependencyUpdate: true,
 		DryRun:           true,

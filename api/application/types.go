@@ -55,10 +55,11 @@ type AppList struct {
 
 // AppSpec is a description of a bootstrap.
 type AppSpec struct {
-	Type          AppType
-	TenantID      string
-	Name          string
-	TargetCluster string
+	Type            AppType
+	TenantID        string
+	Name            string
+	TargetCluster   string
+	TargetNamespace string
 	// +optional
 	Chart Chart
 	// Values holds the values for this app.
@@ -137,10 +138,11 @@ type AppHistory struct {
 
 // AppHistorySpec is a description of a AppHistory.
 type AppHistorySpec struct {
-	Type          AppType
-	TenantID      string
-	Name          string
-	TargetCluster string
+	Type            AppType
+	TenantID        string
+	Name            string
+	TargetCluster   string
+	TargetNamespace string
 	// +optional
 	Histories []History
 }
@@ -186,10 +188,11 @@ func (t ResourceValues) String() string {
 
 // AppResourceSpec is a description of a AppResource.
 type AppResourceSpec struct {
-	Type          AppType
-	TenantID      string
-	Name          string
-	TargetCluster string
+	Type            AppType
+	TenantID        string
+	Name            string
+	TargetCluster   string
+	TargetNamespace string
 	// +optional
 	Resources Resources
 }

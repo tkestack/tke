@@ -34,12 +34,12 @@ func Uninstall(ctx context.Context,
 	applicationClient applicationversionedclient.ApplicationV1Interface,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App) (*release.UninstallReleaseResponse, error) {
-	client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Namespace)
+	client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
 	if err != nil {
 		return nil, err
 	}
 	return client.Uninstall(&helmaction.UninstallOptions{
-		Namespace:   app.Namespace,
+		Namespace:   app.Spec.TargetNamespace,
 		ReleaseName: app.Spec.Name,
 	})
 }

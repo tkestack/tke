@@ -68,12 +68,12 @@ func (rs *ResourceREST) Get(ctx context.Context, name string, options *metav1.Ge
 	}
 	app := obj.(*application.App)
 
-	client, err := util.NewHelmClient(ctx, rs.platformClient, app.Spec.TargetCluster, app.Namespace)
+	client, err := util.NewHelmClient(ctx, rs.platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
 	resources, err := client.Status(&helmaction.StatusOptions{
-		Namespace:   app.Namespace,
+		Namespace:   app.Spec.TargetNamespace,
 		ReleaseName: app.Spec.Name,
 	})
 	if err != nil {
@@ -85,10 +85,11 @@ func (rs *ResourceREST) Get(ctx context.Context, name string, options *metav1.Ge
 			Name:      app.Name,
 		},
 		Spec: application.AppResourceSpec{
-			Type:          app.Spec.Type,
-			TenantID:      app.Spec.TenantID,
-			Name:          app.Spec.Name,
-			TargetCluster: app.Spec.TargetCluster,
+			Type:            app.Spec.Type,
+			TenantID:        app.Spec.TenantID,
+			Name:            app.Spec.Name,
+			TargetCluster:   app.Spec.TargetCluster,
+			TargetNamespace: app.Spec.TargetNamespace,
 		},
 	}
 	res := make(application.Resources, len(resources.Resources))

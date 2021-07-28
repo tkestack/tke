@@ -36875,6 +36875,12 @@ func schema_tke_api_application_v1_AppHistorySpec(ref common.ReferenceCallback) 
 							Format: "",
 						},
 					},
+					"targetNamespace": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"histories": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
@@ -36888,7 +36894,7 @@ func schema_tke_api_application_v1_AppHistorySpec(ref common.ReferenceCallback) 
 						},
 					},
 				},
-				Required: []string{"type", "tenantID", "name", "targetCluster"},
+				Required: []string{"type", "tenantID", "name", "targetCluster", "targetNamespace"},
 			},
 		},
 		Dependencies: []string{
@@ -37015,6 +37021,12 @@ func schema_tke_api_application_v1_AppResourceSpec(ref common.ReferenceCallback)
 							Format: "",
 						},
 					},
+					"targetNamespace": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"resources": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
@@ -37037,7 +37049,7 @@ func schema_tke_api_application_v1_AppResourceSpec(ref common.ReferenceCallback)
 						},
 					},
 				},
-				Required: []string{"type", "tenantID", "name", "targetCluster"},
+				Required: []string{"type", "tenantID", "name", "targetCluster", "targetNamespace"},
 			},
 		},
 	}
@@ -37074,6 +37086,12 @@ func schema_tke_api_application_v1_AppSpec(ref common.ReferenceCallback) common.
 							Format: "",
 						},
 					},
+					"targetNamespace": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"chart": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref("tkestack.io/tke/api/application/v1.Chart"),
@@ -37105,7 +37123,7 @@ func schema_tke_api_application_v1_AppSpec(ref common.ReferenceCallback) common.
 						},
 					},
 				},
-				Required: []string{"type", "tenantID", "name", "targetCluster", "dryRun"},
+				Required: []string{"type", "tenantID", "name", "targetCluster", "targetNamespace", "dryRun"},
 			},
 		},
 		Dependencies: []string{

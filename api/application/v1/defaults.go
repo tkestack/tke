@@ -26,6 +26,12 @@ func addDefaultingFuncs(scheme *runtime.Scheme) error {
 	return RegisterDefaults(scheme)
 }
 
+func SetDefaults_App(obj *App) {
+	if len(obj.Spec.TargetNamespace) == 0 {
+		obj.Spec.TargetNamespace = obj.Namespace
+	}
+}
+
 func SetDefaults_AppSpec(obj *AppSpec) {
 	if obj.Finalizers == nil || len(obj.Finalizers) == 0 {
 		obj.Finalizers = []FinalizerName{

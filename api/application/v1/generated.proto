@@ -62,8 +62,10 @@ message AppHistorySpec {
 
   optional string targetCluster = 4;
 
+  optional string targetNamespace = 5;
+
   // +optional
-  repeated History histories = 5;
+  repeated History histories = 6;
 }
 
 // AppList is the whole list of all bootstraps.
@@ -95,8 +97,10 @@ message AppResourceSpec {
 
   optional string targetCluster = 4;
 
+  optional string targetNamespace = 5;
+
   // +optional
-  map<string, ResourceValues> resources = 5;
+  map<string, ResourceValues> resources = 6;
 }
 
 // AppSpec is a description of a project.
@@ -109,17 +113,19 @@ message AppSpec {
 
   optional string targetCluster = 4;
 
+  optional string targetNamespace = 5;
+
   // +optional
-  optional Chart chart = 5;
+  optional Chart chart = 6;
 
   // Values holds the values for this app.
   // +optional
-  optional AppValues values = 6;
+  optional AppValues values = 7;
 
   // +optional
-  repeated string finalizers = 7;
+  repeated string finalizers = 8;
 
-  optional bool dryRun = 8;
+  optional bool dryRun = 9;
 }
 
 // AppStatus represents information about the status of a bootstrap.

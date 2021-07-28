@@ -39,7 +39,7 @@ func Install(ctx context.Context,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
 	updateStatusFunc updateStatusFunc) (*applicationv1.App, error) {
-	client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Namespace)
+	client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func Install(ctx context.Context,
 
 	chartPathBasicOptions.ExistedFile = destfile
 	_, err = client.Install(&helmaction.InstallOptions{
-		Namespace:        newApp.Namespace,
+		Namespace:        newApp.Spec.TargetNamespace,
 		ReleaseName:      newApp.Spec.Name,
 		DependencyUpdate: true,
 		Values:           values,

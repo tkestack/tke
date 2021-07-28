@@ -55,18 +55,19 @@ type AppList struct {
 
 // AppSpec is a description of a project.
 type AppSpec struct {
-	Type          AppType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=AppType"`
-	TenantID      string  `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
-	Name          string  `json:"name" protobuf:"bytes,3,opt,name=name"`
-	TargetCluster string  `json:"targetCluster" protobuf:"bytes,4,opt,name=targetCluster"`
+	Type            AppType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=AppType"`
+	TenantID        string  `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
+	Name            string  `json:"name" protobuf:"bytes,3,opt,name=name"`
+	TargetCluster   string  `json:"targetCluster" protobuf:"bytes,4,opt,name=targetCluster"`
+	TargetNamespace string  `json:"targetNamespace" protobuf:"bytes,5,opt,name=targetNamespace"`
 	// +optional
-	Chart Chart `json:"chart" protobuf:"bytes,5,opt,name=chart,casttype=Chart"`
+	Chart Chart `json:"chart" protobuf:"bytes,6,opt,name=chart,casttype=Chart"`
 	// Values holds the values for this app.
 	// +optional
-	Values AppValues `json:"values,omitempty" protobuf:"bytes,6,opt,name=values,casttype=AppValues"`
+	Values AppValues `json:"values,omitempty" protobuf:"bytes,7,opt,name=values,casttype=AppValues"`
 	// +optional
-	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,7,rep,name=finalizers,casttype=FinalizerName"`
-	DryRun     bool            `json:"dryRun" protobuf:"bytes,8,opt,name=dryRun"`
+	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,8,rep,name=finalizers,casttype=FinalizerName"`
+	DryRun     bool            `json:"dryRun" protobuf:"bytes,9,opt,name=dryRun"`
 }
 
 // Chart is a description of a chart.
@@ -137,12 +138,13 @@ type AppHistory struct {
 
 // AppHistorySpec is a description of a AppHistory.
 type AppHistorySpec struct {
-	Type          AppType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=AppType"`
-	TenantID      string  `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
-	Name          string  `json:"name" protobuf:"bytes,3,opt,name=name"`
-	TargetCluster string  `json:"targetCluster" protobuf:"bytes,4,opt,name=targetCluster"`
+	Type            AppType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=AppType"`
+	TenantID        string  `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
+	Name            string  `json:"name" protobuf:"bytes,3,opt,name=name"`
+	TargetCluster   string  `json:"targetCluster" protobuf:"bytes,4,opt,name=targetCluster"`
+	TargetNamespace string  `json:"targetNamespace" protobuf:"bytes,5,opt,name=targetNamespace"`
 	// +optional
-	Histories []History `json:"histories,omitempty" protobuf:"bytes,5,opt,name=histories,casttype=History"`
+	Histories []History `json:"histories,omitempty" protobuf:"bytes,6,opt,name=histories,casttype=History"`
 }
 
 // History is a history of a app.
@@ -186,12 +188,13 @@ func (t ResourceValues) String() string {
 
 // AppResourceSpec is a description of a AppResource.
 type AppResourceSpec struct {
-	Type          AppType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=AppType"`
-	TenantID      string  `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
-	Name          string  `json:"name" protobuf:"bytes,3,opt,name=name"`
-	TargetCluster string  `json:"targetCluster" protobuf:"bytes,4,opt,name=targetCluster"`
+	Type            AppType `json:"type" protobuf:"bytes,1,opt,name=type,casttype=AppType"`
+	TenantID        string  `json:"tenantID" protobuf:"bytes,2,opt,name=tenantID"`
+	Name            string  `json:"name" protobuf:"bytes,3,opt,name=name"`
+	TargetCluster   string  `json:"targetCluster" protobuf:"bytes,4,opt,name=targetCluster"`
+	TargetNamespace string  `json:"targetNamespace" protobuf:"bytes,5,opt,name=targetNamespace"`
 	// +optional
-	Resources Resources `json:"resources,omitempty" protobuf:"bytes,5,opt,name=resources,casttype=Resources"`
+	Resources Resources `json:"resources,omitempty" protobuf:"bytes,6,opt,name=resources,casttype=Resources"`
 }
 
 // AppValues string the values for this app.
