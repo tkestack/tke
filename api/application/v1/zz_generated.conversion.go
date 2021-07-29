@@ -243,6 +243,7 @@ func autoConvert_v1_AppHistorySpec_To_application_AppHistorySpec(in *AppHistoryS
 	out.TenantID = in.TenantID
 	out.Name = in.Name
 	out.TargetCluster = in.TargetCluster
+	out.TargetNamespace = in.TargetNamespace
 	out.Histories = *(*[]application.History)(unsafe.Pointer(&in.Histories))
 	return nil
 }
@@ -257,6 +258,7 @@ func autoConvert_application_AppHistorySpec_To_v1_AppHistorySpec(in *application
 	out.TenantID = in.TenantID
 	out.Name = in.Name
 	out.TargetCluster = in.TargetCluster
+	out.TargetNamespace = in.TargetNamespace
 	out.Histories = *(*[]History)(unsafe.Pointer(&in.Histories))
 	return nil
 }
@@ -319,6 +321,7 @@ func autoConvert_v1_AppResourceSpec_To_application_AppResourceSpec(in *AppResour
 	out.TenantID = in.TenantID
 	out.Name = in.Name
 	out.TargetCluster = in.TargetCluster
+	out.TargetNamespace = in.TargetNamespace
 	out.Resources = *(*application.Resources)(unsafe.Pointer(&in.Resources))
 	return nil
 }
@@ -333,6 +336,7 @@ func autoConvert_application_AppResourceSpec_To_v1_AppResourceSpec(in *applicati
 	out.TenantID = in.TenantID
 	out.Name = in.Name
 	out.TargetCluster = in.TargetCluster
+	out.TargetNamespace = in.TargetNamespace
 	out.Resources = *(*Resources)(unsafe.Pointer(&in.Resources))
 	return nil
 }
@@ -347,6 +351,7 @@ func autoConvert_v1_AppSpec_To_application_AppSpec(in *AppSpec, out *application
 	out.TenantID = in.TenantID
 	out.Name = in.Name
 	out.TargetCluster = in.TargetCluster
+	out.TargetNamespace = in.TargetNamespace
 	if err := Convert_v1_Chart_To_application_Chart(&in.Chart, &out.Chart, s); err != nil {
 		return err
 	}
@@ -368,6 +373,7 @@ func autoConvert_application_AppSpec_To_v1_AppSpec(in *application.AppSpec, out 
 	out.TenantID = in.TenantID
 	out.Name = in.Name
 	out.TargetCluster = in.TargetCluster
+	out.TargetNamespace = in.TargetNamespace
 	if err := Convert_application_Chart_To_v1_Chart(&in.Chart, &out.Chart, s); err != nil {
 		return err
 	}

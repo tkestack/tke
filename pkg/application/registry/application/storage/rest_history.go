@@ -68,12 +68,12 @@ func (rs *HistoryREST) Get(ctx context.Context, name string, options *metav1.Get
 	}
 	app := obj.(*application.App)
 
-	client, err := util.NewHelmClient(ctx, rs.platformClient, app.Spec.TargetCluster, app.Namespace)
+	client, err := util.NewHelmClient(ctx, rs.platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
 	history, err := client.History(&helmaction.HistoryOptions{
-		Namespace:   app.Namespace,
+		Namespace:   app.Spec.TargetNamespace,
 		ReleaseName: app.Spec.Name,
 	})
 	if err != nil {
@@ -85,11 +85,12 @@ func (rs *HistoryREST) Get(ctx context.Context, name string, options *metav1.Get
 			Name:      app.Name,
 		},
 		Spec: application.AppHistorySpec{
-			Type:          app.Spec.Type,
-			TenantID:      app.Spec.TenantID,
-			Name:          app.Spec.Name,
-			TargetCluster: app.Spec.TargetCluster,
-			Histories:     make([]application.History, len(history)),
+			Type:            app.Spec.Type,
+			TenantID:        app.Spec.TenantID,
+			Name:            app.Spec.Name,
+			TargetCluster:   app.Spec.TargetCluster,
+			TargetNamespace: app.Spec.TargetNamespace,
+			Histories:       make([]application.History, len(history)),
 		},
 	}
 	appHistory.Spec.Histories = make([]application.History, len(history))

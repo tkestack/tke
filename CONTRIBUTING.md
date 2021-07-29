@@ -127,3 +127,4 @@ At the same time, the Release TKEStack contains Release Notes and Changelog, whi
 For changes that have a greater scope of impact, such as underlying networks, installation processes, kay data structure changes, etc., design Proposals need to be planned in advance and submitted (or comment under the Issue).
 
 Proposals submitted documents to the [design-proposals](https://github.com/tkestack/tke/tree/master/docs/design-proposals) to the public, the user feedback through Issue comments, the administrator and TOC finally decide the Proposals results.
+
