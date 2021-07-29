@@ -353,11 +353,11 @@ func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedAp
 		newStatus.LastTransitionTime = metav1.Now()
 		return c.updateStatus(ctx, app, &app.Status, newStatus)
 	}
-	rel, found := helmutil.Filter(rels, app.Namespace, app.Spec.Name)
+	rel, found := helmutil.Filter(rels, app.Spec.TargetNamespace, app.Spec.Name)
 	if !found {
 		newStatus.Phase = applicationv1.AppPhaseSyncFailed
 		newStatus.Message = "sync app failed"
-		newStatus.Reason = fmt.Sprintf("release not found: %s/%s", app.Namespace, app.Spec.Name)
+		newStatus.Reason = fmt.Sprintf("release not found: %s/%s", app.Spec.TargetNamespace, app.Spec.Name)
 		newStatus.LastTransitionTime = metav1.Now()
 		return c.updateStatus(ctx, app, &app.Status, newStatus)
 	}

@@ -39,6 +39,7 @@ func RegisterDefaults(scheme *runtime.Scheme) error {
 }
 
 func SetObjectDefaults_App(in *App) {
+	SetDefaults_App(in)
 	SetDefaults_AppSpec(&in.Spec)
 	SetDefaults_AppStatus(&in.Status)
 }
