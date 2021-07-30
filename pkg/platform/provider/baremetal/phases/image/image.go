@@ -20,6 +20,8 @@ package image
 
 import (
 	"fmt"
+	"k8s.io/klog"
+	"strings"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -39,16 +41,28 @@ func PullKubernetesImages(c *v1.Cluster, s ssh.Interface, option *Option) error 
 
 	for _, image := range images {
 		cmd := ""
-		if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
-			cmd = fmt.Sprintf("docker pull %s", image)
-		} else {
-			cmd = fmt.Sprintf("crictl pull %s", image)
-		}
-		_, err := s.CombinedOutput(cmd)
+		output, err := s.CombinedOutput("env | grep DOCKERHUBACTIONAUTH= | awk -F 'DOCKERHUBACTIONAUTH=' '{print $2}'")
+		klog.Info("=====AUTH ENV STRING")
+		klog.Info(output)
 		if err != nil {
 			return err
 		}
+		AUTHENV := strings.TrimSpace(string(output))
+		if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
+			cmd = fmt.Sprintf("docker pull %s", image)
+		} else {
+			if len(AUTHENV) == 0 {
+				cmd = fmt.Sprintf("crictl pull %s", image)
+			} else {
+				cmd = fmt.Sprintf("crictl pull --auth=%s %s", AUTHENV, image)
+			}
+		}
+		_, err = s.CombinedOutput(cmd)
+		if err != nil {
+			str := err.Error()
+			str = strings.ReplaceAll(str, AUTHENV, "")
+			return fmt.Errorf("pull kubernetes image failed with error: %s", str)
+		}
 	}
-
 	return nil
 }

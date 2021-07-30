@@ -361,6 +361,7 @@ func (p *provider) CreateDockerConf(sshConfig ssh.Config) error {
 	if err != nil {
 		return fmt.Errorf("create docker config failed. %v", err)
 	}
+	auths := os.Getenv(env.DOCKERHUBACTIONAUTH)
 	s, err := ssh.New(&sshConfig)
 	if err != nil {
 		return fmt.Errorf("create ssh failed: %v", err)
@@ -368,6 +369,11 @@ func (p *provider) CreateDockerConf(sshConfig ssh.Config) error {
 	out, err := s.CombinedOutput("mkdir " + dockerconfDir)
 	if err != nil {
 		return fmt.Errorf("mkdir %v failed: %v, out: %v", dockerconfDir, err, string(out))
+	}
+	cmd := fmt.Sprintf("export DOCKERHUBACTIONAUTH=%s", auths)
+	output, err := s.CombinedOutput("echo " + cmd + " >> ~/.bashrc && export BASH_ENV=~/.bashrc")
+	if err != nil {
+		return fmt.Errorf("set DOCKERHUBACTIONAUTH env failed: %v, out: %v", err, string(output))
 	}
 
 	err = s.WriteFile(bytes.NewReader(dockerconf), dockerconfPath)
