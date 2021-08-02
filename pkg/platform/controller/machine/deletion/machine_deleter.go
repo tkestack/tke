@@ -26,12 +26,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
+
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	platformv1 "tkestack.io/tke/api/platform/v1"
 	v1 "tkestack.io/tke/api/platform/v1"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
-	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -101,7 +100,7 @@ func (d *machineDeleter) Delete(ctx context.Context, name string) error {
 
 	// ensure that the status is up to date on the machine
 	// if we get a not found error, we assume the machine is truly gone
-	machine, err = d.retryOnConflictError(machine, d.updateMachineStatusFunc)
+	machine, err = d.retryOnConflictError(ctx, machine, d.updateMachineStatusFunc)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return nil
@@ -126,7 +125,7 @@ func (d *machineDeleter) Delete(ctx context.Context, name string) error {
 	}
 
 	// we have removed content, so mark it finalized by us
-	machine, err = d.retryOnConflictError(machine, d.finalizeMachine)
+	machine, err = d.retryOnConflictError(ctx, machine, d.finalizeMachine)
 	if err != nil {
 		// in normal practice, this should not be possible, but if a deployment is running
 		// two controllers to do machine deletion that share a common finalizer token it's
@@ -159,15 +158,15 @@ func (d *machineDeleter) deleteMachine(machine *v1.Machine) error {
 }
 
 // updateMachineFunc is a function that makes an update to a namespace
-type updateMachineFunc func(machine *v1.Machine) (*v1.Machine, error)
+type updateMachineFunc func(ctx context.Context, machine *v1.Machine) (*v1.Machine, error)
 
 // retryOnConflictError retries the specified fn if there was a conflict error
 // it will return an error if the UID for an object changes across retry operations.
 // TODO RetryOnConflict should be a generic concept in client code
-func (d *machineDeleter) retryOnConflictError(machine *v1.Machine, fn updateMachineFunc) (result *v1.Machine, err error) {
+func (d *machineDeleter) retryOnConflictError(ctx context.Context, machine *v1.Machine, fn updateMachineFunc) (result *v1.Machine, err error) {
 	latestMachine := machine
 	for {
-		result, err = fn(latestMachine)
+		result, err = fn(ctx, latestMachine)
 		if err == nil {
 			return result, nil
 		}
@@ -186,7 +185,7 @@ func (d *machineDeleter) retryOnConflictError(machine *v1.Machine, fn updateMach
 }
 
 // updateMachineStatusFunc will verify that the status of the machine is correct
-func (d *machineDeleter) updateMachineStatusFunc(machine *v1.Machine) (*v1.Machine, error) {
+func (d *machineDeleter) updateMachineStatusFunc(ctx context.Context, machine *v1.Machine) (*v1.Machine, error) {
 	if machine.DeletionTimestamp.IsZero() || machine.Status.Phase == v1.MachineTerminating {
 		return machine, nil
 	}
@@ -203,7 +202,7 @@ func finalized(machine *v1.Machine) bool {
 }
 
 // finalizeMachine removes the specified finalizerToken and finalizes the machine
-func (d *machineDeleter) finalizeMachine(machine *v1.Machine) (*v1.Machine, error) {
+func (d *machineDeleter) finalizeMachine(ctx context.Context, machine *v1.Machine) (*v1.Machine, error) {
 	machineFinalize := v1.Machine{}
 	machineFinalize.ObjectMeta = machine.ObjectMeta
 	machineFinalize.Spec = machine.Spec
@@ -225,7 +224,7 @@ func (d *machineDeleter) finalizeMachine(machine *v1.Machine) (*v1.Machine, erro
 		Name(machineFinalize.Name).
 		SubResource("finalize").
 		Body(&machineFinalize).
-		Do(context.Background()).
+		Do(ctx).
 		Into(machine)
 
 	if err != nil {
@@ -241,7 +240,6 @@ type deleteResourceFunc func(ctx context.Context, deleter *machineDeleter, machi
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	deleteMachineProvider,
-	deleteNode,
 }
 
 // deleteAllContent will use the client to delete each resource identified in machine.
@@ -284,42 +282,6 @@ func deleteMachineProvider(ctx context.Context, deleter *machineDeleter, machine
 	}
 
 	log.FromContext(ctx).Info("deleteMachineProvider done")
-
-	return nil
-}
-
-func deleteNode(ctx context.Context, deleter *machineDeleter, machine *v1.Machine) error {
-	log.FromContext(ctx).Info("deleteNode doing")
-
-	cluster, err := clusterprovider.GetV1ClusterByName(context.Background(), deleter.platformClient, machine.Spec.ClusterName, clusterprovider.AdminUsername)
-	if err != nil {
-		return err
-	}
-	if cluster.Status.Phase == platformv1.ClusterTerminating {
-		return nil
-	}
-	clientset, err := cluster.Clientset()
-	if err != nil {
-		return err
-	}
-
-	node, err := apiclient.GetNodeByMachineIP(ctx, clientset, machine.Spec.IP)
-	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
-		}
-		log.FromContext(ctx).Info("deleteNode done")
-		return nil
-	}
-
-	err = clientset.CoreV1().Nodes().Delete(context.Background(), node.Name, metav1.DeleteOptions{})
-	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
-		}
-	}
-
-	log.FromContext(ctx).Info("deleteNode done")
 
 	return nil
 }
