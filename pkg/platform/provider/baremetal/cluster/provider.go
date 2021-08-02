@@ -153,6 +153,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureRemoveNode,
 		},
 		DeleteHandlers: []clusterprovider.Handler{
+			p.EnsureRemoveMachine,
 			p.EnsureCleanClusterMark,
 		},
 	}
@@ -168,6 +169,8 @@ func NewProvider() (*Provider, error) {
 
 	// Run for compatibility with installer.
 	// TODO: Installer reuse platform components
+
+	log.Infof("===============cfg:%#v\n", cfg)
 	if cfg.PlatformAPIClientConfig != "" {
 		restConfig, err := clientcmd.BuildConfigFromFlags("", cfg.PlatformAPIClientConfig)
 		if err != nil {

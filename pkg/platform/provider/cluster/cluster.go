@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+	"tkestack.io/tke/pkg/util/log"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -101,7 +102,12 @@ func Providers() []string {
 // GetProvider returns provider by name
 func GetProvider(name string) (Provider, error) {
 	providersMu.RLock()
+
+	log.Infof("providers = %#v\n", providers)
 	provider, ok := providers[name]
+
+	log.Infof("provider[%s]= %#v\n", name, provider)
+
 	providersMu.RUnlock()
 	if !ok {
 		return nil, fmt.Errorf("cluster: unknown provider %q (forgotten import?)", name)
