@@ -94,6 +94,10 @@ func NewProvider() (*Provider, error) {
 			p.EnsureUpgrade,
 			p.EnsurePostUpgradeHook,
 		},
+		// TODO:
+		//DeleteHandlers: []machineprovider.Handler{
+		//	p.EnsureRemoveNode,
+		//},
 	}
 
 	cfg, err := config.New(constants.ConfigFile)

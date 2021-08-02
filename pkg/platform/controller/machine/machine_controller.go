@@ -21,9 +21,6 @@ package machine
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"time"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -33,6 +30,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
+	"reflect"
+	"time"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
@@ -117,12 +116,22 @@ func (c *Controller) needsUpdate(oldMachine *platformv1.Machine, newMachine *pla
 		return true
 	}
 
+	c.log.Info("==================", "oldPhase", oldMachine.Status.Phase)
+	c.log.Info("==================", "newPhase", newMachine.Status.Phase)
+	if oldMachine.Status.Phase != platformv1.MachineTerminating && newMachine.Status.Phase == platformv1.MachineTerminating {
+		c.log.Info("==================", "check", true)
+		return true
+	}
+
 	// Control the synchronization interval through the health detection interval
 	// to avoid version conflicts caused by concurrent modification
 	healthCondition := newMachine.GetCondition(conditionTypeHealthCheck)
+	c.log.Info("==================", "healthCondition", healthCondition)
 	if healthCondition == nil {
 		return true
 	}
+
+	c.log.Info("==================", "time.Since(healthCondition.LastProbeTime.Time) > resyncInternal", time.Since(healthCondition.LastProbeTime.Time) > resyncInternal)
 	if time.Since(healthCondition.LastProbeTime.Time) > resyncInternal {
 		return true
 	}
@@ -183,6 +192,7 @@ func (c *Controller) processNextWorkItem() bool {
 		return true
 	}
 
+	// TODO:
 	runtime.HandleError(fmt.Errorf("error processing machine %v (will retry): %v", key, err))
 	c.queue.AddRateLimited(key)
 	return true
@@ -206,10 +216,12 @@ func (c *Controller) syncMachine(key string) error {
 	}
 
 	machine, err := c.lister.Get(name)
+	// TODO: Maybe already deleted
 	if apierrors.IsNotFound(err) {
 		log.FromContext(ctx).Info("Machine has been deleted")
 	}
 	if err != nil {
+		// TODO
 		utilruntime.HandleError(fmt.Errorf("unable to retrieve machine %v from store: %v", key, err))
 		return err
 	}

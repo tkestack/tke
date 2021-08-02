@@ -24,9 +24,9 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
+
 	v1clientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
@@ -245,7 +245,6 @@ var deleteResourceFuncs = []deleteResourceFunc{
 	deleteIPAM,
 	deleteTappControllers,
 	deleteClusterProvider,
-	deleteMachine,
 }
 
 // deleteAllContent will use the client to delete each resource identified in cluster.
@@ -434,29 +433,3 @@ func deleteClusterCredential(ctx context.Context, deleter *clusterDeleter, clust
 	return nil
 }
 */
-
-func deleteMachine(ctx context.Context, deleter *clusterDeleter, cluster *platformv1.Cluster) error {
-	log.FromContext(ctx).Info("deleteMachine doing")
-
-	fieldSelector := fields.OneTermEqualSelector("spec.clusterName", cluster.Name).String()
-	machineList, err := deleter.platformClient.Machines().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
-	if err != nil {
-		return err
-	}
-	if len(machineList.Items) == 0 {
-		return nil
-	}
-	background := metav1.DeletePropagationForeground
-	deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
-	for _, machine := range machineList.Items {
-		if err := deleter.platformClient.Machines().Delete(ctx, machine.Name, deleteOpt); err != nil {
-			if !errors.IsNotFound(err) {
-				return err
-			}
-		}
-	}
-
-	log.FromContext(ctx).Info("deleteMachine done")
-
-	return nil
-}

@@ -291,10 +291,15 @@ func deleteMachineProvider(ctx context.Context, deleter *machineDeleter, machine
 func deleteNode(ctx context.Context, deleter *machineDeleter, machine *v1.Machine) error {
 	log.FromContext(ctx).Info("deleteNode doing")
 
+	// TODO: ERROR
 	cluster, err := typesv1.GetClusterByName(context.Background(), deleter.platformClient, machine.Spec.ClusterName)
 	if err != nil {
+		log.FromContext(ctx).Info("===========", "err", err.Error())
 		return err
 	}
+
+	log.FromContext(ctx).Info("===========", "phase", cluster.Status.Phase)
+	// phase Terminating don't delete
 	if cluster.Status.Phase == platformv1.ClusterTerminating {
 		return nil
 	}
@@ -306,9 +311,10 @@ func deleteNode(ctx context.Context, deleter *machineDeleter, machine *v1.Machin
 	node, err := apiclient.GetNodeByMachineIP(ctx, clientset, machine.Spec.IP)
 	if err != nil {
 		if !errors.IsNotFound(err) {
+			log.FromContext(ctx).Info("===========", "error", err)
 			return err
 		}
-		log.FromContext(ctx).Info("deleteNode done")
+		log.FromContext(ctx).Info("deleteNode done successfully")
 		return nil
 	}
 

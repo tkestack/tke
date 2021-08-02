@@ -271,7 +271,7 @@ func (c *Controller) reconcile(ctx context.Context, key string, cluster *platfor
 		log.FromContext(ctx).Info("Cluster has been terminated. Attempting to cleanup resources")
 		err = c.deleter.Delete(ctx, key)
 		if err == nil {
-			log.FromContext(ctx).Info("Machine has been successfully deleted")
+			log.FromContext(ctx).Info("Cluster has been successfully deleted")
 		}
 	default:
 		log.FromContext(ctx).Info("unknown cluster phase", "status.phase", cluster.Status.Phase)

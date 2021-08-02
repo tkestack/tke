@@ -20,9 +20,13 @@ package cluster
 
 import (
 	"context"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/util/wait"
+
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -73,5 +77,34 @@ func (p *Provider) EnsureRemoveNode(ctx context.Context, c *v1.Cluster) error {
 		}
 		log.FromContext(ctx).Info("deleteNode done")
 	}
+	return nil
+}
+
+func (p *Provider) EnsureRemoveMachine(ctx context.Context, c *v1.Cluster) error {
+	log.FromContext(ctx).Info("delete machine start")
+	fieldSelector := fields.OneTermEqualSelector("spec.clusterName", c.Name).String()
+	machineList, err := p.platformClient.Machines().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
+	if err != nil {
+		return err
+	}
+	if len(machineList.Items) == 0 {
+		return nil
+	}
+	background := metav1.DeletePropagationForeground
+	deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
+	for _, machine := range machineList.Items {
+		err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+			if err := p.platformClient.Machines().Delete(ctx, machine.Name, deleteOpt); err != nil {
+				if !errors.IsNotFound(err) {
+					log.FromContext(ctx).Infof("delete machine %s failed.", machine.Name)
+					return false, err
+				}
+			}
+			return true, nil
+		})
+	}
+
+	log.FromContext(ctx).Info("delete machine done")
+
 	return nil
 }
