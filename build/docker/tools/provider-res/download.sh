@@ -66,7 +66,7 @@ function download::containerd() {
   elif [ "${arch}" == "arm64" ]; then
     containerd_arch=arm64
     for version in ${CONTAINERD_VERSIONS}; do
-      wget -c https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/cri-containerd-cni-${version}-linux-{containerd_arch}.tar.gz \
+      wget -c https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/cri-containerd-cni-${version}-linux-${containerd_arch}.tar.gz \
         -O "containerd-${platform}-${version}.tar.gz"
     done
   else

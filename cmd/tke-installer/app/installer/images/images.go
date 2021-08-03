@@ -76,7 +76,7 @@ var components = Components{
 	InfluxDB: containerregistry.Image{Name: "influxdb", Tag: "1.7.9"},
 	Thanos:   containerregistry.Image{Name: "thanos", Tag: "v0.15.0"},
 
-	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.20.4-2"},
+	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.20.4-3"},
 
 	TKEAuthAPI:               containerregistry.Image{Name: "tke-auth-api", Tag: Version},
 	TKEAuthController:        containerregistry.Image{Name: "tke-auth-controller", Tag: Version},
