@@ -26,6 +26,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/image"
 
 	"github.com/imdario/mergo"
 	corev1 "k8s.io/api/core/v1"
@@ -319,6 +320,20 @@ func (p *Provider) EnsureContainerRuntime(ctx context.Context, machine *platform
 		return p.EnsureDocker(ctx, machine, cluster)
 	}
 	return p.EnsureContainerd(ctx, machine, cluster)
+}
+
+func (p *Provider) EnsureKubernetesImages(ctx context.Context, machine *platformv1.Machine, c *typesv1.Cluster) error {
+	machineSSH, err := machine.Spec.SSH()
+	if err != nil {
+		return err
+	}
+	option := &image.Option{Version: c.Spec.Version, RegistryDomain: p.config.Registry.Domain}
+	err = image.PullKubernetesImages(c, machineSSH, option)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *Provider) EnsureContainerd(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {

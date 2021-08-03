@@ -44,6 +44,10 @@ var (
 		Name:     "critools",
 		Versions: spec.CriToolsVersions,
 	}
+	Nerdctl = Package{
+		Name:     "nerdctl",
+		Versions: spec.NerdctlVersions,
+	}
 	CNIPlugins = Package{
 		Name:     "cni-plugins",
 		Versions: spec.CNIPluginsVersions,

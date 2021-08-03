@@ -42,7 +42,7 @@ func PullKubernetesImages(c *v1.Cluster, s ssh.Interface, option *Option) error 
 		if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
 			cmd = fmt.Sprintf("docker pull %s", image)
 		} else {
-			cmd = fmt.Sprintf("crictl pull %s", image)
+			cmd = fmt.Sprintf("nerdctl --namespace k8s.io pull %s", image)
 		}
 		_, err := s.CombinedOutput(cmd)
 		if err != nil {
