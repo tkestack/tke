@@ -50,6 +50,10 @@ func (c *FakePlatform) ClusterCredentials() internalversion.ClusterCredentialInt
 	return &FakeClusterCredentials{c}
 }
 
+func (c *FakePlatform) ClusterGroupAPIResourceItemses() internalversion.ClusterGroupAPIResourceItemsInterface {
+	return &FakeClusterGroupAPIResourceItemses{c}
+}
+
 func (c *FakePlatform) ConfigMaps() internalversion.ConfigMapInterface {
 	return &FakeConfigMaps{c}
 }

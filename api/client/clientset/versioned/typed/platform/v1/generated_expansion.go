@@ -30,6 +30,8 @@ type ClusterAddonTypeExpansion interface{}
 
 type ClusterCredentialExpansion interface{}
 
+type ClusterGroupAPIResourceItemsExpansion interface{}
+
 type ConfigMapExpansion interface{}
 
 type CronHPAExpansion interface{}
