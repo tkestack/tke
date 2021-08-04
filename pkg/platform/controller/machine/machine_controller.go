@@ -34,6 +34,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
+
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
@@ -120,6 +121,10 @@ func (c *Controller) updateMachine(old, obj interface{}) {
 
 func (c *Controller) needsUpdate(oldMachine *platformv1.Machine, newMachine *platformv1.Machine) bool {
 	if !reflect.DeepEqual(oldMachine.Spec, newMachine.Spec) {
+		return true
+	}
+
+	if oldMachine.Status.Phase != platformv1.MachineTerminating && newMachine.Status.Phase == platformv1.MachineTerminating {
 		return true
 	}
 

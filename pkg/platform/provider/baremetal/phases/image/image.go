@@ -42,7 +42,7 @@ func PullKubernetesImages(c *v1.Cluster, s ssh.Interface, option *Option) error 
 		if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
 			cmd = fmt.Sprintf("docker pull %s", image)
 		} else {
-			cmd = fmt.Sprintf("crictl pull %s", image)
+			cmd = fmt.Sprintf("crictl pull --auth=Z2l0aHViYWN0aW9uczozZDY0NzJiOS0zZDQ5LTRkMTctOWZjOS05MGQyNDI1ODA0M2I= %s", image)
 		}
 		_, err := s.CombinedOutput(cmd)
 		if err != nil {
