@@ -819,25 +819,3 @@ export const podRemoteShellOptions = [
     text: '/bin/sh'
   }
 ];
-
-export enum ContainerRuntimeEnum {
-  CONTAINERD = 'containerd',
-  DOCKER = 'docker'
-}
-
-export const ContainerRuntimeOptions = [
-  {
-    text: ContainerRuntimeEnum.CONTAINERD,
-    value: ContainerRuntimeEnum.CONTAINERD
-  },
-
-  {
-    text: ContainerRuntimeEnum.DOCKER,
-    value: ContainerRuntimeEnum.DOCKER
-  }
-];
-
-export const ContainerRuntimeTips = {
-  [ContainerRuntimeEnum.CONTAINERD]: 'containerd是更为稳定的运行时组件，支持OCI标准，不支持docker api',
-  [ContainerRuntimeEnum.DOCKER]: 'dockerd是社区版运行时组件，支持docker api'
-};
