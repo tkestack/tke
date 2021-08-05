@@ -60,6 +60,9 @@ var _ = BeforeSuite(func() {
 	Expect(err).To(BeNil())
 	tkeClient := tkeclientset.NewForConfigOrDie(restConf)
 	testTKE = tke2.Init(tkeClient, provider)
+
+	By("==================sleep one hour to run cases")
+	time.Sleep(time.Hour)
 })
 
 var _ = AfterSuite(func() {

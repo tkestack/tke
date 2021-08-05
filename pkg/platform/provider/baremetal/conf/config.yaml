@@ -1,3 +1,4 @@
+platformAPIClientConfig: conf/tke-platform-config.yaml
 registry:
-  prefix: docker.io/tkestack
-  ip: ""
+  prefix: registry.tke.com/library
+  ip: 10.0.0.40

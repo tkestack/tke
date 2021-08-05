@@ -111,7 +111,7 @@ const (
 	ProviderDir           = "provider/baremetal/"
 	SrcDir                = ProviderDir + "res/"
 	ConfDir               = ProviderDir + "conf/"
-	ConfigFile            = ConfDir + "config.yaml"
+	ConfigFile            = ConfDir + "config.yaml" // provider/baremetal/conf/config.yaml
 	AuditPolicyConfigFile = ConfDir + AuditPolicyConfigName
 	OIDCConfigFile        = ConfDir + OIDCCACertName
 	ManifestsDir          = ProviderDir + "manifests/"

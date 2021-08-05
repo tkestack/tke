@@ -37,6 +37,7 @@ import (
 
 // Run runs the specified platform controller manager. This should never exit.
 func Run(cfg *config.Config, stopCh <-chan struct{}) error {
+
 	log.Info("Starting Tencent Kubernetes Engine platform controller manager")
 	log.Infof("Available cluster providers: %v", clusterprovider.Providers())
 	log.Infof("Available machine providers: %v", machineprovider.Providers())

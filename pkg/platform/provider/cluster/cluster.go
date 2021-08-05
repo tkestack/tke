@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+	"tkestack.io/tke/pkg/util/log"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,6 +47,9 @@ const AdminUsername = "admin"
 // If Register is called twice with the same name or if provider is nil,
 // it panics.
 func Register(name string, provider Provider) {
+
+	fmt.Println("================Register Provider", name)
+	log.Infof("================Register Provider %s", name)
 	providersMu.Lock()
 	defer providersMu.Unlock()
 	if provider == nil {
@@ -101,6 +105,11 @@ func Providers() []string {
 // GetProvider returns provider by name
 func GetProvider(name string) (Provider, error) {
 	providersMu.RLock()
+	for s, provider := range providers {
+		fmt.Printf("===========%s:%#v\n", s, provider)
+	}
+
+	fmt.Println("====name=", name)
 	provider, ok := providers[name]
 	providersMu.RUnlock()
 	if !ok {

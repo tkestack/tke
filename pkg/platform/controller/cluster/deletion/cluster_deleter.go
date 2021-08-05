@@ -385,6 +385,8 @@ func deleteClusterProvider(ctx context.Context, deleter *clusterDeleter, cluster
 	log.FromContext(ctx).Info("deleteClusterProvider doing")
 
 	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
+
+	fmt.Println("deleteClusterProvider====provider", provider)
 	if err != nil {
 		panic(err)
 	}

@@ -19,6 +19,7 @@
 package cluster
 
 import (
+	"fmt"
 	"path"
 	"strings"
 
@@ -49,6 +50,9 @@ func init() {
 		log.Errorf("init cluster provider error: %s", err)
 		return
 	}
+
+	fmt.Printf("==============%s(%s) cluster provider:%#v\n", p.Name(), p.ProviderName, p)
+	fmt.Println("=========== platformClient=", p.platformClient)
 	clusterprovider.Register(p.Name(), p)
 }
 
@@ -158,7 +162,9 @@ func NewProvider() (*Provider, error) {
 	}
 	p.ScaleUpHandlers = p.CreateHandlers
 
+	fmt.Println("========================constants.ConfigFile:", constants.ConfigFile)
 	cfg, err := config.New(constants.ConfigFile)
+
 	if err != nil {
 		return nil, err
 	}
@@ -166,19 +172,30 @@ func NewProvider() (*Provider, error) {
 
 	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
 
+	fmt.Println("========================cfg.PlatformAPIClientConfig", cfg.PlatformAPIClientConfig) // 这个是空 cfg 应该不是空，否则空指针了
+	fmt.Println("========================cfg:", cfg)
 	// Run for compatibility with installer.
 	// TODO: Installer reuse platform components
 	if cfg.PlatformAPIClientConfig != "" {
 		restConfig, err := clientcmd.BuildConfigFromFlags("", cfg.PlatformAPIClientConfig)
+		fmt.Println("========================restConfig", restConfig)
 		if err != nil {
+			fmt.Println("========================err != nil", err.Error())
+
 			log.Errorf("read PlatformAPIClientConfig error: %w", err)
 		} else {
 			p.platformClient, err = platformv1client.NewForConfig(restConfig)
+
+			fmt.Println("=============333===========cfg.PlatformAPIClientConfig", cfg.PlatformAPIClientConfig)
+			fmt.Println("===============4444444=========err=", err)
+
 			if err != nil {
 				return nil, err
 			}
 		}
 	}
+
+	fmt.Println("========================cfg.PlatformAPIClientConfig", cfg.PlatformAPIClientConfig)
 
 	return p, nil
 }
@@ -190,6 +207,9 @@ func (p *Provider) RegisterHandler(mux *mux.PathRecorderMux) {
 }
 
 func (p *Provider) Validate(cluster *types.Cluster) field.ErrorList {
+
+	fmt.Println("=========== Validate  platformClient =", p.platformClient)
+
 	return validation.ValidateCluster(p.platformClient, cluster)
 }
 
