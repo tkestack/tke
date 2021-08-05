@@ -19,6 +19,8 @@ Cron Horizontal Pod Autoscaler([CronHPA](https://github.com/tkestack/cron-hpa)) 
 
 CronHPA 定义了一个新的 CRD，cron-hpa-controller 是该 CRD 对应的 Controller/operator，它解析 CRD 中的配置，根据系统时间信息对相应的工作负载进行扩缩容操作。
 
+
+
 ### CronHPA 使用场景
 
 以游戏服务为例，从星期五晚上到星期日晚上，游戏玩家数量暴增。如果可以将游戏服务器在星期五晚上扩大规模，并在星期日晚上缩放为原始规模，则可以为玩家提供更好的体验。这就是游戏服务器管理员每周要做的事情。
@@ -64,7 +66,7 @@ TKEStack 已经支持在页面多处位置为负载配置 CronHPA
 
    ![image-20200929175620334](../../../docs/images/image-20200929175620334.png)
 
-### 通过 YAML 使用 CronHPA 
+### 通过 YAML 使用 CronHPA
 
 #### 创建 CronHPA 对象
 
