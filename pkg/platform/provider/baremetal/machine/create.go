@@ -33,10 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/addons/cniplugins"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/containerd"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/critools"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/docker"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
@@ -314,53 +311,6 @@ func (p *Provider) EnsureNvidiaContainerRuntime(ctx context.Context, machine *pl
 	return gpu.InstallNvidiaContainerRuntime(machineSSH, &gpu.NvidiaContainerRuntimeOption{})
 }
 
-func (p *Provider) EnsureContainerRuntime(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	if cluster.Cluster.Spec.Features.ContainerRuntime == platformv1.Containerd {
-		return p.EnsureContainerd(ctx, machine, cluster)
-	}
-	return p.EnsureDocker(ctx, machine, cluster)
-}
-
-func (p *Provider) EnsureContainerd(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	machineSSH, err := machine.Spec.SSH()
-	if err != nil {
-		return err
-	}
-
-	insecureRegistries := []string{p.config.Registry.Domain}
-	if p.config.Registry.NeedSetHosts() && machine.Spec.TenantID != "" {
-		insecureRegistries = append(insecureRegistries, machine.Spec.TenantID+"."+p.config.Registry.Domain)
-	}
-
-	option := &containerd.Option{
-		InsecureRegistries: insecureRegistries,
-		IsGPU:              gpu.IsEnable(machine.Spec.Labels),
-		SandboxImage:       images.Get().Pause.FullName(),
-	}
-	err = containerd.Install(machineSSH, option)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (p *Provider) EnsureCriTools(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	option := &critools.Option{}
-
-	machineSSH, err := machine.Spec.SSH()
-	if err != nil {
-		return err
-	}
-
-	err = critools.Install(machineSSH, option)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (p *Provider) EnsureDocker(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
@@ -436,10 +386,7 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, machine *platformv1.Machin
 		return err
 	}
 
-	option := &kubeadm.Option{
-		RuntimeType: cluster.Spec.Features.ContainerRuntime,
-	}
-	err = kubeadm.Install(machineSSH, cluster.Spec.Version, option)
+	err = kubeadm.Install(machineSSH, cluster.Spec.Version)
 	if err != nil {
 		return err
 	}

@@ -85,7 +85,7 @@ func NewProvider() (*Provider, error) {
 			// install packages
 			p.EnsureNvidiaDriver,
 			p.EnsureNvidiaContainerRuntime,
-			p.EnsureContainerRuntime,
+			p.EnsureDocker,
 			p.EnsureKubernetesImages,
 			p.EnsureKubelet,
 			p.EnsureCNIPlugins,

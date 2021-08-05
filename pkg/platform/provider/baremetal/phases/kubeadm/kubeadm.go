@@ -51,10 +51,6 @@ import (
 	"tkestack.io/tke/pkg/util/template"
 )
 
-type Option struct {
-	RuntimeType platformv1.ContainerRuntimeType
-}
-
 const (
 	kubeadmKubeletConf = "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
 
@@ -76,7 +72,7 @@ var (
 	unMigrataleComponents = []string{"tke-platform-api", "tke-platform-controller", "tke-registry-api", "tke-registry-controller", "influxdb"}
 )
 
-func Install(s ssh.Interface, version string, option *Option) error {
+func Install(s ssh.Interface, version string) error {
 	dstFile, err := res.KubernetesNode.CopyToNode(s, version)
 	if err != nil {
 		return err
@@ -88,7 +84,7 @@ func Install(s ssh.Interface, version string, option *Option) error {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
 
-	data, err := template.ParseFile(path.Join(constants.ConfDir, "kubeadm/10-kubeadm.conf"), option)
+	data, err := template.ParseFile(path.Join(constants.ConfDir, "kubeadm/10-kubeadm.conf"), nil)
 	if err != nil {
 		return err
 	}
@@ -181,7 +177,7 @@ func Reset(s ssh.Interface, phase string) error {
 	return nil
 }
 
-func RenewCerts(c *v1.Cluster, s ssh.Interface) error {
+func RenewCerts(s ssh.Interface) error {
 	err := fixKubeadmBug1753(s)
 	if err != nil {
 		return fmt.Errorf("fixKubeadmBug1753(https://github.com/kubernetes/kubeadm/issues/1753) error: %w", err)
@@ -193,7 +189,7 @@ func RenewCerts(c *v1.Cluster, s ssh.Interface) error {
 		return err
 	}
 
-	err = RestartControlPlane(c, s)
+	err = RestartControlPlane(s)
 	if err != nil {
 		return err
 	}
@@ -252,10 +248,10 @@ func fixKubeadmBug88811(client kubernetes.Interface) error {
 	return nil
 }
 
-func RestartControlPlane(c *v1.Cluster, s ssh.Interface) error {
+func RestartControlPlane(s ssh.Interface) error {
 	targets := []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler"}
 	for _, one := range targets {
-		err := RestartContainerByLabel(c, s, ContainerLabelOfControlPlane(one))
+		err := RestartContainerByFilter(s, DockerFilterForControlPlane(one))
 		if err != nil {
 			return err
 		}
@@ -264,29 +260,19 @@ func RestartControlPlane(c *v1.Cluster, s ssh.Interface) error {
 	return nil
 }
 
-func ContainerLabelOfControlPlane(name string) string {
+func DockerFilterForControlPlane(name string) string {
 	return fmt.Sprintf("label=io.kubernetes.container.name=%s", name)
 }
 
-func RestartContainerByLabel(c *v1.Cluster, s ssh.Interface, label string) error {
-	cmd := ""
-	if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Containerd {
-		cmd = fmt.Sprintf("crictl rm -f $(crictl ps -q --label '%s')", label)
-	} else {
-		cmd = fmt.Sprintf("docker rm -f $(docker ps -q -f '%s')", label)
-	}
+func RestartContainerByFilter(s ssh.Interface, filter string) error {
+	cmd := fmt.Sprintf("docker rm -f $(docker ps -q -f '%s')", filter)
 	_, err := s.CombinedOutput(cmd)
 	if err != nil {
 		return err
 	}
 
 	err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		cmd := ""
-		if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Containerd {
-			cmd = fmt.Sprintf("crictl ps -q -f '%s'", label)
-		} else {
-			cmd = fmt.Sprintf("docker ps -q -f '%s'", label)
-		}
+		cmd = fmt.Sprintf("docker ps -q -f '%s'", filter)
 		output, err := s.CombinedOutput(cmd)
 		if err != nil {
 			return false, nil
@@ -297,7 +283,7 @@ func RestartContainerByLabel(c *v1.Cluster, s ssh.Interface, label string) error
 		return true, nil
 	})
 	if err != nil {
-		return fmt.Errorf("restart container(%s) error: %w", label, err)
+		return fmt.Errorf("restart container(%s) error: %w", filter, err)
 	}
 
 	return nil
@@ -353,12 +339,9 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 
 	// Step 1: install kubeadm
 	// ignore patch version for patch version kubeadm may not exist in platform-controller
-	kubamdOption := &Option{
-		RuntimeType: cluster.Spec.Features.ContainerRuntime,
-	}
 	if !sameMinor {
 		logger.Infof("Start install kubeadm to %s", option.MachineIP)
-		err = Install(s, option.Version, kubamdOption)
+		err = Install(s, option.Version)
 		if err != nil {
 			return upgraded, err
 		}
