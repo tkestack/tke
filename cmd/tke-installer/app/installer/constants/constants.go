@@ -47,7 +47,7 @@ const (
 
 	DevRegistryDomain    = "docker.io"
 	DevRegistryNamespace = "tkestack"
-	ImagesFile           = "images.tar"
+	ImagesFile           = "images.tar.gz"
 	ImagesPattern        = DevRegistryNamespace + "/*"
 
 	OIDCClientSecretFile = DataDir + "oidc_client_secret"

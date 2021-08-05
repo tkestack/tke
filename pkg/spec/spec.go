@@ -40,7 +40,6 @@ var (
 	ContainerdVersions             = []string{"1.5.2"}
 	CriToolsVersions               = []string{"v1.21.0"}
 	CNIPluginsVersions             = []string{"v0.8.6"}
-	NerdctlVersions                = []string{"v0.10.0"}
 	ConntrackToolsVersions         = []string{"1.4.4"}
 	NvidiaDriverVersions           = []string{"440.31"}
 	NvidiaContainerRuntimeVersions = []string{"3.1.4"}
