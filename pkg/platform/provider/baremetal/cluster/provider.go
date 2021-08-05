@@ -153,7 +153,6 @@ func NewProvider() (*Provider, error) {
 			p.EnsureRemoveNode,
 		},
 		DeleteHandlers: []clusterprovider.Handler{
-			p.EnsureRemoveMachine,
 			p.EnsureCleanClusterMark,
 		},
 	}

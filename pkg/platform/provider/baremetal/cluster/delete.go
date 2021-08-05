@@ -20,14 +20,9 @@ package cluster
 
 import (
 	"context"
-	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/util/wait"
-
-	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -79,45 +74,4 @@ func (p *Provider) EnsureRemoveNode(ctx context.Context, c *v1.Cluster) error {
 		log.FromContext(ctx).Info("deleteNode done")
 	}
 	return nil
-}
-
-func (p *Provider) EnsureRemoveMachine(ctx context.Context, c *v1.Cluster) error {
-	log.FromContext(ctx).Info("delete machine start")
-	fieldSelector := fields.OneTermEqualSelector("spec.clusterName", c.Name).String()
-	machineList, err := p.platformClient.Machines().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
-	if err != nil {
-		return err
-	}
-	if len(machineList.Items) == 0 {
-		return nil
-	}
-	for _, machine := range machineList.Items {
-		if err := p.platformClient.Machines().Delete(ctx, machine.Name, metav1.DeleteOptions{}); err != nil {
-			if errors.IsNotFound(err) {
-				return nil
-			}
-			return err
-		}
-
-		if err = wait.PollImmediate(5*time.Second, 5*time.Minute, waitForMachineDelete(ctx, p.platformClient, machine.Name)); err != nil {
-			return err
-		}
-	}
-
-	log.FromContext(ctx).Info("delete machine done")
-
-	return nil
-}
-
-func waitForMachineDelete(ctx context.Context, c platformv1client.PlatformV1Interface, machineName string) wait.ConditionFunc {
-	return func() (done bool, err error) {
-
-		if _, err := c.Machines().Get(ctx, machineName, metav1.GetOptions{}); err != nil {
-			if errors.IsNotFound(err) {
-				return true, nil
-			}
-		}
-
-		return false, nil
-	}
 }
