@@ -505,10 +505,10 @@ func (p *Provider) EnsureNvidiaContainerRuntime(ctx context.Context, c *v1.Clust
 }
 
 func (p *Provider) EnsureContainerRuntime(ctx context.Context, c *v1.Cluster) error {
-	if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
-		return p.EnsureDocker(ctx, c)
+	if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Containerd {
+		return p.EnsureContainerd(ctx, c)
 	}
-	return p.EnsureContainerd(ctx, c)
+	return p.EnsureDocker(ctx, c)
 }
 
 func (p *Provider) EnsureCriTools(ctx context.Context, c *v1.Cluster) error {

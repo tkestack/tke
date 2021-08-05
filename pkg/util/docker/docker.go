@@ -73,16 +73,16 @@ func (d *Docker) getCmdOutput(cmdString string) ([]byte, error) {
 
 // Healthz check docker daemon healthz status.
 func (d *Docker) Healthz() bool {
-	_, err := d.getCmdOutput("ctr -v")
+	_, err := d.getCmdOutput("docker ps")
 	return err == nil
 }
 
 // GetImages returns docker images which match given image prefix.
 func (d *Docker) GetImages(imagePrefix string) ([]string, error) {
-	cmdString := fmt.Sprintf("ctr images ls | grep %s | awk  '{print $1}'", imagePrefix)
+	cmdString := fmt.Sprintf("docker images --format='{{.Repository}}:{{.Tag}}' --filter='reference=%s'", imagePrefix)
 	out, err := d.getCmdOutput(cmdString)
 	if err != nil {
-		return nil, pkgerrors.Wrap(err, "ctr images error")
+		return nil, pkgerrors.Wrap(err, "docker images error")
 	}
 	images := strings.Split(strings.TrimSpace(string(out)), "\n")
 	return images, nil
@@ -94,8 +94,8 @@ func (d *Docker) GetImages(imagePrefix string) ([]string, error) {
 // and push the updated local manifest to registry if need.
 // (For speed up processing, it is better to push manifests after all changes have made.)
 func (d *Docker) PushImageWithArch(image string, manifestName string,
-	arch string, variant string, needPushManifest bool, username string, passsword string) error {
-	err := d.PushImage(image, username, passsword)
+	arch string, variant string, needPushManifest bool) error {
+	err := d.PushImage(image)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (d *Docker) PushImageWithArch(image string, manifestName string,
 // PushArm64Variants accepts an arm64 image, and creates another two variants that refer to this image.
 // The manifest of this arm64 image is updated accordingly.
 // Current variants: unknown, v8.
-func (d *Docker) PushArm64Variants(image string, name string, tag string, username string, password string) error {
+func (d *Docker) PushArm64Variants(image string, name string, tag string) error {
 	manifestName := fmt.Sprintf("%s:%s", name, tag)
 	for _, variant := range spec.Arm64Variants {
 		// variantImage: ${BIN}-arm64-${VARIANT}:${VERSION}
@@ -134,7 +134,7 @@ func (d *Docker) PushArm64Variants(image string, name string, tag string, userna
 			return err
 		}
 
-		err = d.PushImageWithArch(variantImage, manifestName, spec.Arm64, variant, false, username, password)
+		err = d.PushImageWithArch(variantImage, manifestName, spec.Arm64, variant, false)
 		if err != nil {
 			return err
 		}
@@ -191,40 +191,40 @@ func (d *Docker) SplitNameAndArch(name string) (string, string) {
 
 // LoadImages loads images from a tar archive file.
 func (d *Docker) LoadImages(imagesFile string) error {
-	cmdString := fmt.Sprintf("ctr images import %s --all-platforms", imagesFile)
+	cmdString := fmt.Sprintf("docker load -i %s", imagesFile)
 	err := d.runCmd(cmdString)
 	if err != nil {
-		return pkgerrors.Wrap(err, "ctr import error")
+		return pkgerrors.Wrap(err, "docker load error")
 	}
 	return nil
 }
 
 // TagImage creates a tag destImage that refers to srcImage.
 func (d *Docker) TagImage(srcImage string, destImage string) error {
-	cmdString := fmt.Sprintf("ctr images tag %s %s", srcImage, destImage)
+	cmdString := fmt.Sprintf("docker tag %s %s", srcImage, destImage)
 	err := d.runCmd(cmdString)
 	if err != nil {
-		return pkgerrors.Wrap(err, "ctr tag error")
+		return pkgerrors.Wrap(err, "docker tag error")
 	}
 	return nil
 }
 
 // PushImage pushes an image.
-func (d *Docker) PushImage(image string, username string, password string) error {
-	cmdString := fmt.Sprintf("ctr images push %s -u %s:%s -k", image, username, password)
+func (d *Docker) PushImage(image string) error {
+	cmdString := fmt.Sprintf("docker push %s", image)
 	err := d.runCmd(cmdString)
 	if err != nil {
-		return pkgerrors.Wrap(err, "ctr push error")
+		return pkgerrors.Wrap(err, "docker push error")
 	}
 	return nil
 }
 
 // RemoveImage removes a local image.
 func (d *Docker) RemoveImage(image string) error {
-	cmdString := fmt.Sprintf("nerdctl rmi %s ", image)
+	cmdString := fmt.Sprintf("docker rmi %s ", image)
 	err := d.runCmd(cmdString)
 	if err != nil {
-		return pkgerrors.Wrap(err, "nerdctl rmi error")
+		return pkgerrors.Wrap(err, "docker rmi error")
 	}
 	return nil
 }
@@ -232,10 +232,10 @@ func (d *Docker) RemoveImage(image string) error {
 // RemoveContainers forces to remove one or more running containers.
 func (d *Docker) RemoveContainers(containers ...string) error {
 	for _, one := range containers {
-		cmdString := fmt.Sprintf("nerdctl stop %s && nerdctl rm %s || true", one, one)
+		cmdString := fmt.Sprintf("docker inspect %s >/dev/null 2>&1 && docker rm -f %s || true", one, one)
 		err := d.runCmd(cmdString)
 		if err != nil {
-			return pkgerrors.Wrap(err, "nerdctl remove containers error")
+			return pkgerrors.Wrap(err, "docker rm error")
 		}
 	}
 

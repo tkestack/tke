@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"fmt"
 	"path"
+
 	"tkestack.io/tke/pkg/util/template"
 
 	"github.com/pkg/errors"
@@ -76,12 +77,6 @@ func Install(s ssh.Interface, option *Option) error {
 	err = ss.Start()
 	if err != nil {
 		return err
-	}
-
-	cmd = "rm -rf /etc/cni/net.d/10-containerd-net.conflist"
-	_, stderr, exit, err = s.Execf(cmd)
-	if err != nil {
-		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
 
 	return nil

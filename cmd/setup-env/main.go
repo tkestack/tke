@@ -36,7 +36,6 @@ func main() {
 	env = append(env, fmt.Sprintf("CONTAINERD_VERSIONS=%s", strings.Join(spec.ContainerdVersions, " ")))
 	env = append(env, fmt.Sprintf("CRITOOLS_VERSIONS=%s", strings.Join(spec.CriToolsVersions, " ")))
 	env = append(env, fmt.Sprintf("CNI_PLUGINS_VERSIONS=%s", strings.Join(spec.CNIPluginsVersions, " ")))
-	env = append(env, fmt.Sprintf("NERDCTL_VERSIONS=%s", strings.Join(spec.NerdctlVersions, " ")))
 	env = append(env, fmt.Sprintf("NVIDIA_DRIVER_VERSIONS=%s", strings.Join(spec.NvidiaDriverVersions, " ")))
 	env = append(env, fmt.Sprintf("NVIDIA_CONTAINER_RUNTIME_VERSIONS=%s", strings.Join(spec.NvidiaContainerRuntimeVersions, " ")))
 

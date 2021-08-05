@@ -131,10 +131,6 @@ func (t *TKE) createProviderConfigs(ctx context.Context) error {
 			Name: "kubeadm",
 			File: e2e.ConfDir + "kubeadm/*",
 		},
-		{
-			Name: "containerd",
-			File: e2e.ConfDir + "containerd/*",
-		},
 	}
 
 	for _, one := range configMaps {

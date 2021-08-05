@@ -31,6 +31,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	goruntime "runtime"
 	"sort"
 	"strings"
 	"time"
@@ -1256,19 +1257,19 @@ func (t *TKE) tagImages(ctx context.Context) error {
 
 func (t *TKE) setupLocalRegistry(ctx context.Context) error {
 	server := t.Para.Config.Registry.Domain()
-	/*
-		err := t.startLocalRegistry()
-		if err != nil {
-			return errors.Wrap(err, "start local registry error")
-		}
-	*/
+
+	err := t.startLocalRegistry()
+	if err != nil {
+		return errors.Wrap(err, "start local registry error")
+	}
+
 	// for push image to local registry
 	localHosts := hosts.LocalHosts{Host: server, File: "hosts"}
-	err := localHosts.Set("127.0.0.1")
+	err = localHosts.Set("127.0.0.1")
 	if err != nil {
 		return err
 	}
-	localHosts.File = "/app/hosts"
+	localHosts.File = "/etc/hosts"
 	err = localHosts.Set("127.0.0.1")
 	if err != nil {
 		return err
@@ -1279,6 +1280,33 @@ func (t *TKE) setupLocalRegistry(ctx context.Context) error {
 		return err
 	}
 	t.log.Info(string(data))
+
+	return nil
+}
+
+func (t *TKE) startLocalRegistry() error {
+	err := t.stopLocalRegistry(context.Background())
+	if err != nil {
+		return err
+	}
+
+	err = t.docker.ClearLocalManifests()
+	if err != nil {
+		return err
+	}
+
+	registryImage := strings.ReplaceAll(images.Get().Registry.FullName(), ":", fmt.Sprintf("-%s:", goruntime.GOARCH))
+
+	err = t.docker.RunImage(registryImage, constants.RegistryHTTPOptions, "")
+	if err != nil {
+		return err
+	}
+
+	// for docker manifest create which --insecure is not working
+	err = t.docker.RunImage(registryImage, constants.RegistryHTTPSOptions, "")
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -1549,7 +1577,7 @@ func (t *TKE) prepareImages(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		cmdString := fmt.Sprintf("crictl pull %s", images.Get().TKEGateway.FullName())
+		cmdString := fmt.Sprintf("docker pull %s", images.Get().TKEGateway.FullName())
 		_, err = machineSSH.CombinedOutput(cmdString)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
@@ -2302,7 +2330,7 @@ func (t *TKE) preparePushImagesToTKERegistry(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		localHosts.File = "/app/hosts"
+		localHosts.File = "/etc/hosts"
 		err = localHosts.Set(t.servers[0])
 		if err != nil {
 			return err
@@ -2476,13 +2504,14 @@ func (t *TKE) pushImages(ctx context.Context) error {
 	}
 	sort.Strings(tkeImages)
 	tkeImagesSet := sets.NewString(tkeImages...)
-	/*	manifestSet := sets.NewString()
-		// clear all local manifest lists before create any manifest list
-		err = t.docker.ClearLocalManifests()
-		if err != nil {
-			return err
-		}
-	*/
+	manifestSet := sets.NewString()
+
+	// clear all local manifest lists before create any manifest list
+	err = t.docker.ClearLocalManifests()
+	if err != nil {
+		return err
+	}
+
 	for i, image := range tkeImages {
 		name, arch, tag, err := t.docker.GetNameArchTag(image)
 		if err != nil { // skip invalid image
@@ -2500,23 +2529,40 @@ func (t *TKE) pushImages(ctx context.Context) error {
 			}
 
 			// only push image
-			err = t.docker.PushImage(image, t.Para.Config.Registry.TKERegistry.Username, string(t.Para.Config.Registry.TKERegistry.Password))
+			err = t.docker.PushImage(image)
 			if err != nil {
 				return err
 			}
+		} else {
+			// when arch != "", need create manifest list
+			manifestName := fmt.Sprintf("%s:%s", name, tag)
+			manifestSet.Insert(manifestName) // To speed up, push manifests after all changes have made
+
+			err = t.docker.PushImageWithArch(image, manifestName, arch, "", false)
+			if err != nil {
+				return err
+			}
+
+			if arch == spec.Arm64 {
+				err = t.docker.PushArm64Variants(image, name, tag)
+				if err != nil {
+					return err
+				}
+			}
 		}
+
 		t.log.Infof("upload %s to registry success[%d/%d]", image, i+1, len(tkeImages))
 	}
-	/*
-		sortedManifests := manifestSet.List()
-		for i, manifest := range sortedManifests {
-			err = t.docker.PushManifest(manifest, true)
-			if err != nil {
-				return nil
-			}
-			t.log.Infof("push manifest %s to registry success[%d/%d]", manifest, i+1, len(sortedManifests))
+
+	sortedManifests := manifestSet.List()
+	for i, manifest := range sortedManifests {
+		err = t.docker.PushManifest(manifest, true)
+		if err != nil {
+			return nil
 		}
-	*/
+		t.log.Infof("push manifest %s to registry success[%d/%d]", manifest, i+1, len(sortedManifests))
+	}
+
 	return nil
 }
 
