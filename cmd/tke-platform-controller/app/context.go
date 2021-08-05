@@ -26,7 +26,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	cacheddiscovery "k8s.io/client-go/discovery/cached"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
+	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
+	applicationv1 "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	"tkestack.io/tke/cmd/tke-platform-controller/app/config"
 	"tkestack.io/tke/pkg/controller"
@@ -71,8 +74,9 @@ type ControllerContext struct {
 	ControllerStartInterval time.Duration
 
 	// Remote write/read address for prometheus
-	RemoteAddresses []string
-	RemoteType      string
+	RemoteAddresses   []string
+	RemoteType        string
+	ApplicationClient applicationv1.ApplicationV1Interface
 }
 
 // IsControllerEnabled returns whether the controller has been enabled
@@ -84,6 +88,15 @@ func (c ControllerContext) IsControllerEnabled(name string) bool {
 // controllers such as the cloud provider and clientBuilder. rootClientBuilder is only used for
 // the shared-informers client and token controller.
 func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.ClientBuilder, stop <-chan struct{}) (ControllerContext, error) {
+	var applicationClientset *versionedclientset.Clientset
+	var applicationClient applicationv1.ApplicationV1Interface
+	var err error
+	if cfg.ApplicationAPIServerClientConfig != nil {
+		applicationClientset, err = versionedclientset.NewForConfig(rest.AddUserAgent(cfg.ApplicationAPIServerClientConfig, "tke-platform-controller"))
+		if err != nil {
+			return ControllerContext{}, fmt.Errorf("failed to create the application client: %v", err)
+		}
+	}
 	versionedClient := rootClientBuilder.ClientOrDie("shared-informers")
 	sharedInformers := versionedinformers.NewSharedInformerFactory(versionedClient, controller.ResyncPeriod(&cfg.Component)())
 
@@ -105,6 +118,11 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 	if err != nil {
 		return ControllerContext{}, err
 	}
+	if applicationClientset != nil {
+		applicationClient = applicationClientset.ApplicationV1()
+	} else {
+		applicationClient = nil
+	}
 
 	ctx := ControllerContext{
 		ClientBuilder:           rootClientBuilder,
@@ -118,6 +136,7 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 		ControllerStartInterval: cfg.Component.ControllerStartInterval,
 		RemoteAddresses:         cfg.Features.MonitorStorageAddresses,
 		RemoteType:              cfg.Features.MonitorStorageType,
+		ApplicationClient:       applicationClient,
 	}
 	return ctx, nil
 }

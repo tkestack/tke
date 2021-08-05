@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 )
 
 // +genclient
@@ -150,6 +151,9 @@ type ClusterSpec struct {
 	HostnameAsNodename bool
 	// +optional
 	NetworkArgs map[string]string
+	// BootstrapApps will install apps during creating cluster
+	// +optional
+	BootstrapApps BootstrapApps
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -388,6 +392,19 @@ type ClusterFeature struct {
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade
+}
+
+type BootstrapApps []BootstapApp
+
+type BootstapApp struct {
+	App App
+}
+
+type App struct {
+	// +optional
+	metav1.ObjectMeta
+	// +optional
+	Spec applicationv1.AppSpec
 }
 
 type HA struct {

@@ -23,6 +23,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
@@ -66,7 +67,16 @@ func ValidateClusterUpdate(cluster *types.Cluster, oldCluster *types.Cluster) fi
 	allErrs = append(allErrs, ValidatClusterSpec(&cluster.Spec, field.NewPath("spec"), false)...)
 	allErrs = append(allErrs, ValidateClusterByProvider(cluster)...)
 	allErrs = append(allErrs, ValidateClusterScale(cluster.Cluster, oldCluster.Cluster, fldPath.Child("machines"))...)
+	allErrs = append(allErrs, ValidateBootstrapApps(cluster.Cluster, oldCluster.Cluster, fldPath.Child("bootstrapApps"))...)
 
+	return allErrs
+}
+
+func ValidateBootstrapApps(cluster *platform.Cluster, oldCluster *platform.Cluster, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if !reflect.DeepEqual(cluster.Spec.BootstrapApps, oldCluster.Spec.BootstrapApps) {
+		allErrs = append(allErrs, field.Invalid(fldPath, "bootstrapApps", "bootstrap apps are not allowed be edited"))
+	}
 	return allErrs
 }
 
