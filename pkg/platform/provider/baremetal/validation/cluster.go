@@ -35,7 +35,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
 	"tkestack.io/tke/pkg/platform/types"
 	"tkestack.io/tke/pkg/platform/util"
-	"tkestack.io/tke/pkg/platform/util/vendor"
+	vendor "tkestack.io/tke/pkg/platform/util/kubevendor"
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/ipallocator"
 	"tkestack.io/tke/pkg/util/validation"
