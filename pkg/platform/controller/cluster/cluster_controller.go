@@ -44,7 +44,7 @@ import (
 	"tkestack.io/tke/pkg/platform/controller/cluster/deletion"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
-	"tkestack.io/tke/pkg/platform/util/vendor"
+	vendor "tkestack.io/tke/pkg/platform/util/kubevendor"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
