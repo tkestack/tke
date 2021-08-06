@@ -167,6 +167,7 @@ func NewProvider() (*Provider, error) {
 
 	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
 
+	log.Infof("cfg:%#v\n", cfg)
 	// Run for compatibility with installer.
 	// TODO: Installer reuse platform components
 
@@ -182,7 +183,7 @@ func NewProvider() (*Provider, error) {
 			}
 		}
 	}
-
+	log.Infof("provider:%#v\n", p)
 	return p, nil
 }
 
