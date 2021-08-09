@@ -29,11 +29,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/platform"
-	clusterutil "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/platform/types"
-	utilmath "tkestack.io/tke/pkg/util/math"
-	"tkestack.io/tke/pkg/util/ssh"
 	utilvalidation "tkestack.io/tke/pkg/util/validation"
 )
 
@@ -42,7 +39,11 @@ func ValidateCluster(cluster *types.Cluster) field.ErrorList {
 	allErrs := apimachineryvalidation.ValidateObjectMeta(&cluster.ObjectMeta, false, apimachineryvalidation.NameIsDNSLabel, field.NewPath("metadata"))
 
 	allErrs = append(allErrs, ValidatClusterSpec(&cluster.Spec, field.NewPath("spec"), true)...)
-	allErrs = append(allErrs, ValidateClusterByProvider(cluster)...)
+	p, err := clusterprovider.GetProvider(cluster.Spec.Type)
+	if err != nil {
+		return append(allErrs, field.NotFound(field.NewPath("spec").Child("type"), cluster.Spec.Type))
+	}
+	allErrs = append(allErrs, p.Validate(cluster)...)
 
 	return allErrs
 }
@@ -64,111 +65,27 @@ func ValidateClusterUpdate(cluster *types.Cluster, oldCluster *types.Cluster) fi
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.SchedulerExtraArgs, oldCluster.Spec.SchedulerExtraArgs, fldPath.Child("schedulerExtraArgs"))...)
 
 	allErrs = append(allErrs, ValidatClusterSpec(&cluster.Spec, field.NewPath("spec"), false)...)
-	allErrs = append(allErrs, ValidateClusterByProvider(cluster)...)
-	allErrs = append(allErrs, ValidateClusterScale(cluster.Cluster, oldCluster.Cluster, fldPath.Child("machines"))...)
-
-	return allErrs
-}
-
-// ValidateClusterScale tests if master scale up/down to a cluster is valid.
-func ValidateClusterScale(cluster *platform.Cluster, oldCluster *platform.Cluster, fldPath *field.Path) field.ErrorList {
-
-	allErrs := field.ErrorList{}
-	if len(cluster.Spec.Machines) == len(oldCluster.Spec.Machines) {
-		return allErrs
-	}
-	ha := cluster.Spec.Features.HA
-	if ha == nil {
-		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, "HA configuration should enabled for master scale"))
-		return allErrs
-	}
-	if ha.TKEHA == nil && ha.ThirdPartyHA == nil {
-		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, "tkestack HA or third party HA should enabled for master scale"))
-		return allErrs
-	}
-	_, err := clusterutil.PrepareClusterScale(cluster, oldCluster)
+	p, err := clusterprovider.GetProvider(cluster.Spec.Type)
 	if err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, err.Error()))
+		return append(allErrs, field.NotFound(field.NewPath("spec").Child("type"), cluster.Spec.Type))
 	}
+	allErrs = append(allErrs, p.ValidateUpdate(cluster, oldCluster)...)
+
 	return allErrs
 }
 
 // ValidateCluster validates a given ClusterSpec.
 func ValidatClusterSpec(spec *platform.ClusterSpec, fldPath *field.Path, validateMachine bool) field.ErrorList {
 	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, ValidateClusteType(spec.Type, fldPath.Child("type"))...)
-	if validateMachine {
-		allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
-	}
+	allErrs = append(allErrs, ValidateClusterType(spec.Type, fldPath.Child("type"))...)
 	allErrs = append(allErrs, ValidateClusterFeature(&spec.Features, fldPath.Child("features"))...)
 
 	return allErrs
 }
 
-// ValidateClusteType validates a given type.
-func ValidateClusteType(clusterType string, fldPath *field.Path) field.ErrorList {
+// ValidateClusterType validates a given type.
+func ValidateClusterType(clusterType string, fldPath *field.Path) field.ErrorList {
 	return utilvalidation.ValidateEnum(clusterType, fldPath, clusterprovider.Providers())
-}
-
-// ValidateClusterByProvider validates a given cluster by cluster provider.
-func ValidateClusterByProvider(cluster *types.Cluster) field.ErrorList {
-	p, err := clusterprovider.GetProvider(cluster.Spec.Type)
-	if err != nil {
-		return nil
-	}
-
-	return p.Validate(cluster)
-}
-
-// ValidateClusterMachines validates a given CluterMachines.
-func ValidateClusterMachines(machines []platform.ClusterMachine, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if machines == nil {
-		return allErrs
-	}
-
-	var masters []*ssh.SSH
-	for i, one := range machines {
-		sshErrors := ValidateSSH(fldPath.Index(i), one.IP, int(one.Port), one.Username, one.Password, one.PrivateKey, one.PassPhrase)
-		if sshErrors != nil {
-			allErrs = append(allErrs, sshErrors...)
-		} else {
-			master, _ := one.SSH()
-			masters = append(masters, master)
-		}
-	}
-
-	if len(masters) == len(machines) {
-		allErrs = append(allErrs, ValidateMasterTimeOffset(fldPath, masters)...)
-
-	}
-
-	return allErrs
-}
-
-// ValidateMasterTimeOffset validates a given master time offset.
-func ValidateMasterTimeOffset(fldPath *field.Path, masters []*ssh.SSH) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	times := make([]float64, 0, len(masters))
-	for _, one := range masters {
-		t, err := ssh.Timestamp(one)
-		if err != nil {
-			allErrs = append(allErrs, field.InternalError(fldPath, err))
-			return allErrs
-		}
-		times = append(times, float64(t))
-	}
-	maxIndex, maxTime := utilmath.Max(times)
-	minIndex, minTime := utilmath.Min(times)
-	offset := int(*maxTime) - int(*minTime)
-	if offset > MaxTimeOffset {
-		allErrs = append(allErrs, field.Invalid(fldPath, "",
-			fmt.Sprintf("the time offset(%v-%v=%v) between node(%v) with node(%v) exceeds %d seconds, please unify machine time between nodes by using ntp or manual", int(*maxTime), int(*minTime), offset, masters[*maxIndex].Host, masters[*minIndex].Host, MaxTimeOffset)))
-	}
-
-	return allErrs
 }
 
 // ValidateClusterFeature validates a given ClusterFeature.

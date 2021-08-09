@@ -38,6 +38,8 @@ import (
 	vendor "tkestack.io/tke/pkg/platform/util/kubevendor"
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/ipallocator"
+	utilmath "tkestack.io/tke/pkg/util/math"
+	"tkestack.io/tke/pkg/util/ssh"
 	"tkestack.io/tke/pkg/util/validation"
 	utilvalidation "tkestack.io/tke/pkg/util/validation"
 )
@@ -49,19 +51,51 @@ var (
 
 // ValidateCluster validates a given Cluster.
 func ValidateCluster(platformClient platformv1client.PlatformV1Interface, obj *types.Cluster) field.ErrorList {
-	allErrs := ValidatClusterSpec(platformClient, obj.Name, &obj.Spec, field.NewPath("spec"), obj.Status.Phase)
+	allErrs := ValidatClusterSpec(platformClient, obj.Name, &obj.Spec, field.NewPath("spec"), obj.Status.Phase, true)
+	return allErrs
+}
+
+// ValidateCluster validates a given Cluster.
+func ValidateClusterUpdate(platformClient platformv1client.PlatformV1Interface, cluster *types.Cluster, oldCluster *types.Cluster) field.ErrorList {
+	allErrs := ValidatClusterSpec(platformClient, cluster.Name, &cluster.Spec, field.NewPath("spec"), cluster.Status.Phase, false)
+	allErrs = append(allErrs, ValidateClusterScale(cluster.Cluster, oldCluster.Cluster, field.NewPath("spec").Child("machines"))...)
 
 	return allErrs
 }
 
+// ValidateClusterScale tests if master scale up/down to a cluster is valid.
+func ValidateClusterScale(cluster *platform.Cluster, oldCluster *platform.Cluster, fldPath *field.Path) field.ErrorList {
+
+	allErrs := field.ErrorList{}
+	if len(cluster.Spec.Machines) == len(oldCluster.Spec.Machines) {
+		return allErrs
+	}
+	ha := cluster.Spec.Features.HA
+	if ha == nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, "HA configuration should enabled for master scale"))
+		return allErrs
+	}
+	if ha.TKEHA == nil && ha.ThirdPartyHA == nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, "tkestack HA or third party HA should enabled for master scale"))
+		return allErrs
+	}
+	_, err := util.PrepareClusterScale(cluster, oldCluster)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath, cluster.Spec.Machines, err.Error()))
+	}
+	return allErrs
+}
+
 // ValidatClusterSpec validates a given ClusterSpec.
-func ValidatClusterSpec(platformClient platformv1client.PlatformV1Interface, clusterName string, spec *platform.ClusterSpec, fldPath *field.Path, phase platform.ClusterPhase) field.ErrorList {
+func ValidatClusterSpec(platformClient platformv1client.PlatformV1Interface, clusterName string, spec *platform.ClusterSpec, fldPath *field.Path, phase platform.ClusterPhase, validateMachine bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, ValidateClusterSpecVersion(platformClient, clusterName, spec.Version, fldPath.Child("version"), phase)...)
 	allErrs = append(allErrs, ValidateCIDRs(spec, fldPath)...)
 	allErrs = append(allErrs, ValidateClusterProperty(spec, fldPath.Child("properties"))...)
-	allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
+	if validateMachine {
+		allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
+	}
 	allErrs = append(allErrs, ValidateClusterFeature(spec, fldPath.Child("features"))...)
 
 	return allErrs
@@ -92,6 +126,68 @@ func ValidateClusterSpecVersion(platformClient platformv1client.PlatformV1Interf
 				err,
 				"current kubevendor is not supported to upgrade to input version"))
 		}
+	}
+
+	return allErrs
+}
+
+// ValidateClusterMachines validates a given CluterMachines.
+func ValidateClusterMachines(machines []platform.ClusterMachine, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if machines == nil {
+		return allErrs
+	}
+
+	var masters []*ssh.SSH
+	for i, one := range machines {
+		sshErrors := ValidateSSH(fldPath.Index(i), one.IP, int(one.Port), one.Username, one.Password, one.PrivateKey, one.PassPhrase)
+		if sshErrors != nil {
+			allErrs = append(allErrs, sshErrors...)
+		} else {
+			master, _ := one.SSH()
+			masters = append(masters, master)
+		}
+	}
+
+	for i, machine := range machines {
+		idxPath := fldPath.Index(i)
+		if s, err := machine.SSH(); err == nil {
+			if gpu.IsEnable(machine.Labels) {
+				if !gpu.MachineIsSupport(s) {
+					allErrs = append(allErrs, field.Invalid(idxPath.Child("labels"), machine.Labels, "don't has GPU card"))
+				}
+			}
+		}
+	}
+
+	if len(masters) == len(machines) {
+		allErrs = append(allErrs, ValidateMasterTimeOffset(fldPath, masters)...)
+
+	}
+
+	return allErrs
+}
+
+// ValidateMasterTimeOffset validates a given master time offset.
+func ValidateMasterTimeOffset(fldPath *field.Path, masters []*ssh.SSH) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	times := make([]float64, 0, len(masters))
+	for _, one := range masters {
+		t, err := ssh.Timestamp(one)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(fldPath, err))
+			return allErrs
+		}
+		times = append(times, float64(t))
+	}
+	maxIndex, maxTime := utilmath.Max(times)
+	minIndex, minTime := utilmath.Min(times)
+	offset := int(*maxTime) - int(*minTime)
+	if offset > MaxTimeOffset {
+		allErrs = append(allErrs, field.Invalid(fldPath, "",
+			fmt.Sprintf("the time offset(%v-%v=%v) between node(%v) with node(%v) exceeds %d seconds, please unify machine time between nodes by using ntp or manual", int(*maxTime), int(*minTime), offset, masters[*maxIndex].Host, masters[*minIndex].Host, MaxTimeOffset)))
 	}
 
 	return allErrs
@@ -218,28 +314,6 @@ func ValidateClusterProperty(spec *platform.ClusterSpec, propPath *field.Path) f
 			if *properties.MaxClusterServiceNum < 10 {
 				allErrs = append(allErrs, field.Invalid(fldPath, *properties.MaxClusterServiceNum,
 					"must be greater than or equal to 10 because kubeadm need the 10th ip"))
-			}
-		}
-	}
-
-	return allErrs
-}
-
-// ValidateClusterMachines validates a given CluterMachines.
-func ValidateClusterMachines(machines []platform.ClusterMachine, fldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if machines == nil {
-		allErrs = append(allErrs, field.Required(fldPath, ""))
-	} else {
-		for i, machine := range machines {
-			idxPath := fldPath.Index(i)
-			if s, err := machine.SSH(); err == nil {
-				if gpu.IsEnable(machine.Labels) {
-					if !gpu.MachineIsSupport(s) {
-						allErrs = append(allErrs, field.Invalid(idxPath.Child("labels"), machine.Labels, "don't has GPU card"))
-					}
-				}
 			}
 		}
 	}

@@ -193,6 +193,10 @@ func (p *Provider) Validate(cluster *types.Cluster) field.ErrorList {
 	return validation.ValidateCluster(p.platformClient, cluster)
 }
 
+func (p *Provider) ValidateUpdate(cluster *types.Cluster, oldCluster *types.Cluster) field.ErrorList {
+	return validation.ValidateClusterUpdate(p.platformClient, cluster, oldCluster)
+}
+
 func (p *Provider) PreCreate(cluster *types.Cluster) error {
 	if cluster.Spec.Version == "" {
 		cluster.Spec.Version = spec.K8sVersions[0]

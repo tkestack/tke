@@ -122,7 +122,7 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end cluster.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return validation.ValidateMachineUpdate(ctx, obj.(*platform.Machine), old.(*platform.Machine))
+	return validation.ValidateMachineUpdate(ctx, obj.(*platform.Machine), old.(*platform.Machine), s.platformClient)
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.

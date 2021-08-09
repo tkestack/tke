@@ -27,10 +27,12 @@ import (
 	"net"
 	"net/http"
 	"path"
+	"reflect"
 	"strings"
 	"time"
 
 	monitoringclient "github.com/coreos/prometheus-operator/pkg/client/versioned"
+	mapset "github.com/deckarep/golang-set"
 	pkgerrors "github.com/pkg/errors"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -562,4 +564,51 @@ func CheckClusterHealthzWithTimeout(ctx context.Context, platformClient platform
 	})
 
 	return err
+}
+
+func PrepareClusterScale(cluster *platform.Cluster, oldCluster *platform.Cluster) ([]platform.ClusterMachine, error) {
+	allMachines, scalingMachines := []platform.ClusterMachine{}, []platform.ClusterMachine{}
+
+	oIPs := mapset.NewSet()
+	for _, machine := range oldCluster.Spec.Machines {
+		oIPs.Add(machine.IP)
+		allMachines = append(allMachines, machine)
+	}
+	IPs := mapset.NewSet()
+	for _, machine := range cluster.Spec.Machines {
+		IPs.Add(machine.IP)
+		allMachines = append(allMachines, machine)
+	}
+	// nothing to do since ips not changed
+	if reflect.DeepEqual(oIPs, IPs) {
+		return scalingMachines, nil
+	}
+	// machine in oldCluster but not in cluster
+	diff1 := oIPs.Difference(IPs)
+	// machine in cluster but not in oldCluster
+	diff2 := IPs.Difference(oIPs)
+	// scaling machine ips
+	diff := mapset.NewSet()
+	log.Errorf("PrepareClusterScale called: diff1 -> %v, diff2 -> %v", diff1.ToSlice(), diff2.ToSlice())
+	if diff1.Cardinality() > 0 && diff2.Cardinality() > 0 {
+		return scalingMachines, pkgerrors.Errorf("scale up and down master in parallel is not allowed: %v, %v", diff1.ToSlice(), diff2.ToSlice())
+	}
+	if diff1.Cardinality() > 0 {
+		if diff1.Contains(oldCluster.Spec.Machines[0].IP) {
+			return scalingMachines, pkgerrors.Errorf("master[0] can't scale down: %v", oldCluster.Spec.Machines[0].IP)
+		}
+		diff = diff1
+	}
+	if diff2.Cardinality() > 0 {
+		diff = diff2
+	}
+	for _, m := range diff.ToSlice() {
+		for _, machine := range allMachines {
+			if m == machine.IP {
+				scalingMachines = append(scalingMachines, machine)
+				break
+			}
+		}
+	}
+	return scalingMachines, nil
 }

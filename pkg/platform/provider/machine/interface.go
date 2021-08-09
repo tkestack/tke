@@ -46,19 +46,28 @@ const (
 	ConditionTypeDone = "EnsureDone"
 )
 
+// APIProvider APIProvider
+type APIProvider interface {
+	Validate(machine *platform.Machine) field.ErrorList
+	ValidateUpdate(machine *platform.Machine, oldMachine *platform.Machine) field.ErrorList
+	PreCreate(machine *platform.Machine) error
+	AfterCreate(machine *platform.Machine) error
+}
+
+// ControllerProvider ControllerProvider
+type ControllerProvider interface {
+	OnCreate(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error
+	OnUpdate(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error
+	OnDelete(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error
+}
+
 // Provider defines a set of response interfaces for specific machine
 // types in machine management.
 type Provider interface {
 	Name() string
 
-	Validate(machine *platform.Machine) field.ErrorList
-
-	PreCreate(machine *platform.Machine) error
-	AfterCreate(machine *platform.Machine) error
-
-	OnCreate(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error
-	OnUpdate(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error
-	OnDelete(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error
+	APIProvider
+	ControllerProvider
 }
 
 var _ Provider = &DelegateProvider{}
@@ -77,9 +86,10 @@ func (h Handler) Name() string {
 type DelegateProvider struct {
 	ProviderName string
 
-	ValidateFunc    func(machine *platform.Machine) field.ErrorList
-	PreCreateFunc   func(machine *platform.Machine) error
-	AfterCreateFunc func(machine *platform.Machine) error
+	ValidateFunc       func(machine *platform.Machine) field.ErrorList
+	ValidateUpdateFunc func(machine *platform.Machine, oldMachine *platform.Machine) field.ErrorList
+	PreCreateFunc      func(machine *platform.Machine) error
+	AfterCreateFunc    func(machine *platform.Machine) error
 
 	CreateHandlers []Handler
 	DeleteHandlers []Handler
@@ -96,6 +106,14 @@ func (p *DelegateProvider) Name() string {
 func (p *DelegateProvider) Validate(machine *platform.Machine) field.ErrorList {
 	if p.ValidateFunc != nil {
 		return p.ValidateFunc(machine)
+	}
+
+	return nil
+}
+
+func (p *DelegateProvider) ValidateUpdate(machine *platform.Machine, oldMachine *platform.Machine) field.ErrorList {
+	if p.ValidateUpdateFunc != nil {
+		return p.ValidateUpdateFunc(machine, oldMachine)
 	}
 
 	return nil
