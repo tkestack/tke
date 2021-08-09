@@ -21,13 +21,8 @@ package platform_test
 import (
 	"context"
 	"errors"
+	"k8s.io/klog"
 	"time"
-
-	"tkestack.io/tke/pkg/platform/apiserver/cluster"
-	"tkestack.io/tke/test/e2e/tke"
-	tke2 "tkestack.io/tke/test/tke"
-	"tkestack.io/tke/test/util"
-	"tkestack.io/tke/test/util/cloudprovider/tencent"
 	"tkestack.io/tke/test/util/env"
 
 	. "github.com/onsi/ginkgo"
@@ -35,11 +30,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1 "tkestack.io/tke/api/platform/v1"
+	"tkestack.io/tke/pkg/platform/apiserver/cluster"
 	_ "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	_ "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
 	_ "tkestack.io/tke/pkg/platform/provider/imported/cluster"
 	_ "tkestack.io/tke/pkg/platform/provider/registered/cluster"
+	"tkestack.io/tke/test/e2e/tke"
+	tke2 "tkestack.io/tke/test/tke"
+	"tkestack.io/tke/test/util"
 	"tkestack.io/tke/test/util/cloudprovider"
+	"tkestack.io/tke/test/util/cloudprovider/tencent"
 )
 
 const namespacePrefix = "platform-"
@@ -57,18 +57,21 @@ var _ = BeforeSuite(func() {
 
 	tkeKubeConfigFile = t.GetKubeConfigFile()
 	restConf, err := t.GetKubeConfig()
+
 	Expect(err).To(BeNil())
 	tkeClient := tkeclientset.NewForConfigOrDie(restConf)
 	testTKE = tke2.Init(tkeClient, provider)
 })
 
 var _ = AfterSuite(func() {
-	for _, cls := range testTKE.Clusters {
-		testTKE.DeleteCluster(cls.Name)
-	}
 
-	t.Delete()
-
+	klog.Info("Resources all resources for test ")
+	//for _, cls := range testTKE.Clusters {
+	//	testTKE.DeleteCluster(cls.Name)
+	//}
+	//
+	//t.Delete()
+	//
 	if env.NeedDelete() {
 		Expect(provider.TearDown()).Should(BeNil())
 	}

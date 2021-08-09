@@ -153,6 +153,10 @@ func (c *TkeCert) WriteKubeConfig(host string, port int, namespace string) error
 		return err
 	}
 
+	klog.Info("=======data: ")
+	klog.Info("=======data: ", string(data))
+	klog.Info("=======data: ")
+
 	klog.Info("Kubeconfig file path: ", c.GetKubeConfigFile())
 	return files.WriteFileWithDir(c.tmpDir, constants.KubeconfigFileBaseName, data, 0644)
 }

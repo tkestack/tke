@@ -196,9 +196,13 @@ func updateCoreDNSVersion(ctx context.Context, client kubernetes.Interface, vers
 func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Cluster) error {
 	// check all machines are upgraded before upgrade cluster
 	requirement, err := labels.NewRequirement(constants.LabelNodeNeedUpgrade, selection.Exists, []string{})
+	fmt.Println("=============err:", err)
+
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("=============p.platformClient", p.platformClient)
 	machines, err := p.platformClient.Machines().List(context.TODO(), metav1.ListOptions{
 		LabelSelector: requirement.String(),
 		FieldSelector: fields.OneTermEqualSelector(platformv1.MachineClusterField, c.Name).String(),
