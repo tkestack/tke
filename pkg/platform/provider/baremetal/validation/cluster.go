@@ -96,6 +96,7 @@ func ValidatClusterSpec(platformClient platformv1client.PlatformV1Interface, clu
 	if validateMachine {
 		allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
 	}
+	allErrs = append(allErrs, ValidateClusterGPUMachines(spec.Machines, fldPath.Child("machines"))...)
 	allErrs = append(allErrs, ValidateClusterFeature(spec, fldPath.Child("features"))...)
 
 	return allErrs
@@ -147,17 +148,6 @@ func ValidateClusterMachines(machines []platform.ClusterMachine, fldPath *field.
 		} else {
 			master, _ := one.SSH()
 			masters = append(masters, master)
-		}
-	}
-
-	for i, machine := range machines {
-		idxPath := fldPath.Index(i)
-		if s, err := machine.SSH(); err == nil {
-			if gpu.IsEnable(machine.Labels) {
-				if !gpu.MachineIsSupport(s) {
-					allErrs = append(allErrs, field.Invalid(idxPath.Child("labels"), machine.Labels, "don't has GPU card"))
-				}
-			}
 		}
 	}
 
@@ -314,6 +304,28 @@ func ValidateClusterProperty(spec *platform.ClusterSpec, propPath *field.Path) f
 			if *properties.MaxClusterServiceNum < 10 {
 				allErrs = append(allErrs, field.Invalid(fldPath, *properties.MaxClusterServiceNum,
 					"must be greater than or equal to 10 because kubeadm need the 10th ip"))
+			}
+		}
+	}
+
+	return allErrs
+}
+
+// ValidateClusterGPUMachines validates a given GPUMachines.
+func ValidateClusterGPUMachines(machines []platform.ClusterMachine, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if machines == nil {
+		allErrs = append(allErrs, field.Required(fldPath, ""))
+	} else {
+		for i, machine := range machines {
+			idxPath := fldPath.Index(i)
+			if s, err := machine.SSH(); err == nil {
+				if gpu.IsEnable(machine.Labels) {
+					if !gpu.MachineIsSupport(s) {
+						allErrs = append(allErrs, field.Invalid(idxPath.Child("labels"), machine.Labels, "don't has GPU card"))
+					}
+				}
 			}
 		}
 	}
