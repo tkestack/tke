@@ -319,18 +319,22 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
 
   /** 搜索框的操作，不同的搜索进行相对应的操作 */
   private _handleClickForTagSearch(tags) {
+    const finalTags = tags.filter(({ attr }) => attr);
+
+    if (finalTags.length <= 0) return;
+
     const { actions, subRoot } = this.props,
       { resourceOption } = subRoot,
       { ffResourceList } = resourceOption;
 
     // 这里是控制tagSearch的展示
     this.setState({
-      searchBoxValues: tags,
-      searchBoxLength: tags.length
+      searchBoxValues: finalTags,
+      searchBoxLength: finalTags.length
     });
 
-    const resourceName = tags.find(({ attr: { key } }) => key === 'resourceName')?.values?.[0]?.name ?? '';
-    const labelSelector = tags.find(({ attr: { key } }) => key === 'labelSelector')?.values?.[0]?.name;
+    const resourceName = finalTags.find(({ attr: { key } }) => key === 'resourceName')?.values?.[0]?.name ?? '';
+    const labelSelector = finalTags.find(({ attr: { key } }) => key === 'labelSelector')?.values?.[0]?.name;
 
     actions.resource.changeFilter({ labelSelector });
     actions.resource.changeKeyword(resourceName);

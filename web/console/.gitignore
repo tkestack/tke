@@ -1,6 +1,6 @@
 ./node_modules
 
 
-./server.config.js
+server.config.js
 
 ./build
