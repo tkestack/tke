@@ -54,7 +54,9 @@ spec:
             requests:
               cpu: 50m
               memory: 128Mi
+{{- if .FilesystemEnabled }}
       nodeName: {{ .NodeName }}
+{{- end }}
       volumes:
         - name: certs-volume
           configMap:
@@ -123,8 +125,67 @@ data:
         endpoints:
         - "https://etcd.kube-system:2379"
         prefix: "/chart_backend_bucket"
+{{- if .FilesystemEnabled }}
       fileSystem:
         rootDirectory: /storage
+{{- end }}
+{{- if .S3Enabled }}
+{{- with .S3Storage }}
+      s3:
+        bucket: {{ .Bucket }}
+        region: {{ .Region }}
+{{- if .AccessKey }}
+        accessKey: {{ .AccessKey }}
+{{- end }}
+{{- if .SecretKey }}
+        secretKey: {{ .SecretKey }}
+{{- end }}
+{{- if .RegionEndpoint }}
+        regionEndpoint: {{ .RegionEndpoint }}
+{{- end }}
+{{- if .Encrypt }}
+        encrypt: {{ .Encrypt }}
+{{- end }}
+{{- if .KeyID }}
+        keyID: {{ .KeyID }}
+{{- end }}
+{{- if .Secure }}
+        secure: {{ .Secure }}
+{{- end }}
+{{- if .SkipVerify }}
+        skipVerify: {{ .SkipVerify }}
+{{- end }}
+{{- if .V4Auth }}
+        v4Auth: {{ .V4Auth }}
+{{- end }}
+{{- if .ChunkSize }}
+        chunkSize: {{ .ChunkSize }}
+{{- end }}
+{{- if .MultipartCopyChunkSize }}
+        multipartCopyChunkSize: {{ .MultipartCopyChunkSize }}
+{{- end }}
+{{- if .MultipartCopyMaxConcurrency }}
+        multipartCopyMaxConcurrency: {{ .MultipartCopyMaxConcurrency }}
+{{- end }}
+{{- if .MultipartCopyThresholdSize }}
+        multipartCopyThresholdSize: {{ .MultipartCopyThresholdSize }}
+{{- end }}
+{{- if .RootDirectory }}
+        rootDirectory: {{ .RootDirectory }}
+{{- end }}
+{{- if .StorageClass }}
+        storageClass: {{ .StorageClass }}
+{{- end }}
+{{- if .UserAgent }}
+        userAgent: {{ .UserAgent }}
+{{- end }}
+{{- if .ObjectACL }}
+        objectACL: {{ .ObjectACL }}
+{{- end }}
+{{- end -}}
+{{- end }}
+      delete:
+        enabled: true
     security:
       tokenPrivateKeyFile: /etc/registry/private_key.pem
       tokenPublicKeyFile: /etc/registry/public_key.crt

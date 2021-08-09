@@ -1482,8 +1482,7 @@ func (t *TKE) prepareBaremetalProviderConfig(ctx context.Context) error {
 	}
 	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
 		t.Para.Config.Registry.TKERegistry != nil {
-		ip := t.Cluster.Spec.Machines[0].IP // registry current only run in first node
-		providerConfig.Registry.IP = ip
+		providerConfig.Registry.IP = t.Para.RegistryIP()
 	}
 	if t.auditEnabled() {
 		providerConfig.Audit.Address = t.determineGatewayHTTPSAddress()
@@ -2161,6 +2160,16 @@ func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
 		"HarborEnabled":  t.Para.Config.Registry.TKERegistry.HarborEnabled,
 		"HarborCAFile":   t.Para.Config.Registry.TKERegistry.HarborCAFile,
 	}
+	//check if s3 enabled
+	storageConfig := t.Para.Config.Registry.TKERegistry.Storage
+	s3Enabled := (storageConfig != nil && storageConfig.S3 != nil)
+	options["S3Enabled"] = s3Enabled
+	if s3Enabled {
+		options["S3Storage"] = storageConfig.S3
+	}
+	//or enable filesystem by default
+	options["FilesystemEnabled"] = !s3Enabled
+
 	if t.Para.Config.Auth.OIDCAuth != nil {
 		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
 		options["OIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
@@ -2187,18 +2196,28 @@ func (t *TKE) installTKERegistryController(ctx context.Context) error {
 		return err
 	}
 
-	err = apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-registry-controller/*.yaml",
-		map[string]interface{}{
-			"Replicas":           t.Config.Replicas,
-			"Image":              images.Get().TKERegistryController.FullName(),
-			"NodeName":           node.Name,
-			"AdminUsername":      t.Para.Config.Registry.TKERegistry.Username,
-			"AdminPassword":      string(t.Para.Config.Registry.TKERegistry.Password),
-			"EnableAuth":         t.Para.Config.Auth.TKEAuth != nil,
-			"EnableBusiness":     t.businessEnabled(),
-			"DomainSuffix":       t.Para.Config.Registry.TKERegistry.Domain,
-			"DefaultChartGroups": defaultChartGroupsStringConfig,
-		})
+	options := map[string]interface{}{
+		"Replicas":           t.Config.Replicas,
+		"Image":              images.Get().TKERegistryController.FullName(),
+		"NodeName":           node.Name,
+		"AdminUsername":      t.Para.Config.Registry.TKERegistry.Username,
+		"AdminPassword":      string(t.Para.Config.Registry.TKERegistry.Password),
+		"EnableAuth":         t.Para.Config.Auth.TKEAuth != nil,
+		"EnableBusiness":     t.businessEnabled(),
+		"DomainSuffix":       t.Para.Config.Registry.TKERegistry.Domain,
+		"DefaultChartGroups": defaultChartGroupsStringConfig,
+	}
+	//check if s3 enabled
+	storageConfig := t.Para.Config.Registry.TKERegistry.Storage
+	s3Enabled := (storageConfig != nil && storageConfig.S3 != nil)
+	options["S3Enabled"] = s3Enabled
+	if s3Enabled {
+		options["S3Storage"] = storageConfig.S3
+	}
+	//or enable filesystem by default
+	options["FilesystemEnabled"] = !s3Enabled
+
+	err = apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-registry-controller/*.yaml", options)
 	if err != nil {
 		return err
 	}

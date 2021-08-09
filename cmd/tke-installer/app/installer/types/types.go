@@ -32,6 +32,13 @@ type CreateClusterPara struct {
 	Config  Config     `json:"Config"`
 }
 
+func (c *CreateClusterPara) RegistryIP() string {
+	if c.Config.HA != nil {
+		return c.Config.HA.VIP()
+	}
+	return c.Cluster.Spec.Machines[0].IP
+}
+
 // Config is the installer config
 type Config struct {
 	Basic       *Basic       `json:"basic"`
@@ -138,12 +145,59 @@ func (r *Registry) IsOfficial() bool {
 }
 
 type TKERegistry struct {
-	Domain        string `json:"domain" validate:"hostname_rfc1123"`
-	HarborEnabled bool   `json:"harborEnabled"`
-	HarborCAFile  string `json:"harborCAFile"`
-	Namespace     string `json:"namespace"`
-	Username      string `json:"username"`
-	Password      []byte `json:"password"`
+	Domain        string              `json:"domain" validate:"hostname_rfc1123"`
+	HarborEnabled bool                `json:"harborEnabled"`
+	HarborCAFile  string              `json:"harborCAFile"`
+	Namespace     string              `json:"namespace"`
+	Username      string              `json:"username"`
+	Password      []byte              `json:"password"`
+	Storage       *TKERegistryStorage `json:"storage"`
+}
+
+type TKERegistryStorage struct {
+	Filesystem *TKERegistryFilesystemStorage `json:"filesystem"`
+	S3         *TKERegistryS3Storage         `json:"s3"`
+}
+
+type TKERegistryFilesystemStorage struct {
+}
+
+type TKERegistryS3Storage struct {
+	Bucket string `json:"bucket"`
+	Region string `json:"region"`
+
+	// +optional
+	AccessKey *string `json:"accessKey,omitempty"`
+	// +optional
+	SecretKey *string `json:"secretKey,omitempty"`
+	// +optional
+	RegionEndpoint *string `json:"regionEndpoint,omitempty"`
+	// +optional
+	Encrypt *bool `json:"encrypt,omitempty"`
+	// +optional
+	KeyID *string `json:"keyID,omitempty"`
+	// +optional
+	Secure *bool `json:"secure,omitempty"`
+	// +optional
+	SkipVerify *bool `json:"skipVerify,omitempty"`
+	// +optional
+	V4Auth *bool `json:"v4Auth,omitempty"`
+	// +optional
+	ChunkSize *int64 `json:"chunkSize,omitempty"`
+	// +optional
+	MultipartCopyChunkSize *int64 `json:"multipartCopyChunkSize,omitempty"`
+	// +optional
+	MultipartCopyMaxConcurrency *int64 `json:"multipartCopyMaxConcurrency,omitempty"`
+	// +optional
+	MultipartCopyThresholdSize *int64 `json:"multipartCopyThresholdSize,omitempty"`
+	// +optional
+	RootDirectory *string `json:"rootDirectory,omitempty"`
+	// +optional
+	StorageClass *string `json:"storageClass,omitempty"`
+	// +optional
+	UserAgent *string `json:"userAgent,omitempty"`
+	// +optional
+	ObjectACL *string `json:"objectACL,omitempty"`
 }
 
 type ThirdPartyRegistry struct {
