@@ -14,29 +14,30 @@
 # WARRANTIES OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 
-NODE_SUPPORTED_VERSION = v12
-NPM = npm
+NVM_VERSION = v0.38.0
 
 .PHONY: web.build
 web.build: web.verify web.build.console web.build.installer
 
 .PHONY: web.verify
+.ONESHELL:
 web.verify:
-	@echo "===========> Check Node.js version"
-ifneq ($(shell node -v | cut -f1 -d.), $(NODE_SUPPORTED_VERSION))
-	@echo "===========> Install Node.js v12"
-	curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
-	sudo apt-get install -y nodejs
-endif
+	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/$(NVM_VERSION)/install.sh | bash
 
 .PHONY: web.build.console
+.ONESHELL:
 web.build.console: web.verify
 	@echo "===========> Building the console web app"
-	@mkdir -p $(ROOT_DIR)/web/console/build
-	@cd $(ROOT_DIR)/web/console && $(NPM) run build
+	@cd $(ROOT_DIR)/web/console
+	@source $(HOME)/.nvm/nvm.sh
+	@nvm install
+	@npm run build
 
 .PHONY: web.build.installer
+.ONESHELL:
 web.build.installer: web.verify
-	@echo "===========> Building the installer web app"
-	@mkdir -p $(ROOT_DIR)/web/installer/build
-	@cd $(ROOT_DIR)/web/installer && $(NPM) run build
+	@echo "===========> Building the Installer web app"
+	@cd $(ROOT_DIR)/web/installer
+	@source $(HOME)/.nvm/nvm.sh
+	@nvm install
+	@npm run build
