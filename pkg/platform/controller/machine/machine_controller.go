@@ -120,6 +120,18 @@ func (c *Controller) needsUpdate(oldMachine *platformv1.Machine, newMachine *pla
 		return true
 	}
 
+	if oldMachine.Status.Phase == platformv1.MachineRunning && newMachine.Status.Phase == platformv1.MachineTerminating {
+		return true
+	}
+
+	if !reflect.DeepEqual(oldMachine.ObjectMeta.Annotations, newMachine.ObjectMeta.Annotations) {
+		return true
+	}
+
+	if !reflect.DeepEqual(oldMachine.ObjectMeta.Labels, newMachine.ObjectMeta.Labels) {
+		return true
+	}
+
 	// Control the synchronization interval through the health detection interval
 	// to avoid version conflicts caused by concurrent modification
 	healthCondition := newMachine.GetCondition(conditionTypeHealthCheck)
