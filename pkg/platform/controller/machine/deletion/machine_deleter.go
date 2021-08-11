@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -275,6 +276,10 @@ func deleteMachineProvider(ctx context.Context, deleter *machineDeleter, machine
 	}
 	cluster, err := typesv1.GetClusterByName(context.Background(), deleter.platformClient, machine.Spec.ClusterName)
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			log.FromContext(ctx).Info("Cluster has been deleted")
+			return nil
+		}
 		return err
 	}
 
@@ -293,6 +298,10 @@ func deleteNode(ctx context.Context, deleter *machineDeleter, machine *v1.Machin
 
 	cluster, err := typesv1.GetClusterByName(context.Background(), deleter.platformClient, machine.Spec.ClusterName)
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			log.FromContext(ctx).Info("Cluster has been deleted")
+			return nil
+		}
 		return err
 	}
 	if cluster.Status.Phase == platformv1.ClusterTerminating {
