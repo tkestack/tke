@@ -102,7 +102,6 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 		app.Spec.TenantID = tenantID
 	}
 	app.ObjectMeta.GenerateName = "app-"
-	app.ObjectMeta.Name = ""
 	app.Generation = 1
 
 	if app.Spec.Chart.TenantID == "" {
