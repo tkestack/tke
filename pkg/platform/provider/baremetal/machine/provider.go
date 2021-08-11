@@ -19,16 +19,27 @@
 package machine
 
 import (
+	"context"
+	"fmt"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/retry"
 	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/validation"
 	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
+	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/strategicpatch"
 )
 
 const (
@@ -123,4 +134,56 @@ var _ machineprovider.Provider = &Provider{}
 
 func (p *Provider) Validate(machine *platform.Machine) field.ErrorList {
 	return validation.ValidateMachine(machine)
+}
+
+func (p *Provider) OnUpdate(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
+	p.ensureSyncMachineNodeLabel(ctx, machine)
+
+	return p.DelegateProvider.OnUpdate(ctx, machine, cluster)
+}
+
+func (p *Provider) ensureSyncMachineNodeLabel(ctx context.Context, machine *platformv1.Machine) {
+	cluster, err := typesv1.GetClusterByName(ctx, p.platformClient, machine.Spec.ClusterName)
+	if err != nil {
+		log.FromContext(ctx).Error(err, "sync Machine node label error")
+		return
+	}
+
+	client, err := cluster.Clientset()
+	if err != nil {
+		log.FromContext(ctx).Error(err, "sync Machine node label error")
+		return
+	}
+
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		node, err := client.CoreV1().Nodes().Get(ctx, machine.Spec.IP, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return nil
+			}
+			return err
+		}
+
+		labels := node.GetLabels()
+		_, ok := labels[string(apiclient.LabelMachineIPV4)]
+		if ok {
+			return nil
+		}
+
+		oldNode := node.DeepCopy()
+		labels[string(apiclient.LabelMachineIPV4)] = machine.Spec.IP
+		node.SetLabels(labels)
+
+		patchBytes, err := strategicpatch.GetPatchBytes(oldNode, node)
+		if err != nil {
+			return fmt.Errorf("GetPatchBytes for node error: %w", err)
+		}
+
+		_, err = client.CoreV1().Nodes().Patch(ctx, node.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
+		return err
+	})
+
+	if err != nil {
+		log.FromContext(ctx).Error(err, "sync Machine node label error")
+	}
 }
