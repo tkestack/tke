@@ -1716,3 +1716,58 @@ type LBCFStatus struct {
 	// +optional
 	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,5,name=lastReInitializingTimestamp"`
 }
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterGroupAPIResourceItemsList is the whole list of all ClusterAPIResource.
+type ClusterGroupAPIResourceItemsList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,3,opt,name=metadata"`
+	// List of ClusterGroupAPIResourceItems
+	Items []ClusterGroupAPIResourceItems `protobuf:"bytes,2,rep,name=items"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:onlyVerbs=list,get
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterGroupAPIResourceItems contains the GKV for the current kubernetes cluster
+type ClusterGroupAPIResourceItems struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// groupVersion is the group and version this APIResourceList is for.
+	GroupVersion string `json:"groupVersion" protobuf:"bytes,2,opt,name=groupVersion"`
+	// resources contains the name of the resources and if they are namespaced.
+	APIResources []ClusterGroupAPIResourceItem `json:"apiResources" protobuf:"bytes,3,rep,name=apiResources"`
+}
+
+// ClusterGroupAPIResourceItem specifies the name of a resource and whether it is namespaced.
+type ClusterGroupAPIResourceItem struct {
+	// name is the plural name of the resource.
+	Name string `protobuf:"bytes,1,opt,name=name"`
+	// singularName is the singular name of the resource.  This allows clients to handle plural and singular opaquely.
+	// The singularName is more correct for reporting status on a single item and both singular and plural are allowed
+	// from the kubectl CLI interface.
+	SingularName string `protobuf:"bytes,2,opt,name=singularName"`
+	// namespaced indicates if a resource is namespaced or not.
+	Namespaced bool `protobuf:"varint,3,opt,name=namespaced"`
+	// group is the preferred group of the resource.  Empty implies the group of the containing resource list.
+	// For subresources, this may have a different value, for example: Scale".
+	Group string `protobuf:"bytes,4,opt,name=group"`
+	// version is the preferred version of the resource.  Empty implies the version of the containing resource list
+	// For subresources, this may have a different value, for example: v1 (while inside a v1beta1 version of the core resource's group)".
+	Version string `protobuf:"bytes,5,opt,name=version"`
+	// kind is the kind for the resource (e.g. 'Foo' is the kind for a resource 'foo')
+	Kind string `protobuf:"bytes,6,opt,name=kind"`
+	// verbs is a list of supported kube verbs (this includes get, list, watch, create,
+	// update, patch, delete, deletecollection, and proxy)
+	Verbs []string `protobuf:"bytes,7,rep,name=verbs"`
+	// shortNames is a list of suggested short names of the resource.
+	ShortNames []string `protobuf:"bytes,8,rep,name=shortNames"`
+	// categories is a list of the grouped resources this resource belongs to (e.g. 'all')
+	Categories []string `protobuf:"bytes,9,rep,name=categories"`
+}

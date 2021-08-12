@@ -36,6 +36,10 @@ type ClusterAddonListerExpansion interface{}
 // ClusterCredentialLister.
 type ClusterCredentialListerExpansion interface{}
 
+// ClusterGroupAPIResourceItemsListerExpansion allows custom methods to be added to
+// ClusterGroupAPIResourceItemsLister.
+type ClusterGroupAPIResourceItemsListerExpansion interface{}
+
 // ConfigMapListerExpansion allows custom methods to be added to
 // ConfigMapLister.
 type ConfigMapListerExpansion interface{}

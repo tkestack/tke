@@ -84,6 +84,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["clusters/drain"] = clusterREST.Drain
 		storageMap["clusters/proxy"] = clusterREST.Proxy
 		storageMap["clusters/apply"] = clusterREST.Apply
+		storageMap["clusters/apiresources"] = clusterREST.APIResources
 		storageMap["clusters/helm"] = clusterREST.Helm
 		storageMap["clusters/tapps"] = clusterREST.TappController
 		storageMap["clusters/csis"] = clusterREST.CSI
