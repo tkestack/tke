@@ -279,6 +279,7 @@ var map_ClusterSpec = map[string]string{
 	"clusterCredentialRef": "ClusterCredentialRef for isolate sensitive information. If not specified, cluster controller will create one; If specified, provider must make sure is valid.",
 	"etcd":                 "Etcd holds configuration for etcd.",
 	"hostnameAsNodename":   "If true will use hostname as nodename, if false will use machine IP as nodename.",
+	"bootstrapApps":        "BootstrapApps will install apps during creating cluster",
 }
 
 func (ClusterSpec) SwaggerDoc() map[string]string {

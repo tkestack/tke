@@ -28,6 +28,7 @@ import "k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/generated.proto";
 import "k8s.io/apimachinery/pkg/runtime/schema/generated.proto";
 import "k8s.io/apimachinery/pkg/util/intstr/generated.proto";
+import "tkestack.io/tke/api/application/v1/generated.proto";
 
 // Package-wide variables from generator "generated".
 option go_package = "v1";
@@ -41,12 +42,24 @@ message AddonSpec {
   optional string version = 3;
 }
 
+message App {
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  // +optional
+  optional tkestack.io.tke.api.application.v1.AppSpec spec = 2;
+}
+
 message AuthzWebhookAddr {
   // +optional
   optional BuiltinAuthzWebhookAddr builtin = 1;
 
   // +optional
   optional ExternalAuthzWebhookAddr external = 2;
+}
+
+message BootstrapApp {
+  optional App app = 1;
 }
 
 message BuiltinAuthzWebhookAddr {
@@ -527,6 +540,10 @@ message ClusterSpec {
 
   // +optional
   repeated ClusterMachine scalingMachines = 25;
+
+  // BootstrapApps will install apps during creating cluster
+  // +optional
+  repeated BootstrapApp bootstrapApps = 26;
 }
 
 // ClusterStatus represents information about the status of a cluster.

@@ -952,7 +952,9 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/notify/v1.TemplateText":                                  schema_tke_api_notify_v1_TemplateText(ref),
 		"tkestack.io/tke/api/notify/v1.TemplateWechat":                                schema_tke_api_notify_v1_TemplateWechat(ref),
 		"tkestack.io/tke/api/platform/v1.AddonSpec":                                   schema_tke_api_platform_v1_AddonSpec(ref),
+		"tkestack.io/tke/api/platform/v1.App":                                         schema_tke_api_platform_v1_App(ref),
 		"tkestack.io/tke/api/platform/v1.AuthzWebhookAddr":                            schema_tke_api_platform_v1_AuthzWebhookAddr(ref),
+		"tkestack.io/tke/api/platform/v1.BootstrapApp":                                schema_tke_api_platform_v1_BootstrapApp(ref),
 		"tkestack.io/tke/api/platform/v1.BuiltinAuthzWebhookAddr":                     schema_tke_api_platform_v1_BuiltinAuthzWebhookAddr(ref),
 		"tkestack.io/tke/api/platform/v1.CSIOperator":                                 schema_tke_api_platform_v1_CSIOperator(ref),
 		"tkestack.io/tke/api/platform/v1.CSIOperatorFeature":                          schema_tke_api_platform_v1_CSIOperatorFeature(ref),
@@ -45900,6 +45902,30 @@ func schema_tke_api_platform_v1_AddonSpec(ref common.ReferenceCallback) common.O
 	}
 }
 
+func schema_tke_api_platform_v1_App(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/application/v1.AppSpec"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/application/v1.AppSpec"},
+	}
+}
+
 func schema_tke_api_platform_v1_AuthzWebhookAddr(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -45921,6 +45947,25 @@ func schema_tke_api_platform_v1_AuthzWebhookAddr(ref common.ReferenceCallback) c
 		},
 		Dependencies: []string{
 			"tkestack.io/tke/api/platform/v1.BuiltinAuthzWebhookAddr", "tkestack.io/tke/api/platform/v1.ExternalAuthzWebhookAddr"},
+	}
+}
+
+func schema_tke_api_platform_v1_BootstrapApp(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"app": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("tkestack.io/tke/api/platform/v1.App"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/platform/v1.App"},
 	}
 }
 
@@ -47442,12 +47487,25 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							},
 						},
 					},
+					"bootstrapApps": {
+						SchemaProps: spec.SchemaProps{
+							Description: "BootstrapApps will install apps during creating cluster",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("tkestack.io/tke/api/platform/v1.BootstrapApp"),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"tenantID", "type", "version"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.LocalObjectReference", "tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty", "tkestack.io/tke/api/platform/v1.Etcd"},
+			"k8s.io/api/core/v1.LocalObjectReference", "tkestack.io/tke/api/platform/v1.BootstrapApp", "tkestack.io/tke/api/platform/v1.ClusterFeature", "tkestack.io/tke/api/platform/v1.ClusterMachine", "tkestack.io/tke/api/platform/v1.ClusterProperty", "tkestack.io/tke/api/platform/v1.Etcd"},
 	}
 }
 
