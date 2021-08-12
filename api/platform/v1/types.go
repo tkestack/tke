@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 )
 
 // +genclient
@@ -156,6 +157,9 @@ type ClusterSpec struct {
 	NetworkArgs map[string]string `json:"networkArgs,omitempty" protobuf:"bytes,24,name=networkArgs"`
 	// +optional
 	ScalingMachines []ClusterMachine `json:"scalingMachines,omitempty" protobuf:"bytes,25,opt,name=scalingMachines"`
+	// BootstrapApps will install apps during creating cluster
+	// +optional
+	BootstrapApps BootstrapApps `json:"bootstrapApps,omitempty" protobuf:"bytes,26,opt,name=bootstrapApps"`
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -394,6 +398,19 @@ type ClusterFeature struct {
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
+}
+
+type BootstrapApps []BootstrapApp
+
+type BootstrapApp struct {
+	App App `json:"app,omitempty" protobuf:"bytes,1,opt,name=app"`
+}
+
+type App struct {
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// +optional
+	Spec applicationv1.AppSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 }
 
 type HA struct {

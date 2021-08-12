@@ -46,8 +46,10 @@ type Config struct {
 	LeaderElectionClient *versionedclientset.Clientset
 	// the rest config for the platform apiserver
 	PlatformAPIServerClientConfig *restclient.Config
-	Component                     controlleroptions.ComponentConfiguration
-	Features                      *options.FeatureOptions
+	// the rest config for the application apiserver
+	ApplicationAPIServerClientConfig *restclient.Config
+	Component                        controlleroptions.ComponentConfiguration
+	Features                         *options.FeatureOptions
 
 	ClusterController clusterconfig.ClusterControllerConfiguration
 	MachineController machineconfig.MachineControllerConfiguration
@@ -73,6 +75,11 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	config.Timeout = opts.Component.LeaderElection.RenewDeadline
 	leaderElectionClient := versionedclientset.NewForConfigOrDie(restclient.AddUserAgent(&config, "leader-election"))
 
+	applicationAPIServerClientConfig, _, err := controllerconfig.BuildClientConfig(opts.ApplicationAPIClient)
+	if err != nil {
+		return nil, err
+	}
+
 	controllerManagerConfig := &Config{
 		ServerName:                    serverName,
 		LeaderElectionClient:          leaderElectionClient,
@@ -83,7 +90,8 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		Authentication: apiserver.AuthenticationInfo{
 			Authenticator: anonymous.NewAuthenticator(),
 		},
-		Features: opts.FeatureOptions,
+		Features:                         opts.FeatureOptions,
+		ApplicationAPIServerClientConfig: applicationAPIServerClientConfig,
 	}
 
 	if err := opts.Component.ApplyTo(&controllerManagerConfig.Component); err != nil {
