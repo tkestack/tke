@@ -56,6 +56,7 @@ type Config struct {
 	Scheduler               Scheduler         `yaml:"scheduler"`
 	AuthzWebhook            AuthzWebhook      `yaml:"authzWebhook"`
 	Business                Business          `yaml:"business"`
+	Etcd                    Etcd              `yaml:"etcd"`
 }
 
 func (c *Config) Save(filename string) error {
@@ -121,4 +122,8 @@ type AuthzWebhook struct {
 }
 type Business struct {
 	Enabled bool `yaml:"enabled"`
+}
+
+type Etcd struct {
+	ExtraArgs map[string]string `yaml:"extraArgs"`
 }

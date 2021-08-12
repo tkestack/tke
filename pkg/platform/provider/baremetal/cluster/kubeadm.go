@@ -186,6 +186,10 @@ func (p *Provider) getClusterConfiguration(c *v1.Cluster) *kubeadmv1beta2.Cluste
 	utilruntime.Must(json.Merge(&config.Etcd, &c.Spec.Etcd))
 	if config.Etcd.Local != nil {
 		config.Etcd.Local.ImageTag = images.Get().ETCD.Tag
+
+		if config.Etcd.Local.ExtraArgs != nil && p.config.Etcd.ExtraArgs != nil {
+			utilruntime.Must(mergo.Merge(&config.Etcd.Local.ExtraArgs, p.config.Etcd.ExtraArgs))
+		}
 	}
 
 	return config
@@ -239,9 +243,6 @@ func (p *Provider) getAPIServerExtraArgs(c *v1.Cluster) map[string]string {
 		args["authorization-webhook-config-file"] = constants.KubernetesAuthzWebhookConfigFile
 		args["authorization-mode"] = "Node,RBAC,Webhook"
 	}
-	for k, v := range c.Spec.APIServerExtraArgs {
-		args[k] = v
-	}
 
 	utilruntime.Must(mergo.Merge(&args, c.Spec.APIServerExtraArgs))
 	utilruntime.Must(mergo.Merge(&args, p.config.APIServer.ExtraArgs))
@@ -267,9 +268,6 @@ func (p *Provider) getControllerManagerExtraArgs(c *v1.Cluster) map[string]strin
 		args["configure-cloud-routes"] = "false"
 		args["allocate-node-cidrs"] = "false"
 	}
-	for k, v := range c.Spec.ControllerManagerExtraArgs {
-		args[k] = v
-	}
 
 	utilruntime.Must(mergo.Merge(&args, c.Spec.ControllerManagerExtraArgs))
 	utilruntime.Must(mergo.Merge(&args, p.config.ControllerManager.ExtraArgs))
@@ -282,9 +280,6 @@ func (p *Provider) getSchedulerExtraArgs(c *v1.Cluster) map[string]string {
 		"use-legacy-policy-config": "true",
 		"policy-config-file":       constants.KubernetesSchedulerPolicyConfigFile,
 		"bind-address":             "0.0.0.0",
-	}
-	for k, v := range c.Spec.SchedulerExtraArgs {
-		args[k] = v
 	}
 
 	utilruntime.Must(mergo.Merge(&args, c.Spec.SchedulerExtraArgs))
