@@ -23,23 +23,21 @@ import (
 	"errors"
 	"time"
 
-	"tkestack.io/tke/pkg/platform/apiserver/cluster"
-	"tkestack.io/tke/test/e2e/tke"
-	tke2 "tkestack.io/tke/test/tke"
-	"tkestack.io/tke/test/util"
-	"tkestack.io/tke/test/util/cloudprovider/tencent"
-	"tkestack.io/tke/test/util/env"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1 "tkestack.io/tke/api/platform/v1"
+	"tkestack.io/tke/pkg/platform/apiserver/cluster"
 	_ "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	_ "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
 	_ "tkestack.io/tke/pkg/platform/provider/imported/cluster"
 	_ "tkestack.io/tke/pkg/platform/provider/registered/cluster"
+	"tkestack.io/tke/test/e2e/tke"
+	tke2 "tkestack.io/tke/test/tke"
+	"tkestack.io/tke/test/util"
 	"tkestack.io/tke/test/util/cloudprovider"
+	"tkestack.io/tke/test/util/cloudprovider/tencent"
 )
 
 const namespacePrefix = "platform-"
@@ -63,15 +61,17 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	for _, cls := range testTKE.Clusters {
-		testTKE.DeleteCluster(cls.Name)
-	}
 
-	t.Delete()
-
-	if env.NeedDelete() {
-		Expect(provider.TearDown()).Should(BeNil())
-	}
+	By("Reserve all resources, please clean manually")
+	//for _, cls := range testTKE.Clusters {
+	//	testTKE.DeleteCluster(cls.Name)
+	//}
+	//
+	//t.Delete()
+	//
+	//if env.NeedDelete() {
+	//	Expect(provider.TearDown()).Should(BeNil())
+	//}
 })
 
 var _ = Describe("Platform Test", func() {

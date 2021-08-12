@@ -24,12 +24,13 @@ import (
 	"net"
 	"strings"
 
+	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"tkestack.io/tke/api/platform"
-
 	netutils "k8s.io/utils/net"
+
 	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
@@ -38,6 +39,7 @@ import (
 	vendor "tkestack.io/tke/pkg/platform/util/kubevendor"
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/ipallocator"
+	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/validation"
 	utilvalidation "tkestack.io/tke/pkg/util/validation"
 )
@@ -98,15 +100,32 @@ func ValidateClusterSpecVersion(platformClient platformv1client.PlatformV1Interf
 }
 
 func getK8sValidVersions(platformClient platformv1client.PlatformV1Interface, clsName string) (validVersions []string, err error) {
-	k8sValidVersions := []string{}
+
+	fmt.Println("==================================")
+	fmt.Println("=================cls name:", clsName)
+	fmt.Println("=================platformClient", platformClient)
+	fmt.Println("==================================")
+
 	if clsName == "global" || platformClient == nil {
 		return spec.K8sVersions, nil
 	}
-	client, err := util.BuildExternalClientSetWithName(context.Background(), platformClient, "global")
+
+	cluster, err := platformClient.Clusters().Get(context.Background(), "global", metav1.GetOptions{})
 	if err != nil {
-		return k8sValidVersions, err
+		if k8serror.IsNotFound(err) {
+			log.Infof("global cluster is not exist")
+
+			return spec.K8sVersions, nil
+		}
+		return nil, err
 	}
-	_, k8sValidVersions, err = util.GetPlatformVersionsFromClusterInfo(context.Background(), client)
+
+	client, err := util.BuildExternalClientSet(context.Background(), cluster, platformClient)
+	if err != nil {
+		return nil, err
+	}
+
+	_, k8sValidVersions, err := util.GetPlatformVersionsFromClusterInfo(context.Background(), client)
 
 	return k8sValidVersions, err
 }

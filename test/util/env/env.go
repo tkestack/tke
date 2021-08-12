@@ -19,6 +19,7 @@
 package env
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -38,7 +39,17 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Println("===========check tke.env exist:", Exists(path.Join(home, envFile)))
 	godotenv.Overload(path.Join(home, envFile), envFile) // for local dev
+}
+
+func Exists(path string) bool {
+	_, err := os.Stat(path) //os.Stat获取文件信息
+	if err != nil {
+		return os.IsExist(err)
+	}
+	return true
 }
 
 const (

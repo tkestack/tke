@@ -83,7 +83,7 @@ data:
       - name: tke
         cluster:
           insecure-skip-tls-verify: true
-          server: https://tke-platform-api
+          server: https://tke-platform-api-service
     users:
       - name: admin-cert
         user:
@@ -99,7 +99,7 @@ data:
 kind: Service
 apiVersion: v1
 metadata:
-  name: tke-platform-api
+  name: tke-platform-api-service
   namespace: {{ .Namespace }}
 spec:
   type: NodePort

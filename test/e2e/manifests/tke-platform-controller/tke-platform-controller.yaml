@@ -82,7 +82,7 @@ data:
     [client]
 
       [client.platform]
-      api_server = "https://tke-platform-api"
+      api_server = "https://tke-platform-api-service"
       api_server_client_config = "/app/conf/tke-platform-config.yaml"
 
     [registry]
@@ -93,18 +93,18 @@ data:
     apiVersion: v1
     kind: Config
     clusters:
-      - name: {{ .Namespace }}
+      - name: tke
         cluster:
-          certificate-authority: /app/certs/ca.crt
-          server: https://tke-platform-api
+          insecure-skip-tls-verify: true
+          server: https://tke-platform-api-service
     users:
       - name: admin-cert
         user:
           client-certificate: /app/certs/admin.crt
           client-key: /app/certs/admin.key
-    current-context: {{ .Namespace }}
+    current-context: tke
     contexts:
       - context:
-          cluster: {{ .Namespace }}
+          cluster: tke
           user: admin-cert
-        name: {{ .Namespace }}
+        name: tke

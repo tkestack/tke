@@ -19,8 +19,11 @@
 package cluster
 
 import (
+	"context"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/AlekSi/pointer"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -50,6 +53,26 @@ func init() {
 		return
 	}
 	clusterprovider.Register(p.Name(), p)
+
+	if p.platformClient != nil {
+
+		log.Infof("Sleep 10s wait for service")
+		time.Sleep(10 * time.Second)
+
+		clss, err := p.platformClient.Clusters().List(context.Background(), metav1.ListOptions{})
+		if err != nil {
+			log.Errorf("================platformClient is error:", err)
+			return
+		}
+
+		log.Infof("==========List success, cluster list:%s\n", clss.String())
+
+		for i, cls := range clss.Items {
+			log.Warnf("==========%d:%s\n", i, cls.Name)
+		}
+		return
+	}
+	log.Errorf("================platformClient is nil nil nil==========:%v", p.platformClient)
 }
 
 type Provider struct {
@@ -166,6 +189,7 @@ func NewProvider() (*Provider, error) {
 
 	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
 
+	log.Infof("cfg:%#v\n", cfg)
 	// Run for compatibility with installer.
 	// TODO: Installer reuse platform components
 	if cfg.PlatformAPIClientConfig != "" {
@@ -179,7 +203,7 @@ func NewProvider() (*Provider, error) {
 			}
 		}
 	}
-
+	log.Infof("provider(%s):%#v\n", p.ProviderName, p)
 	return p, nil
 }
 
