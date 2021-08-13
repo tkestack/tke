@@ -1,4 +1,21 @@
 #!/bin/bash
+
+# Tencent is pleased to support the open source community by making TKEStack
+# available.
+#
+# Copyright (C) 2012-2021 Tencent. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy of the
+# License at
+#
+# https://opensource.org/licenses/Apache-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations under the License.
+
 # Author: yhchen
 set -e
 
@@ -78,7 +95,7 @@ host_init(){
         remote_img_registry_url=`cat hosts | grep ^remote_img_registry_url | awk -F\' '{print $2}'`
       else
         echo "hosts file not exist, please check!!!" && exit 0
-      fi 
+      fi
       if [ `ls ../offline-pot-tgz/${remote_img_registry_url}.cert.tar.gz | wc -l` -gt 0 ]; then
         sh ./mgr-scripts/host-init.sh -f issue_img_crt 2>&1 >> /opt/tke-installer/data/host-init.log
       fi

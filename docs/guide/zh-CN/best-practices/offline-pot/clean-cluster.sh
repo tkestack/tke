@@ -1,4 +1,21 @@
 #!/bin/bash
+
+# Tencent is pleased to support the open source community by making TKEStack
+# available.
+#
+# Copyright (C) 2012-2021 Tencent. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy of the
+# License at
+#
+# https://opensource.org/licenses/Apache-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations under the License.
+
 # Author: yhchen
 set -e
 
@@ -38,7 +55,7 @@ remove_business(){
   if [ -d "../tkestack" ]; then
     if [ `docker ps | grep tke-installer | wc -l` -eq 1 ]; then
       if [ -f 'offline-pot-cmd.sh' ]; then
-        sh ./offline-pot-cmd.sh -s remove-business.sh -f del_business 
+        sh ./offline-pot-cmd.sh -s remove-business.sh -f del_business
       fi
     else
       echo "please exec install-tke-installer.sh to start tke-installer" && exit 0
@@ -75,7 +92,7 @@ clean_cluster_nodes(){
   echo "###### clean cluster nodes start ######"
   if [ `docker ps | grep tke-installer | wc -l` -eq 1 ]; then
     if [ -f 'offline-pot-cmd.sh' ] && [ -d "../tkestack" ]; then
-      sh ./offline-pot-cmd.sh -s clean-cluster-nodes.sh -f clean_cluster 
+      sh ./offline-pot-cmd.sh -s clean-cluster-nodes.sh -f clean_cluster
     fi
   else
     echo "please exec install-tke-installer.sh to start tke-installer" && exit 0
