@@ -1,6 +1,6 @@
 # CSIOperator
 
-## CSIOperator 介绍 
+## CSIOperator 介绍
 
 Container Storage Interface Operator(CSIOperator)用于部署和更新 Kubernetes 集群中的 CSI 驱动和外部存储组件。
 
@@ -30,6 +30,27 @@ CSIOperator 用于支持集群方便的使用存储资源，当前支持的存�
 ![新建组件](images/新建扩展组件.png)
 4. 在弹出的扩展组件列表里，滑动列表窗口找到 CSIOperator
 5. 单击【完成】进行安装
+
+### 镜像准备
+
+当前支持的存储插件包括 RBD、CephFS、TencentCBS 和 TencentCFS（测试中，暂不支持），
+针对不同的模式，依赖不同的 csi 镜像
+
+由于支持版本较多，所有镜像都上传的话导致 `TKE Stack` 安装包太大，并且大部分并不会被使用，
+因此 所有镜像均已上传 [公网 dockerhub](https://hub.docker.com/u/tkestack):
+
+| csi 类型及版本 |依赖的镜像及拉取命令|
+|--------------|--------|
+| CephRBD V0 |docker pull tkestack/csi-provisioner:v0.4.2 <br>docker pull tkestack/csi-attacher:v0.4.2 <br>docker pull tkestack/csi-snapshotter:v0.4.1 <br/>docker pull tkestack/livenessprobe:v0.4.1 <br/>docker pull tkestack/driver-registrar:v0.3.0 <br/>docker pull tkestack/rbdplugin:v0.3.0|
+| CephRBD V1 |docker pull tkestack/csi-provisioner:v1.0.1 <br>docker pull tkestack/csi-attacher:v1.1.0<br>docker pull tkestack/csi-snapshotter:v1.1.0 <br/>docker pull tkestack/livenessprobe:v1.1.0<br/>docker pull tkestack/csi-node-driver-registrar:v1.1.0 <br/>docker pull tkestack/rbdplugin:v1.0.0|
+| CephFS V0 |docker pull tkestack/csi-provisioner:v0.4.2 <br>docker pull tkestack/csi-attacher:v0.4.2 <br>docker pull tkestack/livenessprobe:v0.4.1 <br/>docker pull tkestack/driver-registrar:v0.3.0 <br/>docker pull tkestack/cephfsplugin:v0.3.0|
+| CephFS V1 |docker pull tkestack/csi-provisioner:v1.0.1 <br/>docker pull tkestack/csi-attacher:v1.1.0<br/>docker pull tkestack/livenessprobe:v1.1.0<br/>docker pull tkestack/csi-node-driver-registrar:v1.1.0<br/>docker pull tkestack/cephfsplugin:v1.0.0|
+| TencentCBS V0 |docker pull tkestack/csi-provisioner:v1.0.1 <br/>docker pull tkestack/csi-attacher:v1.1.0<br/>docker pull tkestack/driver-registrar:v0.3.0<br/>docker pull tkestack/csi-tencentcloud-cbs:v0.2.1|
+| TencentCBS V1 |docker pull tkestack/csi-provisioner:v1.2.0 <br/>docker pull tkestack/csi-attacher:v1.1.0<br/>docker pull tkestack/csi-snapshotter:v1.2.2<br/>docker pull tkestack/csi-node-driver-registrar:v1.1.0<br/>docker pull tkestack/csi-tencentcloud-cbs:v1.0.0 <br />docker pull tkestack/csi-resizer:v0.5.0|
+| TencentCBS V1P1 |docker pull tkestack/csi-provisioner:v1.2.0 <br/>docker pull tkestack/csi-attacher:v1.1.0<br/>docker pull tkestack/csi-snapshotter:v1.2.2<br/>docker pull tkestack/csi-node-driver-registrar:v1.1.0<br/>docker pull tkestack/csi-tencentcloud-cbs:v1.2.0 <br />docker pull tkestack/csi-resizer:v0.5.0|
+
+
+使用时 `csi-operator`根据配置的存储类型拉取所需的镜像
 
 ### 通过 CSIOperator 使用腾讯云存储资源
 1. 登录 TKEStack
@@ -91,5 +112,4 @@ CSIOperator 用于支持集群方便的使用存储资源，当前支持的存�
 
 
 详情请见 [CSIOperator Example](https://github.com/tkestack/csi-operator/blob/master/examples)
-
 
