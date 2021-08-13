@@ -1,4 +1,21 @@
 #!/bin/bash
+
+# Tencent is pleased to support the open source community by making TKEStack
+# available.
+#
+# Copyright (C) 2012-2021 Tencent. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy of the
+# License at
+#
+# https://opensource.org/licenses/Apache-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations under the License.
+
 # Author: yhchen
 set -e
 
@@ -91,7 +108,7 @@ install_base_tools(){
   echo "###### install base tools end ######"
 }
 
-# issue images registry crt 
+# issue images registry crt
 issue_img_crt(){
   echo "###### issue images registry crt start ######"
   ansible-playbook -f 10 -i ../hosts --tags issue_docker_crt ../playbooks/hosts-init/hosts-init.yml \
@@ -99,7 +116,7 @@ issue_img_crt(){
   echo "###### issue images registry crt end ######"
 }
 
-# data disk init 
+# data disk init
 data_disk_init(){
   echo "###### data disk init start ######"
   ansible-playbook -f 10 -i ../hosts --tags data_disk_init ../playbooks/hosts-init/hosts-init.yml \
@@ -107,7 +124,7 @@ data_disk_init(){
   echo "###### data disk init end ######"
 }
 
-# check iptables 
+# check iptables
 check_iptables(){
   echo "###### check iptables start ######"
   ansible-playbook -f 10 -i ../hosts --tags check_iptables ../playbooks/hosts-init/hosts-init.yml \
@@ -149,7 +166,7 @@ all_func(){
   data_disk_init
   check_iptables
   time_sync
-  install_stress_tools 
+  install_stress_tools
   install_base_tools
   issue_img_crt
   registry_influxdb_init
