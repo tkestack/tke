@@ -1,4 +1,21 @@
 #!/bin/bash
+
+# Tencent is pleased to support the open source community by making TKEStack
+# available.
+#
+# Copyright (C) 2012-2021 Tencent. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy of the
+# License at
+#
+# https://opensource.org/licenses/Apache-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations under the License.
+
 # Author: yhchen
 set -e
 
@@ -33,10 +50,10 @@ builder_init(){
   echo "##### builder init start #####"
   # start onestep builder init container
   if [ `docker ps -a | grep onestep-builder-init | wc -l ` -eq 0 ]; then
-    docker run --name onestep-builder-init -ti -d chenyihua/onestep-builder:v0.1  
+    docker run --name onestep-builder-init -ti -d chenyihua/onestep-builder:v0.1
   else
     docker rm -f onestep-builder-init
-    docker run --name onestep-builder-init -ti -d chenyihua/onestep-builder:v0.1 
+    docker run --name onestep-builder-init -ti -d chenyihua/onestep-builder:v0.1
   fi
   # copy onestep offline resource
   docker cp onestep-builder-init:/data/base-component-helms ${BUILDER_PDIR}
@@ -57,7 +74,7 @@ all_func(){
 
 main(){
   if [ ! -d "${BUILDER_PDIR}/base-component-helms" ] || [ ! -d "${BUILDER_PDIR}/offline-pot-images-base" ] || \
-     [ ! -d "${BUILDER_PDIR}/offline-pot-tgz-base" ]; then  
+     [ ! -d "${BUILDER_PDIR}/offline-pot-tgz-base" ]; then
      $CALL_FUN || help
   fi
 }
