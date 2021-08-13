@@ -106,6 +106,9 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&LBCF{},
 		&LBCFList{},
 		&LBCFProxyOptions{},
+
+		&ClusterGroupAPIResourceItems{},
+		&ClusterGroupAPIResourceItemsList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

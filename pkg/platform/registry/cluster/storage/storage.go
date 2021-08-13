@@ -63,6 +63,7 @@ type Storage struct {
 	LBCFBackendRecord *LBCFBackendRecordREST
 	Drain             *DrainREST
 	Proxy             *ProxyREST
+	APIResources      *APIResourcesREST
 }
 
 // NewStorage returns a Storage object that will work against clusters.
@@ -164,6 +165,10 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, platformClient pla
 		Proxy: &ProxyREST{
 			store:          store,
 			host:           host,
+			platformClient: platformClient,
+		},
+		APIResources: &APIResourcesREST{
+			store:          store,
 			platformClient: platformClient,
 		},
 	}
