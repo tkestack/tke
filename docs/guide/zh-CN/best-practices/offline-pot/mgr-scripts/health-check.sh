@@ -1,4 +1,21 @@
 #!/bin/bash
+
+# Tencent is pleased to support the open source community by making TKEStack
+# available.
+#
+# Copyright (C) 2012-2021 Tencent. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy of the
+# License at
+#
+# https://opensource.org/licenses/Apache-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations under the License.
+
 # Author: yhchen
 set -e
 
@@ -42,7 +59,7 @@ do
   esac
 done
 
-# helm tiller deploy check 
+# helm tiller deploy check
 helm_tiller_dpl_check(){
   echo "###### helm tiller deploy check start ######"
   ansible-playbook -f 10 -i ../hosts --tags helmtiller_health_check ../playbooks/base-component/base-component.yml \
@@ -91,7 +108,7 @@ nginx_ingress_health_check(){
   ansible-playbook -f 10 -i ../hosts --tags ingress_controller_health_check ../playbooks/base-component/base-component.yml \
   --extra-vars "hosts=${hosts}"
   echo "###### nginx ingress controller health check end ######"
-} 
+}
 
 # kafka deploy check
 kafka_dpl_check(){
@@ -99,7 +116,7 @@ kafka_dpl_check(){
   ansible-playbook -f 10 -i ../hosts --tags kafka_health_check ../playbooks/base-component/base-component.yml \
   --extra-vars "hosts=${hosts}"
   echo "###### kafka deploy check end ######"
-} 
+}
 
 # elk deploy check
 elk_dpl_check(){
