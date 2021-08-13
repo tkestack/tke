@@ -180,7 +180,7 @@ spec:
         args:
         - --ip-masq
         - --kube-subnet-mgr
-        - --iface=$(HOST_IP)
+        - --iface={{ .IFace }}
         resources:
           requests:
             cpu: "100m"

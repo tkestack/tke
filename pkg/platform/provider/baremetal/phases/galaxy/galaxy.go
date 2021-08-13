@@ -87,7 +87,7 @@ func Install(ctx context.Context, clientset kubernetes.Interface, option *Option
 		}
 	}
 	// Daemonset Flannel
-	flannelObj, err := daemonsetFlannel(option.Version)
+	flannelObj, err := daemonsetFlannel(option.NetDevice, option.Version)
 	if err != nil {
 		return err
 	}
@@ -164,9 +164,11 @@ func configMapGalaxy(netDevice string) ([]*corev1.ConfigMap, error) {
 	return payloads, nil
 }
 
-func daemonsetFlannel(version string) (*appsv1.DaemonSet, error) {
+func daemonsetFlannel(netDevice string, version string) (*appsv1.DaemonSet, error) {
 	imageName := images.Get(version).Flannel.FullName()
-	reader := strings.NewReader(strings.Replace(FlannelDaemonset, "{{ .Image }}", imageName, -1))
+	flannelYaml := strings.Replace(FlannelDaemonset, "{{ .Image }}", imageName, -1)
+	flannelYaml = strings.Replace(flannelYaml, "{{ .IFace }}", netDevice, -1)
+	reader := strings.NewReader(flannelYaml)
 	payload := &appsv1.DaemonSet{}
 	err := yaml.NewYAMLOrJSONDecoder(reader, 4096).Decode(payload)
 	if err != nil {
