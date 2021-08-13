@@ -29,6 +29,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/platform/proxy"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,7 +40,6 @@ import (
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
-	"tkestack.io/tke/pkg/platform/proxy"
 	"tkestack.io/tke/pkg/platform/util"
 )
 
@@ -85,17 +86,27 @@ func (r *ProxyREST) Connect(ctx context.Context, clusterName string, opts runtim
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
-	if config.BearerToken == "" {
-		return nil, errors.NewInternalError(fmt.Errorf("%s has NO BearerToken", clusterName))
-	}
 
+	userName, tenantID := authentication.UsernameAndTenantID(ctx)
 	uri, err := makeURL(config.Host, proxyOpts.Path)
 	if err != nil {
 		return nil, errors.NewBadRequest(err.Error())
 	}
+	TLSClientConfig := &tls.Config{}
+	TLSClientConfig.InsecureSkipVerify = true
+
+	if config.TLSClientConfig.CertData != nil && config.TLSClientConfig.KeyData != nil {
+		cert, err := tls.X509KeyPair(config.TLSClientConfig.CertData, config.TLSClientConfig.KeyData)
+		if err != nil {
+			return nil, err
+		}
+		TLSClientConfig.Certificates = []tls.Certificate{cert}
+	} else if config.BearerToken == "" {
+		return nil, errors.NewInternalError(fmt.Errorf("%s has NO BearerToken", clusterName))
+	}
 
 	return &httputil.ReverseProxy{
-		Director: makeDirector(cluster.ObjectMeta.Name, uri, config.BearerToken),
+		Director: makeDirector(cluster.ObjectMeta.Name, userName, tenantID, uri, config.BearerToken),
 		Transport: &http.Transport{
 			DialContext: (&net.Dialer{
 				Timeout:   30 * time.Second,
@@ -105,7 +116,7 @@ func (r *ProxyREST) Connect(ctx context.Context, clusterName string, opts runtim
 			IdleConnTimeout:       90 * time.Second,
 			TLSHandshakeTimeout:   10 * time.Second,
 			ExpectContinueTimeout: 1 * time.Second,
-			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig:       TLSClientConfig,
 		},
 	}, nil
 }
@@ -115,10 +126,14 @@ func (r *ProxyREST) New() runtime.Object {
 	return &platform.HelmProxyOptions{}
 }
 
-func makeDirector(clusterName string, uri *url.URL, token string) func(req *http.Request) {
+func makeDirector(clusterName, userName, tenantID string, uri *url.URL, token string) func(req *http.Request) {
 	return func(req *http.Request) {
 		req.Header.Set(filter.ClusterNameHeaderKey, clusterName)
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+		req.Header.Set("X-Remote-User", userName)
+		req.Header.Set("X-Remote-Extra-TenantID", tenantID)
+		if token != "" {
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+		}
 		req.URL = uri
 	}
 }
