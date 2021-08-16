@@ -25,8 +25,6 @@ import (
 	"sync"
 	"time"
 
-	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -40,14 +38,15 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
 	v1 "tkestack.io/tke/api/platform/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	storageutil "tkestack.io/tke/pkg/platform/controller/addon/storage/util"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/util"
-	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -64,6 +63,9 @@ const (
 
 	timeOut       = 5 * time.Minute
 	maxRetryCount = 5
+
+	// CSIRepo link to internet docker hub, where stores all csi depends images.
+	CSIRepo = "tkestack"
 )
 
 // Controller is responsible for performing actions dependent upon a CSIOperator phase.
@@ -614,7 +616,7 @@ func genContainerArgs(svInfo *storageutil.SVInfo) []string {
 	args := []string{
 		"--leader-election=true",
 		"--kubelet-root-dir=/var/lib/kubelet",
-		"--registry-domain=" + containerregistryutil.GetPrefix(),
+		"--registry-domain=" + CSIRepo,
 		"--logtostderr=true",
 		"--v=5",
 	}

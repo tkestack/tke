@@ -50,7 +50,7 @@ func Install(s ssh.Interface, option *Option) error {
 	}
 
 	cmd := "tar xvaf %s -C %s"
-	_, stderr, exit, err := s.Execf(cmd, dstFile, constants.DstContainerdBinDir)
+	_, stderr, exit, err := s.Execf(cmd, dstFile, "/")
 	if err != nil {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}

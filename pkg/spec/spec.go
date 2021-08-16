@@ -38,7 +38,6 @@ var (
 
 	DockerVersions                 = []string{"19.03.14"}
 	ContainerdVersions             = []string{"1.5.4"}
-	CriToolsVersions               = []string{"v1.21.0"}
 	NerdctlVersions                = []string{"0.11.0"}
 	CNIPluginsVersions             = []string{"v0.8.6"}
 	ConntrackToolsVersions         = []string{"1.4.4"}

@@ -26,20 +26,17 @@ import (
 	"os"
 	"time"
 
-	"k8s.io/klog"
-
-	"github.com/onsi/gomega"
-
-	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
-
-	"tkestack.io/tke/test/e2e"
-
 	"github.com/onsi/ginkgo"
+	"github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/klog"
+
+	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/test/e2e"
 	"tkestack.io/tke/test/e2e/certs"
 	testclient "tkestack.io/tke/test/util/client"
 	"tkestack.io/tke/test/util/env"

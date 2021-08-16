@@ -53,6 +53,7 @@ import (
 
 type Option struct {
 	RuntimeType platformv1.ContainerRuntimeType
+	Version     string
 }
 
 const (
@@ -76,8 +77,8 @@ var (
 	unMigrataleComponents = []string{"tke-platform-api", "tke-platform-controller", "tke-registry-api", "tke-registry-controller", "influxdb"}
 )
 
-func Install(s ssh.Interface, version string, option *Option) error {
-	dstFile, err := res.KubernetesNode.CopyToNode(s, version)
+func Install(s ssh.Interface, option *Option) error {
+	dstFile, err := res.KubernetesNode.CopyToNode(s, option.Version)
 	if err != nil {
 		return err
 	}
@@ -255,7 +256,7 @@ func fixKubeadmBug88811(client kubernetes.Interface) error {
 func RestartControlPlane(c *v1.Cluster, s ssh.Interface) error {
 	targets := []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler"}
 	for _, one := range targets {
-		err := RestartContainerByLabel(c, s, ContainerLabelOfControlPlane(one))
+		err := RestartContainerByLabel(c, s, ContainerLabelOfControlPlane(c, one))
 		if err != nil {
 			return err
 		}
@@ -264,8 +265,11 @@ func RestartControlPlane(c *v1.Cluster, s ssh.Interface) error {
 	return nil
 }
 
-func ContainerLabelOfControlPlane(name string) string {
-	return fmt.Sprintf("label=io.kubernetes.container.name=%s", name)
+func ContainerLabelOfControlPlane(c *v1.Cluster, name string) string {
+	if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
+		return fmt.Sprintf("label=io.kubernetes.container.name=%s", name)
+	}
+	return fmt.Sprintf("io.kubernetes.container.name=%s", name)
 }
 
 func RestartContainerByLabel(c *v1.Cluster, s ssh.Interface, label string) error {
@@ -285,7 +289,7 @@ func RestartContainerByLabel(c *v1.Cluster, s ssh.Interface, label string) error
 		if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
 			cmd = fmt.Sprintf("docker ps -q -f '%s'", label)
 		} else {
-			cmd = fmt.Sprintf("crictl ps -q -f '%s'", label)
+			cmd = fmt.Sprintf("crictl ps -q --label '%s'", label)
 		}
 		output, err := s.CombinedOutput(cmd)
 		if err != nil {
@@ -353,12 +357,13 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 
 	// Step 1: install kubeadm
 	// ignore patch version for patch version kubeadm may not exist in platform-controller
-	kubamdOption := &Option{
-		RuntimeType: cluster.Spec.Features.ContainerRuntime,
-	}
 	if !sameMinor {
 		logger.Infof("Start install kubeadm to %s", option.MachineIP)
-		err = Install(s, option.Version, kubamdOption)
+		kubeAdmOption := &Option{
+			RuntimeType: cluster.Spec.Features.ContainerRuntime,
+			Version:     option.Version,
+		}
+		err = Install(s, kubeAdmOption)
 		if err != nil {
 			return upgraded, err
 		}

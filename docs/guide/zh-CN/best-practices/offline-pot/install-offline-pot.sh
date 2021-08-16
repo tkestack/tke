@@ -1,4 +1,21 @@
 #!/bin/bash
+
+# Tencent is pleased to support the open source community by making TKEStack
+# available.
+#
+# Copyright (C) 2012-2021 Tencent. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+# this file except in compliance with the License. You may obtain a copy of the
+# License at
+#
+# https://opensource.org/licenses/Apache-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations under the License.
+
 # Author: yhchen
 set -e
 
@@ -74,7 +91,7 @@ init_keepalived(){
 only_install_tkestack(){
   echo "###### install tkestack start ######"
   # change tke components's replicas number
-  if [ -f "hosts" ]; then 
+  if [ -f "hosts" ]; then
     sed -i 's/tke_replicas="1"/tke_replicas="2"/g' hosts
   fi
   # hosts init
@@ -96,7 +113,7 @@ only_install_tkestack(){
 
 defaut(){
   # change tke components's replicas number
-  if [ -f "hosts" ]; then 
+  if [ -f "hosts" ]; then
     sed -i 's/tke_replicas="2"/tke_replicas="1"/g' hosts
   fi
   # only deploy tkestack
@@ -112,7 +129,7 @@ defaut(){
 
 all_func(){
   # change tke components's replicas number
-  if [ -f "hosts" ]; then 
+  if [ -f "hosts" ]; then
     sed -i 's/tke_replicas="2"/tke_replicas="1"/g' hosts
   fi
   init_and_check

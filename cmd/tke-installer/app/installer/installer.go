@@ -1128,14 +1128,18 @@ func (t *TKE) runAfterClusterReady() bool {
 
 func (t *TKE) generateCertificates(ctx context.Context) error {
 	var dnsNames []string
+	ips := []net.IP{net.ParseIP("127.0.0.1")}
 	if t.Para.Config.Gateway != nil && t.Para.Config.Gateway.Domain != "" {
-		dnsNames = append(dnsNames, t.Para.Config.Gateway.Domain)
+		if ip := net.ParseIP(t.Para.Config.Gateway.Domain); ip != nil {
+			ips = append(ips, ip)
+		} else {
+			dnsNames = append(dnsNames, t.Para.Config.Gateway.Domain)
+		}
 	}
 	if t.Para.Config.Registry.TKERegistry != nil {
 		dnsNames = append(dnsNames, t.Para.Config.Registry.TKERegistry.Domain, "*."+t.Para.Config.Registry.TKERegistry.Domain)
 	}
 
-	ips := []net.IP{net.ParseIP("127.0.0.1")}
 	for _, one := range t.Cluster.Spec.Machines {
 		ips = append(ips, net.ParseIP(one.IP))
 	}

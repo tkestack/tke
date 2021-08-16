@@ -44,6 +44,7 @@ import (
 	"tkestack.io/tke/api/notify"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/api/registry"
+	"tkestack.io/tke/api/application"
 	auditconfig "tkestack.io/tke/pkg/audit/apis/config"
 	auditconfigv1 "tkestack.io/tke/pkg/audit/apis/config/v1"
 	"tkestack.io/tke/pkg/audit/config/codec"
@@ -84,6 +85,7 @@ func init() {
 		monitor.GroupName,
 		business.GroupName,
 		auth.GroupName,
+		application.GroupName,
 	)
 	k8sClient = initK8sClient()
 	initWatcher()

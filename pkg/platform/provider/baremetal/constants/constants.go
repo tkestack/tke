@@ -53,13 +53,12 @@ const (
 	KubeletPathInNodePackge = "kubernetes/node/bin/kubelet"
 	KubectlPathInNodePackge = "kubernetes/node/bin/kubectl"
 
-	DstTmpDir           = "/tmp/k8s/"
-	DstBinDir           = "/usr/bin/"
-	DstContainerdBinDir = "/"
-	CNIBinDir           = "/opt/cni/bin/"
-	CNIDataDir          = "/var/lib/cni/"
-	CNIConfDIr          = "/etc/cni"
-	AppCertDir          = "/app/certs/"
+	DstTmpDir  = "/tmp/k8s/"
+	DstBinDir  = "/usr/bin/"
+	CNIBinDir  = "/opt/cni/bin/"
+	CNIDataDir = "/var/lib/cni/"
+	CNIConfDIr = "/etc/cni"
+	AppCertDir = "/app/certs/"
 
 	// AppCert
 	AppAdminCertFile = AppCertDir + AdminCertName

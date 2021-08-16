@@ -3,7 +3,7 @@
 # Tencent is pleased to support the open source community by making TKEStack
 # available.
 #
-# Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+# Copyright (C) 2012-2021 Tencent. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 # this file except in compliance with the License. You may obtain a copy of the
@@ -91,22 +91,6 @@ function download::nerdctl() {
   done
 }
 
-function download::critools() {
-  if [ "${arch}" == "amd64" ]; then
-    critools_arch=amd64
-  elif [ "${arch}" == "arm64" ]; then
-    critools_arch=arm
-  else
-    echo "[ERROR] Fail to get critools ${arch} on ${platform} platform."
-    exit 255
-  fi
-
-  for version in ${CRITOOLS_VERSIONS}; do
-    wget -c "https://github.com/kubernetes-sigs/cri-tools/releases/download/${version}/crictl-${version}-linux-${critools_arch}.tar.gz" \
-      -O "critools-${platform}-${version}.tar.gz"
-  done
-}
-
 function download::kubernetes() {
   for version in ${K8S_VERSIONS}; do
     if [[ "${version}" =~ "tke" ]]; then
@@ -168,7 +152,6 @@ for os in ${OSS}; do
     download::docker
     download::containerd
     download::nerdctl
-    download::critools
     download::kubernetes
     download::nvidia_driver
     download::nvidia_container_runtime

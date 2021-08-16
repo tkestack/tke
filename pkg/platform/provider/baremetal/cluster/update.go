@@ -124,7 +124,7 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
-		err = kubeadm.RestartContainerByLabel(c, s, kubeadm.ContainerLabelOfControlPlane("kube-apiserver"))
+		err = kubeadm.RestartContainerByLabel(c, s, kubeadm.ContainerLabelOfControlPlane(c, "kube-apiserver"))
 		if err != nil {
 			return err
 		}

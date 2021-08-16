@@ -63,6 +63,12 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubead
 		}
 	}
 	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
+	// Specify cri runtime type
+	if c.Cluster.Spec.Features.ContainerRuntime == "docker" {
+		nodeRegistration.CRISocket = "/var/run/dockershim.sock"
+	} else {
+		nodeRegistration.CRISocket = "/var/run/containerd/containerd.sock"
+	}
 
 	return &kubeadmv1beta2.JoinConfiguration{
 		NodeRegistration: nodeRegistration,

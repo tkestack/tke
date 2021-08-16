@@ -39,11 +39,6 @@ var (
 		Name:     "containerd",
 		Versions: spec.ContainerdVersions,
 	}
-
-	CriTools = Package{
-		Name:     "critools",
-		Versions: spec.CriToolsVersions,
-	}
 	Nerdctl = Package{
 		Name:     "nerdctl",
 		Versions: spec.NerdctlVersions,

@@ -10,7 +10,7 @@ spec:
     - command:
         - sh
         - -c
-        - cp -r /data/res /app/provider/baremetal/ && cp -r /data/conf/containerd /app/provider/baremetal/conf/
+        - cp -r /data/res /app/provider/baremetal/ && cp -r /data/conf/* /app/provider/baremetal/conf/
       image: {{ .ProviderResImage }}
       name: provider-res
       volumeMounts:
