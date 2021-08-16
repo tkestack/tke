@@ -27,12 +27,10 @@ import (
 	"golang.org/x/time/rate"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
 
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
@@ -47,7 +45,6 @@ import (
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
-	"tkestack.io/tke/pkg/util/strategicpatch"
 )
 
 const (
@@ -231,9 +228,6 @@ func (c *Controller) syncMachine(key string) error {
 }
 
 func (c *Controller) reconcile(ctx context.Context, key string, machine *platformv1.Machine) error {
-
-	c.ensureSyncMachineNodeLabel(ctx, machine)
-
 	var err error
 	switch machine.Status.Phase {
 	case platformv1.MachineInitializing:
@@ -341,51 +335,4 @@ func (c *Controller) checkHealth(ctx context.Context, machine *platformv1.Machin
 	log.FromContext(ctx).Info("Update machine health status", "phase", machine.Status.Phase)
 
 	return machine
-}
-
-func (c *Controller) ensureSyncMachineNodeLabel(ctx context.Context, machine *platformv1.Machine) {
-
-	cluster, err := clusterprovider.GetV1ClusterByName(ctx, c.platformClient, machine.Spec.ClusterName, clusterprovider.AdminUsername)
-	if err != nil {
-		log.FromContext(ctx).Error(err, "sync Machine node label error")
-		return
-	}
-
-	client, err := cluster.Clientset()
-	if err != nil {
-		log.FromContext(ctx).Error(err, "sync Machine node label error")
-		return
-	}
-
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		node, err := client.CoreV1().Nodes().Get(ctx, machine.Spec.IP, metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				return nil
-			}
-			return err
-		}
-
-		labels := node.GetLabels()
-		_, ok := labels[string(apiclient.LabelMachineIPV4)]
-		if ok {
-			return nil
-		}
-
-		oldNode := node.DeepCopy()
-		labels[string(apiclient.LabelMachineIPV4)] = machine.Spec.IP
-		node.SetLabels(labels)
-
-		patchBytes, err := strategicpatch.GetPatchBytes(oldNode, node)
-		if err != nil {
-			return fmt.Errorf("GetPatchBytes for node error: %w", err)
-		}
-
-		_, err = client.CoreV1().Nodes().Patch(ctx, node.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
-		return err
-	})
-
-	if err != nil {
-		log.FromContext(ctx).Error(err, "sync Machine node label error")
-	}
 }
