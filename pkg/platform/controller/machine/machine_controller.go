@@ -217,10 +217,12 @@ func (c *Controller) syncMachine(key string) error {
 	}
 
 	machine, err := c.lister.Get(name)
-	if apierrors.IsNotFound(err) {
-		log.FromContext(ctx).Info("Machine has been deleted")
-	}
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			log.FromContext(ctx).Info("Machine has been deleted")
+			return nil
+		}
+
 		utilruntime.HandleError(fmt.Errorf("unable to retrieve machine %v from store: %v", key, err))
 		return err
 	}
