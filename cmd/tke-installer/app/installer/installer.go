@@ -753,6 +753,7 @@ func (t *TKE) setClusterDefault(cluster *platformv1.Cluster, config *types.Confi
 	}
 	cluster.Spec.Features.EnableMasterSchedule = true
 
+	cluster.Spec.PublicAlternativeNames = append(cluster.Spec.PublicAlternativeNames, t.Para.Config.Gateway.Domain)
 	if config.HA != nil {
 		if t.Para.Config.HA.TKEHA != nil {
 			cluster.Spec.Features.HA = &platformv1.HA{
