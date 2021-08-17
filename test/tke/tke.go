@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
-
 	"github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common"
 	corev1 "k8s.io/api/core/v1"
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
@@ -14,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
+	"time"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
@@ -27,6 +26,8 @@ import (
 	_ "tkestack.io/tke/pkg/platform/provider/imported/cluster"
 	_ "tkestack.io/tke/pkg/platform/provider/registered/cluster"
 )
+
+const retryMax = 5
 
 type TestTKE struct {
 	TkeClient tkeclientset.Interface
@@ -93,15 +94,7 @@ func (testTke *TestTKE) ClusterTemplate(nodes ...cloudprovider.Instance) *platfo
 func (testTke *TestTKE) CreateClusterInternal(cls *platformv1.Cluster) (cluster *platformv1.Cluster, err error) {
 	klog.Info("Create cluster: ", cls.String())
 
-	err = wait.PollImmediate(30*time.Second, 5*time.Minute, func() (bool, error) {
-		cluster, err = testTke.TkeClient.PlatformV1().Clusters().Create(context.Background(), cls, metav1.CreateOptions{})
-		if err != nil {
-			klog.Warningf("Create cluster failed: %v", err)
-			return false, err
-		}
-		return true, nil
-	})
-
+	cluster, err = testTke.try2CreateCluster(cls)
 	if err != nil {
 		return
 	}
@@ -202,6 +195,7 @@ func (testTke *TestTKE) WaitClusterToBeRunning(clusterName string) (cluster *pla
 			klog.Error(err)
 			return false, nil
 		}
+
 		if len(cluster.Status.Conditions) > 0 {
 			lastCondition := cluster.Status.Conditions[len(cluster.Status.Conditions)-1]
 			klog.Info("Phase: ", cluster.Status.Phase, ", Type: ", lastCondition.Type, ", message: ", lastCondition.Message)
@@ -251,14 +245,7 @@ func (testTke *TestTKE) ImportCluster(host string, port int32, caCert []byte, to
 	}
 
 	// retry
-	err = wait.PollImmediate(30*time.Second, 5*time.Minute, func() (bool, error) {
-		cluster, err = testTke.TkeClient.PlatformV1().Clusters().Create(context.Background(), cluster, metav1.CreateOptions{})
-		if err != nil {
-			klog.Warningf("Create cluster failed: %v", err)
-			return false, err
-		}
-		return true, nil
-	})
+	cluster, err = testTke.try2CreateCluster(cluster)
 	if err != nil {
 		klog.Error(err)
 		return
@@ -287,7 +274,7 @@ func (testTke *TestTKE) DeleteCluster(clusterName string) (err error) {
 		}
 		for _, cls := range clusters.Items {
 			if cls.Name == clusterName {
-				klog.Info(cls.Status.Phase)
+				klog.Info("cluster Phase:", cls.Status.Phase)
 				return false, nil
 			}
 		}
@@ -375,4 +362,18 @@ func (testTke *TestTKE) updateNode(cls *platformv1.Cluster, nodeName string, uns
 
 func (testTke *TestTKE) CreateInstances(count int64) ([]cloudprovider.Instance, error) {
 	return testTke.provider.CreateInstances(count)
+}
+
+func (testTke *TestTKE) try2CreateCluster(cls *platformv1.Cluster) (cluster *platformv1.Cluster, err error) {
+	for i := 0; i < retryMax; i++ {
+		cluster, err = testTke.TkeClient.PlatformV1().Clusters().Create(context.Background(), cls, metav1.CreateOptions{})
+		if err != nil {
+			klog.Warningf("Create cluster failed: %v,try count = %d", err, i+1)
+			time.Sleep(time.Second * 5)
+		} else {
+			break
+		}
+	}
+
+	return cluster, err
 }
