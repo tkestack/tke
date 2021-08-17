@@ -201,10 +201,11 @@ func (c *BootstrapAppsController) sync(key string) error {
 	}
 
 	cluster, err := c.clsLister.Get(name)
-	if apierrors.IsNotFound(err) {
-		log.FromContext(ctx).Info("cluster has been deleted")
-	}
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			log.FromContext(ctx).Info("cluster has been deleted")
+			return nil
+		}
 		utilruntime.HandleError(fmt.Errorf("unable to retrieve cluster %v from store: %v", key, err))
 		return err
 	}
