@@ -772,10 +772,12 @@ func (c *Controller) checkIPAMStatus(ctx context.Context, ipam *v1.IPAM, key str
 			log.Debug("checking over ipam addon status")
 			return true, nil
 		}
+		// TODO： build client
 		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
+		// TODO: lister.get
 		ipam, err := c.lister.Get(key)
 		if err != nil {
 			return false, err
@@ -783,8 +785,8 @@ func (c *Controller) checkIPAMStatus(ctx context.Context, ipam *v1.IPAM, key str
 
 		_, err = kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(ctx, deployIPAMName, metav1.GetOptions{})
 		if err != nil {
-			log.Errorf("fail to create ipam %v", err)
-			return false, err
+			log.Warnf("fail to get deployment %s/%s, error %v", metav1.NamespaceSystem, deployIPAMName, err)
+			return false, nil
 		}
 
 		ipam = ipam.DeepCopy()

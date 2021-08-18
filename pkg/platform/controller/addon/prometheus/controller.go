@@ -2911,6 +2911,7 @@ func (c *Controller) checkPrometheusStatus(ctx context.Context, prometheus *v1.P
 	return func() (bool, error) {
 		log.Info("Start to check prometheus status", log.String("prome", key))
 
+		// todo
 		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, prometheus.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
@@ -2922,6 +2923,7 @@ func (c *Controller) checkPrometheusStatus(ctx context.Context, prometheus *v1.P
 			log.Info("Prometheus status checking over", log.String("prome", key))
 			return true, nil
 		}
+		// todo
 		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
@@ -2936,6 +2938,7 @@ func (c *Controller) checkPrometheusStatus(ctx context.Context, prometheus *v1.P
 				prometheus = prometheus.DeepCopy()
 				prometheus.Status.Phase = v1.AddonPhaseFailed
 				prometheus.Status.Reason = "Prometheus is not healthy."
+				// todo
 				if err = c.persistUpdate(ctx, prometheus); err != nil {
 					return false, err
 				}
@@ -2947,6 +2950,7 @@ func (c *Controller) checkPrometheusStatus(ctx context.Context, prometheus *v1.P
 		prometheus = prometheus.DeepCopy()
 		prometheus.Status.Phase = v1.AddonPhaseRunning
 		prometheus.Status.Reason = ""
+		// todo
 		if err = c.persistUpdate(ctx, prometheus); err != nil {
 			return false, err
 		}
@@ -2958,6 +2962,7 @@ func (c *Controller) checkPrometheusUpgrade(ctx context.Context, prometheus *v1.
 	return func() (bool, error) {
 		log.Info("Start to upgrade prometheus", log.String("prome", key))
 
+		// todo
 		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, prometheus.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err

@@ -800,6 +800,7 @@ func (c *Controller) upgradeCSIOperator(
 	key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to upgrade CSIOperator", log.String("name", csiOperator.Name))
+		// todo
 		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, csiOperator.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && k8serrors.IsNotFound(err) {
 			return false, err
@@ -813,6 +814,7 @@ func (c *Controller) upgradeCSIOperator(
 			return true, nil
 		}
 
+		// todo
 		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err

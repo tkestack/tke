@@ -65,19 +65,20 @@ func (h *processor) saveRule(ctx context.Context, clusterName string, groups []v
 	return wait.PollImmediate(time.Second, time.Second*5, func() (done bool, err error) {
 		promRule, getErr := monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(ctx, prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
 		if getErr != nil {
-			return false, getErr
+			log.Warnf("get PrometheusRules %s/%s error:%v", metav1.NamespaceSystem, prometheusrule.PrometheusRuleAlert, getErr)
+			return false, nil
 		}
 
 		promRule.Spec.Groups = groups
 		_, err = monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Update(ctx, promRule, metav1.UpdateOptions{})
-		if err == nil {
-			return true, nil
-		}
-
-		if apierror.IsConflict(err) {
+		if err != nil {
+			// TODO: need retry?
+			if apierror.IsConflict(err) {
+				return false, nil
+			}
+			log.Warnf("update PrometheusRules %s/%s error:%v", metav1.NamespaceSystem, promRule.Name, err)
 			return false, nil
 		}
-
-		return false, err
+		return true, nil
 	})
 }

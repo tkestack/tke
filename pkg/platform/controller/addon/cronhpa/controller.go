@@ -576,10 +576,9 @@ func (c *Controller) checkCronHPAStatus(ctx context.Context, cronHPA *v1.CronHPA
 	return func() (bool, error) {
 		log.Info("Start to check CronHPA health", log.String("CronHPA", cronHPA.Name))
 		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, cronHPA.Spec.ClusterName, metav1.GetOptions{})
-		if err != nil && errors.IsNotFound(err) {
-			return false, err
-		}
+		// TODO: DELETE duplicated logic？
 		if err != nil {
+			log.Warnf("get cronHPA %s error: %v", cronHPA.Name, err)
 			return false, nil
 		}
 		if _, ok := c.checking.Load(key); !ok {
@@ -588,11 +587,13 @@ func (c *Controller) checkCronHPAStatus(ctx context.Context, cronHPA *v1.CronHPA
 		}
 		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
-			return false, err
+			log.Warnf("build kube client error: %v", err)
+			return false, nil
 		}
 		cronHPA, err := c.lister.Get(key)
 		if err != nil {
-			return false, err
+			log.Warnf("get cronHPA error: %v", err)
+			return false, nil
 		}
 		if deploy, err := kubeClient.AppsV1().Deployments(metav1.NamespaceSystem).Get(ctx, deployCronHPAName, metav1.GetOptions{}); err != nil ||
 			(deploy.Spec.Replicas != nil && deploy.Status.AvailableReplicas < *deploy.Spec.Replicas) {
@@ -600,6 +601,7 @@ func (c *Controller) checkCronHPAStatus(ctx context.Context, cronHPA *v1.CronHPA
 				cronHPA = cronHPA.DeepCopy()
 				cronHPA.Status.Phase = v1.AddonPhaseFailed
 				cronHPA.Status.Reason = "CronHPA is not healthy."
+				// TODO: persist
 				if err = c.persistUpdate(ctx, cronHPA); err != nil {
 					return false, err
 				}
@@ -621,10 +623,9 @@ func (c *Controller) upgradeCronHPA(ctx context.Context, cronHPA *v1.CronHPA, ke
 	return func() (bool, error) {
 		log.Info("Start to upgrade CronHPA", log.String("CronHPA", cronHPA.Name))
 		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, cronHPA.Spec.ClusterName, metav1.GetOptions{})
-		if err != nil && errors.IsNotFound(err) {
-			return false, err
-		}
+		// TODO: DELETE duplicated logic？
 		if err != nil {
+			log.Warnf("get cronHPA %s error: %v", cronHPA.Name, err)
 			return false, nil
 		}
 		if _, ok := c.upgrading.Load(key); !ok {
@@ -633,11 +634,13 @@ func (c *Controller) upgradeCronHPA(ctx context.Context, cronHPA *v1.CronHPA, ke
 		}
 		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
-			return false, err
+			log.Warnf("build kube client error: %v", err)
+			return false, nil
 		}
 		cronHPA, err := c.lister.Get(key)
 		if err != nil {
-			return false, err
+			log.Warnf("get cronHPA error: %v", err)
+			return false, nil
 		}
 		newImage := images.Get(cronHPA.Spec.Version).CronHPA.FullName()
 
@@ -647,6 +650,7 @@ func (c *Controller) upgradeCronHPA(ctx context.Context, cronHPA *v1.CronHPA, ke
 				cronHPA = cronHPA.DeepCopy()
 				cronHPA.Status.Phase = v1.AddonPhaseFailed
 				cronHPA.Status.Reason = "Failed to upgrade CronHPA."
+				// TODO: persist
 				if err = c.persistUpdate(ctx, cronHPA); err != nil {
 					return false, err
 				}

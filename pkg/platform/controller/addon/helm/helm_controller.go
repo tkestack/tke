@@ -350,6 +350,7 @@ func updateHelmStatus(ctx context.Context, obj *v1.Helm, client clientset.Interf
 			return true, nil
 		}
 		if errors.IsConflict(err) {
+			// TODO: why persist? conflict?
 			return false, fmt.Errorf("not persisting update to helm '%s' that has been changed since we received it: %v", obj.Spec.ClusterName, err)
 		}
 		log.Warn(fmt.Sprintf("Failed to persist updated status of helm '%s/%s'", obj.Spec.ClusterName, obj.Status.Phase), log.String("clusterName", obj.Spec.ClusterName), log.Err(err))

@@ -780,11 +780,11 @@ func (c *Controller) checkLogCollectorStatus(
 	key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to check LogCollector health", log.String("name", LogCollector.Name))
-
 		kubeClient, err := util.GetClusterClient(ctx, LogCollector.Spec.ClusterName, c.platformClient)
-
+		// TODO: need retry?
 		if err != nil { //what if cluster does not exists?
-			return false, err
+			log.Warnf("Get cluster client error:", err)
+			return false, nil
 		}
 
 		if _, ok := c.checking.Load(key); !ok {
@@ -794,7 +794,8 @@ func (c *Controller) checkLogCollectorStatus(
 
 		LogCollector, err := c.lister.Get(key)
 		if err != nil {
-			return false, err
+			log.Warnf("get logCollector failed, error:%v", err)
+			return false, nil
 		}
 
 		daemon, err := kubeClient.AppsV1().DaemonSets(metav1.NamespaceSystem).
@@ -837,13 +838,16 @@ func (c *Controller) watchLogCollectorHealth(ctx context.Context, key string) fu
 	return func() (bool, error) {
 		LogCollector, err := c.lister.Get(key)
 		if err != nil {
-			return false, err
+			log.Warnf("get logCollector failed, error:%v", err)
+			return false, nil
 		}
-		log.Info("Start check health of LogCollector", log.String("name", LogCollector.Name))
 
+		log.Info("Start check health of LogCollector", log.String("name", LogCollector.Name))
 		kubeClient, err := util.GetClusterClient(ctx, LogCollector.Spec.ClusterName, c.platformClient)
+		// TODO: need retry?
 		if err != nil {
-			return false, err
+			log.Warnf("get cluster client failed, error:%v", err)
+			return false, nil
 		}
 
 		if _, ok := c.health.Load(key); !ok {
@@ -875,8 +879,10 @@ func (c *Controller) upgradeLogCollector(
 	return func() (bool, error) {
 		log.Info("Start to upgrade LogCollector", log.String("name", LogCollector.Name))
 		kubeClient, err := util.GetClusterClient(ctx, LogCollector.Spec.ClusterName, c.platformClient)
+		// TODO: need retry?
 		if err != nil {
-			return false, err
+			log.Warnf("Get cluster client error:", err)
+			return false, nil
 		}
 		if _, ok := c.upgrading.Load(key); !ok {
 			log.Debug("Upgrading LogCollector", log.String("name", LogCollector.Name))
@@ -885,7 +891,8 @@ func (c *Controller) upgradeLogCollector(
 
 		LogCollector, err := c.lister.Get(key)
 		if err != nil {
-			return false, err
+			log.Warnf("get logCollector failed, error:%v", err)
+			return false, nil
 		}
 
 		patch := fmt.Sprintf(upgradePatchTemplate, images.Get(LogCollector.Spec.Version).LogCollector.FullName())
@@ -910,6 +917,7 @@ func (c *Controller) upgradeLogCollector(
 		LogCollector.Status.Phase = v1.AddonPhaseChecking
 		LogCollector.Status.Reason = ""
 		if err = c.persistUpdate(ctx, LogCollector); err != nil {
+			// TODO: need retry?
 			return false, err
 		}
 		return true, nil

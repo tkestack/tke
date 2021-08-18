@@ -752,6 +752,7 @@ func (c *Controller) checkLogCollectorStatus(
 		log.Info("Start to check LogCollector health", log.String("name", LogCollector.Name))
 
 		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, LogCollector.Spec.ClusterName, metav1.GetOptions{})
+		// todo: duplicate
 		if err != nil && k8serrors.IsNotFound(err) {
 			return false, err
 		}
@@ -764,10 +765,12 @@ func (c *Controller) checkLogCollectorStatus(
 			return true, nil
 		}
 
+		// todo: build client
 		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
+		// TODO: lister.get
 		LogCollector, err := c.lister.Get(key)
 		if err != nil {
 			return false, err
@@ -781,6 +784,7 @@ func (c *Controller) checkLogCollectorStatus(
 				LogCollector = LogCollector.DeepCopy()
 				LogCollector.Status.Phase = v1.AddonPhaseFailed
 				LogCollector.Status.Reason = "Log Collector is not healthy"
+				// todo: persist
 				if err = c.persistUpdate(ctx, LogCollector); err != nil {
 					return false, err
 				}
@@ -807,6 +811,7 @@ func (c *Controller) upgradeLogCollector(
 	return func() (bool, error) {
 		log.Info("Start to upgrade LogCollector", log.String("name", LogCollector.Name))
 		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, LogCollector.Spec.ClusterName, metav1.GetOptions{})
+		// todo: duplicate
 		if err != nil && k8serrors.IsNotFound(err) {
 			return false, err
 		}
@@ -819,6 +824,7 @@ func (c *Controller) upgradeLogCollector(
 			return true, nil
 		}
 
+		// todo: build client & lister.get
 		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
@@ -837,6 +843,7 @@ func (c *Controller) upgradeLogCollector(
 				LogCollector = LogCollector.DeepCopy()
 				LogCollector.Status.Phase = v1.AddonPhaseFailed
 				LogCollector.Status.Reason = "Failed to upgrade LogCollector."
+				// todo
 				if err = c.persistUpdate(ctx, LogCollector); err != nil {
 					return false, err
 				}
@@ -849,6 +856,7 @@ func (c *Controller) upgradeLogCollector(
 		fillOperatorStatus(LogCollector)
 		LogCollector.Status.Phase = v1.AddonPhaseChecking
 		LogCollector.Status.Reason = ""
+		// todo
 		if err = c.persistUpdate(ctx, LogCollector); err != nil {
 			return false, err
 		}

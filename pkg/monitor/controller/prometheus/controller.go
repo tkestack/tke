@@ -2942,8 +2942,10 @@ func (c *Controller) checkPrometheusStatus(ctx context.Context, prometheus *v1.P
 		log.Info("Start to check prometheus status", log.String("prome", key))
 
 		cluster, err := c.platformClient.Clusters().Get(ctx, prometheus.Spec.ClusterName, metav1.GetOptions{})
+		// TODO: need retry?
 		if err != nil && errors.IsNotFound(err) {
-			return false, err
+			log.Warnf("Get cluster client error:", err)
+			return false, nil
 		}
 		if err != nil {
 			return false, nil
@@ -2954,11 +2956,13 @@ func (c *Controller) checkPrometheusStatus(ctx context.Context, prometheus *v1.P
 		}
 		kubeClient, err := platformutil.BuildExternalClientSet(ctx, cluster, c.platformClient)
 		if err != nil {
-			return false, err
+			log.Warnf("build kube client error:%v", err)
+			return false, nil
 		}
 		prometheus, err := c.lister.Get(key)
 		if err != nil {
-			return false, err
+			log.Warnf("get prometheus error:%v", err)
+			return false, nil
 		}
 
 		if _, err := kubeClient.CoreV1().Services(metav1.NamespaceSystem).ProxyGet("http", PrometheusService, PrometheusServicePort, `/-/healthy`, nil).DoRaw(ctx); err != nil {
@@ -2966,6 +2970,7 @@ func (c *Controller) checkPrometheusStatus(ctx context.Context, prometheus *v1.P
 				prometheus = prometheus.DeepCopy()
 				prometheus.Status.Phase = v1.AddonPhaseFailed
 				prometheus.Status.Reason = "Prometheus is not healthy."
+				// TODO: need retry? what is persistUpdate?
 				if err = c.persistUpdate(ctx, prometheus); err != nil {
 					return false, err
 				}
@@ -2977,6 +2982,7 @@ func (c *Controller) checkPrometheusStatus(ctx context.Context, prometheus *v1.P
 		prometheus = prometheus.DeepCopy()
 		prometheus.Status.Phase = v1.AddonPhaseRunning
 		prometheus.Status.Reason = ""
+		// TODO: need retry?
 		if err = c.persistUpdate(ctx, prometheus); err != nil {
 			return false, err
 		}
@@ -2990,7 +2996,8 @@ func (c *Controller) checkPrometheusUpgrade(ctx context.Context, prometheus *v1.
 
 		cluster, err := c.platformClient.Clusters().Get(ctx, prometheus.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
-			return false, err
+			log.Warnf("get cluster error:%v", err)
+			return false, nil
 		}
 		if err != nil {
 			return false, nil
@@ -3001,11 +3008,13 @@ func (c *Controller) checkPrometheusUpgrade(ctx context.Context, prometheus *v1.
 		}
 		kubeClient, err := platformutil.BuildExternalClientSet(ctx, cluster, c.platformClient)
 		if err != nil {
-			return false, err
+			log.Warnf("build kube client error: %v", err)
+			return false, nil
 		}
 		prometheus, err := c.lister.Get(key)
 		if err != nil {
-			return false, err
+			log.Warnf("get prometheus error: %v", err)
+			return false, nil
 		}
 
 		newComponents := images.Get(prometheus.Spec.Version)
@@ -3019,6 +3028,7 @@ func (c *Controller) checkPrometheusUpgrade(ctx context.Context, prometheus *v1.
 							prometheus = prometheus.DeepCopy()
 							prometheus.Status.Phase = v1.AddonPhaseUpgrading
 							prometheus.Status.Reason = fmt.Sprintf("Upgrade timeout, %v", err)
+							// TODO: persist
 							if err = c.persistUpdate(ctx, prometheus); err != nil {
 								return false, err
 							}

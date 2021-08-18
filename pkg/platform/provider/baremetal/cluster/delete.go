@@ -111,7 +111,6 @@ func (p *Provider) EnsureRemoveMachine(ctx context.Context, c *v1.Cluster) error
 
 func waitForMachineDelete(ctx context.Context, c platformv1client.PlatformV1Interface, machineName string) wait.ConditionFunc {
 	return func() (done bool, err error) {
-
 		if _, err := c.Machines().Get(ctx, machineName, metav1.GetOptions{}); err != nil {
 			if errors.IsNotFound(err) {
 				return true, nil

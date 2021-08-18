@@ -72,19 +72,21 @@ func (h *processor) saveConfig(ctx context.Context, clusterName string, data str
 	return wait.PollImmediate(time.Second, time.Second*5, func() (done bool, err error) {
 		configMap, getErr := k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, alertmanagerrule.AlertManagerConfigMap, metav1.GetOptions{})
 		if getErr != nil {
-			return false, getErr
+			log.Warnf("get configMap %s/%s error:%v", metav1.NamespaceSystem, alertmanagerrule.AlertManagerConfigMap, getErr)
+			return false, nil
 		}
 
 		configMap.Data[alertmanagerrule.AlertManagerConfigName] = data
 		_, err = k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Update(ctx, configMap, metav1.UpdateOptions{})
-		if err == nil {
-			return true, nil
-		}
-
-		if apierror.IsConflict(err) {
+		if err != nil {
+			// TODO: need retry?
+			if apierror.IsConflict(err) {
+				return false, nil
+			}
+			log.Warnf("update configMap %s/%s error:%v", metav1.NamespaceSystem, configMap.Name, err)
 			return false, nil
 		}
+		return true, nil
 
-		return false, err
 	})
 }

@@ -790,11 +790,11 @@ func (c *Controller) checkMeshManagerStatus(
 	key string, initDelay time.Time) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to check MeshManager health", log.String("name", MeshManager.Name))
-
 		kubeClient, err := util.GetClusterClient(ctx, MeshManager.Spec.ClusterName, c.platformClient)
-
-		if err != nil { //what if cluster does not exists?
-			return false, err
+		// TODO: need retry?
+		if err != nil {
+			log.Warnf("Get cluster client error:", err)
+			return false, nil
 		}
 
 		if _, ok := c.checking.Load(key); !ok {
@@ -802,6 +802,7 @@ func (c *Controller) checkMeshManagerStatus(
 			return true, nil
 		}
 
+		// TODO: need retry?
 		MeshManager, err := c.lister.Get(key)
 		if err != nil {
 			return false, err
@@ -885,14 +886,17 @@ func (c *Controller) upgradeMeshManager(
 	return func() (bool, error) {
 		log.Info("Start to upgrade MeshManager", log.String("name", MeshManager.Name))
 		kubeClient, err := util.GetClusterClient(ctx, MeshManager.Spec.ClusterName, c.platformClient)
+		// TODO: need retry?
 		if err != nil {
-			return false, err
+			log.Warnf("Get cluster client error:", err)
+			return false, nil
 		}
 		if _, ok := c.upgrading.Load(key); !ok {
 			log.Debug("Upgrading MeshManager", log.String("name", MeshManager.Name))
 			return true, nil
 		}
 
+		// TODO: need retry?
 		MeshManager, err := c.lister.Get(key)
 		if err != nil {
 			return false, err

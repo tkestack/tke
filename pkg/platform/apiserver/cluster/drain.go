@@ -203,6 +203,7 @@ func (o *drainCmdOptions) waitForDelete(pods []corev1.Pod, interval, timeout tim
 	err := wait.PollImmediate(interval, timeout, func() (bool, error) {
 		var pendingPods []corev1.Pod
 		for i, pod := range pods {
+			// TODO: need retry? getPodFn has poll too.
 			p, err := getPodFn(pod.Namespace, pod.Name)
 			if apierrors.IsNotFound(err) || (p != nil && p.ObjectMeta.UID != pod.ObjectMeta.UID) {
 				log.Infof("%s %s/%s", verbStr, pod.Namespace, pod.Name)

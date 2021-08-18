@@ -145,10 +145,12 @@ func (t *TKE) createChartgroup(ctx context.Context, tenantID, name string) (regi
 			FieldSelector: fmt.Sprintf("spec.tenantID=%s,spec.name=%s", tenantID, name),
 		})
 		if err != nil {
+			log.Warnf("list chart groups failed, error:", err)
 			return false, err
 		}
 		if len(cgs.Items) == 0 {
-			return false, fmt.Errorf("create chargroup failed, cannot find %s chartgroup", name)
+			log.Warnf("create chart groups failed, cannot find %s chartGroup", name)
+			return false, nil
 		}
 		return true, nil
 	})

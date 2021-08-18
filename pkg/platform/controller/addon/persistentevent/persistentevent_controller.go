@@ -565,6 +565,7 @@ func (c *Controller) watchPersistentEventHealth(ctx context.Context, key string)
 func (c *Controller) checkDeploymentStatus(ctx context.Context, persistentEvent *v1.PersistentEvent, key string) func() (bool, error) {
 	return func() (bool, error) {
 		log.Info("Start to check the persistent event deployment health", log.String("clusterName", persistentEvent.Spec.ClusterName))
+		// todo
 		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, persistentEvent.Spec.ClusterName, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return false, err
@@ -576,6 +577,7 @@ func (c *Controller) checkDeploymentStatus(ctx context.Context, persistentEvent 
 			log.Info("checking over.")
 			return true, nil
 		}
+		// todo
 		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
@@ -589,6 +591,7 @@ func (c *Controller) checkDeploymentStatus(ctx context.Context, persistentEvent 
 			persistentEvent = persistentEvent.DeepCopy()
 			persistentEvent.Status.Phase = v1.AddonPhaseFailed
 			persistentEvent.Status.Reason = "Persistent event deployment do not exist."
+			// todo
 			if err = c.persistUpdate(ctx, persistentEvent); err != nil {
 				return false, err
 			}
@@ -612,6 +615,7 @@ func (c *Controller) checkDeploymentStatus(ctx context.Context, persistentEvent 
 			persistentEvent = persistentEvent.DeepCopy()
 			persistentEvent.Status.Phase = v1.AddonPhaseFailed
 			persistentEvent.Status.Reason = reason
+			// todo
 			if err = c.persistUpdate(ctx, persistentEvent); err != nil {
 				return false, err
 			}
@@ -625,6 +629,7 @@ func (c *Controller) checkDeploymentStatus(ctx context.Context, persistentEvent 
 		persistentEvent = persistentEvent.DeepCopy()
 		persistentEvent.Status.Phase = v1.AddonPhaseRunning
 		persistentEvent.Status.Reason = ""
+		// todo
 		if err = c.persistUpdate(ctx, persistentEvent); err != nil {
 			return false, err
 		}

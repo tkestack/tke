@@ -564,6 +564,8 @@ func (c *Controller) checkLBCFStatus(ctx context.Context, lbcf *v1.LBCF, key str
 	return func() (bool, error) {
 		log.Info("Start to check LBCF health", log.String("clusterName", lbcf.Spec.ClusterName))
 		cluster, err := c.client.PlatformV1().Clusters().Get(ctx, lbcf.Spec.ClusterName, metav1.GetOptions{})
+
+		// TODO: DELETE duplicate logic
 		if err != nil && errors.IsNotFound(err) {
 			log.Infof("checkLBCFStatus: lbcf not found")
 			return false, err
@@ -585,6 +587,7 @@ func (c *Controller) checkLBCFStatus(ctx context.Context, lbcf *v1.LBCF, key str
 				lbcf = lbcf.DeepCopy()
 				lbcf.Status.Phase = v1.AddonPhaseFailed
 				lbcf.Status.Reason = "LBCF is not healthy."
+				// TODO: persist
 				if err = c.persistUpdate(ctx, lbcf); err != nil {
 					return false, err
 				}
