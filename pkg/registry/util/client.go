@@ -1,7 +1,7 @@
 /*
  * Tencent is pleased to support the open source community by making TKEStack available.
  *
- * Copyright (C) 2012-2021 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2020 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -18,24 +18,20 @@
 package util
 
 import (
-	"os"
-	"os/signal"
-	"syscall"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
-// SetupSignalHandler registered for SIGTERM and SIGINT. A stop channel is returned
-// which is closed on one of these signals. If a second signal is caught, the program
-// is terminated with exit code 1.
-func SetupSignalHandler() (stopCh <-chan struct{}) {
-	stop := make(chan struct{})
-	c := make(chan os.Signal, 2)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		close(stop)
-		<-c
-		os.Exit(1) // second signal. Exit directly.
-	}()
+func BuildKubeClient() (*kubernetes.Clientset, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, err
+	}
 
-	return stop
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return clientset, nil
 }

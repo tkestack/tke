@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"sync"
 
-	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 
 	"github.com/caddyserver/caddy/caddyfile"
@@ -56,7 +55,7 @@ type CoreDNS struct {
 }
 
 func NewCoreDNS() (*CoreDNS, error) {
-	kubeClient, err := apiclient.BuildKubeClient()
+	kubeClient, err := BuildKubeClient()
 	if err != nil {
 		return nil, err
 	}
