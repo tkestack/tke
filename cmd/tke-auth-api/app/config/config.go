@@ -47,7 +47,6 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
-	k8sinformers "k8s.io/client-go/informers"
 
 	authapi "tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -71,7 +70,6 @@ import (
 	"tkestack.io/tke/pkg/auth/authorization/aggregation"
 	dexutil "tkestack.io/tke/pkg/auth/util/dex"
 	casbinlogger "tkestack.io/tke/pkg/auth/util/logger"
-	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/log/dex"
 )
@@ -87,7 +85,6 @@ type Config struct {
 	OIDCExternalAddress            string
 	GenericAPIServerConfig         *genericapiserver.Config
 	VersionedSharedInformerFactory versionedinformers.SharedInformerFactory
-	K8sSharedInformerFactory       k8sinformers.SharedInformerFactory
 	StorageFactory                 *serverstorage.DefaultStorageFactory
 
 	DexConfig            *dexserver.Config
@@ -148,11 +145,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	}
 	versionedInformers := versionedinformers.NewSharedInformerFactory(clientgoExternalClient, 10*time.Minute)
 
-	k8sClient, err := apiclient.BuildKubeClient()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create real external clientset: %v", err)
-	}
-	k8sInformers := k8sinformers.NewSharedInformerFactory(k8sClient, 1*time.Minute)
 	enforcer, err := setupCasbinEnforcer(opts.Authorization)
 	if err != nil {
 		return nil, err
@@ -169,7 +161,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
-	aggregateAuthz, err := aggregation.NewAuthorizer(authClient, opts.Authorization, opts.Auth, enforcer, opts.Authentication.PrivilegedUsername, k8sInformers)
+	aggregateAuthz, err := aggregation.NewAuthorizer(authClient, opts.Authorization, opts.Auth, enforcer, opts.Authentication.PrivilegedUsername)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +200,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		GenericAPIServerConfig:         genericAPIServerConfig,
 		StorageFactory:                 storageFactory,
 		VersionedSharedInformerFactory: versionedInformers,
-		K8sSharedInformerFactory:       k8sInformers,
 		DexConfig:                      dexConfig,
 		DexStorage:                     dexConfig.Storage,
 		CasbinEnforcer:                 enforcer,

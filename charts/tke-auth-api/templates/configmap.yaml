@@ -6,8 +6,7 @@ metadata:
     {{- include "tke-auth-api.labels" . | nindent 4 }}
 data:
   abac-policy.json: |
-    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"system:kube-*|system:serviceaccount:kube-system:*","namespace":"*", "resource":"*","apiGroup":"*tkestack.io", "group": "*", "nonResourcePath":"*"}}
-    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"^system:serviceaccount:tke:default$","namespace":"*", "resource":"*","apiGroup":"*", "group": "*", "nonResourcePath":"*"}}
+    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"system:*","namespace":"*", "resource":"*","apiGroup":"*", "group": "*", "nonResourcePath":"*"}}
   tke-auth-api.toml: |
     [secure_serving]
     tls_cert_file = "/app/certs/tke-auth-api/tls.crt"

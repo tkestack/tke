@@ -23,8 +23,6 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/authorization/union"
 	"k8s.io/apiserver/plugin/pkg/authorizer/webhook"
-	k8sinformers "k8s.io/client-go/informers"
-	"k8s.io/kubernetes/plugin/pkg/auth/authorizer/rbac"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/cmd/tke-auth-api/app/options"
 	"tkestack.io/tke/pkg/apiserver/authorization/abac"
@@ -32,9 +30,7 @@ import (
 )
 
 // NewAuthorizer creates a authorizer for subject access review and returns it.
-func NewAuthorizer(authClient authinternalclient.AuthInterface, authorizationOpts *options.AuthorizationOptions,
-	authOpts *options.AuthOptions, enforcer *casbin.SyncedEnforcer,
-	privilegedUsername string, k8sInformers k8sinformers.SharedInformerFactory) (authorizer.Authorizer, error) {
+func NewAuthorizer(authClient authinternalclient.AuthInterface, authorizationOpts *options.AuthorizationOptions, authOpts *options.AuthOptions, enforcer *casbin.SyncedEnforcer, privilegedUsername string) (authorizer.Authorizer, error) {
 	var (
 		authorizers []authorizer.Authorizer
 	)
@@ -57,16 +53,6 @@ func NewAuthorizer(authClient authinternalclient.AuthInterface, authorizationOpt
 			return nil, err
 		}
 		authorizers = append(authorizers, abacAuthorizer)
-	}
-
-	if k8sInformers != nil {
-		rbacAuthorizer := rbac.New(
-			&rbac.RoleGetter{Lister: k8sInformers.Rbac().V1().Roles().Lister()},
-			&rbac.RoleBindingLister{Lister: k8sInformers.Rbac().V1().RoleBindings().Lister()},
-			&rbac.ClusterRoleGetter{Lister: k8sInformers.Rbac().V1().ClusterRoles().Lister()},
-			&rbac.ClusterRoleBindingLister{Lister: k8sInformers.Rbac().V1().ClusterRoleBindings().Lister()},
-		)
-		authorizers = append(authorizers, rbacAuthorizer)
 	}
 
 	authorizers = append(authorizers, local.NewAuthorizer(authClient, enforcer, privilegedUsername))
