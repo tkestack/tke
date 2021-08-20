@@ -115,26 +115,37 @@ func (c *Controller) updateMachine(old, obj interface{}) {
 	c.enqueue(machine)
 }
 
-func (c *Controller) needsUpdate(oldMachine *platformv1.Machine, newMachine *platformv1.Machine) bool {
-	if !reflect.DeepEqual(oldMachine.Spec, newMachine.Spec) {
+func (c *Controller) needsUpdate(old *platformv1.Machine, new *platformv1.Machine) bool {
+	if !reflect.DeepEqual(old.Spec, new.Spec) {
 		return true
 	}
 
-	if oldMachine.Status.Phase == platformv1.MachineRunning && newMachine.Status.Phase == platformv1.MachineTerminating {
+	if !reflect.DeepEqual(old.ObjectMeta.Annotations, new.ObjectMeta.Annotations) {
 		return true
 	}
 
-	if !reflect.DeepEqual(oldMachine.ObjectMeta.Annotations, newMachine.ObjectMeta.Annotations) {
+	if !reflect.DeepEqual(old.ObjectMeta.Labels, new.ObjectMeta.Labels) {
 		return true
 	}
 
-	if !reflect.DeepEqual(oldMachine.ObjectMeta.Labels, newMachine.ObjectMeta.Labels) {
+	if old.Status.Phase != platformv1.MachineTerminating && new.Status.Phase == platformv1.MachineTerminating {
 		return true
+	}
+
+	// fixed continuously trigger needupdate due to the provider modifies the condition when the creation error.
+	if new.Status.Phase == platformv1.MachineInitializing &&
+		old.ResourceVersion != new.ResourceVersion &&
+		len(new.Status.Conditions) != 0 {
+		// in create error case, should be return err to retry by workqueue.
+		lastCondition := new.Status.Conditions[len(new.Status.Conditions)-1]
+		if lastCondition.Status == platformv1.ConditionFalse {
+			return false
+		}
 	}
 
 	// Control the synchronization interval through the health detection interval
 	// to avoid version conflicts caused by concurrent modification
-	healthCondition := newMachine.GetCondition(conditionTypeHealthCheck)
+	healthCondition := new.GetCondition(conditionTypeHealthCheck)
 	if healthCondition == nil {
 		return true
 	}

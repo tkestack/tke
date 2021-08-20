@@ -140,16 +140,27 @@ func (c *Controller) needsUpdate(old *platformv1.Cluster, new *platformv1.Cluste
 		return true
 	}
 
-	if old.Status.Phase == platformv1.ClusterRunning && new.Status.Phase == platformv1.ClusterTerminating {
-		return true
-	}
-
 	if !reflect.DeepEqual(old.ObjectMeta.Annotations, new.ObjectMeta.Annotations) {
 		return true
 	}
 
 	if !reflect.DeepEqual(old.ObjectMeta.Labels, new.ObjectMeta.Labels) {
 		return true
+	}
+
+	if old.Status.Phase != platformv1.ClusterTerminating && new.Status.Phase == platformv1.ClusterTerminating {
+		return true
+	}
+
+	// fixed continuously trigger needupdate due to the provider modifies the condition when the creation error.
+	if new.Status.Phase == platformv1.ClusterInitializing &&
+		old.ResourceVersion != new.ResourceVersion &&
+		len(new.Status.Conditions) != 0 {
+		// in create error case, should be return err to retry by workqueue.
+		lastCondition := new.Status.Conditions[len(new.Status.Conditions)-1]
+		if lastCondition.Status == platformv1.ConditionFalse {
+			return false
+		}
 	}
 
 	// Control the synchronization interval through the health detection interval
