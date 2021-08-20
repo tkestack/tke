@@ -59,6 +59,7 @@ import (
 	certutil "k8s.io/client-go/util/cert"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+
 	applicationclientset "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryclientset "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
@@ -465,6 +466,10 @@ func (t *TKE) initSteps() {
 			{
 				Name: "Import charts",
 				Func: t.importCharts,
+			},
+			{
+				Name: "Label built-in charts",
+				Func: t.labelBuiltInCharts,
 			},
 			{
 				Name: "Import Expansion Charts",

@@ -29,6 +29,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
+
 	registryv1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
@@ -40,7 +41,10 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 )
 
-const chartFilesSuffix = ".charts.tar.gz"
+const (
+	chartFilesSuffix = ".charts.tar.gz"
+	BuiltInLabel     = registryv1.GroupName + "/built-in"
+)
 
 var (
 	needImportedChartGroups = []string{"public"}
@@ -63,8 +67,25 @@ func (t *TKE) importCharts(ctx context.Context) error {
 		err := t.pushCharts(ctx, chartGroup+chartFilesSuffix, constants.DefaultTeantID, chartGroup)
 		errs = append(errs, err)
 	}
-	return utilerrors.NewAggregate(errs)
 
+	return utilerrors.NewAggregate(errs)
+}
+
+func (t *TKE) labelBuiltInCharts(ctx context.Context) error {
+	var errs []error
+	charts, err := t.registryClient.Charts("").List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	for _, chart := range charts.Items {
+		chart.Labels[BuiltInLabel] = ""
+		_, err = t.registryClient.Charts(chart.Namespace).Update(ctx, &chart, metav1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+	}
+	return utilerrors.NewAggregate(errs)
 }
 
 func (t *TKE) pushCharts(ctx context.Context, chartsPath, tenantID, chartGroup string) error {
@@ -126,6 +147,7 @@ func (t *TKE) pushCharts(ctx context.Context, chartsPath, tenantID, chartGroup s
 			errs = append(errs, err)
 		}
 	}
+
 	return utilerrors.NewAggregate(errs)
 }
 
