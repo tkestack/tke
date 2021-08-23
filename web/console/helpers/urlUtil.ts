@@ -1,16 +1,17 @@
 import { remove, isEmpty } from '../src/modules/common/utils';
 import { ResourceInfo } from '../src/modules/common';
 import { resourceConfig } from '../config';
+import { isObject } from 'lodash';
 
-export function parseQueryString(str: string = '') {
-  let result = {};
+export function parseQueryString(str = '') {
+  const result = {};
   str
     .replace(/^\?*/, '')
     .split('&')
     .forEach(item => {
-      let keyVal = item.split('=');
+      const keyVal = item.split('=');
       if (keyVal.length > 0) {
-        let key = decodeURIComponent(keyVal[0]);
+        const key = decodeURIComponent(keyVal[0]);
         result[key] = keyVal[1] ? decodeURIComponent(keyVal[1]) : '';
       }
     });
@@ -18,8 +19,8 @@ export function parseQueryString(str: string = '') {
 }
 
 export function buildQueryString(obj: any = {}) {
-  let keys = remove(Object.keys(obj), value => value === '');
-  let queryStr = keys.map(key => `${encodeURIComponent(key)}=${encodeURIComponent(obj[key])}`).join('&');
+  const keys = remove(Object.keys(obj), value => value === '');
+  const queryStr = keys.map(key => `${encodeURIComponent(key)}=${encodeURIComponent(obj[key])}`).join('&');
 
   if (queryStr) {
     return '?' + queryStr;
@@ -46,46 +47,25 @@ export const reduceK8sQueryString = ({
   k8sQueryObj = {},
   restfulPath = ''
 }: {
-  k8sQueryObj: any;
+  k8sQueryObj: Record<string, string | number | Record<string, string | number>>;
   restfulPath?: string;
 }) => {
-  let operator = '?';
-  let queryString = '';
-  if (!isEmpty(k8sQueryObj)) {
-    let queryKeys = Object.keys(k8sQueryObj);
-    queryKeys.forEach((queryKey, index) => {
-      if (index !== 0) {
-        queryString += '&';
-      }
+  const queryString = Object.entries(k8sQueryObj)
+    .map(([key, value]) => {
+      // 也许value是object，即labelSelector 或者 fieldSelector
+      value = isObject(value)
+        ? Object.entries(value)
+            .map(([key, value]) => `${key}${value && '='}${value}`)
+            .join(',')
+        : value;
 
-      // 这里去判断每种资源的query，eg：fieldSelector、limit等
-      let specificQuery = k8sQueryObj[queryKey];
+      return `${key}=${encodeURIComponent(`${value}`)}`;
+    })
+    .join('&');
 
-      if (typeof specificQuery === 'object') {
-        // 这里是对于 query的字段里面，还有多种过滤条件，比如fieldSelector支持 involvedObject.name=*,involvedObject.kind=*
-        let specificKeys = Object.keys(specificQuery),
-          specificString = '';
-        specificKeys.forEach((speKey, index) => {
-          if (index !== 0) {
-            specificString += ',';
-          }
-          specificString += speKey + '=' + specificQuery[speKey];
-        });
-        if (specificString) {
-          queryString += queryKey + '=' + specificString;
-        }
-      } else {
-        queryString += queryKey + '=' + k8sQueryObj[queryKey];
-      }
-    });
-  }
+  const preFix = restfulPath.includes('?') ? '&' : '?';
 
-  /** 如果原本的url里面已经有 ? 了，则我们这里的query的内容，必须是拼接在后面，而不能直接加多一个 ? */
-  if (restfulPath.includes('?')) {
-    operator = '&';
-  }
-
-  return queryString ? `${operator}${queryString}` : '';
+  return queryString ? `${preFix}${queryString}` : '';
 };
 
 interface K8sRestfulPathOptions {
@@ -114,7 +94,6 @@ interface K8sRestfulPathOptions {
   logAgentName?: string;
 
   meshId?: string;
-
 }
 
 /**
@@ -134,12 +113,12 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
     extraResource = '',
     clusterId = '',
     meshId = '',
-    logAgentName = '',
+    logAgentName = ''
   } = options;
 
   namespace = namespace.replace(new RegExp(`^${clusterId}-`), '');
-  let url: string = '';
-  let isAddon = resourceInfo.requestType && resourceInfo.requestType.addon ? resourceInfo.requestType.addon : false;
+  let url = '';
+  const isAddon = resourceInfo.requestType && resourceInfo.requestType.addon ? resourceInfo.requestType.addon : false;
 
   /**
    * addon 和 非 addon的资源，请求的url 不太一样
@@ -153,12 +132,12 @@ export const reduceK8sRestfulPath = (options: K8sRestfulPathOptions) => {
    */
   if (isAddon) {
     // 兼容新旧日志组件
-    let baseInfo: ResourceInfo = resourceConfig()[logAgentName ? 'logagent' : 'cluster'];
-    let baseValue = logAgentName || clusterId;
+    const baseInfo: ResourceInfo = resourceConfig()[logAgentName ? 'logagent' : 'cluster'];
+    const baseValue = logAgentName || clusterId;
     url = `/${baseInfo.basicEntry}/${baseInfo.group}/${baseInfo.version}/${baseInfo.requestType['list']}/${baseValue}/${resourceInfo.requestType['list']}`;
 
     if (extraResource || resourceInfo['namespaces'] || specificName) {
-      let queryArr: string[] = [];
+      const queryArr: string[] = [];
       resourceInfo.namespaces && namespace && queryArr.push(`namespace=${namespace}`);
       specificName && queryArr.push(`name=${specificName}`);
       extraResource && queryArr.push(`action=${extraResource}`);

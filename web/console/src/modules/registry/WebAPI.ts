@@ -709,7 +709,7 @@ export async function fetchChartList(query: QueryState<ChartFilter>) {
       }
     : {};
   const resourceInfo: ResourceInfo = resourceConfig()['chart'];
-  const opts = { resourceInfo: resourceInfo };
+  const opts = { resourceInfo: { ...resourceInfo, namespaces: undefined } };
   // if (filter.namespace) {
   //   opts['namespace'] = filter.namespace;
   //   opts['isSpecialNamespace'] = true;
