@@ -116,26 +116,46 @@ func (c *Controller) updateMachine(old, obj interface{}) {
 	c.enqueue(machine)
 }
 
-func (c *Controller) needsUpdate(oldMachine *platformv1.Machine, newMachine *platformv1.Machine) bool {
-	if !reflect.DeepEqual(oldMachine.Spec, newMachine.Spec) {
+func (c *Controller) needsUpdate(old *platformv1.Machine, new *platformv1.Machine) bool {
+	switch {
+	case !reflect.DeepEqual(old.Spec, new.Spec):
 		return true
-	}
+	case !reflect.DeepEqual(old.ObjectMeta.Labels, new.ObjectMeta.Labels):
+		return true
+	case !reflect.DeepEqual(old.ObjectMeta.Annotations, new.ObjectMeta.Annotations):
+		return true
+	case old.Status.Phase != new.Status.Phase:
+		return true
+	case new.Status.Phase == platformv1.MachineInitializing:
+		// if ResourceVersion is equal, it's an resync envent, should return true.
+		if old.ResourceVersion == new.ResourceVersion {
+			return true
+		}
+		if len(new.Status.Conditions) == 0 {
+			return true
+		}
+		if new.Status.Conditions[len(new.Status.Conditions)-1].Status == platformv1.ConditionUnknown {
+			return true
+		}
+		// if user set last condition false block procesee
+		if new.Status.Conditions[len(new.Status.Conditions)-1].Status == platformv1.ConditionFalse {
+			return false
+		}
+		fallthrough
+	case !reflect.DeepEqual(old.Status.Conditions, new.Status.Conditions):
+		return true
+	default:
+		healthCondition := new.GetCondition(conditionTypeHealthCheck)
+		if healthCondition == nil {
+			// when healthCondition is not set, if ResourceVersion is equal, it's an resync envent, should return true.
+			return old.ResourceVersion == new.ResourceVersion
+		}
+		if time.Since(healthCondition.LastProbeTime.Time) > resyncInternal {
+			return true
+		}
 
-	if oldMachine.Status.Phase != platformv1.MachineTerminating && newMachine.Status.Phase == platformv1.MachineTerminating {
-		return true
+		return false
 	}
-
-	// Control the synchronization interval through the health detection interval
-	// to avoid version conflicts caused by concurrent modification
-	healthCondition := newMachine.GetCondition(conditionTypeHealthCheck)
-	if healthCondition == nil {
-		return true
-	}
-	if time.Since(healthCondition.LastProbeTime.Time) > resyncInternal {
-		return true
-	}
-
-	return false
 }
 
 func (c *Controller) enqueue(obj *platformv1.Machine) {
