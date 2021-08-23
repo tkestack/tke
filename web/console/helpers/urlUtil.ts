@@ -47,7 +47,7 @@ export const reduceK8sQueryString = ({
   k8sQueryObj = {},
   restfulPath = ''
 }: {
-  k8sQueryObj: Record<string, string | number | Record<string, string | number>>;
+  k8sQueryObj: Record<string, string | number | boolean | Record<string, string | number | boolean>>;
   restfulPath?: string;
 }) => {
   const queryString = Object.entries(k8sQueryObj)
