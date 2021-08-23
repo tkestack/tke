@@ -29,6 +29,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -390,33 +391,43 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 }
 
 // ensureCreateClusterCredential creates ClusterCredential for cluster if ClusterCredentialRef is nil.
-// TODO: add gc collector for clean non reference ClusterCredential.
 func (c *Controller) ensureCreateClusterCredential(ctx context.Context, cluster *platformv1.Cluster) (*platformv1.Cluster, error) {
 	if cluster.Spec.ClusterCredentialRef != nil {
 		return cluster, nil
 	}
 
-	var err error
-	credential := &platformv1.ClusterCredential{
-		TenantID:    cluster.Spec.TenantID,
-		ClusterName: cluster.Name,
-		ObjectMeta: metav1.ObjectMeta{
-			OwnerReferences: []metav1.OwnerReference{
-				*metav1.NewControllerRef(cluster, platformv1.SchemeGroupVersion.WithKind("Cluster"))},
-		},
+	// TODO use informer search by labels.
+	fieldSelector := fields.OneTermEqualSelector("clusterName", cluster.Name).String()
+	clustercredentials, err := c.platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
+	if err != nil {
+		return nil, err
 	}
 
-	credential, err = c.platformClient.ClusterCredentials().Create(ctx, credential, metav1.CreateOptions{})
-	if err != nil {
-		return nil, err
+	// [Idempotent] if not found cluster credentials, create one for next logic
+	var credential *platformv1.ClusterCredential
+	if len(clustercredentials.Items) == 0 {
+		credential = &platformv1.ClusterCredential{
+			TenantID:    cluster.Spec.TenantID,
+			ClusterName: cluster.Name,
+			ObjectMeta: metav1.ObjectMeta{
+				OwnerReferences: []metav1.OwnerReference{
+					*metav1.NewControllerRef(cluster, platformv1.SchemeGroupVersion.WithKind("Cluster"))},
+			},
+		}
+
+		credential, err = c.platformClient.ClusterCredentials().Create(ctx, credential, metav1.CreateOptions{})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		if len(clustercredentials.Items) > 1 {
+			log.Warnf("cluster %s has more than one credentials, need attention!")
+		}
+
+		credential = &clustercredentials.Items[0]
 	}
+
 	cluster.Spec.ClusterCredentialRef = &corev1.LocalObjectReference{Name: credential.Name}
-	cluster, err = c.platformClient.Clusters().Update(ctx, cluster, metav1.UpdateOptions{})
-	if err != nil {
-		// Possible deletion failure will result in dirty data. So need gc collector.
-		_ = c.platformClient.ClusterCredentials().Delete(ctx, credential.Name, metav1.DeleteOptions{})
-		return nil, err
-	}
 
 	return cluster, nil
 }
