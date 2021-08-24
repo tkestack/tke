@@ -30,12 +30,14 @@ spec:
         - command:
             - sh
             - -c
-            - cp -r /data/res /app/provider/baremetal/
+            - cp -r /data/res /app/provider/baremetal/ && cp -r /data/conf/* /app/provider/baremetal/conf/
           image: {{ .ProviderResImage }}
           name: provider-res
           volumeMounts:
             - mountPath: /app/provider/baremetal
               name: provider-volume
+            - mountPath: /app/provider/baremetal/conf/containerd
+              name: containerd-volume
       containers:
         - name: tke-platform-controller
           image: {{ .Image }}
@@ -48,6 +50,8 @@ spec:
               mountPath: /app/conf
             - name: provider-volume
               mountPath: /app/provider/baremetal
+            - name: containerd-volume
+              mountPath: /app/provider/baremetal/conf/containerd/
             - name: provider-config-volume
               mountPath: /app/provider/baremetal/conf/
             - name: docker-volume
@@ -90,6 +94,8 @@ spec:
           configMap:
             name: tke-platform-controller
         - name: provider-volume
+          emptyDir: {}
+        - name: containerd-volume
           emptyDir: {}
         - name: provider-config-volume
           configMap:

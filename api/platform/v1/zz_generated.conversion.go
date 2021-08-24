@@ -1731,6 +1731,7 @@ func autoConvert_v1_ClusterFeature_To_platform_ClusterFeature(in *ClusterFeature
 	out.EnableMetricsServer = in.EnableMetricsServer
 	out.IPv6DualStack = in.IPv6DualStack
 	out.EnableCilium = in.EnableCilium
+	out.ContainerRuntime = in.ContainerRuntime
 	if err := Convert_v1_Upgrade_To_platform_Upgrade(&in.Upgrade, &out.Upgrade, s); err != nil {
 		return err
 	}
@@ -1756,6 +1757,7 @@ func autoConvert_platform_ClusterFeature_To_v1_ClusterFeature(in *platform.Clust
 	out.AuthzWebhookAddr = (*AuthzWebhookAddr)(unsafe.Pointer(in.AuthzWebhookAddr))
 	out.EnableMetricsServer = in.EnableMetricsServer
 	out.EnableCilium = in.EnableCilium
+	out.ContainerRuntime = in.ContainerRuntime
 	out.IPv6DualStack = in.IPv6DualStack
 	if err := Convert_platform_Upgrade_To_v1_Upgrade(&in.Upgrade, &out.Upgrade, s); err != nil {
 		return err

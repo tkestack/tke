@@ -56,6 +56,41 @@ function download::docker() {
   done
 }
 
+function download::containerd() {
+  if [ "${arch}" == "amd64" ]; then
+    containerd_arch=amd64
+    for version in ${CONTAINERD_VERSIONS}; do
+      wget -c "https://github.com/containerd/containerd/releases/download/v${version}/cri-containerd-cni-${version}-linux-${containerd_arch}.tar.gz" \
+        -O "containerd-${platform}-${version}.tar.gz"
+    done
+  elif [ "${arch}" == "arm64" ]; then
+    containerd_arch=arm64
+    for version in ${CONTAINERD_VERSIONS}; do
+      wget -c "https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/cri-containerd-cni-${version}-linux-${containerd_arch}.tar.gz" \
+        -O "containerd-${platform}-${version}.tar.gz"
+    done
+  else
+    echo "[ERROR] Fail to get containerd ${arch} on ${platform} platform."
+    exit 255
+  fi
+}
+
+function download::nerdctl() {
+  if [ "${arch}" == "amd64" ]; then
+    nerdctl_arch=x86_64
+  elif [ "${arch}" == "arm64" ]; then
+    nerdctl_arch=arm64
+  else
+    echo "[ERROR] Fail to get nerdctl ${arch} on ${platform} platform."
+    exit 255
+  fi
+
+  for version in ${NERDCTL_VERSIONS}; do
+    wget -c "https://github.com/containerd/nerdctl/releases/download/v${version}/nerdctl-${version}-linux-${arch}.tar.gz" \
+      -O "nerdctl-${platform}-${version}.tar.gz"
+  done
+}
+
 function download::kubernetes() {
   for version in ${K8S_VERSIONS}; do
     if [[ "${version}" =~ "tke" ]]; then
@@ -115,6 +150,8 @@ for os in ${OSS}; do
 
     download::cni_plugins
     download::docker
+    download::containerd
+    download::nerdctl
     download::kubernetes
     download::nvidia_driver
     download::nvidia_container_runtime

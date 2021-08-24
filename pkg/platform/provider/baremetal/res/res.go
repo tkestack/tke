@@ -35,6 +35,14 @@ var (
 		Name:     "docker",
 		Versions: spec.DockerVersions,
 	}
+	Containerd = Package{
+		Name:     "containerd",
+		Versions: spec.ContainerdVersions,
+	}
+	Nerdctl = Package{
+		Name:     "nerdctl",
+		Versions: spec.NerdctlVersions,
+	}
 	CNIPlugins = Package{
 		Name:     "cni-plugins",
 		Versions: spec.CNIPluginsVersions,

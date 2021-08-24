@@ -47021,6 +47021,12 @@ func schema_tke_api_platform_v1_ClusterFeature(ref common.ReferenceCallback) com
 							Format: "",
 						},
 					},
+					"containerRuntime": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"upgrade": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Upgrade control upgrade process.",

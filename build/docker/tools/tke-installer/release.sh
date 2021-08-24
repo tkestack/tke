@@ -23,7 +23,7 @@ set -o pipefail
 REGISTRY_PREFIX=${REGISTRY_PREFIX:-tkestack}
 BUILDER=${BUILDER:-default}
 VERSION=${VERSION:-$(git describe --dirty --always --tags | sed 's/-/./g')}
-PROVIDER_RES_VERSION=v1.20.4-1
+PROVIDER_RES_VERSION=v1.20.4-2
 K8S_VERSION=${PROVIDER_RES_VERSION%-*}
 DOCKER_VERSION=19.03.14
 OSS=(linux)

@@ -231,6 +231,13 @@ const (
 	GPUVirtual GPUType = "Virtual"
 )
 
+type ContainerRuntimeType = string
+
+const (
+	Containerd ContainerRuntimeType = "containerd"
+	Docker ContainerRuntimeType = "docker"
+)
+
 // ClusterPhase defines the phase of cluster constructor.
 type ClusterPhase string
 
@@ -387,6 +394,8 @@ type ClusterFeature struct {
 	EnableMetricsServer bool
 	// +optional
 	EnableCilium bool
+	// +optional
+	ContainerRuntime ContainerRuntimeType
 	// +optional
 	IPv6DualStack bool
 	// Upgrade control upgrade process.
