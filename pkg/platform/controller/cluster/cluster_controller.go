@@ -34,6 +34,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
@@ -131,7 +132,14 @@ func (c *Controller) addCluster(obj interface{}) {
 func (c *Controller) updateCluster(old, obj interface{}) {
 	oldCluster := old.(*platformv1.Cluster)
 	cluster := obj.(*platformv1.Cluster)
-	if !c.needsUpdate(oldCluster, cluster) {
+
+	controllerNeedUpddateResult := c.needsUpdate(oldCluster, cluster)
+	var providerNeedUpddateResult bool
+	provider, _ := clusterprovider.GetProvider(cluster.Spec.Type)
+	if provider != nil {
+		providerNeedUpddateResult = provider.NeedUpdate(oldCluster, cluster)
+	}
+	if !(controllerNeedUpddateResult || providerNeedUpddateResult) {
 		return
 	}
 	c.log.Info("Updating cluster", "clusterName", cluster.Name)

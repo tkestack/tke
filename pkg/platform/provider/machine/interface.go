@@ -51,7 +51,17 @@ const (
 type Provider interface {
 	Name() string
 
+	APIProvider
+	ControllerProvider
+}
+
+type APIProvider interface {
 	Validate(machine *platform.Machine) field.ErrorList
+}
+
+type ControllerProvider interface {
+	// NeedUpdate could be implemented by user to judge whether machine need update or not.
+	NeedUpdate(old, new *platformv1.Machine) bool
 
 	PreCreate(machine *platform.Machine) error
 	AfterCreate(machine *platform.Machine) error
@@ -211,6 +221,10 @@ func (p *DelegateProvider) OnDelete(ctx context.Context, machine *platformv1.Mac
 	cluster.Status.Message = ""
 
 	return nil
+}
+
+func (p *DelegateProvider) NeedUpdate(old, new *platformv1.Machine) bool {
+	return false
 }
 
 func (p *DelegateProvider) getNextConditionType(conditionType string) string {

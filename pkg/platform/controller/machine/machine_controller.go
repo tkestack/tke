@@ -109,7 +109,14 @@ func (c *Controller) addMachine(obj interface{}) {
 func (c *Controller) updateMachine(old, obj interface{}) {
 	oldMachine := old.(*platformv1.Machine)
 	machine := obj.(*platformv1.Machine)
-	if !c.needsUpdate(oldMachine, machine) {
+
+	controllerNeedUpddateResult := c.needsUpdate(oldMachine, machine)
+	var providerNeedUpddateResult bool
+	provider, _ := machineprovider.GetProvider(machine.Spec.Type)
+	if provider != nil {
+		providerNeedUpddateResult = provider.NeedUpdate(oldMachine, machine)
+	}
+	if !(controllerNeedUpddateResult || providerNeedUpddateResult) {
 		return
 	}
 	c.log.Info("Updating machine", "machine", machine.Name)
