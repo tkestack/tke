@@ -1,21 +1,4 @@
 ---
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  annotations:
-    rbac.authorization.kubernetes.io/autoupdate: "true"
-  labels:
-    kubernetes.io/bootstrapping: rbac-defaults
-  name: tke-bind
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-  - kind: ServiceAccount
-    name: default
-    namespace: tke
----
 kind: Service
 apiVersion: v1
 metadata:
@@ -113,8 +96,7 @@ metadata:
   namespace: tke
 data:
   abac-policy.json: |
-    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"system:kube-*|system:serviceaccount:kube-system:*","namespace":"*", "resource":"*","apiGroup":"*tkestack.io", "group": "*", "nonResourcePath":"*"}}
-    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"^system:serviceaccount:tke:default$","namespace":"*", "resource":"*","apiGroup":"*", "group": "*", "nonResourcePath":"*"}}
+    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"system:*","namespace":"*", "resource":"*","apiGroup":"*", "group": "*", "nonResourcePath":"*"}}
   tke-auth-api.toml: |
     [secure_serving]
     tls_cert_file = "/app/certs/server.crt"
