@@ -20,8 +20,9 @@ package filter
 import (
 	"context"
 	"fmt"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
+
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
@@ -52,6 +53,10 @@ func NewClusterInspector(platformClient platformv1.PlatformV1Interface, privileg
 
 func (i *clusterInspector) Inspect(handler http.Handler, c *genericapiserver.Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if getK8sDecision(req) {
+			handler.ServeHTTP(w, req)
+			return
+		}
 		ctx := req.Context()
 		username, tenantID := authentication.UsernameAndTenantID(ctx)
 		if (username == i.privilegedUsername || username == "system:apiserver") && tenantID == "" {

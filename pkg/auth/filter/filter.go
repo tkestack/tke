@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httputil"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -57,9 +58,10 @@ const (
 	reasonAnnotationKey   = "authorization.auth.tke.com/reason"
 
 	// Annotation values set in advanced audit
-	decisionAllow  = "allow"
-	decisionForbid = "forbid"
-	reasonError    = "internal error"
+	decisionAllow          = "allow"
+	decisionForbid         = "forbid"
+	reasonError            = "internal error"
+	k8sDecisionAllowHeader = "X-TKE-K8sDecisionAllow"
 )
 
 var (
@@ -131,13 +133,21 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 			reason     string
 		)
 
-		// first check if user is admin
-		tkeAttributes := ConvertTKEAttributes(ctx, attributes)
-		authorized = UnprotectedAuthorized(tkeAttributes)
+		// firstly check if resource is unprotected
+		authorized = UnprotectedAuthorized(attributes)
 		if authorized != authorizer.DecisionAllow {
-			authorized, reason, err = a.Authorize(ctx, tkeAttributes)
+			authorized, reason, err = a.Authorize(ctx, attributes)
 		}
 
+		// secondly check k8s resource authz result
+		if authorized != authorizer.DecisionAllow {
+			attributes = ConvertTKEAttributes(ctx, attributes)
+			authorized, reason, err = a.Authorize(ctx, attributes)
+		} else {
+			setK8sDecision(req, true)
+		}
+
+		// finaly check tke casbin resource authz resoult
 		// an authorizer like RBAC could encounter evaluation errors and still allow the request, so authorizer decision is checked before error here.
 		if authorized == authorizer.DecisionAllow {
 			audit.LogAnnotation(ae, decisionAnnotationKey, decisionAllow)
@@ -151,7 +161,7 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 			return
 		}
 
-		ForbiddenResponse(ctx, tkeAttributes, w, req, ae, s, reason)
+		ForbiddenResponse(ctx, attributes, w, req, ae, s, reason)
 	})
 }
 
@@ -320,4 +330,18 @@ func splitPath(path string) []string {
 		return []string{}
 	}
 	return strings.Split(path, "/")
+}
+
+func setK8sDecision(req *http.Request, k8sDecisionAllow bool) {
+	if req != nil {
+		req.Header.Set(k8sDecisionAllowHeader, strconv.FormatBool(k8sDecisionAllow))
+	}
+}
+
+func getK8sDecision(req *http.Request) (k8sDecisionAllow bool) {
+	if req != nil {
+		k8sDecisionAllowString := req.Header.Get(k8sDecisionAllowHeader)
+		k8sDecisionAllow, _ = strconv.ParseBool(k8sDecisionAllowString)
+	}
+	return k8sDecisionAllow
 }

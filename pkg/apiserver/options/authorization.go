@@ -20,23 +20,23 @@ package options
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"strings"
-	"time"
+	genericserveroptions "k8s.io/apiserver/pkg/server/options"
 	"tkestack.io/tke/pkg/apiserver/authorization/modes"
 )
 
 const (
-	flagAuthzMode                        = "authorization-mode"
-	flagAuthzWebhookConfigFile           = "authorization-webhook-config-file"
-	flagAuthzWebhookVersion              = "authorization-webhook-version"
-	flagAuthzWebhookCacheUnauthorizedTTL = "authorization-webhook-cache-unauthorized-ttl"
-	flagAuthzWebhookCacheAuthorizedTTL   = "authorization-webhook-cache-authorized-ttl"
+	flagAuthzMode              = "authorization-mode"
+	flagAuthzWebhookConfigFile = "authorization-webhook-config-file"
+	flagAuthzWebhookVersion    = "authorization-webhook-version"
 )
 
 const (
+	configAuthzKubeconfig                  = "authorization.kubeconfig"
 	configAuthzMode                        = "authorization.mode"
 	configAuthzWebhookConfigFile           = "authorization.webhook_config_file"
 	configAuthzWebhookVersion              = "authorization.webhook_version"
@@ -47,26 +47,25 @@ const (
 // AuthorizationOptions defines the configuration parameters required to
 // include the authorization.
 type AuthorizationOptions struct {
-	Modes                       []string
-	WebhookConfigFile           string
-	WebhookVersion              string
-	WebhookCacheAuthorizedTTL   time.Duration
-	WebhookCacheUnauthorizedTTL time.Duration
+	Modes             []string
+	WebhookConfigFile string
+	WebhookVersion    string
+	*genericserveroptions.DelegatingAuthorizationOptions
 }
 
 // NewAuthorizationOptions creates the default AuthorizationOptions object and
 // returns it.
 func NewAuthorizationOptions() *AuthorizationOptions {
 	return &AuthorizationOptions{
-		Modes:                       []string{modes.ModeAlwaysAllow},
-		WebhookVersion:              "v1beta1",
-		WebhookCacheAuthorizedTTL:   5 * time.Minute,
-		WebhookCacheUnauthorizedTTL: 30 * time.Second,
+		DelegatingAuthorizationOptions: genericserveroptions.NewDelegatingAuthorizationOptions(),
+		Modes:                          []string{},
+		WebhookVersion:                 "v1beta1",
 	}
 }
 
 // AddFlags adds flags for log to the specified FlagSet object.
 func (o *AuthorizationOptions) AddFlags(fs *pflag.FlagSet) {
+	o.DelegatingAuthorizationOptions.AddFlags(fs)
 	fs.StringSlice(flagAuthzMode, o.Modes, ""+
 		"Ordered list of plug-ins to do authorization on secure port. Comma-delimited list of: "+
 		strings.Join(modes.AuthorizationModeChoices, ",")+".")
@@ -80,14 +79,6 @@ func (o *AuthorizationOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.String(flagAuthzWebhookVersion, o.WebhookVersion, ""+
 		"The API version of the authorization.k8s.io SubjectAccessReview to send to and expect from the webhook.")
 	_ = viper.BindPFlag(configAuthzWebhookVersion, fs.Lookup(flagAuthzWebhookVersion))
-
-	fs.Duration(flagAuthzWebhookCacheAuthorizedTTL, o.WebhookCacheAuthorizedTTL, ""+
-		"The duration to cache 'authorized' responses from the webhook authorizer.")
-	_ = viper.BindPFlag(configAuthzWebhookCacheAuthorizedTTL, fs.Lookup(flagAuthzWebhookCacheAuthorizedTTL))
-
-	fs.Duration(flagAuthzWebhookCacheUnauthorizedTTL, o.WebhookCacheUnauthorizedTTL,
-		"The duration to cache 'unauthorized' responses from the webhook authorizer.")
-	_ = viper.BindPFlag(configAuthzWebhookCacheUnauthorizedTTL, fs.Lookup(flagAuthzWebhookCacheUnauthorizedTTL))
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -95,13 +86,13 @@ func (o *AuthorizationOptions) AddFlags(fs *pflag.FlagSet) {
 func (o *AuthorizationOptions) ApplyFlags() []error {
 	var errs []error
 
-	o.Modes = viper.GetStringSlice(configAuthzMode)
-	o.WebhookCacheAuthorizedTTL = viper.GetDuration(configAuthzWebhookCacheAuthorizedTTL)
-	o.WebhookCacheUnauthorizedTTL = viper.GetDuration(configAuthzWebhookCacheUnauthorizedTTL)
+	o.RemoteKubeConfigFile = viper.GetString(configAuthzKubeconfig)
+	o.AllowCacheTTL = viper.GetDuration(configAuthzWebhookCacheAuthorizedTTL)
+	o.DenyCacheTTL = viper.GetDuration(configAuthzWebhookCacheUnauthorizedTTL)
 	o.WebhookConfigFile = viper.GetString(configAuthzWebhookConfigFile)
 
 	if len(o.Modes) == 0 {
-		errs = append(errs, fmt.Errorf("at least one authorization-mode must be passed"))
+		return errs
 	}
 
 	allowedModes := sets.NewString(modes.AuthorizationModeChoices...)
