@@ -140,12 +140,6 @@ data:
       group_headers = "X-Remote-Group"
       extra_headers_prefix = "X-Remote-Extra-"
 
-    [authorization]
-{{- if .EnableAuth }}
-    mode = "Webhook"
-    webhook_config_file = "/app/conf/tke-auth-webhook.yaml"
-{{- end }}
-
     [client]
 
       [client.platform]
