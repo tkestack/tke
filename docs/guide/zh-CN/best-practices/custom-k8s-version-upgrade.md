@@ -1,56 +1,156 @@
 # 使用installer进行自定义k8s版本升级
 
+注意：
+
+- 以下所有操作均在 `global` 集群 `master` 节点上操作
+- 操作的节点当前可用磁盘最少 `30G`，建议`50G`以上，可以手动检查：
+  
+    ```sh
+    # df -h -BG /opt
+    文件系统       1G-块  已用  可用 已用% 挂载点
+    /dev/vda1       253G   78G  166G   32% /
+    ```
+
 ## 物料准备
 
-升级所需物料需要存放到`/opt/tke-installer/data/`下，默认物料文件夹名称为`custom_upgrade_resource`，由于installer以容器形式执行命令会挂在`/opt/tke-installer/data/`到执行目录的`data/`目录下，installer会默认从`data/custom_upgrade_resource`中获取物料，如用户想指定其他目录请通过installer的`--prepare-custom-images --upgrade-resource-dir your_resource_dir`在准备物料阶段指定位置，`--upgrade-resource-dir`未指定时默认值为`data/custom_upgrade_resource`。
+核心物料简介：
 
-`custom_upgrade_resource`下需要有且仅有一个以版本号命名的文件夹，例如`1.16.15`，此文件夹下需要有`images`和`bins`文件夹。
+1. 二进制文件
+2. 升级所需镜像
+3. 集群的 `kubeconfig` 文件
+
+大致步骤：
+
+- 升级所需物料需要存放到`/opt/tke-installer/data/`下，
+- 默认物料文件夹名称为`custom_upgrade_resource`，
+  - 由于installer以容器形式执行命令会挂在`/opt/tke-installer/data/`到执行目录的`data/`目录下，installer会默认从`data/custom_upgrade_resource`中获取物料，
+  - 如用户想指定其他目录请通过installer的`--upgrade-resource-dir [your_resource_dir]`在准备物料阶段指定位置，
+  - `--upgrade-resource-dir`未指定时默认值为`data/custom_upgrade_resource`。
+
+- `custom_upgrade_resource`下需要有且仅有一个以版本号命名的文件夹，
+
+    ```sh
+    mkdir -p /opt/tke-installer/data/custom_upgrade_resource/1.16.5
+    cd /opt/tke-installer/data/custom_upgrade_resource/1.16.5
+    mkdir images
+    mkdir bins
+    ```
+
+  - 此文件夹下需要有`images`和`bins`文件夹，文件目录结构
+
+    ```sh
+    # tree /opt/tke-installer/data/
+    /opt/tke-installer/data/
+    └── custom_upgrade_resource
+        └── 1.16.5
+            ├── bins
+            └── images
+    ```
+
+下面将介绍详细准备步骤
 
 ### images
 
-`images`文件夹下用于存放自定义K8s版本的镜像的tar包，如kube-proxy等。在镜像存为tar包之前需要注意：
+`images`文件夹下用于存放自定义 K8s 版本的镜像的 tar 包，如 kube-proxy 等。
 
-1. 镜像名的domain需要统一改为tkestack，否则将不会被installer识别为需要维护的镜像；
-2. 镜像名需要携带cpu架构，由于TKEStack支持多架构，installer会将镜像统以`multi-CPU architecture`维护，需要导入镜像携带cpu架构。
+在镜像存为 tar 包之前需要注意：
 
-以官方amd64架构的kube-proxy为例子，通过执行`docker tag k8s.gcr.io/kube-proxy-amd64:v1.16.15 tkestack/kube-proxy-amd64:v1.16.15 && docker save -o kp-amd-16.tar tkestack/kube-proxy-amd64:v1.16.15`就能得到一个可以被installer识别的镜像tar包。
+1. 镜像名的 `repo` 需要统一改为 `tkestack`，否则将不会被 `installer` 识别为需要维护的镜像；
+2. 镜像名需要携带 `cpu` 架构，由于 `TKEStack` 支持多种 `CPU架构(multi-arch)`，installer会将镜像统以`multi-CPU architecture`维护，需要导入镜像携带 cpu 架构。
+
+    - 以官方amd64架构的kube-proxy为例子，执行如下命令，就能得到一个可以被installer识别的镜像tar包。
+
+    ```sh
+    docker tag k8s.gcr.io/kube-proxy-amd64:v1.16.5 tkestack/kube-proxy-amd64:v1.16.5
+    docker save -o  kube-proxy-amd64 tkestack/kube-proxy-amd64:v1.16.5
+    ```
 
 ### bins
 
-`bins`目录下可以有两个目录`linux-amd64`和`linux-arm64`，分别用于存放amd64架构和arm64架构的二进制压缩包，用户可以根据自身需求同时创建两个或其中一个。这两个文件夹下需要有一个压缩包，命名规范需要符合`kubernetes-node-linux-$arch-v$version.tar.gz`。此压缩包可以从官方下载下来，以1.16.15版本amd64架构的K8s为例，可以通过命令`curl -o kubernetes-node-linux-amd64-v1.16.15.tar.gz -L https://dl.k8s.io/v1.16.15/kubernetes-node-linux-amd64.tar.gz`下载并重命名为可以被installer识别的压缩包。
+- `bins`目录下可以有两个目录`linux-amd64`和`linux-arm64`，分别用于存放amd64架构和arm64架构的二进制压缩包，用户可以根据自身需求同时创建两个或其中一个。
+
+- 这两个文件夹下需要有一个压缩包，命名规范需要符合`kubernetes-node-linux-$arch-v$version.tar.gz`。
+  - 此压缩包可以从官方下载下来，以1.16.5版本amd64架构的K8s为例，可以通过命令
+
+  ```sh
+  curl -o kubernetes-node-linux-amd64-v1.16.5.tar.gz -L https://dl.k8s.io/v1.16.5/kubernetes-node-linux-amd64.tar.gz
+  ```
+
+  下载并重命名为可以被installer识别的压缩包。
 
 最终文件目录结构可以参考：
 
 ```sh
 /opt/tke-installer/data/custom_upgrade_resource/
-`-- 1.16.15
-    |-- bins
-    |   `-- linux-amd64
-    |       `-- kubernetes-node-linux-amd64-v1.16.15.tar.gz
-    `-- images
-        |-- kube-proxy-amd64.tar
-        |-- kube-controller-manager-amd64.tar
-        |-- kube-apiserver-amd64.tar
-        `-- kube-scheduler-amd64.tar
+└── 1.16.5
+    ├── bins
+    │   └── linux-amd64
+    │       └── kubernetes-node-linux-amd64-v1.16.5.tar.gz
+    └── images
+        ├── kube-apiserver-amd64.tar
+        ├── kube-controller-manager-amd64.tar
+        ├── kube-proxy-amd64.tar
+        └── kube-schedular-amd64.tar
+```
+
+### kubeconfig 文件
+
+提前将 `kubeconfig` 文件复制到指定位置：`/opt/tke-installer/conf/kubeconfig`
+
+```sh
+mkdir -p /opt/tke-installer/conf
+cp ~/.kube/config /opt/tke-installer/conf/kubeconfig
 ```
 
 ### 使用installer完成升级
 
-升级时注意要在global集群节点上执行，提前将kubeconfig文件存放到指定位置等事项，可参考[K8S 版本升级说明](https://github.com/tkestack/tke/blob/master/docs/guide/zh-CN/best-practices/cluster-upgrade-guide.md)。
+1. 升级物料准备完成之后，导入准备的资源：`tke-installer-linux-amd64-xxx.run --prepare-custom-images`
+    - 注意：`tke-installer` 版本需要和之前部署该集群使用的 `tke-installer` 版本保持一致
+      比如我们当前的集群使用 `tke-installer-1.7` 部署的，升级用的 installer 也需要使用 `tke-installer-1.7`
+    - 查看导入日志，最终停在这里，该步骤成功：
 
-升级物料准备完成之后，首先通过`tke-installer-linux-amd64-xxx.run --prepare-custom-images`将用户的自定义K8s版本资源以镜像方式准备好，执行成功后再使用`tke-installer-linux-amd64-xxx.run --upgrade`执行升级。
+    ```log
+    # tail -f /opt/tke-installer/data/tke.log
+    ...
+    
+    2021-08-26 07:27:12.734	info	tke-installer	===>prepare custom images task [Sucesss] [392.225361s]
+    ```
 
-触发集群升级需要在global集群上修改cluster资源对象内容：
+    执行成功之后：会在集群升级页面上多一个选项
 
-```sh
-kubectl edit cluster cls-yourcluster
-```
+    ![upgrade-cluster](.pic/../pic/upgrade-cluster.png)
 
-修改`spec.version`中的内容为`1.16.15`。
+    ![import-success](./pic/import-success.png)
+
+2. 执行成功后再使用`tke-installer-linux-amd64-xxx.run --upgrade`执行升级。
+   - 该步骤执行时间较长，需耐心等待
+   - 查看导入日志，确保升级成功：
+
+3. 触发集群升级需要在 `global` 集群上修改指定 `cluster` 资源对象内容：
+
+    ```sh
+    kubectl edit cluster [cls-yourcluster]
+    ```
+
+    修改`spec.version`中的内容为`1.16.5`
+
+    这步操作也可以在 tkestack界面上执行，详情见[集群升级指引](./cluster-upgrade-guide.md)
+
+### 已知问题
 
 > 目前Web UI不允许补丁版本升级，会导致可以在UI升级选项中可以看到`1.16.15`版本，但是提示无法升级到该版本，后续版本中将会[修复](https://github.com/tkestack/tke/issues/1020)。当前请使用kubectl修改cluster资源对象内容升级自定义版本。
 
 > K8s 1.16.x版本使用kubeadm升级存在[已知bug](https://github.com/kubernetes/kubernetes/issues/88725)，会导致coreDNS的pod启动失败。遇到此场景请首先使用`kubectl get -n kube-system cm coredns -o yaml`观察`Corefile`和`Corefile-backup`内容是否一致，如不一致请确保`Corefile`内容为期望内容。之后请使用`kubectl edit -n kube-system deployments.apps coredns`将使用`Corefile-backup`的地方统一修改为`Corefile`。
+
+## FAQ
+
+1. 页面上升级集群失败，http 响应`422 Unprocessable Entity`：
+   - 漏执行步骤 `tke-installer-linux-amd64-xxx.run --upgrade`
+
+2. 执行 `tke-installer-linux-amd64-xxx.run --prepare-custom-images` 不生效、失败：
+   1. 检查当前磁盘可用容量是否够用
+   2. 检查 `kubeconfig` 是否按步骤配置
+   3. 检查 使用 `installer` 版本是否和部署当前的集群版本一致
 
 # 用户手动进行自定义k8s版本升级
 
