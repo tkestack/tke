@@ -66,7 +66,7 @@ func Install(s ssh.Interface, option *Option) error {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
 
-	data, err := template.ParseFile(path.Join(constants.ConfDir, "containerd/config.toml"), option)
+	data, err := template.ParseFile(path.Join(constants.SrcDir, "containerd/config.toml"), option)
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func Install(s ssh.Interface, option *Option) error {
 		return errors.Wrapf(err, "write %s error", containerdConfigFile)
 	}
 
-	data, err = template.ParseFile(path.Join(constants.ConfDir, "containerd/containerd.service"), option)
+	data, err = template.ParseFile(path.Join(constants.SrcDir, "containerd/containerd.service"), option)
 	if err != nil {
 		return err
 	}

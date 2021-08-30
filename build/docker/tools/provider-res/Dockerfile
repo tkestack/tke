@@ -42,7 +42,6 @@ COPY linux-amd64/NVIDIA-*.tar.gz       res/linux-amd64/
 
 COPY linux-amd64/nvidia-container-*.tar.gz res/linux-amd64/
 
-COPY containerd conf/containerd
-COPY kubeadm conf/kubeadm
+COPY containerd/* res/containerd/
 
 ENTRYPOINT ["sh"]
