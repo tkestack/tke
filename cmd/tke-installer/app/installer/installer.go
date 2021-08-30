@@ -1188,6 +1188,9 @@ func (t *TKE) createGlobalCluster(ctx context.Context) error {
 		return err
 	}
 	t.completeWithProvider()
+	if len(t.Cluster.Spec.Features.ContainerRuntime) == 0 {
+		t.Cluster.Spec.Features.ContainerRuntime = platformv1.Docker
+	}
 
 	if t.Cluster.Spec.ClusterCredentialRef == nil {
 		credential := &platformv1.ClusterCredential{
