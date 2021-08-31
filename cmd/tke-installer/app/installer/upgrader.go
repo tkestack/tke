@@ -32,7 +32,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	cronhpaimage "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
@@ -281,6 +283,10 @@ func (t *TKE) prepareForUpgrade(ctx context.Context) error {
 		return err
 	}
 	t.platformClient, err = platformv1.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	t.registryClient, err = registryversionedclient.NewForConfig(config)
 	if err != nil {
 		return err
 	}
