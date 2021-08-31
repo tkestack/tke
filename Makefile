@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations under the License.
 
 .PHONY: all
-all: asset lint test build
+all: lint test build
 
 # ==============================================================================
 # Build options
