@@ -14,7 +14,7 @@
 # WARRANTIES OF ANY KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations under the License.
 
-FROM alpine:3.10
+FROM docker:20.10.8-dind
 
 RUN echo "hosts: files dns" >> /etc/nsswitch.conf
 
@@ -22,6 +22,7 @@ WORKDIR /app
 
 ENV PATH="/app/bin:$PATH"
 ENV DOCKER_CLI_EXPERIMENTAL=enabled
+ARG ENV_ARCH
 
 RUN apk add --no-cache \
     bash \
@@ -32,9 +33,12 @@ RUN apk add --no-cache \
     ansible
 
 RUN apk --update-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ --allow-untrusted add lrzsz
+RUN wget -O nerdctl-0.11.0-linux.tar.gz https://github.com/containerd/nerdctl/releases/download/v0.11.0/nerdctl-0.11.0-linux-"$ENV_ARCH".tar.gz \
+   && tar -zvxf nerdctl-0.11.0-linux.tar.gz -C /usr/local/bin/ \
+   && rm -rf nerdctl-0.11.0-linux.tar.gz
 
 ADD . /app
 
 RUN ln -s /app/.docker /root/.docker
 
-ENTRYPOINT ["/app/bin/tke-installer"]
+ENTRYPOINT ["/bin/sh", "-c" , "/app/run.sh"]

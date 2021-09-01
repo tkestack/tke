@@ -31,7 +31,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	goruntime "runtime"
 	"sort"
 	"strings"
 	"time"
@@ -1188,9 +1187,6 @@ func (t *TKE) createGlobalCluster(ctx context.Context) error {
 		return err
 	}
 	t.completeWithProvider()
-	if len(t.Cluster.Spec.Features.ContainerRuntime) == 0 {
-		t.Cluster.Spec.Features.ContainerRuntime = platformv1.Docker
-	}
 
 	if t.Cluster.Spec.ClusterCredentialRef == nil {
 		credential := &platformv1.ClusterCredential{
@@ -1266,18 +1262,13 @@ func (t *TKE) tagImages(ctx context.Context) error {
 func (t *TKE) setupLocalRegistry(ctx context.Context) error {
 	server := t.Para.Config.Registry.Domain()
 
-	err := t.startLocalRegistry()
-	if err != nil {
-		return errors.Wrap(err, "start local registry error")
-	}
-
 	// for push image to local registry
 	localHosts := hosts.LocalHosts{Host: server, File: "hosts"}
-	err = localHosts.Set("127.0.0.1")
+	err := localHosts.Set("127.0.0.1")
 	if err != nil {
 		return err
 	}
-	localHosts.File = "/etc/hosts"
+	localHosts.File = "/app/hosts"
 	err = localHosts.Set("127.0.0.1")
 	if err != nil {
 		return err
@@ -1288,33 +1279,6 @@ func (t *TKE) setupLocalRegistry(ctx context.Context) error {
 		return err
 	}
 	t.log.Info(string(data))
-
-	return nil
-}
-
-func (t *TKE) startLocalRegistry() error {
-	err := t.stopLocalRegistry(context.Background())
-	if err != nil {
-		return err
-	}
-
-	err = t.docker.ClearLocalManifests()
-	if err != nil {
-		return err
-	}
-
-	registryImage := strings.ReplaceAll(images.Get().Registry.FullName(), ":", fmt.Sprintf("-%s:", goruntime.GOARCH))
-
-	err = t.docker.RunImage(registryImage, constants.RegistryHTTPOptions, "")
-	if err != nil {
-		return err
-	}
-
-	// for docker manifest create which --insecure is not working
-	err = t.docker.RunImage(registryImage, constants.RegistryHTTPSOptions, "")
-	if err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -2354,7 +2318,7 @@ func (t *TKE) preparePushImagesToTKERegistry(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		localHosts.File = "/etc/hosts"
+		localHosts.File = "/app/hosts"
 		err = localHosts.Set(t.servers[0])
 		if err != nil {
 			return err
