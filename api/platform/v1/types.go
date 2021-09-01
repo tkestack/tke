@@ -1780,3 +1780,10 @@ type ClusterGroupAPIResourceItem struct {
 	// categories is a list of the grouped resources this resource belongs to (e.g. 'all')
 	Categories []string `protobuf:"bytes,9,rep,name=categories"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterGroupAPIResourceOptions is the query options.
+type ClusterGroupAPIResourceOptions struct {
+	metav1.TypeMeta `json:",inline"`
+}
