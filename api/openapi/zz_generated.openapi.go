@@ -980,6 +980,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.ClusterGroupAPIResourceItem":                 schema_tke_api_platform_v1_ClusterGroupAPIResourceItem(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterGroupAPIResourceItems":                schema_tke_api_platform_v1_ClusterGroupAPIResourceItems(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterGroupAPIResourceItemsList":            schema_tke_api_platform_v1_ClusterGroupAPIResourceItemsList(ref),
+		"tkestack.io/tke/api/platform/v1.ClusterGroupAPIResourceOptions":              schema_tke_api_platform_v1_ClusterGroupAPIResourceOptions(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterList":                                 schema_tke_api_platform_v1_ClusterList(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterMachine":                              schema_tke_api_platform_v1_ClusterMachine(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterProperty":                             schema_tke_api_platform_v1_ClusterProperty(ref),
@@ -47239,6 +47240,33 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItemsList(ref common.Refe
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/platform/v1.ClusterGroupAPIResourceItems"},
+	}
+}
+
+func schema_tke_api_platform_v1_ClusterGroupAPIResourceOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ClusterGroupAPIResourceOptions is the query options.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

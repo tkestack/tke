@@ -271,6 +271,14 @@ func (ClusterGroupAPIResourceItemsList) SwaggerDoc() map[string]string {
 	return map_ClusterGroupAPIResourceItemsList
 }
 
+var map_ClusterGroupAPIResourceOptions = map[string]string{
+	"": "ClusterGroupAPIResourceOptions is the query options.",
+}
+
+func (ClusterGroupAPIResourceOptions) SwaggerDoc() map[string]string {
+	return map_ClusterGroupAPIResourceOptions
+}
+
 var map_ClusterList = map[string]string{
 	"":      "ClusterList is the whole list of all clusters which owned by a tenant.",
 	"items": "List of clusters",
