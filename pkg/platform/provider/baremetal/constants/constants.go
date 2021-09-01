@@ -115,7 +115,7 @@ const (
 	AuditPolicyConfigFile = ConfDir + AuditPolicyConfigName
 	OIDCConfigFile        = ConfDir + OIDCCACertName
 	ManifestsDir          = ProviderDir + "manifests/"
-	GPUManagerManifest    = ManifestsDir + "gpu-manager/gpu-manager.yaml"
+	GPUManagerManifest    = SrcDir + "gpu-manager/gpu-manager.yaml"
 	CSIOperatorManifest   = ManifestsDir + "csi-operator/csi-operator.yaml"
 	MetricsServerManifest = ManifestsDir + "metrics-server/metrics-server.yaml"
 	CiliumManifest        = ManifestsDir + "cilium/*.yaml"
