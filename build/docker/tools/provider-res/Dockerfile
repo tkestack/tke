@@ -43,6 +43,7 @@ COPY linux-amd64/NVIDIA-*.tar.gz       res/linux-amd64/
 COPY linux-amd64/nvidia-container-*.tar.gz res/linux-amd64/
 
 COPY containerd/* res/containerd/
+COPY gpu-manager/* res/gpu-manager/
 
 COPY cilium* res/cilium/
 

@@ -36,6 +36,7 @@ per.build: download
 	@cp "$(ROOT_DIR)/build/docker/tools/$(IMAGE)/Dockerfile" "$(WORK_DIR)/Dockerfile"
 	@cp -r "$(ROOT_DIR)/pkg/platform/provider/baremetal/conf/containerd" "$(WORK_DIR)/containerd"
 	@cp -r "$(ROOT_DIR)/pkg/platform/provider/baremetal/manifests/cilium" "$(WORK_DIR)/cilium"
+	@cp -r "$(ROOT_DIR)/pkg/platform/provider/baremetal/manifests/gpu-manager" "$(WORK_DIR)/gpu-manager"
 
 .PHONY: download
 download:
