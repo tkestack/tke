@@ -16,14 +16,17 @@ state = "/run/containerd"
       bin_dir = "/opt/cni/bin"
       conf_dir = "/etc/cni/net.d"
     [plugins."io.containerd.grpc.v1.cri".containerd]
-      {{ if .IsGPU}}
-      default_runtime_name=nvidia
-      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia]
-          [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.nvidia.options]
-          Runtime="/usr/bin/nvidia-container-runtime"
-      {{else}}
       default_runtime_name="runc"
+      {{ if .IsGPU}}
+      [plugins."io.containerd.grpc.v1.cri".containerd.runtimes]
+        [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+          runtime_type = "io.containerd.runtime.v1.linux"
       {{end}}
+  {{ if .IsGPU}}
+  [plugins."io.containerd.runtime.v1.linux"]
+    shim = "containerd-shim"
+    runtime = "nvidia-container-runtime"
+  {{end}}
     [plugins."io.containerd.grpc.v1.cri".registry]
       [plugins."io.containerd.grpc.v1.cri".registry.configs]
         {{range .InsecureRegistries}}

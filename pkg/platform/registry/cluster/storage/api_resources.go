@@ -43,6 +43,10 @@ func (r *APIResourcesREST) New() runtime.Object {
 	return &platform.ClusterGroupAPIResourceItems{}
 }
 
+func (r *APIResourcesREST) NewGetOptions() (runtime.Object, bool, string) {
+	return &platform.ClusterGroupAPIResourceOptions{}, false, ""
+}
+
 // Get finds a resource in the storage by name and returns it.
 func (r *APIResourcesREST) Get(ctx context.Context, clusterName string, options runtime.Object) (runtime.Object, error) {
 	clusterObject, err := r.store.Get(ctx, clusterName, &metav1.GetOptions{})

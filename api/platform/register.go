@@ -121,6 +121,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 
 		&ClusterGroupAPIResourceItems{},
 		&ClusterGroupAPIResourceItemsList{},
+		&ClusterGroupAPIResourceOptions{},
 	)
 	return nil
 }

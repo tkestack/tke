@@ -110,7 +110,11 @@ spec:
             - name: LOG_LEVEL
               value: "3"
             - name: EXTRA_FLAGS
-              value: "--incluster-mode=true --logtostderr"
+              {{ if eq .ContainerRuntime "docker" }}
+              value: "--logtostderr"
+              {{ else }}
+              value: "--logtostderr --container-runtime-endpoint /var/run/containerd/containerd.sock"
+              {{ end }}
             - name: NODE_NAME
               valueFrom:
                 fieldRef:

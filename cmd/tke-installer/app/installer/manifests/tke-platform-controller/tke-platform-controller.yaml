@@ -58,14 +58,10 @@ spec:
               mountPath: /app/provider/baremetal/conf/kubeadm/
             - name: gpu-manifests-volume
               mountPath: /app/provider/baremetal/manifests/gpu/
-            - name: gpu-manager-manifests-volume
-              mountPath: /app/provider/baremetal/manifests/gpu-manager/
             - name: keepalived-manifests-volume
               mountPath: /app/provider/baremetal/manifests/keepalived/
             - name: metrics-server-manifests-volume
               mountPath: /app/provider/baremetal/manifests/metrics-server/
-            - name: cilium-manifests-volume
-              mountPath: /app/provider/baremetal/manifests/cilium/
           ports:
             - containerPort: 9445
           livenessProbe:
@@ -106,18 +102,12 @@ spec:
         - name: gpu-manifests-volume
           configMap:
             name: gpu-manifests
-        - name: gpu-manager-manifests-volume
-          configMap:
-            name: gpu-manager-manifests
         - name: keepalived-manifests-volume
           configMap:
             name: keepalived-manifests
         - name: metrics-server-manifests-volume
           configMap:
             name: metrics-server-manifests
-        - name: cilium-manifests-volume
-          configMap:
-            name: cilium-manifests
 ---
 kind: ConfigMap
 apiVersion: v1

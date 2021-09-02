@@ -457,6 +457,10 @@ message ClusterGroupAPIResourceItemsList {
   repeated ClusterGroupAPIResourceItems items = 2;
 }
 
+// ClusterGroupAPIResourceOptions is the query options.
+message ClusterGroupAPIResourceOptions {
+}
+
 // ClusterList is the whole list of all clusters which owned by a tenant.
 message ClusterList {
   // +optional
