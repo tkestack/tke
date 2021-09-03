@@ -26,6 +26,9 @@ VERSION=${VERSION:-$(git describe --dirty --always --tags | sed 's/-/./g')}
 PROVIDER_RES_VERSION=v1.20.4-2
 K8S_VERSION=${PROVIDER_RES_VERSION%-*}
 DOCKER_VERSION=19.03.14
+CONTAINERD_VERSION=1.5.4
+NERDCTL_VERSION=0.11.0
+REGISTRY_VERSION=2.7.1
 OSS=(linux)
 ARCHS=(amd64 arm64)
 OUTPUT_DIR=_output
@@ -75,6 +78,8 @@ function prepare::tke_installer() {
   cp -rv cmd/tke-installer/app/installer/hooks "${DST_DIR}"
   cp -rv "${SCRIPT_DIR}/certs" "${DST_DIR}"
   cp -rv "${SCRIPT_DIR}/.docker" "${DST_DIR}"
+  cp -rv "${SCRIPT_DIR}/run.sh" "${DST_DIR}"
+  cp -rv "${SCRIPT_DIR}/dockerd-entrypoint.sh" "${DST_DIR}"
 
   make web.build.installer
   cp -rv web/installer/build  "${DST_DIR}/assets"
@@ -83,7 +88,7 @@ function prepare::tke_installer() {
 function build::installer_image() {
   local -r arch="$1"
 
-  docker build --platform="${arch}" --pull -t "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" -f "${SCRIPT_DIR}/Dockerfile" "${DST_DIR}"
+  docker build --platform="${arch}" --build-arg ENV_ARCH="${arch}" --pull -t "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" -f "${SCRIPT_DIR}/Dockerfile" "${DST_DIR}"
 }
 
 function build::installer() {
@@ -102,10 +107,15 @@ function build::installer() {
           "${INSTALLER_DIR}/res/docker.tgz"
     cp -v pkg/platform/provider/baremetal/conf/docker/docker.service "${INSTALLER_DIR}/res/"
     cp -v build/docker/tools/tke-installer/daemon.json "${INSTALLER_DIR}/res/"
+    cp -v "${DST_DIR}/provider/baremetal/res/${target_platform}/containerd-${target_platform}-${CONTAINERD_VERSION}.tar.gz" "${INSTALLER_DIR}/res/containerd.tar.gz"
+    cp -v "${DST_DIR}/provider/baremetal/res/${target_platform}/nerdctl-${target_platform}-${NERDCTL_VERSION}.tar.gz" "${INSTALLER_DIR}/res/nerdctl.tar.gz"
 
-    docker save "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" | gzip -c > "${INSTALLER_DIR}/res/tke-installer.tgz"
+    docker save "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" -o "${INSTALLER_DIR}/res/tke-installer.tar"
+    docker pull "${REGISTRY_PREFIX}/registry-${arch}:$REGISTRY_VERSION"
+    docker save "${REGISTRY_PREFIX}/registry-${arch}:$REGISTRY_VERSION" -o "${INSTALLER_DIR}/res/registry.tar"
 
     sed -i "s;VERSION=.*;VERSION=$VERSION;g" "${INSTALLER_DIR}/install.sh"
+    sed -i "s;REGISTRY_VERSION=.*;REGISTRY_VERSION=$REGISTRY_VERSION;g" "${INSTALLER_DIR}/install.sh"
 
     "${INSTALLER_DIR}/build.sh" "${installer}"
     cp -v "${INSTALLER_DIR}/${installer}" $OUTPUT_DIR
