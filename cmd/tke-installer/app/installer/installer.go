@@ -34,6 +34,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+
 	"tkestack.io/tke/pkg/util/validation"
 
 	"github.com/emicklei/go-restful"
@@ -790,6 +791,10 @@ func (t *TKE) validateConfig(config types.Config) *apierrors.StatusError {
 		if config.Basic.Username == "" || config.Basic.Password == nil {
 			return apierrors.NewBadRequest("username or password required when enabled gateway or registry")
 		}
+		if err = validation.IsDNS1123Name(config.Registry.TKERegistry.Username); err != nil {
+			return apierrors.NewBadRequest(fmt.Sprintf("invalid value \"%s\" ",
+				config.Registry.TKERegistry.Username))
+		}
 	}
 
 	if config.Auth.TKEAuth == nil && config.Auth.OIDCAuth == nil {
@@ -801,7 +806,7 @@ func (t *TKE) validateConfig(config types.Config) *apierrors.StatusError {
 	}
 
 	if config.Registry.ThirdPartyRegistry != nil && config.Registry.ThirdPartyRegistry.Username != "" {
-		if err := validation.IsDNS1123Name(config.Registry.ThirdPartyRegistry.Username); err != nil {
+		if err = validation.IsDNS1123Name(config.Registry.ThirdPartyRegistry.Username); err != nil {
 			return apierrors.NewBadRequest(fmt.Sprintf("invalid value \"%s\" ",
 				config.Registry.ThirdPartyRegistry.Username))
 		}
@@ -833,9 +838,9 @@ func (t *TKE) validateConfig(config types.Config) *apierrors.StatusError {
 		}
 	}
 
-	if  config.Auth.TKEAuth != nil{
-		if err := validation.IsDNS1123Name(config.Auth.TKEAuth.Username); err != nil {
-			return apierrors.NewBadRequest(fmt.Sprintf("invalid value \"%s\" ",config.Auth.TKEAuth.Username))
+	if config.Auth.TKEAuth != nil {
+		if err = validation.IsDNS1123Name(config.Auth.TKEAuth.Username); err != nil {
+			return apierrors.NewBadRequest(fmt.Sprintf("invalid value \"%s\" ", config.Auth.TKEAuth.Username))
 		}
 	}
 
