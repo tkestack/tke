@@ -34,6 +34,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"tkestack.io/tke/pkg/util/validation"
 
 	"github.com/emicklei/go-restful"
 	"github.com/pkg/errors"
@@ -800,6 +801,10 @@ func (t *TKE) validateConfig(config types.Config) *apierrors.StatusError {
 	}
 
 	if config.Registry.ThirdPartyRegistry != nil && config.Registry.ThirdPartyRegistry.Username != "" {
+		if err := validation.IsDNS1123Name(config.Registry.ThirdPartyRegistry.Username); err != nil {
+			return apierrors.NewBadRequest(fmt.Sprintf("invalid value \"%s\" ",
+				config.Registry.ThirdPartyRegistry.Username))
+		}
 		cmd := exec.Command("docker", "login",
 			"--username", config.Registry.ThirdPartyRegistry.Username,
 			"--password", string(config.Registry.ThirdPartyRegistry.Password),
@@ -825,6 +830,12 @@ func (t *TKE) validateConfig(config types.Config) *apierrors.StatusError {
 			config.Gateway.Cert.ThirdPartyCert.PrivateKey, config.Gateway.Domain)
 		if statusError != nil {
 			return statusError
+		}
+	}
+
+	if  config.Auth.TKEAuth != nil{
+		if err := validation.IsDNS1123Name(config.Auth.TKEAuth.Username); err != nil {
+			return apierrors.NewBadRequest(fmt.Sprintf("invalid value \"%s\" ",config.Auth.TKEAuth.Username))
 		}
 	}
 
