@@ -48,7 +48,6 @@ const (
 	AddonPhaseUnknown AddonPhase = "Unknown"
 )
 
-
 // +genclient
 // +genclient:nonNamespaced
 // +genclient:skipVerbs=deleteCollection
@@ -80,7 +79,6 @@ type LogAgentList struct {
 	Items []LogAgent
 }
 
-
 // LogAgentSpec describes the attributes of a Logagent.
 type LogAgentSpec struct {
 	TenantID    string
@@ -106,6 +104,7 @@ type LogAgentStatus struct {
 	LastReInitializingTimestamp metav1.Time
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // LogAgentProxyOptions is the query options to a kube-apiserver proxy call for LogAgent crd object.
@@ -116,14 +115,12 @@ type LogAgentProxyOptions struct {
 	Name      string `json:"name,omitempty"`
 }
 
-
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // LogFileTree
 type LogFileTree struct {
 	metav1.TypeMeta `json:",inline"`
-	Spec LogFileTreeSpec `json:"spec"`
+	Spec            LogFileTreeSpec `json:"spec"`
 }
 
 type LogFileTreeSpec struct {
@@ -132,7 +129,6 @@ type LogFileTreeSpec struct {
 	Container string `json:"container,omitempty"`
 	Pod       string `json:"pod,omitempty"`
 }
-
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 

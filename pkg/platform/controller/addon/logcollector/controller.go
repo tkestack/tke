@@ -26,13 +26,12 @@ import (
 	"sync"
 	"time"
 
-	"tkestack.io/tke/pkg/platform/controller/addon/logcollector/images"
-
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
-	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/logagent/util"
+	"tkestack.io/tke/pkg/platform/controller/addon/logcollector/images"
 	"tkestack.io/tke/pkg/util/metrics"
 
 	appsv1 "k8s.io/api/apps/v1"
