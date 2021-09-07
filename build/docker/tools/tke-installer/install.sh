@@ -111,7 +111,8 @@ function ensure_containerd() {
 function install_containerd() {
   echo "install containerd [in process]"
 
-  tar xvaf "res/containerd.tar.gz" -C /
+  # Install containerd exclude cni binaries and cni config file.
+  tar xvaf "res/containerd.tar.gz" -C / --exclude=etc/cni --exclude=opt
   tar xvaf "res/nerdctl.tar.gz" -C /usr/local/bin/
 
   systemctl daemon-reload
