@@ -74,7 +74,7 @@ var components = Components{
 
 	Cilium:         containerregistry.Image{Name: "cilium", Tag: "v1.9.5"},
 	CiliumOperator: containerregistry.Image{Name: "cilium-operator-generic", Tag: "v1.9.5"},
-	Ipamd:          containerregistry.Image{Name: "tke-eni-ipamd", Tag: "v3.2.6"},
+	Ipamd:          containerregistry.Image{Name: "tke-eni-ipamd", Tag: "v3.3.3"},
 	Masq:           containerregistry.Image{Name: "ip-masq-agent", Tag: "v1.0.0"},
 	CiliumRouter:   containerregistry.Image{Name: "cilium-router", Tag: "v0.1.0"},
 }
