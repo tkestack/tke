@@ -126,3 +126,9 @@ func SetDefaults_LBCFStatus(obj *LBCFStatus) {
 		obj.Phase = AddonPhaseInitializing
 	}
 }
+
+func SetDefaults_ClusterFeature(obj *ClusterFeature) {
+	if obj.ContainerRuntime == "" {
+		obj.ContainerRuntime = Docker
+	}
+}

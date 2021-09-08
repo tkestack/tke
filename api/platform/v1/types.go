@@ -402,8 +402,8 @@ type ClusterFeature struct {
 	IPv6DualStack bool `json:"ipv6DualStack,omitempty" protobuf:"bytes,13,opt,name=ipv6DualStack"`
 	// +optional
 	EnableCilium bool `json:"enableCilium,omitempty" protobuf:"bytes,14,opt,name=enableCilium"`
-	// +optional
-	ContainerRuntime ContainerRuntimeType `json:"containerRuntime,omitempty" protobuf:"bytes,15,opt,name=containerRuntime"`
+
+	ContainerRuntime ContainerRuntimeType `json:"containerRuntime" protobuf:"bytes,15,opt,name=containerRuntime"`
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
