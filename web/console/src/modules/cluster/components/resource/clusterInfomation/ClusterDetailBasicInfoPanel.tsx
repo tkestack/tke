@@ -28,10 +28,11 @@ import { Clip } from '../../../../common/components';
 import { DialogNameEnum } from '../../../models';
 import { RootProps } from '../../ClusterApp';
 import { ClusterStatus } from '../../clusterManage/ClusterTablePanel';
+import { ContainerRuntimeEnum } from '@src/modules/cluster/constants/Config';
 
 export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> {
   render() {
-    let { cluster } = this.props;
+    const { cluster } = this.props;
 
     return (
       <FormPanel title={t('基本信息')}>
@@ -44,11 +45,11 @@ export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> 
     );
   }
   _renderNodeMax() {
-    let { cluster } = this.props;
-    let clusterInfo: Cluster = cluster.selection;
+    const { cluster } = this.props;
+    const clusterInfo: Cluster = cluster.selection;
     if (clusterInfo && clusterInfo.spec.clusterCIDR) {
-      let b = clusterInfo.spec.clusterCIDR.split('/')[1];
-      let { maxNodePodNum, maxClusterServiceNum } = clusterInfo.spec.properties;
+      const b = clusterInfo.spec.clusterCIDR.split('/')[1];
+      const { maxNodePodNum, maxClusterServiceNum } = clusterInfo.spec.properties;
       return Math.pow(2, 32 - parseInt(b)) / maxNodePodNum - Math.ceil(maxClusterServiceNum / maxNodePodNum);
     } else {
       return '';
@@ -56,8 +57,8 @@ export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> 
   }
   /** 处理开关日志采集组件的的操作 */
   private _handleSwitch(cluster: Cluster) {
-    let { actions, route } = this.props;
-    let enableLogAgent = !cluster.spec.logAgentName;
+    const { actions, route } = this.props;
+    const enableLogAgent = !cluster.spec.logAgentName;
     if (enableLogAgent) {
       actions.cluster.enableLogAgent(cluster);
     } else {
@@ -70,9 +71,9 @@ export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> 
   }
   /** 展示集群的基本信息 */
   private _renderClusterInfo() {
-    let { actions, cluster } = this.props;
-    let clusterInfo: Cluster = cluster.selection;
-    let nodeMax = this._renderNodeMax();
+    const { actions, cluster } = this.props;
+    const clusterInfo: Cluster = cluster.selection;
+    const nodeMax = this._renderNodeMax();
     return cluster.selection ? (
       <React.Fragment>
         <FormPanel.Item label={t('集群名称')} text>
@@ -88,6 +89,9 @@ export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> 
         </FormPanel.Item>
         <FormPanel.Item label={t('Kubernetes版本')} text>
           {clusterInfo.status.version}
+        </FormPanel.Item>
+        <FormPanel.Item label={t('运行时组件')} text>
+          {clusterInfo?.spec?.features?.enableContainerRuntime ?? ContainerRuntimeEnum.DOCKER}
         </FormPanel.Item>
         {clusterInfo.spec.networkDevice && (
           <FormPanel.Item label={t('网卡名称')} text>

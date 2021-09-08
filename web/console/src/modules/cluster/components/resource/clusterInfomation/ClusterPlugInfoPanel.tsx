@@ -15,22 +15,24 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
-import React, { useEffect } from 'react';
+import React from 'react';
 import { FormPanel } from '@tencent/ff-component';
-import { Table, TableColumn, Button, Icon } from '@tea/component';
+import { Table, TableColumn, Button, Icon, Bubble } from '@tea/component';
 import { RootProps } from '../../ClusterApp';
 import { FetchState } from '@tencent/ff-redux';
 import { router } from '../../../router';
+import { ContainerRuntimeEnum } from '@src/modules/cluster/constants/Config';
 
 enum PlugType {
   Promethus,
   LogAgent
 }
 
-export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, clusterVersion, route }) => {
-  const targetCluster = cluster.selection;
-  const { promethus = null, logAgent = null } = targetCluster ? cluster.selection.spec : {};
-  const clusterId = targetCluster ? targetCluster.metadata.name : '';
+export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, route }) => {
+  const { promethus = null, logAgent = null } = cluster?.selection?.spec ?? {};
+  const clusterId = cluster?.selection?.metadata?.name ?? '';
+
+  const isContainerd = cluster?.selection?.spec?.features?.enableContainerRuntime === ContainerRuntimeEnum.CONTAINERD;
 
   const open = (type: PlugType) => () => {
     switch (type) {
@@ -66,6 +68,8 @@ export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, cl
       key: 'action',
       header: '操作',
       render({ action, type }) {
+        const disabled = type === PlugType.LogAgent && isContainerd;
+
         return action ? (
           <>
             <Button type="link" onClick={close(type)}>
@@ -73,9 +77,11 @@ export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, cl
             </Button>
           </>
         ) : (
-          <Button type="link" onClick={open(type)}>
-            开启
-          </Button>
+          <Bubble content={disabled ? '运行时为containerd的集群不支持开启日志采集' : ''}>
+            <Button type="link" disabled={disabled} onClick={open(type)}>
+              开启
+            </Button>
+          </Bubble>
         );
       }
     }
@@ -104,7 +110,12 @@ export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, cl
       {cluster.list.fetched !== true || cluster.list.fetchState === FetchState.Fetching ? (
         <Icon type="loading" />
       ) : (
-        <Table columns={columns} records={records} recordKey="des" />
+        <Table
+          columns={columns}
+          records={records}
+          recordKey="des"
+          rowDisabled={({ type }) => type === PlugType.LogAgent && isContainerd}
+        />
       )}
     </FormPanel>
   );
