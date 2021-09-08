@@ -31,15 +31,14 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/kubernetes"
 
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	v1platform "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/platform/util/addon"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -60,7 +59,7 @@ func GetClusterClient(ctx context.Context, clusterName string, platformClient pl
 		ClusterNameToClient.Delete(clusterName)
 	}
 
-	kubeClient, err := BuildExternalClientSetWithName(ctx, platformClient, clusterName)
+	kubeClient, err := addon.BuildExternalClientSetWithName(ctx, platformClient, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +83,7 @@ func APIServerLocationByCluster(ctx context.Context, clusterName string, platfor
 	if cluster.Status.Phase != v1platform.ClusterRunning {
 		return nil, nil, "", errors.NewServiceUnavailable(fmt.Sprintf("cluster %s status is abnormal", cluster.ObjectMeta.Name))
 	}
-	credential, err := GetClusterCredentialV1(ctx, platformClient, cluster)
+	credential, err := addon.GetClusterCredentialV1(ctx, platformClient, cluster)
 	if err != nil {
 		log.Errorf("unable to get credential %v", err)
 		return nil, nil, "", err
@@ -173,60 +172,4 @@ func rootCertPool(caData []byte) *x509.CertPool {
 	certPool := x509.NewCertPool()
 	certPool.AppendCertsFromPEM(caData)
 	return certPool
-}
-
-// BuildExternalClientSetWithName creates the clientset of kubernetes by given cluster
-// name and returns it.
-func BuildExternalClientSetWithName(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, name string) (*kubernetes.Clientset, error) {
-	cluster, err := platformClient.Clusters().Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	clientset, err := BuildExternalClientSet(ctx, cluster, platformClient)
-	if err != nil {
-		return nil, err
-	}
-	return clientset, nil
-}
-
-// BuildExternalClientSet creates the clientset of kubernetes by given cluster object and returns it.
-func BuildExternalClientSet(ctx context.Context, cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (*kubernetes.Clientset, error) {
-	credential, err := GetClusterCredentialV1(ctx, client, cluster)
-	if err != nil {
-		return nil, err
-	}
-
-	if cluster.Status.Locked != nil && *cluster.Status.Locked {
-		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
-	}
-
-	return util.BuildVersionedClientSet(cluster, credential)
-}
-
-// GetClusterCredentialV1 returns the versioned cluster's credential
-func GetClusterCredentialV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster) (*platformv1.ClusterCredential, error) {
-	var (
-		credential *platformv1.ClusterCredential
-		err        error
-	)
-
-	if cluster.Spec.ClusterCredentialRef != nil {
-		credential, err = client.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			return nil, err
-		}
-	} else {
-		clusterName := cluster.Name
-		fieldSelector := fields.OneTermEqualSelector("clusterName", clusterName).String()
-		clusterCredentials, err := client.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
-		if err != nil {
-			return nil, err
-		}
-		if len(clusterCredentials.Items) == 0 {
-			return nil, errors.NewNotFound(platform.Resource("ClusterCredential"), clusterName)
-		}
-		credential = &clusterCredentials.Items[0]
-	}
-
-	return credential, nil
 }
