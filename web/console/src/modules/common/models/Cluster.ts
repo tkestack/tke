@@ -57,7 +57,7 @@ interface ClusterSpec {
   features?: {
     ipvs: boolean;
     public: boolean;
-    enableContainerRuntime?: ContainerRuntimeEnum;
+    containerRuntime?: ContainerRuntimeEnum;
   };
 
   /** 集群类型 */

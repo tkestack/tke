@@ -91,7 +91,7 @@ export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> 
           {clusterInfo.status.version}
         </FormPanel.Item>
         <FormPanel.Item label={t('运行时组件')} text>
-          {clusterInfo?.spec?.features?.enableContainerRuntime ?? ContainerRuntimeEnum.DOCKER}
+          {clusterInfo?.spec?.features?.containerRuntime ?? ContainerRuntimeEnum.DOCKER}
         </FormPanel.Item>
         {clusterInfo.spec.networkDevice && (
           <FormPanel.Item label={t('网卡名称')} text>
