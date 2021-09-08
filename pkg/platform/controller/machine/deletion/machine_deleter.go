@@ -312,6 +312,10 @@ func deleteNode(ctx context.Context, deleter *machineDeleter, machine *v1.Machin
 		return err
 	}
 
+	if machine.Spec.IP == "" {
+		log.FromContext(ctx).Info("deleteNode done, machine spec ip is empty, skip")
+		return nil
+	}
 	node, err := apiclient.GetNodeByMachineIP(ctx, clientset, machine.Spec.IP)
 	if err != nil {
 		if !errors.IsNotFound(err) {
