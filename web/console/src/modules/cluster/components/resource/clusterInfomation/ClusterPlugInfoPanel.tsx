@@ -32,7 +32,7 @@ export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, ro
   const { promethus = null, logAgent = null } = cluster?.selection?.spec ?? {};
   const clusterId = cluster?.selection?.metadata?.name ?? '';
 
-  const isContainerd = cluster?.selection?.spec?.features?.enableContainerRuntime === ContainerRuntimeEnum.CONTAINERD;
+  const isContainerd = cluster?.selection?.spec?.features?.containerRuntime === ContainerRuntimeEnum.CONTAINERD;
 
   const open = (type: PlugType) => () => {
     switch (type) {
