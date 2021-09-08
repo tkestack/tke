@@ -73,6 +73,7 @@ func SetObjectDefaults_CSIOperatorList(in *CSIOperatorList) {
 
 func SetObjectDefaults_Cluster(in *Cluster) {
 	SetDefaults_ClusterSpec(&in.Spec)
+	SetDefaults_ClusterFeature(&in.Spec.Features)
 	for i := range in.Spec.BootstrapApps {
 		a := &in.Spec.BootstrapApps[i]
 		applicationv1.SetDefaults_AppSpec(&a.App.Spec)

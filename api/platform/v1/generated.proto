@@ -393,7 +393,6 @@ message ClusterFeature {
   // +optional
   optional bool enableCilium = 14;
 
-  // +optional
   optional string containerRuntime = 15;
 
   // Upgrade control upgrade process.

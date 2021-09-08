@@ -394,7 +394,7 @@ type ClusterFeature struct {
 	EnableMetricsServer bool
 	// +optional
 	EnableCilium bool
-	// +optional
+
 	ContainerRuntime ContainerRuntimeType
 	// +optional
 	IPv6DualStack bool
