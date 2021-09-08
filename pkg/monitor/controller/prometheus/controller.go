@@ -27,6 +27,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"tkestack.io/tke/pkg/platform/util/addon"
 
 	"github.com/coreos/prometheus-operator/pkg/apis/monitoring"
 	monitoringv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
@@ -49,6 +50,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
+
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	monitorv1informer "tkestack.io/tke/api/client/informers/externalversions/monitor/v1"
@@ -60,8 +62,6 @@ import (
 	"tkestack.io/tke/pkg/monitor/controller/prometheus/images"
 	esutil "tkestack.io/tke/pkg/monitor/storage/es/client"
 	monitorutil "tkestack.io/tke/pkg/monitor/util"
-	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
-	platformutil "tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/apiclient"
 	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
 	utilhttp "tkestack.io/tke/pkg/util/http"
@@ -601,22 +601,22 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 	if err != nil {
 		return fmt.Errorf("get cluster failed: %v", err)
 	}
-	kubeClient, err := platformutil.BuildExternalClientSet(ctx, cluster, c.platformClient)
+	kubeClient, err := addon.BuildExternalClientSet(ctx, cluster, c.platformClient)
 	if err != nil {
 		return fmt.Errorf("get kubeClient failed: %v", err)
 	}
 
-	crdClient, err := platformutil.BuildExternalExtensionClientSet(ctx, cluster, c.platformClient)
+	crdClient, err := addon.BuildExternalExtensionClientSet(ctx, cluster, c.platformClient)
 	if err != nil {
 		return fmt.Errorf("get crdClient failed: %v", err)
 	}
 
-	kaClient, err := platformutil.BuildKubeAggregatorClientSet(ctx, cluster, c.platformClient)
+	kaClient, err := addon.BuildKubeAggregatorClientSet(ctx, cluster, c.platformClient)
 	if err != nil {
 		return fmt.Errorf("get kaClient failed: %v", err)
 	}
 
-	mclient, err := platformutil.BuildExternalMonitoringClientSet(ctx, cluster, c.platformClient)
+	mclient, err := addon.BuildExternalMonitoringClientSet(ctx, cluster, c.platformClient)
 	if err != nil {
 		return fmt.Errorf("get mclient failed: %v", err)
 	}
@@ -737,12 +737,9 @@ func (c *Controller) installPrometheus(ctx context.Context, prometheus *v1.Prome
 	prometheus.Status.SubVersion[AlertManagerService] = components.AlertManagerService.Tag
 
 	log.Infof("Start to create prometheus")
-	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
-	if err != nil {
-		return fmt.Errorf("get provider failed: %v", err)
-	}
+
 	// Secret for prometheus-etcd
-	credential, err := provider.GetClusterCredentialV1(ctx, c.platformClient, cluster, clusterprovider.AdminUsername)
+	credential, err := addon.GetClusterCredentialV1(ctx, c.platformClient, cluster)
 	if err != nil {
 		return fmt.Errorf("get credential failed: %v", err)
 	}
@@ -2613,22 +2610,22 @@ func (c *Controller) uninstallPrometheus(ctx context.Context, prometheus *v1.Pro
 	if err != nil {
 		return err
 	}
-	kubeClient, err := platformutil.BuildExternalClientSet(ctx, cluster, c.platformClient)
+	kubeClient, err := addon.BuildExternalClientSet(ctx, cluster, c.platformClient)
 	if err != nil {
 		return err
 	}
 
-	kaClient, err := platformutil.BuildKubeAggregatorClientSet(ctx, cluster, c.platformClient)
+	kaClient, err := addon.BuildKubeAggregatorClientSet(ctx, cluster, c.platformClient)
 	if err != nil {
 		return fmt.Errorf("get kaClient failed: %v", err)
 	}
 
-	crdClient, err := platformutil.BuildExternalExtensionClientSet(ctx, cluster, c.platformClient)
+	crdClient, err := addon.BuildExternalExtensionClientSet(ctx, cluster, c.platformClient)
 	if err != nil {
 		return err
 	}
 
-	mclient, err := platformutil.BuildExternalMonitoringClientSet(ctx, cluster, c.platformClient)
+	mclient, err := addon.BuildExternalMonitoringClientSet(ctx, cluster, c.platformClient)
 	if err != nil {
 		return err
 	}
@@ -2919,7 +2916,7 @@ func (c *Controller) watchPrometheusHealth(ctx context.Context, key string) func
 			log.Info("Prometheus health check over", log.String("prome", key))
 			return true, nil
 		}
-		kubeClient, err := platformutil.BuildExternalClientSet(ctx, cluster, c.platformClient)
+		kubeClient, err := addon.BuildExternalClientSet(ctx, cluster, c.platformClient)
 		if err != nil {
 			return false, err
 		}
@@ -2952,7 +2949,7 @@ func (c *Controller) checkPrometheusStatus(ctx context.Context, prometheus *v1.P
 			log.Info("Prometheus status checking over", log.String("prome", key))
 			return true, nil
 		}
-		kubeClient, err := platformutil.BuildExternalClientSet(ctx, cluster, c.platformClient)
+		kubeClient, err := addon.BuildExternalClientSet(ctx, cluster, c.platformClient)
 		if err != nil {
 			return false, err
 		}
@@ -2999,7 +2996,7 @@ func (c *Controller) checkPrometheusUpgrade(ctx context.Context, prometheus *v1.
 			log.Info("Prometheus upgrade over", log.String("prome", key))
 			return true, nil
 		}
-		kubeClient, err := platformutil.BuildExternalClientSet(ctx, cluster, c.platformClient)
+		kubeClient, err := addon.BuildExternalClientSet(ctx, cluster, c.platformClient)
 		if err != nil {
 			return false, err
 		}

@@ -26,21 +26,21 @@ import (
 	"sync/atomic"
 	"time"
 
-	businessversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
-	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	"tkestack.io/tke/api/monitor"
-	platformv1 "tkestack.io/tke/api/platform/v1"
-	"tkestack.io/tke/pkg/monitor/util"
-	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
-	platformutil "tkestack.io/tke/pkg/platform/util"
-	"tkestack.io/tke/pkg/util/log"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 	metricsv "k8s.io/metrics/pkg/client/clientset/versioned"
+
+	businessversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
+	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	"tkestack.io/tke/api/monitor"
+	platformv1 "tkestack.io/tke/api/platform/v1"
+	"tkestack.io/tke/pkg/monitor/util"
+	platformutil "tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/platform/util/addon"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 type updateComponent func(componentStatus *corev1.ComponentStatus, health *util.ComponentHealth)
@@ -170,7 +170,7 @@ func (c *cacher) getClusters(ctx context.Context) {
 					})
 					return
 				}
-				clientSet, err := platformutil.BuildExternalClientSet(ctx, &cls, c.platformClient)
+				clientSet, err := addon.BuildExternalClientSet(ctx, &cls, c.platformClient)
 				if err != nil {
 					log.Error("create clientSet of cluster failed",
 						log.Any("cluster", clusterID), log.Err(err))
@@ -281,11 +281,7 @@ func (c *cacher) getClusters(ctx context.Context) {
 }
 
 func (c *cacher) getMetricServerClientSet(ctx context.Context, cls *platformv1.Cluster) (*metricsv.Clientset, error) {
-	provider, err := clusterprovider.GetProvider(cls.Spec.Type)
-	if err != nil {
-		return nil, err
-	}
-	cc, err := provider.GetClusterCredentialV1(ctx, c.platformClient, cls, clusterprovider.AdminUsername)
+	cc, err := addon.GetClusterCredentialV1(ctx, c.platformClient, cls)
 	if err != nil {
 		log.Error("query cluster credential failed", log.Any("cluster", cls.GetName()), log.Err(err))
 		return nil, err

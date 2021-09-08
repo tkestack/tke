@@ -30,8 +30,8 @@ import (
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
 	controllerutil "tkestack.io/tke/pkg/controller"
-	"tkestack.io/tke/pkg/logagent/util"
 	"tkestack.io/tke/pkg/platform/controller/addon/logcollector/images"
+	"tkestack.io/tke/pkg/platform/util/addon"
 	"tkestack.io/tke/pkg/util/metrics"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -423,7 +423,7 @@ func (c *Controller) installLogCollector(ctx context.Context, LogCollector *v1.L
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
+	kubeClient, err := addon.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
@@ -653,7 +653,7 @@ func (c *Controller) uninstallLogCollector(ctx context.Context, LogCollector *v1
 	if err != nil {
 		return err
 	}
-	kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
+	kubeClient, err := addon.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 	if err != nil {
 		return err
 	}
@@ -722,7 +722,7 @@ func (c *Controller) watchLogCollectorHealth(ctx context.Context, key string) fu
 			return true, nil
 		}
 
-		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
+		kubeClient, err := addon.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -763,7 +763,7 @@ func (c *Controller) checkLogCollectorStatus(
 			return true, nil
 		}
 
-		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
+		kubeClient, err := addon.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}
@@ -818,7 +818,7 @@ func (c *Controller) upgradeLogCollector(
 			return true, nil
 		}
 
-		kubeClient, err := util.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
+		kubeClient, err := addon.BuildExternalClientSet(ctx, cluster, c.client.PlatformV1())
 		if err != nil {
 			return false, err
 		}

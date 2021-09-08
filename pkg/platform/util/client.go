@@ -35,13 +35,13 @@ import (
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
@@ -395,20 +395,6 @@ func BuildExternalMonitoringClientSet(ctx context.Context, cluster *platformv1.C
 	return BuildExternalMonitoringClientSetNoStatus(ctx, cluster, client)
 }
 
-// BuildExternalMonitoringClientSetWithName creates the clientset of prometheus operator by given cluster
-// name and returns it.
-func BuildExternalMonitoringClientSetWithName(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, name string) (monitoringclient.Interface, error) {
-	cluster, err := platformClient.Clusters().Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	clientset, err := BuildExternalMonitoringClientSet(ctx, cluster, platformClient)
-	if err != nil {
-		return nil, err
-	}
-	return clientset, nil
-}
-
 // BuildExternalDynamicClientSetNoStatus creates the dynamic clientset of kubernetes by given
 // cluster object and returns it.
 func BuildExternalDynamicClientSetNoStatus(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) (dynamic.Interface, error) {
@@ -544,22 +530,4 @@ func rootCertPool(caData []byte) *x509.CertPool {
 	certPool := x509.NewCertPool()
 	certPool.AppendCertsFromPEM(caData)
 	return certPool
-}
-
-// CheckClusterHealthzWithTimeout check cluster status within timeout
-func CheckClusterHealthzWithTimeout(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, name string, timeout time.Duration) error {
-	err := wait.PollImmediate(1*time.Second, timeout, func() (bool, error) {
-		clientset, err := BuildExternalClientSetWithName(ctx, platformClient, name)
-		if err != nil {
-			return false, nil
-		}
-		healthStatus := 0
-		clientset.Discovery().RESTClient().Get().AbsPath("/healthz").Do(ctx).StatusCode(&healthStatus)
-		if healthStatus != http.StatusOK {
-			return false, nil
-		}
-		return true, nil
-	})
-
-	return err
 }
