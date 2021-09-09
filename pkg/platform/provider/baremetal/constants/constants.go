@@ -68,6 +68,7 @@ const (
 	EtcdDataDir          = "/var/lib/etcd"
 	KubectlConfigFile    = "/root/.kube/config"
 	KeepavliedConfigFile = "/etc/keepalived/keepalived.conf"
+	CNIConfigFile        = "/etc/cni/net.d/00-galaxy.conf"
 
 	// PKI
 	CertificatesDir = KubernetesDir + "pki/"
