@@ -57,7 +57,7 @@ const (
 	DstBinDir  = "/usr/bin/"
 	CNIBinDir  = "/opt/cni/bin/"
 	CNIDataDir = "/var/lib/cni/"
-	CNIConfDIr = "/etc/cni"
+	CNIConfDIr = "/etc/cni/net.d"
 	AppCertDir = "/app/certs/"
 
 	// AppCert

@@ -18,7 +18,9 @@
 
 package ssh
 
-import "io"
+import (
+	"io"
+)
 
 type Interface interface {
 	Ping() error
@@ -30,6 +32,7 @@ type Interface interface {
 	CopyFile(src, dst string) error
 	WriteFile(src io.Reader, dst string) error
 	ReadFile(filename string) ([]byte, error)
+	ReadDir(dirname string) (string, error)
 	Exist(filename string) (bool, error)
 
 	LookPath(file string) (string, error)

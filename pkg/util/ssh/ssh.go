@@ -245,6 +245,11 @@ func (s *SSH) LookPath(file string) (string, error) {
 	return string(data), err
 }
 
+func (s *SSH) ReadDir(dir string) (string, error) {
+	data, err := s.CombinedOutput(fmt.Sprintf("ls %s", dir))
+	return string(data), err
+}
+
 func (s *SSH) writeFile(src io.Reader, dst string) error {
 	log.Debugf("[%s] Write data to %q", s.addr(), dst)
 
