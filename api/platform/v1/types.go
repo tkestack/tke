@@ -402,8 +402,8 @@ type ClusterFeature struct {
 	IPv6DualStack bool `json:"ipv6DualStack,omitempty" protobuf:"bytes,13,opt,name=ipv6DualStack"`
 	// +optional
 	EnableCilium bool `json:"enableCilium,omitempty" protobuf:"bytes,14,opt,name=enableCilium"`
-	// +optional
-	ContainerRuntime ContainerRuntimeType `json:"containerRuntime,omitempty" protobuf:"bytes,15,opt,name=containerRuntime"`
+
+	ContainerRuntime ContainerRuntimeType `json:"containerRuntime" protobuf:"bytes,15,opt,name=containerRuntime"`
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
@@ -1361,6 +1361,7 @@ type VolumeDecoratorStatus struct {
 	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,8,name=lastReInitializingTimestamp"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // LogCollectorProxyOptions is the query options to a kube-apiserver proxy call for LogCollector crd object.

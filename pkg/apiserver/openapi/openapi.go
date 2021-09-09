@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/go-openapi/spec"
+	"k8s.io/apimachinery/pkg/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapicommon "k8s.io/kube-openapi/pkg/common"
@@ -43,6 +44,14 @@ func SetupOpenAPI(genericAPIServerConfig *genericapiserver.Config, getDefinition
 	genericAPIServerConfig.OpenAPIConfig.Info.Version = appVersion.GitVersion
 	genericAPIServerConfig.OpenAPIConfig.PostProcessSpec = postProcessOpenAPISpec(host, port)
 
+	// version
+	genericAPIServerConfig.Version = &version.Info{
+		GitVersion: appVersion.GitVersion,
+		BuildDate:  appVersion.BuildDate,
+		GoVersion:  appVersion.GoVersion,
+		Compiler:   appVersion.Compiler,
+		Platform:   appVersion.Platform,
+	}
 }
 
 func postProcessOpenAPISpec(host string, port int) func(*spec.Swagger) (*spec.Swagger, error) {

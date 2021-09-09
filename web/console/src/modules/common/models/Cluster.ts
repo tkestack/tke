@@ -15,6 +15,7 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+import { ContainerRuntimeEnum } from '@src/modules/cluster/constants/Config';
 import { Identifiable } from '@tencent/ff-redux';
 import { Resource } from './Resource';
 
@@ -56,6 +57,7 @@ interface ClusterSpec {
   features?: {
     ipvs: boolean;
     public: boolean;
+    containerRuntime?: ContainerRuntimeEnum;
   };
 
   /** 集群类型 */

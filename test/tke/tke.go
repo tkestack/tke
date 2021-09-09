@@ -66,6 +66,7 @@ func (testTke *TestTKE) ClusterTemplate(nodes ...cloudprovider.Instance) *platfo
 			Features: platformv1.ClusterFeature{
 				HA:                   &platformv1.HA{},
 				EnableMasterSchedule: true,
+				ContainerRuntime:     platformv1.Containerd,
 			},
 			Version:       env.K8sVersion(),
 			ClusterCIDR:   "10.244.0.0/16",
