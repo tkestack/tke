@@ -139,7 +139,7 @@ which are default charts in `tke-installer` release package:
 
 ## User case
 
-#### Case 1. Installer install built-in apps during creating global cluster
+#### Case 1. Installer install built-in apps during creating global cluster (stage alpha)
 
 Before UI support tke-installer to set apps in `global cluster` object, hardcode some `built-in apps` in `tke-installer` and use `tke.json` with empty `PlatformApps`:
 
@@ -176,7 +176,7 @@ Before UI support tke-installer to set apps in `global cluster` object, hardcode
 
 Tkestack will manage `built-in` apps life-cycle through `built-in` labels. It means that `built-in apps` will be upgraded if Tkestack platform is upgraded.
 
-#### Case 2. Installer install expansion apps during creating global cluster
+#### Case 2. Installer install expansion apps during creating global cluster (stage alpha)
 
 Use `tke.json` with expansions apps:
 
@@ -232,7 +232,7 @@ Use `tke.json` with expansions apps:
 }
 ```
 
-#### Case 3. tke-installer upgrade built-in apps
+#### Case 3. tke-installer upgrade built-in apps (stage alpha)
 
 Download next minor version of current version `tke-installer` and upgrade through `tke-installerxxx --upgrade`. This work need enable first `built-in app` in tke-installer.
 
@@ -320,46 +320,50 @@ spec:
   tenantID: default
   clusterCIDR: 10.244.0.0/16
   networkDevice: eth0
+  bootstrapApps:
+  - app:
+      metadata:
+        namespace: kube-system
+      spec:
+        name: demo1
+        type: HelmV3
+        dryRun: false
+        tenantID: default
+        targetCluster: ""
+        targetNamespace: ""
+        values:
+          rawValues: 'key2: val2-override'
+        chart:
+          chartName: demo
+          chartGroupName: public
+          chartVersion: 1.0.0
+          tenantID: default
+          repoURL: ""
+          repoUsername: ""
+          repoPassword: ""
+          importedRepo: false
+  - app:
+      spec:
+        name: demo2
+        type: HelmV3
+        dryRun: false
+        tenantID: default
+        targetCluster: ""
+        targetNamespace: "kube-public"
+        values:
+          rawValues: 'key2: val2-override'
+        chart:
+          chartName: demo
+          chartGroupName: public
+          chartVersion: 1.0.0
+          tenantID: default
+          repoURL: ""
+          repoUsername: ""
+          repoPassword: ""
+          importedRepo: false
   features:
     enableMetricsServer: true
     enableCilium: false
-    clusterApps:
-    - app:
-        spec:
-          name: demo1
-          type: HelmV3
-          targetCluster: global
-          dryRun: false
-          tenantID: default
-          values:
-            rawValues: 'key2: val2-override'
-          chart:
-            chartName: demo
-            chartGroupName: public
-            chartVersion: 1.0.0
-            tenantID: default
-            repoURL: ""
-            repoUsername: ""
-            repoPassword: ""
-            importedRepo: false
-    - app:
-        spec:
-          name: demo2
-          type: HelmV3
-          targetCluster: global
-          dryRun: false
-          tenantID: default
-          values:
-            rawValues: 'key1: val1-override'
-          chart:
-            chartName: demo
-            chartGroupName: public
-            chartVersion: 1.0.0
-            tenantID: default
-            repoURL: ""
-            repoUsername: ""
-            repoPassword: ""
-            importedRepo: false
   properties:
     maxClusterServiceNum: 256
     maxNodePodNum: 256
@@ -369,6 +373,7 @@ spec:
   - ip: {your_ip}
     port: 22
     username: root
+    privateKey:
     password:
     labels: {}
 ```
@@ -379,62 +384,17 @@ kubectl create -f cls.2.apps.yaml
 kubectl get cls {your cls name} -o yaml | grep demo
 # get demo1 and demo2
 kubectl get apps -o custom-columns=APPNAME:.spec.name
-# get demo1 and demo2
+# get demo2
+kubectl get apps -n kube-system custom-columns=APPNAME:.spec.name
+# get demo1
 ```
 
-### Delete app through update cls
-
-Edit your cluster through `kubectl edit cls {your cluster name}`, and delete `demo2` app content.
+### Update bootstrap app is not allowed
 
 ```sh
-kubectl get cls {your cls name} -o yaml | grep demo
-# get demo1 and demo1
-kubectl get apps -o custom-columns=APPNAME:.spec.name
-# get demo1 and demo1
-```
+kubectl edit cls {your_cls}
+# edit bootstrapApps content will return validation err
 
-### Delete app through delete app (recommand)
-
-```sh
-kubectl delete app {your app name}
-kubectl get cls {your cls name} -o yaml | grep demo
-# get no app info
-kubectl get apps -o custom-columns=APPNAME:.spec.name
-# get no app info
-```
-
-### Create app
-
-Create app through `kubectl create -f app.yaml`.
-
-```yaml
-# app.yaml
-apiVersion: application.tkestack.io/v1
-kind: App
-spec:
-  chart:
-    chartGroupName: public
-    chartName: demo
-    chartVersion: 1.0.0
-    importedRepo: false
-    repoPassword: ""
-    repoURL: ""
-    repoUsername: ""
-    tenantID: default
-  dryRun: false
-  finalizers:
-  - app
-  name: demo
-  targetCluster: {your cluster name}
-  tenantID: default
-  type: HelmV3
-```
-
-```sh
-kubectl get cls {your cls name} -o yaml | grep demo
-# get demo app
-kubectl get apps -o custom-columns=APPNAME:.spec.name
-# get demo app
 ```
 
 ## Reference
