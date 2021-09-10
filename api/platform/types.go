@@ -688,6 +688,7 @@ type ClusterAddonTypeList struct {
 	Items []ClusterAddonType
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ClusterApplyOptions is the query options to a kube-apiserver proxy call for cluster object.
@@ -994,6 +995,7 @@ const (
 	AddonPhaseUnknown AddonPhase = "Unknown"
 )
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // IPAMProxyOptions is the query options to a Helm-api proxy call.
@@ -1191,6 +1193,7 @@ type TappControllerStatus struct {
 	LastReInitializingTimestamp metav1.Time
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CSIProxyOptions is the query options to a kube-apiserver proxy call for CSI crd object.
@@ -1261,6 +1264,7 @@ type CSIOperatorStatus struct {
 	LastReInitializingTimestamp metav1.Time
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // PVCRProxyOptions is the query options to a kube-apiserver proxy call for PVCR crd object.
@@ -1632,6 +1636,7 @@ type CronHPAStatus struct {
 	LastReInitializingTimestamp metav1.Time
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // LBCFProxyOptions is the query options to a kube-apiserver proxy call.
@@ -1754,6 +1759,7 @@ type ClusterGroupAPIResourceItem struct {
 	Categories []string
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ClusterGroupAPIResourceOptions is the query options.
