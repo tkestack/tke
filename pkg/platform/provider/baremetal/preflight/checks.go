@@ -64,7 +64,7 @@ func newCommonChecks(c *v1.Cluster, s ssh.Interface) []Checker {
 
 		FileAvailableCheck{Interface: s, Path: constants.KubectlConfigFile},
 
-		DirAvailableCheck{Interface: s, Path: constants.CNIConfDIr},
+		DirEmptyCheck{Interface: s, Path: constants.CNIConfDIr},
 		DirAvailableCheck{Interface: s, Path: constants.CNIDataDir},
 
 		PortOpenCheck{Interface: s, port: constants.ProxyHealthzPort},
@@ -384,6 +384,30 @@ func (dac DirAvailableCheck) Name() string {
 func (dac DirAvailableCheck) Check() (warnings, errorList []error) {
 	if ok, err := dac.Exist(dac.Path); err == nil && ok {
 		errorList = append(errorList, errors.Errorf("%s already exists", dac.Path))
+	}
+
+	return nil, errorList
+}
+
+// DirEmptyCheck checks if the given directory either does not exist, or is empty.
+type DirEmptyCheck struct {
+	ssh.Interface
+	Path  string
+	Label string
+}
+
+// Name returns label for individual DirEmptyCheck. If not known, will return based on path.
+func (dmc DirEmptyCheck) Name() string {
+	if dmc.Label != "" {
+		return dmc.Label
+	}
+	return fmt.Sprintf("DirEmptyCheck-%s", strings.Replace(dmc.Path, "/", "-", -1))
+}
+
+// Check validates if a directory is empty.
+func (dmc DirEmptyCheck) Check() (warnings, errorList []error) {
+	if res, err := dmc.ReadDir(dmc.Path); err == nil && len(res) != 0 {
+		errorList = append(errorList, errors.Errorf("%s not empty dir", dmc.Path))
 	}
 
 	return nil, errorList
