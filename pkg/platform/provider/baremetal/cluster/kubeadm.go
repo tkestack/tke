@@ -182,6 +182,10 @@ func (p *Provider) getClusterConfiguration(c *v1.Cluster) *kubeadmv1beta2.Cluste
 		},
 		DNS: kubeadmv1beta2.DNS{
 			Type: kubeadmv1beta2.CoreDNS,
+			ImageMeta: kubeadmv1beta2.ImageMeta{
+				ImageRepository: p.config.Registry.Prefix,
+				ImageTag:        images.Get().CoreDNS.Tag,
+			},
 		},
 		ImageRepository: p.config.Registry.Prefix,
 		ClusterName:     c.Name,
