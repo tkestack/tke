@@ -28,6 +28,7 @@ type Components struct {
 	ETCD               containerregistry.Image
 	CoreDNS            containerregistry.Image
 	Pause              containerregistry.Image
+	Pause4KubeadmJob   containerregistry.Image
 	NvidiaDevicePlugin containerregistry.Image
 	Keepalived         containerregistry.Image
 
@@ -62,6 +63,7 @@ var components = Components{
 	ETCD:               containerregistry.Image{Name: "etcd", Tag: "v3.4.7"},
 	CoreDNS:            containerregistry.Image{Name: "coredns", Tag: "1.7.0"},
 	Pause:              containerregistry.Image{Name: "pause", Tag: "3.2"},
+	Pause4KubeadmJob:   containerregistry.Image{Name: "pause", Tag: "3.4.1"},
 	NvidiaDevicePlugin: containerregistry.Image{Name: "nvidia-device-plugin", Tag: "1.0.0-beta4"},
 	Keepalived:         containerregistry.Image{Name: "keepalived", Tag: "2.0.16-r0"},
 
