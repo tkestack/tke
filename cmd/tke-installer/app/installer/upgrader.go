@@ -81,6 +81,10 @@ func (t *TKE) upgradeSteps() {
 
 	t.steps = append(t.steps, []types.Handler{
 		{
+			Name: "Prepare images before upgrade",
+			Func: t.prepareImages,
+		},
+		{
 			Name: "Upgrade tke-platform-api",
 			Func: t.upgradeTKEPlatformAPI,
 		},
@@ -95,6 +99,10 @@ func (t *TKE) upgradeSteps() {
 		{
 			Name: "Upgrade tke-monitor-controller",
 			Func: t.upgradeTKEMonitorController,
+		},
+		{
+			Name: "Upgrade tke-gateway",
+			Func: t.upgradeTKEGateway,
 		},
 	}...)
 
@@ -259,6 +267,32 @@ func (t *TKE) upgradeTKEMonitorController(ctx context.Context) error {
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
 		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, com)
+		if err != nil {
+			return false, nil
+		}
+		return ok, nil
+	})
+}
+
+func (t *TKE) upgradeTKEGateway(ctx context.Context) error {
+	com := "tke-gateway"
+	ds, err := t.globalClient.AppsV1().DaemonSets(t.namespace).Get(ctx, com, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	if len(ds.Spec.Template.Spec.Containers) == 0 {
+		return fmt.Errorf("%s has no containers", com)
+	}
+	ds.Spec.Template.Spec.Containers[0].Image = images.Get().TKEGateway.FullName()
+
+	_, err = t.globalClient.AppsV1().DaemonSets(t.namespace).Update(ctx, ds, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		ok, err := apiclient.CheckDaemonset(ctx, t.globalClient, t.namespace, com)
 		if err != nil {
 			return false, nil
 		}
