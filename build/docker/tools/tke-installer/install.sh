@@ -70,6 +70,7 @@ function preflight() {
   echo "Step.1 preflight"
 
   check::root
+  check::docker
   check::disk '/opt' 30
   check::disk '/var/lib' 20
 }
@@ -93,6 +94,17 @@ function check::disk() {
   fi
 
   echo "available disk space($path):  $disk_avail GiB"
+}
+
+function check::docker() {
+  echo "check docker status"
+
+  if systemctl is-active --quiet docker; then
+    echo "docker is running,please stop docker before using containerd runtime"
+    echo "if the migration case please follow the migration doc:"
+    echo "https://tkestack.github.io/web/zh/blog/2021/09/01/container-runtime-migraion/"
+    exit 1
+  fi
 }
 
 function ensure_containerd() {
