@@ -98,6 +98,8 @@ spec:
               mountPath: /etc/gpu-manager/vm
             - name: log
               mountPath: /var/log/gpu-manager
+            - name: checkpoint
+              mountPath: /etc/gpu-manager/checkpoint
             - name: rundir
               mountPath: /var/run
             - name: cgroup
@@ -144,6 +146,10 @@ spec:
           hostPath:
             type: DirectoryOrCreate
             path: /etc/gpu-manager/log
+        - name: checkpoint
+          hostPath:
+            type: DirectoryOrCreate
+            path: /etc/gpu-manager/checkpoint
         - name: rundir
           hostPath:
             type: Directory
