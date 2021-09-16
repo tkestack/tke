@@ -18,7 +18,19 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Button, Dropdown, List, Modal, Select, Switch, Table, TagSearchBox, Text, Tooltip } from '@tea/component';
+import {
+  Button,
+  Dropdown,
+  List,
+  Modal,
+  Select,
+  Switch,
+  Table,
+  TagSearchBox,
+  Text,
+  Tooltip,
+  Bubble
+} from '@tea/component';
 // import { TagSearchBox } from '../../../../common/components/tagsearchbox';
 import { bindActionCreators, FetchState, insertCSS } from '@tencent/ff-redux';
 import { ChartInstancesPanel } from '@tencent/tchart';
@@ -152,15 +164,20 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
   }
 
   private _renderMonitorButton() {
+    const disabled = !this?.props?.cluster?.selection?.spec?.promethus;
+
     return (
-      <Button
-        type="primary"
-        onClick={() => {
-          this._handleMonitor();
-        }}
-      >
-        {t('监控')}
-      </Button>
+      <Bubble content={disabled ? t('监控组件尚未安装！') : ''}>
+        <Button
+          type="primary"
+          disabled={disabled}
+          onClick={() => {
+            !disabled && this._handleMonitor();
+          }}
+        >
+          {t('监控')}
+        </Button>
+      </Bubble>
     );
   }
 
