@@ -29,9 +29,8 @@ import {
   TagSearchBox,
   Text,
   Tooltip,
-  AttributeValue,
   Bubble
-} from 'tea-component';
+} from '@tea/component';
 // import { TagSearchBox } from '../../../../common/components/tagsearchbox';
 import { bindActionCreators, FetchState, insertCSS } from '@tencent/ff-redux';
 import { ChartInstancesPanel } from '@tencent/tchart';
