@@ -124,19 +124,24 @@ export class ComputerActionPanel extends React.Component<RootProps, State> {
     const disableAddNode = cluster.selection && cluster.selection.spec.type === 'Imported';
 
     let monitorButton = null;
+
+    const disabledMonitorButton = !computer.list.data.records.length || !cluster?.selection?.spec?.promethus;
+
     monitorButton = (
-      <Button
-        type="primary"
-        disabled={!computer.list.data.records.length}
-        onClick={() => {
-          if (!computer.list.data.records.length) {
-            return;
-          }
-          this._handleMonitor('nodeMonitor', '');
-        }}
-      >
-        {t('监控')}
-      </Button>
+      <Bubble content={disabledMonitorButton ? t('监控组件尚未安装！') : ''}>
+        <Button
+          type="primary"
+          disabled={disabledMonitorButton}
+          onClick={() => {
+            if (disabledMonitorButton) {
+              return;
+            }
+            this._handleMonitor('nodeMonitor', '');
+          }}
+        >
+          {t('监控')}
+        </Button>
+      </Bubble>
     );
     return (
       <Table.ActionPanel>
