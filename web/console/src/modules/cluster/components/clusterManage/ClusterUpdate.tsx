@@ -25,7 +25,7 @@ import { updateCluster } from '@src/webApi/cluster';
 import { useForm, Controller } from 'react-hook-form';
 import { getReactHookFormStatusWithMessage } from '@helper';
 
-export function ClusterUpdate({ route, actions }: RootProps) {
+export function ClusterUpdate({ route }: RootProps) {
   const defaultUpgradeConfig = {
     version: null,
     drainNodeBeforeUpgrade: true,
@@ -34,11 +34,13 @@ export function ClusterUpdate({ route, actions }: RootProps) {
   };
 
   const { handleSubmit, control, watch } = useForm({
-    mode: 'onBlur',
+    mode: 'onChange',
     defaultValues: defaultUpgradeConfig
   });
 
   const { clusterId, clusterVersion } = route.queries;
+
+  const [_, clusterVersionSecondPart] = clusterVersion.split('.');
 
   function goBack() {
     history.back();
@@ -86,7 +88,15 @@ export function ClusterUpdate({ route, actions }: RootProps) {
         <Controller
           control={control}
           name="version"
-          rules={{ required: '请选择将要升级的k8s版本！' }}
+          rules={{
+            required: '请选择将要升级的k8s版本！',
+            validate(value) {
+              const [__, targetSecond] = value.split('.');
+              return +targetSecond - +clusterVersionSecondPart <= 1 // 等于0 或者等于1
+                ? true
+                : '不支持直接升级到该版本！';
+            }
+          }}
           render={({ field, ...others }) => (
             <Form.Item
               label="升级目标版本"
