@@ -163,10 +163,6 @@ const detailBasicInfo: DetailInfo = {
 
 const tabList = [
   {
-    id: 'history',
-    label: t('修订历史')
-  },
-  {
     id: 'event',
     label: t('事件')
   },
