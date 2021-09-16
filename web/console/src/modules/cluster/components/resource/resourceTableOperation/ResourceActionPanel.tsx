@@ -29,7 +29,8 @@ import {
   TagSearchBox,
   Text,
   Tooltip,
-  AttributeValue
+  AttributeValue,
+  Bubble
 } from 'tea-component';
 // import { TagSearchBox } from '../../../../common/components/tagsearchbox';
 import { bindActionCreators, FetchState, insertCSS } from '@tencent/ff-redux';
@@ -164,15 +165,20 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
   }
 
   private _renderMonitorButton() {
+    const disabled = !this?.props?.cluster?.selection?.spec?.promethus;
+
     return (
-      <Button
-        type="primary"
-        onClick={() => {
-          this._handleMonitor();
-        }}
-      >
-        {t('监控')}
-      </Button>
+      <Bubble content={disabled ? t('监控组件尚未安装！') : ''}>
+        <Button
+          type="primary"
+          disabled={disabled}
+          onClick={() => {
+            !disabled && this._handleMonitor();
+          }}
+        >
+          {t('监控')}
+        </Button>
+      </Bubble>
     );
   }
 
