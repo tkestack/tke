@@ -313,15 +313,20 @@ export class ResourcePodActionPanel extends React.Component<RootProps, ResourceP
 
   /** render监控按钮 */
   private _renderMonitorButton() {
+    const disabled = !this?.props?.cluster?.selection?.spec?.promethus;
+
     return (
-      <Button
-        onClick={() => {
-          this._handleMonitor('podMonitor');
-        }}
-        type="primary"
-      >
-        {t('监控')}
-      </Button>
+      <Bubble content={disabled ? t('监控组件尚未安装！') : ''}>
+        <Button
+          disabled={disabled}
+          onClick={() => {
+            !disabled && this._handleMonitor('podMonitor');
+          }}
+          type="primary"
+        >
+          {t('监控')}
+        </Button>
+      </Bubble>
     );
   }
 
