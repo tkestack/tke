@@ -21,8 +21,11 @@ package installer
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
+	"path"
 	"time"
 
 	applicationversiondclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
@@ -37,6 +40,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	cronhpaimage "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
@@ -390,6 +394,13 @@ func (t *TKE) loadRegistry(ctx context.Context) error {
 
 func (t *TKE) loginRegistry(ctx context.Context) error {
 	containerregistry.Init(t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace())
+	dir := path.Join(constants.DockerCertsDir, t.Para.Config.Registry.Domain())
+	_ = os.MkdirAll(dir, 0777)
+	caCert, _ := ioutil.ReadFile(constants.CACrtFile)
+	err := ioutil.WriteFile(path.Join(dir, "ca.crt"), caCert, 0644)
+	if err != nil {
+		return err
+	}
 	cmd := exec.Command("docker", "login",
 		"--username", t.Para.Config.Registry.Username(),
 		"--password", string(t.Para.Config.Registry.Password()),
