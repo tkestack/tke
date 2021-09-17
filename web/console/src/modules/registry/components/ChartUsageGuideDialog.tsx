@@ -54,7 +54,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
   }
 
   componentWillReceiveProps(nextProps: ChartUsageGuideDialogProps) {
-    let { showDialog } = nextProps;
+    const { showDialog } = nextProps;
     if (showDialog !== this.props.showDialog) {
       this.setState({
         showDialog: showDialog
@@ -90,7 +90,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
               <p>
                 <Trans>
                   本地安装 Helm 客户端, 更多可查看{' '}
-                  <a href="https://helm.sh/docs/intro/quickstart/" target="_blank">
+                  <a href="https://helm.sh/docs/intro/quickstart/" target="_blank" rel="noreferrer">
                     安装 Helm
                   </a>
                   .{' '}
@@ -100,7 +100,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
                 <Clip target="#installHelm" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="installHelm">{`curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash`}</p>
+                <p id="installHelm">{`curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | DESIRED_VERSION=v3.6.2 bash`}</p>
               </code>
             </li>
             <li>
@@ -119,7 +119,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
                   <a
                     href="javascript:;"
                     onClick={() => {
-                      let urlParams = router.resolve(this.props.route);
+                      const urlParams = router.resolve(this.props.route);
                       router.navigate(Object.assign({}, urlParams, { sub: 'apikey', mode: '', tab: '' }), {});
                     }}
                   >
@@ -140,7 +140,9 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
                 <p id="installHelmPush">{`helm plugin install https://github.com/chartmuseum/helm-push`}</p>
               </code>
               <p className="text-weak">
-                <Trans>如安装失败，可以手动下载后解压到$HOME/.local/share/helm/plugins，解压路径可以通过helm --help 查看</Trans>
+                <Trans>
+                  如安装失败，可以手动下载后解压到$HOME/.local/share/helm/plugins，解压路径可以通过helm --help 查看
+                </Trans>
               </p>
             </li>
             <li>

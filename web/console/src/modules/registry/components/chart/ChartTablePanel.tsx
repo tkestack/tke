@@ -155,7 +155,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
               <p>
                 <Trans>
                   本地安装 Helm 客户端, 更多可查看{' '}
-                  <a href="https://helm.sh/docs/intro/quickstart/" target="_blank">
+                  <a href="https://helm.sh/docs/intro/quickstart/" target="_blank" rel="noreferrer">
                     安装 Helm
                   </a>
                   .{' '}
@@ -165,7 +165,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#installHelm" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="installHelm">{`$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash`}</p>
+                <p id="installHelm">{`$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | DESIRED_VERSION=v3.6.2 bash`}</p>
               </code>
             </li>
             <li>
@@ -184,7 +184,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
                   <a
                     href="javascript:;"
                     onClick={() => {
-                      let urlParams = router.resolve(this.props.route);
+                      const urlParams = router.resolve(this.props.route);
                       router.navigate(Object.assign({}, urlParams, { sub: 'apikey', mode: '', tab: '' }), {});
                     }}
                   >
