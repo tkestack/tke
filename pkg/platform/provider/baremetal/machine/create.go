@@ -171,7 +171,7 @@ func (p *Provider) EnsureKernelModule(ctx context.Context, machine *platformv1.M
 		return err
 	}
 
-	modules := []string{"iptable_nat", "ip_vs", "ip_vs_rr", "ip_vs_wrr", "ip_vs_sh"}
+	modules := []string{"iptable_nat", "ip_vs", "ip_vs_rr", "ip_vs_wrr", "ip_vs_sh", "nf_conntrack_ipv4"}
 	if _, err := s.CombinedOutput("modinfo br_netfilter"); err == nil {
 		modules = append(modules, "br_netfilter")
 	}

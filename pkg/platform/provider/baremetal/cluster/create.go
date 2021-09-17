@@ -192,8 +192,7 @@ func (p *Provider) EnsureKernelModule(ctx context.Context, c *v1.Cluster) error 
 		true:  c.Spec.ScalingMachines,
 		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
 	for _, machine := range machines {
-		modules := []string{"iptable_nat", "ip_vs", "ip_vs_rr", "ip_vs_wrr", "ip_vs_sh"}
-
+		modules := []string{"iptable_nat", "ip_vs", "ip_vs_rr", "ip_vs_wrr", "ip_vs_sh", "nf_conntrack_ipv4"}
 		s, err := machine.SSH()
 		if err != nil {
 			return err
@@ -823,6 +822,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseKubeletStart(ctx context.Context, c *v1.Cluster) error {
+
 	if c.Status.Phase == platformv1.ClusterUpscaling {
 		return nil
 	}
