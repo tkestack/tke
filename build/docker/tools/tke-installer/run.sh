@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Tencent is pleased to support the open source community by making TKEStack
 # available.
@@ -25,7 +25,7 @@ if [ $status -ne 0 ]; then
 fi
 
 # Start the second process
-./bin/tke-installer
+./bin/tke-installer $@
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start my_second_process: $status"
