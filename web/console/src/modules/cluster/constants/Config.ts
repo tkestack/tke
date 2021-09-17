@@ -734,7 +734,12 @@ nerdctl rm -f $(nerdctl ps -aq) 2>/dev/null
 ip netns list | cut -d' ' -f 1 | xargs -n1 ip netns delete 2>/dev/null
 systemctl disable containerd 2>/dev/null
 systemctl stop containerd 2>/dev/null
-rm -rfv /var/lib/nerdctl/*`;
+rm -rfv /var/lib/nerdctl/*
+
+## ip link
+ip link delete cilium_net 2>/dev/null
+ip link delete cilium_vxlan 2>/dev/null
+ip link delete flannel.1 2>/dev/null`;
 
 export enum GPUTYPE {
   PGPU = 'Physical',
