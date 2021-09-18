@@ -277,7 +277,7 @@ func (t *TKE) upgradeDeplImage(ctx context.Context, image containerregistry.Imag
 	if len(depl.Spec.Template.Spec.Containers) == 0 {
 		return fmt.Errorf("%s has no containers", com)
 	}
-	depl.Spec.Template.Spec.Containers[0].Image = images.Get().TKEMonitorController.FullName()
+	depl.Spec.Template.Spec.Containers[0].Image = image.FullName()
 
 	_, err = t.globalClient.AppsV1().Deployments(t.namespace).Update(ctx, depl, metav1.UpdateOptions{})
 	if err != nil {
