@@ -1274,7 +1274,7 @@ func (p *Provider) EnsureNvidiaDevicePlugin(ctx context.Context, c *v1.Cluster) 
 		return nil
 	}
 
-	if c.Cluster.Spec.Features.GPUType == nil {
+	if c.Cluster.Spec.Features.GPUType == nil || *c.Cluster.Spec.Features.GPUType == platformv1.GPUVirtual {
 		return nil
 	}
 
