@@ -111,7 +111,7 @@ function build::installer() {
     cp -v "${DST_DIR}/provider/baremetal/res/${target_platform}/nerdctl-${target_platform}-${NERDCTL_VERSION}.tar.gz" "${INSTALLER_DIR}/res/nerdctl.tar.gz"
 
     docker save "${REGISTRY_PREFIX}/tke-installer-${arch}:$VERSION" -o "${INSTALLER_DIR}/res/tke-installer.tar"
-    docker pull "${REGISTRY_PREFIX}/registry-${arch}:$REGISTRY_VERSION"
+    docker --config=${DOCKER_PULL_CONFIG} pull "${REGISTRY_PREFIX}/registry-${arch}:$REGISTRY_VERSION"
     docker save "${REGISTRY_PREFIX}/registry-${arch}:$REGISTRY_VERSION" -o "${INSTALLER_DIR}/res/registry.tar"
 
     sed -i "s;VERSION=.*;VERSION=$VERSION;g" "${INSTALLER_DIR}/install.sh"
@@ -136,7 +136,7 @@ function prepare::images() {
   make build BINS=generate-images VERSION="$VERSION"
 
   $GENERATE_IMAGES_BIN
-  $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | xargs -n1 -I{} sh -c "docker pull {} || exit 255"
+  $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | xargs -n1 -I{} sh -c "docker --config=${DOCKER_PULL_CONFIG} pull {} || exit 255"
   $GENERATE_IMAGES_BIN | sed "s;^;${REGISTRY_PREFIX}/;" | xargs docker save | gzip -c >"${DST_DIR}"/images.tar.gz
 }
 
