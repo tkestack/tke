@@ -182,15 +182,15 @@ function start_installer() {
 }
 
 function start_registry() {
-  result=$(echo $@ | grep "\-\-upgrade")
-  if [[ "$result" != "" ]];then
+  echo "Step.6 start regisry [in process]"
+  checkupgrade="--upgrade"
+  if [[ $@ =~ $checkupgrade ]]; then
     echo "Step.6 upgrade will not start local registry"
     echo "Step.6 start registry [skip]"
   else
-    echo "Step.6 start regisry [in process]"
     mkdir -p $REGISTRY_DIR
-    nerdctl run $RegistryHTTPOptions "tkestack/registry-${ARCH}:$REGISTRY_VERSION" $@
-    nerdctl run $RegistryHTTPSOptions "tkestack/registry-${ARCH}:$REGISTRY_VERSION" $@
+    nerdctl run $RegistryHTTPOptions "tkestack/registry-${ARCH}:$REGISTRY_VERSION"
+    nerdctl run $RegistryHTTPSOptions "tkestack/registry-${ARCH}:$REGISTRY_VERSION"
     echo "Step.6 start registry [done]"
   fi
 }
