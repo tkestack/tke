@@ -337,6 +337,10 @@ message ClusterCredential {
   // For kubeadm init or join
   // +optional
   optional string certificateKey = 14;
+
+  // Impersonate is the configuration that RESTClient will use for impersonation.
+  // +optional
+  optional ImpersonationConfig impersonationConfig = 15;
 }
 
 // ClusterCredentialList is the whole list of all ClusterCredential which owned by a tenant.
@@ -932,6 +936,19 @@ message IPAMStatus {
   // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
+}
+
+// ImpersonationConfig has all the available impersonation options
+message ImpersonationConfig {
+  // UserName is the username to impersonate on each request.
+  optional string userName = 1;
+
+  // Groups are the groups to impersonate on each request.
+  repeated string groups = 2;
+
+  // Extra is a free-form field which can be used to link some authentication information
+  // to authorization information.  This field allows you to impersonate it.
+  map<string, string> extra = 3;
 }
 
 // LBCF is a kubernetes load balancer manager.
