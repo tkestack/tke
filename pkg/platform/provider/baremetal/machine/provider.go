@@ -22,6 +22,7 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/api/errors"
+	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/tools/clientcmd"
@@ -60,7 +61,14 @@ func NewProvider() (*Provider, error) {
 
 	p.DelegateProvider = &machineprovider.DelegateProvider{
 		ProviderName: name,
-
+		ValidateUpdateFunc: func(machine, oldMachine *platform.Machine) field.ErrorList {
+			allErrs := field.ErrorList{}
+			fldPath := field.NewPath("spec")
+			allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.IP, oldMachine.Spec.IP, fldPath.Child("ip"))...)
+			allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.Labels, oldMachine.Spec.Labels, fldPath.Child("labels"))...)
+			allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.Taints, oldMachine.Spec.Taints, fldPath.Child("taints"))...)
+			return allErrs
+		},
 		CreateHandlers: []machineprovider.Handler{
 			p.EnsureCopyFiles,
 			p.EnsurePreInstallHook,
