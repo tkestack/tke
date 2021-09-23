@@ -24,12 +24,12 @@ import (
 	"net"
 	"strings"
 
+	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"tkestack.io/tke/api/platform"
-
 	netutils "k8s.io/utils/net"
 	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/gpu"
@@ -57,8 +57,17 @@ func ValidateCluster(platformClient platformv1client.PlatformV1Interface, obj *t
 
 // ValidateCluster validates a given Cluster.
 func ValidateClusterUpdate(platformClient platformv1client.PlatformV1Interface, cluster *types.Cluster, oldCluster *types.Cluster) field.ErrorList {
-	allErrs := ValidatClusterSpec(platformClient, cluster.Name, &cluster.Spec, field.NewPath("spec"), cluster.Status.Phase, false)
-	allErrs = append(allErrs, ValidateClusterScale(cluster.Cluster, oldCluster.Cluster, field.NewPath("spec").Child("machines"))...)
+	fldPath := field.NewPath("spec")
+	allErrs := ValidatClusterSpec(platformClient, cluster.Name, &cluster.Spec, fldPath, cluster.Status.Phase, false)
+	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.NetworkDevice, oldCluster.Spec.NetworkDevice, fldPath.Child("networkDevice"))...)
+	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.ClusterCIDR, oldCluster.Spec.ClusterCIDR, fldPath.Child("clusterCIDR"))...)
+	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.DNSDomain, oldCluster.Spec.DNSDomain, fldPath.Child("dnsDomain"))...)
+	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.DockerExtraArgs, oldCluster.Spec.DockerExtraArgs, fldPath.Child("dockerExtraArgs"))...)
+	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.KubeletExtraArgs, oldCluster.Spec.KubeletExtraArgs, fldPath.Child("kubeletExtraArgs"))...)
+	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.APIServerExtraArgs, oldCluster.Spec.APIServerExtraArgs, fldPath.Child("apiServerExtraArgs"))...)
+	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.ControllerManagerExtraArgs, oldCluster.Spec.ControllerManagerExtraArgs, fldPath.Child("controllerManagerExtraArgs"))...)
+	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.SchedulerExtraArgs, oldCluster.Spec.SchedulerExtraArgs, fldPath.Child("schedulerExtraArgs"))...)
+	allErrs = append(allErrs, ValidateClusterScale(cluster.Cluster, oldCluster.Cluster, fldPath.Child("machines"))...)
 
 	return allErrs
 }

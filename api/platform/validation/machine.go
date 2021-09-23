@@ -44,11 +44,10 @@ func ValidateMachine(ctx context.Context, machine *platform.Machine, platformCli
 
 // ValidateMachineUpdate tests if an update to a machine is valid.
 func ValidateMachineUpdate(ctx context.Context, machine *platform.Machine, oldMachine *platform.Machine, platformClient platforminternalclient.PlatformInterface) field.ErrorList {
-	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&machine.ObjectMeta, &oldMachine.ObjectMeta, field.NewPath("metadata"))
 	fldPath := field.NewPath("spec")
+	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&machine.ObjectMeta, &oldMachine.ObjectMeta, field.NewPath("metadata"))
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.Type, oldMachine.Spec.Type, fldPath.Child("type"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.ClusterName, oldMachine.Spec.ClusterName, fldPath.Child("clusterName"))...)
-
 	allErrs = append(allErrs, ValidateMachineSpec(ctx, &machine.Spec, field.NewPath("spec"), platformClient)...)
 	p, err := machineprovider.GetProvider(machine.Spec.Type)
 	if err != nil {
