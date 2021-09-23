@@ -58,6 +58,7 @@ interface ClusterSpec {
     ipvs: boolean;
     public: boolean;
     containerRuntime?: ContainerRuntimeEnum;
+    gpuType?: string;
   };
 
   /** 集群类型 */
