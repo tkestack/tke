@@ -19,6 +19,7 @@
 package v1
 
 import (
+	"encoding/json"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -356,6 +357,26 @@ type ClusterCredential struct {
 	// For kubeadm init or join
 	// +optional
 	CertificateKey *string `json:"certificateKey,omitempty" protobuf:"bytes,14,opt,name=certificateKey"`
+	// Impersonate is the configuration that RESTClient will use for impersonation.
+	// +optional
+	Impersonate *ImpersonationConfig `json:"impersonationConfig,omitempty" protobuf:"bytes,15,opt,name=impersonationConfig"`
+}
+
+// ImpersonationConfig has all the available impersonation options
+type ImpersonationConfig struct {
+	// UserName is the username to impersonate on each request.
+	UserName string `json:"userName" protobuf:"bytes,1,opt,name=userName"`
+	// Groups are the groups to impersonate on each request.
+	Groups []string `json:"groups" protobuf:"bytes,2,opt,name=groups"`
+	// Extra is a free-form field which can be used to link some authentication information
+	// to authorization information.  This field allows you to impersonate it.
+	Extra []byte `json:"extra" protobuf:"bytes,3,opt,name=extra"`
+}
+
+func (i *ImpersonationConfig) ExtraToMap() map[string][]string {
+	res := map[string][]string{}
+	json.Unmarshal(i.Extra, &res)
+	return res
 }
 
 // +genclient:nonNamespaced

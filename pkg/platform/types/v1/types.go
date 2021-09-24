@@ -148,6 +148,12 @@ func (c *Cluster) RESTConfig(config *rest.Config) (*rest.Config, error) {
 		config.BearerToken = *c.ClusterCredential.Token
 	}
 
+	if c.ClusterCredential.Impersonate != nil {
+		config.Impersonate.UserName = c.ClusterCredential.Impersonate.UserName
+		config.Impersonate.Groups = c.ClusterCredential.Impersonate.Groups
+		config.Impersonate.Extra = c.ClusterCredential.Impersonate.ExtraToMap()
+	}
+
 	return config, nil
 }
 

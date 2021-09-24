@@ -1009,6 +1009,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.IPAMProxyOptions":                            schema_tke_api_platform_v1_IPAMProxyOptions(ref),
 		"tkestack.io/tke/api/platform/v1.IPAMSpec":                                    schema_tke_api_platform_v1_IPAMSpec(ref),
 		"tkestack.io/tke/api/platform/v1.IPAMStatus":                                  schema_tke_api_platform_v1_IPAMStatus(ref),
+		"tkestack.io/tke/api/platform/v1.ImpersonationConfig":                         schema_tke_api_platform_v1_ImpersonationConfig(ref),
 		"tkestack.io/tke/api/platform/v1.LBCF":                                        schema_tke_api_platform_v1_LBCF(ref),
 		"tkestack.io/tke/api/platform/v1.LBCFList":                                    schema_tke_api_platform_v1_LBCFList(ref),
 		"tkestack.io/tke/api/platform/v1.LBCFProxyOptions":                            schema_tke_api_platform_v1_LBCFProxyOptions(ref),
@@ -46855,12 +46856,18 @@ func schema_tke_api_platform_v1_ClusterCredential(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
+					"impersonationConfig": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Impersonate is the configuration that RESTClient will use for impersonation.",
+							Ref:         ref("tkestack.io/tke/api/platform/v1.ImpersonationConfig"),
+						},
+					},
 				},
 				Required: []string{"tenantID", "clusterName"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/platform/v1.ImpersonationConfig"},
 	}
 }
 
@@ -48802,6 +48809,48 @@ func schema_tke_api_platform_v1_IPAMStatus(ref common.ReferenceCallback) common.
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+	}
+}
+
+func schema_tke_api_platform_v1_ImpersonationConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ImpersonationConfig has all the available impersonation options",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"userName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "UserName is the username to impersonate on each request.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"groups": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Groups are the groups to impersonate on each request.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"extra": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Extra is a free-form field which can be used to link some authentication information to authorization information.  This field allows you to impersonate it.",
+							Type:        []string{"string"},
+							Format:      "byte",
+						},
+					},
+				},
+				Required: []string{"userName", "groups", "extra"},
+			},
+		},
 	}
 }
 

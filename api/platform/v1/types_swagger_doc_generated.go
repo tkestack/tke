@@ -202,14 +202,15 @@ func (ClusterCondition) SwaggerDoc() map[string]string {
 }
 
 var map_ClusterCredential = map[string]string{
-	"":               "ClusterCredential records the credential information needed to access the cluster.",
-	"etcdCACert":     "For TKE in global reuse",
-	"caCert":         "For connect the cluster",
-	"clientCert":     "For kube-apiserver X509 auth",
-	"clientKey":      "For kube-apiserver X509 auth",
-	"token":          "For kube-apiserver token auth",
-	"bootstrapToken": "For kubeadm init or join",
-	"certificateKey": "For kubeadm init or join",
+	"":                    "ClusterCredential records the credential information needed to access the cluster.",
+	"etcdCACert":          "For TKE in global reuse",
+	"caCert":              "For connect the cluster",
+	"clientCert":          "For kube-apiserver X509 auth",
+	"clientKey":           "For kube-apiserver X509 auth",
+	"token":               "For kube-apiserver token auth",
+	"bootstrapToken":      "For kubeadm init or join",
+	"certificateKey":      "For kubeadm init or join",
+	"impersonationConfig": "Impersonate is the configuration that RESTClient will use for impersonation.",
 }
 
 func (ClusterCredential) SwaggerDoc() map[string]string {
@@ -520,6 +521,17 @@ var map_IPAMStatus = map[string]string{
 
 func (IPAMStatus) SwaggerDoc() map[string]string {
 	return map_IPAMStatus
+}
+
+var map_ImpersonationConfig = map[string]string{
+	"":         "ImpersonationConfig has all the available impersonation options",
+	"userName": "UserName is the username to impersonate on each request.",
+	"groups":   "Groups are the groups to impersonate on each request.",
+	"extra":    "Extra is a free-form field which can be used to link some authentication information to authorization information.  This field allows you to impersonate it.",
+}
+
+func (ImpersonationConfig) SwaggerDoc() map[string]string {
+	return map_ImpersonationConfig
 }
 
 var map_LBCF = map[string]string{
