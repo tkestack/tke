@@ -496,6 +496,13 @@ spec:
                 - NET_ADMIN
                 - SYS_MODULE
             privileged: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              cpu: 2000m
+              memory: 2Gi
           volumeMounts:
             - mountPath: /sys/fs/bpf
               name: bpf-maps
@@ -560,7 +567,10 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 100Mi
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
       restartPolicy: Always
       priorityClassName: system-node-critical
       serviceAccount: cilium
@@ -703,6 +713,13 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 10
             timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
           volumeMounts:
             - mountPath: /tmp/cilium/config-map
               name: cilium-config-path
