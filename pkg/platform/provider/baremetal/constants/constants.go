@@ -134,6 +134,4 @@ const (
 	MinNumCPU = 2
 
 	APIServerHostName = "api.tke.com"
-
-	NeedUpgradeCoreDNSK8sVersion = "1.19.0"
 )

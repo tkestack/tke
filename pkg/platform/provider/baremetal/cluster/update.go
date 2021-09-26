@@ -20,7 +20,6 @@ package cluster
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -32,18 +31,13 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
-	"k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/client-go/kubernetes"
 	certutil "k8s.io/client-go/util/cert"
 	platformv1 "tkestack.io/tke/api/platform/v1"
-	kubeadmv1beta2 "tkestack.io/tke/pkg/platform/provider/baremetal/apis/kubeadm/v1beta2"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
-	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/log"
-	"tkestack.io/tke/pkg/util/version"
 )
 
 func (p *Provider) EnsureRenewCerts(ctx context.Context, c *v1.Cluster) error {
@@ -144,53 +138,6 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 
 func (p *Provider) EnsurePreClusterUpgradeHook(ctx context.Context, c *v1.Cluster) error {
 	return util.ExcuteCustomizedHook(ctx, c, platformv1.HookPreClusterUpgrade, c.Spec.Machines[:1])
-}
-
-func (p *Provider) EnsureUpgradeCoreDNS(ctx context.Context, c *v1.Cluster) error {
-	logger := log.FromContext(ctx).WithName("Upgrade coreDNS")
-	if version.Compare(c.Status.Version, constants.NeedUpgradeCoreDNSK8sVersion) >= 0 {
-		logger.Infof("Current k8s version is %s, skip upgrade coreDNS", c.Spec.Version)
-		return nil
-	}
-	if version.Compare(c.Spec.Version, constants.NeedUpgradeCoreDNSK8sVersion) >= 0 {
-		client, err := c.Clientset()
-		if err != nil {
-			return errors.Wrap(err, "unable to update coreDNS version")
-		}
-		err = updateCoreDNSVersion(ctx, client, images.Get().CoreDNS.Tag)
-		if err != nil {
-			return errors.Wrap(err, "unable to update coreDNS version")
-		}
-	} else {
-		logger.Infof("Target k8s version is %s, skip upgrade coreDNS", c.Spec.Version)
-	}
-	return nil
-}
-
-func updateCoreDNSVersion(ctx context.Context, client kubernetes.Interface, version string) error {
-	cm, err := client.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, "kubeadm-config", metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-	clsConfigData, err := yaml.ToJSON([]byte(cm.Data["ClusterConfiguration"]))
-	if err != nil {
-		return err
-	}
-	clsConfig := kubeadmv1beta2.ClusterConfiguration{}
-	err = json.Unmarshal(clsConfigData, &clsConfig)
-	if err != nil {
-		return err
-	}
-
-	clsConfig.DNS.ImageTag = version
-
-	clsConfigData, err = kubeadm.MarshalToYAML(&clsConfig)
-	if err != nil {
-		return err
-	}
-	cm.Data["ClusterConfiguration"] = string(clsConfigData)
-	_, err = client.CoreV1().ConfigMaps(metav1.NamespaceSystem).Update(ctx, cm, metav1.UpdateOptions{})
-	return err
 }
 
 func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Cluster) error {
