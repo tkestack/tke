@@ -135,5 +135,8 @@ const (
 
 	APIServerHostName = "api.tke.com"
 
-	NeedUpgradeCoreDNSK8sVersion = "1.19.0"
+	// include itself
+	NeedUpgradeCoreDNSLowerK8sVersion = "1.19.0"
+	// not include itself
+	NeedUpgradeCoreDNSUpperK8sVersion = "1.21.0"
 )
