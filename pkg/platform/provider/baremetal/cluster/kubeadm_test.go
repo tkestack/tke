@@ -36,35 +36,35 @@ func TestProvider_coreDNSNeedUpgrade(t *testing.T) {
 			args{
 				k8sVersion: "1.18.4",
 			},
-			false,
+			true,
 		},
 		{
 			"Test k8s 1.19",
 			args{
 				k8sVersion: "1.19.7",
 			},
-			true,
+			false,
 		},
 		{
 			"Test k8s 1.20",
 			args{
 				k8sVersion: "1.20.4-tke.1",
 			},
-			true,
+			false,
 		},
 		{
 			"Test k8s 1.21",
 			args{
 				k8sVersion: "1.21.4-tke.1",
 			},
-			false,
+			true,
 		},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := Provider{}
-			if got := p.coreDNSNeedUpgrade(tt.args.k8sVersion); got != tt.want {
+			if got := p.needSetCoreDNS(tt.args.k8sVersion); got != tt.want {
 				t.Errorf("Provider.coreDNSNeedUpgrade() = %v, want %v", got, tt.want)
 			}
 		})
