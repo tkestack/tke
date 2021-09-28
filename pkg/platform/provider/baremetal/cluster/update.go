@@ -43,7 +43,6 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/util"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/log"
-	"tkestack.io/tke/pkg/util/version"
 )
 
 func (p *Provider) EnsureRenewCerts(ctx context.Context, c *v1.Cluster) error {
@@ -148,11 +147,7 @@ func (p *Provider) EnsurePreClusterUpgradeHook(ctx context.Context, c *v1.Cluste
 
 func (p *Provider) EnsureUpgradeCoreDNS(ctx context.Context, c *v1.Cluster) error {
 	logger := log.FromContext(ctx).WithName("Upgrade coreDNS")
-	if version.Compare(c.Status.Version, constants.NeedUpgradeCoreDNSK8sVersion) >= 0 {
-		logger.Infof("Current k8s version is %s, skip upgrade coreDNS", c.Spec.Version)
-		return nil
-	}
-	if version.Compare(c.Spec.Version, constants.NeedUpgradeCoreDNSK8sVersion) >= 0 {
+	if p.needSetCoreDNS(c.Spec.Version) {
 		client, err := c.Clientset()
 		if err != nil {
 			return errors.Wrap(err, "unable to update coreDNS version")

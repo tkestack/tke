@@ -183,8 +183,8 @@ function start_installer() {
 
 function start_registry() {
   echo "Step.6 start regisry [in process]"
-  result=$(echo $@ | grep "\-\-upgrade")
-  if [[ "$result" != "" ]];then
+  checkupgrade="--upgrade"
+  if [[ $@ =~ $checkupgrade ]]; then
     echo "Step.6 upgrade will not start local registry"
     echo "Step.6 start registry [skip]"
   else

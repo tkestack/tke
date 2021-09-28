@@ -303,7 +303,7 @@ func (c *Controller) cronHPAReinitialize(ctx context.Context, key string, cached
 func (c *Controller) createCronHPAIfNeeded(ctx context.Context, key string, cachedCronHPA *cachedCronHPA, cronHPA *v1.CronHPA) error {
 	switch cronHPA.Status.Phase {
 	case v1.AddonPhaseInitializing:
-		log.Error("CronHPA will be created", log.String("CronHPA", key))
+		log.Info("CronHPA will be created", log.String("CronHPA", key))
 		err := c.installCronHPA(ctx, cronHPA)
 		if err == nil {
 			cronHPA = cronHPA.DeepCopy()
