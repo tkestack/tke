@@ -22,11 +22,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"tkestack.io/tke/api/registry"
 	registryv1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/pkg/registry/chartmuseum/model"
@@ -183,10 +185,15 @@ func (a *authorization) afterAPICreateChart(ctx context.Context, chartGroup *reg
 		AppVersion:  chartMeta.AppVersion,
 		Icon:        chartMeta.Icon,
 	}
+	keywords := make(map[string]string)
+	for _, key := range chartMeta.Keywords {
+		keywords[strings.Replace(key, " ", "-", -1)] = ""
+	}
 	if len(chartList.Items) == 0 {
 		if _, err := a.registryClient.Charts(chartGroup.ObjectMeta.Name).Create(ctx, &registry.Chart{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: chartGroup.ObjectMeta.Name,
+				Labels:    keywords,
 			},
 			Spec: registry.ChartSpec{
 				Name:           chartMeta.Name,
