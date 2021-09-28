@@ -67,11 +67,11 @@ GPU-Manager 包含如下功能:
 
 ![image-20201001153047837](../../../docs/images/image-20201001153047837.png)
 
-#### 通过 YAML 使用
+#### 创建使用GPU的Pod
 
 如果使用 YAML 创建使用 GPU 的工作负载，提交的时候需要在 YAML 为容器设置 GPU 的使用资源。
 
-* CPU 资源需要在 resource 上填写`tencent.com/vcuda-core` 
+* CPU 资源需要在 resource 上填写`tencent.com/vcuda-core`
 * 显存资源需要在 resource 上填写`tencent.com/vcuda-memory`
 
 例1：使用1张卡的 Pod
@@ -90,7 +90,7 @@ spec:
     - name: gpu
 
       resources:
-        limits: 
+        limits:
           tencent.com/vcuda-core: 100
         requests:
           tencent.com/vcuda-core: 100
@@ -100,17 +100,14 @@ spec:
 
 ```
 apiVersion: v1
-
 kind: Pod
-
-...
-
+metadata:
+  name: nginx
 spec:
-
   containers:
-
-  - name: gpu
-
+  - name: nginx
+    image: nginx
+    imagePullPolicy: IfNotPresent
     resources:
       limits:
         tencent.com/vcuda-core: 30
@@ -118,6 +115,24 @@ spec:
       requests:
         tencent.com/vcuda-core: 30
         tencent.com/vcuda-memory: 20
+```
+
+如果pod在创建过程中出现`CrashLoopBackOff `的状态，且error log如下所示：
+```
+failed to create containerd task: OCI runtime create failed: container_linux.go:380: starting container process caused: process_linux.go:545: container init caused: Running hook #0:: error running hook: exit status 1, stdout: , stderr: nvidia-container-cli: mount error: open failed: /sys/fs/cgroup/devices/system.slice/containerd.service/kubepods-besteffort-podfd3b355a_665c_4c95_8e7f_61fd2111689f.slice/devices.allow: no such file or directory: unknown
+```
+需要在GPU主机上手动安装`libnvidia-container-tools`这个组件，首先需要添加repo源：[添加repo源](https://nvidia.github.io/libnvidia-container/)，
+添加repo源后执行如下命令：
+```
+yum install libnvidia-container-tools
+```
+如果pod在创建过程中出现如下error log：
+```
+failed to generate spec: lstat /dev/nvidia-uvm: no such file or directory
+```
+需要在pod所在的主机上手动mount这个设备文件：
+```
+nvidia-modprobe -u -c=0
 ```
 
 ## GPU 监控数据查询
@@ -143,4 +158,4 @@ curl http://127.0.0.1:5678/metric
 
 ![img](../../../docs/images/gpu-metric-result.png)
 
-GPUManager 项目请参考：[GPUManager Repository ](https://github.com/tkestack/gpu-manager) 
+GPUManager 项目请参考：[GPUManager Repository ](https://github.com/tkestack/gpu-manager)
