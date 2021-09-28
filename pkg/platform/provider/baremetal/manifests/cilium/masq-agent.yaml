@@ -26,7 +26,13 @@ spec:
         - image: {{ .MasqImage }}
           imagePullPolicy: IfNotPresent
           name: ip-masq-agent
-          resources: {}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
           securityContext:
             privileged: true
           terminationMessagePath: /dev/termination-log
