@@ -350,6 +350,23 @@ type ClusterCredential struct {
 	// For kubeadm init or join
 	// +optional
 	CertificateKey *string
+	// Impersonate is the configuration that RESTClient will use for impersonation.
+	// +optional
+	Impersonate *ImpersonationConfig
+}
+
+// ImpersonationConfig has all the available impersonation options
+type ImpersonationConfig struct {
+	// UserName is the username to impersonate on each request.
+	// +optional
+	UserName string
+	// Groups are the groups to impersonate on each request.
+	// +optional
+	Groups []string
+	// Extra is a free-form field which can be used to link some authentication information
+	// to authorization information.  This field allows you to impersonate it.
+	// +optional
+	Extra string
 }
 
 // +genclient:nonNamespaced
