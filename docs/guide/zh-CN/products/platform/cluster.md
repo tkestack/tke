@@ -31,41 +31,41 @@ TKEStack还可以另外**新建独立集群**以及**导入已有集群**实现*
      ![企业微信截图_ac96f3e1-bec5-47bf-92dc-114dda837bc0](../../../../images/企业微信截图_ac96f3e1-bec5-47bf-92dc-114dda837bc0-4564372.png)
 
    + **高可用类型** ：高可用 VIP 地址（**按需使用**）
-   
+
      > 注意：如果使用高可用，至少需要三个 master 节点才可组成高可用集群，否则会出现 ***脑裂*** 现象。
-   
+
      - **不设置**：第一台 master 节点的 IP 地址作为 APIServer 地址
   - **TKE 提供**：用户只需提供高可用的 IP 地址。TKE 部署 Keepalive，配置该 IP 为 Global 集群所有 Master 节点的VIP，以实现 Global 集群和控制台的高可用，此时该 VIP 和所有 Master 节点 IP 地址都是 APIServer 地址
      - **使用已有**：对接配置好的外部 LB 实例。VIP 绑定 Global 集群所有 Master 节点的 80（TKEStack 控制台）、443（TKEStack 控制台）、6443（kube-apiserver 端口）、31138（tke-auth-api 端口）端口，同时确保该 VIP 有至少两个 LB 后端（Master 节点），以避免 LB 单后端不可用风险
-   
+
    + **GPU**：选择是否安装 GPU 相关依赖。（**按需使用**）
-     
+
      > 注意：使用 GPU 首先确保节点有物理 GPU 卡，选择 GPU 类型后，平台将自动为节点安装相应的 GPU 驱动和运行时工具
-     
-     + **pGPU**：平台会自动为集群安装 [GPUManager](https://github.com/tkestack/docs/blob/master/features/gpumanager.md) 扩展组件，此时可以给负载分配任意整数张卡
-     + **vGPU**：平台会自动为集群安装 [Nvidia-k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin)，此时GPU可以被虚拟化，可以给负载分配非整数张GPU卡，例如可以给一个负载分配0.3个GPU
-     
+
+     + **vGPU**：平台会自动为集群安装 [GPUManager](https://github.com/tkestack/docs/blob/master/features/gpumanager.md) 扩展组件，此时GPU可以被虚拟化，可以给负载分配非整数张GPU卡，例如可以给一个负载分配0.3个GPU
+     + **pGPU**：平台会自动为集群安装 [Nvidia-k8s-device-plugin](https://github.com/NVIDIA/k8s-device-plugin)，此时可以给负载分配任意整数张卡
+
    + **容器网络** ：将为集群内容器分配在容器网络地址范围内的 IP 地址，您可以自定义三大私有网段作为容器网络， 根据您选择的集群内服务数量的上限，自动分配适当大小的 CIDR 段用于 kubernetes service；根据您选择 Pod 数量上限/节点，自动为集群内每台云服务器分配一个适当大小的网段用于该主机分配 Pod 的 IP 地址。（**建议使用默认值**）
      + **CIDR：** 集群内 Sevice、 Pod 等资源所在网段，注意：CIDR不能与目标机器IP段重叠， 否则会造成初始化失败
      + **Pod数量上限/节点：** 决定分配给每个 Node 的 CIDR 的大小
      + **Service数量上限/集群**：决定分配给 Sevice 的 CIDR 大小
-     
+
    + **Master** ：输入目标机器信息后单击保存，**若保存按钮是灰色，单击网页空白处即可变蓝**
-     
+
      > 注意：如果在之前选择了高可用，至少需要三个 master 节点才可组成高可用集群，否则会出现 ***脑裂*** 现象。
-     
+
      + **目标机器**：Master 节点**内网 IP**，请配置**至少 8 Cores & 16G 内存** 及以上的机型，**否则会部署失败**。注意：如上图所示，如果节点密码一样，这里可以通过英文的分号“;”分隔多个 IP 地址实现快速添加多个节点
      + **SSH 端口**： 请确保目标机器安全组开放 22 端口和 ICMP 协议，否则无法远程登录和 ping 通云服务器。（**建议使用默认值22**）
      + **主机label**：给主机设置 Label,可用于指定容器调度。（**按需使用**）
      +  **认证方式**：连接目标机器的方式
-        
+
         +  **密码认证**：
            +  **密码**：目标机器密码
         +  **密钥认证**：
            +  **密码**：目标机器密码
            +  **证书**：目标机器登陆证书
      + **GPU**： 使用 GPU 机器需提前安装驱动和 runtime。（**按需使用**）
-       
+
        > **添加机器**：可以通过节点下面的**【添加】**蓝色字体增加不同密码的master节点（**按需添加**）
 5. **提交**： 集群信息填写完毕后，【提交】按钮变为可提交状态，单击即可提交。
 
@@ -77,21 +77,21 @@ TKEStack还可以另外**新建独立集群**以及**导入已有集群**实现*
 
 3. 在“集群管理”页面，单击【导入集群】，如下图所示：
    ![导入集群](../../../../images/importCluster-1.png)
-   
+
 4. 在“导入集群”页面，填写被导入的集群信息，如下图所示：
    ![导入集群信息](../../../../images/importCluster-2.png)
-   
+
    - **名称**： 被导入集群的名称，最长60字符
-   
+
    - **API Server**： 被导入集群的 API Server 的域名或 IP 地址
-   
+
    - **CertFile**： 输入被导入集群的 CertFile 文件内容
-   
+
    - **Token**： 输入被导入集群创建时的 token 值
-   
+
      > 注意：若不清楚集群的这些信息如何获取，可以参照下面导入 TKE/ACK/RKE 的方式导入自己的集群。
-   
-5. 单击最下方 【提交】 按钮 
+
+5. 单击最下方 【提交】 按钮
 
 #### TKEStack 导入腾讯的 TKE 集群
 
@@ -147,7 +147,7 @@ TKEStack还可以另外**新建独立集群**以及**导入已有集群**实现*
       Type:  kubernetes.io/service-account-token
       token:            非常长的字符串
       ```
-   
+
 
 #### TKEStack 中导入 Rancher 的 RKE 集群
 
