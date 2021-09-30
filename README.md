@@ -69,6 +69,10 @@
 > If you encounter problems during installation, you can refer to [FAQ installation](docs/guide/zh-CN/FAQ/Installation).
 
 
+### Upgrade
+
+If you want to upgrade your TKEStack, please check [Upgrade TKEStack with tke-installer](https://tkestack.github.io/web/blog/2021/09/30/upgrade-tkestack/).
+
 ## Using
 
 [TKEStack Documentation ](https://tkestack.github.io/docs/)
