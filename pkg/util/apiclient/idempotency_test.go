@@ -31,6 +31,7 @@ import (
 )
 
 func TestCreateOrUpdateNamespace(t *testing.T) {
+	t.Skip("TODO")
 	cfg, err := clientcmd.BuildConfigFromFlags("", "/Users/chenglong/.kube/config")
 	assert.Nil(t, err)
 	client := kubernetes.NewForConfigOrDie(cfg)
