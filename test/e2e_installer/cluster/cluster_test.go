@@ -149,4 +149,67 @@ var _ = Describe("cluster", func() {
 		Expect(err).Should(BeNil(), "Cluster downscale failed")
 		Expect(cls.Spec.Machines).Should(HaveLen(1), "Cluster node num is wrong")
 	})
+
+	It("Cluster bootstrap application", func() {
+		nodes, err := provider.CreateInstances(1)
+		Expect(err).Should(BeNil(), "Create instances failed")
+
+		cls = testTKE.ClusterTemplate(nodes[0])
+		cls.Spec.BootstrapApps = []platformv1.BootstrapApp{
+			{
+				App: platformv1.App{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "kube-system",
+					},
+					Spec: v1.AppSpec{
+						Type:            "HelmV3",
+						TenantID:        "default",
+						Name:            "demo1",
+						TargetCluster:   "",
+						TargetNamespace: "",
+						Chart: v1.Chart{
+							ChartName:      "tke-resilience",
+							ChartGroupName: "public",
+							ChartVersion:   "1.0.0",
+							TenantID:       "default",
+						},
+						Values: v1.AppValues{
+							RawValues: "key2: val2-override",
+						},
+					},
+				},
+			},
+			{
+				App: platformv1.App{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "kube-public",
+					},
+					Spec: v1.AppSpec{
+						Name:            "demo2",
+						Type:            "HelmV3",
+						TenantID:        "default",
+						TargetCluster:   "",
+						TargetNamespace: "kube-public",
+						Chart: v1.Chart{
+							ChartName:      "tke-resilience",
+							ChartGroupName: "public",
+							ChartVersion:   "1.0.0",
+							TenantID:       "default",
+						},
+						Values: v1.AppValues{
+							RawValues: "key2: val2-override",
+						},
+					},
+				},
+			},
+		}
+		cls, err = testTKE.CreateClusterInternal(cls)
+		Expect(err).To(BeNil(), "Create cluster failed")
+
+		By("验证bootstrap app已创建")
+		_, err = testTKE.TkeClient.ApplicationV1().Apps("kube-system").Get(context.Background(), "bootstrapapp-kube-system-demo1", metav1.GetOptions{})
+		Ω(err).Should(BeNil())
+		_, err = testTKE.TkeClient.ApplicationV1().Apps("kube-public").Get(context.Background(), "bootstrapapp-kube-public-demo2", metav1.GetOptions{})
+		Ω(err).Should(BeNil())
+	})
 })

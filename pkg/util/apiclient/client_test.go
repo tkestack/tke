@@ -30,6 +30,7 @@ import (
 )
 
 func TestPullImageWithPod(t *testing.T) {
+	t.Skip("TODO")
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test",
