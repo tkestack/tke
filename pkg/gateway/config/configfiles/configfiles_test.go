@@ -213,9 +213,9 @@ func TestResolveRelativePaths(t *testing.T) {
 	}
 }
 
-func newString(s string) *string {
-	return &s
-}
+//func newString(s string) *string {
+//	return &s
+//}
 
 func addFile(fs utilfs.Filesystem, path string, file string) error {
 	if err := utilfiles.EnsureDir(fs, filepath.Dir(path)); err != nil {
