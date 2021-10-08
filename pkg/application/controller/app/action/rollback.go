@@ -37,6 +37,11 @@ func Rollback(ctx context.Context,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
 	updateStatusFunc updateStatusFunc) (*applicationv1.App, error) {
+	hooks := getHooks(app)
+	err := hooks.PreRollback(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	if err != nil {
+		return nil, err
+	}
 	client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
 	if err != nil {
 		return nil, err
@@ -49,6 +54,7 @@ func Rollback(ctx context.Context,
 	})
 	if updateStatusFunc != nil {
 		newStatus := app.Status.DeepCopy()
+		var updateStatusErr error
 		if err != nil {
 			newStatus.Phase = applicationv1.AppPhaseRollbackFailed
 			newStatus.Message = "rollback app failed"
@@ -61,7 +67,14 @@ func Rollback(ctx context.Context,
 			newStatus.LastTransitionTime = metav1.Now()
 			newStatus.RollbackRevision = 0 // clean revision
 		}
-		return updateStatusFunc(ctx, app, &app.Status, newStatus)
+		app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
+		if updateStatusErr != nil {
+			return app, updateStatusErr
+		}
 	}
+	if err != nil {
+		return app, err
+	}
+	err = hooks.PostRollback(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 	return app, err
 }

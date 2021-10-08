@@ -39,6 +39,11 @@ func Install(ctx context.Context,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
 	updateStatusFunc updateStatusFunc) (*applicationv1.App, error) {
+	hooks := getHooks(app)
+	err := hooks.PreInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	if err != nil {
+		return nil, err
+	}
 	client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
 	if err != nil {
 		return nil, err
@@ -73,6 +78,7 @@ func Install(ctx context.Context,
 	})
 	if updateStatusFunc != nil {
 		newStatus := newApp.Status.DeepCopy()
+		var updateStatusErr error
 		if err != nil {
 			newStatus.Phase = applicationv1.AppPhaseFailed
 			newStatus.Message = "install app failed"
@@ -84,7 +90,14 @@ func Install(ctx context.Context,
 			newStatus.Reason = ""
 			newStatus.LastTransitionTime = metav1.Now()
 		}
-		return updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
+		newApp, updateStatusErr = updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
+		if updateStatusErr != nil {
+			return newApp, updateStatusErr
+		}
 	}
+	if err != nil {
+		return newApp, err
+	}
+	err = hooks.PostInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 	return newApp, err
 }
