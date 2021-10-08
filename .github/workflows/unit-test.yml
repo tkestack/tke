@@ -13,6 +13,8 @@ jobs:
     name: unit test
     runs-on: self-hosted
     steps:
+      - name: checkout
+        uses: actions/checkout@v2
       - name: unit test
         run: |
           ginkgo -r -nodes=5 -v pkg
