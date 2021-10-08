@@ -90,6 +90,7 @@ func (o *AuthorizationOptions) ApplyFlags() []error {
 	o.AllowCacheTTL = viper.GetDuration(configAuthzWebhookCacheAuthorizedTTL)
 	o.DenyCacheTTL = viper.GetDuration(configAuthzWebhookCacheUnauthorizedTTL)
 	o.WebhookConfigFile = viper.GetString(configAuthzWebhookConfigFile)
+	o.Modes = viper.GetStringSlice(configAuthzMode)
 
 	if len(o.Modes) == 0 {
 		return errs
