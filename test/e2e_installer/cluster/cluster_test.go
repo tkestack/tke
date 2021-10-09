@@ -20,6 +20,8 @@ package cluster_test
 
 import (
 	"context"
+	"fmt"
+	"k8s.io/klog"
 	"os"
 	"time"
 	v1 "tkestack.io/tke/api/application/v1"
@@ -209,13 +211,28 @@ var _ = Describe("cluster", func() {
 		Expect(err).To(BeNil(), "Create cluster failed")
 
 		By("验证bootstrap app已创建")
+		verifyApp := func(namespace, appName string) error {
+			apps, err := testTKE.TkeClient.ApplicationV1().Apps(namespace).List(context.Background(), metav1.ListOptions{})
+			if err != nil {
+				return fmt.Errorf("list apps in namespace %v failed", namespace)
+			}
+			klog.Infof("Apps in %v: %v", namespace, len(apps.Items))
+			for _, app := range apps.Items {
+				klog.Info(app.Name)
+			}
+			appFullName := fmt.Sprintf("bootstrapapp-%v-%v", namespace, appName)
+			_, err = testTKE.TkeClient.ApplicationV1().Apps(namespace).Get(context.Background(), appFullName, metav1.GetOptions{})
+			if err != nil {
+				err = fmt.Errorf("get app %v failed", appFullName)
+			}
+			return err
+		}
 		Eventually(func() error {
-			_, err = testTKE.TkeClient.ApplicationV1().Apps("kube-system").Get(context.Background(), "bootstrapapp-kube-system-demo1", metav1.GetOptions{})
+			err = verifyApp("kube-system", "demo1")
 			if err != nil {
 				return err
 			}
-			_, err = testTKE.TkeClient.ApplicationV1().Apps("kube-public").Get(context.Background(), "bootstrapapp-kube-public-demo2", metav1.GetOptions{})
-			return err
+			return verifyApp("kube-public", "demo2")
 		}, time.Minute, time.Second).Should(BeNil())
 	})
 })
