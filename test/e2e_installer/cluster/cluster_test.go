@@ -21,6 +21,7 @@ package cluster_test
 import (
 	"context"
 	"os"
+	"time"
 	v1 "tkestack.io/tke/api/application/v1"
 
 	. "github.com/onsi/ginkgo"
@@ -208,9 +209,13 @@ var _ = Describe("cluster", func() {
 		Expect(err).To(BeNil(), "Create cluster failed")
 
 		By("验证bootstrap app已创建")
-		_, err = testTKE.TkeClient.ApplicationV1().Apps("kube-system").Get(context.Background(), "bootstrapapp-kube-system-demo1", metav1.GetOptions{})
-		Ω(err).Should(BeNil())
-		_, err = testTKE.TkeClient.ApplicationV1().Apps("kube-public").Get(context.Background(), "bootstrapapp-kube-public-demo2", metav1.GetOptions{})
-		Ω(err).Should(BeNil())
+		Eventually(func() error {
+			_, err = testTKE.TkeClient.ApplicationV1().Apps("kube-system").Get(context.Background(), "bootstrapapp-kube-system-demo1", metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			_, err = testTKE.TkeClient.ApplicationV1().Apps("kube-public").Get(context.Background(), "bootstrapapp-kube-public-demo2", metav1.GetOptions{})
+			return err
+		}, time.Minute, time.Second).Should(BeNil())
 	})
 })
