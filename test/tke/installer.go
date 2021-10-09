@@ -86,6 +86,9 @@ func (installer *Installer) CreateClusterParaTemplate(nodes []cloudprovider.Inst
 				SelfSignedCert: &types.SelfSignedCert{},
 			},
 		},
+		Application: &types.Application{
+			RegistryDomain: "registry.tke.com",
+		},
 	}
 	return para
 }
