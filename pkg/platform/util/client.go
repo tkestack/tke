@@ -112,6 +112,8 @@ func ResourceFromKind(kind string) string {
 		return "podsecuritypolicies"
 	case "priorityclass":
 		return "priorityclasses"
+	case "endpoints":
+		return "endpoints"
 	default:
 		return kindLower + "s"
 	}
