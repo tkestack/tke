@@ -97,3 +97,13 @@ docker rm -f $(docker ps -q -f label=io.kubernetes.container.name=etcd)
 
 echo | openssl s_client -showcerts -connect 127.0.0.1:6443 -servername api 2>/dev/null | openssl x509 -noout -enddate
 ```
+
+如果你更新的集群是TKEStack的global集群，为了保证TKEStack系统组件正常工作还需要更新`tke namespace`下的`certs configmap`里的`etcd.crt`和`etcd.key`:
+
+```sh
+# 执行更新操作前请先做备份
+kubectl get -n tke cm certs -o yaml > certs.bak.yaml
+# 使用/etc/kubernetes/pki/apiserver-etcd-client.crt /etc/kubernetes/pki/apiserver-etcd-client.key的内容
+# 替换configmap data中的etcd.crt和etcd.key下的内容
+kubectl edit -n tke cm certs -o yaml
+```
