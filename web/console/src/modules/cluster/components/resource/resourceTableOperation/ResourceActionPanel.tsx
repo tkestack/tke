@@ -1,3 +1,20 @@
+/*
+ * Tencent is pleased to support the open source community by making TKEStack
+ * available.
+ *
+ * Copyright (C) 2012-2021 Tencent. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of the
+ * License at
+ *
+ * https://opensource.org/licenses/Apache-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 import * as React from 'react';
 import { connect } from 'react-redux';
 
@@ -12,7 +29,8 @@ import {
   TagSearchBox,
   Text,
   Tooltip,
-  AttributeValue
+  AttributeValue,
+  Bubble
 } from 'tea-component';
 // import { TagSearchBox } from '../../../../common/components/tagsearchbox';
 import { bindActionCreators, FetchState, insertCSS } from '@tencent/ff-redux';
@@ -147,15 +165,20 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
   }
 
   private _renderMonitorButton() {
+    const disabled = !this?.props?.cluster?.selection?.spec?.promethus;
+
     return (
-      <Button
-        type="primary"
-        onClick={() => {
-          this._handleMonitor();
-        }}
-      >
-        {t('监控')}
-      </Button>
+      <Bubble content={disabled ? t('监控组件尚未安装！') : ''}>
+        <Button
+          type="primary"
+          disabled={disabled}
+          onClick={() => {
+            !disabled && this._handleMonitor();
+          }}
+        >
+          {t('监控')}
+        </Button>
+      </Bubble>
     );
   }
 
@@ -319,18 +342,22 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
 
   /** 搜索框的操作，不同的搜索进行相对应的操作 */
   private _handleClickForTagSearch(tags) {
+    const finalTags = tags.filter(({ attr }) => attr);
+
+    if (finalTags.length <= 0) return;
+
     const { actions, subRoot } = this.props,
       { resourceOption } = subRoot,
       { ffResourceList } = resourceOption;
 
     // 这里是控制tagSearch的展示
     this.setState({
-      searchBoxValues: tags,
-      searchBoxLength: tags.length
+      searchBoxValues: finalTags,
+      searchBoxLength: finalTags.length
     });
 
-    const resourceName = tags.find(({ attr: { key } }) => key === 'resourceName')?.values?.[0]?.name ?? '';
-    const labelSelector = tags.find(({ attr: { key } }) => key === 'labelSelector')?.values?.[0]?.name;
+    const resourceName = finalTags.find(({ attr: { key } }) => key === 'resourceName')?.values?.[0]?.name ?? '';
+    const labelSelector = finalTags.find(({ attr: { key } }) => key === 'labelSelector')?.values?.[0]?.name;
 
     actions.resource.changeFilter({ labelSelector });
     actions.resource.changeKeyword(resourceName);

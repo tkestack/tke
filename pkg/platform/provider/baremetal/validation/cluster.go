@@ -24,6 +24,7 @@ import (
 	"net"
 	"strings"
 
+	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -38,6 +39,7 @@ import (
 	vendor "tkestack.io/tke/pkg/platform/util/kubevendor"
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/ipallocator"
+	"tkestack.io/tke/pkg/util/log"
 	utilmath "tkestack.io/tke/pkg/util/math"
 	"tkestack.io/tke/pkg/util/ssh"
 	"tkestack.io/tke/pkg/util/validation"
@@ -193,15 +195,26 @@ func ValidateMasterTimeOffset(fldPath *field.Path, masters []*ssh.SSH) field.Err
 }
 
 func getK8sValidVersions(platformClient platformv1client.PlatformV1Interface, clsName string) (validVersions []string, err error) {
-	k8sValidVersions := []string{}
 	if clsName == "global" || platformClient == nil {
 		return spec.K8sVersions, nil
 	}
-	client, err := util.BuildExternalClientSetWithName(context.Background(), platformClient, "global")
+
+	cluster, err := platformClient.Clusters().Get(context.Background(), "global", metav1.GetOptions{})
 	if err != nil {
-		return k8sValidVersions, err
+		if k8serror.IsNotFound(err) {
+			log.Warnf("global cluster is not exist")
+
+			return spec.K8sVersions, nil
+		}
+		return nil, err
 	}
-	_, k8sValidVersions, err = util.GetPlatformVersionsFromClusterInfo(context.Background(), client)
+
+	client, err := util.BuildExternalClientSet(context.Background(), cluster, platformClient)
+	if err != nil {
+		return nil, err
+	}
+
+	_, k8sValidVersions, err := util.GetPlatformVersionsFromClusterInfo(context.Background(), client)
 
 	return k8sValidVersions, err
 }

@@ -1,3 +1,20 @@
+/*
+ * Tencent is pleased to support the open source community by making TKEStack
+ * available.
+ *
+ * Copyright (C) 2012-2021 Tencent. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of the
+ * License at
+ *
+ * https://opensource.org/licenses/Apache-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { WorkflowDialog } from 'src/modules/common';
@@ -107,19 +124,24 @@ export class ComputerActionPanel extends React.Component<RootProps, State> {
     const disableAddNode = cluster.selection && cluster.selection.spec.type === 'Imported';
 
     let monitorButton = null;
+
+    const disabledMonitorButton = !computer.list.data.records.length || !cluster?.selection?.spec?.promethus;
+
     monitorButton = (
-      <Button
-        type="primary"
-        disabled={!computer.list.data.records.length}
-        onClick={() => {
-          if (!computer.list.data.records.length) {
-            return;
-          }
-          this._handleMonitor('nodeMonitor', '');
-        }}
-      >
-        {t('监控')}
-      </Button>
+      <Bubble content={disabledMonitorButton ? t('监控组件尚未安装！') : ''}>
+        <Button
+          type="primary"
+          disabled={disabledMonitorButton}
+          onClick={() => {
+            if (disabledMonitorButton) {
+              return;
+            }
+            this._handleMonitor('nodeMonitor', '');
+          }}
+        >
+          {t('监控')}
+        </Button>
+      </Bubble>
     );
     return (
       <Table.ActionPanel>

@@ -66,6 +66,8 @@ type ControllerProvider interface {
 	Setup() error
 	// Teardown called by controller for plugin do some clean job.
 	Teardown() error
+	// NeedUpdate could be implemented by user to judge whether cluster need update or not.
+	NeedUpdate(old, new *platformv1.Cluster) bool
 
 	OnCreate(ctx context.Context, cluster *v1.Cluster) error
 	OnUpdate(ctx context.Context, cluster *v1.Cluster) error
@@ -347,6 +349,10 @@ func (p *DelegateProvider) OnRunning(ctx context.Context, cluster *v1.Cluster) e
 
 func (p *DelegateProvider) OnFilter(ctx context.Context, cluster *platformv1.Cluster) (pass bool) {
 	return true
+}
+
+func (p *DelegateProvider) NeedUpdate(old, new *platformv1.Cluster) bool {
+	return false
 }
 
 func (p *DelegateProvider) getNextConditionType(conditionType string, handlers []Handler) string {

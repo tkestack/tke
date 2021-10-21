@@ -26,8 +26,14 @@ COPY linux-arm64/cni-*.tar.gz          res/linux-arm64/
 COPY linux-amd64/conntrack-tools-*.tar.gz          res/linux-amd64/
 COPY linux-arm64/conntrack-tools-*.tar.gz          res/linux-arm64/
 
+COPY linux-amd64/nerdctl-*.tar.gz res/linux-amd64/
+COPY linux-arm64/nerdctl-*.tar.gz res/linux-arm64/
+
 COPY linux-amd64/docker-*.tar.gz       res/linux-amd64/
 COPY linux-arm64/docker-*.tar.gz       res/linux-arm64/
+
+COPY linux-amd64/containerd-*.tar.gz       res/linux-amd64/
+COPY linux-arm64/containerd-*.tar.gz       res/linux-arm64/
 
 COPY linux-amd64/kubernetes-*.tar.gz   res/linux-amd64/
 COPY linux-arm64/kubernetes-*.tar.gz   res/linux-arm64/
@@ -35,5 +41,10 @@ COPY linux-arm64/kubernetes-*.tar.gz   res/linux-arm64/
 COPY linux-amd64/NVIDIA-*.tar.gz       res/linux-amd64/
 
 COPY linux-amd64/nvidia-container-*.tar.gz res/linux-amd64/
+
+COPY containerd/* res/containerd/
+COPY gpu-manager/* res/gpu-manager/
+
+COPY cilium* res/cilium/
 
 ENTRYPOINT ["sh"]

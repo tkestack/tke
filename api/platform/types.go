@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 )
 
 // +genclient
@@ -150,6 +151,9 @@ type ClusterSpec struct {
 	HostnameAsNodename bool
 	// +optional
 	NetworkArgs map[string]string
+	// BootstrapApps will install apps during creating cluster
+	// +optional
+	BootstrapApps BootstrapApps
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -225,6 +229,13 @@ const (
 	GPUPhysical GPUType = "Physical"
 	// GPUVirtual indicates the gpu type of cluster is virtual.
 	GPUVirtual GPUType = "Virtual"
+)
+
+type ContainerRuntimeType = string
+
+const (
+	Containerd ContainerRuntimeType = "containerd"
+	Docker     ContainerRuntimeType = "docker"
 )
 
 // ClusterPhase defines the phase of cluster constructor.
@@ -383,11 +394,26 @@ type ClusterFeature struct {
 	EnableMetricsServer bool
 	// +optional
 	EnableCilium bool
+
+	ContainerRuntime ContainerRuntimeType
 	// +optional
 	IPv6DualStack bool
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade
+}
+
+type BootstrapApps []BootstapApp
+
+type BootstapApp struct {
+	App App
+}
+
+type App struct {
+	// +optional
+	metav1.ObjectMeta
+	// +optional
+	Spec applicationv1.AppSpec
 }
 
 type HA struct {
@@ -662,6 +688,7 @@ type ClusterAddonTypeList struct {
 	Items []ClusterAddonType
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ClusterApplyOptions is the query options to a kube-apiserver proxy call for cluster object.
@@ -968,6 +995,7 @@ const (
 	AddonPhaseUnknown AddonPhase = "Unknown"
 )
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // IPAMProxyOptions is the query options to a Helm-api proxy call.
@@ -1165,6 +1193,7 @@ type TappControllerStatus struct {
 	LastReInitializingTimestamp metav1.Time
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CSIProxyOptions is the query options to a kube-apiserver proxy call for CSI crd object.
@@ -1235,6 +1264,7 @@ type CSIOperatorStatus struct {
 	LastReInitializingTimestamp metav1.Time
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // PVCRProxyOptions is the query options to a kube-apiserver proxy call for PVCR crd object.
@@ -1312,6 +1342,7 @@ type VolumeDecoratorStatus struct {
 	LastReInitializingTimestamp metav1.Time
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // LogCollectorProxyOptions is the query options to a kube-apiserver proxy call for LogCollector crd object.
@@ -1605,6 +1636,7 @@ type CronHPAStatus struct {
 	LastReInitializingTimestamp metav1.Time
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // LBCFProxyOptions is the query options to a kube-apiserver proxy call.
@@ -1670,4 +1702,67 @@ type LBCFList struct {
 
 	// List of CronHPAs
 	Items []LBCF
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterGroupAPIResourceItemsList is the whole list of all ClusterAPIResource.
+type ClusterGroupAPIResourceItemsList struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ListMeta
+	// List of ClusterAPIResource
+	Items []ClusterGroupAPIResourceItems
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:onlyVerbs=list,get
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterGroupAPIResourceItems contains the GKV for the current kubernetes cluster
+type ClusterGroupAPIResourceItems struct {
+	metav1.TypeMeta
+	// +optional
+	metav1.ObjectMeta
+	// groupVersion is the group and version this APIResourceList is for.
+	GroupVersion string
+	// resources contains the name of the resources and if they are namespaced.
+	APIResources []ClusterGroupAPIResourceItem
+}
+
+// ClusterGroupAPIResourceItem specifies the name of a resource and whether it is namespaced.
+type ClusterGroupAPIResourceItem struct {
+	// name is the plural name of the resource.
+	Name string
+	// singularName is the singular name of the resource.  This allows clients to handle plural and singular opaquely.
+	// The singularName is more correct for reporting status on a single item and both singular and plural are allowed
+	// from the kubectl CLI interface.
+	SingularName string
+	// namespaced indicates if a resource is namespaced or not.
+	Namespaced bool
+	// group is the preferred group of the resource.  Empty implies the group of the containing resource list.
+	// For subresources, this may have a different value, for example: Scale".
+	Group string
+	// version is the preferred version of the resource.  Empty implies the version of the containing resource list
+	// For subresources, this may have a different value, for example: v1 (while inside a v1beta1 version of the core resource's group)".
+	Version string
+	// kind is the kind for the resource (e.g. 'Foo' is the kind for a resource 'foo')
+	Kind string
+	// verbs is a list of supported kube verbs (this includes get, list, watch, create,
+	// update, patch, delete, deletecollection, and proxy)
+	Verbs []string
+	// shortNames is a list of suggested short names of the resource.
+	ShortNames []string
+	// categories is a list of the grouped resources this resource belongs to (e.g. 'all')
+	Categories []string
+}
+
+// +k8s:conversion-gen:explicit-from=net/url.Values
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterGroupAPIResourceOptions is the query options.
+type ClusterGroupAPIResourceOptions struct {
+	metav1.TypeMeta
 }

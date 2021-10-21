@@ -1,3 +1,20 @@
+/*
+ * Tencent is pleased to support the open source community by making TKEStack
+ * available.
+ *
+ * Copyright (C) 2012-2021 Tencent. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of the
+ * License at
+ *
+ * https://opensource.org/licenses/Apache-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 import React, { useState, useEffect } from 'react';
 import { AntdLayout } from '@src/modules/common/layouts';
 import { Button, H5, Form, Select, Checkbox, InputNumber } from 'tea-component';
@@ -8,7 +25,7 @@ import { updateCluster } from '@src/webApi/cluster';
 import { useForm, Controller } from 'react-hook-form';
 import { getReactHookFormStatusWithMessage } from '@helper';
 
-export function ClusterUpdate({ route, actions }: RootProps) {
+export function ClusterUpdate({ route }: RootProps) {
   const defaultUpgradeConfig = {
     version: null,
     drainNodeBeforeUpgrade: true,
@@ -17,11 +34,13 @@ export function ClusterUpdate({ route, actions }: RootProps) {
   };
 
   const { handleSubmit, control, watch } = useForm({
-    mode: 'onBlur',
+    mode: 'onChange',
     defaultValues: defaultUpgradeConfig
   });
 
   const { clusterId, clusterVersion } = route.queries;
+
+  const [_, clusterVersionSecondPart] = clusterVersion.split('.');
 
   function goBack() {
     history.back();
@@ -69,7 +88,15 @@ export function ClusterUpdate({ route, actions }: RootProps) {
         <Controller
           control={control}
           name="version"
-          rules={{ required: '请选择将要升级的k8s版本！' }}
+          rules={{
+            required: '请选择将要升级的k8s版本！',
+            validate(value) {
+              const [__, targetSecond] = value.split('.');
+              return +targetSecond - +clusterVersionSecondPart <= 1 // 等于0 或者等于1
+                ? true
+                : '不支持直接升级到该版本！';
+            }
+          }}
           render={({ field, ...others }) => (
             <Form.Item
               label="升级目标版本"

@@ -102,7 +102,6 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 		app.Spec.TenantID = tenantID
 	}
 	app.ObjectMeta.GenerateName = "app-"
-	app.ObjectMeta.Name = ""
 	app.Generation = 1
 
 	if app.Spec.Chart.TenantID == "" {
@@ -160,6 +159,7 @@ func MatchApplication(label labels.Selector, field fields.Selector) storage.Sele
 			"spec.name",
 			"spec.type",
 			"spec.targetCluster",
+			"spec.targetNamespace",
 			"metadata.name",
 		},
 	}
@@ -169,10 +169,11 @@ func MatchApplication(label labels.Selector, field fields.Selector) storage.Sele
 func ToSelectableFields(app *application.App) fields.Set {
 	objectMetaFieldsSet := genericregistry.ObjectMetaFieldsSet(&app.ObjectMeta, false)
 	specificFieldsSet := fields.Set{
-		"spec.tenantID":      app.Spec.TenantID,
-		"spec.name":          app.Spec.Name,
-		"spec.type":          string(app.Spec.Type),
-		"spec.targetCluster": app.Spec.TargetCluster,
+		"spec.tenantID":        app.Spec.TenantID,
+		"spec.name":            app.Spec.Name,
+		"spec.type":            string(app.Spec.Type),
+		"spec.targetCluster":   app.Spec.TargetCluster,
+		"spec.targetNamespace": app.Spec.TargetNamespace,
 	}
 	return genericregistry.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }

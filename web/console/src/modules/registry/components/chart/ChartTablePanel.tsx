@@ -1,3 +1,20 @@
+/*
+ * Tencent is pleased to support the open source community by making TKEStack
+ * available.
+ *
+ * Copyright (C) 2012-2021 Tencent. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of the
+ * License at
+ *
+ * https://opensource.org/licenses/Apache-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 import * as React from 'react';
 
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
@@ -138,7 +155,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
               <p>
                 <Trans>
                   本地安装 Helm 客户端, 更多可查看{' '}
-                  <a href="https://helm.sh/docs/intro/quickstart/" target="_blank">
+                  <a href="https://helm.sh/docs/intro/quickstart/" target="_blank" rel="noreferrer">
                     安装 Helm
                   </a>
                   .{' '}
@@ -148,7 +165,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#installHelm" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="installHelm">{`$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash`}</p>
+                <p id="installHelm">{`$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | DESIRED_VERSION=v3.6.2 bash`}</p>
               </code>
             </li>
             <li>
@@ -167,7 +184,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
                   <a
                     href="javascript:;"
                     onClick={() => {
-                      let urlParams = router.resolve(this.props.route);
+                      const urlParams = router.resolve(this.props.route);
                       router.navigate(Object.assign({}, urlParams, { sub: 'apikey', mode: '', tab: '' }), {});
                     }}
                   >

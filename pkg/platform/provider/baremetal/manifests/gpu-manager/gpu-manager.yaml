@@ -98,6 +98,8 @@ spec:
               mountPath: /etc/gpu-manager/vm
             - name: log
               mountPath: /var/log/gpu-manager
+            - name: checkpoint
+              mountPath: /etc/gpu-manager/checkpoint
             - name: rundir
               mountPath: /var/run
             - name: cgroup
@@ -110,7 +112,11 @@ spec:
             - name: LOG_LEVEL
               value: "3"
             - name: EXTRA_FLAGS
-              value: "--incluster-mode=true --logtostderr"
+              {{ if eq .ContainerRuntime "docker" }}
+              value: "--logtostderr"
+              {{ else }}
+              value: "--logtostderr --container-runtime-endpoint /var/run/containerd/containerd.sock"
+              {{ end }}
             - name: NODE_NAME
               valueFrom:
                 fieldRef:
@@ -140,6 +146,10 @@ spec:
           hostPath:
             type: DirectoryOrCreate
             path: /etc/gpu-manager/log
+        - name: checkpoint
+          hostPath:
+            type: DirectoryOrCreate
+            path: /etc/gpu-manager/checkpoint
         - name: rundir
           hostPath:
             type: Directory

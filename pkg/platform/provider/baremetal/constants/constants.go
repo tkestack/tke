@@ -57,7 +57,7 @@ const (
 	DstBinDir  = "/usr/bin/"
 	CNIBinDir  = "/opt/cni/bin/"
 	CNIDataDir = "/var/lib/cni/"
-	CNIConfDIr = "/etc/cni"
+	CNIConfDIr = "/etc/cni/net.d"
 	AppCertDir = "/app/certs/"
 
 	// AppCert
@@ -115,10 +115,10 @@ const (
 	AuditPolicyConfigFile = ConfDir + AuditPolicyConfigName
 	OIDCConfigFile        = ConfDir + OIDCCACertName
 	ManifestsDir          = ProviderDir + "manifests/"
-	GPUManagerManifest    = ManifestsDir + "gpu-manager/gpu-manager.yaml"
+	GPUManagerManifest    = SrcDir + "gpu-manager/gpu-manager.yaml"
 	CSIOperatorManifest   = ManifestsDir + "csi-operator/csi-operator.yaml"
 	MetricsServerManifest = ManifestsDir + "metrics-server/metrics-server.yaml"
-	CiliumManifest        = ManifestsDir + "cilium/*.yaml"
+	CiliumManifest        = SrcDir + "cilium/*.yaml"
 
 	KUBERNETES                   = 1
 	DNSIPIndex                   = 10
@@ -135,5 +135,8 @@ const (
 
 	APIServerHostName = "api.tke.com"
 
-	NeedUpgradeCoreDNSK8sVersion = "1.19.0"
+	// include itself
+	NeedUpgradeCoreDNSLowerK8sVersion = "1.19.0"
+	// not include itself
+	NeedUpgradeCoreDNSUpperK8sVersion = "1.21.0"
 )

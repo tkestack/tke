@@ -45,6 +45,7 @@ type Storage struct {
 	Status      *StatusREST
 	Scale       *ScaleREST
 	Events      *EventREST
+	HPAs        *HPARest
 }
 
 // REST implements pkg/api/rest.StandardStorage
@@ -77,6 +78,9 @@ func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platformin
 		Events: &EventREST{
 			platformClient: platformClient,
 		},
+		HPAs: &HPARest{
+			platformClient: platformClient,
+		},
 	}
 }
 
@@ -105,6 +109,9 @@ func NewStorageV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platf
 		Events: &EventREST{
 			platformClient: platformClient,
 		},
+		HPAs: &HPARest{
+			platformClient: platformClient,
+		},
 	}
 }
 
@@ -131,6 +138,9 @@ func NewStorageV1Beta2(_ genericregistry.RESTOptionsGetter, platformClient platf
 			platformClient: platformClient,
 		},
 		Events: &EventREST{
+			platformClient: platformClient,
+		},
+		HPAs: &HPARest{
 			platformClient: platformClient,
 		},
 	}

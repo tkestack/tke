@@ -303,10 +303,15 @@ func afterCreateChart(ctx context.Context, resp *http.Response, chart *chart.Cha
 		AppVersion:  chartMeta.AppVersion,
 		Icon:        chartMeta.Icon,
 	}
+	keywords := make(map[string]string)
+	for _, key := range chartMeta.Keywords {
+		keywords[strings.Replace(key, " ", "-", -1)] = ""
+	}
 	if len(chartList.Items) == 0 {
 		if _, err := registryClient.Charts(chartGroup.ObjectMeta.Name).Create(ctx, &registry.Chart{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: chartGroup.ObjectMeta.Name,
+				Labels:    keywords,
 			},
 			Spec: registry.ChartSpec{
 				Name:           chartMeta.Name,

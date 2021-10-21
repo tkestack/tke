@@ -28,6 +28,7 @@ type Components struct {
 	ETCD               containerregistry.Image
 	CoreDNS            containerregistry.Image
 	Pause              containerregistry.Image
+	Pause4KubeadmJob   containerregistry.Image
 	NvidiaDevicePlugin containerregistry.Image
 	Keepalived         containerregistry.Image
 
@@ -55,15 +56,18 @@ func (c Components) Get(name string) *containerregistry.Image {
 	return nil
 }
 
-var kubecomponetNames = []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler", "kube-proxy"}
+var KubecomponetNames = append(KubeNodeImages, "kube-apiserver", "kube-controller-manager", "kube-scheduler", "kube-proxy")
+var KubeNodeImages = []string{"kube-proxy"}
+
 var components = Components{
 	ETCD:               containerregistry.Image{Name: "etcd", Tag: "v3.4.7"},
 	CoreDNS:            containerregistry.Image{Name: "coredns", Tag: "1.7.0"},
 	Pause:              containerregistry.Image{Name: "pause", Tag: "3.2"},
+	Pause4KubeadmJob:   containerregistry.Image{Name: "pause", Tag: "3.4.1"},
 	NvidiaDevicePlugin: containerregistry.Image{Name: "nvidia-device-plugin", Tag: "1.0.0-beta4"},
 	Keepalived:         containerregistry.Image{Name: "keepalived", Tag: "2.0.16-r0"},
 
-	GPUManager:        containerregistry.Image{Name: "gpu-manager", Tag: "v1.0.6"},
+	GPUManager:        containerregistry.Image{Name: "gpu-manager", Tag: "v1.1.5"},
 	Busybox:           containerregistry.Image{Name: "busybox", Tag: "1.31.1"},
 	GPUQuotaAdmission: containerregistry.Image{Name: "gpu-quota-admission", Tag: "v1.0.0"},
 
@@ -72,7 +76,7 @@ var components = Components{
 
 	Cilium:         containerregistry.Image{Name: "cilium", Tag: "v1.9.5"},
 	CiliumOperator: containerregistry.Image{Name: "cilium-operator-generic", Tag: "v1.9.5"},
-	Ipamd:          containerregistry.Image{Name: "tke-eni-ipamd", Tag: "v3.2.6"},
+	Ipamd:          containerregistry.Image{Name: "tke-eni-ipamd", Tag: "v3.3.3"},
 	Masq:           containerregistry.Image{Name: "ip-masq-agent", Tag: "v1.0.0"},
 	CiliumRouter:   containerregistry.Image{Name: "cilium-router", Tag: "v0.1.0"},
 }
@@ -81,7 +85,7 @@ func List() []string {
 	var items []string
 
 	for _, version := range spec.K8sVersionsWithV {
-		for _, name := range kubecomponetNames {
+		for _, name := range KubecomponetNames {
 			items = append(items, containerregistry.Image{Name: name, Tag: version}.BaseName())
 		}
 	}
@@ -100,9 +104,9 @@ func Get() Components {
 	return components
 }
 
-func ListKubernetesImageFullNamesWithVerion(version string) []string {
+func ListKubernetesImageFullNamesWithVersion(version string, images []string) []string {
 	var items []string
-	for _, name := range kubecomponetNames {
+	for _, name := range images {
 		items = append(items, containerregistry.Image{Name: name, Tag: "v" + version}.FullName())
 	}
 

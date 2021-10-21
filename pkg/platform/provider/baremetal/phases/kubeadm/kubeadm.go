@@ -51,6 +51,11 @@ import (
 	"tkestack.io/tke/pkg/util/template"
 )
 
+type Option struct {
+	RuntimeType platformv1.ContainerRuntimeType
+	Version     string
+}
+
 const (
 	kubeadmKubeletConf = "/usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf"
 
@@ -72,8 +77,8 @@ var (
 	unMigrataleComponents = []string{"tke-platform-api", "tke-platform-controller", "tke-registry-api", "tke-registry-controller", "influxdb"}
 )
 
-func Install(s ssh.Interface, version string) error {
-	dstFile, err := res.KubernetesNode.CopyToNode(s, version)
+func Install(s ssh.Interface, option *Option) error {
+	dstFile, err := res.KubernetesNode.CopyToNode(s, option.Version)
 	if err != nil {
 		return err
 	}
@@ -84,7 +89,7 @@ func Install(s ssh.Interface, version string) error {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
 
-	data, err := template.ParseFile(path.Join(constants.ConfDir, "kubeadm/10-kubeadm.conf"), nil)
+	data, err := template.ParseFile(path.Join(constants.ConfDir, "kubeadm/10-kubeadm.conf"), option)
 	if err != nil {
 		return err
 	}
@@ -177,7 +182,7 @@ func Reset(s ssh.Interface, phase string) error {
 	return nil
 }
 
-func RenewCerts(s ssh.Interface) error {
+func RenewCerts(c *v1.Cluster, s ssh.Interface) error {
 	err := fixKubeadmBug1753(s)
 	if err != nil {
 		return fmt.Errorf("fixKubeadmBug1753(https://github.com/kubernetes/kubeadm/issues/1753) error: %w", err)
@@ -189,7 +194,7 @@ func RenewCerts(s ssh.Interface) error {
 		return err
 	}
 
-	err = RestartControlPlane(s)
+	err = RestartControlPlane(c, s)
 	if err != nil {
 		return err
 	}
@@ -248,10 +253,10 @@ func fixKubeadmBug88811(client kubernetes.Interface) error {
 	return nil
 }
 
-func RestartControlPlane(s ssh.Interface) error {
+func RestartControlPlane(c *v1.Cluster, s ssh.Interface) error {
 	targets := []string{"kube-apiserver", "kube-controller-manager", "kube-scheduler"}
 	for _, one := range targets {
-		err := RestartContainerByFilter(s, DockerFilterForControlPlane(one))
+		err := RestartContainerByLabel(c, s, ContainerLabelOfControlPlane(c, one))
 		if err != nil {
 			return err
 		}
@@ -260,19 +265,32 @@ func RestartControlPlane(s ssh.Interface) error {
 	return nil
 }
 
-func DockerFilterForControlPlane(name string) string {
-	return fmt.Sprintf("label=io.kubernetes.container.name=%s", name)
+func ContainerLabelOfControlPlane(c *v1.Cluster, name string) string {
+	if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
+		return fmt.Sprintf("label=io.kubernetes.container.name=%s", name)
+	}
+	return fmt.Sprintf("io.kubernetes.container.name=%s", name)
 }
 
-func RestartContainerByFilter(s ssh.Interface, filter string) error {
-	cmd := fmt.Sprintf("docker rm -f $(docker ps -q -f '%s')", filter)
+func RestartContainerByLabel(c *v1.Cluster, s ssh.Interface, label string) error {
+	cmd := ""
+	if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
+		cmd = fmt.Sprintf("docker rm -f $(docker ps -q -f '%s')", label)
+	} else {
+		cmd = fmt.Sprintf("crictl rm -f $(crictl ps -q --label '%s')", label)
+	}
 	_, err := s.CombinedOutput(cmd)
 	if err != nil {
 		return err
 	}
 
 	err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		cmd = fmt.Sprintf("docker ps -q -f '%s'", filter)
+		cmd := ""
+		if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
+			cmd = fmt.Sprintf("docker ps -q -f '%s'", label)
+		} else {
+			cmd = fmt.Sprintf("crictl ps -q --label '%s'", label)
+		}
 		output, err := s.CombinedOutput(cmd)
 		if err != nil {
 			return false, nil
@@ -283,7 +301,7 @@ func RestartContainerByFilter(s ssh.Interface, filter string) error {
 		return true, nil
 	})
 	if err != nil {
-		return fmt.Errorf("restart container(%s) error: %w", filter, err)
+		return fmt.Errorf("restart container(%s) error: %w", label, err)
 	}
 
 	return nil
@@ -341,7 +359,11 @@ func UpgradeNode(s ssh.Interface, client kubernetes.Interface, platformClient pl
 	// ignore patch version for patch version kubeadm may not exist in platform-controller
 	if !sameMinor {
 		logger.Infof("Start install kubeadm to %s", option.MachineIP)
-		err = Install(s, option.Version)
+		kubeAdmOption := &Option{
+			RuntimeType: cluster.Spec.Features.ContainerRuntime,
+			Version:     option.Version,
+		}
+		err = Install(s, kubeAdmOption)
 		if err != nil {
 			return upgraded, err
 		}

@@ -41,7 +41,6 @@ import (
 	"tkestack.io/tke/pkg/apiserver/util"
 	"tkestack.io/tke/pkg/auth/filter"
 	"tkestack.io/tke/pkg/platform/apiserver"
-	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
@@ -105,11 +104,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 	if err != nil {
 		return nil, fmt.Errorf("failed to create real external clientset: %v", err)
 	}
-	clusterInspector, err := filter.NewClusterInspector(clientgoExternalClient.PlatformV1(), opts.Authentication.PrivilegedUsername)
-	if err != nil {
-		log.Errorf("create clusterInspector failed: %+v", err)
-		return nil, err
-	}
+	clusterInspector := filter.NewClusterInspector(clientgoExternalClient.PlatformV1(), opts.Authentication.PrivilegedUsername)
 	genericAPIServerConfig.BuildHandlerChainFunc = handler.BuildHandlerChain(nil, nil, []filter.Inspector{clusterInspector})
 	versionedInformers := versionedinformers.NewSharedInformerFactory(clientgoExternalClient, 10*time.Minute)
 

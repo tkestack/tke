@@ -21,32 +21,18 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
-	"strings"
-	"time"
-	"tkestack.io/tke/pkg/apiserver/util"
+
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 
-	rbacv1 "k8s.io/api/rbac/v1"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	genericfilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
-	rbaclisters "k8s.io/client-go/listers/rbac/v1"
-	"k8s.io/client-go/tools/cache"
-)
-
-var (
-	serviceAccountRegExp = regexp.MustCompile(`^system:serviceaccount:([^:]+):(.+)$`)
 )
 
 type Inspector interface {
@@ -54,102 +40,26 @@ type Inspector interface {
 }
 
 type clusterInspector struct {
-	k8sClient          kubernetes.Interface
-	crbLister          rbaclisters.ClusterRoleBindingLister
-	crLister           rbaclisters.ClusterRoleLister
 	platformClient     platformv1.PlatformV1Interface
 	privilegedUsername string
 }
 
-func NewClusterInspector(platformClient platformv1.PlatformV1Interface, privilegedUsername string) (Inspector, error) {
-	k8sClient, err := apiclient.BuildKubeClient()
-	if err != nil {
-		return nil, err
-	}
-	informerFactory := informers.NewSharedInformerFactory(k8sClient, time.Minute)
-	clusterRoleBindingInformer := informerFactory.Rbac().V1().ClusterRoleBindings()
-	clusterRoleBindingLister := clusterRoleBindingInformer.Lister()
-	clusterRoleInformer := informerFactory.Rbac().V1().ClusterRoles()
-	clusterRoleLister := clusterRoleInformer.Lister()
-	stopCh := util.SetupSignalHandler()
-	informerFactory.Start(stopCh)
-	if ok := cache.WaitForCacheSync(stopCh, clusterRoleBindingInformer.Informer().HasSynced,
-		clusterRoleInformer.Informer().HasSynced); !ok {
-		return nil, fmt.Errorf("failed to wait for namespaces caches to sync")
-	}
+func NewClusterInspector(platformClient platformv1.PlatformV1Interface, privilegedUsername string) Inspector {
 	return &clusterInspector{
-		k8sClient:          k8sClient,
-		crbLister:          clusterRoleBindingLister,
-		crLister:           clusterRoleLister,
 		platformClient:     platformClient,
 		privilegedUsername: privilegedUsername,
-	}, nil
-}
-
-func isClusterAdmin(rules []rbacv1.PolicyRule) bool {
-	if len(rules) != 2 {
-		return false
 	}
-	isAdmin := true
-	for _, rul := range rules {
-		if len(rul.APIGroups) == 1 && rul.APIGroups[0] == "*" &&
-			len(rul.Resources) == 1 && rul.Resources[0] == "*" &&
-			len(rul.Verbs) == 1 && rul.Verbs[0] == "*" {
-			continue
-		}
-		if len(rul.NonResourceURLs) == 1 && rul.NonResourceURLs[0] == "*" &&
-			len(rul.Verbs) == 1 && rul.Verbs[0] == "*" {
-			continue
-		}
-		isAdmin = false
-		break
-	}
-	return isAdmin
-}
-
-func (i *clusterInspector) needInspect(ctx context.Context, privilegedUsername string) bool {
-	username, tenantID := authentication.UsernameAndTenantID(ctx)
-	if (username == privilegedUsername || username == "system:apiserver") && tenantID == "" {
-		return false
-	}
-
-	clusterRoleBindings, err := i.crbLister.List(labels.Everything())
-	if err != nil {
-		log.Errorf("query clusterRoleBindings failed: %+v", err)
-		return true
-	}
-	matches := serviceAccountRegExp.FindStringSubmatch(username)
-	if len(matches) != 3 {
-		return true
-	}
-	namespace := matches[1]
-	username = matches[2]
-	for _, crb := range clusterRoleBindings {
-		for _, sub := range crb.Subjects {
-			if sub.Name == username && sub.Namespace == namespace {
-				cr, err := i.crLister.Get(crb.RoleRef.Name)
-				if err != nil {
-					log.Errorf("query clusterRole: %+v failed: %+v", crb.RoleRef.Name, err)
-					continue
-				}
-				if len(cr.Rules) != 2 {
-					continue
-				}
-				log.Debugf("needInspect: username: %+v, namespace: %+v, clusterRole: %+v->%v",
-					username, namespace, cr.Name, cr.Rules)
-				if isClusterAdmin(cr.Rules) {
-					return false
-				}
-			}
-		}
-	}
-	return true
 }
 
 func (i *clusterInspector) Inspect(handler http.Handler, c *genericapiserver.Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if getK8sDecision(req) {
+			handler.ServeHTTP(w, req)
+			return
+		}
 		ctx := req.Context()
-		if !i.needInspect(ctx, i.privilegedUsername) {
+		username, tenantID := authentication.UsernameAndTenantID(ctx)
+		if (username == i.privilegedUsername || username == "system:apiserver") && tenantID == "" {
 			handler.ServeHTTP(w, req)
 			return
 		}
@@ -172,19 +82,7 @@ func (i *clusterInspector) Inspect(handler http.Handler, c *genericapiserver.Con
 				"invalid request: too many clusterName in request")
 			return
 		}
-		username, tenantID := authentication.UsernameAndTenantID(ctx)
-		// rbac mode use tenantID as suffix of username
-		if tenantID == "" {
-			strList := strings.Split(username, ":")
-			if len(strList) == 4 && strList[0] == "system" && strList[1] == "serviceaccount" {
-				tenantidStr := strList[len(strList)-1]
-				index := strings.Index(tenantidStr, "-tenant-")
-				if index > 0 {
-					tenantID = tenantidStr[index+8:]
-				}
-			}
-		}
-		log.Infof(" clusterNames: %+v, username: %+v, tenant: %+v, "+
+		log.Infof("WithTKEAuthorization clusterNames: %+v, username: %+v, tenant: %+v, "+
 			"action: %+v, resource: %+v, name: %+v",
 			clusterNames, username, tenantID, tkeAttributes.GetVerb(),
 			tkeAttributes.GetResource(), tkeAttributes.GetName())

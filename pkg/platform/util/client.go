@@ -37,13 +37,14 @@ import (
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+	"yunion.io/x/pkg/util/wait"
+
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
@@ -114,6 +115,8 @@ func ResourceFromKind(kind string) string {
 		return "podsecuritypolicies"
 	case "priorityclass":
 		return "priorityclasses"
+	case "endpoints":
+		return "endpoints"
 	default:
 		return kindLower + "s"
 	}
@@ -395,20 +398,6 @@ func BuildExternalMonitoringClientSet(ctx context.Context, cluster *platformv1.C
 	}
 
 	return BuildExternalMonitoringClientSetNoStatus(ctx, cluster, client)
-}
-
-// BuildExternalMonitoringClientSetWithName creates the clientset of prometheus operator by given cluster
-// name and returns it.
-func BuildExternalMonitoringClientSetWithName(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, name string) (monitoringclient.Interface, error) {
-	cluster, err := platformClient.Clusters().Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	clientset, err := BuildExternalMonitoringClientSet(ctx, cluster, platformClient)
-	if err != nil {
-		return nil, err
-	}
-	return clientset, nil
 }
 
 // BuildExternalDynamicClientSetNoStatus creates the dynamic clientset of kubernetes by given

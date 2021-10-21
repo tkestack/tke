@@ -71,7 +71,6 @@ import (
 	schedulingrest "tkestack.io/tke/pkg/platform/proxy/scheduling/rest"
 	settingsrest "tkestack.io/tke/pkg/platform/proxy/settings/rest"
 	storagerest "tkestack.io/tke/pkg/platform/proxy/storage/rest"
-	versionrest "tkestack.io/tke/pkg/platform/proxy/version/rest"
 	platformrest "tkestack.io/tke/pkg/platform/registry/rest"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -203,10 +202,6 @@ func (m *APIServer) InstallAPIs(apiResourceConfigSource serverstorage.APIResourc
 
 		apiGroupsInfo = append(apiGroupsInfo, apiGroupInfo)
 	}
-
-	// install /version route
-	versionHandler := versionrest.NewVersionProxyHandler(m.GenericAPIServer.LoopbackClientConfig)
-	versionHandler.Install(m.GenericAPIServer.Handler.GoRestfulContainer)
 
 	for i := range apiGroupsInfo {
 		if err := m.GenericAPIServer.InstallAPIGroup(&apiGroupsInfo[i]); err != nil {

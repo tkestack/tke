@@ -1,3 +1,20 @@
+/*
+ * Tencent is pleased to support the open source community by making TKEStack
+ * available.
+ *
+ * Copyright (C) 2012-2021 Tencent. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of the
+ * License at
+ *
+ * https://opensource.org/licenses/Apache-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
 import * as React from 'react';
 
 import { FormPanel } from '@tencent/ff-component';
@@ -11,10 +28,11 @@ import { Clip } from '../../../../common/components';
 import { DialogNameEnum } from '../../../models';
 import { RootProps } from '../../ClusterApp';
 import { ClusterStatus } from '../../clusterManage/ClusterTablePanel';
+import { ContainerRuntimeEnum } from '@src/modules/cluster/constants/Config';
 
 export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> {
   render() {
-    let { cluster } = this.props;
+    const { cluster } = this.props;
 
     return (
       <FormPanel title={t('基本信息')}>
@@ -27,11 +45,11 @@ export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> 
     );
   }
   _renderNodeMax() {
-    let { cluster } = this.props;
-    let clusterInfo: Cluster = cluster.selection;
+    const { cluster } = this.props;
+    const clusterInfo: Cluster = cluster.selection;
     if (clusterInfo && clusterInfo.spec.clusterCIDR) {
-      let b = clusterInfo.spec.clusterCIDR.split('/')[1];
-      let { maxNodePodNum, maxClusterServiceNum } = clusterInfo.spec.properties;
+      const b = clusterInfo.spec.clusterCIDR.split('/')[1];
+      const { maxNodePodNum, maxClusterServiceNum } = clusterInfo.spec.properties;
       return Math.pow(2, 32 - parseInt(b)) / maxNodePodNum - Math.ceil(maxClusterServiceNum / maxNodePodNum);
     } else {
       return '';
@@ -39,8 +57,8 @@ export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> 
   }
   /** 处理开关日志采集组件的的操作 */
   private _handleSwitch(cluster: Cluster) {
-    let { actions, route } = this.props;
-    let enableLogAgent = !cluster.spec.logAgentName;
+    const { actions, route } = this.props;
+    const enableLogAgent = !cluster.spec.logAgentName;
     if (enableLogAgent) {
       actions.cluster.enableLogAgent(cluster);
     } else {
@@ -53,9 +71,9 @@ export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> 
   }
   /** 展示集群的基本信息 */
   private _renderClusterInfo() {
-    let { actions, cluster } = this.props;
-    let clusterInfo: Cluster = cluster.selection;
-    let nodeMax = this._renderNodeMax();
+    const { actions, cluster } = this.props;
+    const clusterInfo: Cluster = cluster.selection;
+    const nodeMax = this._renderNodeMax();
     return cluster.selection ? (
       <React.Fragment>
         <FormPanel.Item label={t('集群名称')} text>
@@ -71,6 +89,9 @@ export class ClusterDetailBasicInfoPanel extends React.Component<RootProps, {}> 
         </FormPanel.Item>
         <FormPanel.Item label={t('Kubernetes版本')} text>
           {clusterInfo.status.version}
+        </FormPanel.Item>
+        <FormPanel.Item label={t('运行时组件')} text>
+          {clusterInfo?.spec?.features?.containerRuntime ?? ContainerRuntimeEnum.DOCKER}
         </FormPanel.Item>
         {clusterInfo.spec.networkDevice && (
           <FormPanel.Item label={t('网卡名称')} text>

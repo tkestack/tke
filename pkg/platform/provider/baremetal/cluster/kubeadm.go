@@ -75,6 +75,12 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubead
 		}
 	}
 	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
+	// Specify cri runtime type
+	if c.Cluster.Spec.Features.ContainerRuntime == "docker" {
+		nodeRegistration.CRISocket = "/var/run/dockershim.sock"
+	} else {
+		nodeRegistration.CRISocket = "/var/run/containerd/containerd.sock"
+	}
 
 	return &kubeadmv1beta2.JoinConfiguration{
 		NodeRegistration: nodeRegistration,
@@ -121,7 +127,12 @@ func (p *Provider) getInitConfiguration(c *v1.Cluster) *kubeadmv1beta2.InitConfi
 		}
 	}
 	nodeRegistration.KubeletExtraArgs = kubeletExtraArgs
-
+	// Specify cri runtime type
+	if c.Cluster.Spec.Features.ContainerRuntime == "docker" {
+		nodeRegistration.CRISocket = "/var/run/dockershim.sock"
+	} else {
+		nodeRegistration.CRISocket = "/var/run/containerd/containerd.sock"
+	}
 	return &kubeadmv1beta2.InitConfiguration{
 		BootstrapTokens: []kubeadmv1beta2.BootstrapToken{
 			{
@@ -178,8 +189,7 @@ func (p *Provider) getClusterConfiguration(c *v1.Cluster) *kubeadmv1beta2.Cluste
 			"IPv6DualStack": c.Cluster.Spec.Features.IPv6DualStack},
 	}
 
-	// since k8s 1.19 will use offical coreDNS version
-	if version.Compare(c.Spec.Version, constants.NeedUpgradeCoreDNSK8sVersion) < 0 {
+	if p.needSetCoreDNS(c.Spec.Version) {
 		config.DNS.ImageTag = images.Get().CoreDNS.Tag
 	}
 
@@ -189,6 +199,11 @@ func (p *Provider) getClusterConfiguration(c *v1.Cluster) *kubeadmv1beta2.Cluste
 	}
 
 	return config
+}
+
+func (Provider) needSetCoreDNS(k8sVersion string) bool {
+	return version.Compare(k8sVersion, constants.NeedUpgradeCoreDNSLowerK8sVersion) < 0 ||
+		version.Compare(k8sVersion, constants.NeedUpgradeCoreDNSUpperK8sVersion) >= 0
 }
 
 func (p *Provider) getKubeProxyConfiguration(c *v1.Cluster) *kubeproxyv1alpha1.KubeProxyConfiguration {

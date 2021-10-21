@@ -235,6 +235,50 @@ func (ClusterFeature) SwaggerDoc() map[string]string {
 	return map_ClusterFeature
 }
 
+var map_ClusterGroupAPIResourceItem = map[string]string{
+	"":             "ClusterGroupAPIResourceItem specifies the name of a resource and whether it is namespaced.",
+	"Name":         "name is the plural name of the resource.",
+	"SingularName": "singularName is the singular name of the resource.  This allows clients to handle plural and singular opaquely. The singularName is more correct for reporting status on a single item and both singular and plural are allowed from the kubectl CLI interface.",
+	"Namespaced":   "namespaced indicates if a resource is namespaced or not.",
+	"Group":        "group is the preferred group of the resource.  Empty implies the group of the containing resource list. For subresources, this may have a different value, for example: Scale\".",
+	"Version":      "version is the preferred version of the resource.  Empty implies the version of the containing resource list For subresources, this may have a different value, for example: v1 (while inside a v1beta1 version of the core resource's group)\".",
+	"Kind":         "kind is the kind for the resource (e.g. 'Foo' is the kind for a resource 'foo')",
+	"Verbs":        "verbs is a list of supported kube verbs (this includes get, list, watch, create, update, patch, delete, deletecollection, and proxy)",
+	"ShortNames":   "shortNames is a list of suggested short names of the resource.",
+	"Categories":   "categories is a list of the grouped resources this resource belongs to (e.g. 'all')",
+}
+
+func (ClusterGroupAPIResourceItem) SwaggerDoc() map[string]string {
+	return map_ClusterGroupAPIResourceItem
+}
+
+var map_ClusterGroupAPIResourceItems = map[string]string{
+	"":             "ClusterGroupAPIResourceItems contains the GKV for the current kubernetes cluster",
+	"groupVersion": "groupVersion is the group and version this APIResourceList is for.",
+	"apiResources": "resources contains the name of the resources and if they are namespaced.",
+}
+
+func (ClusterGroupAPIResourceItems) SwaggerDoc() map[string]string {
+	return map_ClusterGroupAPIResourceItems
+}
+
+var map_ClusterGroupAPIResourceItemsList = map[string]string{
+	"":      "ClusterGroupAPIResourceItemsList is the whole list of all ClusterAPIResource.",
+	"Items": "List of ClusterGroupAPIResourceItems",
+}
+
+func (ClusterGroupAPIResourceItemsList) SwaggerDoc() map[string]string {
+	return map_ClusterGroupAPIResourceItemsList
+}
+
+var map_ClusterGroupAPIResourceOptions = map[string]string{
+	"": "ClusterGroupAPIResourceOptions is the query options.",
+}
+
+func (ClusterGroupAPIResourceOptions) SwaggerDoc() map[string]string {
+	return map_ClusterGroupAPIResourceOptions
+}
+
 var map_ClusterList = map[string]string{
 	"":      "ClusterList is the whole list of all clusters which owned by a tenant.",
 	"items": "List of clusters",
@@ -279,6 +323,7 @@ var map_ClusterSpec = map[string]string{
 	"clusterCredentialRef": "ClusterCredentialRef for isolate sensitive information. If not specified, cluster controller will create one; If specified, provider must make sure is valid.",
 	"etcd":                 "Etcd holds configuration for etcd.",
 	"hostnameAsNodename":   "If true will use hostname as nodename, if false will use machine IP as nodename.",
+	"bootstrapApps":        "BootstrapApps will install apps during creating cluster",
 }
 
 func (ClusterSpec) SwaggerDoc() map[string]string {

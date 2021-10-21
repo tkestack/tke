@@ -24,6 +24,7 @@ package v1
 
 import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 )
 
 // RegisterDefaults adds defaulters functions to the given scheme.
@@ -72,6 +73,11 @@ func SetObjectDefaults_CSIOperatorList(in *CSIOperatorList) {
 
 func SetObjectDefaults_Cluster(in *Cluster) {
 	SetDefaults_ClusterSpec(&in.Spec)
+	SetDefaults_ClusterFeature(&in.Spec.Features)
+	for i := range in.Spec.BootstrapApps {
+		a := &in.Spec.BootstrapApps[i]
+		applicationv1.SetDefaults_AppSpec(&a.App.Spec)
+	}
 	SetDefaults_ClusterStatus(&in.Status)
 }
 

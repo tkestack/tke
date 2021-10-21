@@ -53,7 +53,9 @@ spec:
       targetPort: 19291
       nodePort: 31141
   selector:
-    kubernetes.io/name: thanos-receive
+    app.kubernetes.io/component: database-write-hashring
+    app.kubernetes.io/instance: thanos-receive
+    app.kubernetes.io/name: thanos-receive
   type: NodePort
 
 ---
@@ -69,7 +71,9 @@ data:
         "hashring": "soft-tenants",
         "endpoints":
         [
-          "thanos-receive-0.thanos-receive.thanos.svc.cluster.local:10901"
+          "thanos-receive-0.thanos-receive.tke.svc.cluster.local:10901",
+          "thanos-receive-1.thanos-receive.tke.svc.cluster.local:10901",
+          "thanos-receive-2.thanos-receive.tke.svc.cluster.local:10901"
         ]
       }
     ]
@@ -86,7 +90,7 @@ metadata:
   name: thanos-receive
   namespace: tke
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app.kubernetes.io/component: database-write-hashring
@@ -156,7 +160,6 @@ spec:
           volumeMounts:
             - mountPath: /var/thanos/receive
               name: data
-              readOnly: false
             - mountPath: /etc/thanos/thanos-receive-hashrings.json
               name: thanos-receive-hashrings
               subPath: thanos-receive-hashrings.json
@@ -167,9 +170,7 @@ spec:
             name: thanos-receive-hashrings
           name: thanos-receive-hashrings
         - name: data
-          hostPath:
-            path: /data/thanos-receive
-            type: DirectoryOrCreate
+          emptyDir: {}
 
 ---
 apiVersion: v1
@@ -208,7 +209,7 @@ metadata:
   name: thanos-store
   namespace: tke
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app.kubernetes.io/component: object-store-gateway
@@ -261,14 +262,10 @@ spec:
           volumeMounts:
             - mountPath: /var/thanos/store
               name: data
-              readOnly: false
       terminationGracePeriodSeconds: 120
       volumes:
         - name: data
-          hostPath:
-            path: /data/thanos-store
-            type: DirectoryOrCreate
-
+          emptyDir: {}
 
 ---
 apiVersion: v1
@@ -358,14 +355,10 @@ spec:
           volumeMounts:
             - mountPath: /var/thanos/compact
               name: data
-              readOnly: false
       terminationGracePeriodSeconds: 120
       volumes:
         - name: data
-          hostPath:
-            path: /data/thanos-compact
-            type: DirectoryOrCreate
-
+          emptyDir: {}
 
 ---
 apiVersion: v1
@@ -403,7 +396,7 @@ metadata:
   name: thanos-query
   namespace: tke
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app.kubernetes.io/component: query-layer
@@ -489,7 +482,7 @@ metadata:
   name: thanos-rule
   namespace: tke
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app.kubernetes.io/component: rule-evaluation-engine
@@ -551,7 +544,6 @@ spec:
           volumeMounts:
             - mountPath: /var/thanos/rule
               name: data
-              readOnly: false
             - name: thanos-rules
               mountPath: /etc/thanos/rules
       volumes:
@@ -559,9 +551,7 @@ spec:
           configMap:
             name: thanos-rules
         - name: data
-          hostPath:
-            path: /data/thanos-rule
-            type: DirectoryOrCreate
+          emptyDir: {}
 
 ---
 apiVersion: v1

@@ -20,7 +20,11 @@ package cluster_test
 
 import (
 	"context"
+	"fmt"
+	"k8s.io/klog"
 	"os"
+	"time"
+	v1 "tkestack.io/tke/api/application/v1"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -115,7 +119,7 @@ var _ = Describe("cluster", func() {
 			Expect(cls.Spec.Version).Should(Equal(newVersion), "Cluster version is wrong")
 		},
 		Entry("1.19.7->1.20.4", "1.19.7", "1.20.4"),
-		Entry("1.18.3->1.19.7", "1.18.3", "1.19.7"))
+		Entry("1.20.4->1.21.4-tke.1", "1.20.4", "1.21.4-tke.1"))
 
 	It("Cluster scaling", func() {
 		// Prepare two instances
@@ -148,5 +152,87 @@ var _ = Describe("cluster", func() {
 		cls, err = testTKE.ScaleDown(cls.Name, ips[1:])
 		Expect(err).Should(BeNil(), "Cluster downscale failed")
 		Expect(cls.Spec.Machines).Should(HaveLen(1), "Cluster node num is wrong")
+	})
+
+	It("Cluster bootstrap application", func() {
+		nodes, err := provider.CreateInstances(1)
+		Expect(err).Should(BeNil(), "Create instances failed")
+
+		cls = testTKE.ClusterTemplate(nodes[0])
+		cls.Spec.BootstrapApps = []platformv1.BootstrapApp{
+			{
+				App: platformv1.App{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "kube-system",
+					},
+					Spec: v1.AppSpec{
+						Type:            "HelmV3",
+						TenantID:        "default",
+						Name:            "demo1",
+						TargetCluster:   "",
+						TargetNamespace: "",
+						Chart: v1.Chart{
+							ChartName:      "tke-resilience",
+							ChartGroupName: "public",
+							ChartVersion:   "1.0.0",
+							TenantID:       "default",
+						},
+						Values: v1.AppValues{
+							RawValues: "key2: val2-override",
+						},
+					},
+				},
+			},
+			{
+				App: platformv1.App{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: "kube-public",
+					},
+					Spec: v1.AppSpec{
+						Name:            "demo2",
+						Type:            "HelmV3",
+						TenantID:        "default",
+						TargetCluster:   "",
+						TargetNamespace: "kube-public",
+						Chart: v1.Chart{
+							ChartName:      "tke-resilience",
+							ChartGroupName: "public",
+							ChartVersion:   "1.0.0",
+							TenantID:       "default",
+						},
+						Values: v1.AppValues{
+							RawValues: "key2: val2-override",
+						},
+					},
+				},
+			},
+		}
+		cls, err = testTKE.CreateClusterInternal(cls)
+		Expect(err).To(BeNil(), "Create cluster failed")
+
+		By("验证bootstrap app已创建")
+		verifyApp := func(namespace, appName string) error {
+			apps, err := testTKE.TkeClient.ApplicationV1().Apps(namespace).List(context.Background(), metav1.ListOptions{})
+			if err != nil {
+				return fmt.Errorf("list apps in namespace %v failed", namespace)
+			}
+			klog.Infof("Apps in %v: %v", namespace, len(apps.Items))
+			for _, app := range apps.Items {
+				klog.Info(app.Name)
+			}
+			appFullName := fmt.Sprintf("bootstrapapp-%v-%v", namespace, appName)
+			_, err = testTKE.TkeClient.ApplicationV1().Apps(namespace).Get(context.Background(), appFullName, metav1.GetOptions{})
+			if err != nil {
+				err = fmt.Errorf("get app %v failed", appFullName)
+			}
+			return err
+		}
+		Eventually(func() error {
+			err = verifyApp("kube-system", "demo1")
+			if err != nil {
+				return err
+			}
+			return verifyApp("kube-public", "demo2")
+		}, time.Minute, time.Second).Should(BeNil())
 	})
 })

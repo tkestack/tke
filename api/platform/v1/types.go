@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 )
 
 // +genclient
@@ -156,6 +157,9 @@ type ClusterSpec struct {
 	NetworkArgs map[string]string `json:"networkArgs,omitempty" protobuf:"bytes,24,name=networkArgs"`
 	// +optional
 	ScalingMachines []ClusterMachine `json:"scalingMachines,omitempty" protobuf:"bytes,25,opt,name=scalingMachines"`
+	// BootstrapApps will install apps during creating cluster
+	// +optional
+	BootstrapApps BootstrapApps `json:"bootstrapApps,omitempty" protobuf:"bytes,26,opt,name=bootstrapApps"`
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -231,6 +235,13 @@ const (
 	GPUPhysical GPUType = "Physical"
 	// GPUVirtual indicates the gpu type of cluster is virtual.
 	GPUVirtual GPUType = "Virtual"
+)
+
+type ContainerRuntimeType = string
+
+const (
+	Containerd ContainerRuntimeType = "containerd"
+	Docker     ContainerRuntimeType = "docker"
 )
 
 // ClusterPhase defines the phase of cluster constructor.
@@ -391,9 +402,24 @@ type ClusterFeature struct {
 	IPv6DualStack bool `json:"ipv6DualStack,omitempty" protobuf:"bytes,13,opt,name=ipv6DualStack"`
 	// +optional
 	EnableCilium bool `json:"enableCilium,omitempty" protobuf:"bytes,14,opt,name=enableCilium"`
+
+	ContainerRuntime ContainerRuntimeType `json:"containerRuntime" protobuf:"bytes,15,opt,name=containerRuntime"`
 	// Upgrade control upgrade process.
 	// +optional
 	Upgrade Upgrade `json:"upgrade,omitempty" protobuf:"bytes,22,opt,name=upgrade"`
+}
+
+type BootstrapApps []BootstrapApp
+
+type BootstrapApp struct {
+	App App `json:"app,omitempty" protobuf:"bytes,1,opt,name=app"`
+}
+
+type App struct {
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// +optional
+	Spec applicationv1.AppSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
 }
 
 type HA struct {
@@ -677,6 +703,7 @@ type ClusterAddonTypeList struct {
 	Items []ClusterAddonType `json:"items,omitempty" protobuf:"bytes,2,opt,name=items"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ClusterApplyOptions is the query options to a kube-apiserver proxy call for cluster object.
@@ -990,6 +1017,7 @@ const (
 	AddonPhaseUnknown AddonPhase = "Unknown"
 )
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // IPAMProxyOptions is the query options to a ipam-api proxy call.
@@ -1188,6 +1216,7 @@ type TappControllerStatus struct {
 	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,5,name=lastReInitializingTimestamp"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // CSIProxyOptions is the query options to a kube-apiserver proxy call for CSI crd object.
@@ -1258,6 +1287,7 @@ type CSIOperatorStatus struct {
 	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,6,name=lastReInitializingTimestamp"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // PVCRProxyOptions is the query options to a kube-apiserver proxy call for PVCR crd object.
@@ -1335,6 +1365,7 @@ type VolumeDecoratorStatus struct {
 	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,8,name=lastReInitializingTimestamp"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // LogCollectorProxyOptions is the query options to a kube-apiserver proxy call for LogCollector crd object.
@@ -1633,6 +1664,7 @@ type CronHPAStatus struct {
 	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,5,name=lastReInitializingTimestamp"`
 }
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // LBCFProxyOptions is the query options to a kube-apiserver proxy call.
@@ -1698,4 +1730,67 @@ type LBCFStatus struct {
 	// LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
 	// +optional
 	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,5,name=lastReInitializingTimestamp"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterGroupAPIResourceItemsList is the whole list of all ClusterAPIResource.
+type ClusterGroupAPIResourceItemsList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,3,opt,name=metadata"`
+	// List of ClusterGroupAPIResourceItems
+	Items []ClusterGroupAPIResourceItems `protobuf:"bytes,2,rep,name=items"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +genclient:onlyVerbs=list,get
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterGroupAPIResourceItems contains the GKV for the current kubernetes cluster
+type ClusterGroupAPIResourceItems struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	// groupVersion is the group and version this APIResourceList is for.
+	GroupVersion string `json:"groupVersion" protobuf:"bytes,2,opt,name=groupVersion"`
+	// resources contains the name of the resources and if they are namespaced.
+	APIResources []ClusterGroupAPIResourceItem `json:"apiResources" protobuf:"bytes,3,rep,name=apiResources"`
+}
+
+// ClusterGroupAPIResourceItem specifies the name of a resource and whether it is namespaced.
+type ClusterGroupAPIResourceItem struct {
+	// name is the plural name of the resource.
+	Name string `protobuf:"bytes,1,opt,name=name"`
+	// singularName is the singular name of the resource.  This allows clients to handle plural and singular opaquely.
+	// The singularName is more correct for reporting status on a single item and both singular and plural are allowed
+	// from the kubectl CLI interface.
+	SingularName string `protobuf:"bytes,2,opt,name=singularName"`
+	// namespaced indicates if a resource is namespaced or not.
+	Namespaced bool `protobuf:"varint,3,opt,name=namespaced"`
+	// group is the preferred group of the resource.  Empty implies the group of the containing resource list.
+	// For subresources, this may have a different value, for example: Scale".
+	Group string `protobuf:"bytes,4,opt,name=group"`
+	// version is the preferred version of the resource.  Empty implies the version of the containing resource list
+	// For subresources, this may have a different value, for example: v1 (while inside a v1beta1 version of the core resource's group)".
+	Version string `protobuf:"bytes,5,opt,name=version"`
+	// kind is the kind for the resource (e.g. 'Foo' is the kind for a resource 'foo')
+	Kind string `protobuf:"bytes,6,opt,name=kind"`
+	// verbs is a list of supported kube verbs (this includes get, list, watch, create,
+	// update, patch, delete, deletecollection, and proxy)
+	Verbs []string `protobuf:"bytes,7,rep,name=verbs"`
+	// shortNames is a list of suggested short names of the resource.
+	ShortNames []string `protobuf:"bytes,8,rep,name=shortNames"`
+	// categories is a list of the grouped resources this resource belongs to (e.g. 'all')
+	Categories []string `protobuf:"bytes,9,rep,name=categories"`
+}
+
+// +k8s:conversion-gen:explicit-from=net/url.Values
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// ClusterGroupAPIResourceOptions is the query options.
+type ClusterGroupAPIResourceOptions struct {
+	metav1.TypeMeta `json:",inline"`
 }

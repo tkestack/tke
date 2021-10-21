@@ -23,6 +23,8 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
+	"tkestack.io/tke/api/client/informers/externalversions"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/controller/addon/cronhpa"
 	"tkestack.io/tke/pkg/platform/controller/addon/helm"
@@ -34,6 +36,7 @@ import (
 	"tkestack.io/tke/pkg/platform/controller/addon/storage/csioperator"
 	"tkestack.io/tke/pkg/platform/controller/addon/storage/volumedecorator"
 	"tkestack.io/tke/pkg/platform/controller/addon/tappcontroller"
+	bootstrapps "tkestack.io/tke/pkg/platform/controller/bootstrapapps"
 	clustercontroller "tkestack.io/tke/pkg/platform/controller/cluster"
 	"tkestack.io/tke/pkg/platform/controller/machine"
 )
@@ -272,6 +275,32 @@ func startLBCFControllerController(ctx ControllerContext) (http.Handler, bool, e
 
 	go func() {
 		_ = ctrl.Run(concurrentSyncs, ctx.Stop)
+	}()
+
+	return nil, true, nil
+}
+
+func startBootstrapAppsController(ctx ControllerContext) (http.Handler, bool, error) {
+	if !ctx.AvailableResources[schema.GroupVersionResource{Group: platformv1.GroupName, Version: "v1", Resource: "clusters"}] ||
+		ctx.ApplicationClient == nil {
+		return nil, false, nil
+	}
+	appclientset := versionedclientset.NewForConfigOrDie(ctx.Config.ApplicationAPIServerClientConfig)
+	appInformerFactory := externalversions.NewSharedInformerFactory(appclientset, ctx.ResyncPeriod())
+
+	ctrl := bootstrapps.NewBootstrapAppsController(
+		ctx.ClientBuilder.ClientOrDie("bootstrap-apps-controller").PlatformV1(),
+		appclientset.ApplicationV1(),
+		ctx.InformerFactory.Platform().V1().Clusters(),
+		appInformerFactory.Application().V1().Apps(),
+		ctx.Config.ClusterController,
+		platformv1.ClusterFinalize,
+	)
+
+	appInformerFactory.Start(ctx.Stop)
+
+	go func() {
+		_ = ctrl.Run(ctx.Config.ClusterController.ConcurrentClusterSyncs, ctx.Stop)
 	}()
 
 	return nil, true, nil

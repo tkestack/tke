@@ -29,9 +29,11 @@ import (
 	influxclient "github.com/influxdata/influxdb1-client/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	esclient "tkestack.io/tke/pkg/monitor/storage/es/client"
 	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/platform/util/addon"
 )
 
 const (
@@ -83,7 +85,7 @@ func GetMonitoringClient(ctx context.Context, clusterName string, platformClient
 		ClusterNameToClient.Delete(clusterName)
 	}
 
-	monitoringClient, err := util.BuildExternalMonitoringClientSetWithName(ctx, platformClient, clusterName)
+	monitoringClient, err := addon.BuildExternalMonitoringClientSetWithName(ctx, platformClient, clusterName)
 	if err != nil {
 		return nil, err
 	}

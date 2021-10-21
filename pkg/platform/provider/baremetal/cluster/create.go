@@ -48,6 +48,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/addons/cniplugins"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/authzwebhook"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/containerd"
 	csioperatorimage "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/docker"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy"
@@ -502,6 +503,38 @@ func (p *Provider) EnsureNvidiaContainerRuntime(ctx context.Context, c *v1.Clust
 	return nil
 }
 
+func (p *Provider) EnsureContainerRuntime(ctx context.Context, c *v1.Cluster) error {
+	if c.Cluster.Spec.Features.ContainerRuntime == platformv1.Docker {
+		return p.EnsureDocker(ctx, c)
+	}
+	return p.EnsureContainerd(ctx, c)
+}
+
+func (p *Provider) EnsureContainerd(ctx context.Context, c *v1.Cluster) error {
+	insecureRegistries := []string{p.config.Registry.Domain}
+	if p.config.Registry.NeedSetHosts() && c.Spec.TenantID != "" {
+		insecureRegistries = append(insecureRegistries, c.Spec.TenantID+"."+p.config.Registry.Domain)
+	}
+	option := &containerd.Option{
+		InsecureRegistries: insecureRegistries,
+		SandboxImage:       images.Get().Pause.FullName(),
+	}
+	for _, machine := range c.Spec.Machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+
+		option.IsGPU = gpu.IsEnable(machine.Labels)
+		err = containerd.Install(machineSSH, option)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+	}
+
+	return nil
+}
+
 func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 	machines := map[bool][]platformv1.ClusterMachine{
 		true:  c.Spec.ScalingMachines,
@@ -537,13 +570,13 @@ func (p *Provider) EnsureKubernetesImages(ctx context.Context, c *v1.Cluster) er
 	machines := map[bool][]platformv1.ClusterMachine{
 		true:  c.Spec.ScalingMachines,
 		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
-	option := &image.Option{Version: c.Spec.Version, RegistryDomain: p.config.Registry.Domain}
+	option := &image.Option{Version: c.Spec.Version, RegistryDomain: p.config.Registry.Domain, KubeImages: images.KubecomponetNames}
 	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
 			return err
 		}
-		err = image.PullKubernetesImages(machineSSH, option)
+		err = image.PullKubernetesImages(c, machineSSH, option)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -581,7 +614,11 @@ func (p *Provider) EnsureKubeadm(ctx context.Context, c *v1.Cluster) error {
 			return err
 		}
 
-		err = kubeadm.Install(machineSSH, c.Spec.Version)
+		option := &kubeadm.Option{
+			RuntimeType: c.Spec.Features.ContainerRuntime,
+			Version:     c.Spec.Version,
+		}
+		err = kubeadm.Install(machineSSH, option)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}
@@ -1237,7 +1274,7 @@ func (p *Provider) EnsureNvidiaDevicePlugin(ctx context.Context, c *v1.Cluster) 
 		return nil
 	}
 
-	if c.Cluster.Spec.Features.GPUType == nil {
+	if c.Cluster.Spec.Features.GPUType == nil || *c.Cluster.Spec.Features.GPUType == platformv1.GPUVirtual {
 		return nil
 	}
 
@@ -1279,6 +1316,7 @@ func (p *Provider) EnsureGPUManager(ctx context.Context, c *v1.Cluster) error {
 		"BusyboxImage":           images.Get().Busybox.FullName(),
 		"GPUQuotaAdmissionImage": images.Get().GPUQuotaAdmission.FullName(),
 		"GPUQuotaAdmissionHost":  c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion],
+		"ContainerRuntime":       c.Spec.Features.ContainerRuntime,
 	}
 
 	err = apiclient.CreateResourceWithFile(ctx, client, constants.GPUManagerManifest, option)

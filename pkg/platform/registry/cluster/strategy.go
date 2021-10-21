@@ -24,6 +24,7 @@ import (
 	"regexp"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,6 +37,7 @@ import (
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/api/platform/validation"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	helmutil "tkestack.io/tke/pkg/application/helm/util"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	clusterutil "tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util"
@@ -140,6 +142,19 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	err = clusterProvider.PreCreate(clusterWrapper)
 	if err != nil {
 		panic(err)
+	}
+	for i, app := range cluster.Spec.BootstrapApps {
+		if len(app.App.Spec.Values.RawValues) != 0 {
+			app.App.Spec.Values.RawValues = helmutil.SafeEncodeValue(app.App.Spec.Values.RawValues)
+		}
+		if len(app.App.Namespace) == 0 {
+			app.App.Namespace = metav1.NamespaceDefault
+		}
+		if len(app.App.Name) == 0 {
+			app.App.Name = "bootstrapapp-" + app.App.Namespace + "-" + app.App.Spec.Name
+		}
+		app.App.Spec.TargetCluster = ""
+		cluster.Spec.BootstrapApps[i] = app
 	}
 }
 

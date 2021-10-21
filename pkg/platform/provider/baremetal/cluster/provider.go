@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/server/mux"
 	"k8s.io/client-go/tools/clientcmd"
+
 	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/config"
@@ -85,7 +86,7 @@ func NewProvider() (*Provider, error) {
 			// install packages
 			p.EnsureNvidiaDriver,
 			p.EnsureNvidiaContainerRuntime,
-			p.EnsureDocker,
+			p.EnsureContainerRuntime,
 			p.EnsureKubernetesImages,
 			p.EnsureKubelet,
 			p.EnsureCNIPlugins,
@@ -153,6 +154,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureRemoveNode,
 		},
 		DeleteHandlers: []clusterprovider.Handler{
+			p.EnsureRemoveMachine,
 			p.EnsureCleanClusterMark,
 		},
 	}
@@ -179,7 +181,6 @@ func NewProvider() (*Provider, error) {
 			}
 		}
 	}
-
 	return p, nil
 }
 

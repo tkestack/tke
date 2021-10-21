@@ -21,8 +21,11 @@ package installer
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
+	"path"
 	"time"
 
 	applicationversiondclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
@@ -37,6 +40,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	cronhpaimage "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
@@ -122,6 +126,10 @@ func (t *TKE) upgradeSteps() {
 		}
 		t.steps = append(t.steps, []types.Handler{
 			{
+				Name: "Prepare images before upgrade",
+				Func: t.prepareImages,
+			},
+			{
 				Name: "Upgrade tke-platform-api",
 				Func: t.upgradeTKEPlatformAPI,
 			},
@@ -136,6 +144,27 @@ func (t *TKE) upgradeSteps() {
 			{
 				Name: "Upgrade tke-monitor-controller",
 				Func: t.upgradeTKEMonitorController,
+			},
+			{
+				Name: "Upgrade tke-application-api",
+				Func: t.upgradeTKEApplicationAPI,
+			},
+			{
+				Name: "Upgrade tke-application-controller",
+				Func: t.upgradeTKEApplicationController,
+			},
+			{
+				Name: "Upgrade tke-logagent-api",
+				Func: t.upgradeTKELogagentAPI,
+			},
+			{
+				Name: "Upgrade tke-logagent-controller",
+				Func: t.upgradeTKELogagentController,
+			},
+			// upgrade gateway should always be the last com to upgrade
+			{
+				Name: "Upgrade tke-gateway",
+				Func: t.upgradeTKEGateway,
 			},
 		}...)
 
@@ -179,29 +208,7 @@ func (t *TKE) upgradeSteps() {
 }
 
 func (t *TKE) upgradeTKEPlatformAPI(ctx context.Context) error {
-	com := "tke-platform-api"
-	depl, err := t.globalClient.AppsV1().Deployments(t.namespace).Get(ctx, com, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	if len(depl.Spec.Template.Spec.Containers) == 0 {
-		return fmt.Errorf("%s has no containers", com)
-	}
-	depl.Spec.Template.Spec.Containers[0].Image = images.Get().TKEPlatformAPI.FullName()
-
-	_, err = t.globalClient.AppsV1().Deployments(t.namespace).Update(ctx, depl, metav1.UpdateOptions{})
-	if err != nil {
-		return err
-	}
-
-	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, com)
-		if err != nil {
-			return false, nil
-		}
-		return ok, nil
-	})
+	return t.upgradeDeplImage(ctx, images.Get().TKEPlatformAPI)
 }
 
 func (t *TKE) upgradeTKEPlatformController(ctx context.Context) error {
@@ -237,7 +244,31 @@ func (t *TKE) upgradeTKEPlatformController(ctx context.Context) error {
 }
 
 func (t *TKE) upgradeTKEMonitorAPI(ctx context.Context) error {
-	com := "tke-monitor-api"
+	return t.upgradeDeplImage(ctx, images.Get().TKEMonitorAPI)
+}
+
+func (t *TKE) upgradeTKEMonitorController(ctx context.Context) error {
+	return t.upgradeDeplImage(ctx, images.Get().TKEMonitorController)
+}
+
+func (t *TKE) upgradeTKEApplicationAPI(ctx context.Context) error {
+	return t.upgradeDeplImage(ctx, images.Get().TKEApplicationAPI)
+}
+
+func (t *TKE) upgradeTKEApplicationController(ctx context.Context) error {
+	return t.upgradeDeplImage(ctx, images.Get().TKEApplicationController)
+}
+
+func (t *TKE) upgradeTKELogagentAPI(ctx context.Context) error {
+	return t.upgradeDeplImage(ctx, images.Get().TKELogagentAPI)
+}
+
+func (t *TKE) upgradeTKELogagentController(ctx context.Context) error {
+	return t.upgradeDeplImage(ctx, images.Get().TKELogagentController)
+}
+
+func (t *TKE) upgradeDeplImage(ctx context.Context, image containerregistry.Image) error {
+	com := image.Name
 	depl, err := t.globalClient.AppsV1().Deployments(t.namespace).Get(ctx, com, metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -246,7 +277,7 @@ func (t *TKE) upgradeTKEMonitorAPI(ctx context.Context) error {
 	if len(depl.Spec.Template.Spec.Containers) == 0 {
 		return fmt.Errorf("%s has no containers", com)
 	}
-	depl.Spec.Template.Spec.Containers[0].Image = images.Get().TKEMonitorAPI.FullName()
+	depl.Spec.Template.Spec.Containers[0].Image = image.FullName()
 
 	_, err = t.globalClient.AppsV1().Deployments(t.namespace).Update(ctx, depl, metav1.UpdateOptions{})
 	if err != nil {
@@ -262,25 +293,25 @@ func (t *TKE) upgradeTKEMonitorAPI(ctx context.Context) error {
 	})
 }
 
-func (t *TKE) upgradeTKEMonitorController(ctx context.Context) error {
-	com := "tke-monitor-controller"
-	depl, err := t.globalClient.AppsV1().Deployments(t.namespace).Get(ctx, com, metav1.GetOptions{})
+func (t *TKE) upgradeTKEGateway(ctx context.Context) error {
+	com := "tke-gateway"
+	ds, err := t.globalClient.AppsV1().DaemonSets(t.namespace).Get(ctx, com, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	if len(depl.Spec.Template.Spec.Containers) == 0 {
+	if len(ds.Spec.Template.Spec.Containers) == 0 {
 		return fmt.Errorf("%s has no containers", com)
 	}
-	depl.Spec.Template.Spec.Containers[0].Image = images.Get().TKEMonitorController.FullName()
+	ds.Spec.Template.Spec.Containers[0].Image = images.Get().TKEGateway.FullName()
 
-	_, err = t.globalClient.AppsV1().Deployments(t.namespace).Update(ctx, depl, metav1.UpdateOptions{})
+	_, err = t.globalClient.AppsV1().DaemonSets(t.namespace).Update(ctx, ds, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, com)
+		ok, err := apiclient.CheckDaemonset(ctx, t.globalClient, t.namespace, com)
 		if err != nil {
 			return false, nil
 		}
@@ -363,6 +394,13 @@ func (t *TKE) loadRegistry(ctx context.Context) error {
 
 func (t *TKE) loginRegistry(ctx context.Context) error {
 	containerregistry.Init(t.Para.Config.Registry.Domain(), t.Para.Config.Registry.Namespace())
+	dir := path.Join(constants.DockerCertsDir, t.Para.Config.Registry.Domain())
+	_ = os.MkdirAll(dir, 0777)
+	caCert, _ := ioutil.ReadFile(constants.CACrtFile)
+	err := ioutil.WriteFile(path.Join(dir, "ca.crt"), caCert, 0644)
+	if err != nil {
+		return err
+	}
 	cmd := exec.Command("docker", "login",
 		"--username", t.Para.Config.Registry.Username(),
 		"--password", string(t.Para.Config.Registry.Password()),

@@ -50,6 +50,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*App)(nil), (*platform.App)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_App_To_platform_App(a.(*App), b.(*platform.App), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*platform.App)(nil), (*App)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_platform_App_To_v1_App(a.(*platform.App), b.(*App), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*AuthzWebhookAddr)(nil), (*platform.AuthzWebhookAddr)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_AuthzWebhookAddr_To_platform_AuthzWebhookAddr(a.(*AuthzWebhookAddr), b.(*platform.AuthzWebhookAddr), scope)
 	}); err != nil {
@@ -277,6 +287,46 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*platform.ClusterFeature)(nil), (*ClusterFeature)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_platform_ClusterFeature_To_v1_ClusterFeature(a.(*platform.ClusterFeature), b.(*ClusterFeature), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ClusterGroupAPIResourceItem)(nil), (*platform.ClusterGroupAPIResourceItem)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ClusterGroupAPIResourceItem_To_platform_ClusterGroupAPIResourceItem(a.(*ClusterGroupAPIResourceItem), b.(*platform.ClusterGroupAPIResourceItem), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*platform.ClusterGroupAPIResourceItem)(nil), (*ClusterGroupAPIResourceItem)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_platform_ClusterGroupAPIResourceItem_To_v1_ClusterGroupAPIResourceItem(a.(*platform.ClusterGroupAPIResourceItem), b.(*ClusterGroupAPIResourceItem), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ClusterGroupAPIResourceItems)(nil), (*platform.ClusterGroupAPIResourceItems)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ClusterGroupAPIResourceItems_To_platform_ClusterGroupAPIResourceItems(a.(*ClusterGroupAPIResourceItems), b.(*platform.ClusterGroupAPIResourceItems), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*platform.ClusterGroupAPIResourceItems)(nil), (*ClusterGroupAPIResourceItems)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_platform_ClusterGroupAPIResourceItems_To_v1_ClusterGroupAPIResourceItems(a.(*platform.ClusterGroupAPIResourceItems), b.(*ClusterGroupAPIResourceItems), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ClusterGroupAPIResourceItemsList)(nil), (*platform.ClusterGroupAPIResourceItemsList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ClusterGroupAPIResourceItemsList_To_platform_ClusterGroupAPIResourceItemsList(a.(*ClusterGroupAPIResourceItemsList), b.(*platform.ClusterGroupAPIResourceItemsList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*platform.ClusterGroupAPIResourceItemsList)(nil), (*ClusterGroupAPIResourceItemsList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_platform_ClusterGroupAPIResourceItemsList_To_v1_ClusterGroupAPIResourceItemsList(a.(*platform.ClusterGroupAPIResourceItemsList), b.(*ClusterGroupAPIResourceItemsList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*ClusterGroupAPIResourceOptions)(nil), (*platform.ClusterGroupAPIResourceOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ClusterGroupAPIResourceOptions_To_platform_ClusterGroupAPIResourceOptions(a.(*ClusterGroupAPIResourceOptions), b.(*platform.ClusterGroupAPIResourceOptions), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*platform.ClusterGroupAPIResourceOptions)(nil), (*ClusterGroupAPIResourceOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_platform_ClusterGroupAPIResourceOptions_To_v1_ClusterGroupAPIResourceOptions(a.(*platform.ClusterGroupAPIResourceOptions), b.(*ClusterGroupAPIResourceOptions), scope)
 	}); err != nil {
 		return err
 	}
@@ -1040,6 +1090,21 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*CSIProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_url_Values_To_v1_CSIProxyOptions(a.(*url.Values), b.(*CSIProxyOptions), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*ClusterApplyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_url_Values_To_v1_ClusterApplyOptions(a.(*url.Values), b.(*ClusterApplyOptions), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*ClusterGroupAPIResourceOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_url_Values_To_v1_ClusterGroupAPIResourceOptions(a.(*url.Values), b.(*ClusterGroupAPIResourceOptions), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*CronHPAProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_url_Values_To_v1_CronHPAProxyOptions(a.(*url.Values), b.(*CronHPAProxyOptions), scope)
 	}); err != nil {
@@ -1047,6 +1112,26 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*HelmProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_url_Values_To_v1_HelmProxyOptions(a.(*url.Values), b.(*HelmProxyOptions), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*IPAMProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_url_Values_To_v1_IPAMProxyOptions(a.(*url.Values), b.(*IPAMProxyOptions), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*LBCFProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_url_Values_To_v1_LBCFProxyOptions(a.(*url.Values), b.(*LBCFProxyOptions), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*LogCollectorProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_url_Values_To_v1_LogCollectorProxyOptions(a.(*url.Values), b.(*LogCollectorProxyOptions), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*PVCRProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_url_Values_To_v1_PVCRProxyOptions(a.(*url.Values), b.(*PVCRProxyOptions), scope)
 	}); err != nil {
 		return err
 	}
@@ -1080,6 +1165,28 @@ func autoConvert_platform_AddonSpec_To_v1_AddonSpec(in *platform.AddonSpec, out 
 // Convert_platform_AddonSpec_To_v1_AddonSpec is an autogenerated conversion function.
 func Convert_platform_AddonSpec_To_v1_AddonSpec(in *platform.AddonSpec, out *AddonSpec, s conversion.Scope) error {
 	return autoConvert_platform_AddonSpec_To_v1_AddonSpec(in, out, s)
+}
+
+func autoConvert_v1_App_To_platform_App(in *App, out *platform.App, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.Spec = in.Spec
+	return nil
+}
+
+// Convert_v1_App_To_platform_App is an autogenerated conversion function.
+func Convert_v1_App_To_platform_App(in *App, out *platform.App, s conversion.Scope) error {
+	return autoConvert_v1_App_To_platform_App(in, out, s)
+}
+
+func autoConvert_platform_App_To_v1_App(in *platform.App, out *App, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.Spec = in.Spec
+	return nil
+}
+
+// Convert_platform_App_To_v1_App is an autogenerated conversion function.
+func Convert_platform_App_To_v1_App(in *platform.App, out *App, s conversion.Scope) error {
+	return autoConvert_platform_App_To_v1_App(in, out, s)
 }
 
 func autoConvert_v1_AuthzWebhookAddr_To_platform_AuthzWebhookAddr(in *AuthzWebhookAddr, out *platform.AuthzWebhookAddr, s conversion.Scope) error {
@@ -1270,6 +1377,31 @@ func autoConvert_platform_CSIProxyOptions_To_v1_CSIProxyOptions(in *platform.CSI
 // Convert_platform_CSIProxyOptions_To_v1_CSIProxyOptions is an autogenerated conversion function.
 func Convert_platform_CSIProxyOptions_To_v1_CSIProxyOptions(in *platform.CSIProxyOptions, out *CSIProxyOptions, s conversion.Scope) error {
 	return autoConvert_platform_CSIProxyOptions_To_v1_CSIProxyOptions(in, out, s)
+}
+
+func autoConvert_url_Values_To_v1_CSIProxyOptions(in *url.Values, out *CSIProxyOptions, s conversion.Scope) error {
+	// WARNING: Field TypeMeta does not have json tag, skipping.
+
+	if values, ok := map[string][]string(*in)["namespace"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Namespace, s); err != nil {
+			return err
+		}
+	} else {
+		out.Namespace = ""
+	}
+	if values, ok := map[string][]string(*in)["name"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Name, s); err != nil {
+			return err
+		}
+	} else {
+		out.Name = ""
+	}
+	return nil
+}
+
+// Convert_url_Values_To_v1_CSIProxyOptions is an autogenerated conversion function.
+func Convert_url_Values_To_v1_CSIProxyOptions(in *url.Values, out *CSIProxyOptions, s conversion.Scope) error {
+	return autoConvert_url_Values_To_v1_CSIProxyOptions(in, out, s)
 }
 
 func autoConvert_v1_Cluster_To_platform_Cluster(in *Cluster, out *platform.Cluster, s conversion.Scope) error {
@@ -1504,6 +1636,24 @@ func Convert_platform_ClusterApplyOptions_To_v1_ClusterApplyOptions(in *platform
 	return autoConvert_platform_ClusterApplyOptions_To_v1_ClusterApplyOptions(in, out, s)
 }
 
+func autoConvert_url_Values_To_v1_ClusterApplyOptions(in *url.Values, out *ClusterApplyOptions, s conversion.Scope) error {
+	// WARNING: Field TypeMeta does not have json tag, skipping.
+
+	if values, ok := map[string][]string(*in)["notUpdate"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_bool(&values, &out.NotUpdate, s); err != nil {
+			return err
+		}
+	} else {
+		out.NotUpdate = false
+	}
+	return nil
+}
+
+// Convert_url_Values_To_v1_ClusterApplyOptions is an autogenerated conversion function.
+func Convert_url_Values_To_v1_ClusterApplyOptions(in *url.Values, out *ClusterApplyOptions, s conversion.Scope) error {
+	return autoConvert_url_Values_To_v1_ClusterApplyOptions(in, out, s)
+}
+
 func autoConvert_v1_ClusterComponent_To_platform_ClusterComponent(in *ClusterComponent, out *platform.ClusterComponent, s conversion.Scope) error {
 	out.Type = in.Type
 	if err := Convert_v1_ClusterComponentReplicas_To_platform_ClusterComponentReplicas(&in.Replicas, &out.Replicas, s); err != nil {
@@ -1669,6 +1819,7 @@ func autoConvert_v1_ClusterFeature_To_platform_ClusterFeature(in *ClusterFeature
 	out.EnableMetricsServer = in.EnableMetricsServer
 	out.IPv6DualStack = in.IPv6DualStack
 	out.EnableCilium = in.EnableCilium
+	out.ContainerRuntime = in.ContainerRuntime
 	if err := Convert_v1_Upgrade_To_platform_Upgrade(&in.Upgrade, &out.Upgrade, s); err != nil {
 		return err
 	}
@@ -1694,6 +1845,7 @@ func autoConvert_platform_ClusterFeature_To_v1_ClusterFeature(in *platform.Clust
 	out.AuthzWebhookAddr = (*AuthzWebhookAddr)(unsafe.Pointer(in.AuthzWebhookAddr))
 	out.EnableMetricsServer = in.EnableMetricsServer
 	out.EnableCilium = in.EnableCilium
+	out.ContainerRuntime = in.ContainerRuntime
 	out.IPv6DualStack = in.IPv6DualStack
 	if err := Convert_platform_Upgrade_To_v1_Upgrade(&in.Upgrade, &out.Upgrade, s); err != nil {
 		return err
@@ -1704,6 +1856,117 @@ func autoConvert_platform_ClusterFeature_To_v1_ClusterFeature(in *platform.Clust
 // Convert_platform_ClusterFeature_To_v1_ClusterFeature is an autogenerated conversion function.
 func Convert_platform_ClusterFeature_To_v1_ClusterFeature(in *platform.ClusterFeature, out *ClusterFeature, s conversion.Scope) error {
 	return autoConvert_platform_ClusterFeature_To_v1_ClusterFeature(in, out, s)
+}
+
+func autoConvert_v1_ClusterGroupAPIResourceItem_To_platform_ClusterGroupAPIResourceItem(in *ClusterGroupAPIResourceItem, out *platform.ClusterGroupAPIResourceItem, s conversion.Scope) error {
+	out.Name = in.Name
+	out.SingularName = in.SingularName
+	out.Namespaced = in.Namespaced
+	out.Group = in.Group
+	out.Version = in.Version
+	out.Kind = in.Kind
+	out.Verbs = *(*[]string)(unsafe.Pointer(&in.Verbs))
+	out.ShortNames = *(*[]string)(unsafe.Pointer(&in.ShortNames))
+	out.Categories = *(*[]string)(unsafe.Pointer(&in.Categories))
+	return nil
+}
+
+// Convert_v1_ClusterGroupAPIResourceItem_To_platform_ClusterGroupAPIResourceItem is an autogenerated conversion function.
+func Convert_v1_ClusterGroupAPIResourceItem_To_platform_ClusterGroupAPIResourceItem(in *ClusterGroupAPIResourceItem, out *platform.ClusterGroupAPIResourceItem, s conversion.Scope) error {
+	return autoConvert_v1_ClusterGroupAPIResourceItem_To_platform_ClusterGroupAPIResourceItem(in, out, s)
+}
+
+func autoConvert_platform_ClusterGroupAPIResourceItem_To_v1_ClusterGroupAPIResourceItem(in *platform.ClusterGroupAPIResourceItem, out *ClusterGroupAPIResourceItem, s conversion.Scope) error {
+	out.Name = in.Name
+	out.SingularName = in.SingularName
+	out.Namespaced = in.Namespaced
+	out.Group = in.Group
+	out.Version = in.Version
+	out.Kind = in.Kind
+	out.Verbs = *(*[]string)(unsafe.Pointer(&in.Verbs))
+	out.ShortNames = *(*[]string)(unsafe.Pointer(&in.ShortNames))
+	out.Categories = *(*[]string)(unsafe.Pointer(&in.Categories))
+	return nil
+}
+
+// Convert_platform_ClusterGroupAPIResourceItem_To_v1_ClusterGroupAPIResourceItem is an autogenerated conversion function.
+func Convert_platform_ClusterGroupAPIResourceItem_To_v1_ClusterGroupAPIResourceItem(in *platform.ClusterGroupAPIResourceItem, out *ClusterGroupAPIResourceItem, s conversion.Scope) error {
+	return autoConvert_platform_ClusterGroupAPIResourceItem_To_v1_ClusterGroupAPIResourceItem(in, out, s)
+}
+
+func autoConvert_v1_ClusterGroupAPIResourceItems_To_platform_ClusterGroupAPIResourceItems(in *ClusterGroupAPIResourceItems, out *platform.ClusterGroupAPIResourceItems, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.GroupVersion = in.GroupVersion
+	out.APIResources = *(*[]platform.ClusterGroupAPIResourceItem)(unsafe.Pointer(&in.APIResources))
+	return nil
+}
+
+// Convert_v1_ClusterGroupAPIResourceItems_To_platform_ClusterGroupAPIResourceItems is an autogenerated conversion function.
+func Convert_v1_ClusterGroupAPIResourceItems_To_platform_ClusterGroupAPIResourceItems(in *ClusterGroupAPIResourceItems, out *platform.ClusterGroupAPIResourceItems, s conversion.Scope) error {
+	return autoConvert_v1_ClusterGroupAPIResourceItems_To_platform_ClusterGroupAPIResourceItems(in, out, s)
+}
+
+func autoConvert_platform_ClusterGroupAPIResourceItems_To_v1_ClusterGroupAPIResourceItems(in *platform.ClusterGroupAPIResourceItems, out *ClusterGroupAPIResourceItems, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	out.GroupVersion = in.GroupVersion
+	out.APIResources = *(*[]ClusterGroupAPIResourceItem)(unsafe.Pointer(&in.APIResources))
+	return nil
+}
+
+// Convert_platform_ClusterGroupAPIResourceItems_To_v1_ClusterGroupAPIResourceItems is an autogenerated conversion function.
+func Convert_platform_ClusterGroupAPIResourceItems_To_v1_ClusterGroupAPIResourceItems(in *platform.ClusterGroupAPIResourceItems, out *ClusterGroupAPIResourceItems, s conversion.Scope) error {
+	return autoConvert_platform_ClusterGroupAPIResourceItems_To_v1_ClusterGroupAPIResourceItems(in, out, s)
+}
+
+func autoConvert_v1_ClusterGroupAPIResourceItemsList_To_platform_ClusterGroupAPIResourceItemsList(in *ClusterGroupAPIResourceItemsList, out *platform.ClusterGroupAPIResourceItemsList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]platform.ClusterGroupAPIResourceItems)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_ClusterGroupAPIResourceItemsList_To_platform_ClusterGroupAPIResourceItemsList is an autogenerated conversion function.
+func Convert_v1_ClusterGroupAPIResourceItemsList_To_platform_ClusterGroupAPIResourceItemsList(in *ClusterGroupAPIResourceItemsList, out *platform.ClusterGroupAPIResourceItemsList, s conversion.Scope) error {
+	return autoConvert_v1_ClusterGroupAPIResourceItemsList_To_platform_ClusterGroupAPIResourceItemsList(in, out, s)
+}
+
+func autoConvert_platform_ClusterGroupAPIResourceItemsList_To_v1_ClusterGroupAPIResourceItemsList(in *platform.ClusterGroupAPIResourceItemsList, out *ClusterGroupAPIResourceItemsList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]ClusterGroupAPIResourceItems)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_platform_ClusterGroupAPIResourceItemsList_To_v1_ClusterGroupAPIResourceItemsList is an autogenerated conversion function.
+func Convert_platform_ClusterGroupAPIResourceItemsList_To_v1_ClusterGroupAPIResourceItemsList(in *platform.ClusterGroupAPIResourceItemsList, out *ClusterGroupAPIResourceItemsList, s conversion.Scope) error {
+	return autoConvert_platform_ClusterGroupAPIResourceItemsList_To_v1_ClusterGroupAPIResourceItemsList(in, out, s)
+}
+
+func autoConvert_v1_ClusterGroupAPIResourceOptions_To_platform_ClusterGroupAPIResourceOptions(in *ClusterGroupAPIResourceOptions, out *platform.ClusterGroupAPIResourceOptions, s conversion.Scope) error {
+	return nil
+}
+
+// Convert_v1_ClusterGroupAPIResourceOptions_To_platform_ClusterGroupAPIResourceOptions is an autogenerated conversion function.
+func Convert_v1_ClusterGroupAPIResourceOptions_To_platform_ClusterGroupAPIResourceOptions(in *ClusterGroupAPIResourceOptions, out *platform.ClusterGroupAPIResourceOptions, s conversion.Scope) error {
+	return autoConvert_v1_ClusterGroupAPIResourceOptions_To_platform_ClusterGroupAPIResourceOptions(in, out, s)
+}
+
+func autoConvert_platform_ClusterGroupAPIResourceOptions_To_v1_ClusterGroupAPIResourceOptions(in *platform.ClusterGroupAPIResourceOptions, out *ClusterGroupAPIResourceOptions, s conversion.Scope) error {
+	return nil
+}
+
+// Convert_platform_ClusterGroupAPIResourceOptions_To_v1_ClusterGroupAPIResourceOptions is an autogenerated conversion function.
+func Convert_platform_ClusterGroupAPIResourceOptions_To_v1_ClusterGroupAPIResourceOptions(in *platform.ClusterGroupAPIResourceOptions, out *ClusterGroupAPIResourceOptions, s conversion.Scope) error {
+	return autoConvert_platform_ClusterGroupAPIResourceOptions_To_v1_ClusterGroupAPIResourceOptions(in, out, s)
+}
+
+func autoConvert_url_Values_To_v1_ClusterGroupAPIResourceOptions(in *url.Values, out *ClusterGroupAPIResourceOptions, s conversion.Scope) error {
+	// WARNING: Field TypeMeta does not have json tag, skipping.
+
+	return nil
+}
+
+// Convert_url_Values_To_v1_ClusterGroupAPIResourceOptions is an autogenerated conversion function.
+func Convert_url_Values_To_v1_ClusterGroupAPIResourceOptions(in *url.Values, out *ClusterGroupAPIResourceOptions, s conversion.Scope) error {
+	return autoConvert_url_Values_To_v1_ClusterGroupAPIResourceOptions(in, out, s)
 }
 
 func autoConvert_v1_ClusterList_To_platform_ClusterList(in *ClusterList, out *platform.ClusterList, s conversion.Scope) error {
@@ -1859,6 +2122,7 @@ func autoConvert_v1_ClusterSpec_To_platform_ClusterSpec(in *ClusterSpec, out *pl
 	out.HostnameAsNodename = in.HostnameAsNodename
 	out.NetworkArgs = *(*map[string]string)(unsafe.Pointer(&in.NetworkArgs))
 	out.ScalingMachines = *(*[]platform.ClusterMachine)(unsafe.Pointer(&in.ScalingMachines))
+	out.BootstrapApps = *(*platform.BootstrapApps)(unsafe.Pointer(&in.BootstrapApps))
 	return nil
 }
 
@@ -1896,6 +2160,7 @@ func autoConvert_platform_ClusterSpec_To_v1_ClusterSpec(in *platform.ClusterSpec
 	out.Etcd = (*Etcd)(unsafe.Pointer(in.Etcd))
 	out.HostnameAsNodename = in.HostnameAsNodename
 	out.NetworkArgs = *(*map[string]string)(unsafe.Pointer(&in.NetworkArgs))
+	out.BootstrapApps = *(*BootstrapApps)(unsafe.Pointer(&in.BootstrapApps))
 	return nil
 }
 
@@ -2495,6 +2760,24 @@ func Convert_platform_IPAMProxyOptions_To_v1_IPAMProxyOptions(in *platform.IPAMP
 	return autoConvert_platform_IPAMProxyOptions_To_v1_IPAMProxyOptions(in, out, s)
 }
 
+func autoConvert_url_Values_To_v1_IPAMProxyOptions(in *url.Values, out *IPAMProxyOptions, s conversion.Scope) error {
+	// WARNING: Field TypeMeta does not have json tag, skipping.
+
+	if values, ok := map[string][]string(*in)["path"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Path, s); err != nil {
+			return err
+		}
+	} else {
+		out.Path = ""
+	}
+	return nil
+}
+
+// Convert_url_Values_To_v1_IPAMProxyOptions is an autogenerated conversion function.
+func Convert_url_Values_To_v1_IPAMProxyOptions(in *url.Values, out *IPAMProxyOptions, s conversion.Scope) error {
+	return autoConvert_url_Values_To_v1_IPAMProxyOptions(in, out, s)
+}
+
 func autoConvert_v1_IPAMSpec_To_platform_IPAMSpec(in *IPAMSpec, out *platform.IPAMSpec, s conversion.Scope) error {
 	out.TenantID = in.TenantID
 	out.ClusterName = in.ClusterName
@@ -2623,6 +2906,38 @@ func autoConvert_platform_LBCFProxyOptions_To_v1_LBCFProxyOptions(in *platform.L
 // Convert_platform_LBCFProxyOptions_To_v1_LBCFProxyOptions is an autogenerated conversion function.
 func Convert_platform_LBCFProxyOptions_To_v1_LBCFProxyOptions(in *platform.LBCFProxyOptions, out *LBCFProxyOptions, s conversion.Scope) error {
 	return autoConvert_platform_LBCFProxyOptions_To_v1_LBCFProxyOptions(in, out, s)
+}
+
+func autoConvert_url_Values_To_v1_LBCFProxyOptions(in *url.Values, out *LBCFProxyOptions, s conversion.Scope) error {
+	// WARNING: Field TypeMeta does not have json tag, skipping.
+
+	if values, ok := map[string][]string(*in)["namespace"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Namespace, s); err != nil {
+			return err
+		}
+	} else {
+		out.Namespace = ""
+	}
+	if values, ok := map[string][]string(*in)["name"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Name, s); err != nil {
+			return err
+		}
+	} else {
+		out.Name = ""
+	}
+	if values, ok := map[string][]string(*in)["action"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Action, s); err != nil {
+			return err
+		}
+	} else {
+		out.Action = ""
+	}
+	return nil
+}
+
+// Convert_url_Values_To_v1_LBCFProxyOptions is an autogenerated conversion function.
+func Convert_url_Values_To_v1_LBCFProxyOptions(in *url.Values, out *LBCFProxyOptions, s conversion.Scope) error {
+	return autoConvert_url_Values_To_v1_LBCFProxyOptions(in, out, s)
 }
 
 func autoConvert_v1_LBCFSpec_To_platform_LBCFSpec(in *LBCFSpec, out *platform.LBCFSpec, s conversion.Scope) error {
@@ -2777,6 +3092,31 @@ func autoConvert_platform_LogCollectorProxyOptions_To_v1_LogCollectorProxyOption
 // Convert_platform_LogCollectorProxyOptions_To_v1_LogCollectorProxyOptions is an autogenerated conversion function.
 func Convert_platform_LogCollectorProxyOptions_To_v1_LogCollectorProxyOptions(in *platform.LogCollectorProxyOptions, out *LogCollectorProxyOptions, s conversion.Scope) error {
 	return autoConvert_platform_LogCollectorProxyOptions_To_v1_LogCollectorProxyOptions(in, out, s)
+}
+
+func autoConvert_url_Values_To_v1_LogCollectorProxyOptions(in *url.Values, out *LogCollectorProxyOptions, s conversion.Scope) error {
+	// WARNING: Field TypeMeta does not have json tag, skipping.
+
+	if values, ok := map[string][]string(*in)["namespace"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Namespace, s); err != nil {
+			return err
+		}
+	} else {
+		out.Namespace = ""
+	}
+	if values, ok := map[string][]string(*in)["name"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Name, s); err != nil {
+			return err
+		}
+	} else {
+		out.Name = ""
+	}
+	return nil
+}
+
+// Convert_url_Values_To_v1_LogCollectorProxyOptions is an autogenerated conversion function.
+func Convert_url_Values_To_v1_LogCollectorProxyOptions(in *url.Values, out *LogCollectorProxyOptions, s conversion.Scope) error {
+	return autoConvert_url_Values_To_v1_LogCollectorProxyOptions(in, out, s)
 }
 
 func autoConvert_v1_LogCollectorSpec_To_platform_LogCollectorSpec(in *LogCollectorSpec, out *platform.LogCollectorSpec, s conversion.Scope) error {
@@ -3073,6 +3413,31 @@ func autoConvert_platform_PVCRProxyOptions_To_v1_PVCRProxyOptions(in *platform.P
 // Convert_platform_PVCRProxyOptions_To_v1_PVCRProxyOptions is an autogenerated conversion function.
 func Convert_platform_PVCRProxyOptions_To_v1_PVCRProxyOptions(in *platform.PVCRProxyOptions, out *PVCRProxyOptions, s conversion.Scope) error {
 	return autoConvert_platform_PVCRProxyOptions_To_v1_PVCRProxyOptions(in, out, s)
+}
+
+func autoConvert_url_Values_To_v1_PVCRProxyOptions(in *url.Values, out *PVCRProxyOptions, s conversion.Scope) error {
+	// WARNING: Field TypeMeta does not have json tag, skipping.
+
+	if values, ok := map[string][]string(*in)["namespace"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Namespace, s); err != nil {
+			return err
+		}
+	} else {
+		out.Namespace = ""
+	}
+	if values, ok := map[string][]string(*in)["name"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Name, s); err != nil {
+			return err
+		}
+	} else {
+		out.Name = ""
+	}
+	return nil
+}
+
+// Convert_url_Values_To_v1_PVCRProxyOptions is an autogenerated conversion function.
+func Convert_url_Values_To_v1_PVCRProxyOptions(in *url.Values, out *PVCRProxyOptions, s conversion.Scope) error {
+	return autoConvert_url_Values_To_v1_PVCRProxyOptions(in, out, s)
 }
 
 func autoConvert_v1_PersistentBackEnd_To_platform_PersistentBackEnd(in *PersistentBackEnd, out *platform.PersistentBackEnd, s conversion.Scope) error {

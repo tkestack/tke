@@ -31,12 +31,14 @@ var (
 	OSs           = []string{"linux"}
 
 	K8sVersionConstraint = ">= 1.10"
-	K8sVersions          = []string{"1.20.4-tke.1", "1.20.4", "1.19.7", "1.18.3"}
+	K8sVersions          = []string{"1.21.4-tke.1", "1.20.4-tke.1", "1.20.4", "1.19.7"}
 	K8sVersionsWithV     = funk.Map(K8sVersions, func(s string) string {
 		return "v" + s
 	}).([]string)
 
 	DockerVersions                 = []string{"19.03.14"}
+	ContainerdVersions             = []string{"1.5.4"}
+	NerdctlVersions                = []string{"0.11.0"}
 	CNIPluginsVersions             = []string{"v0.8.6"}
 	ConntrackToolsVersions         = []string{"1.4.4"}
 	NvidiaDriverVersions           = []string{"440.31"}

@@ -47,6 +47,7 @@ func AddFieldLabelConversionsForApp(scheme *runtime.Scheme) error {
 			case "spec.tenantID",
 				"spec.name",
 				"spec.targetCluster",
+				"spec.targetNamespace",
 				"spec.type",
 				"metadata.name":
 				return label, value, nil

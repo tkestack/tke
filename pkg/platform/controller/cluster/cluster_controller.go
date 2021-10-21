@@ -30,10 +30,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
 	platformv1lister "tkestack.io/tke/api/client/listers/platform/v1"
@@ -131,7 +133,14 @@ func (c *Controller) addCluster(obj interface{}) {
 func (c *Controller) updateCluster(old, obj interface{}) {
 	oldCluster := old.(*platformv1.Cluster)
 	cluster := obj.(*platformv1.Cluster)
-	if !c.needsUpdate(oldCluster, cluster) {
+
+	controllerNeedUpddateResult := c.needsUpdate(oldCluster, cluster)
+	var providerNeedUpddateResult bool
+	provider, _ := clusterprovider.GetProvider(cluster.Spec.Type)
+	if provider != nil {
+		providerNeedUpddateResult = provider.NeedUpdate(oldCluster, cluster)
+	}
+	if !(controllerNeedUpddateResult || providerNeedUpddateResult) {
 		return
 	}
 	c.log.Info("Updating cluster", "clusterName", cluster.Name)
@@ -148,33 +157,45 @@ func (c *Controller) enqueue(obj *platformv1.Cluster) {
 }
 
 func (c *Controller) needsUpdate(old *platformv1.Cluster, new *platformv1.Cluster) bool {
-	if !reflect.DeepEqual(old.Spec, new.Spec) {
+	switch {
+	case !reflect.DeepEqual(old.Spec, new.Spec):
 		return true
-	}
+	case !reflect.DeepEqual(old.ObjectMeta.Labels, new.ObjectMeta.Labels):
+		return true
+	case !reflect.DeepEqual(old.ObjectMeta.Annotations, new.ObjectMeta.Annotations):
+		return true
+	case old.Status.Phase != new.Status.Phase:
+		return true
+	case new.Status.Phase == platformv1.ClusterInitializing:
+		// if ResourceVersion is equal, it's an resync envent, should return true.
+		if old.ResourceVersion == new.ResourceVersion {
+			return true
+		}
+		if len(new.Status.Conditions) == 0 {
+			return true
+		}
+		if new.Status.Conditions[len(new.Status.Conditions)-1].Status == platformv1.ConditionUnknown {
+			return true
+		}
+		// if user set last condition false block procesee
+		if new.Status.Conditions[len(new.Status.Conditions)-1].Status == platformv1.ConditionFalse {
+			return false
+		}
+		fallthrough
+	case !reflect.DeepEqual(old.Status.Conditions, new.Status.Conditions):
+		return true
+	default:
+		healthCondition := new.GetCondition(conditionTypeHealthCheck)
+		if healthCondition == nil {
+			// when healthCondition is not set, if ResourceVersion is equal, it's an resync envent, should return true.
+			return old.ResourceVersion == new.ResourceVersion
+		}
+		if time.Since(healthCondition.LastProbeTime.Time) > c.healthCheckPeriod {
+			return true
+		}
 
-	if old.Status.Phase == platformv1.ClusterRunning && new.Status.Phase == platformv1.ClusterTerminating {
-		return true
+		return false
 	}
-
-	if !reflect.DeepEqual(old.ObjectMeta.Annotations, new.ObjectMeta.Annotations) {
-		return true
-	}
-
-	if !reflect.DeepEqual(old.ObjectMeta.Labels, new.ObjectMeta.Labels) {
-		return true
-	}
-
-	// Control the synchronization interval through the health detection interval
-	// to avoid version conflicts caused by concurrent modification
-	healthCondition := new.GetCondition(conditionTypeHealthCheck)
-	if healthCondition == nil {
-		return true
-	}
-	if time.Since(healthCondition.LastProbeTime.Time) > c.healthCheckPeriod {
-		return true
-	}
-
-	return false
 }
 
 // Run will set up the event handlers for types we are interested in, as well
@@ -253,10 +274,12 @@ func (c *Controller) syncCluster(key string) error {
 	}
 
 	cluster, err := c.lister.Get(name)
-	if apierrors.IsNotFound(err) {
-		log.FromContext(ctx).Info("cluster has been deleted")
-	}
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			log.FromContext(ctx).Info("cluster has been deleted")
+			return nil
+		}
+
 		utilruntime.HandleError(fmt.Errorf("unable to retrieve cluster %v from store: %v", key, err))
 		return err
 	}
@@ -281,7 +304,7 @@ func (c *Controller) reconcile(ctx context.Context, key string, cluster *platfor
 		log.FromContext(ctx).Info("Cluster has been terminated. Attempting to cleanup resources")
 		err = c.deleter.Delete(ctx, key)
 		if err == nil {
-			log.FromContext(ctx).Info("Machine has been successfully deleted")
+			log.FromContext(ctx).Info("Cluster has been successfully deleted")
 		}
 	default:
 		log.FromContext(ctx).Info("unknown cluster phase", "status.phase", cluster.Status.Phase)
@@ -386,7 +409,6 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 }
 
 // ensureCreateClusterCredential creates ClusterCredential for cluster if ClusterCredentialRef is nil.
-// TODO: add gc collector for clean non reference ClusterCredential.
 func (c *Controller) ensureCreateClusterCredential(ctx context.Context, cluster *platformv1.Cluster) (*platformv1.Cluster, error) {
 	if cluster.Spec.ClusterCredentialRef != nil {
 		// Set OwnerReferences for imported cluster credentials
@@ -403,28 +425,38 @@ func (c *Controller) ensureCreateClusterCredential(ctx context.Context, cluster 
 		return cluster, nil
 	}
 
-	var err error
-	// Set OwnerReferences for baremetal cluster credentials
-	credential := &platformv1.ClusterCredential{
-		TenantID:    cluster.Spec.TenantID,
-		ClusterName: cluster.Name,
-		ObjectMeta: metav1.ObjectMeta{
-			OwnerReferences: []metav1.OwnerReference{
-				*metav1.NewControllerRef(cluster, platformv1.SchemeGroupVersion.WithKind("Cluster"))},
-		},
+	// TODO use informer search by labels.
+	fieldSelector := fields.OneTermEqualSelector("clusterName", cluster.Name).String()
+	clustercredentials, err := c.platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
+	if err != nil {
+		return nil, err
 	}
 
-	credential, err = c.platformClient.ClusterCredentials().Create(ctx, credential, metav1.CreateOptions{})
-	if err != nil {
-		return nil, err
+	// [Idempotent] if not found cluster credentials, create one for next logic
+	var credential *platformv1.ClusterCredential
+	if len(clustercredentials.Items) == 0 {
+		credential = &platformv1.ClusterCredential{
+			TenantID:    cluster.Spec.TenantID,
+			ClusterName: cluster.Name,
+			ObjectMeta: metav1.ObjectMeta{
+				OwnerReferences: []metav1.OwnerReference{
+					*metav1.NewControllerRef(cluster, platformv1.SchemeGroupVersion.WithKind("Cluster"))},
+			},
+		}
+
+		credential, err = c.platformClient.ClusterCredentials().Create(ctx, credential, metav1.CreateOptions{})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		if len(clustercredentials.Items) > 1 {
+			log.Warnf("cluster %s has more than one credentials, need attention!")
+		}
+
+		credential = &clustercredentials.Items[0]
 	}
+
 	cluster.Spec.ClusterCredentialRef = &corev1.LocalObjectReference{Name: credential.Name}
-	cluster, err = c.platformClient.Clusters().Update(ctx, cluster, metav1.UpdateOptions{})
-	if err != nil {
-		// Possible deletion failure will result in dirty data. So need gc collector.
-		_ = c.platformClient.ClusterCredentials().Delete(ctx, credential.Name, metav1.DeleteOptions{})
-		return nil, err
-	}
 
 	return cluster, nil
 }

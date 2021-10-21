@@ -123,6 +123,7 @@ deploy:
 .PHONY: clean
 clean:
 	@$(MAKE) go.clean
+	git restore pkg/platform/registry/clusteraddontype/assets/assets.go
 
 ## lint: Check syntax and styling of go sources.
 .PHONY: lint
@@ -139,7 +140,7 @@ release.build:
 ifeq ($(NEED_BUILD_PROVIDER),true)
 	cd build/docker/tools/provider-res && make all
 endif
-	make push.multiarch
+	make asset && make push.multiarch
 
 ## release: Release tke
 .PHONY: release

@@ -68,16 +68,12 @@ spec:
               mountPath: /app/provider/baremetal/conf/kubeadm/
             - name: gpu-manifests-volume
               mountPath: /app/provider/baremetal/manifests/gpu/
-            - name: gpu-manager-manifests-volume
-              mountPath: /app/provider/baremetal/manifests/gpu-manager/
             - name: csi-operator-manifests-volume
               mountPath: /app/provider/baremetal/manifests/csi-operator/
             - name: keepalived-manifests-volume
               mountPath: /app/provider/baremetal/manifests/keepalived/
             - name: metrics-server-manifests-volume
               mountPath: /app/provider/baremetal/manifests/metrics-server/
-            - name: cilium-manifests-volume
-              mountPath: /app/provider/baremetal/manifests/cilium/
           ports:
             - containerPort: 9443
           readinessProbe:
@@ -125,9 +121,6 @@ spec:
         - name: gpu-manifests-volume
           configMap:
             name: gpu-manifests
-        - name: gpu-manager-manifests-volume
-          configMap:
-            name: gpu-manager-manifests
         - name: csi-operator-manifests-volume
           configMap:
             name: csi-operator-manifests
@@ -137,9 +130,6 @@ spec:
         - name: metrics-server-manifests-volume
           configMap:
             name: metrics-server-manifests
-        - name: cilium-manifests-volume
-          configMap:
-            name: cilium-manifests
 ---
 kind: ConfigMap
 apiVersion: v1
@@ -196,12 +186,6 @@ data:
       username_headers = "X-Remote-User"
       group_headers = "X-Remote-Group"
       extra_headers_prefix = "X-Remote-Extra-"
-
-    [authorization]
-{{- if .EnableAuth }}
-    mode = "Webhook"
-    webhook_config_file = "/app/conf/tke-authz-webhook.yaml"
-{{- end }}
 
   tke-platform-config.yaml: |
     apiVersion: v1

@@ -83,7 +83,7 @@ data:
       - name: tke
         cluster:
           insecure-skip-tls-verify: true
-          server: https://tke-platform-api
+          server: https://tke-platform-api.{{ .Namespace }}
     users:
       - name: admin-cert
         user:

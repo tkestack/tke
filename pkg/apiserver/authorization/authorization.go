@@ -20,6 +20,7 @@ package authorization
 
 import (
 	"fmt"
+
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
@@ -28,6 +29,15 @@ import (
 // SetupAuthorization to setup the generic apiserver by authorization options.
 func SetupAuthorization(genericAPIServerConfig *genericapiserver.Config, authorizationOpts *apiserveroptions.AuthorizationOptions) error {
 	var err error
+	if len(authorizationOpts.Modes) == 0 {
+		authzInfo := genericapiserver.AuthorizationInfo{}
+		err = authorizationOpts.ApplyTo(&authzInfo)
+		if err != nil {
+			return fmt.Errorf("invalid authorization config: %v", err)
+		}
+		genericAPIServerConfig.Authorization = authzInfo
+		return nil
+	}
 	genericAPIServerConfig.Authorization.Authorizer, genericAPIServerConfig.RuleResolver, err = buildAuthorizer(authorizationOpts)
 	if err != nil {
 		return fmt.Errorf("invalid authorization config: %v", err)
@@ -41,8 +51,8 @@ func buildAuthorizer(o *apiserveroptions.AuthorizationOptions) (authorizer.Autho
 		AuthorizationModes:          o.Modes,
 		WebhookConfigFile:           o.WebhookConfigFile,
 		WebhookVersion:              o.WebhookVersion,
-		WebhookCacheAuthorizedTTL:   o.WebhookCacheAuthorizedTTL,
-		WebhookCacheUnauthorizedTTL: o.WebhookCacheUnauthorizedTTL,
+		WebhookCacheAuthorizedTTL:   o.AllowCacheTTL,
+		WebhookCacheUnauthorizedTTL: o.DenyCacheTTL,
 	}
 	return authorizationConfig.New()
 }
