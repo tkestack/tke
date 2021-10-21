@@ -41,6 +41,10 @@ var (
 // IsValiadURL tests that https://host:port is reachble in timeout.
 func IsValiadURL(url string, timeout time.Duration) error {
 	client := &http.Client{
+		// disabel redirect func for import clusternet proxy cluster case
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
 			DialContext: (&net.Dialer{

@@ -210,6 +210,9 @@ var map_ClusterCredential = map[string]string{
 	"token":          "For kube-apiserver token auth",
 	"bootstrapToken": "For kubeadm init or join",
 	"certificateKey": "For kubeadm init or join",
+	"as":             "Impersonate is the username to act-as.",
+	"as-groups":      "ImpersonateGroups is the groups to imperonate.",
+	"as-user-extra":  "ImpersonateUserExtra contains additional information for impersonated user.",
 }
 
 func (ClusterCredential) SwaggerDoc() map[string]string {

@@ -46,13 +46,6 @@ func ValidateClusterCredential(ctx context.Context, credential *platform.Cluster
 
 		// Deprecated: will remove in next release
 		if cluster.Spec.Type == "Imported" {
-			if credential.Token == nil && credential.ClientKey == nil && credential.ClientCert == nil {
-				allErrs = append(allErrs, field.Required(field.NewPath(""),
-					"must specify at least one of token or client certificate authentication"))
-
-				return allErrs
-			}
-
 			if credential.ClientCert == nil && credential.ClientKey != nil ||
 				credential.ClientCert != nil && credential.ClientKey == nil {
 				allErrs = append(allErrs, field.Required(field.NewPath("clientCert"),

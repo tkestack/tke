@@ -109,6 +109,12 @@ func (c *Cluster) RESTConfig(config *rest.Config) (*rest.Config, error) {
 		config.BearerToken = *c.ClusterCredential.Token
 	}
 
+	if c.ClusterCredential != nil {
+		config.Impersonate.UserName = c.ClusterCredential.Impersonate
+		config.Impersonate.Groups = c.ClusterCredential.ImpersonateGroups
+		config.Impersonate.Extra = c.ClusterCredential.ImpersonateUserExtra.ExtraToHeaders()
+	}
+
 	return config, nil
 }
 

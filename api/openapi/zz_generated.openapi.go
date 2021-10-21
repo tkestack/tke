@@ -46855,6 +46855,42 @@ func schema_tke_api_platform_v1_ClusterCredential(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
+					"as": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Impersonate is the username to act-as.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"as-groups": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ImpersonateGroups is the groups to imperonate.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"as-user-extra": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ImpersonateUserExtra contains additional information for impersonated user.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"tenantID", "clusterName"},
 			},
