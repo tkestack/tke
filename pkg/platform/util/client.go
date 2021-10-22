@@ -43,8 +43,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
-	"yunion.io/x/pkg/util/wait"
-
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
@@ -535,24 +533,6 @@ func rootCertPool(caData []byte) *x509.CertPool {
 	certPool := x509.NewCertPool()
 	certPool.AppendCertsFromPEM(caData)
 	return certPool
-}
-
-// CheckClusterHealthzWithTimeout check cluster status within timeout
-func CheckClusterHealthzWithTimeout(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, name string, timeout time.Duration) error {
-	err := wait.PollImmediate(1*time.Second, timeout, func() (bool, error) {
-		clientset, err := BuildExternalClientSetWithName(ctx, platformClient, name)
-		if err != nil {
-			return false, nil
-		}
-		healthStatus := 0
-		clientset.Discovery().RESTClient().Get().AbsPath("/healthz").Do(ctx).StatusCode(&healthStatus)
-		if healthStatus != http.StatusOK {
-			return false, nil
-		}
-		return true, nil
-	})
-
-	return err
 }
 
 func PrepareClusterScale(cluster *platform.Cluster, oldCluster *platform.Cluster) ([]platform.ClusterMachine, error) {
