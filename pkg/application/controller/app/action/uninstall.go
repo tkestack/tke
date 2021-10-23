@@ -20,6 +20,7 @@ package action
 
 import (
 	"context"
+	appconfig "tkestack.io/tke/pkg/application/config"
 
 	"helm.sh/helm/v3/pkg/release"
 	applicationv1 "tkestack.io/tke/api/application/v1"
@@ -33,9 +34,10 @@ import (
 func Uninstall(ctx context.Context,
 	applicationClient applicationversionedclient.ApplicationV1Interface,
 	platformClient platformversionedclient.PlatformV1Interface,
-	app *applicationv1.App) (*release.UninstallReleaseResponse, error) {
+	app *applicationv1.App,
+	repo appconfig.RepoConfiguration) (*release.UninstallReleaseResponse, error) {
 	hooks := getHooks(app)
-	err := hooks.PreUninstall(ctx, applicationClient, platformClient, app)
+	err := hooks.PreUninstall(ctx, applicationClient, platformClient, app, repo)
 	if err != nil {
 		return nil, err
 	}
@@ -50,6 +52,6 @@ func Uninstall(ctx context.Context,
 	if err != nil {
 		return resp, err
 	}
-	err = hooks.PostUninstall(ctx, applicationClient, platformClient, app)
+	err = hooks.PostUninstall(ctx, applicationClient, platformClient, app, repo)
 	return resp, err
 }

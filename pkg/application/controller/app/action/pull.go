@@ -37,7 +37,7 @@ func Pull(ctx context.Context,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
-	updateStatusFunc updateStatusFunc) (string, error) {
+	UpdateStatusFunc UpdateStatusFunc) (string, error) {
 	client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
 	if err != nil {
 		return "", err
@@ -50,21 +50,21 @@ func Pull(ctx context.Context,
 	destfile, err := client.Pull(&helmaction.PullOptions{
 		ChartPathOptions: chartPathBasicOptions,
 	})
-	if updateStatusFunc != nil {
+	if UpdateStatusFunc != nil {
 		newStatus := app.Status.DeepCopy()
 		if err != nil {
 			newStatus.Phase = applicationv1.AppPhaseChartFetchFailed
 			newStatus.Message = "fetch chart failed"
 			newStatus.Reason = err.Error()
 			newStatus.LastTransitionTime = metav1.Now()
-			updateStatusFunc(ctx, app, &app.Status, newStatus)
+			UpdateStatusFunc(ctx, app, &app.Status, newStatus)
 			return destfile, err
 		}
 		newStatus.Phase = applicationv1.AppPhaseChartFetched
 		newStatus.Message = ""
 		newStatus.Reason = ""
 		newStatus.LastTransitionTime = metav1.Now()
-		_, err := updateStatusFunc(ctx, app, &app.Status, newStatus)
+		_, err := UpdateStatusFunc(ctx, app, &app.Status, newStatus)
 		if err != nil {
 			return destfile, err
 		}

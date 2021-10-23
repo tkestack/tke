@@ -38,9 +38,9 @@ func Install(ctx context.Context,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
-	updateStatusFunc updateStatusFunc) (*applicationv1.App, error) {
+	UpdateStatusFunc UpdateStatusFunc) (*applicationv1.App, error) {
 	hooks := getHooks(app)
-	err := hooks.PreInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	err := hooks.PreInstall(ctx, applicationClient, platformClient, app, repo, UpdateStatusFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func Install(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	destfile, err := Pull(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	destfile, err := Pull(ctx, applicationClient, platformClient, app, repo, UpdateStatusFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func Install(ctx context.Context,
 		Values:           values,
 		ChartPathOptions: chartPathBasicOptions,
 	})
-	if updateStatusFunc != nil {
+	if UpdateStatusFunc != nil {
 		newStatus := newApp.Status.DeepCopy()
 		var updateStatusErr error
 		if err != nil {
@@ -90,7 +90,7 @@ func Install(ctx context.Context,
 			newStatus.Reason = ""
 			newStatus.LastTransitionTime = metav1.Now()
 		}
-		newApp, updateStatusErr = updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
+		newApp, updateStatusErr = UpdateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
 		if updateStatusErr != nil {
 			return newApp, updateStatusErr
 		}
@@ -98,6 +98,6 @@ func Install(ctx context.Context,
 	if err != nil {
 		return newApp, err
 	}
-	err = hooks.PostInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	err = hooks.PostInstall(ctx, applicationClient, platformClient, app, repo, UpdateStatusFunc)
 	return newApp, err
 }

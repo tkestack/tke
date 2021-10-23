@@ -38,9 +38,9 @@ func Upgrade(ctx context.Context,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
-	updateStatusFunc updateStatusFunc) (*applicationv1.App, error) {
+	UpdateStatusFunc UpdateStatusFunc) (*applicationv1.App, error) {
 	hooks := getHooks(app)
-	err := hooks.PreUpgrade(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	err := hooks.PreUpgrade(ctx, applicationClient, platformClient, app, repo, UpdateStatusFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func Upgrade(ctx context.Context,
 		return nil, err
 	}
 
-	destfile, err := Pull(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	destfile, err := Pull(ctx, applicationClient, platformClient, app, repo, UpdateStatusFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func Upgrade(ctx context.Context,
 		ChartPathOptions: chartPathBasicOptions,
 	})
 
-	if updateStatusFunc != nil {
+	if UpdateStatusFunc != nil {
 		newStatus := newApp.Status.DeepCopy()
 		var updateStatusErr error
 		if err != nil {
@@ -93,7 +93,7 @@ func Upgrade(ctx context.Context,
 			newStatus.Reason = ""
 			newStatus.LastTransitionTime = metav1.Now()
 		}
-		newApp, updateStatusErr = updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
+		newApp, updateStatusErr = UpdateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
 		if updateStatusErr != nil {
 			return newApp, updateStatusErr
 		}
@@ -101,6 +101,6 @@ func Upgrade(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	err = hooks.PostUpgrade(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	err = hooks.PostUpgrade(ctx, applicationClient, platformClient, app, repo, UpdateStatusFunc)
 	return newApp, err
 }

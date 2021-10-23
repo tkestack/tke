@@ -36,9 +36,9 @@ func Rollback(ctx context.Context,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
-	updateStatusFunc updateStatusFunc) (*applicationv1.App, error) {
+	UpdateStatusFunc UpdateStatusFunc) (*applicationv1.App, error) {
 	hooks := getHooks(app)
-	err := hooks.PreRollback(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	err := hooks.PreRollback(ctx, applicationClient, platformClient, app, repo, UpdateStatusFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func Rollback(ctx context.Context,
 		ReleaseName: app.Spec.Name,
 		Revision:    app.Status.RollbackRevision,
 	})
-	if updateStatusFunc != nil {
+	if UpdateStatusFunc != nil {
 		newStatus := app.Status.DeepCopy()
 		var updateStatusErr error
 		if err != nil {
@@ -67,7 +67,7 @@ func Rollback(ctx context.Context,
 			newStatus.LastTransitionTime = metav1.Now()
 			newStatus.RollbackRevision = 0 // clean revision
 		}
-		app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
+		app, updateStatusErr = UpdateStatusFunc(ctx, app, &app.Status, newStatus)
 		if updateStatusErr != nil {
 			return app, updateStatusErr
 		}
@@ -75,6 +75,6 @@ func Rollback(ctx context.Context,
 	if err != nil {
 		return app, err
 	}
-	err = hooks.PostRollback(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	err = hooks.PostRollback(ctx, applicationClient, platformClient, app, repo, UpdateStatusFunc)
 	return app, err
 }
