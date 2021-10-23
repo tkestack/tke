@@ -38,7 +38,7 @@ func Install(ctx context.Context,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
-	updateStatusFunc updateStatusFunc) (*applicationv1.App, error) {
+	updateStatusFunc UpdateStatusFunc) (*applicationv1.App, error) {
 	hooks := getHooks(app)
 	err := hooks.PreInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 	if err != nil {

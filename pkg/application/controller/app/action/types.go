@@ -24,4 +24,4 @@ import (
 	applicationv1 "tkestack.io/tke/api/application/v1"
 )
 
-type updateStatusFunc func(ctx context.Context, app *applicationv1.App, previousStatus, newStatus *applicationv1.AppStatus) (*applicationv1.App, error)
+type UpdateStatusFunc func(ctx context.Context, app *applicationv1.App, previousStatus, newStatus *applicationv1.AppStatus) (*applicationv1.App, error)
