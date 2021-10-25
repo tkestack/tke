@@ -38,45 +38,47 @@ type Hooks interface {
 		platformClient platformversionedclient.PlatformV1Interface,
 		app *applicationv1.App,
 		repo appconfig.RepoConfiguration,
-		updateStatusFunc updateStatusFunc) error
+		updateStatusFunc UpdateStatusFunc) error
 	PostInstall(ctx context.Context,
 		applicationClient applicationversionedclient.ApplicationV1Interface,
 		platformClient platformversionedclient.PlatformV1Interface,
 		app *applicationv1.App,
 		repo appconfig.RepoConfiguration,
-		updateStatusFunc updateStatusFunc) error
+		updateStatusFunc UpdateStatusFunc) error
 	PreUpgrade(ctx context.Context,
 		applicationClient applicationversionedclient.ApplicationV1Interface,
 		platformClient platformversionedclient.PlatformV1Interface,
 		app *applicationv1.App,
 		repo appconfig.RepoConfiguration,
-		updateStatusFunc updateStatusFunc) error
+		updateStatusFunc UpdateStatusFunc) error
 	PostUpgrade(ctx context.Context,
 		applicationClient applicationversionedclient.ApplicationV1Interface,
 		platformClient platformversionedclient.PlatformV1Interface,
 		app *applicationv1.App,
 		repo appconfig.RepoConfiguration,
-		updateStatusFunc updateStatusFunc) error
+		updateStatusFunc UpdateStatusFunc) error
 	PreRollback(ctx context.Context,
 		applicationClient applicationversionedclient.ApplicationV1Interface,
 		platformClient platformversionedclient.PlatformV1Interface,
 		app *applicationv1.App,
 		repo appconfig.RepoConfiguration,
-		updateStatusFunc updateStatusFunc) error
+		updateStatusFunc UpdateStatusFunc) error
 	PostRollback(ctx context.Context,
 		applicationClient applicationversionedclient.ApplicationV1Interface,
 		platformClient platformversionedclient.PlatformV1Interface,
 		app *applicationv1.App,
 		repo appconfig.RepoConfiguration,
-		updateStatusFunc updateStatusFunc) error
+		updateStatusFunc UpdateStatusFunc) error
 	PreUninstall(ctx context.Context,
 		applicationClient applicationversionedclient.ApplicationV1Interface,
 		platformClient platformversionedclient.PlatformV1Interface,
-		app *applicationv1.App) error
+		app *applicationv1.App,
+		repo appconfig.RepoConfiguration) error
 	PostUninstall(ctx context.Context,
 		applicationClient applicationversionedclient.ApplicationV1Interface,
 		platformClient platformversionedclient.PlatformV1Interface,
-		app *applicationv1.App) error
+		app *applicationv1.App,
+		repo appconfig.RepoConfiguration) error
 }
 
 type EmptyHooks struct{}
@@ -86,7 +88,7 @@ func (EmptyHooks) PreInstall(ctx context.Context,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
-	updateStatusFunc updateStatusFunc) error {
+	updateStatusFunc UpdateStatusFunc) error {
 	return nil
 }
 
@@ -95,7 +97,7 @@ func (EmptyHooks) PostInstall(ctx context.Context,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
-	updateStatusFunc updateStatusFunc) error {
+	updateStatusFunc UpdateStatusFunc) error {
 	return nil
 }
 
@@ -104,7 +106,7 @@ func (EmptyHooks) PreUpgrade(ctx context.Context,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
-	updateStatusFunc updateStatusFunc) error {
+	updateStatusFunc UpdateStatusFunc) error {
 	return nil
 }
 
@@ -113,7 +115,7 @@ func (EmptyHooks) PostUpgrade(ctx context.Context,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
-	updateStatusFunc updateStatusFunc) error {
+	updateStatusFunc UpdateStatusFunc) error {
 	return nil
 }
 
@@ -122,7 +124,7 @@ func (EmptyHooks) PreRollback(ctx context.Context,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
-	updateStatusFunc updateStatusFunc) error {
+	updateStatusFunc UpdateStatusFunc) error {
 	return nil
 }
 
@@ -131,21 +133,23 @@ func (EmptyHooks) PostRollback(ctx context.Context,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
-	updateStatusFunc updateStatusFunc) error {
+	updateStatusFunc UpdateStatusFunc) error {
 	return nil
 }
 
 func (EmptyHooks) PreUninstall(ctx context.Context,
 	applicationClient applicationversionedclient.ApplicationV1Interface,
 	platformClient platformversionedclient.PlatformV1Interface,
-	app *applicationv1.App) error {
+	app *applicationv1.App,
+	repo appconfig.RepoConfiguration) error {
 	return nil
 }
 
 func (EmptyHooks) PostUninstall(ctx context.Context,
 	applicationClient applicationversionedclient.ApplicationV1Interface,
 	platformClient platformversionedclient.PlatformV1Interface,
-	app *applicationv1.App) error {
+	app *applicationv1.App,
+	repo appconfig.RepoConfiguration) error {
 	return nil
 }
 

@@ -253,7 +253,8 @@ func (d *applicationResourcesDeleter) finalizeApplication(ctx context.Context, a
 
 type deleteResourceFunc func(ctx context.Context,
 	deleter *applicationResourcesDeleter,
-	app *applicationv1.App) error
+	app *applicationv1.App,
+	repo appconfig.RepoConfiguration) error
 
 var deleteResourceFuncs = []deleteResourceFunc{
 	deleteApplication,
@@ -267,7 +268,7 @@ func (d *applicationResourcesDeleter) deleteAllContent(ctx context.Context, app 
 
 	var errs []error
 	for _, deleteFunc := range deleteResourceFuncs {
-		err := deleteFunc(ctx, d, app)
+		err := deleteFunc(ctx, d, app, d.repo)
 		if err != nil {
 			// If there is an error, hold on to it but proceed with all the remaining resource.
 			errs = append(errs, err)
@@ -284,8 +285,9 @@ func (d *applicationResourcesDeleter) deleteAllContent(ctx context.Context, app 
 
 func deleteApplication(ctx context.Context,
 	deleter *applicationResourcesDeleter,
-	app *applicationv1.App) error {
-	_, err := action.Uninstall(ctx, deleter.applicationClient, deleter.platformClient, app)
+	app *applicationv1.App,
+	repo appconfig.RepoConfiguration) error {
+	_, err := action.Uninstall(ctx, deleter.applicationClient, deleter.platformClient, app, repo)
 	if err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			log.Warn(err.Error())
