@@ -19,6 +19,11 @@
 package machine
 
 import (
+	"context"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/client-go/tools/clientcmd"
 	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
@@ -56,7 +61,14 @@ func NewProvider() (*Provider, error) {
 
 	p.DelegateProvider = &machineprovider.DelegateProvider{
 		ProviderName: name,
-
+		ValidateUpdateFunc: func(machine, oldMachine *platform.Machine) field.ErrorList {
+			allErrs := field.ErrorList{}
+			fldPath := field.NewPath("spec")
+			allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.IP, oldMachine.Spec.IP, fldPath.Child("ip"))...)
+			allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.Labels, oldMachine.Spec.Labels, fldPath.Child("labels"))...)
+			allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(machine.Spec.Taints, oldMachine.Spec.Taints, fldPath.Child("taints"))...)
+			return allErrs
+		},
 		CreateHandlers: []machineprovider.Handler{
 			p.EnsureCopyFiles,
 			p.EnsurePreInstallHook,
@@ -127,5 +139,17 @@ func NewProvider() (*Provider, error) {
 var _ machineprovider.Provider = &Provider{}
 
 func (p *Provider) Validate(machine *platform.Machine) field.ErrorList {
-	return validation.ValidateMachine(machine)
+	allErrs := field.ErrorList{}
+	fldPath := field.NewPath("spec")
+
+	cluster, err := p.platformClient.Clusters().Get(context.TODO(), machine.Spec.ClusterName, metav1.GetOptions{})
+	if err != nil {
+		if errors.IsNotFound(err) {
+			allErrs = append(allErrs, field.NotFound(fldPath.Child("ClusterName"), machine.Spec.ClusterName))
+		} else {
+			allErrs = append(allErrs, field.InternalError(fldPath, err))
+		}
+	}
+
+	return append(allErrs, validation.ValidateMachine(machine, cluster, p.platformClient)...)
 }

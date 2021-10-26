@@ -56,6 +56,7 @@ const (
 type APIProvider interface {
 	RegisterHandler(mux *mux.PathRecorderMux)
 	Validate(cluster *types.Cluster) field.ErrorList
+	ValidateUpdate(cluster *types.Cluster, oldCluster *types.Cluster) field.ErrorList
 	PreCreate(cluster *types.Cluster) error
 	AfterCreate(cluster *types.Cluster) error
 }
@@ -113,9 +114,10 @@ func (h Handler) Name() string {
 type DelegateProvider struct {
 	ProviderName string
 
-	ValidateFunc    func(cluster *types.Cluster) field.ErrorList
-	PreCreateFunc   func(cluster *types.Cluster) error
-	AfterCreateFunc func(cluster *types.Cluster) error
+	ValidateFunc       func(cluster *types.Cluster) field.ErrorList
+	ValidateUpdateFunc func(cluster *types.Cluster, oldCluster *types.Cluster) field.ErrorList
+	PreCreateFunc      func(cluster *types.Cluster) error
+	AfterCreateFunc    func(cluster *types.Cluster) error
 
 	CreateHandlers    []Handler
 	DeleteHandlers    []Handler
@@ -146,6 +148,14 @@ func (p *DelegateProvider) RegisterHandler(mux *mux.PathRecorderMux) {
 func (p *DelegateProvider) Validate(cluster *types.Cluster) field.ErrorList {
 	if p.ValidateFunc != nil {
 		return p.ValidateFunc(cluster)
+	}
+
+	return nil
+}
+
+func (p *DelegateProvider) ValidateUpdate(cluster *types.Cluster, oldCluster *types.Cluster) field.ErrorList {
+	if p.ValidateUpdateFunc != nil {
+		return p.ValidateUpdateFunc(cluster, oldCluster)
 	}
 
 	return nil
