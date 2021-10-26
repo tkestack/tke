@@ -656,7 +656,7 @@ type ClusterAddonList struct {
 
 // ClusterAddonSpec indicates the specifications of the ClusterAddon.
 type ClusterAddonSpec struct {
-	// Addon type, one of Helm, PersistentEvent or LogCollector etc.
+	// Addon type, one of PersistentEvent or LogCollector etc.
 	Type string
 	// AddonLevel is level of cluster addon.
 	Level AddonLevel
@@ -686,7 +686,7 @@ type ClusterAddonType struct {
 	metav1.TypeMeta
 	// +optional
 	metav1.ObjectMeta
-	// Addon type, one of Helm, PersistentEvent or LogCollector etc.
+	// Addon type, one of PersistentEvent or LogCollector etc.
 	Type string
 	// AddonLevel is level of cluster addon.
 	Level AddonLevel
@@ -849,69 +849,13 @@ type StorageBackEndES struct {
 // +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// HelmProxyOptions is the query options to a Helm-api proxy call.
-type HelmProxyOptions struct {
+// ProxyOptions is the query options to a proxy call.
+type ProxyOptions struct {
 	metav1.TypeMeta
 
 	// Path is the URL path to use for the current proxy request to helm-api.
 	// +optional
 	Path string
-}
-
-// +genclient
-// +genclient:nonNamespaced
-// +genclient:skipVerbs=deleteCollection
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// Helm is a kubernetes package manager.
-type Helm struct {
-	metav1.TypeMeta
-	// +optional
-	metav1.ObjectMeta
-
-	// Spec defines the desired identities of clusters in this set.
-	// +optional
-	Spec HelmSpec
-	// +optional
-	Status HelmStatus
-}
-
-// +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// HelmList is the whole list of all helms which owned by a tenant.
-type HelmList struct {
-	metav1.TypeMeta
-	// +optional
-	metav1.ListMeta
-
-	// List of Helms
-	Items []Helm
-}
-
-// HelmSpec describes the attributes on a Helm.
-type HelmSpec struct {
-	TenantID    string
-	ClusterName string
-	Version     string
-}
-
-// HelmStatus is information about the current status of a Helm.
-type HelmStatus struct {
-	// +optional
-	Version string
-	// Phase is the current lifecycle phase of the helm of cluster.
-	// +optional
-	Phase AddonPhase
-	// Reason is a brief CamelCase string that describes any failure.
-	// +optional
-	Reason string
-	// RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
-	// +optional
-	RetryCount int32
-	// LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
-	// +optional
-	LastReInitializingTimestamp metav1.Time
 }
 
 // +genclient

@@ -28,7 +28,6 @@ import (
 	logagent "tkestack.io/tke/pkg/logagent/controller/logagent/images"
 	mesh "tkestack.io/tke/pkg/mesh/controller/meshmanager/images"
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
-	helm "tkestack.io/tke/pkg/platform/controller/addon/helm/images"
 	ipam "tkestack.io/tke/pkg/platform/controller/addon/ipam/images"
 	lbcf "tkestack.io/tke/pkg/platform/controller/addon/lbcf/images"
 	logcollector "tkestack.io/tke/pkg/platform/controller/addon/logcollector/images"
@@ -51,7 +50,6 @@ func main() {
 	pflag.Parse()
 	unsupportMultiArchImages := []func() []string{
 		cronhpa.List,
-		helm.List,
 		lbcf.List,
 		logcollector.List,
 		persistentevent.List,

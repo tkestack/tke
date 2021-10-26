@@ -88,19 +88,6 @@ func FilterPersistentEvent(ctx context.Context, pe *platform.PersistentEvent) er
 	return nil
 }
 
-// FilterHelm is used to filter helm that do not belong
-// to the tenant.
-func FilterHelm(ctx context.Context, helm *platform.Helm) error {
-	_, tenantID := authentication.UsernameAndTenantID(ctx)
-	if tenantID == "" {
-		return nil
-	}
-	if helm.Spec.TenantID != tenantID {
-		return errors.NewNotFound(v1.Resource("helm"), helm.ObjectMeta.Name)
-	}
-	return nil
-}
-
 // FilterTappController is used to filter tapp controller that do not belong
 // to the tenant.
 func FilterTappController(ctx context.Context, tappController *platform.TappController) error {

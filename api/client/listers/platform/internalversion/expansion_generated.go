@@ -48,10 +48,6 @@ type ConfigMapListerExpansion interface{}
 // CronHPALister.
 type CronHPAListerExpansion interface{}
 
-// HelmListerExpansion allows custom methods to be added to
-// HelmLister.
-type HelmListerExpansion interface{}
-
 // IPAMListerExpansion allows custom methods to be added to
 // IPAMLister.
 type IPAMListerExpansion interface{}

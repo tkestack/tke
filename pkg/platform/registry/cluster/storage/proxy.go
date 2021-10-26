@@ -29,6 +29,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/platform/proxy"
 
@@ -59,7 +60,7 @@ func (r *ProxyREST) ConnectMethods() []string {
 
 // NewConnectOptions returns versioned resource that represents proxy parameters
 func (r *ProxyREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return &platform.HelmProxyOptions{}, false, "path"
+	return &platform.ProxyOptions{}, false, "path"
 }
 
 // Connect returns a handler for the native api proxy
@@ -72,7 +73,7 @@ func (r *ProxyREST) Connect(ctx context.Context, clusterName string, opts runtim
 	if err := util.FilterCluster(ctx, cluster); err != nil {
 		return nil, err
 	}
-	proxyOpts := opts.(*platform.HelmProxyOptions)
+	proxyOpts := opts.(*platform.ProxyOptions)
 
 	if proxyOpts.Path == "" {
 		return nil, errors.NewBadRequest("invalid path")
@@ -123,7 +124,7 @@ func (r *ProxyREST) Connect(ctx context.Context, clusterName string, opts runtim
 
 // New creates a new helm proxy options object
 func (r *ProxyREST) New() runtime.Object {
-	return &platform.HelmProxyOptions{}
+	return &platform.ProxyOptions{}
 }
 
 func makeDirector(clusterName, userName, tenantID string, uri *url.URL, token string) func(req *http.Request) {

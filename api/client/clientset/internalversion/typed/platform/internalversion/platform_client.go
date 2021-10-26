@@ -35,7 +35,6 @@ type PlatformInterface interface {
 	ClusterGroupAPIResourceItemsesGetter
 	ConfigMapsGetter
 	CronHPAsGetter
-	HelmsGetter
 	IPAMsGetter
 	LBCFsGetter
 	LogCollectorsGetter
@@ -82,10 +81,6 @@ func (c *PlatformClient) ConfigMaps() ConfigMapInterface {
 
 func (c *PlatformClient) CronHPAs() CronHPAInterface {
 	return newCronHPAs(c)
-}
-
-func (c *PlatformClient) Helms() HelmInterface {
-	return newHelms(c)
 }
 
 func (c *PlatformClient) IPAMs() IPAMInterface {

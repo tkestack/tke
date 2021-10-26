@@ -240,7 +240,6 @@ type deleteResourceFunc func(ctx context.Context, deleter *clusterDeleter, clust
 // todo: delete more addons
 var deleteResourceFuncs = []deleteResourceFunc{
 	deletePersistentEvent,
-	deleteHelm,
 	deleteIPAM,
 	deleteTappControllers,
 	deleteClusterProvider,
@@ -292,34 +291,6 @@ func deletePersistentEvent(ctx context.Context, deleter *clusterDeleter, cluster
 	}
 
 	log.FromContext(ctx).Info("deletePersistentEvent done")
-
-	return nil
-}
-
-func deleteHelm(ctx context.Context, deleter *clusterDeleter, cluster *platformv1.Cluster) error {
-	log.FromContext(ctx).Info("deleteHelm doing")
-
-	listOpt := metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("spec.clusterName=%s", cluster.Name),
-	}
-	helmList, err := deleter.platformClient.Helms().List(ctx, listOpt)
-	if err != nil {
-		return err
-	}
-	if len(helmList.Items) == 0 {
-		return nil
-	}
-	background := metav1.DeletePropagationBackground
-	deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
-	for _, helm := range helmList.Items {
-		if err := deleter.platformClient.Helms().Delete(ctx, helm.Name, deleteOpt); err != nil {
-			if !errors.IsNotFound(err) {
-				return err
-			}
-		}
-	}
-
-	log.FromContext(ctx).Info("deleteHelm done")
 
 	return nil
 }

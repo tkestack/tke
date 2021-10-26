@@ -36,8 +36,6 @@ type ConfigMapExpansion interface{}
 
 type CronHPAExpansion interface{}
 
-type HelmExpansion interface{}
-
 type IPAMExpansion interface{}
 
 type LBCFExpansion interface{}

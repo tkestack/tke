@@ -49,7 +49,6 @@ type Storage struct {
 	Status            *StatusREST
 	Finalize          *FinalizeREST
 	Apply             *ApplyREST
-	Helm              *HelmREST
 	TappController    *TappControllerREST
 	CSI               *CSIREST
 	PVCR              *PVCRREST
@@ -107,10 +106,6 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, platformClient pla
 		Status:   &StatusREST{&statusStore},
 		Finalize: &FinalizeREST{&finalizeStore},
 		Apply: &ApplyREST{
-			store:          store,
-			platformClient: platformClient,
-		},
-		Helm: &HelmREST{
 			store:          store,
 			platformClient: platformClient,
 		},

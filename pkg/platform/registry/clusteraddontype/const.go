@@ -25,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/api/platform"
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
-	helm "tkestack.io/tke/pkg/platform/controller/addon/helm/images"
 	ipam "tkestack.io/tke/pkg/platform/controller/addon/ipam/images"
 	lbcf "tkestack.io/tke/pkg/platform/controller/addon/lbcf/images"
 	logcollector "tkestack.io/tke/pkg/platform/controller/addon/logcollector/images"
@@ -69,16 +68,6 @@ const (
 // Types defines the type of each plugin and the mapping table of the latest
 // version number.
 var Types = map[AddonType]platform.ClusterAddonType{
-	Helm: {
-		ObjectMeta: metav1.ObjectMeta{
-			Name: strings.ToLower(string(Helm)),
-		},
-		Type:                  string(Helm),
-		Level:                 platform.LevelEnhance,
-		LatestVersion:         helm.LatestVersion,
-		Description:           description("Helm.md"),
-		CompatibleClusterType: cluster.Providers(),
-	},
 	PersistentEvent: {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: strings.ToLower(string(PersistentEvent)),

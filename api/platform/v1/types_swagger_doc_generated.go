@@ -114,7 +114,7 @@ func (ClusterAddonList) SwaggerDoc() map[string]string {
 
 var map_ClusterAddonSpec = map[string]string{
 	"":        "ClusterAddonSpec indicates the specifications of the ClusterAddon.",
-	"type":    "Addon type, one of Helm, PersistentEvent or LogCollector etc.",
+	"type":    "Addon type, one of PersistentEvent or LogCollector etc.",
 	"level":   "AddonLevel is level of cluster addon.",
 	"version": "Version",
 }
@@ -429,53 +429,6 @@ var map_ExternalEtcd = map[string]string{
 
 func (ExternalEtcd) SwaggerDoc() map[string]string {
 	return map_ExternalEtcd
-}
-
-var map_Helm = map[string]string{
-	"":     "Helm is a kubernetes package manager.",
-	"spec": "Spec defines the desired identities of clusters in this set.",
-}
-
-func (Helm) SwaggerDoc() map[string]string {
-	return map_Helm
-}
-
-var map_HelmList = map[string]string{
-	"":      "HelmList is the whole list of all helms which owned by a tenant.",
-	"items": "List of Helms",
-}
-
-func (HelmList) SwaggerDoc() map[string]string {
-	return map_HelmList
-}
-
-var map_HelmProxyOptions = map[string]string{
-	"":     "HelmProxyOptions is the query options to a Helm-api proxy call.",
-	"path": "Path is the URL path to use for the current proxy request to helm-api.",
-}
-
-func (HelmProxyOptions) SwaggerDoc() map[string]string {
-	return map_HelmProxyOptions
-}
-
-var map_HelmSpec = map[string]string{
-	"": "HelmSpec describes the attributes on a Helm.",
-}
-
-func (HelmSpec) SwaggerDoc() map[string]string {
-	return map_HelmSpec
-}
-
-var map_HelmStatus = map[string]string{
-	"":                            "HelmStatus is information about the current status of a Helm.",
-	"phase":                       "Phase is the current lifecycle phase of the helm of cluster.",
-	"reason":                      "Reason is a brief CamelCase string that describes any failure.",
-	"retryCount":                  "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
-	"lastReInitializingTimestamp": "LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.",
-}
-
-func (HelmStatus) SwaggerDoc() map[string]string {
-	return map_HelmStatus
 }
 
 var map_IPAM = map[string]string{
@@ -817,6 +770,15 @@ var map_PrometheusStatus = map[string]string{
 
 func (PrometheusStatus) SwaggerDoc() map[string]string {
 	return map_PrometheusStatus
+}
+
+var map_ProxyOptions = map[string]string{
+	"":     "ProxyOptions is the query options to a proxy call.",
+	"path": "Path is the URL path to use for the current proxy request.",
+}
+
+func (ProxyOptions) SwaggerDoc() map[string]string {
+	return map_ProxyOptions
 }
 
 var map_Registry = map[string]string{

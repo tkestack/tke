@@ -60,6 +60,8 @@ var (
 // addKnownTypes adds the list of known types to the given scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
+		&ProxyOptions{},
+
 		&Cluster{},
 		&ClusterList{},
 		&ClusterApplyOptions{},
@@ -77,10 +79,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 
 		&PersistentEvent{},
 		&PersistentEventList{},
-
-		&Helm{},
-		&HelmList{},
-		&HelmProxyOptions{},
 
 		&IPAM{},
 		&IPAMList{},

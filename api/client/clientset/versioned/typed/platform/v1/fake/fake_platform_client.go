@@ -62,10 +62,6 @@ func (c *FakePlatformV1) CronHPAs() v1.CronHPAInterface {
 	return &FakeCronHPAs{c}
 }
 
-func (c *FakePlatformV1) Helms() v1.HelmInterface {
-	return &FakeHelms{c}
-}
-
 func (c *FakePlatformV1) IPAMs() v1.IPAMInterface {
 	return &FakeIPAMs{c}
 }
