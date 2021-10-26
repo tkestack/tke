@@ -337,6 +337,18 @@ message ClusterCredential {
   // For kubeadm init or join
   // +optional
   optional string certificateKey = 14;
+
+  // Impersonate is the username to act-as.
+  // +optional
+  optional string as = 15;
+
+  // ImpersonateGroups is the groups to imperonate.
+  // +optional
+  repeated string asGroups = 16;
+
+  // ImpersonateUserExtra contains additional information for impersonated user.
+  // +optional
+  map<string, string> asUserExtra = 17;
 }
 
 // ClusterCredentialList is the whole list of all ClusterCredential which owned by a tenant.

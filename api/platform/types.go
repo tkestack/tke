@@ -19,6 +19,8 @@
 package platform
 
 import (
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -350,6 +352,25 @@ type ClusterCredential struct {
 	// For kubeadm init or join
 	// +optional
 	CertificateKey *string
+	// Impersonate is the username to act-as.
+	// +optional
+	Impersonate string
+	// ImpersonateGroups is the groups to imperonate.
+	// +optional
+	ImpersonateGroups []string
+	// ImpersonateUserExtra contains additional information for impersonated user.
+	// +optional
+	ImpersonateUserExtra ImpersonateUserExtra
+}
+
+type ImpersonateUserExtra map[string]string
+
+func (i ImpersonateUserExtra) ExtraToHeaders() map[string][]string {
+	res := map[string][]string{}
+	for k, v := range i {
+		res[k] = strings.Split(v, ",")
+	}
+	return res
 }
 
 // +genclient:nonNamespaced

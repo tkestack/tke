@@ -99,12 +99,6 @@ func ValidatClusterCredentialRef(ctx context.Context, cluster *types.Cluster, fl
 	allErrs := field.ErrorList{}
 
 	credential := cluster.ClusterCredential
-	if credential.Token == nil && credential.ClientKey == nil && credential.ClientCert == nil {
-		allErrs = append(allErrs, field.Required(field.NewPath(""),
-			"must specify at least one of token or client certificate authentication"))
-
-		return allErrs
-	}
 
 	if credential.ClientCert == nil && credential.ClientKey != nil ||
 		credential.ClientCert != nil && credential.ClientKey == nil {
