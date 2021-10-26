@@ -671,7 +671,7 @@ type ClusterAddonList struct {
 
 // ClusterAddonSpec indicates the specifications of the ClusterAddon.
 type ClusterAddonSpec struct {
-	// Addon type, one of Helm, PersistentEvent or LogCollector etc.
+	// Addon type, one of PersistentEvent or LogCollector etc.
 	Type string `json:"type" protobuf:"bytes,1,opt,name=type"`
 	// AddonLevel is level of cluster addon.
 	Level AddonLevel `json:"level" protobuf:"bytes,2,opt,name=level,casttype=AddonLevel"`
@@ -864,69 +864,13 @@ type StorageBackEndES struct {
 // +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// HelmProxyOptions is the query options to a Helm-api proxy call.
-type HelmProxyOptions struct {
+// ProxyOptions is the query options to a proxy call.
+type ProxyOptions struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// Path is the URL path to use for the current proxy request to helm-api.
+	// Path is the URL path to use for the current proxy request.
 	// +optional
 	Path string `json:"path,omitempty" protobuf:"bytes,1,opt,name=path"`
-}
-
-// +genclient
-// +genclient:nonNamespaced
-// +genclient:skipVerbs=deleteCollection
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// Helm is a kubernetes package manager.
-type Helm struct {
-	metav1.TypeMeta `json:",inline"`
-	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-
-	// Spec defines the desired identities of clusters in this set.
-	// +optional
-	Spec HelmSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
-	// +optional
-	Status HelmStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
-}
-
-// +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// HelmList is the whole list of all helms which owned by a tenant.
-type HelmList struct {
-	metav1.TypeMeta `json:",inline"`
-	// +optional
-	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-
-	// List of Helms
-	Items []Helm `json:"items" protobuf:"bytes,2,rep,name=items"`
-}
-
-// HelmSpec describes the attributes on a Helm.
-type HelmSpec struct {
-	TenantID    string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
-	ClusterName string `json:"clusterName" protobuf:"bytes,2,opt,name=clusterName"`
-	Version     string `json:"version,omitempty" protobuf:"bytes,3,opt,name=version"`
-}
-
-// HelmStatus is information about the current status of a Helm.
-type HelmStatus struct {
-	// +optional
-	Version string `json:"version,omitempty" protobuf:"bytes,1,opt,name=version"`
-	// Phase is the current lifecycle phase of the helm of cluster.
-	// +optional
-	Phase AddonPhase `json:"phase,omitempty" protobuf:"bytes,2,opt,name=phase"`
-	// Reason is a brief CamelCase string that describes any failure.
-	// +optional
-	Reason string `json:"reason,omitempty" protobuf:"bytes,3,opt,name=reason"`
-	// RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
-	// +optional
-	RetryCount int32 `json:"retryCount" protobuf:"varint,4,name=retryCount"`
-	// LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
-	// +optional
-	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,5,name=lastReInitializingTimestamp"`
 }
 
 // +genclient

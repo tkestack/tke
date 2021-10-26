@@ -51,7 +51,7 @@ func (r *DrainREST) ConnectMethods() []string {
 
 // NewConnectOptions returns versioned resource that represents proxy parameters
 func (r *DrainREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return &platform.HelmProxyOptions{}, true, "path"
+	return &platform.ProxyOptions{}, true, "path"
 }
 
 // Connect returns a handler for the helm-api proxy
@@ -64,7 +64,7 @@ func (r *DrainREST) Connect(ctx context.Context, clusterName string, opts runtim
 	if err := util.FilterCluster(ctx, c); err != nil {
 		return nil, err
 	}
-	proxyOpts := opts.(*platform.HelmProxyOptions)
+	proxyOpts := opts.(*platform.ProxyOptions)
 
 	clientset, err := util.ClientSetByCluster(ctx, c, r.platformClient)
 	if err != nil {
@@ -79,7 +79,7 @@ func (r *DrainREST) Connect(ctx context.Context, clusterName string, opts runtim
 
 // New creates a new helm proxy options object
 func (r *DrainREST) New() runtime.Object {
-	return &platform.HelmProxyOptions{}
+	return &platform.ProxyOptions{}
 }
 
 type drainHandler struct {

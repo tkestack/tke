@@ -27,7 +27,6 @@ import (
 	"tkestack.io/tke/api/client/informers/externalversions"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/controller/addon/cronhpa"
-	"tkestack.io/tke/pkg/platform/controller/addon/helm"
 	"tkestack.io/tke/pkg/platform/controller/addon/ipam"
 	"tkestack.io/tke/pkg/platform/controller/addon/lbcf"
 	"tkestack.io/tke/pkg/platform/controller/addon/logcollector"
@@ -88,24 +87,6 @@ func startMachineController(ctx ControllerContext) (http.Handler, bool, error) {
 
 	go func() {
 		_ = ctrl.Run(ctx.Config.MachineController.ConcurrentMachineSyncs, ctx.Stop)
-	}()
-
-	return nil, true, nil
-}
-
-func startHelmController(ctx ControllerContext) (http.Handler, bool, error) {
-	if !ctx.AvailableResources[schema.GroupVersionResource{Group: platformv1.GroupName, Version: "v1", Resource: "helms"}] {
-		return nil, false, nil
-	}
-
-	ctrl := helm.NewController(
-		ctx.ClientBuilder.ClientOrDie("helm-controller"),
-		ctx.InformerFactory.Platform().V1().Helms(),
-		eventSyncPeriod,
-	)
-
-	go func() {
-		_ = ctrl.Run(concurrentSyncs, ctx.Stop)
 	}()
 
 	return nil, true, nil

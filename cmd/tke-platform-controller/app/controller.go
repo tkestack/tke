@@ -51,7 +51,6 @@ func NewControllerInitializers() map[string]InitFunc {
 	controllers["cluster"] = startClusterController
 	controllers["machine"] = startMachineController
 	controllers["persistentevent"] = startPersistentEventController
-	controllers["helm"] = startHelmController
 	controllers["tappcontroller"] = startTappControllerController
 	controllers["cronhpa"] = startCronHPAController
 	controllers["csioperator"] = startCSIOperatorController

@@ -999,11 +999,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.ExternalEtcd":                                schema_tke_api_platform_v1_ExternalEtcd(ref),
 		"tkestack.io/tke/api/platform/v1.File":                                        schema_tke_api_platform_v1_File(ref),
 		"tkestack.io/tke/api/platform/v1.HA":                                          schema_tke_api_platform_v1_HA(ref),
-		"tkestack.io/tke/api/platform/v1.Helm":                                        schema_tke_api_platform_v1_Helm(ref),
-		"tkestack.io/tke/api/platform/v1.HelmList":                                    schema_tke_api_platform_v1_HelmList(ref),
-		"tkestack.io/tke/api/platform/v1.HelmProxyOptions":                            schema_tke_api_platform_v1_HelmProxyOptions(ref),
-		"tkestack.io/tke/api/platform/v1.HelmSpec":                                    schema_tke_api_platform_v1_HelmSpec(ref),
-		"tkestack.io/tke/api/platform/v1.HelmStatus":                                  schema_tke_api_platform_v1_HelmStatus(ref),
 		"tkestack.io/tke/api/platform/v1.IPAM":                                        schema_tke_api_platform_v1_IPAM(ref),
 		"tkestack.io/tke/api/platform/v1.IPAMList":                                    schema_tke_api_platform_v1_IPAMList(ref),
 		"tkestack.io/tke/api/platform/v1.IPAMProxyOptions":                            schema_tke_api_platform_v1_IPAMProxyOptions(ref),
@@ -1038,6 +1033,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.PrometheusRemoteAddr":                        schema_tke_api_platform_v1_PrometheusRemoteAddr(ref),
 		"tkestack.io/tke/api/platform/v1.PrometheusSpec":                              schema_tke_api_platform_v1_PrometheusSpec(ref),
 		"tkestack.io/tke/api/platform/v1.PrometheusStatus":                            schema_tke_api_platform_v1_PrometheusStatus(ref),
+		"tkestack.io/tke/api/platform/v1.ProxyOptions":                                schema_tke_api_platform_v1_ProxyOptions(ref),
 		"tkestack.io/tke/api/platform/v1.Registry":                                    schema_tke_api_platform_v1_Registry(ref),
 		"tkestack.io/tke/api/platform/v1.RegistryList":                                schema_tke_api_platform_v1_RegistryList(ref),
 		"tkestack.io/tke/api/platform/v1.RegistrySpec":                                schema_tke_api_platform_v1_RegistrySpec(ref),
@@ -46369,7 +46365,7 @@ func schema_tke_api_platform_v1_ClusterAddonSpec(ref common.ReferenceCallback) c
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Addon type, one of Helm, PersistentEvent or LogCollector etc.",
+							Description: "Addon type, one of PersistentEvent or LogCollector etc.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -48427,213 +48423,6 @@ func schema_tke_api_platform_v1_HA(ref common.ReferenceCallback) common.OpenAPID
 	}
 }
 
-func schema_tke_api_platform_v1_Helm(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Helm is a kubernetes package manager.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
-						},
-					},
-					"spec": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Spec defines the desired identities of clusters in this set.",
-							Ref:         ref("tkestack.io/tke/api/platform/v1.HelmSpec"),
-						},
-					},
-					"status": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("tkestack.io/tke/api/platform/v1.HelmStatus"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "tkestack.io/tke/api/platform/v1.HelmSpec", "tkestack.io/tke/api/platform/v1.HelmStatus"},
-	}
-}
-
-func schema_tke_api_platform_v1_HelmList(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "HelmList is the whole list of all helms which owned by a tenant.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Description: "List of Helms",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref("tkestack.io/tke/api/platform/v1.Helm"),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"items"},
-			},
-		},
-		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta", "tkestack.io/tke/api/platform/v1.Helm"},
-	}
-}
-
-func schema_tke_api_platform_v1_HelmProxyOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "HelmProxyOptions is the query options to a Helm-api proxy call.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"path": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Path is the URL path to use for the current proxy request to helm-api.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func schema_tke_api_platform_v1_HelmSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "HelmSpec describes the attributes on a Helm.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"tenantID": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"clusterName": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"version": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-				},
-				Required: []string{"tenantID", "clusterName"},
-			},
-		},
-	}
-}
-
-func schema_tke_api_platform_v1_HelmStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "HelmStatus is information about the current status of a Helm.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"version": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"phase": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Phase is the current lifecycle phase of the helm of cluster.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"reason": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Reason is a brief CamelCase string that describes any failure.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"retryCount": {
-						SchemaProps: spec.SchemaProps{
-							Description: "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
-					"lastReInitializingTimestamp": {
-						SchemaProps: spec.SchemaProps{
-							Description: "LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.",
-							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
-	}
-}
-
 func schema_tke_api_platform_v1_IPAM(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -50315,6 +50104,40 @@ func schema_tke_api_platform_v1_PrometheusStatus(ref common.ReferenceCallback) c
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+	}
+}
+
+func schema_tke_api_platform_v1_ProxyOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ProxyOptions is the query options to a proxy call.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path is the URL path to use for the current proxy request.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

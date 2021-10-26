@@ -34,7 +34,6 @@ import (
 	configmapstorage "tkestack.io/tke/pkg/platform/registry/configmap/storage"
 	cronhpastorage "tkestack.io/tke/pkg/platform/registry/cronhpa/storage"
 	csioperatorstorage "tkestack.io/tke/pkg/platform/registry/csioperator/storage"
-	helmstorage "tkestack.io/tke/pkg/platform/registry/helm/storage"
 	ipamstorage "tkestack.io/tke/pkg/platform/registry/ipam/storage"
 	lbcfstorage "tkestack.io/tke/pkg/platform/registry/lbcf/storage"
 	logcollectorstorage "tkestack.io/tke/pkg/platform/registry/logcollector/storage"
@@ -85,7 +84,6 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["clusters/proxy"] = clusterREST.Proxy
 		storageMap["clusters/apply"] = clusterREST.Apply
 		storageMap["clusters/apiresources"] = clusterREST.APIResources
-		storageMap["clusters/helm"] = clusterREST.Helm
 		storageMap["clusters/tapps"] = clusterREST.TappController
 		storageMap["clusters/csis"] = clusterREST.CSI
 		storageMap["clusters/pvcrs"] = clusterREST.PVCR
@@ -112,10 +110,6 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		persistentEventREST := persistenteventstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
 		storageMap["persistentevents"] = persistentEventREST.PersistentEvent
 		storageMap["persistentevents/status"] = persistentEventREST.Status
-
-		helmREST := helmstorage.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
-		storageMap["helms"] = helmREST.Helm
-		storageMap["helms/status"] = helmREST.Status
 
 		ipamREST := ipamstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
 		storageMap["ipams"] = ipamREST.IPAM

@@ -73,12 +73,6 @@ func SetDefaults_PersistentEventStatus(obj *PersistentEventStatus) {
 	}
 }
 
-func SetDefaults_HelmStatus(obj *HelmStatus) {
-	if obj.Phase == "" {
-		obj.Phase = AddonPhaseInitializing
-	}
-}
-
 func SetDefaults_TappControllerStatus(obj *TappControllerStatus) {
 	if obj.Phase == "" {
 		obj.Phase = AddonPhaseInitializing

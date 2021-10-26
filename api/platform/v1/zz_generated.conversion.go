@@ -510,56 +510,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*Helm)(nil), (*platform.Helm)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_Helm_To_platform_Helm(a.(*Helm), b.(*platform.Helm), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*platform.Helm)(nil), (*Helm)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_platform_Helm_To_v1_Helm(a.(*platform.Helm), b.(*Helm), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*HelmList)(nil), (*platform.HelmList)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_HelmList_To_platform_HelmList(a.(*HelmList), b.(*platform.HelmList), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*platform.HelmList)(nil), (*HelmList)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_platform_HelmList_To_v1_HelmList(a.(*platform.HelmList), b.(*HelmList), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*HelmProxyOptions)(nil), (*platform.HelmProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_HelmProxyOptions_To_platform_HelmProxyOptions(a.(*HelmProxyOptions), b.(*platform.HelmProxyOptions), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*platform.HelmProxyOptions)(nil), (*HelmProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_platform_HelmProxyOptions_To_v1_HelmProxyOptions(a.(*platform.HelmProxyOptions), b.(*HelmProxyOptions), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*HelmSpec)(nil), (*platform.HelmSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_HelmSpec_To_platform_HelmSpec(a.(*HelmSpec), b.(*platform.HelmSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*platform.HelmSpec)(nil), (*HelmSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_platform_HelmSpec_To_v1_HelmSpec(a.(*platform.HelmSpec), b.(*HelmSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*HelmStatus)(nil), (*platform.HelmStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_HelmStatus_To_platform_HelmStatus(a.(*HelmStatus), b.(*platform.HelmStatus), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*platform.HelmStatus)(nil), (*HelmStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_platform_HelmStatus_To_v1_HelmStatus(a.(*platform.HelmStatus), b.(*HelmStatus), scope)
-	}); err != nil {
-		return err
-	}
 	if err := s.AddGeneratedConversionFunc((*IPAM)(nil), (*platform.IPAM)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_IPAM_To_platform_IPAM(a.(*IPAM), b.(*platform.IPAM), scope)
 	}); err != nil {
@@ -900,6 +850,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*ProxyOptions)(nil), (*platform.ProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_ProxyOptions_To_platform_ProxyOptions(a.(*ProxyOptions), b.(*platform.ProxyOptions), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*platform.ProxyOptions)(nil), (*ProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_platform_ProxyOptions_To_v1_ProxyOptions(a.(*platform.ProxyOptions), b.(*ProxyOptions), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*Registry)(nil), (*platform.Registry)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_Registry_To_platform_Registry(a.(*Registry), b.(*platform.Registry), scope)
 	}); err != nil {
@@ -1110,11 +1070,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*HelmProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_url_Values_To_v1_HelmProxyOptions(a.(*url.Values), b.(*HelmProxyOptions), scope)
-	}); err != nil {
-		return err
-	}
 	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*IPAMProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_url_Values_To_v1_IPAMProxyOptions(a.(*url.Values), b.(*IPAMProxyOptions), scope)
 	}); err != nil {
@@ -1132,6 +1087,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*PVCRProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_url_Values_To_v1_PVCRProxyOptions(a.(*url.Values), b.(*PVCRProxyOptions), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*ProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_url_Values_To_v1_ProxyOptions(a.(*url.Values), b.(*ProxyOptions), scope)
 	}); err != nil {
 		return err
 	}
@@ -2548,150 +2508,6 @@ func Convert_platform_HA_To_v1_HA(in *platform.HA, out *HA, s conversion.Scope) 
 	return autoConvert_platform_HA_To_v1_HA(in, out, s)
 }
 
-func autoConvert_v1_Helm_To_platform_Helm(in *Helm, out *platform.Helm, s conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-	if err := Convert_v1_HelmSpec_To_platform_HelmSpec(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
-	if err := Convert_v1_HelmStatus_To_platform_HelmStatus(&in.Status, &out.Status, s); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Convert_v1_Helm_To_platform_Helm is an autogenerated conversion function.
-func Convert_v1_Helm_To_platform_Helm(in *Helm, out *platform.Helm, s conversion.Scope) error {
-	return autoConvert_v1_Helm_To_platform_Helm(in, out, s)
-}
-
-func autoConvert_platform_Helm_To_v1_Helm(in *platform.Helm, out *Helm, s conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-	if err := Convert_platform_HelmSpec_To_v1_HelmSpec(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
-	if err := Convert_platform_HelmStatus_To_v1_HelmStatus(&in.Status, &out.Status, s); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Convert_platform_Helm_To_v1_Helm is an autogenerated conversion function.
-func Convert_platform_Helm_To_v1_Helm(in *platform.Helm, out *Helm, s conversion.Scope) error {
-	return autoConvert_platform_Helm_To_v1_Helm(in, out, s)
-}
-
-func autoConvert_v1_HelmList_To_platform_HelmList(in *HelmList, out *platform.HelmList, s conversion.Scope) error {
-	out.ListMeta = in.ListMeta
-	out.Items = *(*[]platform.Helm)(unsafe.Pointer(&in.Items))
-	return nil
-}
-
-// Convert_v1_HelmList_To_platform_HelmList is an autogenerated conversion function.
-func Convert_v1_HelmList_To_platform_HelmList(in *HelmList, out *platform.HelmList, s conversion.Scope) error {
-	return autoConvert_v1_HelmList_To_platform_HelmList(in, out, s)
-}
-
-func autoConvert_platform_HelmList_To_v1_HelmList(in *platform.HelmList, out *HelmList, s conversion.Scope) error {
-	out.ListMeta = in.ListMeta
-	out.Items = *(*[]Helm)(unsafe.Pointer(&in.Items))
-	return nil
-}
-
-// Convert_platform_HelmList_To_v1_HelmList is an autogenerated conversion function.
-func Convert_platform_HelmList_To_v1_HelmList(in *platform.HelmList, out *HelmList, s conversion.Scope) error {
-	return autoConvert_platform_HelmList_To_v1_HelmList(in, out, s)
-}
-
-func autoConvert_v1_HelmProxyOptions_To_platform_HelmProxyOptions(in *HelmProxyOptions, out *platform.HelmProxyOptions, s conversion.Scope) error {
-	out.Path = in.Path
-	return nil
-}
-
-// Convert_v1_HelmProxyOptions_To_platform_HelmProxyOptions is an autogenerated conversion function.
-func Convert_v1_HelmProxyOptions_To_platform_HelmProxyOptions(in *HelmProxyOptions, out *platform.HelmProxyOptions, s conversion.Scope) error {
-	return autoConvert_v1_HelmProxyOptions_To_platform_HelmProxyOptions(in, out, s)
-}
-
-func autoConvert_platform_HelmProxyOptions_To_v1_HelmProxyOptions(in *platform.HelmProxyOptions, out *HelmProxyOptions, s conversion.Scope) error {
-	out.Path = in.Path
-	return nil
-}
-
-// Convert_platform_HelmProxyOptions_To_v1_HelmProxyOptions is an autogenerated conversion function.
-func Convert_platform_HelmProxyOptions_To_v1_HelmProxyOptions(in *platform.HelmProxyOptions, out *HelmProxyOptions, s conversion.Scope) error {
-	return autoConvert_platform_HelmProxyOptions_To_v1_HelmProxyOptions(in, out, s)
-}
-
-func autoConvert_url_Values_To_v1_HelmProxyOptions(in *url.Values, out *HelmProxyOptions, s conversion.Scope) error {
-	// WARNING: Field TypeMeta does not have json tag, skipping.
-
-	if values, ok := map[string][]string(*in)["path"]; ok && len(values) > 0 {
-		if err := runtime.Convert_Slice_string_To_string(&values, &out.Path, s); err != nil {
-			return err
-		}
-	} else {
-		out.Path = ""
-	}
-	return nil
-}
-
-// Convert_url_Values_To_v1_HelmProxyOptions is an autogenerated conversion function.
-func Convert_url_Values_To_v1_HelmProxyOptions(in *url.Values, out *HelmProxyOptions, s conversion.Scope) error {
-	return autoConvert_url_Values_To_v1_HelmProxyOptions(in, out, s)
-}
-
-func autoConvert_v1_HelmSpec_To_platform_HelmSpec(in *HelmSpec, out *platform.HelmSpec, s conversion.Scope) error {
-	out.TenantID = in.TenantID
-	out.ClusterName = in.ClusterName
-	out.Version = in.Version
-	return nil
-}
-
-// Convert_v1_HelmSpec_To_platform_HelmSpec is an autogenerated conversion function.
-func Convert_v1_HelmSpec_To_platform_HelmSpec(in *HelmSpec, out *platform.HelmSpec, s conversion.Scope) error {
-	return autoConvert_v1_HelmSpec_To_platform_HelmSpec(in, out, s)
-}
-
-func autoConvert_platform_HelmSpec_To_v1_HelmSpec(in *platform.HelmSpec, out *HelmSpec, s conversion.Scope) error {
-	out.TenantID = in.TenantID
-	out.ClusterName = in.ClusterName
-	out.Version = in.Version
-	return nil
-}
-
-// Convert_platform_HelmSpec_To_v1_HelmSpec is an autogenerated conversion function.
-func Convert_platform_HelmSpec_To_v1_HelmSpec(in *platform.HelmSpec, out *HelmSpec, s conversion.Scope) error {
-	return autoConvert_platform_HelmSpec_To_v1_HelmSpec(in, out, s)
-}
-
-func autoConvert_v1_HelmStatus_To_platform_HelmStatus(in *HelmStatus, out *platform.HelmStatus, s conversion.Scope) error {
-	out.Version = in.Version
-	out.Phase = platform.AddonPhase(in.Phase)
-	out.Reason = in.Reason
-	out.RetryCount = in.RetryCount
-	out.LastReInitializingTimestamp = in.LastReInitializingTimestamp
-	return nil
-}
-
-// Convert_v1_HelmStatus_To_platform_HelmStatus is an autogenerated conversion function.
-func Convert_v1_HelmStatus_To_platform_HelmStatus(in *HelmStatus, out *platform.HelmStatus, s conversion.Scope) error {
-	return autoConvert_v1_HelmStatus_To_platform_HelmStatus(in, out, s)
-}
-
-func autoConvert_platform_HelmStatus_To_v1_HelmStatus(in *platform.HelmStatus, out *HelmStatus, s conversion.Scope) error {
-	out.Version = in.Version
-	out.Phase = AddonPhase(in.Phase)
-	out.Reason = in.Reason
-	out.RetryCount = in.RetryCount
-	out.LastReInitializingTimestamp = in.LastReInitializingTimestamp
-	return nil
-}
-
-// Convert_platform_HelmStatus_To_v1_HelmStatus is an autogenerated conversion function.
-func Convert_platform_HelmStatus_To_v1_HelmStatus(in *platform.HelmStatus, out *HelmStatus, s conversion.Scope) error {
-	return autoConvert_platform_HelmStatus_To_v1_HelmStatus(in, out, s)
-}
-
 func autoConvert_v1_IPAM_To_platform_IPAM(in *IPAM, out *platform.IPAM, s conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_v1_IPAMSpec_To_platform_IPAMSpec(&in.Spec, &out.Spec, s); err != nil {
@@ -3730,6 +3546,44 @@ func autoConvert_platform_PrometheusStatus_To_v1_PrometheusStatus(in *platform.P
 // Convert_platform_PrometheusStatus_To_v1_PrometheusStatus is an autogenerated conversion function.
 func Convert_platform_PrometheusStatus_To_v1_PrometheusStatus(in *platform.PrometheusStatus, out *PrometheusStatus, s conversion.Scope) error {
 	return autoConvert_platform_PrometheusStatus_To_v1_PrometheusStatus(in, out, s)
+}
+
+func autoConvert_v1_ProxyOptions_To_platform_ProxyOptions(in *ProxyOptions, out *platform.ProxyOptions, s conversion.Scope) error {
+	out.Path = in.Path
+	return nil
+}
+
+// Convert_v1_ProxyOptions_To_platform_ProxyOptions is an autogenerated conversion function.
+func Convert_v1_ProxyOptions_To_platform_ProxyOptions(in *ProxyOptions, out *platform.ProxyOptions, s conversion.Scope) error {
+	return autoConvert_v1_ProxyOptions_To_platform_ProxyOptions(in, out, s)
+}
+
+func autoConvert_platform_ProxyOptions_To_v1_ProxyOptions(in *platform.ProxyOptions, out *ProxyOptions, s conversion.Scope) error {
+	out.Path = in.Path
+	return nil
+}
+
+// Convert_platform_ProxyOptions_To_v1_ProxyOptions is an autogenerated conversion function.
+func Convert_platform_ProxyOptions_To_v1_ProxyOptions(in *platform.ProxyOptions, out *ProxyOptions, s conversion.Scope) error {
+	return autoConvert_platform_ProxyOptions_To_v1_ProxyOptions(in, out, s)
+}
+
+func autoConvert_url_Values_To_v1_ProxyOptions(in *url.Values, out *ProxyOptions, s conversion.Scope) error {
+	// WARNING: Field TypeMeta does not have json tag, skipping.
+
+	if values, ok := map[string][]string(*in)["path"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Path, s); err != nil {
+			return err
+		}
+	} else {
+		out.Path = ""
+	}
+	return nil
+}
+
+// Convert_url_Values_To_v1_ProxyOptions is an autogenerated conversion function.
+func Convert_url_Values_To_v1_ProxyOptions(in *url.Values, out *ProxyOptions, s conversion.Scope) error {
+	return autoConvert_url_Values_To_v1_ProxyOptions(in, out, s)
 }
 
 func autoConvert_v1_Registry_To_platform_Registry(in *Registry, out *platform.Registry, s conversion.Scope) error {

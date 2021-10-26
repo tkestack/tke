@@ -171,7 +171,7 @@ message ClusterAddonList {
 
 // ClusterAddonSpec indicates the specifications of the ClusterAddon.
 message ClusterAddonSpec {
-  // Addon type, one of Helm, PersistentEvent or LogCollector etc.
+  // Addon type, one of PersistentEvent or LogCollector etc.
   optional string type = 1;
 
   // AddonLevel is level of cluster addon.
@@ -826,66 +826,6 @@ message HA {
   optional ThirdPartyHA thirdParty = 2;
 }
 
-// Helm is a kubernetes package manager.
-message Helm {
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
-
-  // Spec defines the desired identities of clusters in this set.
-  // +optional
-  optional HelmSpec spec = 2;
-
-  // +optional
-  optional HelmStatus status = 3;
-}
-
-// HelmList is the whole list of all helms which owned by a tenant.
-message HelmList {
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
-
-  // List of Helms
-  repeated Helm items = 2;
-}
-
-// HelmProxyOptions is the query options to a Helm-api proxy call.
-message HelmProxyOptions {
-  // Path is the URL path to use for the current proxy request to helm-api.
-  // +optional
-  optional string path = 1;
-}
-
-// HelmSpec describes the attributes on a Helm.
-message HelmSpec {
-  optional string tenantID = 1;
-
-  optional string clusterName = 2;
-
-  optional string version = 3;
-}
-
-// HelmStatus is information about the current status of a Helm.
-message HelmStatus {
-  // +optional
-  optional string version = 1;
-
-  // Phase is the current lifecycle phase of the helm of cluster.
-  // +optional
-  optional string phase = 2;
-
-  // Reason is a brief CamelCase string that describes any failure.
-  // +optional
-  optional string reason = 3;
-
-  // RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
-  // +optional
-  optional int32 retryCount = 4;
-
-  // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
-}
-
 // IPAM is a scheduler plugin for assigning IP.
 message IPAM {
   // +optional
@@ -1404,6 +1344,13 @@ message PrometheusStatus {
 
   // SubVersion is the components version such as node-exporter.
   map<string, string> subVersion = 6;
+}
+
+// ProxyOptions is the query options to a proxy call.
+message ProxyOptions {
+  // Path is the URL path to use for the current proxy request.
+  // +optional
+  optional string path = 1;
 }
 
 // Registry records the third-party image repository information stored by the

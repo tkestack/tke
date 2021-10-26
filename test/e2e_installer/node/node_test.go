@@ -21,12 +21,13 @@ package node_test
 import (
 	"context"
 	"errors"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"strings"
 	"time"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/apiserver/cluster"
 	tke2 "tkestack.io/tke/test/tke"
@@ -262,28 +263,6 @@ var _ = Describe("node", func() {
 				return nil
 			}, 10*time.Minute, 10*time.Second).Should(Succeed())
 			Expect(testTKE.TkeClient.PlatformV1().LBCFs().Delete(context.Background(), lbcf.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete LBCF failed")
-		})
-
-		It("Helm", func() {
-			helm := &platformv1.Helm{
-				Spec: platformv1.HelmSpec{
-					ClusterName: cls.Name,
-				},
-			}
-			helm, err := testTKE.TkeClient.PlatformV1().Helms().Create(context.Background(), helm, metav1.CreateOptions{})
-			Expect(err).Should(BeNil())
-
-			Eventually(func() error {
-				addon, err := testTKE.TkeClient.PlatformV1().Helms().Get(context.Background(), helm.Name, metav1.GetOptions{})
-				if err != nil {
-					return err
-				}
-				if addon.Status.Phase != "Running" {
-					return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
-				}
-				return nil
-			}, 10*time.Minute, 10*time.Second).Should(Succeed())
-			Expect(testTKE.TkeClient.PlatformV1().Helms().Delete(context.Background(), helm.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete Helm failed")
 		})
 
 		It("CSIOperator", func() {
