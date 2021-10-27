@@ -30,7 +30,6 @@ import (
 	logcollector "tkestack.io/tke/pkg/platform/controller/addon/logcollector/images"
 	persistentevent "tkestack.io/tke/pkg/platform/controller/addon/persistentevent/images"
 	prometheus "tkestack.io/tke/pkg/platform/controller/addon/prometheus/images"
-	volumedecorator "tkestack.io/tke/pkg/platform/controller/addon/storage/volumedecorator/images"
 	tappcontroller "tkestack.io/tke/pkg/platform/controller/addon/tappcontroller/images"
 	csioperator "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/cluster"
@@ -53,8 +52,6 @@ const (
 	TappController AddonType = "TappController"
 	// CSIOperator is type for CSIOperator
 	CSIOperator AddonType = "CSIOperator"
-	// VolumeDecorator is type for VolumeDecorator
-	VolumeDecorator AddonType = "VolumeDecorator"
 	// CronHPA is type for CronHPA
 	CronHPA AddonType = "CronHPA"
 	// Prometheus is type for prometheus addon.
@@ -106,16 +103,6 @@ var Types = map[AddonType]platform.ClusterAddonType{
 		Level:                 platform.LevelBasic,
 		LatestVersion:         csioperator.LatestVersion,
 		Description:           description("CSIOperator.md"),
-		CompatibleClusterType: cluster.Providers(),
-	},
-	VolumeDecorator: {
-		ObjectMeta: metav1.ObjectMeta{
-			Name: strings.ToLower(string(VolumeDecorator)),
-		},
-		Type:                  string(VolumeDecorator),
-		Level:                 platform.LevelEnhance,
-		LatestVersion:         volumedecorator.LatestVersion,
-		Description:           description("VolumeDecorator.md"),
 		CompatibleClusterType: cluster.Providers(),
 	},
 	CronHPA: {

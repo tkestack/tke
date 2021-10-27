@@ -85,12 +85,6 @@ func SetDefaults_CSIOperatorStatus(obj *CSIOperatorStatus) {
 	}
 }
 
-func SetDefaults_VolumeDecoratorStatus(obj *VolumeDecoratorStatus) {
-	if obj.Phase == "" {
-		obj.Phase = AddonPhaseInitializing
-	}
-}
-
 func SetDefaults_LogCollectorStatus(obj *LogCollectorStatus) {
 	if obj.Phase == "" {
 		obj.Phase = AddonPhaseInitializing

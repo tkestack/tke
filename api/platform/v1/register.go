@@ -93,10 +93,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&CSIOperatorList{},
 		&CSIProxyOptions{},
 
-		&VolumeDecorator{},
-		&VolumeDecoratorList{},
-		&PVCRProxyOptions{},
-
 		&LogCollector{},
 		&LogCollectorList{},
 		&LogCollectorProxyOptions{},

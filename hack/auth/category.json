@@ -45,10 +45,6 @@
 					"description": "创建TappController组件"
 				},
 				{
-					"name": "createVolumedecorator",
-					"description": "创建Volumedecorator组件"
-				},
-				{
 					"name": "deleteCronhpa",
 					"description": "删除CronHPA组件"
 				},
@@ -83,10 +79,6 @@
 				{
 					"name": "deleteTappcontroller",
 					"description": "删除TappController组件"
-				},
-				{
-					"name": "deleteVolumedecorator",
-					"description": "删除Volumedecorator组件"
 				},
 				{
 					"name": "getClusteraddontype",
@@ -165,14 +157,6 @@
 					"description": "获取TappController组件状态"
 				},
 				{
-					"name": "getVolumedecorator",
-					"description": "获取Volumedecorator组件"
-				},
-				{
-					"name": "getVolumedecoratorStatus",
-					"description": "获取Volumedecorator组件状态"
-				},
-				{
 					"name": "listAddons",
 					"description": "列举扩展组件"
 				},
@@ -219,10 +203,6 @@
 				{
 					"name": "listTappcontrollers",
 					"description": "列举TappController组件"
-				},
-				{
-					"name": "listVolumedecorators",
-					"description": "列举Volumedecorator组件"
 				},
 				{
 					"name": "updateCronhpa",
@@ -295,14 +275,6 @@
 				{
 					"name": "updateTappcontrollerStatus",
 					"description": "修改TappController组件状态"
-				},
-				{
-					"name": "updateVolumedecorator",
-					"description": "修改Volumedecorator组件"
-				},
-				{
-					"name": "updateVolumedecoratorStatus",
-					"description": "修改Volumedecorator组件状态"
 				}
 			]
 		}

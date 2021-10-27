@@ -44,7 +44,6 @@ type PlatformV1Interface interface {
 	PrometheusesGetter
 	RegistriesGetter
 	TappControllersGetter
-	VolumeDecoratorsGetter
 }
 
 // PlatformV1Client is used to interact with features provided by the platform.tkestack.io group.
@@ -114,10 +113,6 @@ func (c *PlatformV1Client) Registries() RegistryInterface {
 
 func (c *PlatformV1Client) TappControllers() TappControllerInterface {
 	return newTappControllers(c)
-}
-
-func (c *PlatformV1Client) VolumeDecorators() VolumeDecoratorInterface {
-	return newVolumeDecorators(c)
 }
 
 // NewForConfig creates a new PlatformV1Client for the given config.

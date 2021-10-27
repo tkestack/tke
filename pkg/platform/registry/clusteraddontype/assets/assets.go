@@ -92,13 +92,6 @@ var staticFiles = map[string]*staticFilesFile{
 		mtime: time.Unix(1574851373, 0),
 		size:  0,
 	},
-	"VolumeDecorator.md": {
-		data:  "",
-		hash:  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-		mime:  "",
-		mtime: time.Unix(1574851373, 0),
-		size:  0,
-	},
 }
 
 // NotFound is called when no asset is found.

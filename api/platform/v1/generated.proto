@@ -1186,13 +1186,6 @@ message MachineSystemInfo {
   optional string architecture = 10;
 }
 
-// PVCRProxyOptions is the query options to a kube-apiserver proxy call for PVCR crd object.
-message PVCRProxyOptions {
-  optional string namespace = 1;
-
-  optional string name = 2;
-}
-
 // PersistentBackEnd indicates the backend type and attributes of the persistent
 // log store.
 message PersistentBackEnd {
@@ -1525,74 +1518,5 @@ message UpgradeStrategy {
   // If your pod can not accept be expelled from current node, this value should be false.
   // +optional
   optional bool drainNodeBeforeUpgrade = 2;
-}
-
-// VolumeDecorator is a controller to manage PVC information.
-message VolumeDecorator {
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
-
-  // Spec defines the desired identities of volume decorator.
-  // +optional
-  optional VolumeDecoratorSpec spec = 2;
-
-  // +optional
-  optional VolumeDecoratorStatus status = 3;
-}
-
-// VolumeDecoratorList is the whole list of all VolumeDecorator which owned by a tenant.
-message VolumeDecoratorList {
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
-
-  // List of volume decorators.
-  repeated VolumeDecorator items = 2;
-}
-
-// VolumeDecoratorSpec describes the attributes of a VolumeDecorator.
-message VolumeDecoratorSpec {
-  optional string tenantID = 1;
-
-  optional string clusterName = 2;
-
-  optional string version = 3;
-
-  repeated string volumeTypes = 4;
-
-  optional bool workloadAdmission = 5;
-}
-
-// VolumeDecoratorStatus is information about the current status of a VolumeDecorator.
-message VolumeDecoratorStatus {
-  // +optional
-  optional string version = 1;
-
-  // VolumeTypes is the supported volume types in this cluster.
-  // +optional
-  repeated string volumeTypes = 2;
-
-  // WorkloadAdmission will be true to enable the workload admission webhook.
-  // +optional
-  optional bool workloadAdmission = 3;
-
-  // StorageVendorVersion will be set to the config version of the storage vendor.
-  // +optional
-  optional string storageVendorVersion = 4;
-
-  // Phase is the current lifecycle phase of the volume decorator of cluster.
-  // +optional
-  optional string phase = 5;
-
-  // Reason is a brief CamelCase string that describes any failure.
-  // +optional
-  optional string reason = 6;
-
-  // RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
-  // +optional
-  optional int32 retryCount = 7;
-
-  // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 8;
 }
 

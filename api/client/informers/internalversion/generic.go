@@ -179,8 +179,6 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().Registries().Informer()}, nil
 	case platform.SchemeGroupVersion.WithResource("tappcontrollers"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().TappControllers().Informer()}, nil
-	case platform.SchemeGroupVersion.WithResource("volumedecorators"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Platform().InternalVersion().VolumeDecorators().Informer()}, nil
 
 		// Group=registry.tkestack.io, Version=internalVersion
 	case registry.SchemeGroupVersion.WithResource("charts"):

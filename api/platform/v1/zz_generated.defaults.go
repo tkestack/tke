@@ -53,8 +53,6 @@ func RegisterDefaults(scheme *runtime.Scheme) error {
 	scheme.AddTypeDefaultingFunc(&PrometheusList{}, func(obj interface{}) { SetObjectDefaults_PrometheusList(obj.(*PrometheusList)) })
 	scheme.AddTypeDefaultingFunc(&TappController{}, func(obj interface{}) { SetObjectDefaults_TappController(obj.(*TappController)) })
 	scheme.AddTypeDefaultingFunc(&TappControllerList{}, func(obj interface{}) { SetObjectDefaults_TappControllerList(obj.(*TappControllerList)) })
-	scheme.AddTypeDefaultingFunc(&VolumeDecorator{}, func(obj interface{}) { SetObjectDefaults_VolumeDecorator(obj.(*VolumeDecorator)) })
-	scheme.AddTypeDefaultingFunc(&VolumeDecoratorList{}, func(obj interface{}) { SetObjectDefaults_VolumeDecoratorList(obj.(*VolumeDecoratorList)) })
 	return nil
 }
 
@@ -182,16 +180,5 @@ func SetObjectDefaults_TappControllerList(in *TappControllerList) {
 	for i := range in.Items {
 		a := &in.Items[i]
 		SetObjectDefaults_TappController(a)
-	}
-}
-
-func SetObjectDefaults_VolumeDecorator(in *VolumeDecorator) {
-	SetDefaults_VolumeDecoratorStatus(&in.Status)
-}
-
-func SetObjectDefaults_VolumeDecoratorList(in *VolumeDecoratorList) {
-	for i := range in.Items {
-		a := &in.Items[i]
-		SetObjectDefaults_VolumeDecorator(a)
 	}
 }

@@ -119,9 +119,7 @@
 					"*Prometheuse*",
 					"*Prometheuses*",
 					"*Tappcontroller*",
-					"*Tappcontrollers*",
-					"*Volumedecorator*",
-					"*Volumedecorators*"
+					"*Tappcontrollers*"
 				],
 				"resources": [
 					"*"
@@ -713,7 +711,6 @@
 					"*projectpolicybinding*",
 					"*projectpolicyunbinding*",
 					"*projectuser*",
-					"*pvcr*",
 					"*receiver*",
 					"*receivergroup*",
 					"*registry*",
