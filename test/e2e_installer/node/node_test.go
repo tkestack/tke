@@ -221,28 +221,6 @@ var _ = Describe("node", func() {
 			Expect(testTKE.TkeClient.PlatformV1().CronHPAs().Delete(context.Background(), cronHPA.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete CronHPA failed")
 		})
 
-		It("VolumeDecorator", func() {
-			vd := &platformv1.VolumeDecorator{
-				Spec: platformv1.VolumeDecoratorSpec{
-					ClusterName: cls.Name,
-				},
-			}
-			vd, err := testTKE.TkeClient.PlatformV1().VolumeDecorators().Create(context.Background(), vd, metav1.CreateOptions{})
-			Expect(err).Should(BeNil())
-
-			Eventually(func() error {
-				addon, err := testTKE.TkeClient.PlatformV1().VolumeDecorators().Get(context.Background(), vd.Name, metav1.GetOptions{})
-				if err != nil {
-					return err
-				}
-				if addon.Status.Phase != "Running" {
-					return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
-				}
-				return nil
-			}, 10*time.Minute, 10*time.Second).Should(Succeed())
-			Expect(testTKE.TkeClient.PlatformV1().VolumeDecorators().Delete(context.Background(), vd.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete VolumeDecorator failed")
-		})
-
 		It("LBCF", func() {
 			lbcf := &platformv1.LBCF{
 				Spec: platformv1.LBCFSpec{

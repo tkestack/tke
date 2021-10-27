@@ -17,5 +17,3 @@
 [Prometheus](Prometheus.md)：实现集群的监控、告警功能
 
 [TApp](TappController.md)：自研工作负载类型，支持同时部署多种类型任务，支持多种升级发布方式
-
-[VolumeDecorator](VolumeDecorator.md)：为 Kubernetes Volume(PVC) 维护更多运行时信息的控制器，例如应用程序身份，实际使用情况等

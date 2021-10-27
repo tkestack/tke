@@ -51,7 +51,6 @@ type Storage struct {
 	Apply             *ApplyREST
 	TappController    *TappControllerREST
 	CSI               *CSIREST
-	PVCR              *PVCRREST
 	LogCollector      *LogCollectorREST
 	CronHPA           *CronHPAREST
 	Addon             *AddonREST
@@ -114,10 +113,6 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, platformClient pla
 			platformClient: platformClient,
 		},
 		CSI: &CSIREST{
-			store:          store,
-			platformClient: platformClient,
-		},
-		PVCR: &PVCRREST{
 			store:          store,
 			platformClient: platformClient,
 		},

@@ -51,5 +51,3 @@ type PrometheusExpansion interface{}
 type RegistryExpansion interface{}
 
 type TappControllerExpansion interface{}
-
-type VolumeDecoratorExpansion interface{}

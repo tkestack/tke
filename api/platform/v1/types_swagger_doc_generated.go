@@ -664,14 +664,6 @@ func (MachineSystemInfo) SwaggerDoc() map[string]string {
 	return map_MachineSystemInfo
 }
 
-var map_PVCRProxyOptions = map[string]string{
-	"": "PVCRProxyOptions is the query options to a kube-apiserver proxy call for PVCR crd object.",
-}
-
-func (PVCRProxyOptions) SwaggerDoc() map[string]string {
-	return map_PVCRProxyOptions
-}
-
 var map_PersistentBackEnd = map[string]string{
 	"": "PersistentBackEnd indicates the backend type and attributes of the persistent log store.",
 }
@@ -892,47 +884,6 @@ var map_UpgradeStrategy = map[string]string{
 
 func (UpgradeStrategy) SwaggerDoc() map[string]string {
 	return map_UpgradeStrategy
-}
-
-var map_VolumeDecorator = map[string]string{
-	"":     "VolumeDecorator is a controller to manage PVC information.",
-	"spec": "Spec defines the desired identities of volume decorator.",
-}
-
-func (VolumeDecorator) SwaggerDoc() map[string]string {
-	return map_VolumeDecorator
-}
-
-var map_VolumeDecoratorList = map[string]string{
-	"":      "VolumeDecoratorList is the whole list of all VolumeDecorator which owned by a tenant.",
-	"items": "List of volume decorators.",
-}
-
-func (VolumeDecoratorList) SwaggerDoc() map[string]string {
-	return map_VolumeDecoratorList
-}
-
-var map_VolumeDecoratorSpec = map[string]string{
-	"": "VolumeDecoratorSpec describes the attributes of a VolumeDecorator.",
-}
-
-func (VolumeDecoratorSpec) SwaggerDoc() map[string]string {
-	return map_VolumeDecoratorSpec
-}
-
-var map_VolumeDecoratorStatus = map[string]string{
-	"":                            "VolumeDecoratorStatus is information about the current status of a VolumeDecorator.",
-	"volumeTypes":                 "VolumeTypes is the supported volume types in this cluster.",
-	"workloadAdmission":           "WorkloadAdmission will be true to enable the workload admission webhook.",
-	"storageVendorVersion":        "StorageVendorVersion will be set to the config version of the storage vendor.",
-	"phase":                       "Phase is the current lifecycle phase of the volume decorator of cluster.",
-	"reason":                      "Reason is a brief CamelCase string that describes any failure.",
-	"retryCount":                  "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
-	"lastReInitializingTimestamp": "LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.",
-}
-
-func (VolumeDecoratorStatus) SwaggerDoc() map[string]string {
-	return map_VolumeDecoratorStatus
 }
 
 // AUTO-GENERATED FUNCTIONS END HERE

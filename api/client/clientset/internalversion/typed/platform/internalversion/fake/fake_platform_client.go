@@ -94,10 +94,6 @@ func (c *FakePlatform) TappControllers() internalversion.TappControllerInterface
 	return &FakeTappControllers{c}
 }
 
-func (c *FakePlatform) VolumeDecorators() internalversion.VolumeDecoratorInterface {
-	return &FakeVolumeDecorators{c}
-}
-
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakePlatform) RESTClient() rest.Interface {

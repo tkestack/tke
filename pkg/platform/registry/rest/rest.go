@@ -42,7 +42,6 @@ import (
 	promstorage "tkestack.io/tke/pkg/platform/registry/prometheus/storage"
 	registrystorage "tkestack.io/tke/pkg/platform/registry/registry/storage"
 	tappcontrollertorage "tkestack.io/tke/pkg/platform/registry/tappcontroller/storage"
-	volumedecoratorstorage "tkestack.io/tke/pkg/platform/registry/volumedecorator/storage"
 )
 
 // StorageProvider is a REST type for core resources storage that implement
@@ -86,7 +85,6 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["clusters/apiresources"] = clusterREST.APIResources
 		storageMap["clusters/tapps"] = clusterREST.TappController
 		storageMap["clusters/csis"] = clusterREST.CSI
-		storageMap["clusters/pvcrs"] = clusterREST.PVCR
 		storageMap["clusters/logcollector"] = clusterREST.LogCollector
 		storageMap["clusters/cronhpas"] = clusterREST.CronHPA
 		storageMap["clusters/addons"] = clusterREST.Addon
@@ -128,10 +126,6 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		csiOperatorREST := csioperatorstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
 		storageMap["csioperators"] = csiOperatorREST.CSIOperator
 		storageMap["csioperators/status"] = csiOperatorREST.Status
-
-		volumeDecoratorREST := volumedecoratorstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
-		storageMap["volumedecorators"] = volumeDecoratorREST.VolumeDecorator
-		storageMap["volumedecorators/status"] = volumeDecoratorREST.Status
 
 		logCollectorREST := logcollectorstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
 		storageMap["logcollectors"] = logCollectorREST.LogCollector

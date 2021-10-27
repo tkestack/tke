@@ -43,7 +43,6 @@ type PlatformInterface interface {
 	PrometheusesGetter
 	RegistriesGetter
 	TappControllersGetter
-	VolumeDecoratorsGetter
 }
 
 // PlatformClient is used to interact with features provided by the platform.tkestack.io group.
@@ -113,10 +112,6 @@ func (c *PlatformClient) Registries() RegistryInterface {
 
 func (c *PlatformClient) TappControllers() TappControllerInterface {
 	return newTappControllers(c)
-}
-
-func (c *PlatformClient) VolumeDecorators() VolumeDecoratorInterface {
-	return newVolumeDecorators(c)
 }
 
 // NewForConfig creates a new PlatformClient for the given config.

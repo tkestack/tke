@@ -52,8 +52,6 @@ type Interface interface {
 	Registries() RegistryInformer
 	// TappControllers returns a TappControllerInformer.
 	TappControllers() TappControllerInformer
-	// VolumeDecorators returns a VolumeDecoratorInformer.
-	VolumeDecorators() VolumeDecoratorInformer
 }
 
 type version struct {
@@ -130,9 +128,4 @@ func (v *version) Registries() RegistryInformer {
 // TappControllers returns a TappControllerInformer.
 func (v *version) TappControllers() TappControllerInformer {
 	return &tappControllerInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
-}
-
-// VolumeDecorators returns a VolumeDecoratorInformer.
-func (v *version) VolumeDecorators() VolumeDecoratorInformer {
-	return &volumeDecoratorInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }

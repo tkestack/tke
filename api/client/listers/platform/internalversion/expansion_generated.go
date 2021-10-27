@@ -79,7 +79,3 @@ type RegistryListerExpansion interface{}
 // TappControllerListerExpansion allows custom methods to be added to
 // TappControllerLister.
 type TappControllerListerExpansion interface{}
-
-// VolumeDecoratorListerExpansion allows custom methods to be added to
-// VolumeDecoratorLister.
-type VolumeDecoratorListerExpansion interface{}

@@ -33,7 +33,6 @@ import (
 	"tkestack.io/tke/pkg/platform/controller/addon/persistentevent"
 	"tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 	"tkestack.io/tke/pkg/platform/controller/addon/storage/csioperator"
-	"tkestack.io/tke/pkg/platform/controller/addon/storage/volumedecorator"
 	"tkestack.io/tke/pkg/platform/controller/addon/tappcontroller"
 	bootstrapps "tkestack.io/tke/pkg/platform/controller/bootstrapapps"
 	clustercontroller "tkestack.io/tke/pkg/platform/controller/cluster"
@@ -172,24 +171,6 @@ func startCSIOperatorController(ctx ControllerContext) (http.Handler, bool, erro
 	ctrl := csioperator.NewController(
 		ctx.ClientBuilder.ClientOrDie("csi-operator-controller"),
 		ctx.InformerFactory.Platform().V1().CSIOperators(),
-		eventSyncPeriod,
-	)
-
-	go func() {
-		_ = ctrl.Run(concurrentSyncs, ctx.Stop)
-	}()
-
-	return nil, true, nil
-}
-
-func startVolumeDecoratorController(ctx ControllerContext) (http.Handler, bool, error) {
-	if !ctx.AvailableResources[schema.GroupVersionResource{Group: platformv1.GroupName, Version: "v1", Resource: "volumedecorators"}] {
-		return nil, false, nil
-	}
-
-	ctrl := volumedecorator.NewController(
-		ctx.ClientBuilder.ClientOrDie("volume-decorator-controller"),
-		ctx.InformerFactory.Platform().V1().VolumeDecorators(),
 		eventSyncPeriod,
 	)
 

@@ -740,16 +740,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*PVCRProxyOptions)(nil), (*platform.PVCRProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_PVCRProxyOptions_To_platform_PVCRProxyOptions(a.(*PVCRProxyOptions), b.(*platform.PVCRProxyOptions), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*platform.PVCRProxyOptions)(nil), (*PVCRProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_platform_PVCRProxyOptions_To_v1_PVCRProxyOptions(a.(*platform.PVCRProxyOptions), b.(*PVCRProxyOptions), scope)
-	}); err != nil {
-		return err
-	}
 	if err := s.AddGeneratedConversionFunc((*PersistentBackEnd)(nil), (*platform.PersistentBackEnd)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_PersistentBackEnd_To_platform_PersistentBackEnd(a.(*PersistentBackEnd), b.(*platform.PersistentBackEnd), scope)
 	}); err != nil {
@@ -1010,46 +1000,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*VolumeDecorator)(nil), (*platform.VolumeDecorator)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_VolumeDecorator_To_platform_VolumeDecorator(a.(*VolumeDecorator), b.(*platform.VolumeDecorator), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*platform.VolumeDecorator)(nil), (*VolumeDecorator)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_platform_VolumeDecorator_To_v1_VolumeDecorator(a.(*platform.VolumeDecorator), b.(*VolumeDecorator), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*VolumeDecoratorList)(nil), (*platform.VolumeDecoratorList)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_VolumeDecoratorList_To_platform_VolumeDecoratorList(a.(*VolumeDecoratorList), b.(*platform.VolumeDecoratorList), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*platform.VolumeDecoratorList)(nil), (*VolumeDecoratorList)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_platform_VolumeDecoratorList_To_v1_VolumeDecoratorList(a.(*platform.VolumeDecoratorList), b.(*VolumeDecoratorList), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*VolumeDecoratorSpec)(nil), (*platform.VolumeDecoratorSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_VolumeDecoratorSpec_To_platform_VolumeDecoratorSpec(a.(*VolumeDecoratorSpec), b.(*platform.VolumeDecoratorSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*platform.VolumeDecoratorSpec)(nil), (*VolumeDecoratorSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_platform_VolumeDecoratorSpec_To_v1_VolumeDecoratorSpec(a.(*platform.VolumeDecoratorSpec), b.(*VolumeDecoratorSpec), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*VolumeDecoratorStatus)(nil), (*platform.VolumeDecoratorStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1_VolumeDecoratorStatus_To_platform_VolumeDecoratorStatus(a.(*VolumeDecoratorStatus), b.(*platform.VolumeDecoratorStatus), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*platform.VolumeDecoratorStatus)(nil), (*VolumeDecoratorStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_platform_VolumeDecoratorStatus_To_v1_VolumeDecoratorStatus(a.(*platform.VolumeDecoratorStatus), b.(*VolumeDecoratorStatus), scope)
-	}); err != nil {
-		return err
-	}
 	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*CSIProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_url_Values_To_v1_CSIProxyOptions(a.(*url.Values), b.(*CSIProxyOptions), scope)
 	}); err != nil {
@@ -1082,11 +1032,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*LogCollectorProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_url_Values_To_v1_LogCollectorProxyOptions(a.(*url.Values), b.(*LogCollectorProxyOptions), scope)
-	}); err != nil {
-		return err
-	}
-	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*PVCRProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_url_Values_To_v1_PVCRProxyOptions(a.(*url.Values), b.(*PVCRProxyOptions), scope)
 	}); err != nil {
 		return err
 	}
@@ -3215,53 +3160,6 @@ func Convert_platform_MachineSystemInfo_To_v1_MachineSystemInfo(in *platform.Mac
 	return autoConvert_platform_MachineSystemInfo_To_v1_MachineSystemInfo(in, out, s)
 }
 
-func autoConvert_v1_PVCRProxyOptions_To_platform_PVCRProxyOptions(in *PVCRProxyOptions, out *platform.PVCRProxyOptions, s conversion.Scope) error {
-	out.Namespace = in.Namespace
-	out.Name = in.Name
-	return nil
-}
-
-// Convert_v1_PVCRProxyOptions_To_platform_PVCRProxyOptions is an autogenerated conversion function.
-func Convert_v1_PVCRProxyOptions_To_platform_PVCRProxyOptions(in *PVCRProxyOptions, out *platform.PVCRProxyOptions, s conversion.Scope) error {
-	return autoConvert_v1_PVCRProxyOptions_To_platform_PVCRProxyOptions(in, out, s)
-}
-
-func autoConvert_platform_PVCRProxyOptions_To_v1_PVCRProxyOptions(in *platform.PVCRProxyOptions, out *PVCRProxyOptions, s conversion.Scope) error {
-	out.Namespace = in.Namespace
-	out.Name = in.Name
-	return nil
-}
-
-// Convert_platform_PVCRProxyOptions_To_v1_PVCRProxyOptions is an autogenerated conversion function.
-func Convert_platform_PVCRProxyOptions_To_v1_PVCRProxyOptions(in *platform.PVCRProxyOptions, out *PVCRProxyOptions, s conversion.Scope) error {
-	return autoConvert_platform_PVCRProxyOptions_To_v1_PVCRProxyOptions(in, out, s)
-}
-
-func autoConvert_url_Values_To_v1_PVCRProxyOptions(in *url.Values, out *PVCRProxyOptions, s conversion.Scope) error {
-	// WARNING: Field TypeMeta does not have json tag, skipping.
-
-	if values, ok := map[string][]string(*in)["namespace"]; ok && len(values) > 0 {
-		if err := runtime.Convert_Slice_string_To_string(&values, &out.Namespace, s); err != nil {
-			return err
-		}
-	} else {
-		out.Namespace = ""
-	}
-	if values, ok := map[string][]string(*in)["name"]; ok && len(values) > 0 {
-		if err := runtime.Convert_Slice_string_To_string(&values, &out.Name, s); err != nil {
-			return err
-		}
-	} else {
-		out.Name = ""
-	}
-	return nil
-}
-
-// Convert_url_Values_To_v1_PVCRProxyOptions is an autogenerated conversion function.
-func Convert_url_Values_To_v1_PVCRProxyOptions(in *url.Values, out *PVCRProxyOptions, s conversion.Scope) error {
-	return autoConvert_url_Values_To_v1_PVCRProxyOptions(in, out, s)
-}
-
 func autoConvert_v1_PersistentBackEnd_To_platform_PersistentBackEnd(in *PersistentBackEnd, out *platform.PersistentBackEnd, s conversion.Scope) error {
 	out.CLS = (*platform.StorageBackEndCLS)(unsafe.Pointer(in.CLS))
 	out.ES = (*platform.StorageBackEndES)(unsafe.Pointer(in.ES))
@@ -4000,120 +3898,4 @@ func autoConvert_platform_UpgradeStrategy_To_v1_UpgradeStrategy(in *platform.Upg
 // Convert_platform_UpgradeStrategy_To_v1_UpgradeStrategy is an autogenerated conversion function.
 func Convert_platform_UpgradeStrategy_To_v1_UpgradeStrategy(in *platform.UpgradeStrategy, out *UpgradeStrategy, s conversion.Scope) error {
 	return autoConvert_platform_UpgradeStrategy_To_v1_UpgradeStrategy(in, out, s)
-}
-
-func autoConvert_v1_VolumeDecorator_To_platform_VolumeDecorator(in *VolumeDecorator, out *platform.VolumeDecorator, s conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-	if err := Convert_v1_VolumeDecoratorSpec_To_platform_VolumeDecoratorSpec(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
-	if err := Convert_v1_VolumeDecoratorStatus_To_platform_VolumeDecoratorStatus(&in.Status, &out.Status, s); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Convert_v1_VolumeDecorator_To_platform_VolumeDecorator is an autogenerated conversion function.
-func Convert_v1_VolumeDecorator_To_platform_VolumeDecorator(in *VolumeDecorator, out *platform.VolumeDecorator, s conversion.Scope) error {
-	return autoConvert_v1_VolumeDecorator_To_platform_VolumeDecorator(in, out, s)
-}
-
-func autoConvert_platform_VolumeDecorator_To_v1_VolumeDecorator(in *platform.VolumeDecorator, out *VolumeDecorator, s conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-	if err := Convert_platform_VolumeDecoratorSpec_To_v1_VolumeDecoratorSpec(&in.Spec, &out.Spec, s); err != nil {
-		return err
-	}
-	if err := Convert_platform_VolumeDecoratorStatus_To_v1_VolumeDecoratorStatus(&in.Status, &out.Status, s); err != nil {
-		return err
-	}
-	return nil
-}
-
-// Convert_platform_VolumeDecorator_To_v1_VolumeDecorator is an autogenerated conversion function.
-func Convert_platform_VolumeDecorator_To_v1_VolumeDecorator(in *platform.VolumeDecorator, out *VolumeDecorator, s conversion.Scope) error {
-	return autoConvert_platform_VolumeDecorator_To_v1_VolumeDecorator(in, out, s)
-}
-
-func autoConvert_v1_VolumeDecoratorList_To_platform_VolumeDecoratorList(in *VolumeDecoratorList, out *platform.VolumeDecoratorList, s conversion.Scope) error {
-	out.ListMeta = in.ListMeta
-	out.Items = *(*[]platform.VolumeDecorator)(unsafe.Pointer(&in.Items))
-	return nil
-}
-
-// Convert_v1_VolumeDecoratorList_To_platform_VolumeDecoratorList is an autogenerated conversion function.
-func Convert_v1_VolumeDecoratorList_To_platform_VolumeDecoratorList(in *VolumeDecoratorList, out *platform.VolumeDecoratorList, s conversion.Scope) error {
-	return autoConvert_v1_VolumeDecoratorList_To_platform_VolumeDecoratorList(in, out, s)
-}
-
-func autoConvert_platform_VolumeDecoratorList_To_v1_VolumeDecoratorList(in *platform.VolumeDecoratorList, out *VolumeDecoratorList, s conversion.Scope) error {
-	out.ListMeta = in.ListMeta
-	out.Items = *(*[]VolumeDecorator)(unsafe.Pointer(&in.Items))
-	return nil
-}
-
-// Convert_platform_VolumeDecoratorList_To_v1_VolumeDecoratorList is an autogenerated conversion function.
-func Convert_platform_VolumeDecoratorList_To_v1_VolumeDecoratorList(in *platform.VolumeDecoratorList, out *VolumeDecoratorList, s conversion.Scope) error {
-	return autoConvert_platform_VolumeDecoratorList_To_v1_VolumeDecoratorList(in, out, s)
-}
-
-func autoConvert_v1_VolumeDecoratorSpec_To_platform_VolumeDecoratorSpec(in *VolumeDecoratorSpec, out *platform.VolumeDecoratorSpec, s conversion.Scope) error {
-	out.TenantID = in.TenantID
-	out.ClusterName = in.ClusterName
-	out.Version = in.Version
-	out.VolumeTypes = *(*[]string)(unsafe.Pointer(&in.VolumeTypes))
-	out.WorkloadAdmission = in.WorkloadAdmission
-	return nil
-}
-
-// Convert_v1_VolumeDecoratorSpec_To_platform_VolumeDecoratorSpec is an autogenerated conversion function.
-func Convert_v1_VolumeDecoratorSpec_To_platform_VolumeDecoratorSpec(in *VolumeDecoratorSpec, out *platform.VolumeDecoratorSpec, s conversion.Scope) error {
-	return autoConvert_v1_VolumeDecoratorSpec_To_platform_VolumeDecoratorSpec(in, out, s)
-}
-
-func autoConvert_platform_VolumeDecoratorSpec_To_v1_VolumeDecoratorSpec(in *platform.VolumeDecoratorSpec, out *VolumeDecoratorSpec, s conversion.Scope) error {
-	out.TenantID = in.TenantID
-	out.ClusterName = in.ClusterName
-	out.Version = in.Version
-	out.VolumeTypes = *(*[]string)(unsafe.Pointer(&in.VolumeTypes))
-	out.WorkloadAdmission = in.WorkloadAdmission
-	return nil
-}
-
-// Convert_platform_VolumeDecoratorSpec_To_v1_VolumeDecoratorSpec is an autogenerated conversion function.
-func Convert_platform_VolumeDecoratorSpec_To_v1_VolumeDecoratorSpec(in *platform.VolumeDecoratorSpec, out *VolumeDecoratorSpec, s conversion.Scope) error {
-	return autoConvert_platform_VolumeDecoratorSpec_To_v1_VolumeDecoratorSpec(in, out, s)
-}
-
-func autoConvert_v1_VolumeDecoratorStatus_To_platform_VolumeDecoratorStatus(in *VolumeDecoratorStatus, out *platform.VolumeDecoratorStatus, s conversion.Scope) error {
-	out.Version = in.Version
-	out.VolumeTypes = *(*[]string)(unsafe.Pointer(&in.VolumeTypes))
-	out.WorkloadAdmission = in.WorkloadAdmission
-	out.StorageVendorVersion = in.StorageVendorVersion
-	out.Phase = platform.AddonPhase(in.Phase)
-	out.Reason = in.Reason
-	out.RetryCount = in.RetryCount
-	out.LastReInitializingTimestamp = in.LastReInitializingTimestamp
-	return nil
-}
-
-// Convert_v1_VolumeDecoratorStatus_To_platform_VolumeDecoratorStatus is an autogenerated conversion function.
-func Convert_v1_VolumeDecoratorStatus_To_platform_VolumeDecoratorStatus(in *VolumeDecoratorStatus, out *platform.VolumeDecoratorStatus, s conversion.Scope) error {
-	return autoConvert_v1_VolumeDecoratorStatus_To_platform_VolumeDecoratorStatus(in, out, s)
-}
-
-func autoConvert_platform_VolumeDecoratorStatus_To_v1_VolumeDecoratorStatus(in *platform.VolumeDecoratorStatus, out *VolumeDecoratorStatus, s conversion.Scope) error {
-	out.Version = in.Version
-	out.VolumeTypes = *(*[]string)(unsafe.Pointer(&in.VolumeTypes))
-	out.WorkloadAdmission = in.WorkloadAdmission
-	out.StorageVendorVersion = in.StorageVendorVersion
-	out.Phase = AddonPhase(in.Phase)
-	out.Reason = in.Reason
-	out.RetryCount = in.RetryCount
-	out.LastReInitializingTimestamp = in.LastReInitializingTimestamp
-	return nil
-}
-
-// Convert_platform_VolumeDecoratorStatus_To_v1_VolumeDecoratorStatus is an autogenerated conversion function.
-func Convert_platform_VolumeDecoratorStatus_To_v1_VolumeDecoratorStatus(in *platform.VolumeDecoratorStatus, out *VolumeDecoratorStatus, s conversion.Scope) error {
-	return autoConvert_platform_VolumeDecoratorStatus_To_v1_VolumeDecoratorStatus(in, out, s)
 }
