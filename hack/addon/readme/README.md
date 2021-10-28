@@ -6,8 +6,6 @@
 
 [GPUManager](GPUManager.md)：用于支持容器使用 GPU 资源，支持给容器绑定非整数张卡
 
-[IPAM](../gal)：用于实现固定容器 IP，容器重启后可以维持其 IP 保持不变
-
 [LBCF](LBCF.md)：用于对接使用负载均衡器
 
 [LogAgent](LogAgent.md)：用于集群日志采集，提供多个维度的日志采集功能，并可以将日志发送给 ElasticSearch 或 Kafka

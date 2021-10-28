@@ -153,19 +153,6 @@ func FilterPrometheus(ctx context.Context, prom *platform.Prometheus) error {
 	return nil
 }
 
-// FilterIPAM is used to filter ipam that do not belong
-// to the tenant.
-func FilterIPAM(ctx context.Context, ipam *platform.IPAM) error {
-	_, tenantID := authentication.UsernameAndTenantID(ctx)
-	if tenantID == "" {
-		return nil
-	}
-	if ipam.Spec.TenantID != tenantID {
-		return errors.NewNotFound(v1.Resource("ipam"), ipam.ObjectMeta.Name)
-	}
-	return nil
-}
-
 // FilterLBCF is used to filter LBCF that do not belong to the tenant.
 func FilterLBCF(ctx context.Context, lbcf *platform.LBCF) error {
 	_, tenantID := authentication.UsernameAndTenantID(ctx)

@@ -51,8 +51,7 @@ const (
                "name" : "tke.cloud.tencent.com/eni-ip"
             }
          ],
-         "nodeCacheCapable" : false,
-         "urlPrefix" : "http://{{.GalaxyIPAMHost}}:9040/v1"
+         "nodeCacheCapable" : false
       }
    ],
    "kind" : "Policy"

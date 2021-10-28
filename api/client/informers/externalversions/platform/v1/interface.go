@@ -36,8 +36,6 @@ type Interface interface {
 	ConfigMaps() ConfigMapInformer
 	// CronHPAs returns a CronHPAInformer.
 	CronHPAs() CronHPAInformer
-	// IPAMs returns a IPAMInformer.
-	IPAMs() IPAMInformer
 	// LBCFs returns a LBCFInformer.
 	LBCFs() LBCFInformer
 	// LogCollectors returns a LogCollectorInformer.
@@ -88,11 +86,6 @@ func (v *version) ConfigMaps() ConfigMapInformer {
 // CronHPAs returns a CronHPAInformer.
 func (v *version) CronHPAs() CronHPAInformer {
 	return &cronHPAInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
-}
-
-// IPAMs returns a IPAMInformer.
-func (v *version) IPAMs() IPAMInformer {
-	return &iPAMInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // LBCFs returns a LBCFInformer.

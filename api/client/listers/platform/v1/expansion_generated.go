@@ -48,10 +48,6 @@ type ConfigMapListerExpansion interface{}
 // CronHPALister.
 type CronHPAListerExpansion interface{}
 
-// IPAMListerExpansion allows custom methods to be added to
-// IPAMLister.
-type IPAMListerExpansion interface{}
-
 // LBCFListerExpansion allows custom methods to be added to
 // LBCFLister.
 type LBCFListerExpansion interface{}

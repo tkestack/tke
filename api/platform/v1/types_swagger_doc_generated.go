@@ -431,53 +431,6 @@ func (ExternalEtcd) SwaggerDoc() map[string]string {
 	return map_ExternalEtcd
 }
 
-var map_IPAM = map[string]string{
-	"":     "IPAM is a scheduler plugin for assigning IP.",
-	"spec": "Spec defines the desired identities of clusters in this set.",
-}
-
-func (IPAM) SwaggerDoc() map[string]string {
-	return map_IPAM
-}
-
-var map_IPAMList = map[string]string{
-	"":      "IPAMList is the whole list of all IPAMs which owned by a tenant.",
-	"items": "List of IPAMs",
-}
-
-func (IPAMList) SwaggerDoc() map[string]string {
-	return map_IPAMList
-}
-
-var map_IPAMProxyOptions = map[string]string{
-	"":     "IPAMProxyOptions is the query options to a ipam-api proxy call.",
-	"path": "Path is the URL path to use for the current proxy request to ipam-api.",
-}
-
-func (IPAMProxyOptions) SwaggerDoc() map[string]string {
-	return map_IPAMProxyOptions
-}
-
-var map_IPAMSpec = map[string]string{
-	"": "IPAMSpec describes the attributes on a IPAM.",
-}
-
-func (IPAMSpec) SwaggerDoc() map[string]string {
-	return map_IPAMSpec
-}
-
-var map_IPAMStatus = map[string]string{
-	"":                            "IPAMStatus is information about the current status of a IPAM.",
-	"phase":                       "Phase is the current lifecycle phase of the addon of cluster.",
-	"reason":                      "Reason is a brief CamelCase string that describes any failure.",
-	"retryCount":                  "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
-	"lastReInitializingTimestamp": "LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.",
-}
-
-func (IPAMStatus) SwaggerDoc() map[string]string {
-	return map_IPAMStatus
-}
-
 var map_LBCF = map[string]string{
 	"":     "LBCF is a kubernetes load balancer manager.",
 	"spec": "Spec defines the desired identities of clusters in this set.",

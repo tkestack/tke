@@ -103,12 +103,6 @@ func SetDefaults_PrometheusStatus(obj *PrometheusStatus) {
 	}
 }
 
-func SetDefaults_IPAMStatus(obj *IPAMStatus) {
-	if obj.Phase == "" {
-		obj.Phase = AddonPhaseInitializing
-	}
-}
-
 func SetDefaults_LBCFStatus(obj *LBCFStatus) {
 	if obj.Phase == "" {
 		obj.Phase = AddonPhaseInitializing

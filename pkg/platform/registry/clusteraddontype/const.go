@@ -25,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/api/platform"
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
-	ipam "tkestack.io/tke/pkg/platform/controller/addon/ipam/images"
 	lbcf "tkestack.io/tke/pkg/platform/controller/addon/lbcf/images"
 	logcollector "tkestack.io/tke/pkg/platform/controller/addon/logcollector/images"
 	persistentevent "tkestack.io/tke/pkg/platform/controller/addon/persistentevent/images"
@@ -56,8 +55,6 @@ const (
 	CronHPA AddonType = "CronHPA"
 	// Prometheus is type for prometheus addon.
 	Prometheus AddonType = "Prometheus"
-	// Galaxy-IPAM
-	IPAM AddonType = "IPAM"
 	// LBCF is type for LBCF
 	LBCF AddonType = "LBCF"
 )
@@ -123,16 +120,6 @@ var Types = map[AddonType]platform.ClusterAddonType{
 		Level:                 platform.LevelBasic,
 		LatestVersion:         prometheus.LatestVersion,
 		Description:           description("Prometheus.md"),
-		CompatibleClusterType: cluster.Providers(),
-	},
-	IPAM: {
-		ObjectMeta: metav1.ObjectMeta{
-			Name: strings.ToLower(string(IPAM)),
-		},
-		Type:                  string(IPAM),
-		Level:                 platform.LevelEnhance,
-		LatestVersion:         ipam.LatestVersion,
-		Description:           description("IPAM.md"),
 		CompatibleClusterType: cluster.Providers(),
 	},
 	LBCF: {
