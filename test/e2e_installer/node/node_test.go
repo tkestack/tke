@@ -177,28 +177,6 @@ var _ = Describe("node", func() {
 			Expect(testTKE.TkeClient.PlatformV1().TappControllers().Delete(context.Background(), tapp.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete TappController failed")
 		})
 
-		It("IPAM", func() {
-			ipam := &platformv1.IPAM{
-				Spec: platformv1.IPAMSpec{
-					ClusterName: cls.Name,
-				},
-			}
-			ipam, err := testTKE.TkeClient.PlatformV1().IPAMs().Create(context.Background(), ipam, metav1.CreateOptions{})
-			Expect(err).Should(BeNil())
-
-			Eventually(func() error {
-				addon, err := testTKE.TkeClient.PlatformV1().IPAMs().Get(context.Background(), ipam.Name, metav1.GetOptions{})
-				if err != nil {
-					return err
-				}
-				if addon.Status.Phase != "Running" {
-					return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
-				}
-				return nil
-			}, 10*time.Minute, 10*time.Second).Should(Succeed())
-			Expect(testTKE.TkeClient.PlatformV1().IPAMs().Delete(context.Background(), ipam.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete IPAM failed")
-		})
-
 		It("CronHPA", func() {
 			cronHPA := &platformv1.CronHPA{
 				Spec: platformv1.CronHPASpec{

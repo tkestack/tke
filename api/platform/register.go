@@ -80,10 +80,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&PersistentEvent{},
 		&PersistentEventList{},
 
-		&IPAM{},
-		&IPAMList{},
-		&IPAMProxyOptions{},
-
 		&ConfigMap{},
 		&ConfigMapList{},
 

@@ -36,8 +36,6 @@ type ConfigMapExpansion interface{}
 
 type CronHPAExpansion interface{}
 
-type IPAMExpansion interface{}
-
 type LBCFExpansion interface{}
 
 type LogCollectorExpansion interface{}

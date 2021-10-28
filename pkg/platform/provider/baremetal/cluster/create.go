@@ -388,7 +388,6 @@ func completeServiceIP(cluster *v1.Cluster) error {
 	}
 	for index, name := range map[int]string{
 		constants.GPUQuotaAdmissionIPIndex: constants.GPUQuotaAdmissionIPAnnotaion,
-		constants.GalaxyIPAMIPIndex:        constants.GalaxyIPAMIPIndexAnnotaion,
 	} {
 		ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, index)
 		if err != nil {
@@ -763,13 +762,8 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 	if GPUQuotaAdmissionHost == "" {
 		GPUQuotaAdmissionHost = "gpu-quota-admission"
 	}
-	GalaxyIPAMHost := c.Annotations[constants.GalaxyIPAMIPIndexAnnotaion]
-	if GalaxyIPAMHost == "" {
-		GalaxyIPAMHost = "galaxy-ipam"
-	}
 	schedulerPolicyConfig, err := template.ParseString(schedulerPolicyConfig, map[string]interface{}{
 		"GPUQuotaAdmissionHost": GPUQuotaAdmissionHost,
-		"GalaxyIPAMHost":        GalaxyIPAMHost,
 	})
 	if err != nil {
 		return errors.Wrap(err, "parse schedulerPolicyConfig error")

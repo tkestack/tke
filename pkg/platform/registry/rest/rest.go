@@ -34,7 +34,6 @@ import (
 	configmapstorage "tkestack.io/tke/pkg/platform/registry/configmap/storage"
 	cronhpastorage "tkestack.io/tke/pkg/platform/registry/cronhpa/storage"
 	csioperatorstorage "tkestack.io/tke/pkg/platform/registry/csioperator/storage"
-	ipamstorage "tkestack.io/tke/pkg/platform/registry/ipam/storage"
 	lbcfstorage "tkestack.io/tke/pkg/platform/registry/lbcf/storage"
 	logcollectorstorage "tkestack.io/tke/pkg/platform/registry/logcollector/storage"
 	machinestorage "tkestack.io/tke/pkg/platform/registry/machine/storage"
@@ -108,10 +107,6 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		persistentEventREST := persistenteventstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
 		storageMap["persistentevents"] = persistentEventREST.PersistentEvent
 		storageMap["persistentevents/status"] = persistentEventREST.Status
-
-		ipamREST := ipamstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
-		storageMap["ipams"] = ipamREST.IPAM
-		storageMap["ipams/status"] = ipamREST.Status
 
 		configmapREST := configmapstorage.NewStorage(restOptionsGetter)
 		storageMap["configmaps"] = configmapREST.ConfigMap

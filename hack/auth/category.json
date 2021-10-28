@@ -21,10 +21,6 @@
 					"description": "创建GPUManager组件"
 				},
 				{
-					"name": "createIpam",
-					"description": "创建IPAM组件"
-				},
-				{
 					"name": "createLbcf",
 					"description": "创建LBCF组件"
 				},
@@ -55,10 +51,6 @@
 				{
 					"name": "deleteGpumanager",
 					"description": "删除GPUManager组件"
-				},
-				{
-					"name": "deleteIpam",
-					"description": "删除IPAM组件"
 				},
 				{
 					"name": "deleteLbcf",
@@ -107,14 +99,6 @@
 				{
 					"name": "getGpumanagerStatus",
 					"description": "获取GPUManager组件状态"
-				},
-				{
-					"name": "getIpam",
-					"description": "获取IPAM组件"
-				},
-				{
-					"name": "getIpamStatus",
-					"description": "获取IPAM组件状态"
 				},
 				{
 					"name": "getLbcf",
@@ -181,10 +165,6 @@
 					"description": "列举GPUManager组件"
 				},
 				{
-					"name": "listIpams",
-					"description": "列举IPAM组件"
-				},
-				{
 					"name": "listLbcfs",
 					"description": "列举LBCF组件"
 				},
@@ -227,14 +207,6 @@
 				{
 					"name": "updateGpumanagerStatus",
 					"description": "修改GPUManager组件状态"
-				},
-				{
-					"name": "updateIpam",
-					"description": "修改IPAM组件"
-				},
-				{
-					"name": "updateIpamStatus",
-					"description": "修改IPAM组件状态"
 				},
 				{
 					"name": "updateLbcf",

@@ -240,7 +240,6 @@ type deleteResourceFunc func(ctx context.Context, deleter *clusterDeleter, clust
 // todo: delete more addons
 var deleteResourceFuncs = []deleteResourceFunc{
 	deletePersistentEvent,
-	deleteIPAM,
 	deleteTappControllers,
 	deleteClusterProvider,
 }
@@ -291,34 +290,6 @@ func deletePersistentEvent(ctx context.Context, deleter *clusterDeleter, cluster
 	}
 
 	log.FromContext(ctx).Info("deletePersistentEvent done")
-
-	return nil
-}
-
-func deleteIPAM(ctx context.Context, deleter *clusterDeleter, cluster *platformv1.Cluster) error {
-	log.FromContext(ctx).Info("deleteIPAM doing")
-
-	listOpt := metav1.ListOptions{
-		FieldSelector: fmt.Sprintf("spec.clusterName=%s", cluster.Name),
-	}
-	ipamList, err := deleter.platformClient.IPAMs().List(ctx, listOpt)
-	if err != nil {
-		return err
-	}
-	if len(ipamList.Items) == 0 {
-		return nil
-	}
-	background := metav1.DeletePropagationBackground
-	deleteOpt := metav1.DeleteOptions{PropagationPolicy: &background}
-	for _, ipam := range ipamList.Items {
-		if err := deleter.platformClient.IPAMs().Delete(ctx, ipam.ObjectMeta.Name, deleteOpt); err != nil {
-			if !errors.IsNotFound(err) {
-				return err
-			}
-		}
-	}
-
-	log.FromContext(ctx).Info("deleteIPAM done")
 
 	return nil
 }

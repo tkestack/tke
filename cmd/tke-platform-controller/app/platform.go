@@ -27,7 +27,6 @@ import (
 	"tkestack.io/tke/api/client/informers/externalversions"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/controller/addon/cronhpa"
-	"tkestack.io/tke/pkg/platform/controller/addon/ipam"
 	"tkestack.io/tke/pkg/platform/controller/addon/lbcf"
 	"tkestack.io/tke/pkg/platform/controller/addon/logcollector"
 	"tkestack.io/tke/pkg/platform/controller/addon/persistentevent"
@@ -48,9 +47,6 @@ const (
 
 	promEventSyncPeriod = 5 * time.Minute
 	concurrentPromSyncs = 10
-
-	ipamEventSyncPeriod = 5 * time.Minute
-	concurrentIPAMSyncs = 5
 )
 
 func startClusterController(ctx ControllerContext) (http.Handler, bool, error) {
@@ -86,24 +82,6 @@ func startMachineController(ctx ControllerContext) (http.Handler, bool, error) {
 
 	go func() {
 		_ = ctrl.Run(ctx.Config.MachineController.ConcurrentMachineSyncs, ctx.Stop)
-	}()
-
-	return nil, true, nil
-}
-
-func startIPAMController(ctx ControllerContext) (http.Handler, bool, error) {
-	if !ctx.AvailableResources[schema.GroupVersionResource{Group: platformv1.GroupName, Version: "v1", Resource: "ipams"}] {
-		return nil, false, nil
-	}
-
-	ctrl := ipam.NewController(
-		ctx.ClientBuilder.ClientOrDie("ipam-controller"),
-		ctx.InformerFactory.Platform().V1().IPAMs(),
-		ipamEventSyncPeriod,
-	)
-
-	go func() {
-		_ = ctrl.Run(concurrentIPAMSyncs, ctx.Stop)
 	}()
 
 	return nil, true, nil

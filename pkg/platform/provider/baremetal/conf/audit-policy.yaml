@@ -74,7 +74,6 @@ rules:
       - "system:serviceaccount:kube-system:expand-controller"
       - "system:serviceaccount:kube-system:flannel"
       - "system:serviceaccount:kube-system:galaxy"
-      - "system:serviceaccount:kube-system:galaxy-ipam"
       - "system:serviceaccount:kube-system:generic-garbage-collector"
       - "system:serviceaccount:kube-system:helm"
       - "system:serviceaccount:kube-system:horizontal-pod-autoscaler"

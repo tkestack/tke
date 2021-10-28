@@ -62,10 +62,6 @@ func (c *FakePlatform) CronHPAs() internalversion.CronHPAInterface {
 	return &FakeCronHPAs{c}
 }
 
-func (c *FakePlatform) IPAMs() internalversion.IPAMInterface {
-	return &FakeIPAMs{c}
-}
-
 func (c *FakePlatform) LBCFs() internalversion.LBCFInterface {
 	return &FakeLBCFs{c}
 }

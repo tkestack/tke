@@ -826,66 +826,6 @@ message HA {
   optional ThirdPartyHA thirdParty = 2;
 }
 
-// IPAM is a scheduler plugin for assigning IP.
-message IPAM {
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
-
-  // Spec defines the desired identities of clusters in this set.
-  // +optional
-  optional IPAMSpec spec = 2;
-
-  // +optional
-  optional IPAMStatus status = 3;
-}
-
-// IPAMList is the whole list of all IPAMs which owned by a tenant.
-message IPAMList {
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
-
-  // List of IPAMs
-  repeated IPAM items = 2;
-}
-
-// IPAMProxyOptions is the query options to a ipam-api proxy call.
-message IPAMProxyOptions {
-  // Path is the URL path to use for the current proxy request to ipam-api.
-  // +optional
-  optional string path = 1;
-}
-
-// IPAMSpec describes the attributes on a IPAM.
-message IPAMSpec {
-  optional string tenantID = 1;
-
-  optional string clusterName = 2;
-
-  optional string version = 3;
-}
-
-// IPAMStatus is information about the current status of a IPAM.
-message IPAMStatus {
-  // +optional
-  optional string version = 1;
-
-  // Phase is the current lifecycle phase of the addon of cluster.
-  // +optional
-  optional string phase = 2;
-
-  // Reason is a brief CamelCase string that describes any failure.
-  // +optional
-  optional string reason = 3;
-
-  // RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
-  // +optional
-  optional int32 retryCount = 4;
-
-  // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
-}
-
 // LBCF is a kubernetes load balancer manager.
 message LBCF {
   // +optional

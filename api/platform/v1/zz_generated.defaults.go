@@ -39,8 +39,6 @@ func RegisterDefaults(scheme *runtime.Scheme) error {
 	scheme.AddTypeDefaultingFunc(&ConfigMapList{}, func(obj interface{}) { SetObjectDefaults_ConfigMapList(obj.(*ConfigMapList)) })
 	scheme.AddTypeDefaultingFunc(&CronHPA{}, func(obj interface{}) { SetObjectDefaults_CronHPA(obj.(*CronHPA)) })
 	scheme.AddTypeDefaultingFunc(&CronHPAList{}, func(obj interface{}) { SetObjectDefaults_CronHPAList(obj.(*CronHPAList)) })
-	scheme.AddTypeDefaultingFunc(&IPAM{}, func(obj interface{}) { SetObjectDefaults_IPAM(obj.(*IPAM)) })
-	scheme.AddTypeDefaultingFunc(&IPAMList{}, func(obj interface{}) { SetObjectDefaults_IPAMList(obj.(*IPAMList)) })
 	scheme.AddTypeDefaultingFunc(&LBCF{}, func(obj interface{}) { SetObjectDefaults_LBCF(obj.(*LBCF)) })
 	scheme.AddTypeDefaultingFunc(&LBCFList{}, func(obj interface{}) { SetObjectDefaults_LBCFList(obj.(*LBCFList)) })
 	scheme.AddTypeDefaultingFunc(&LogCollector{}, func(obj interface{}) { SetObjectDefaults_LogCollector(obj.(*LogCollector)) })
@@ -103,17 +101,6 @@ func SetObjectDefaults_CronHPAList(in *CronHPAList) {
 	for i := range in.Items {
 		a := &in.Items[i]
 		SetObjectDefaults_CronHPA(a)
-	}
-}
-
-func SetObjectDefaults_IPAM(in *IPAM) {
-	SetDefaults_IPAMStatus(&in.Status)
-}
-
-func SetObjectDefaults_IPAMList(in *IPAMList) {
-	for i := range in.Items {
-		a := &in.Items[i]
-		SetObjectDefaults_IPAM(a)
 	}
 }
 
