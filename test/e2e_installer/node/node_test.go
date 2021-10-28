@@ -199,28 +199,6 @@ var _ = Describe("node", func() {
 			Expect(testTKE.TkeClient.PlatformV1().CronHPAs().Delete(context.Background(), cronHPA.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete CronHPA failed")
 		})
 
-		It("LBCF", func() {
-			lbcf := &platformv1.LBCF{
-				Spec: platformv1.LBCFSpec{
-					ClusterName: cls.Name,
-				},
-			}
-			lbcf, err := testTKE.TkeClient.PlatformV1().LBCFs().Create(context.Background(), lbcf, metav1.CreateOptions{})
-			Expect(err).Should(BeNil())
-
-			Eventually(func() error {
-				addon, err := testTKE.TkeClient.PlatformV1().LBCFs().Get(context.Background(), lbcf.Name, metav1.GetOptions{})
-				if err != nil {
-					return err
-				}
-				if addon.Status.Phase != "Running" {
-					return errors.New(addon.Name + " Phase: " + string(addon.Status.Phase) + ", Reason: " + addon.Status.Reason)
-				}
-				return nil
-			}, 10*time.Minute, 10*time.Second).Should(Succeed())
-			Expect(testTKE.TkeClient.PlatformV1().LBCFs().Delete(context.Background(), lbcf.Name, metav1.DeleteOptions{})).Should(BeNil(), "Delete LBCF failed")
-		})
-
 		It("CSIOperator", func() {
 			csiOperator := &platformv1.CSIOperator{
 				Spec: platformv1.CSIOperatorSpec{

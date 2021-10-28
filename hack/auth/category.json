@@ -21,10 +21,6 @@
 					"description": "创建GPUManager组件"
 				},
 				{
-					"name": "createLbcf",
-					"description": "创建LBCF组件"
-				},
-				{
 					"name": "createLogcollector",
 					"description": "创建日志收集器组件"
 				},
@@ -51,10 +47,6 @@
 				{
 					"name": "deleteGpumanager",
 					"description": "删除GPUManager组件"
-				},
-				{
-					"name": "deleteLbcf",
-					"description": "删除LBCF组件"
 				},
 				{
 					"name": "deleteLogcollector",
@@ -99,14 +91,6 @@
 				{
 					"name": "getGpumanagerStatus",
 					"description": "获取GPUManager组件状态"
-				},
-				{
-					"name": "getLbcf",
-					"description": "获取LBCF组件"
-				},
-				{
-					"name": "getLbcfStatus",
-					"description": "获取LBCF组件状态"
 				},
 				{
 					"name": "getLogcollector",
@@ -165,10 +149,6 @@
 					"description": "列举GPUManager组件"
 				},
 				{
-					"name": "listLbcfs",
-					"description": "列举LBCF组件"
-				},
-				{
 					"name": "listLogcollectors",
 					"description": "列举日志收集器组件"
 				},
@@ -207,14 +187,6 @@
 				{
 					"name": "updateGpumanagerStatus",
 					"description": "修改GPUManager组件状态"
-				},
-				{
-					"name": "updateLbcf",
-					"description": "修改LBCF组件"
-				},
-				{
-					"name": "updateLbcfStatus",
-					"description": "修改LBCF组件状态"
 				},
 				{
 					"name": "updateLogcollector",
@@ -1845,18 +1817,6 @@
 					"description": "创建Ingress"
 				},
 				{
-					"name": "createLbcfbackendgroup",
-					"description": "创建LBCFBackendGroup"
-				},
-				{
-					"name": "createLbcfbackendrecord",
-					"description": "创建LBCFBackendRecord"
-				},
-				{
-					"name": "createLbcflb",
-					"description": "创建LBCFLoadBalancer实例"
-				},
-				{
 					"name": "createNetworkpolicy",
 					"description": "创建网络策略"
 				},
@@ -1871,18 +1831,6 @@
 				{
 					"name": "deleteIngress",
 					"description": "删除Ingress"
-				},
-				{
-					"name": "deleteLbcfbackendgroup",
-					"description": "删除LBCFBackendGroup"
-				},
-				{
-					"name": "deleteLbcfbackendrecord",
-					"description": "删除LBCFBackendRecord"
-				},
-				{
-					"name": "deleteLbcflb",
-					"description": "删除LBCFLoadBalancer实例"
 				},
 				{
 					"name": "deleteNetworkpolicy",
@@ -1929,18 +1877,6 @@
 					"description": "列举Ingress"
 				},
 				{
-					"name": "listLbcfbackendgroups",
-					"description": "列举LBCFBackendGroup"
-				},
-				{
-					"name": "listLbcfbackendrecords",
-					"description": "列举LBCFBackendRecord"
-				},
-				{
-					"name": "listLbcflbs",
-					"description": "列举LBCFLoadBalancer实例"
-				},
-				{
 					"name": "listNetworkpolicies",
 					"description": "列举网络策略"
 				},
@@ -1963,18 +1899,6 @@
 				{
 					"name": "updateIngressStatus",
 					"description": "修改Ingress状态"
-				},
-				{
-					"name": "updateLbcfbackendgroup",
-					"description": "修改LBCFBackendGroup"
-				},
-				{
-					"name": "updateLbcfbackendrecord",
-					"description": "修改LBCFBackendRecord"
-				},
-				{
-					"name": "updateLbcflb",
-					"description": "修改LBCFLoadBalancer实例"
 				},
 				{
 					"name": "updateNetworkpolicy",

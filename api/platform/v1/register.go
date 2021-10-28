@@ -93,10 +93,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&LogCollectorList{},
 		&LogCollectorProxyOptions{},
 
-		&LBCF{},
-		&LBCFList{},
-		&LBCFProxyOptions{},
-
 		&ClusterGroupAPIResourceItems{},
 		&ClusterGroupAPIResourceItemsList{},
 		&ClusterGroupAPIResourceOptions{},

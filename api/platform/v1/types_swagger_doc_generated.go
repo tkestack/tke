@@ -431,52 +431,6 @@ func (ExternalEtcd) SwaggerDoc() map[string]string {
 	return map_ExternalEtcd
 }
 
-var map_LBCF = map[string]string{
-	"":     "LBCF is a kubernetes load balancer manager.",
-	"spec": "Spec defines the desired identities of clusters in this set.",
-}
-
-func (LBCF) SwaggerDoc() map[string]string {
-	return map_LBCF
-}
-
-var map_LBCFList = map[string]string{
-	"":      "LBCFList is the whole list of all helms which owned by a tenant.",
-	"items": "List of LBCFs",
-}
-
-func (LBCFList) SwaggerDoc() map[string]string {
-	return map_LBCFList
-}
-
-var map_LBCFProxyOptions = map[string]string{
-	"": "LBCFProxyOptions is the query options to a kube-apiserver proxy call.",
-}
-
-func (LBCFProxyOptions) SwaggerDoc() map[string]string {
-	return map_LBCFProxyOptions
-}
-
-var map_LBCFSpec = map[string]string{
-	"": "LBCFSpec describes the attributes on a Helm.",
-}
-
-func (LBCFSpec) SwaggerDoc() map[string]string {
-	return map_LBCFSpec
-}
-
-var map_LBCFStatus = map[string]string{
-	"":                            "LBCFStatus is information about the current status of a Helm.",
-	"phase":                       "Phase is the current lifecycle phase of the helm of cluster.",
-	"reason":                      "Reason is a brief CamelCase string that describes any failure.",
-	"retryCount":                  "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
-	"lastReInitializingTimestamp": "LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.",
-}
-
-func (LBCFStatus) SwaggerDoc() map[string]string {
-	return map_LBCFStatus
-}
-
 var map_LocalEtcd = map[string]string{
 	"":               "LocalEtcd describes that kubeadm should run an etcd cluster locally",
 	"dataDir":        "DataDir is the directory etcd will place its data. Defaults to \"/var/lib/etcd\".",

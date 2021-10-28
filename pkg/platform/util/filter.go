@@ -152,15 +152,3 @@ func FilterPrometheus(ctx context.Context, prom *platform.Prometheus) error {
 	}
 	return nil
 }
-
-// FilterLBCF is used to filter LBCF that do not belong to the tenant.
-func FilterLBCF(ctx context.Context, lbcf *platform.LBCF) error {
-	_, tenantID := authentication.UsernameAndTenantID(ctx)
-	if tenantID == "" {
-		return nil
-	}
-	if lbcf.Spec.TenantID != tenantID {
-		return errors.NewNotFound(v1.Resource("lbcf"), lbcf.ObjectMeta.Name)
-	}
-	return nil
-}

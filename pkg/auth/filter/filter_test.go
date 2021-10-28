@@ -296,20 +296,6 @@ func TestConvertTKEAttributes(t *testing.T) {
 				Resource: "cluster:cls-82qkvzgp/alarmpolicy:*",
 			},
 		},
-		//{
-		//	ctx: contextWithNamespace(contextWithCluster(context.Background())),
-		//	attr: &authorizer.AttributesRecord{
-		//		Verb:            "list",
-		//		Resource:        "clusters",
-		//		ResourceRequest: true,
-		//		Subresource:     "lbcfbackendgroups",
-		//		Path:            "/apis/platform.tkestack.io/v1/clusters/cls-2brjpwrg/lbcfbackendgroups",
-		//	},
-		//	expect: &authorizer.AttributesRecord{
-		//		Verb:     "listLbcfbackendgroups",
-		//		Resource: "Resource:cluster:cls-2brjpwrg/namespace:ns-1/lbcfbackendgroup:*",
-		//	},
-		//},
 		{
 			ctx: contextWithCluster(context.Background()),
 			attr: &authorizer.AttributesRecord{

@@ -39,8 +39,6 @@ rules:
         resources: ["*/status"]
       - group: "platform.tkestack.io"
         resources: ["*/status"]
-      - group: "lbcf.tkestack.io"
-        resources: ["*/status"]
       - group: "auth.tkestack.io"
         resources: ["*/status"]
       - group: "business.tkestack.io"
@@ -75,12 +73,10 @@ rules:
       - "system:serviceaccount:kube-system:flannel"
       - "system:serviceaccount:kube-system:galaxy"
       - "system:serviceaccount:kube-system:generic-garbage-collector"
-      - "system:serviceaccount:kube-system:helm"
       - "system:serviceaccount:kube-system:horizontal-pod-autoscaler"
       - "system:serviceaccount:kube-system:job-controller"
       - "system:serviceaccount:kube-system:kube-proxy"
       - "system:serviceaccount:kube-system:kube-state-metrics"
-      - "system:serviceaccount:kube-system:lbcf-controller"
       - "system:serviceaccount:kube-system:log-collector"
       - "system:serviceaccount:kube-system:namespace-controller"
       - "system:serviceaccount:kube-system:node-controller"
