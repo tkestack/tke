@@ -76,6 +76,7 @@ func Upgrade(ctx context.Context,
 		DependencyUpdate: true,
 		Install:          true,
 		Values:           values,
+		Timeout:          clientTimeOut,
 		ChartPathOptions: chartPathBasicOptions,
 	})
 
