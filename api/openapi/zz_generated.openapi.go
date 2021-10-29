@@ -46831,6 +46831,13 @@ func schema_tke_api_platform_v1_ClusterCredential(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
+					"username": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Username is the username for basic authentication to the kubernetes cluster.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"as": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Impersonate is the username to act-as.",
