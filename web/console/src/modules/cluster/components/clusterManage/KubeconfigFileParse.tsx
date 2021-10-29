@@ -37,6 +37,12 @@ export interface KubeConfig {
       token?: string;
       'client-certificate-data'?: string;
       'client-key-data'?: string;
+      username?: string;
+      as?: string;
+      'as-user-extra'?: {
+        'clusternet-certificate': string[];
+        'clusternet-privatekey': string[];
+      };
     };
   }>;
 }
@@ -48,6 +54,10 @@ export interface KubeconfigFileParseProps {
     token: string;
     clientCert: string;
     clientKey: string;
+    username: string;
+    as: string;
+    clusternetCertificate?: string;
+    clusternetPrivatekey?: string;
   }) => any;
 }
 
@@ -106,7 +116,14 @@ export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
     ],
     users: [
       {
-        user: { token = '', 'client-certificate-data': clientCert = '', 'client-key-data': clientKey = '' }
+        user: {
+          token = '',
+          'client-certificate-data': clientCert = '',
+          'client-key-data': clientKey = '',
+          username = '',
+          as = '',
+          'as-user-extra': asUserExtra
+        }
       }
     ]
   }: KubeConfig) {
@@ -115,7 +132,11 @@ export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
       certFile,
       token,
       clientCert,
-      clientKey
+      clientKey,
+      username,
+      as,
+      clusternetCertificate: asUserExtra?.['clusternet-certificate']?.join(',') ?? '',
+      clusternetPrivatekey: asUserExtra?.['clusternet-privatekey']?.join(',') ?? ''
     };
   }
 

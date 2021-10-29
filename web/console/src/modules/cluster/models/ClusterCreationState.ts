@@ -41,4 +41,10 @@ export interface ClusterCreationState extends Identifiable {
 
   clientCert?: string;
   clientKey?: string;
+
+  username?: string;
+  as?: string;
+
+  clusternetCertificate?: string;
+  clusternetPrivatekey?: string;
 }

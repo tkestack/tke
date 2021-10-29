@@ -57,7 +57,11 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
         name,
         token,
         clientCert,
-        clientKey
+        clientKey,
+        username,
+        as,
+        clusternetCertificate,
+        clusternetPrivatekey
       } = clusterCreationState;
     const workflow = createClusterFlow;
     const action = actions.workflow.createCluster;
@@ -122,13 +126,15 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
             credential: {
               caCert: certIsBase64 ? clusterCreationState.certFile : window.btoa(clusterCreationState.certFile),
               clientCert: clusterCreationState.clientCert || undefined,
-              clientKey: clusterCreationState.clientKey || undefined
+              clientKey: clusterCreationState.clientKey || undefined,
+              token: clusterCreationState.token || undefined,
+              username: clusterCreationState.username || undefined,
+              as: clusterCreationState.as || undefined,
+              'clusternet-certificate': clusterCreationState.clusternetCertificate || undefined,
+              'clusternet-privatekey': clusterCreationState.clusternetPrivatekey || undefined
             }
           }
         };
-        if (clusterCreationState.token) {
-          data.status.credential['token'] = clusterCreationState.token;
-        }
 
         const createClusterData: CreateResource[] = [
           {
@@ -142,9 +148,8 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
         action.perform();
       }
     };
-    function parseKubeconfigSuccess({ apiServer, certFile, token, clientCert, clientKey }) {
-      console.log(apiServer, certFile, token);
-      actions.clusterCreation.updateClusterCreationState({ apiServer, certFile, token, clientCert, clientKey });
+    function parseKubeconfigSuccess(params) {
+      actions.clusterCreation.updateClusterCreationState({ ...params });
     }
 
     const failed = workflow.operationState === OperationState.Done && !isSuccessWorkflow(workflow);
@@ -220,6 +225,46 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
                 placeholder={t('请输入Client-Key')}
                 tipMode="popup"
                 onChange={value => actions.clusterCreation.updateClusterCreationState({ clientKey: value })}
+              />
+            </FormPanel.Item>
+
+            <FormPanel.Item label="username">
+              <InputField
+                type="textarea"
+                value={username}
+                placeholder={t('请输入username')}
+                tipMode="popup"
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ username: value })}
+              />
+            </FormPanel.Item>
+
+            <FormPanel.Item label="as">
+              <InputField
+                type="textarea"
+                value={as}
+                placeholder={t('请输入as')}
+                tipMode="popup"
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ as: value })}
+              />
+            </FormPanel.Item>
+
+            <FormPanel.Item label="clusternet-certificate">
+              <InputField
+                type="textarea"
+                value={clusternetCertificate}
+                placeholder={t('请输入 clusternet-certificate')}
+                tipMode="popup"
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ clusternetCertificate: value })}
+              />
+            </FormPanel.Item>
+
+            <FormPanel.Item label="clusternet-privatekey">
+              <InputField
+                type="textarea"
+                value={clusternetPrivatekey}
+                placeholder={t('请输入 clusternet-privatekey')}
+                tipMode="popup"
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ clusternetPrivatekey: value })}
               />
             </FormPanel.Item>
 
