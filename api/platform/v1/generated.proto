@@ -338,17 +338,21 @@ message ClusterCredential {
   // +optional
   optional string certificateKey = 14;
 
+  // Username is the username for basic authentication to the kubernetes cluster.
+  // +optional
+  optional string username = 15;
+
   // Impersonate is the username to act-as.
   // +optional
-  optional string as = 15;
+  optional string as = 16;
 
   // ImpersonateGroups is the groups to imperonate.
   // +optional
-  repeated string asGroups = 16;
+  repeated string asGroups = 17;
 
   // ImpersonateUserExtra contains additional information for impersonated user.
   // +optional
-  map<string, string> asUserExtra = 17;
+  map<string, string> asUserExtra = 18;
 }
 
 // ClusterCredentialList is the whole list of all ClusterCredential which owned by a tenant.

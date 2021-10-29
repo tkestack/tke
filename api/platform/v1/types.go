@@ -358,15 +358,18 @@ type ClusterCredential struct {
 	// For kubeadm init or join
 	// +optional
 	CertificateKey *string `json:"certificateKey,omitempty" protobuf:"bytes,14,opt,name=certificateKey"`
+	// Username is the username for basic authentication to the kubernetes cluster.
+	// +optional
+	Username string `json:"username,omitempty" protobuf:"bytes,15,opt,name=username"`
 	// Impersonate is the username to act-as.
 	// +optional
-	Impersonate string `json:"as,omitempty" protobuf:"bytes,15,opt,name=as"`
+	Impersonate string `json:"as,omitempty" protobuf:"bytes,16,opt,name=as"`
 	// ImpersonateGroups is the groups to imperonate.
 	// +optional
-	ImpersonateGroups []string `json:"as-groups,omitempty" protobuf:"bytes,16,opt,name=asGroups"`
+	ImpersonateGroups []string `json:"as-groups,omitempty" protobuf:"bytes,17,opt,name=asGroups"`
 	// ImpersonateUserExtra contains additional information for impersonated user.
 	// +optional
-	ImpersonateUserExtra ImpersonateUserExtra `json:"as-user-extra,omitempty" protobuf:"bytes,17,opt,name=asUserExtra"`
+	ImpersonateUserExtra ImpersonateUserExtra `json:"as-user-extra,omitempty" protobuf:"bytes,18,opt,name=asUserExtra"`
 }
 
 type ImpersonateUserExtra map[string]string

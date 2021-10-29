@@ -352,6 +352,9 @@ type ClusterCredential struct {
 	// For kubeadm init or join
 	// +optional
 	CertificateKey *string
+	// Username is the username for basic authentication to the kubernetes cluster.
+	// +optional
+	Username string
 	// Impersonate is the username to act-as.
 	// +optional
 	Impersonate string

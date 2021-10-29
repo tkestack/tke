@@ -1491,6 +1491,7 @@ func autoConvert_v1_ClusterCredential_To_platform_ClusterCredential(in *ClusterC
 	out.Token = (*string)(unsafe.Pointer(in.Token))
 	out.BootstrapToken = (*string)(unsafe.Pointer(in.BootstrapToken))
 	out.CertificateKey = (*string)(unsafe.Pointer(in.CertificateKey))
+	out.Username = in.Username
 	out.Impersonate = in.Impersonate
 	out.ImpersonateGroups = *(*[]string)(unsafe.Pointer(&in.ImpersonateGroups))
 	out.ImpersonateUserExtra = *(*platform.ImpersonateUserExtra)(unsafe.Pointer(&in.ImpersonateUserExtra))
@@ -1517,6 +1518,7 @@ func autoConvert_platform_ClusterCredential_To_v1_ClusterCredential(in *platform
 	out.Token = (*string)(unsafe.Pointer(in.Token))
 	out.BootstrapToken = (*string)(unsafe.Pointer(in.BootstrapToken))
 	out.CertificateKey = (*string)(unsafe.Pointer(in.CertificateKey))
+	out.Username = in.Username
 	out.Impersonate = in.Impersonate
 	out.ImpersonateGroups = *(*[]string)(unsafe.Pointer(&in.ImpersonateGroups))
 	out.ImpersonateUserExtra = *(*ImpersonateUserExtra)(unsafe.Pointer(&in.ImpersonateUserExtra))
