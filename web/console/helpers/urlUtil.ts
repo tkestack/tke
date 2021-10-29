@@ -72,7 +72,8 @@ export const reduceK8sQueryString = ({
       // 也许value是object，即labelSelector 或者 fieldSelector
       value = isObject(value)
         ? Object.entries(value)
-            .map(([key, value]) => `${key}${value && '='}${value}`)
+            .filter(([_, value]) => value)
+            .map(([key, value]) => `${key}=${value}`)
             .join(',')
         : value;
 
