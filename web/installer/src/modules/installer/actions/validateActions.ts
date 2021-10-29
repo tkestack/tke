@@ -30,6 +30,9 @@ export const validateActions = {
     if (!username) {
       status = 2;
       message = '用户名不能为空';
+    } else if (username.length < 3 || username.length > 32) {
+      status = 2;
+      message = '用户名长度必须在3到32位之间';
     } else if (!/^[a-z]*$/.test(username)) {
       status = 2;
       message = '用户名只支持小写字母';
