@@ -25,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/api/platform"
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
-	logcollector "tkestack.io/tke/pkg/platform/controller/addon/logcollector/images"
 	persistentevent "tkestack.io/tke/pkg/platform/controller/addon/persistentevent/images"
 	prometheus "tkestack.io/tke/pkg/platform/controller/addon/prometheus/images"
 	tappcontroller "tkestack.io/tke/pkg/platform/controller/addon/tappcontroller/images"
@@ -40,12 +39,8 @@ type AddonType string
 
 // These are valid type of addon.
 const (
-	// Helm is type for helm addon.
-	Helm AddonType = "Helm"
 	// PersistentEvent is type for persistent event addon.
 	PersistentEvent AddonType = "PersistentEvent"
-	// LogCollector is type for log collector.
-	LogCollector AddonType = "LogCollector"
 	// TappController is type for TappController
 	TappController AddonType = "TappController"
 	// CSIOperator is type for CSIOperator
@@ -67,16 +62,6 @@ var Types = map[AddonType]platform.ClusterAddonType{
 		Level:                 platform.LevelEnhance,
 		LatestVersion:         persistentevent.LatestVersion,
 		Description:           description("PersistentEvent.md"),
-		CompatibleClusterType: cluster.Providers(),
-	},
-	LogCollector: {
-		ObjectMeta: metav1.ObjectMeta{
-			Name: strings.ToLower(string(LogCollector)),
-		},
-		Type:                  string(LogCollector),
-		Level:                 platform.LevelEnhance,
-		LatestVersion:         logcollector.LatestVersion,
-		Description:           description("LogCollector.md"),
 		CompatibleClusterType: cluster.Providers(),
 	},
 	TappController: {

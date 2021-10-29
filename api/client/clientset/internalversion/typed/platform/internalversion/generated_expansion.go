@@ -36,8 +36,6 @@ type ConfigMapExpansion interface{}
 
 type CronHPAExpansion interface{}
 
-type LogCollectorExpansion interface{}
-
 type MachineExpansion interface{}
 
 type PersistentEventExpansion interface{}

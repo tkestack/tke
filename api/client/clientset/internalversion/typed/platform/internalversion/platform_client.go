@@ -35,7 +35,6 @@ type PlatformInterface interface {
 	ClusterGroupAPIResourceItemsesGetter
 	ConfigMapsGetter
 	CronHPAsGetter
-	LogCollectorsGetter
 	MachinesGetter
 	PersistentEventsGetter
 	PrometheusesGetter
@@ -78,10 +77,6 @@ func (c *PlatformClient) ConfigMaps() ConfigMapInterface {
 
 func (c *PlatformClient) CronHPAs() CronHPAInterface {
 	return newCronHPAs(c)
-}
-
-func (c *PlatformClient) LogCollectors() LogCollectorInterface {
-	return newLogCollectors(c)
 }
 
 func (c *PlatformClient) Machines() MachineInterface {

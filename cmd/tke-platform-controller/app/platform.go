@@ -27,7 +27,6 @@ import (
 	"tkestack.io/tke/api/client/informers/externalversions"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/controller/addon/cronhpa"
-	"tkestack.io/tke/pkg/platform/controller/addon/logcollector"
 	"tkestack.io/tke/pkg/platform/controller/addon/persistentevent"
 	"tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 	"tkestack.io/tke/pkg/platform/controller/addon/storage/csioperator"
@@ -148,24 +147,6 @@ func startCSIOperatorController(ctx ControllerContext) (http.Handler, bool, erro
 	ctrl := csioperator.NewController(
 		ctx.ClientBuilder.ClientOrDie("csi-operator-controller"),
 		ctx.InformerFactory.Platform().V1().CSIOperators(),
-		eventSyncPeriod,
-	)
-
-	go func() {
-		_ = ctrl.Run(concurrentSyncs, ctx.Stop)
-	}()
-
-	return nil, true, nil
-}
-
-func startLogCollectorController(ctx ControllerContext) (http.Handler, bool, error) {
-	if !ctx.AvailableResources[schema.GroupVersionResource{Group: platformv1.GroupName, Version: "v1", Resource: "logcollectors"}] {
-		return nil, false, nil
-	}
-
-	ctrl := logcollector.NewController(
-		ctx.ClientBuilder.ClientOrDie("log-collector-controller"),
-		ctx.InformerFactory.Platform().V1().LogCollectors(),
 		eventSyncPeriod,
 	)
 

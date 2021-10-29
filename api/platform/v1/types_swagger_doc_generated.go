@@ -443,52 +443,6 @@ func (LocalEtcd) SwaggerDoc() map[string]string {
 	return map_LocalEtcd
 }
 
-var map_LogCollector = map[string]string{
-	"":     "LogCollector is a manager to collect logs of workload.",
-	"spec": "Spec defines the desired identities of LogCollector.",
-}
-
-func (LogCollector) SwaggerDoc() map[string]string {
-	return map_LogCollector
-}
-
-var map_LogCollectorList = map[string]string{
-	"":      "LogCollectorList is the whole list of all LogCollector which owned by a tenant.",
-	"items": "List of volume decorators.",
-}
-
-func (LogCollectorList) SwaggerDoc() map[string]string {
-	return map_LogCollectorList
-}
-
-var map_LogCollectorProxyOptions = map[string]string{
-	"": "LogCollectorProxyOptions is the query options to a kube-apiserver proxy call for LogCollector crd object.",
-}
-
-func (LogCollectorProxyOptions) SwaggerDoc() map[string]string {
-	return map_LogCollectorProxyOptions
-}
-
-var map_LogCollectorSpec = map[string]string{
-	"": "LogCollectorSpec describes the attributes of a LogCollector.",
-}
-
-func (LogCollectorSpec) SwaggerDoc() map[string]string {
-	return map_LogCollectorSpec
-}
-
-var map_LogCollectorStatus = map[string]string{
-	"":                            "LogCollectorStatus is information about the current status of a LogCollector.",
-	"phase":                       "Phase is the current lifecycle phase of the LogCollector of cluster.",
-	"reason":                      "Reason is a brief CamelCase string that describes any failure.",
-	"retryCount":                  "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
-	"lastReInitializingTimestamp": "LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.",
-}
-
-func (LogCollectorStatus) SwaggerDoc() map[string]string {
-	return map_LogCollectorStatus
-}
-
 var map_Machine = map[string]string{
 	"":     "Machine instance in Kubernetes cluster",
 	"spec": "Spec defines the desired identities of the Machine.",

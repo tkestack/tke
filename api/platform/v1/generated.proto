@@ -843,66 +843,6 @@ message LocalEtcd {
   repeated string peerCertSANs = 4;
 }
 
-// LogCollector is a manager to collect logs of workload.
-message LogCollector {
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
-
-  // Spec defines the desired identities of LogCollector.
-  // +optional
-  optional LogCollectorSpec spec = 2;
-
-  // +optional
-  optional LogCollectorStatus status = 3;
-}
-
-// LogCollectorList is the whole list of all LogCollector which owned by a tenant.
-message LogCollectorList {
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
-
-  // List of volume decorators.
-  repeated LogCollector items = 2;
-}
-
-// LogCollectorProxyOptions is the query options to a kube-apiserver proxy call for LogCollector crd object.
-message LogCollectorProxyOptions {
-  optional string namespace = 1;
-
-  optional string name = 2;
-}
-
-// LogCollectorSpec describes the attributes of a LogCollector.
-message LogCollectorSpec {
-  optional string tenantID = 1;
-
-  optional string clusterName = 2;
-
-  optional string version = 3;
-}
-
-// LogCollectorStatus is information about the current status of a LogCollector.
-message LogCollectorStatus {
-  // +optional
-  optional string version = 1;
-
-  // Phase is the current lifecycle phase of the LogCollector of cluster.
-  // +optional
-  optional string phase = 2;
-
-  // Reason is a brief CamelCase string that describes any failure.
-  // +optional
-  optional string reason = 3;
-
-  // RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
-  // +optional
-  optional int32 retryCount = 4;
-
-  // LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
-  // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastReInitializingTimestamp = 5;
-}
-
 // Machine instance in Kubernetes cluster
 message Machine {
   // +optional

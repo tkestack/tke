@@ -33,7 +33,6 @@ func addConversionFuncs(scheme *runtime.Scheme) error {
 		AddFieldLabelConversionsForPersistentEvent,
 		AddFieldLabelConversionsForTappController,
 		AddFieldLabelConversionsForCSIOperator,
-		AddFieldLabelConversionsForLogCollector,
 		AddFieldLabelConversionsForCronHPA,
 		AddFieldLabelConversionsForPrometheus,
 	}
@@ -166,26 +165,6 @@ func AddFieldLabelConversionsForTappController(scheme *runtime.Scheme) error {
 // representation.
 func AddFieldLabelConversionsForCSIOperator(scheme *runtime.Scheme) error {
 	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("CSIOperator"),
-		func(label, value string) (string, string, error) {
-			switch label {
-			case "spec.tenantID",
-				"spec.clusterName",
-				"spec.version",
-				"status.phase",
-				"status.version",
-				"metadata.name":
-				return label, value, nil
-			default:
-				return "", "", fmt.Errorf("field label not supported: %s", label)
-			}
-		})
-}
-
-// AddFieldLabelConversionsForLogCollector adds a conversion function to convert
-// field selectors of VolumeDecorator from the given version to internal version
-// representation.
-func AddFieldLabelConversionsForLogCollector(scheme *runtime.Scheme) error {
-	return scheme.AddFieldLabelConversionFunc(SchemeGroupVersion.WithKind("LogCollector"),
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "spec.tenantID",
