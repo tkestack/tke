@@ -74,6 +74,7 @@ func Install(ctx context.Context,
 		ReleaseName:      newApp.Spec.Name,
 		DependencyUpdate: true,
 		Values:           values,
+		Timeout:          clientTimeOut,
 		ChartPathOptions: chartPathBasicOptions,
 	})
 	if updateStatusFunc != nil {

@@ -20,6 +20,7 @@ package action
 
 import (
 	"helm.sh/helm/v3/pkg/action"
+	"time"
 )
 
 // RollbackOptions is the options to a rollback call.
@@ -27,6 +28,7 @@ type RollbackOptions struct {
 	Namespace   string
 	ReleaseName string
 	Revision    int64
+	Timeout     time.Duration
 }
 
 // Rollback roll back to the previous release.
@@ -37,5 +39,6 @@ func (c *Client) Rollback(options *RollbackOptions) error {
 	}
 	client := action.NewRollback(actionConfig)
 	client.Version = int(options.Revision)
+	client.Timeout = options.Timeout
 	return client.Run(options.ReleaseName)
 }
