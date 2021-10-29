@@ -103,12 +103,6 @@ func SetDefaults_PrometheusStatus(obj *PrometheusStatus) {
 	}
 }
 
-func SetDefaults_LBCFStatus(obj *LBCFStatus) {
-	if obj.Phase == "" {
-		obj.Phase = AddonPhaseInitializing
-	}
-}
-
 func SetDefaults_ClusterFeature(obj *ClusterFeature) {
 	if obj.ContainerRuntime == "" {
 		obj.ContainerRuntime = Docker

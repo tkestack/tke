@@ -27,7 +27,6 @@ import (
 	"tkestack.io/tke/api/client/informers/externalversions"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/controller/addon/cronhpa"
-	"tkestack.io/tke/pkg/platform/controller/addon/lbcf"
 	"tkestack.io/tke/pkg/platform/controller/addon/logcollector"
 	"tkestack.io/tke/pkg/platform/controller/addon/persistentevent"
 	"tkestack.io/tke/pkg/platform/controller/addon/prometheus"
@@ -197,24 +196,6 @@ func startPrometheusController(ctx ControllerContext) (http.Handler, bool, error
 
 	go func() {
 		_ = ctrl.Run(concurrentPromSyncs, ctx.Stop)
-	}()
-
-	return nil, true, nil
-}
-
-func startLBCFControllerController(ctx ControllerContext) (http.Handler, bool, error) {
-	if !ctx.AvailableResources[schema.GroupVersionResource{Group: platformv1.GroupName, Version: "v1", Resource: "lbcfs"}] {
-		return nil, false, nil
-	}
-
-	ctrl := lbcf.NewController(
-		ctx.ClientBuilder.ClientOrDie("tapp-controller-controller"),
-		ctx.InformerFactory.Platform().V1().LBCFs(),
-		eventSyncPeriod,
-	)
-
-	go func() {
-		_ = ctrl.Run(concurrentSyncs, ctx.Stop)
 	}()
 
 	return nil, true, nil

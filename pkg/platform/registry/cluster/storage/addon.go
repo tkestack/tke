@@ -91,7 +91,6 @@ var (
 		logCollector,
 		cronHPA,
 		prometheus,
-		lbcf,
 	}
 )
 
@@ -302,40 +301,6 @@ func prometheus(ctx context.Context, a *addonFinder) {
 		Spec: platform.ClusterAddonSpec{
 			Type:    string(clusteraddontype.Prometheus),
 			Level:   clusteraddontype.Types[clusteraddontype.Prometheus].Level,
-			Version: l.Items[0].Spec.Version,
-		},
-		Status: platform.ClusterAddonStatus{
-			Version: l.Items[0].Status.Version,
-			Phase:   string(l.Items[0].Status.Phase),
-			Reason:  l.Items[0].Status.Reason,
-		},
-	})
-	a.mutex.Unlock()
-}
-
-func lbcf(ctx context.Context, a *addonFinder) {
-	defer a.wg.Done()
-	l, err := a.platformClient.LBCFs().List(ctx, metav1.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector("spec.clusterName", a.clusterName).String(),
-	})
-	if err != nil {
-		a.mutex.Lock()
-		a.errors = append(a.errors, err)
-		a.mutex.Unlock()
-		return
-	}
-	if len(l.Items) == 0 {
-		return
-	}
-	a.mutex.Lock()
-	a.addons = append(a.addons, platform.ClusterAddon{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              l.Items[0].ObjectMeta.Name,
-			CreationTimestamp: l.Items[0].ObjectMeta.CreationTimestamp,
-		},
-		Spec: platform.ClusterAddonSpec{
-			Type:    string(clusteraddontype.LBCF),
-			Level:   clusteraddontype.Types[clusteraddontype.LBCF].Level,
 			Version: l.Items[0].Spec.Version,
 		},
 		Status: platform.ClusterAddonStatus{

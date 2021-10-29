@@ -25,7 +25,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/api/platform"
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
-	lbcf "tkestack.io/tke/pkg/platform/controller/addon/lbcf/images"
 	logcollector "tkestack.io/tke/pkg/platform/controller/addon/logcollector/images"
 	persistentevent "tkestack.io/tke/pkg/platform/controller/addon/persistentevent/images"
 	prometheus "tkestack.io/tke/pkg/platform/controller/addon/prometheus/images"
@@ -55,8 +54,6 @@ const (
 	CronHPA AddonType = "CronHPA"
 	// Prometheus is type for prometheus addon.
 	Prometheus AddonType = "Prometheus"
-	// LBCF is type for LBCF
-	LBCF AddonType = "LBCF"
 )
 
 // Types defines the type of each plugin and the mapping table of the latest
@@ -120,16 +117,6 @@ var Types = map[AddonType]platform.ClusterAddonType{
 		Level:                 platform.LevelBasic,
 		LatestVersion:         prometheus.LatestVersion,
 		Description:           description("Prometheus.md"),
-		CompatibleClusterType: cluster.Providers(),
-	},
-	LBCF: {
-		ObjectMeta: metav1.ObjectMeta{
-			Name: strings.ToLower(string(LBCF)),
-		},
-		Type:                  string(LBCF),
-		Level:                 platform.LevelBasic,
-		LatestVersion:         lbcf.LatestVersion,
-		Description:           description("LBCF.md"),
 		CompatibleClusterType: cluster.Providers(),
 	},
 }

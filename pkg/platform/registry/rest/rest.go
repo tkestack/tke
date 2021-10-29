@@ -34,7 +34,6 @@ import (
 	configmapstorage "tkestack.io/tke/pkg/platform/registry/configmap/storage"
 	cronhpastorage "tkestack.io/tke/pkg/platform/registry/cronhpa/storage"
 	csioperatorstorage "tkestack.io/tke/pkg/platform/registry/csioperator/storage"
-	lbcfstorage "tkestack.io/tke/pkg/platform/registry/lbcf/storage"
 	logcollectorstorage "tkestack.io/tke/pkg/platform/registry/logcollector/storage"
 	machinestorage "tkestack.io/tke/pkg/platform/registry/machine/storage"
 	persistenteventstorage "tkestack.io/tke/pkg/platform/registry/persistentevent/storage"
@@ -88,10 +87,6 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["clusters/cronhpas"] = clusterREST.CronHPA
 		storageMap["clusters/addons"] = clusterREST.Addon
 		storageMap["clusters/addontypes"] = clusterREST.AddonType
-		storageMap["clusters/lbcflbdrivers"] = clusterREST.LBCFDriver
-		storageMap["clusters/lbcflbs"] = clusterREST.LBCFLoadBalancer
-		storageMap["clusters/lbcfbackendgroups"] = clusterREST.LBCFBackendGroup
-		storageMap["clusters/lbcfbackendrecords"] = clusterREST.LBCFBackendRecord
 
 		machineREST := machinestorage.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
 		storageMap["machines"] = machineREST.Machine
@@ -133,10 +128,6 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		promREST := promstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
 		storageMap["prometheuses"] = promREST.Prometheus
 		storageMap["prometheuses/status"] = promREST.Status
-
-		lbcfREST := lbcfstorage.NewStorage(restOptionsGetter, platformClient, s.PrivilegedUsername)
-		storageMap["lbcfs"] = lbcfREST.LBCF
-		storageMap["lbcfs/status"] = lbcfREST.Status
 	}
 
 	return storageMap
