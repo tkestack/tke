@@ -88,7 +88,6 @@ var (
 		persistentEvent,
 		tappcontroller,
 		csiOperator,
-		logCollector,
 		cronHPA,
 		prometheus,
 	}
@@ -199,40 +198,6 @@ func csiOperator(ctx context.Context, a *addonFinder) {
 		Spec: platform.ClusterAddonSpec{
 			Type:    string(clusteraddontype.CSIOperator),
 			Level:   clusteraddontype.Types[clusteraddontype.CSIOperator].Level,
-			Version: l.Items[0].Spec.Version,
-		},
-		Status: platform.ClusterAddonStatus{
-			Version: l.Items[0].Status.Version,
-			Phase:   string(l.Items[0].Status.Phase),
-			Reason:  l.Items[0].Status.Reason,
-		},
-	})
-	a.mutex.Unlock()
-}
-
-func logCollector(ctx context.Context, a *addonFinder) {
-	defer a.wg.Done()
-	l, err := a.platformClient.LogCollectors().List(ctx, metav1.ListOptions{
-		FieldSelector: fields.OneTermEqualSelector("spec.clusterName", a.clusterName).String(),
-	})
-	if err != nil {
-		a.mutex.Lock()
-		a.errors = append(a.errors, err)
-		a.mutex.Unlock()
-		return
-	}
-	if len(l.Items) == 0 {
-		return
-	}
-	a.mutex.Lock()
-	a.addons = append(a.addons, platform.ClusterAddon{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              l.Items[0].ObjectMeta.Name,
-			CreationTimestamp: l.Items[0].ObjectMeta.CreationTimestamp,
-		},
-		Spec: platform.ClusterAddonSpec{
-			Type:    string(clusteraddontype.LogCollector),
-			Level:   clusteraddontype.Types[clusteraddontype.LogCollector].Level,
 			Version: l.Items[0].Spec.Version,
 		},
 		Status: platform.ClusterAddonStatus{

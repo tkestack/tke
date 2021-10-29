@@ -36,8 +36,6 @@ type Interface interface {
 	ConfigMaps() ConfigMapInformer
 	// CronHPAs returns a CronHPAInformer.
 	CronHPAs() CronHPAInformer
-	// LogCollectors returns a LogCollectorInformer.
-	LogCollectors() LogCollectorInformer
 	// Machines returns a MachineInformer.
 	Machines() MachineInformer
 	// PersistentEvents returns a PersistentEventInformer.
@@ -84,11 +82,6 @@ func (v *version) ConfigMaps() ConfigMapInformer {
 // CronHPAs returns a CronHPAInformer.
 func (v *version) CronHPAs() CronHPAInformer {
 	return &cronHPAInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
-}
-
-// LogCollectors returns a LogCollectorInformer.
-func (v *version) LogCollectors() LogCollectorInformer {
-	return &logCollectorInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // Machines returns a MachineInformer.

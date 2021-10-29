@@ -34,7 +34,6 @@ import (
 	configmapstorage "tkestack.io/tke/pkg/platform/registry/configmap/storage"
 	cronhpastorage "tkestack.io/tke/pkg/platform/registry/cronhpa/storage"
 	csioperatorstorage "tkestack.io/tke/pkg/platform/registry/csioperator/storage"
-	logcollectorstorage "tkestack.io/tke/pkg/platform/registry/logcollector/storage"
 	machinestorage "tkestack.io/tke/pkg/platform/registry/machine/storage"
 	persistenteventstorage "tkestack.io/tke/pkg/platform/registry/persistentevent/storage"
 	promstorage "tkestack.io/tke/pkg/platform/registry/prometheus/storage"
@@ -83,7 +82,6 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["clusters/apiresources"] = clusterREST.APIResources
 		storageMap["clusters/tapps"] = clusterREST.TappController
 		storageMap["clusters/csis"] = clusterREST.CSI
-		storageMap["clusters/logcollector"] = clusterREST.LogCollector
 		storageMap["clusters/cronhpas"] = clusterREST.CronHPA
 		storageMap["clusters/addons"] = clusterREST.Addon
 		storageMap["clusters/addontypes"] = clusterREST.AddonType
@@ -116,10 +114,6 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		csiOperatorREST := csioperatorstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
 		storageMap["csioperators"] = csiOperatorREST.CSIOperator
 		storageMap["csioperators/status"] = csiOperatorREST.Status
-
-		logCollectorREST := logcollectorstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
-		storageMap["logcollectors"] = logCollectorREST.LogCollector
-		storageMap["logcollectors/status"] = logCollectorREST.Status
 
 		cronHPAREST := cronhpastorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
 		storageMap["cronhpas"] = cronHPAREST.CronHPA

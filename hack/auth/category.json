@@ -21,10 +21,6 @@
 					"description": "创建GPUManager组件"
 				},
 				{
-					"name": "createLogcollector",
-					"description": "创建日志收集器组件"
-				},
-				{
 					"name": "createPersistentevent",
 					"description": "创建事件持久化组件"
 				},
@@ -47,10 +43,6 @@
 				{
 					"name": "deleteGpumanager",
 					"description": "删除GPUManager组件"
-				},
-				{
-					"name": "deleteLogcollector",
-					"description": "删除日志收集器组件"
 				},
 				{
 					"name": "deletePersistentevent",
@@ -91,14 +83,6 @@
 				{
 					"name": "getGpumanagerStatus",
 					"description": "获取GPUManager组件状态"
-				},
-				{
-					"name": "getLogcollector",
-					"description": "获取日志收集器组件"
-				},
-				{
-					"name": "getLogcollectorStatus",
-					"description": "获取日志收集器组件状态"
 				},
 				{
 					"name": "getPersistentevent",
@@ -149,10 +133,6 @@
 					"description": "列举GPUManager组件"
 				},
 				{
-					"name": "listLogcollectors",
-					"description": "列举日志收集器组件"
-				},
-				{
 					"name": "listPersistentevents",
 					"description": "列举事件持久化组件"
 				},
@@ -187,14 +167,6 @@
 				{
 					"name": "updateGpumanagerStatus",
 					"description": "修改GPUManager组件状态"
-				},
-				{
-					"name": "updateLogcollector",
-					"description": "修改日志收集器组件"
-				},
-				{
-					"name": "updateLogcollectorStatus",
-					"description": "修改日志收集器组件状态"
 				},
 				{
 					"name": "updatePersistentevent",

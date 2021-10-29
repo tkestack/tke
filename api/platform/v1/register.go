@@ -89,10 +89,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&CSIOperatorList{},
 		&CSIProxyOptions{},
 
-		&LogCollector{},
-		&LogCollectorList{},
-		&LogCollectorProxyOptions{},
-
 		&ClusterGroupAPIResourceItems{},
 		&ClusterGroupAPIResourceItemsList{},
 		&ClusterGroupAPIResourceOptions{},

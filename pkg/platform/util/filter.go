@@ -114,19 +114,6 @@ func FilterCSIOperator(ctx context.Context, csiOperator *platform.CSIOperator) e
 	return nil
 }
 
-// FilterLogCollector is used to filter log collector that do not belong
-// to the tenant.
-func FilterLogCollector(ctx context.Context, decorator *platform.LogCollector) error {
-	_, tenantID := authentication.UsernameAndTenantID(ctx)
-	if tenantID == "" {
-		return nil
-	}
-	if decorator.Spec.TenantID != tenantID {
-		return errors.NewNotFound(v1.Resource("logcollector"), decorator.ObjectMeta.Name)
-	}
-	return nil
-}
-
 // FilterCronHPA is used to filter CronHPA that do not belong
 // to the tenant.
 func FilterCronHPA(ctx context.Context, cronHPA *platform.CronHPA) error {
