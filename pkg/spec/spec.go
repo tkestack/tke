@@ -31,7 +31,7 @@ var (
 	OSs           = []string{"linux"}
 
 	K8sVersionConstraint = ">= 1.10"
-	K8sVersions          = []string{"1.21.4-tke.1", "1.20.4-tke.1", "1.20.4", "1.19.7"}
+	K8sVersions          = []string{"1.21.4-tke.1", "1.20.4-tke.1"}
 	K8sVersionsWithV     = funk.Map(K8sVersions, func(s string) string {
 		return "v" + s
 	}).([]string)
