@@ -32,6 +32,7 @@ import { router } from '../../router';
 import { RootProps } from '../ClusterApp';
 import { ClusterSubpageHeaderPanel } from './ClusterSubpageHeaderPanel';
 import { KubeconfigFileParse } from './KubeconfigFileParse';
+import { AsUserExtraInput } from './AsUserExtraInput';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -60,8 +61,8 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
         clientKey,
         username,
         as,
-        clusternetCertificate,
-        clusternetPrivatekey
+        asUserExtra,
+        v_asUserExtra
       } = clusterCreationState;
     const workflow = createClusterFlow;
     const action = actions.workflow.createCluster;
@@ -77,6 +78,18 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
 
       router.navigate({}, { rid: route.queries['rid'] });
     };
+
+    function transAsUserExtra(asUserExtra: { key: string; value: string }[]) {
+      if (!asUserExtra || asUserExtra.length <= 0) return undefined;
+
+      return asUserExtra.reduce(
+        (all, { key, value }) => ({
+          ...all,
+          [key]: all?.[key] ? `${all?.[key]},${value}` : value
+        }),
+        {}
+      );
+    }
 
     const perform = () => {
       actions.validate.clusterCreation.validateclusterCreationState();
@@ -130,8 +143,7 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
               token: clusterCreationState.token || undefined,
               username: clusterCreationState.username || undefined,
               as: clusterCreationState.as || undefined,
-              'clusternet-certificate': clusterCreationState.clusternetCertificate || undefined,
-              'clusternet-privatekey': clusterCreationState.clusternetPrivatekey || undefined
+              'as-user-extra': transAsUserExtra(asUserExtra)
             }
           }
         };
@@ -248,23 +260,10 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
               />
             </FormPanel.Item>
 
-            <FormPanel.Item label="clusternet-certificate">
-              <InputField
-                type="textarea"
-                value={clusternetCertificate}
-                placeholder={t('请输入 clusternet-certificate')}
-                tipMode="popup"
-                onChange={value => actions.clusterCreation.updateClusterCreationState({ clusternetCertificate: value })}
-              />
-            </FormPanel.Item>
-
-            <FormPanel.Item label="clusternet-privatekey">
-              <InputField
-                type="textarea"
-                value={clusternetPrivatekey}
-                placeholder={t('请输入 clusternet-privatekey')}
-                tipMode="popup"
-                onChange={value => actions.clusterCreation.updateClusterCreationState({ clusternetPrivatekey: value })}
+            <FormPanel.Item label="as-user-extra">
+              <AsUserExtraInput
+                data={asUserExtra}
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ asUserExtra: value })}
               />
             </FormPanel.Item>
 

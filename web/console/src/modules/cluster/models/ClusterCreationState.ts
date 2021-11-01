@@ -45,6 +45,11 @@ export interface ClusterCreationState extends Identifiable {
   username?: string;
   as?: string;
 
-  clusternetCertificate?: string;
-  clusternetPrivatekey?: string;
+  asUserExtra?: Array<{
+    id: string;
+    key: string;
+    value: string;
+  }>;
+
+  v_asUserExtra?: Validation;
 }

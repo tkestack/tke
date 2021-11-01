@@ -15,9 +15,11 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+
 import React, { useState } from 'react';
 import { Upload, Text } from '@tea/component';
 import * as yaml from 'js-yaml';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface KubeConfig {
   apiVersion: string;
@@ -40,8 +42,7 @@ export interface KubeConfig {
       username?: string;
       as?: string;
       'as-user-extra'?: {
-        'clusternet-certificate': string[];
-        'clusternet-privatekey': string[];
+        [key: string]: string[];
       };
     };
   }>;
@@ -56,8 +57,11 @@ export interface KubeconfigFileParseProps {
     clientKey: string;
     username: string;
     as: string;
-    clusternetCertificate?: string;
-    clusternetPrivatekey?: string;
+    asUserExtra: Array<{
+      id: string;
+      key: string;
+      value: string;
+    }>;
   }) => any;
 }
 
@@ -122,7 +126,7 @@ export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
           'client-key-data': clientKey = '',
           username = '',
           as = '',
-          'as-user-extra': asUserExtra
+          'as-user-extra': asUserExtra = {}
         }
       }
     ]
@@ -135,8 +139,10 @@ export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
       clientKey,
       username,
       as,
-      clusternetCertificate: asUserExtra?.['clusternet-certificate']?.join(',') ?? '',
-      clusternetPrivatekey: asUserExtra?.['clusternet-privatekey']?.join(',') ?? ''
+      asUserExtra: Object.entries(asUserExtra).reduce(
+        (all, [key, values]) => [...all, ...values.map(v => ({ key, value: v, id: uuidv4() }))],
+        []
+      )
     };
   }
 

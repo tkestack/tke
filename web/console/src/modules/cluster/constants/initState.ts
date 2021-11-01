@@ -349,8 +349,8 @@ export const initClusterCreationState = {
   clientKey: '',
   username: '',
   as: '',
-  clusternetCertificate: '',
-  clusternetPrivatekey: ''
+  asUserExtra: [],
+  v_asUserExtra: initValidator
 };
 
 export const initAllcationRatioEdition = {
