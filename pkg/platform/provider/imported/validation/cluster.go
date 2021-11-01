@@ -40,10 +40,10 @@ import (
 
 // ValidateCluster validates a given Cluster.
 func ValidateCluster(ctx context.Context, cluster *types.Cluster) field.ErrorList {
-	allErrs := ValidatClusterAddresses(cluster.Status.Addresses, field.NewPath("status", "addresses"))
+	allErrs := ValidateClusterAddresses(cluster.Status.Addresses, field.NewPath("status", "addresses"))
 
 	if cluster.Spec.ClusterCredentialRef != nil {
-		allErrs = append(allErrs, ValidatClusterCredentialRef(ctx, cluster, field.NewPath("spec", "clusterCredentialRef"))...)
+		allErrs = append(allErrs, ValidateClusterCredentialRef(ctx, cluster, field.NewPath("spec", "clusterCredentialRef"))...)
 
 		client, err := cluster.Clientset()
 		if err != nil {
@@ -58,8 +58,8 @@ func ValidateCluster(ctx context.Context, cluster *types.Cluster) field.ErrorLis
 	return allErrs
 }
 
-// ValidatClusterAddresses validates a given ClusterAddresses.
-func ValidatClusterAddresses(addresses []platform.ClusterAddress, fldPath *field.Path) field.ErrorList {
+// ValidateClusterAddresses validates a given ClusterAddresses.
+func ValidateClusterAddresses(addresses []platform.ClusterAddress, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if len(addresses) == 0 {
@@ -94,8 +94,8 @@ func ValidatClusterAddresses(addresses []platform.ClusterAddress, fldPath *field
 	return allErrs
 }
 
-// ValidatClusterCredentialRef validates cluster.Spec.ClusterCredentialRef.
-func ValidatClusterCredentialRef(ctx context.Context, cluster *types.Cluster, fldPath *field.Path) field.ErrorList {
+// ValidateClusterCredentialRef validates cluster.Spec.ClusterCredentialRef.
+func ValidateClusterCredentialRef(ctx context.Context, cluster *types.Cluster, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	credential := cluster.ClusterCredential
@@ -171,7 +171,7 @@ func ValidateClusterMark(ctx context.Context, clusterName string, fldPath *field
 
 }
 
-// ValidateClusterMark validates a given cluster's version.
+// ValidateClusterVersion validates a given cluster's version.
 func ValidateClusterVersion(fldPath *field.Path, client kubernetes.Interface) field.ErrorList {
 	allErrs := field.ErrorList{}
 
