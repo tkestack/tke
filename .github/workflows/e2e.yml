@@ -46,11 +46,11 @@ jobs:
         run: |
           make push IMAGES="tke-platform-api tke-platform-controller" VERSION=${{ github.sha }}
   platform1:
-    name: platform test - 1.19.7
+    name: platform test - 1.21.4-tke.1
     needs: image
     runs-on: self-hosted
     env:
-      K8SVERSION: 1.19.7
+      K8SVERSION: 1.21.4-tke.1
     steps:
       - name: printversion
         env:
