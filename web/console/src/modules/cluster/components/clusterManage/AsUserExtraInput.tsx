@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
 import { Table, Text, Bubble, Icon, Form, Input, TableColumn, Button } from '@tencent/tea-component';
 import { t } from '@tencent/tea-app/lib/i18n';
 import { v4 as uuidv4 } from 'uuid';
@@ -49,10 +49,8 @@ interface IValidator {
 }
 
 export const AsUserExtraInput = ({ data = [], onChange }: IAsUserExtraInputProps) => {
-  const [validators, setValidators] = useState<IValidator[]>([]);
-
-  function handleChange(id: string, { key, value }: { key?: string; value?: string }) {
-    const newData = data.map(item => (item.id === id ? { ...item, key, value } : { ...item }));
+  function handleChange(id: string, params: { key?: string; value?: string }) {
+    const newData = data.map(item => (item.id === id ? { ...item, ...params } : { ...item }));
 
     onChange(newData);
   }
@@ -76,15 +74,13 @@ export const AsUserExtraInput = ({ data = [], onChange }: IAsUserExtraInputProps
     onChange(newData);
   }
 
-  function handleBlur() {
-    const validators = data.map<IValidator>(item => ({
+  const validators = useMemo(() => {
+    return data.map<IValidator>(item => ({
       id: item.id,
       key: item.key ? { status: 'success' } : { status: 'error', message: t('变量名不能为空') },
       value: item.value ? { status: 'success' } : { status: 'error', message: t('变量值不能为空') }
     }));
-
-    setValidators(validators);
-  }
+  }, [data]);
 
   function getValidatorById(id: string, propName: 'key' | 'value') {
     return validators?.find(item => item.id === id)?.[propName] ?? {};
@@ -105,7 +101,7 @@ export const AsUserExtraInput = ({ data = [], onChange }: IAsUserExtraInputProps
 
       render: ({ key, id }) => (
         <Form.Item label="" {...getValidatorById(id, 'key')}>
-          <Input value={key} onChange={key => handleChange(id, { key })} onBlur={() => handleBlur()} />
+          <Input value={key} onChange={key => handleChange(id, { key })} />
         </Form.Item>
       )
     },
@@ -123,7 +119,7 @@ export const AsUserExtraInput = ({ data = [], onChange }: IAsUserExtraInputProps
       header: t('变量值'),
       render: ({ value, id }) => (
         <Form.Item label="" {...getValidatorById(id, 'value')}>
-          <Input value={value} onChange={value => handleChange(id, { value })} onBlur={() => handleBlur()} />
+          <Input value={value} onChange={value => handleChange(id, { value })} />
         </Form.Item>
       )
     },
