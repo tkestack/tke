@@ -349,6 +349,7 @@ export const initClusterCreationState = {
   clientKey: '',
   username: '',
   as: '',
+  asGroups: '',
   asUserExtra: [],
   v_asUserExtra: initValidator
 };

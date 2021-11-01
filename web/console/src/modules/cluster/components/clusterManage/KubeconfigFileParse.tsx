@@ -41,6 +41,7 @@ export interface KubeConfig {
       'client-key-data'?: string;
       username?: string;
       as?: string;
+      'as-groups'?: string[];
       'as-user-extra'?: {
         [key: string]: string[];
       };
@@ -57,6 +58,7 @@ export interface KubeconfigFileParseProps {
     clientKey: string;
     username: string;
     as: string;
+    asGroups: string;
     asUserExtra: Array<{
       id: string;
       key: string;
@@ -126,6 +128,7 @@ export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
           'client-key-data': clientKey = '',
           username = '',
           as = '',
+          'as-groups': asGroups = [],
           'as-user-extra': asUserExtra = {}
         }
       }
@@ -139,6 +142,7 @@ export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
       clientKey,
       username,
       as,
+      asGroups: asGroups.join(','),
       asUserExtra: Object.entries(asUserExtra).reduce(
         (all, [key, values]) => [...all, ...values.map(v => ({ key, value: v, id: uuidv4() }))],
         []

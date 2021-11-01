@@ -45,6 +45,8 @@ export interface ClusterCreationState extends Identifiable {
   username?: string;
   as?: string;
 
+  asGroups?: string;
+
   asUserExtra?: Array<{
     id: string;
     key: string;

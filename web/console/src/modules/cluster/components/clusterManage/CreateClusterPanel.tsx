@@ -61,8 +61,8 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
         clientKey,
         username,
         as,
-        asUserExtra,
-        v_asUserExtra
+        asGroups,
+        asUserExtra
       } = clusterCreationState;
     const workflow = createClusterFlow;
     const action = actions.workflow.createCluster;
@@ -143,6 +143,7 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
               token: clusterCreationState.token || undefined,
               username: clusterCreationState.username || undefined,
               as: clusterCreationState.as || undefined,
+              'as-groups': clusterCreationState.asGroups ? clusterCreationState.asGroups.split(',') : undefined,
               'as-user-extra': transAsUserExtra(asUserExtra)
             }
           }
@@ -257,6 +258,16 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
                 placeholder={t('请输入as')}
                 tipMode="popup"
                 onChange={value => actions.clusterCreation.updateClusterCreationState({ as: value })}
+              />
+            </FormPanel.Item>
+
+            <FormPanel.Item label="as-groups">
+              <InputField
+                type="textarea"
+                value={asGroups}
+                placeholder={t('请输入as-groups，多个group以逗号分隔')}
+                tipMode="popup"
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ asGroups: value })}
               />
             </FormPanel.Item>
 
