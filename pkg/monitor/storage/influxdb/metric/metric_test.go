@@ -18,52 +18,53 @@
 
 package metric
 
-import (
-	"encoding/json"
-	"github.com/influxdata/influxdb1-client/models"
-	"strconv"
-	"testing"
-	"tkestack.io/tke/pkg/monitor/storage/types"
-)
+// import (
+// 	"encoding/json"
+// 	"strconv"
+// 	"testing"
 
-func TestMergeResult(t *testing.T) {
-	var input []types.MetricResult
-	var res1 types.MetricResult
-	series1 := make([]models.Row, 3)
-	for i := range series1 {
-		series1[i].Name = "k8s_pod_status_ready"
-		series1[i].Columns = []string{"time", "k8s_pod_status_ready"}
-		series1[i].Tags = make(map[string]string)
-		series1[i].Tags["pod_name"] = "ajwdlkj" + strconv.Itoa(i)
-		series1[i].Values = make([][]interface{}, 7)
-		for j := range series1[i].Values {
-			series1[i].Values[j] = []interface{}{json.Number(1565770000 + j), 1}
-		}
-	}
-	var res2 types.MetricResult
-	series2 := make([]models.Row, 3)
-	for i := range series2 {
-		series2[i].Name = "k8s_pod_cpu_core_used"
-		series2[i].Columns = []string{"time", "k8s_pod_cpu_core_used"}
-		series2[i].Tags = make(map[string]string)
-		series2[i].Tags["pod_name"] = "ajwdlkj" + strconv.Itoa(i)
-		series2[i].Values = make([][]interface{}, 7)
-		for j := range series2[i].Values {
-			series2[i].Values[j] = []interface{}{json.Number(1565770000 + j), 0.5}
-		}
-	}
-	res1.Series = series1
-	res2.Series = series2
-	input = append(input, res1)
-	input = append(input, res2)
-	res := MergeResult(input, []string{"timestamp(1s)", "pod_name"}, []string{"max(k8s_pod_status_ready)", "mean(k8s_pod_cpu_core_used)"})
-	j, err := json.Marshal(res)
-	if err != nil {
-		t.Fatalf("failed to marshal %v", res)
-	}
+// 	"github.com/influxdata/influxdb1-client/models"
+// 	"tkestack.io/tke/pkg/monitor/storage/types"
+// )
 
-	expect := `{"columns":["timestamp(1s)","k8s_pod_status_ready_max","k8s_pod_cpu_core_used_mean","pod_name"],"data":[[0,1,0.5,"ajwdlkj0"],[0,1,0.5,"ajwdlkj1"],[0,1,0.5,"ajwdlkj2"],[0,1,0.5,"ajwdlkj0"],[0,1,0.5,"ajwdlkj1"],[0,1,0.5,"ajwdlkj2"],[0,1,0.5,"ajwdlkj0"],[0,1,0.5,"ajwdlkj1"],[0,1,0.5,"ajwdlkj2"],[0,1,0.5,"ajwdlkj0"],[0,1,0.5,"ajwdlkj1"],[0,1,0.5,"ajwdlkj2"],[0,1,0.5,"ajwdlkj0"],[0,1,0.5,"ajwdlkj1"],[0,1,0.5,"ajwdlkj2"],[0,1,0.5,"ajwdlkj0"],[0,1,0.5,"ajwdlkj1"],[0,1,0.5,"ajwdlkj2"],[0,1,0.5,"ajwdlkj0"],[0,1,0.5,"ajwdlkj1"],[0,1,0.5,"ajwdlkj2"]]}`
-	if string(j) != expect {
-		t.Errorf("expect %s, got %s", expect, string(j))
-	}
-}
+// func TestMergeResult(t *testing.T) {
+// 	var input []types.MetricResult
+// 	var res1 types.MetricResult
+// 	series1 := make([]models.Row, 3)
+// 	for i := range series1 {
+// 		series1[i].Name = "k8s_pod_status_ready"
+// 		series1[i].Columns = []string{"time", "k8s_pod_status_ready"}
+// 		series1[i].Tags = make(map[string]string)
+// 		series1[i].Tags["pod_name"] = "ajwdlkj" + strconv.Itoa(i)
+// 		series1[i].Values = make([][]interface{}, 7)
+// 		for j := range series1[i].Values {
+// 			series1[i].Values[j] = []interface{}{json.Number(1565770000 + j), 1}
+// 		}
+// 	}
+// 	var res2 types.MetricResult
+// 	series2 := make([]models.Row, 3)
+// 	for i := range series2 {
+// 		series2[i].Name = "k8s_pod_cpu_core_used"
+// 		series2[i].Columns = []string{"time", "k8s_pod_cpu_core_used"}
+// 		series2[i].Tags = make(map[string]string)
+// 		series2[i].Tags["pod_name"] = "ajwdlkj" + strconv.Itoa(i)
+// 		series2[i].Values = make([][]interface{}, 7)
+// 		for j := range series2[i].Values {
+// 			series2[i].Values[j] = []interface{}{json.Number(1565770000 + j), 0.5}
+// 		}
+// 	}
+// 	res1.Series = series1
+// 	res2.Series = series2
+// 	input = append(input, res1)
+// 	input = append(input, res2)
+// 	res := MergeResult(input, []string{"timestamp(1s)", "pod_name"}, []string{"max(k8s_pod_status_ready)", "mean(k8s_pod_cpu_core_used)"})
+// 	j, err := json.Marshal(res)
+// 	if err != nil {
+// 		t.Fatalf("failed to marshal %v", res)
+// 	}
+
+// 	expect := `{"columns":["timestamp(1s)","k8s_pod_status_ready_max","k8s_pod_cpu_core_used_mean","pod_name"],"data":[[0,1,0.5,"ajwdlkj0"],[0,1,0.5,"ajwdlkj1"],[0,1,0.5,"ajwdlkj2"],[0,1,0.5,"ajwdlkj0"],[0,1,0.5,"ajwdlkj1"],[0,1,0.5,"ajwdlkj2"],[0,1,0.5,"ajwdlkj0"],[0,1,0.5,"ajwdlkj1"],[0,1,0.5,"ajwdlkj2"],[0,1,0.5,"ajwdlkj0"],[0,1,0.5,"ajwdlkj1"],[0,1,0.5,"ajwdlkj2"],[0,1,0.5,"ajwdlkj0"],[0,1,0.5,"ajwdlkj1"],[0,1,0.5,"ajwdlkj2"],[0,1,0.5,"ajwdlkj0"],[0,1,0.5,"ajwdlkj1"],[0,1,0.5,"ajwdlkj2"],[0,1,0.5,"ajwdlkj0"],[0,1,0.5,"ajwdlkj1"],[0,1,0.5,"ajwdlkj2"]]}`
+// 	if string(j) != expect {
+// 		t.Errorf("expect %s, got %s", expect, string(j))
+// 	}
+// }
