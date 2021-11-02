@@ -15,9 +15,11 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+
 import React, { useState } from 'react';
 import { Upload, Text } from '@tea/component';
 import * as yaml from 'js-yaml';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface KubeConfig {
   apiVersion: string;
@@ -37,6 +39,12 @@ export interface KubeConfig {
       token?: string;
       'client-certificate-data'?: string;
       'client-key-data'?: string;
+      username?: string;
+      as?: string;
+      'as-groups'?: string[];
+      'as-user-extra'?: {
+        [key: string]: string[];
+      };
     };
   }>;
 }
@@ -48,6 +56,14 @@ export interface KubeconfigFileParseProps {
     token: string;
     clientCert: string;
     clientKey: string;
+    username: string;
+    as: string;
+    asGroups: string;
+    asUserExtra: Array<{
+      id: string;
+      key: string;
+      value: string;
+    }>;
   }) => any;
 }
 
@@ -106,7 +122,15 @@ export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
     ],
     users: [
       {
-        user: { token = '', 'client-certificate-data': clientCert = '', 'client-key-data': clientKey = '' }
+        user: {
+          token = '',
+          'client-certificate-data': clientCert = '',
+          'client-key-data': clientKey = '',
+          username = '',
+          as = '',
+          'as-groups': asGroups = [],
+          'as-user-extra': asUserExtra = {}
+        }
       }
     ]
   }: KubeConfig) {
@@ -115,7 +139,14 @@ export function KubeconfigFileParse({ onSuccess }: KubeconfigFileParseProps) {
       certFile,
       token,
       clientCert,
-      clientKey
+      clientKey,
+      username,
+      as,
+      asGroups: asGroups.join(','),
+      asUserExtra: Object.entries(asUserExtra).reduce(
+        (all, [key, values]) => [...all, ...values.map(v => ({ key, value: v, id: uuidv4() }))],
+        []
+      )
     };
   }
 
