@@ -302,11 +302,11 @@ var _ = Describe("E2e", func() {
 		_, err = client.AuthV1().Policies().Get(context.Background(), policyID, metav1.GetOptions{})
 		Expect(err).To(BeNil())
 
-		role, err := client.AuthV1().Roles().Get(context.Background(), roleID, metav1.GetOptions{})
+		_, err = client.AuthV1().Roles().Get(context.Background(), roleID, metav1.GetOptions{})
 		Expect(err).To(BeNil())
 
 		binding := authv1.Binding{Users: []authv1.Subject{{ID: userID}}, Groups: []authv1.Subject{{ID: groupID}}}
-		role = &authv1.Role{}
+		role := &authv1.Role{}
 		err = client.AuthV1().RESTClient().Post().Resource("roles").SubResource("binding").Name(roleID).Body(&binding).Do(context.Background()).Into(role)
 		Expect(err).To(BeNil())
 

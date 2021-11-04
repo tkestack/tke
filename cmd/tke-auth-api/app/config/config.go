@@ -35,7 +35,6 @@ import (
 	dexserver "github.com/dexidp/dex/server"
 	dexstorage "github.com/dexidp/dex/storage"
 	"github.com/dexidp/dex/storage/etcd"
-	"github.com/go-openapi/spec"
 	"github.com/prometheus/client_golang/prometheus"
 	genericauthenticator "k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/group"
@@ -47,6 +46,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authapi "tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"

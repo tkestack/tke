@@ -19,9 +19,8 @@
 package rest
 
 import (
-	"k8s.io/api/batch/v1"
+	v1 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
-	"k8s.io/api/batch/v2alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -57,10 +56,6 @@ func (s *StorageProvider) NewRESTStorage(apiResourceConfigSource serverstorage.A
 		apiGroupInfo.VersionedResourcesStorageMap[v1beta1.SchemeGroupVersion.Version] = s.v1Beta1Storage(restOptionsGetter, s.LoopbackClientConfig)
 	}
 
-	if apiResourceConfigSource.VersionEnabled(v2alpha1.SchemeGroupVersion) {
-		apiGroupInfo.VersionedResourcesStorageMap[v2alpha1.SchemeGroupVersion.Version] = s.v2Alpha1Storage(restOptionsGetter, s.LoopbackClientConfig)
-	}
-
 	return apiGroupInfo, true
 }
 
@@ -79,20 +74,6 @@ func (s *StorageProvider) v1Storage(restOptionsGetter generic.RESTOptionsGetter,
 		"jobs/pods":   jobStore.Pods,
 		"jobs/status": jobStore.Status,
 		"jobs/events": jobStore.Events,
-	}
-
-	return storageMap
-}
-
-func (s *StorageProvider) v2Alpha1Storage(restOptionsGetter generic.RESTOptionsGetter, loopbackClientConfig *restclient.Config) map[string]rest.Storage {
-	platformClient := platforminternalclient.NewForConfigOrDie(loopbackClientConfig)
-
-	cronjobStore := cronjobstorage.NewStorageV2Alpha1(restOptionsGetter, platformClient)
-
-	storageMap := map[string]rest.Storage{
-		"cronjobs":        cronjobStore.CronJob,
-		"cronjobs/status": cronjobStore.Status,
-		"cronjobs/events": cronjobStore.Events,
 	}
 
 	return storageMap

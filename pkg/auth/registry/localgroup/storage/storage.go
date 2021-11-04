@@ -89,11 +89,9 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 
 	statusStore := *store
 	statusStore.UpdateStrategy = localgroup.NewStatusStrategy(strategy)
-	statusStore.ExportStrategy = localgroup.NewStatusStrategy(strategy)
 
 	finalizeStore := *store
 	finalizeStore.UpdateStrategy = localgroup.NewFinalizerStrategy(strategy)
-	finalizeStore.ExportStrategy = localgroup.NewFinalizerStrategy(strategy)
 
 	return &Storage{
 		Group:     &REST{store, authClient, enforcer, privilegedUsername},
@@ -121,21 +119,6 @@ func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, na
 	return o, nil
 }
 
-// ValidateExportObjectAndTenantID validate name and tenantID, if success return LocalGroup
-func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	obj, err := store.Export(ctx, name, options)
-	if err != nil {
-		return nil, err
-	}
-
-	o := obj.(*auth.LocalGroup)
-	if err := util.FilterGroup(ctx, o); err != nil {
-		return nil, err
-	}
-
-	return o, nil
-}
-
 // REST implements a RESTStorage for clusters against etcd.
 type REST struct {
 	*registry.Store
@@ -152,7 +135,6 @@ var _ rest.Getter = &REST{}
 var _ rest.Updater = &REST{}
 var _ rest.CollectionDeleter = &REST{}
 var _ rest.GracefulDeleter = &REST{}
-var _ rest.Exporter = &REST{}
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {
@@ -292,12 +274,6 @@ func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions)
 	return ValidateGetObjectAndTenantID(ctx, r.Store, name, options)
 }
 
-// Export an object.  Fields that are not user specified are stripped out
-// Returns the stripped object.
-func (r *REST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	return ValidateExportObjectAndTenantID(ctx, r.Store, name, options)
-}
-
 // Update alters the object subset of an object.
 func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	// We are explicitly setting forceAllowCreate to false in the call to the underlying storage because
@@ -397,6 +373,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 				return existingGroup, nil
 			}),
 			dryrun.IsDryRun(options.DryRun),
+			nil,
 		)
 
 		if err != nil {
@@ -440,12 +417,6 @@ func (r *StatusREST) Get(ctx context.Context, name string, options *metav1.GetOp
 	return ValidateGetObjectAndTenantID(ctx, r.store, name, options)
 }
 
-// Export an object.  Fields that are not user specified are stripped out
-// Returns the stripped object.
-func (r *StatusREST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	return ValidateExportObjectAndTenantID(ctx, r.store, name, options)
-}
-
 // Update alters the status subset of an object.
 func (r *StatusREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	// We are explicitly setting forceAllowCreate to false in the call to the underlying storage because
@@ -472,12 +443,6 @@ func (r *FinalizeREST) New() runtime.Object {
 // Get retrieves the object from the storage. It is required to support Patch.
 func (r *FinalizeREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	return ValidateGetObjectAndTenantID(ctx, r.store, name, options)
-}
-
-// Export an object.  Fields that are not user specified are stripped out
-// Returns the stripped object.
-func (r *FinalizeREST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	return ValidateExportObjectAndTenantID(ctx, r.store, name, options)
 }
 
 // Update alters the status finalizers subset of an object.

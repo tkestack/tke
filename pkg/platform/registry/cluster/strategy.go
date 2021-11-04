@@ -160,22 +160,23 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // AfterCreate implements a further operation to run after a resource is
 // created and before it is decorated, optional.
-func (s *Strategy) AfterCreate(obj runtime.Object) error {
+func (s *Strategy) AfterCreate(obj runtime.Object, options *metav1.CreateOptions) {
 	cluster, _ := obj.(*platform.Cluster)
 	clusterProvider, err := clusterprovider.GetProvider(cluster.Spec.Type)
 	if err != nil {
-		return err
+		log.Error("after create cluster failed", log.Any("cluster", cluster.Name), log.Err(err))
+		return
 	}
 	clusterWrapper, err := clusterprovider.GetCluster(context.Background(), s.platformClient, cluster, clusterprovider.AdminUsername)
 	if err != nil {
-		return err
+		log.Error("after create cluster failed", log.Any("cluster", cluster.Name), log.Err(err))
+		return
 	}
 	err = clusterProvider.AfterCreate(clusterWrapper)
 	if err != nil {
-		return err
+		log.Error("after create cluster failed", log.Any("cluster", cluster.Name), log.Err(err))
+		return
 	}
-
-	return nil
 }
 
 // Validate validates a new cluster
@@ -200,6 +201,11 @@ func (Strategy) AllowUnconditionalUpdate() bool {
 	return false
 }
 
+// WarningsOnCreate returns warnings for the creation of the given object.
+func (Strategy) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string {
+	return nil
+}
+
 // Canonicalize normalizes the object after validation.
 func (Strategy) Canonicalize(obj runtime.Object) {
 }
@@ -217,6 +223,11 @@ func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) 
 		return field.ErrorList{field.InternalError(field.NewPath(""), err)}
 	}
 	return validation.ValidateClusterUpdate(clusterWrapper, oldClusterWrapper)
+}
+
+// WarningsOnUpdate returns warnings for the given update.
+func (Strategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Object) []string {
+	return nil
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.

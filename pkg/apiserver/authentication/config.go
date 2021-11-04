@@ -21,7 +21,6 @@ package authentication
 import (
 	"time"
 
-	"github.com/go-openapi/spec"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/authenticatorfactory"
 	"k8s.io/apiserver/pkg/authentication/group"
@@ -35,6 +34,7 @@ import (
 	tokenunion "k8s.io/apiserver/pkg/authentication/token/union"
 	"k8s.io/apiserver/plugin/pkg/authenticator/token/webhook"
 	certutil "k8s.io/client-go/util/cert"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/localtrust"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 )
@@ -193,7 +193,7 @@ func newAuthenticatorFromOIDCIssuerURL(opts *oidc.Options) (authenticator.Token,
 }
 
 func newWebhookTokenAuthenticator(webhookConfigFile string, version string, ttl time.Duration, implicitAuds authenticator.Audiences) (authenticator.Token, error) {
-	webhookTokenAuthenticator, err := webhook.New(webhookConfigFile, version, implicitAuds, nil)
+	webhookTokenAuthenticator, err := webhook.New(webhookConfigFile, version, implicitAuds, *webhook.DefaultRetryBackoff(), nil)
 	if err != nil {
 		return nil, err
 	}

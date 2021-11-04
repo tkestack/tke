@@ -20,8 +20,8 @@
 package openapi
 
 import (
-	"github.com/go-openapi/spec"
 	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 // GetOpenAPIDefinitions provide definition for all models used by routes.
@@ -52,8 +52,7 @@ func schemaResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
 					"data": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"string"},
-							Description:
-								"if request is get, this field will return single object data," +
+							Description: "if request is get, this field will return single object data," +
 								"if request is list, this field will return list data;",
 						},
 					},

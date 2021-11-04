@@ -93,6 +93,11 @@ func (Strategy) AllowUnconditionalUpdate() bool {
 	return false
 }
 
+// WarningsOnCreate returns warnings for the creation of the given object.
+func (Strategy) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string {
+	return nil
+}
+
 // Canonicalize normalizes the object after validation.
 func (Strategy) Canonicalize(obj runtime.Object) {
 }
@@ -120,4 +125,9 @@ func (Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) fie
 		return field.ErrorList{field.Forbidden(field.NewPath(""), "Please contact admin to update category")}
 	}
 	return ValidateCategoryUpdate(obj.(*auth.Category), old.(*auth.Category))
+}
+
+// WarningsOnUpdate returns warnings for the given update.
+func (Strategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Object) []string {
+	return nil
 }

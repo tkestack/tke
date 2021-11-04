@@ -89,6 +89,11 @@ func (Strategy) AllowUnconditionalUpdate() bool {
 	return false
 }
 
+// WarningsOnCreate returns warnings for the creation of the given object.
+func (Strategy) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string {
+	return nil
+}
+
 // Canonicalize normalizes the object after validation.
 func (Strategy) Canonicalize(obj runtime.Object) {
 }
@@ -96,4 +101,9 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 // ValidateUpdate is the default update validation for an end namespace set.
 func (Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
 	return ValidateConfigMapUpdate(obj.(*application.ConfigMap), old.(*application.ConfigMap))
+}
+
+// WarningsOnUpdate returns warnings for the given update.
+func (Strategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Object) []string {
+	return nil
 }

@@ -104,7 +104,7 @@ func (s *Store) List(ctx context.Context, options *metainternalversion.ListOptio
 	fuzzyResourceName := filter.FuzzyResourceFrom(ctx)
 	options, fuzzyResourceName = apiserverutil.InterceptFuzzyResourceNameFromListOptions(options, fuzzyResourceName)
 	v1options := &v1.ListOptions{}
-	err = proxyConvert.Convert(options, v1options, conversion.DestFromSource, &conversion.Meta{})
+	err = proxyConvert.Convert(options, v1options, &conversion.Meta{})
 	if err != nil {
 		return nil, fmt.Errorf("convert failed: %v", err)
 	}
@@ -184,7 +184,7 @@ func (s *Store) Watch(ctx context.Context, options *metainternalversion.ListOpti
 
 	options.Watch = true
 	v1options := &v1.ListOptions{}
-	err = proxyConvert.Convert(options, v1options, conversion.DestFromSource, &conversion.Meta{})
+	err = proxyConvert.Convert(options, v1options, &conversion.Meta{})
 	if err != nil {
 		return nil, fmt.Errorf("convert failed: %v", err)
 	}
@@ -302,7 +302,7 @@ func (s *Store) DeleteCollection(ctx context.Context, options *v1.DeleteOptions,
 		return nil, err
 	}
 	v1listoptions := &v1.ListOptions{}
-	err = proxyConvert.Convert(listOptions, v1listoptions, conversion.DestFromSource, &conversion.Meta{})
+	err = proxyConvert.Convert(listOptions, v1listoptions, &conversion.Meta{})
 	if err != nil {
 		return nil, fmt.Errorf("convert failed: %v", err)
 	}

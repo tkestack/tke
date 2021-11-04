@@ -83,13 +83,13 @@ func BuildHandlerChain(ignoreAuthPathPrefixes []string, ignoreAuthzPathPrefixes 
 			},
 		})
 		handler = corsHandler.Handler(handler)
-		handler = genericfilters.WithTimeoutForNonLongRunningRequests(handler, c.LongRunningFunc, c.RequestTimeout)
+		handler = genericfilters.WithTimeoutForNonLongRunningRequests(handler, c.LongRunningFunc)
 		handler = genericfilters.WithWaitGroup(handler, c.LongRunningFunc, c.HandlerChainWaitGroup)
 		handler = genericapifilters.WithRequestInfo(handler, c.RequestInfoResolver)
 		handler = apiserverfilter.WithLocal(handler)
 		handler = apiserverfilter.WithRequestID(handler)
 		handler = apiserverfilter.WithProject(handler)
-		handler = genericfilters.WithPanicRecovery(handler)
+		handler = genericfilters.WithPanicRecovery(handler, c.RequestInfoResolver)
 		return handler
 	}
 }

@@ -25,6 +25,7 @@ import (
 	"github.com/casbin/casbin/v2"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -142,21 +143,14 @@ func (Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // AfterCreate implements a further operation to run after a resource is
 // created and before it is decorated, optional.
-func (s *Strategy) AfterCreate(obj runtime.Object) error {
+func (s *Strategy) AfterCreate(obj runtime.Object, options *metav1.CreateOptions) {
 	policy, _ := obj.(*auth.Policy)
-	if err := func() error {
-		rules := util.ConvertPolicyToRuleArray(policy)
-		for _, rule := range rules {
-			if _, err := s.enforcer.AddPolicy(rule); err != nil {
-				log.Error("Add rule to policy failed", log.Any("policy", policy.Name), log.Strings("rule", rule), log.Err(err))
-			}
+	rules := util.ConvertPolicyToRuleArray(policy)
+	for _, rule := range rules {
+		if _, err := s.enforcer.AddPolicy(rule); err != nil {
+			log.Error("Add rule to policy failed", log.Any("policy", policy.Name), log.Strings("rule", rule), log.Err(err))
 		}
-		return nil
-	}(); err != nil {
-		return fmt.Errorf("failed to create policy '%s', for '%s'", policy.Name, err)
 	}
-
-	return nil
 }
 
 // Validate validates a new policy.
@@ -176,6 +170,11 @@ func (Strategy) AllowUnconditionalUpdate() bool {
 	return false
 }
 
+// WarningsOnCreate returns warnings for the creation of the given object.
+func (Strategy) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string {
+	return nil
+}
+
 // Canonicalize normalizes the object after validation.
 func (Strategy) Canonicalize(obj runtime.Object) {
 }
@@ -183,6 +182,11 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 // ValidateUpdate is the default update validation for an end policy.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
 	return ValidatePolicyUpdate(ctx, obj.(*auth.Policy), old.(*auth.Policy), s.authClient)
+}
+
+// WarningsOnUpdate returns warnings for the given update.
+func (Strategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Object) []string {
+	return nil
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
