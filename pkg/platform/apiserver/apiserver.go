@@ -71,6 +71,7 @@ import (
 	schedulingrest "tkestack.io/tke/pkg/platform/proxy/scheduling/rest"
 	settingsrest "tkestack.io/tke/pkg/platform/proxy/settings/rest"
 	storagerest "tkestack.io/tke/pkg/platform/proxy/storage/rest"
+	proxyrest "tkestack.io/tke/pkg/platform/registry/cluster/storage"
 	platformrest "tkestack.io/tke/pkg/platform/registry/rest"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -158,6 +159,13 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 			PrivilegedUsername:   c.ExtraConfig.PrivilegedUsername,
 		},
 	}
+
+	notFoundProxy := proxyrest.CustomResourceHandler{
+		LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
+	}
+
+	m.GenericAPIServer.Handler.NonGoRestfulMux.NotFoundHandler(&notFoundProxy)
+
 	m.InstallAPIs(c.ExtraConfig.APIResourceConfigSource, c.GenericConfig.RESTOptionsGetter, restStorageProviders...)
 
 	return m, nil
