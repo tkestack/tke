@@ -7,6 +7,8 @@ replace (
 	github.com/chartmuseum/storage => github.com/leoryu/chartmuseum-storage v0.11.1-0.20211104032734-9da39e8f5170
 	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
 	google.golang.org/grpc => google.golang.org/grpc v1.38.0
+	// this replace will be removed if https://github.com/kubernetes/kubernetes/pull/104920 is merged in 1.22
+	k8s.io/apiserver => github.com/leoryu/k8s-apiserver v0.22.4-0.20211110063743-0341ac1e5801
 	k8s.io/client-go => k8s.io/client-go v0.22.3
 )
 
