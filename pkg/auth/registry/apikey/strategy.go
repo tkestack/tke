@@ -106,7 +106,7 @@ func (Strategy) AllowCreateOnUpdate() bool {
 // Decorator is intended for
 // removing hashed password for identity or list of identities on returned from the
 // underlying storage, since they cannot be watched.
-func Decorator(obj runtime.Object) error {
+func Decorator(obj runtime.Object) {
 	now := metav1.Now()
 	if apiKey, ok := obj.(*auth.APIKey); ok {
 		if apiKey.Spec.ExpireAt.Before(&now) {
@@ -114,7 +114,6 @@ func Decorator(obj runtime.Object) error {
 		} else {
 			apiKey.Status.Expired = false
 		}
-		return nil
 	}
 
 	if apiKeyList, ok := obj.(*auth.APIKeyList); ok {
@@ -125,10 +124,7 @@ func Decorator(obj runtime.Object) error {
 				apiKeyList.Items[i].Status.Expired = false
 			}
 		}
-		return nil
 	}
-
-	return fmt.Errorf("unknown type")
 }
 
 // AllowUnconditionalUpdate returns true if the object can be updated
@@ -138,6 +134,11 @@ func (Strategy) AllowUnconditionalUpdate() bool {
 	return false
 }
 
+// WarningsOnCreate returns warnings for the creation of the given object.
+func (Strategy) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string {
+	return nil
+}
+
 // Canonicalize normalizes the object after validation.
 func (Strategy) Canonicalize(obj runtime.Object) {
 }
@@ -145,6 +146,11 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 // ValidateUpdate is the default update validation for an end project.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
 	return ValidateAPIKeyUpdate(ctx, obj.(*auth.APIKey), old.(*auth.APIKey))
+}
+
+// WarningsOnUpdate returns warnings for the given update.
+func (Strategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Object) []string {
+	return nil
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.

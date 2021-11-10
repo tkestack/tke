@@ -27,7 +27,6 @@ import (
 	autoscalingv2beta1 "k8s.io/api/autoscaling/v2beta1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	batchv2alpha1 "k8s.io/api/batch/v2alpha1"
 	certv1beta1 "k8s.io/api/certificates/v1beta1"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	coordinationv1beta1 "k8s.io/api/coordination/v1beta1"
@@ -45,7 +44,6 @@ import (
 	schedulingv1 "k8s.io/api/scheduling/v1"
 	schedulingv1alpha1 "k8s.io/api/scheduling/v1alpha1"
 	schedulingv1beta "k8s.io/api/scheduling/v1beta1"
-	settingsv1alpha1 "k8s.io/api/settings/v1alpha1"
 	storagev1 "k8s.io/api/storage/v1"
 	storagev1alpha1 "k8s.io/api/storage/v1alpha1"
 	storagev1beta1 "k8s.io/api/storage/v1beta1"
@@ -69,7 +67,6 @@ import (
 	policyrest "tkestack.io/tke/pkg/platform/proxy/policy/rest"
 	rbacrest "tkestack.io/tke/pkg/platform/proxy/rbac/rest"
 	schedulingrest "tkestack.io/tke/pkg/platform/proxy/scheduling/rest"
-	settingsrest "tkestack.io/tke/pkg/platform/proxy/settings/rest"
 	storagerest "tkestack.io/tke/pkg/platform/proxy/storage/rest"
 	platformrest "tkestack.io/tke/pkg/platform/registry/rest"
 	"tkestack.io/tke/pkg/util/log"
@@ -150,7 +147,6 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		&policyrest.StorageProvider{LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig},
 		&rbacrest.StorageProvider{LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig},
 		&schedulingrest.StorageProvider{LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig},
-		&settingsrest.StorageProvider{LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig},
 		&storagerest.StorageProvider{LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig},
 
 		&platformrest.StorageProvider{
@@ -227,7 +223,6 @@ func DefaultAPIResourceConfigSource() *serverstorage.ResourceConfig {
 
 		batchv1.SchemeGroupVersion,
 		batchv1beta1.SchemeGroupVersion,
-		batchv2alpha1.SchemeGroupVersion,
 
 		corev1.SchemeGroupVersion,
 		certv1beta1.SchemeGroupVersion,
@@ -249,8 +244,6 @@ func DefaultAPIResourceConfigSource() *serverstorage.ResourceConfig {
 		schedulingv1alpha1.SchemeGroupVersion,
 		schedulingv1beta.SchemeGroupVersion,
 		schedulingv1.SchemeGroupVersion,
-
-		settingsv1alpha1.SchemeGroupVersion,
 
 		nodev1alpha1.SchemeGroupVersion,
 		nodev1beta.SchemeGroupVersion,

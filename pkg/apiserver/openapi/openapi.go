@@ -24,11 +24,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-openapi/spec"
 	"k8s.io/apimachinery/pkg/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapicommon "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 	"tkestack.io/tke/api/platform"
 	appversion "tkestack.io/tke/pkg/app/version"
 )

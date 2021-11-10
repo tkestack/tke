@@ -20,8 +20,9 @@ package options
 
 import (
 	"fmt"
-	"k8s.io/klog"
 	"time"
+
+	"k8s.io/klog"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"

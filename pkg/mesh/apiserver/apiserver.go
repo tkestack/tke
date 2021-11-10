@@ -20,7 +20,7 @@
 package apiserver
 
 import (
-	"github.com/go-openapi/spec"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	meshv1 "tkestack.io/tke/api/mesh/v1"

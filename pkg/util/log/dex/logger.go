@@ -20,6 +20,7 @@ package dex
 
 import (
 	"fmt"
+
 	"github.com/dexidp/dex/pkg/log"
 	"go.uber.org/zap"
 )

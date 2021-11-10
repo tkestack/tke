@@ -179,8 +179,6 @@ func RESTClientFor(clientSet *kubernetes.Clientset, apiGroup, apiVersion string)
 		return clientSet.BatchV1().RESTClient()
 	case "batch/v1beta1":
 		return clientSet.BatchV1beta1().RESTClient()
-	case "batch/v2alpha1":
-		return clientSet.BatchV2alpha1().RESTClient()
 	case "certificates.k8s.io/v1beta1":
 		return clientSet.CertificatesV1beta1().RESTClient()
 	case "events.k8s.io/v1beta1":
@@ -213,8 +211,6 @@ func RESTClientFor(clientSet *kubernetes.Clientset, apiGroup, apiVersion string)
 		return clientSet.NodeV1beta1().RESTClient()
 	case "scheduling.k8s.io/v1":
 		return clientSet.SchedulingV1().RESTClient()
-	case "settings.k8s.io/v1alpha1":
-		return clientSet.SettingsV1alpha1().RESTClient()
 	case "storage.k8s.io/v1alpha1":
 		return clientSet.StorageV1alpha1().RESTClient()
 	case "storage.k8s.io/v1":

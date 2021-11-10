@@ -78,7 +78,6 @@ var _ rest.Getter = &REST{}
 var _ rest.Updater = &REST{}
 var _ rest.CollectionDeleter = &REST{}
 var _ rest.GracefulDeleter = &REST{}
-var _ rest.Exporter = &REST{}
 
 // ShortNames implements the ShortNamesProvider interface. Returns a list of short names for a resource.
 func (r *REST) ShortNames() []string {

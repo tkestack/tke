@@ -73,7 +73,6 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, platformClient pla
 		AfterCreate:    strategy.AfterCreate,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
-		ExportStrategy: strategy,
 
 		TableConvertor: printerstorage.TableConvertor{TableGenerator: printers.NewTableGenerator().With(AddHandlers)},
 	}
@@ -89,10 +88,8 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, platformClient pla
 
 	statusStore := *store
 	statusStore.UpdateStrategy = clusterstrategy.NewStatusStrategy(strategy)
-	statusStore.ExportStrategy = clusterstrategy.NewStatusStrategy(strategy)
 
 	finalizeStore := *store
-	finalizeStore.UpdateStrategy = clusterstrategy.NewFinalizerStrategy(strategy)
 	finalizeStore.UpdateStrategy = clusterstrategy.NewFinalizerStrategy(strategy)
 
 	return &Storage{
@@ -153,20 +150,6 @@ func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, cl
 	return cluster, nil
 }
 
-// ValidateExportObjectAndTenantID validate name and tenantID, if success return cluster
-func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store, clusterName string, options metav1.ExportOptions) (runtime.Object, error) {
-	obj, err := store.Export(ctx, clusterName, options)
-	if err != nil {
-		return nil, err
-	}
-
-	cluster := obj.(*platform.Cluster)
-	if err := util.FilterCluster(ctx, cluster); err != nil {
-		return nil, err
-	}
-	return cluster, nil
-}
-
 // REST implements a RESTStorage for clusters against etcd.
 type REST struct {
 	*registry.Store
@@ -198,12 +181,6 @@ func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.Valid
 // Get finds a resource in the storage by name and returns it.
 func (r *REST) Get(ctx context.Context, clusterName string, options *metav1.GetOptions) (runtime.Object, error) {
 	return ValidateGetObjectAndTenantID(ctx, r.Store, clusterName, options)
-}
-
-// Export an object.  Fields that are not user specified are stripped out
-// Returns the stripped object.
-func (r *REST) Export(ctx context.Context, clusterName string, options metav1.ExportOptions) (runtime.Object, error) {
-	return ValidateExportObjectAndTenantID(ctx, r.Store, clusterName, options)
 }
 
 // Update finds a resource in the storage and updates it.
@@ -305,6 +282,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 				return existingCluster, nil
 			}),
 			dryrun.IsDryRun(options.DryRun),
+			nil,
 		)
 
 		if err != nil {
@@ -347,12 +325,6 @@ func (r *StatusREST) Get(ctx context.Context, name string, options *metav1.GetOp
 	return ValidateGetObjectAndTenantID(ctx, r.store, name, options)
 }
 
-// Export an object.  Fields that are not user specified are stripped out
-// Returns the stripped object.
-func (r *StatusREST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	return ValidateExportObjectAndTenantID(ctx, r.store, name, options)
-}
-
 // Update alters the status subset of an object.
 func (r *StatusREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	// We are explicitly setting forceAllowCreate to false in the call to the underlying storage because
@@ -378,12 +350,6 @@ func (r *FinalizeREST) New() runtime.Object {
 // Get retrieves the status finalizers subset of an object.
 func (r *FinalizeREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	return ValidateGetObjectAndTenantID(ctx, r.store, name, options)
-}
-
-// Export an object.  Fields that are not user specified are stripped out
-// Returns the stripped object.
-func (r *FinalizeREST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	return ValidateExportObjectAndTenantID(ctx, r.store, name, options)
 }
 
 // Update alters the status finalizers subset of an object.

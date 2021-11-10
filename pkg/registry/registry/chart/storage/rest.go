@@ -29,6 +29,5 @@ type ChartStorage interface {
 	rest.CreaterUpdater
 	rest.GracefulDeleter
 	rest.Watcher
-	rest.Exporter
 	rest.StorageVersionProvider
 }
