@@ -157,7 +157,7 @@ func (a *App) Run() {
 		for _, command := range a.commands {
 			cmd.AddCommand(command.cobraCommand())
 		}
-		cmd.SetHelpCommand(helpCommand(a.name))
+		cmd.SetHelpCommand(helpCommand(a.basename))
 	}
 	if a.runFunc != nil {
 		cmd.Run = a.runCommand
