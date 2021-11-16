@@ -33,7 +33,6 @@ import (
 	_ "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	_ "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
 	_ "tkestack.io/tke/pkg/platform/provider/imported/cluster"
-	_ "tkestack.io/tke/pkg/platform/provider/registered/cluster"
 	"tkestack.io/tke/test/e2e/tke"
 	tke2 "tkestack.io/tke/test/tke"
 	"tkestack.io/tke/test/util"

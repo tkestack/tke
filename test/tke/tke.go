@@ -25,7 +25,6 @@ import (
 	_ "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	_ "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
 	_ "tkestack.io/tke/pkg/platform/provider/imported/cluster"
-	_ "tkestack.io/tke/pkg/platform/provider/registered/cluster"
 )
 
 type TestTKE struct {
