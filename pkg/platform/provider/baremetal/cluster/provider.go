@@ -44,7 +44,7 @@ const (
 	name = "Baremetal"
 )
 
-func init() {
+func RegisterProvider() {
 	p, err := NewProvider()
 	if err != nil {
 		log.Errorf("init cluster provider error: %s", err)

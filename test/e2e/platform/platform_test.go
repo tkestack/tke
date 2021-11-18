@@ -30,9 +30,9 @@ import (
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/apiserver/cluster"
-	_ "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
-	_ "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
-	_ "tkestack.io/tke/pkg/platform/provider/imported/cluster"
+	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
+	baremetalmachine "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
+	importedcluster "tkestack.io/tke/pkg/platform/provider/imported/cluster"
 	"tkestack.io/tke/test/e2e/tke"
 	tke2 "tkestack.io/tke/test/tke"
 	"tkestack.io/tke/test/util"
@@ -52,6 +52,9 @@ var (
 )
 
 var _ = BeforeSuite(func() {
+	baremetalcluster.RegisterProvider()
+	baremetalmachine.RegisterProvider()
+	importedcluster.RegisterProvider()
 	t.Create()
 
 	tkeKubeConfigFile = t.GetKubeConfigFile()

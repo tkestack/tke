@@ -20,11 +20,6 @@ import (
 	"tkestack.io/tke/test/util"
 	"tkestack.io/tke/test/util/cloudprovider"
 	"tkestack.io/tke/test/util/env"
-
-	// import platform provider
-	_ "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
-	_ "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
-	_ "tkestack.io/tke/pkg/platform/provider/imported/cluster"
 )
 
 type TestTKE struct {
