@@ -20,19 +20,16 @@ package util
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"net"
 	"net/http"
 	"net/url"
 	"sync"
-	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/kubernetes"
+	restclient "k8s.io/client-go/rest"
 
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -127,49 +124,12 @@ func GetClusterPodIP(ctx context.Context, clusterName, namespace, podName string
 // BuildTransport create the http transport for communicate to backend
 // kubernetes api server.
 func BuildTransportV1(credential *platformv1.ClusterCredential) (http.RoundTripper, error) {
-	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   5 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-		MaxIdleConns:        100,
-		IdleConnTimeout:     90 * time.Second,
-		TLSHandshakeTimeout: 10 * time.Second,
-	}
-	if len(credential.CACert) > 0 {
-		transport.TLSClientConfig = &tls.Config{
-			RootCAs: rootCertPool(credential.CACert),
-		}
-	} else {
-		transport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true,
-		}
-	}
+	config := credential.RESTConfig()
 
-	if credential.ClientKey != nil && credential.ClientCert != nil {
-		cert, err := tls.X509KeyPair(credential.ClientCert, credential.ClientKey)
-		if err != nil {
-			return nil, err
-		}
-		transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
+	transport, err := restclient.TransportFor(config)
+	if err != nil {
+		return nil, err
 	}
 
 	return transport, nil
-}
-
-// rootCertPool returns nil if caData is empty.  When passed along, this will mean "use system CAs".
-// When caData is not empty, it will be the ONLY information used in the CertPool.
-func rootCertPool(caData []byte) *x509.CertPool {
-	// What we really want is a copy of x509.systemRootsPool, but that isn't exposed.  It's difficult to build (see the go
-	// code for a look at the platform specific insanity), so we'll use the fact that RootCAs == nil gives us the system values
-	// It doesn't allow trusting either/or, but hopefully that won't be an issue
-	if len(caData) == 0 {
-		return nil
-	}
-
-	// if we have caData, use it
-	certPool := x509.NewCertPool()
-	certPool.AppendCertsFromPEM(caData)
-	return certPool
 }

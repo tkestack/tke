@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/rest"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 )
 
@@ -380,6 +381,28 @@ func (i ImpersonateUserExtra) ExtraToHeaders() map[string][]string {
 		res[k] = strings.Split(v, ",")
 	}
 	return res
+}
+
+func (cc ClusterCredential) RESTConfig() *rest.Config {
+	config := &rest.Config{}
+	if cc.CACert != nil {
+		config.TLSClientConfig.CAData = cc.CACert
+	} else {
+		config.TLSClientConfig.Insecure = true
+	}
+	if cc.ClientCert != nil && cc.ClientKey != nil {
+		config.TLSClientConfig.CertData = cc.ClientCert
+		config.TLSClientConfig.KeyData = cc.ClientKey
+	}
+	if cc.Token != nil {
+		config.BearerToken = *cc.Token
+	}
+
+	config.Impersonate.UserName = cc.Impersonate
+	config.Impersonate.Groups = cc.ImpersonateGroups
+	config.Impersonate.Extra = cc.ImpersonateUserExtra.ExtraToHeaders()
+
+	return config
 }
 
 // +genclient:nonNamespaced

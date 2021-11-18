@@ -20,8 +20,6 @@ package util
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"math/rand"
 	"net"
@@ -29,7 +27,6 @@ import (
 	"path"
 	"reflect"
 	"strings"
-	"time"
 
 	monitoringclient "github.com/coreos/prometheus-operator/pkg/client/versioned"
 	mapset "github.com/deckarep/golang-set"
@@ -123,32 +120,11 @@ func ResourceFromKind(kind string) string {
 // BuildTransport create the http transport for communicate to backend
 // kubernetes api server.
 func BuildTransport(credential *platform.ClusterCredential) (http.RoundTripper, error) {
-	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   5 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-		MaxIdleConns:        100,
-		IdleConnTimeout:     90 * time.Second,
-		TLSHandshakeTimeout: 10 * time.Second,
-	}
-	if len(credential.CACert) > 0 {
-		transport.TLSClientConfig = &tls.Config{
-			RootCAs: rootCertPool(credential.CACert),
-		}
-	} else {
-		transport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true,
-		}
-	}
+	config := credential.RESTConfig()
 
-	if credential.ClientKey != nil && credential.ClientCert != nil {
-		cert, err := tls.X509KeyPair(credential.ClientCert, credential.ClientKey)
-		if err != nil {
-			return nil, err
-		}
-		transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
+	transport, err := restclient.TransportFor(config)
+	if err != nil {
+		return nil, err
 	}
 
 	return transport, nil
@@ -517,22 +493,6 @@ func ClusterV1Host(c *platformv1.Cluster) (string, error) {
 		return "", pkgerrors.Wrap(err, "Convert_v1_Cluster_To_platform_Cluster errror")
 	}
 	return ClusterHost(&cluster)
-}
-
-// rootCertPool returns nil if caData is empty.  When passed along, this will mean "use system CAs".
-// When caData is not empty, it will be the ONLY information used in the CertPool.
-func rootCertPool(caData []byte) *x509.CertPool {
-	// What we really want is a copy of x509.systemRootsPool, but that isn't exposed.  It's difficult to build (see the go
-	// code for a look at the platform specific insanity), so we'll use the fact that RootCAs == nil gives us the system values
-	// It doesn't allow trusting either/or, but hopefully that won't be an issue
-	if len(caData) == 0 {
-		return nil
-	}
-
-	// if we have caData, use it
-	certPool := x509.NewCertPool()
-	certPool.AppendCertsFromPEM(caData)
-	return certPool
 }
 
 func PrepareClusterScale(cluster *platform.Cluster, oldCluster *platform.Cluster) ([]platform.ClusterMachine, error) {
