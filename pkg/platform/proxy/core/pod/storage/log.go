@@ -21,6 +21,10 @@ package storage
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strconv"
+	"time"
+
 	corev1api "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
@@ -28,9 +32,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	genericrest "k8s.io/apiserver/pkg/registry/generic/rest"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"net/url"
-	"strconv"
-	"time"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/pkg/platform/util"
 	restutil "tkestack.io/tke/pkg/platform/util/rest"
@@ -87,7 +88,7 @@ func (r *LogREST) Get(ctx context.Context, name string, opts runtime.Object) (ru
 		return nil, errors.NewInvalid(corev1api.SchemeGroupVersion.WithKind("PodLogOptions").GroupKind(), name, errs)
 	}
 
-	location, transport, token, err := util.APIServerLocation(ctx, r.platformClient)
+	location, transport, _, err := util.APIServerLocation(ctx, r.platformClient)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +122,6 @@ func (r *LogREST) Get(ctx context.Context, name string, opts runtime.Object) (ru
 	location.RawQuery = params.Encode()
 
 	return &restutil.LocationStreamer{
-		Token:           token,
 		Location:        location,
 		Transport:       transport,
 		ContentType:     "text/plain",
