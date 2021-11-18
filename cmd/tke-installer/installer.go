@@ -26,7 +26,7 @@ import (
 
 	"tkestack.io/tke/cmd/tke-installer/app"
 
-	_ "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
+	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 )
 
 func main() {
@@ -34,6 +34,8 @@ func main() {
 	if len(os.Getenv("GOMAXPROCS")) == 0 {
 		runtime.GOMAXPROCS(runtime.NumCPU())
 	}
+
+	baremetalcluster.RegisterProvider()
 
 	app.NewApp("tke-installer").Run()
 }

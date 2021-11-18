@@ -38,9 +38,9 @@ import (
 	"tkestack.io/tke/test/util/cloudprovider"
 
 	// import platform schema
-	_ "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
-	_ "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
-	_ "tkestack.io/tke/pkg/platform/provider/imported/cluster"
+	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
+	baremetalmachine "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
+	importedcluster "tkestack.io/tke/pkg/platform/provider/imported/cluster"
 )
 
 func quickConfig(nodes []cloudprovider.Instance) []byte {
@@ -74,6 +74,9 @@ func quickConfig(nodes []cloudprovider.Instance) []byte {
 }
 
 func main() {
+	baremetalcluster.RegisterProvider()
+	baremetalmachine.RegisterProvider()
+	importedcluster.RegisterProvider()
 	provider := tencent.NewTencentProvider()
 	nodes, err := provider.CreateInstances(3)
 	if err != nil {
