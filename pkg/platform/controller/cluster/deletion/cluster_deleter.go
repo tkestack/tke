@@ -153,6 +153,7 @@ func (d *clusterDeleter) deleteCluster(ctx context.Context, cluster *platformv1.
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
+
 	return nil
 }
 

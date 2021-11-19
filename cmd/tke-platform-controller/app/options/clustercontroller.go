@@ -26,19 +26,23 @@ import (
 )
 
 const (
-	flagClusterSyncPeriod       = "cluster-sync-period"
-	flagConcurrentClusterSyncs  = "concurrent-cluster-syncs"
-	flagHealthCheckPeriod       = "healthcheck-period"
-	flagClusterRateLimiterLimit = "cluster-rate-limiter-limit"
-	flagClusterRateLimiterBurst = "cluster-rate-limiter-burst"
+	flagClusterSyncPeriod                   = "cluster-sync-period"
+	flagConcurrentClusterSyncs              = "concurrent-cluster-syncs"
+	flagHealthCheckPeriod                   = "healthcheck-period"
+	flagLowerLimitofRandomHealthCheckPeriod = "lower-limit-random-healthcheck-period"
+	flagUpperLimitofRandomHealthCheckPeriod = "upper-limit-random-healthcheck-period"
+	flagClusterRateLimiterLimit             = "cluster-rate-limiter-limit"
+	flagClusterRateLimiterBurst             = "cluster-rate-limiter-burst"
 )
 
 const (
-	configClusterSyncPeriod       = "controller.cluster_sync_period"
-	configConcurrentClusterSyncs  = "controller.concurrent_cluster_syncs"
-	configHealthCheckPeriod       = "controller.healthcheck_period"
-	configClusterRateLimiterLimit = "controller.cluster_rate_limiter_limit"
-	configClusterRateLimiterBurst = "controller.cluster_rate_limiter_burst"
+	configClusterSyncPeriod                   = "controller.cluster_sync_period"
+	configConcurrentClusterSyncs              = "controller.concurrent_cluster_syncs"
+	configHealthCheckPeriod                   = "controller.healthcheck_period"
+	configLowerLimitofRandomHealthCheckPeriod = "controller.lower-limit-random-healthcheck-period"
+	configUpperLimitofRandomHealthCheckPeriod = "controller.upper-limit-random-healthcheck-period"
+	configClusterRateLimiterLimit             = "controller.cluster_rate_limiter_limit"
+	configClusterRateLimiterBurst             = "controller.cluster_rate_limiter_burst"
 )
 
 // ClusterControllerOptions holds the ClusterController options.
@@ -50,11 +54,13 @@ type ClusterControllerOptions struct {
 func NewClusterControllerOptions() *ClusterControllerOptions {
 	return &ClusterControllerOptions{
 		&clusterconfig.ClusterControllerConfiguration{
-			ClusterSyncPeriod:      defaultSyncPeriod,
-			ConcurrentClusterSyncs: defaultConcurrentSyncs,
-			HealthCheckPeriod:      defaultHealthCheckPeriod,
-			BucketRateLimiterLimit: defaultBucketRateLimiterLimit,
-			BucketRateLimiterBurst: defaultBucketRateLimiterBurst,
+			ClusterSyncPeriod:                          defaultSyncPeriod,
+			ConcurrentClusterSyncs:                     defaultConcurrentSyncs,
+			HealthCheckPeriod:                          defaultHealthCheckPeriod,
+			RandomeRangeLowerLimitForHealthCheckPeriod: defaultRandomeRangeLowerLimitForHealthCheckPeriod,
+			RandomeRangeUpperLimitForHealthCheckPeriod: defaultRandomeRangeUpperLimitForHealthCheckPeriod,
+			BucketRateLimiterLimit:                     defaultBucketRateLimiterLimit,
+			BucketRateLimiterBurst:                     defaultBucketRateLimiterBurst,
 		},
 	}
 }
@@ -67,12 +73,22 @@ func (o *ClusterControllerOptions) AddFlags(fs *pflag.FlagSet) {
 
 	fs.DurationVar(&o.ClusterSyncPeriod, flagClusterSyncPeriod, o.ClusterSyncPeriod, "The period for syncing cluster life-cycle updates")
 	_ = viper.BindPFlag(configClusterSyncPeriod, fs.Lookup(flagClusterSyncPeriod))
+
 	fs.IntVar(&o.ConcurrentClusterSyncs, flagConcurrentClusterSyncs, o.ConcurrentClusterSyncs, "The number of cluster objects that are allowed to sync concurrently. Larger number = more responsive cluster termination, but more CPU (and network) load")
 	_ = viper.BindPFlag(configConcurrentClusterSyncs, fs.Lookup(flagConcurrentClusterSyncs))
+
 	fs.DurationVar(&o.HealthCheckPeriod, flagHealthCheckPeriod, o.HealthCheckPeriod, "The period for cluster health check")
 	_ = viper.BindPFlag(configHealthCheckPeriod, fs.Lookup(flagHealthCheckPeriod))
+
+	fs.DurationVar(&o.RandomeRangeLowerLimitForHealthCheckPeriod, flagLowerLimitofRandomHealthCheckPeriod, o.RandomeRangeLowerLimitForHealthCheckPeriod, "Lower limit of random health check time")
+	viper.BindPFlag(configLowerLimitofRandomHealthCheckPeriod, fs.Lookup(flagLowerLimitofRandomHealthCheckPeriod))
+
+	fs.DurationVar(&o.RandomeRangeUpperLimitForHealthCheckPeriod, flagUpperLimitofRandomHealthCheckPeriod, o.RandomeRangeUpperLimitForHealthCheckPeriod, "Upper limit of random health check time")
+	viper.BindPFlag(configUpperLimitofRandomHealthCheckPeriod, fs.Lookup(flagUpperLimitofRandomHealthCheckPeriod))
+
 	fs.IntVar(&o.BucketRateLimiterLimit, flagClusterRateLimiterLimit, o.BucketRateLimiterLimit, "The number of allows events up to rate r and permits.")
 	_ = viper.BindPFlag(configClusterRateLimiterLimit, fs.Lookup(flagClusterRateLimiterLimit))
+
 	fs.IntVar(&o.BucketRateLimiterBurst, flagClusterRateLimiterBurst, o.BucketRateLimiterBurst, "The number of bursts of at most b tokens.")
 	_ = viper.BindPFlag(configClusterRateLimiterBurst, fs.Lookup(flagClusterRateLimiterBurst))
 }
@@ -86,6 +102,8 @@ func (o *ClusterControllerOptions) ApplyTo(cfg *clusterconfig.ClusterControllerC
 	cfg.ClusterSyncPeriod = o.ClusterSyncPeriod
 	cfg.ConcurrentClusterSyncs = o.ConcurrentClusterSyncs
 	cfg.HealthCheckPeriod = o.HealthCheckPeriod
+	cfg.RandomeRangeLowerLimitForHealthCheckPeriod = o.RandomeRangeLowerLimitForHealthCheckPeriod
+	cfg.RandomeRangeUpperLimitForHealthCheckPeriod = o.RandomeRangeUpperLimitForHealthCheckPeriod
 	cfg.BucketRateLimiterLimit = o.BucketRateLimiterLimit
 	cfg.BucketRateLimiterBurst = o.BucketRateLimiterBurst
 
@@ -108,6 +126,8 @@ func (o *ClusterControllerOptions) ApplyFlags() []error {
 	o.ClusterSyncPeriod = viper.GetDuration(configClusterSyncPeriod)
 	o.ConcurrentClusterSyncs = viper.GetInt(configConcurrentClusterSyncs)
 	o.HealthCheckPeriod = viper.GetDuration(configHealthCheckPeriod)
+	o.RandomeRangeLowerLimitForHealthCheckPeriod = viper.GetDuration(configLowerLimitofRandomHealthCheckPeriod)
+	o.RandomeRangeUpperLimitForHealthCheckPeriod = viper.GetDuration(configUpperLimitofRandomHealthCheckPeriod)
 	o.BucketRateLimiterLimit = viper.GetInt(configClusterRateLimiterLimit)
 	o.BucketRateLimiterBurst = viper.GetInt(configClusterRateLimiterBurst)
 	return nil

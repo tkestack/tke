@@ -30,6 +30,11 @@ type ClusterControllerConfiguration struct {
 	ConcurrentClusterSyncs int
 	// HealthCheckPeriod is the period for cluster health check
 	HealthCheckPeriod time.Duration
+	// When the number of clusters is relatively large,
+	// the health check of all clusters takes a long time.
+	// You can set a random health check time for each cluster
+	RandomeRangeLowerLimitForHealthCheckPeriod time.Duration
+	RandomeRangeUpperLimitForHealthCheckPeriod time.Duration
 	// BucketRateLimiterLimit allows events up to rate r and permits.
 	BucketRateLimiterLimit int
 	// BucketRateLimiterBurst bursts of at most b tokens.

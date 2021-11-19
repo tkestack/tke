@@ -257,6 +257,10 @@ const (
 	ClusterRunning ClusterPhase = "Running"
 	// ClusterFailed is the failed phase.
 	ClusterFailed ClusterPhase = "Failed"
+	// ClusterConfined is the Confined phase.
+	ClusterConfined ClusterPhase = "Confined"
+	// ClusterIdling is the Idling phase.
+	ClusterIdling ClusterPhase = "Idling"
 	// ClusterUpgrading means that the cluster is in upgrading process.
 	ClusterUpgrading ClusterPhase = "Upgrading"
 	// ClusterTerminating means the cluster is undergoing graceful termination.
