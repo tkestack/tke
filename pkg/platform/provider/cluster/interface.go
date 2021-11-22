@@ -35,6 +35,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/server/mux"
+	"k8s.io/client-go/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
@@ -83,9 +84,16 @@ type ControllerProvider interface {
 	OnRunning(ctx context.Context, cluster *v1.Cluster) error
 }
 
+// remove this porvider in future
 type CredentialProvider interface {
 	GetClusterCredential(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster, username string) (*platform.ClusterCredential, error)
 	GetClusterCredentialV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*platformv1.ClusterCredential, error)
+}
+
+type K8sRestConfigProvider interface {
+	GetK8sRestConfig(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster, username string) (*rest.Config, error)
+	// remove this method in future
+	GetK8sRestConfigV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*rest.Config, error)
 }
 
 // Provider defines a set of response interfaces for specific cluster
