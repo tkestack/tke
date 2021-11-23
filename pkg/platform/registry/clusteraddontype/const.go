@@ -26,7 +26,6 @@ import (
 	"tkestack.io/tke/api/platform"
 	cronhpa "tkestack.io/tke/pkg/platform/controller/addon/cronhpa/images"
 	persistentevent "tkestack.io/tke/pkg/platform/controller/addon/persistentevent/images"
-	prometheus "tkestack.io/tke/pkg/platform/controller/addon/prometheus/images"
 	tappcontroller "tkestack.io/tke/pkg/platform/controller/addon/tappcontroller/images"
 	csioperator "tkestack.io/tke/pkg/platform/provider/baremetal/phases/csioperator/images"
 	"tkestack.io/tke/pkg/platform/provider/cluster"
@@ -47,8 +46,6 @@ const (
 	CSIOperator AddonType = "CSIOperator"
 	// CronHPA is type for CronHPA
 	CronHPA AddonType = "CronHPA"
-	// Prometheus is type for prometheus addon.
-	Prometheus AddonType = "Prometheus"
 )
 
 // Types defines the type of each plugin and the mapping table of the latest
@@ -92,16 +89,6 @@ var Types = map[AddonType]platform.ClusterAddonType{
 		Level:                 platform.LevelEnhance,
 		LatestVersion:         cronhpa.LatestVersion,
 		Description:           description("CronHPA.md"),
-		CompatibleClusterType: cluster.Providers(),
-	},
-	Prometheus: {
-		ObjectMeta: metav1.ObjectMeta{
-			Name: strings.ToLower(string(Prometheus)),
-		},
-		Type:                  string(Prometheus),
-		Level:                 platform.LevelBasic,
-		LatestVersion:         prometheus.LatestVersion,
-		Description:           description("Prometheus.md"),
 		CompatibleClusterType: cluster.Providers(),
 	},
 }

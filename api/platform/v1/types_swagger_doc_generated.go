@@ -572,60 +572,6 @@ func (PersistentEventStatus) SwaggerDoc() map[string]string {
 	return map_PersistentEventStatus
 }
 
-var map_Prometheus = map[string]string{
-	"":     "Prometheus is a kubernetes package manager.",
-	"spec": "Spec defines the desired identities of clusters in this set.",
-}
-
-func (Prometheus) SwaggerDoc() map[string]string {
-	return map_Prometheus
-}
-
-var map_PrometheusList = map[string]string{
-	"":      "PrometheusList is the whole list of all prometheus which owned by a tenant.",
-	"items": "List of Prometheuss",
-}
-
-func (PrometheusList) SwaggerDoc() map[string]string {
-	return map_PrometheusList
-}
-
-var map_PrometheusRemoteAddr = map[string]string{
-	"": "PrometheusRemoteAddr is the remote write/read address for prometheus",
-}
-
-func (PrometheusRemoteAddr) SwaggerDoc() map[string]string {
-	return map_PrometheusRemoteAddr
-}
-
-var map_PrometheusSpec = map[string]string{
-	"":                    "PrometheusSpec describes the attributes on a Prometheus.",
-	"subVersion":          "SubVersion is the components version such as node-exporter.",
-	"remoteAddress":       "RemoteAddress is the remote address for prometheus when writing/reading outside of cluster.",
-	"notifyWebhook":       "NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address \"https://[notify-api-address]/webhook\" will be used.",
-	"resources":           "Resources is the resource request and limit for prometheus",
-	"runOnMaster":         "RunOnMaster indicates whether to add master Affinity for all monitor components or not",
-	"alertRepeatInterval": "AlertRepeatInterval indicates repeat interval of alerts",
-	"withNPD":             "WithNPD indicates whether to deploy node-problem-detector or not",
-}
-
-func (PrometheusSpec) SwaggerDoc() map[string]string {
-	return map_PrometheusSpec
-}
-
-var map_PrometheusStatus = map[string]string{
-	"":                            "PrometheusStatus is information about the current status of a Prometheus.",
-	"phase":                       "Phase is the current lifecycle phase of the helm of cluster.",
-	"reason":                      "Reason is a brief CamelCase string that describes any failure.",
-	"retryCount":                  "RetryCount is a int between 0 and 5 that describes the time of retrying initializing.",
-	"lastReInitializingTimestamp": "LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.",
-	"subVersion":                  "SubVersion is the components version such as node-exporter.",
-}
-
-func (PrometheusStatus) SwaggerDoc() map[string]string {
-	return map_PrometheusStatus
-}
-
 var map_ProxyOptions = map[string]string{
 	"":     "ProxyOptions is the query options to a proxy call.",
 	"path": "Path is the URL path to use for the current proxy request.",

@@ -70,10 +70,6 @@ func (c *FakePlatform) PersistentEvents() internalversion.PersistentEventInterfa
 	return &FakePersistentEvents{c}
 }
 
-func (c *FakePlatform) Prometheuses() internalversion.PrometheusInterface {
-	return &FakePrometheuses{c}
-}
-
 func (c *FakePlatform) Registries() internalversion.RegistryInterface {
 	return &FakeRegistries{c}
 }

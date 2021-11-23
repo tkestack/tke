@@ -28,8 +28,13 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"tkestack.io/tke/pkg/monitor/util"
 	"tkestack.io/tke/pkg/monitor/util/rule"
-	prometheusrule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 	"tkestack.io/tke/pkg/util/log"
+)
+
+const (
+	prometheusService   = "prometheus"
+	prometheusRuleAlert = "prometheus-alerts"
+	prometheusCRDName   = "k8s"
 )
 
 func (h *processor) loadRule(ctx context.Context, clusterName string) (util.GenericRuleOperator, error) {
@@ -38,12 +43,12 @@ func (h *processor) loadRule(ctx context.Context, clusterName string) (util.Gene
 		return nil, err
 	}
 
-	promRule, err := monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(ctx, prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
+	promRule, err := monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(ctx, prometheusRuleAlert, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	log.Infof("Load rule from prometheusRule %s(%s)", clusterName, prometheusrule.PrometheusRuleAlert)
+	log.Infof("Load rule from prometheusRule %s(%s)", clusterName, prometheusRuleAlert)
 	ruleOp := rule.NewGenericRuleOperator(func(rule *v1.Rule) string {
 		return rule.Alert
 	})
@@ -60,10 +65,10 @@ func (h *processor) saveRule(ctx context.Context, clusterName string, groups []v
 		return err
 	}
 
-	log.Infof("Save rule to prometheusRule %s(%s)", clusterName, prometheusrule.PrometheusRuleAlert)
+	log.Infof("Save rule to prometheusRule %s(%s)", clusterName, prometheusRuleAlert)
 
 	return wait.PollImmediate(time.Second, time.Second*5, func() (done bool, err error) {
-		promRule, getErr := monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(ctx, prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
+		promRule, getErr := monitoringClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(ctx, prometheusRuleAlert, metav1.GetOptions{})
 		if getErr != nil {
 			return false, getErr
 		}

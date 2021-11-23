@@ -24,7 +24,6 @@ import (
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	prometheusrule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 )
 
 func TestProcessor_CreateGroup(t *testing.T) {
@@ -57,7 +56,7 @@ func TestProcessor_CreateGroup(t *testing.T) {
 	}
 
 	t.Logf("Validate persistent data")
-	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(context.Background(), prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
+	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(context.Background(), prometheusRuleAlert, metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("can't get persistent data, %v", err)
 		return
@@ -119,7 +118,7 @@ func TestProcessor_CreateRule(t *testing.T) {
 	}
 
 	t.Logf("Validate persistent data")
-	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(context.Background(), prometheusrule.PrometheusRuleAlert, metav1.GetOptions{})
+	prometheusRule, err := mClient.MonitoringV1().PrometheusRules(metav1.NamespaceSystem).Get(context.Background(), prometheusRuleAlert, metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("can't get persistent data, %v", err)
 		return
