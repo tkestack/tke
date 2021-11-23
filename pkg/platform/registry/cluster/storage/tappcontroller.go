@@ -42,6 +42,8 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -200,7 +202,7 @@ func (h *tappControllerProxyHandler) getPodList(ctx context.Context) (*corev1.Po
 		return nil, errors.NewInternalError(err)
 	}
 
-	kubeclient, err := util.BuildClientSet(ctx, h.cluster, h.clusterCredential)
+	kubeclient, err := buildClientSet(ctx, h.cluster, h.clusterCredential)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +231,7 @@ func (h *tappControllerProxyHandler) getEventList(ctx context.Context) (*corev1.
 		return nil, err
 	}
 
-	kubeclient, err := util.BuildClientSet(ctx, h.cluster, h.clusterCredential)
+	kubeclient, err := buildClientSet(ctx, h.cluster, h.clusterCredential)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +280,14 @@ func getTapp(ctx context.Context, cluster *platform.Cluster, credential *platfor
 		return nil, err
 	}
 
-	dynamicclient, err := util.BuildExternalDynamicClientSet(&clusterv1, &clusterCredential)
+	if *clusterv1.Status.Locked {
+		return nil, fmt.Errorf("cluster %s has been locked", clusterv1.ObjectMeta.Name)
+	}
+	restConfig, err := clusterCredential.RESTConfig(&clusterv1)
+	if err != nil {
+		return nil, err
+	}
+	dynamicclient, err := dynamic.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -298,4 +307,15 @@ func getTapp(ctx context.Context, cluster *platform.Cluster, credential *platfor
 		return nil, err
 	}
 	return &tapp, nil
+}
+
+func buildClientSet(ctx context.Context, cluster *platform.Cluster, credential *platform.ClusterCredential) (*kubernetes.Clientset, error) {
+	if cluster.Status.Locked != nil && *cluster.Status.Locked {
+		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
+	}
+	restConfig, err := credential.RESTConfig(cluster)
+	if err != nil {
+		return nil, err
+	}
+	return kubernetes.NewForConfig(restConfig)
 }

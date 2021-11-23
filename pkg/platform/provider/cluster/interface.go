@@ -30,9 +30,6 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 
 	"github.com/thoas/go-funk"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/server/mux"
 	"k8s.io/client-go/rest"
@@ -42,6 +39,7 @@ import (
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/types"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/platform/util/credential"
 )
 
 const (
@@ -104,6 +102,7 @@ type Provider interface {
 	APIProvider
 	ControllerProvider
 	CredentialProvider
+	K8sRestConfigProvider
 }
 
 var _ Provider = &DelegateProvider{}
@@ -446,56 +445,36 @@ func (p *DelegateProvider) getCurrentCondition(c *v1.Cluster, phase platformv1.C
 
 // GetClusterCredential returns the cluster's credential
 func (p *DelegateProvider) GetClusterCredential(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster, username string) (*platform.ClusterCredential, error) {
-	var (
-		credential *platform.ClusterCredential
-		err        error
-	)
-
-	if cluster.Spec.ClusterCredentialRef != nil {
-		credential, err = client.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return credential, err
-		}
-	} else if client != nil {
-		clusterName := cluster.Name
-		fieldSelector := fields.OneTermEqualSelector("clusterName", clusterName).String()
-		clusterCredentials, err := client.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
-		if err != nil && !apierrors.IsNotFound(err) {
-			return credential, err
-		}
-		if clusterCredentials == nil || clusterCredentials.Items == nil || len(clusterCredentials.Items) == 0 {
-			return credential, apierrors.NewNotFound(platform.Resource("ClusterCredential"), clusterName)
-		}
-		credential = &clusterCredentials.Items[0]
-	}
-
-	return credential, nil
+	return credential.GetClusterCredential(ctx, client, cluster, username)
 }
 
 // GetClusterCredentialV1 returns the versioned cluster's credential
 func (p *DelegateProvider) GetClusterCredentialV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*platformv1.ClusterCredential, error) {
-	var (
-		credential *platformv1.ClusterCredential
-		err        error
-	)
+	return credential.GetClusterCredentialV1(ctx, client, cluster, username)
+}
 
-	if cluster.Spec.ClusterCredentialRef != nil {
-		credential, err = client.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
-		if err != nil && !apierrors.IsNotFound(err) {
-			return credential, err
-		}
-	} else if client != nil {
-		clusterName := cluster.Name
-		fieldSelector := fields.OneTermEqualSelector("clusterName", clusterName).String()
-		clusterCredentials, err := client.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
-		if err != nil {
-			return credential, err
-		}
-		if clusterCredentials == nil || clusterCredentials.Items == nil || len(clusterCredentials.Items) == 0 {
-			return credential, apierrors.NewNotFound(platform.Resource("ClusterCredential"), clusterName)
-		}
-		credential = &clusterCredentials.Items[0]
+// GetClusterCredential returns the cluster's credential
+func (p *DelegateProvider) GetK8sRestConfig(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster, username string) (*rest.Config, error) {
+	cc, err := credential.GetClusterCredential(ctx, client, cluster, username)
+	if err != nil {
+		return nil, err
 	}
+	config, err := cc.RESTConfig(cluster)
+	if err != nil {
+		return nil, err
+	}
+	return config, nil
+}
 
-	return credential, nil
+// GetClusterCredentialV1 returns the versioned cluster's credential
+func (p *DelegateProvider) GetK8sRestConfigV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*rest.Config, error) {
+	cc, err := credential.GetClusterCredentialV1(ctx, client, cluster, username)
+	if err != nil {
+		return nil, err
+	}
+	config, err := cc.RESTConfig(cluster)
+	if err != nil {
+		return nil, err
+	}
+	return config, nil
 }
