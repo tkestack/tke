@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	metricsv "k8s.io/metrics/pkg/client/clientset/versioned"
 
@@ -38,7 +39,6 @@ import (
 	"tkestack.io/tke/api/monitor"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/monitor/util"
-	platformutil "tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/platform/util/addon"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -287,7 +287,7 @@ func (c *cacher) getMetricServerClientSet(ctx context.Context, cls *platformv1.C
 		return nil, err
 	}
 
-	restConfig, err := platformutil.GetExternalRestConfig(cls, cc)
+	restConfig, err := cc.RESTConfig(cls)
 	if err != nil {
 		log.Error("get rest config failed", log.Any("cluster", cls.GetName()), log.Err(err))
 		return nil, err
@@ -714,10 +714,15 @@ func (c *cacher) getDynamicClients(ctx context.Context) (util.ClusterSet,
 		clusterID := cc.ClusterName
 		resClusterCredentialSet[clusterID] = &clusterCredentials.Items[i]
 		if _, ok := resClusterSet[clusterID]; ok {
-			dynamicClient, err := platformutil.
-				BuildExternalDynamicClientSet(resClusterSet[clusterID], resClusterCredentialSet[clusterID])
+			if resClusterSet[clusterID] != nil && *resClusterSet[clusterID].Status.Locked {
+				return resClusterSet, resClusterCredentialSet, resDynamicClientSet
+			}
+			restConfig, err := resClusterCredentialSet[clusterID].RESTConfig(resClusterSet[clusterID])
 			if err == nil {
-				resDynamicClientSet[clusterID] = dynamicClient
+				dynamicClient, err := dynamic.NewForConfig(restConfig)
+				if err == nil {
+					resDynamicClientSet[clusterID] = dynamicClient
+				}
 			}
 		}
 	}

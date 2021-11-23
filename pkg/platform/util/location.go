@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	restclient "k8s.io/client-go/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
@@ -56,24 +57,21 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, 
 		return nil, nil, "", errors.NewInternalError(err)
 	}
 
-	clusterCredential, err := provider.GetClusterCredential(ctx, platformClient, cluster, username)
+	restconfig, err := provider.GetK8sRestConfig(ctx, platformClient, cluster, username)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
 
-	transport, err := BuildTransport(clusterCredential)
+	transport, err := restclient.TransportFor(restconfig)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
-	address, err := ClusterAddress(cluster)
+	address, err := clusterAddress(cluster)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
 
-	token := ""
-	if clusterCredential.Token != nil {
-		token = *clusterCredential.Token
-	}
+	token := restconfig.BearerToken
 
 	// Otherwise, return the requested scheme and port, and the proxy transport
 	return &url.URL{

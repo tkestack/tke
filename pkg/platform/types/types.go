@@ -96,7 +96,6 @@ func (c *Cluster) setRESTConfigDefaults(config *rest.Config) error {
 
 func (c *Cluster) RESTConfig(config *rest.Config) (*rest.Config, error) {
 	err := c.setRESTConfigDefaults(config)
-	c.ClusterCredential.RESTConfig()
 	if err != nil {
 		return nil, err
 	}

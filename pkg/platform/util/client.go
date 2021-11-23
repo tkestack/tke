@@ -22,24 +22,15 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"net"
-	"net/http"
-	"path"
 	"reflect"
 	"strings"
 
-	monitoringclient "github.com/coreos/prometheus-operator/pkg/client/versioned"
 	mapset "github.com/deckarep/golang-set"
 	pkgerrors "github.com/pkg/errors"
-	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
-	restclient "k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/tools/clientcmd/api"
-	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
@@ -47,12 +38,6 @@ import (
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/util/log"
-)
-
-const (
-	contextName = "tke"
-	clientQPS   = 100
-	clientBurst = 200
 )
 
 func DynamicClientByCluster(ctx context.Context, cluster *platform.Cluster, platformClient platforminternalclient.PlatformInterface) (dynamic.Interface, error) {
@@ -66,12 +51,19 @@ func DynamicClientByCluster(ctx context.Context, cluster *platform.Cluster, plat
 		return nil, err
 	}
 
-	credential, err := provider.GetClusterCredential(ctx, platformClient, cluster, username)
+	restConfig, err := provider.GetK8sRestConfig(ctx, platformClient, cluster, username)
 	if err != nil {
 		return nil, err
 	}
+	if cluster.Status.Phase != platform.ClusterRunning {
+		return nil, fmt.Errorf("cluster %s status is abnormal", cluster.ObjectMeta.Name)
+	}
 
-	return BuildInternalDynamicClientSet(cluster, credential)
+	if cluster.Status.Locked != nil && *cluster.Status.Locked {
+		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
+	}
+	return dynamic.NewForConfig(restConfig)
+
 }
 
 // ClientSetByCluster returns the backend kubernetes clientSet by given cluster object
@@ -86,12 +78,12 @@ func ClientSetByCluster(ctx context.Context, cluster *platform.Cluster, platform
 		return nil, err
 	}
 
-	credential, err := provider.GetClusterCredential(ctx, platformClient, cluster, username)
+	restConfig, err := provider.GetK8sRestConfig(ctx, platformClient, cluster, username)
 	if err != nil {
 		return nil, err
 	}
 
-	return BuildClientSet(ctx, cluster, credential)
+	return kubernetes.NewForConfig(restConfig)
 }
 
 // ResourceFromKind returns the resource name by kind.
@@ -117,132 +109,10 @@ func ResourceFromKind(kind string) string {
 	}
 }
 
-// BuildTransport create the http transport for communicate to backend
-// kubernetes api server.
-func BuildTransport(credential *platform.ClusterCredential) (http.RoundTripper, error) {
-	config := credential.RESTConfig()
-
-	transport, err := restclient.TransportFor(config)
-	if err != nil {
-		return nil, err
-	}
-
-	return transport, nil
-}
-
-// GetExternalRestConfig returns rest config according to cluster
-func GetExternalRestConfig(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) (*restclient.Config, error) {
-	host, err := ClusterV1Host(cluster)
-	if err != nil {
-		return nil, err
-	}
-	config := api.NewConfig()
-	config.CurrentContext = contextName
-
-	if credential.CACert == nil {
-		config.Clusters[contextName] = &api.Cluster{
-			Server:                fmt.Sprintf("https://%s", host),
-			InsecureSkipTLSVerify: true,
-		}
-	} else {
-		config.Clusters[contextName] = &api.Cluster{
-			Server:                   fmt.Sprintf("https://%s", host),
-			CertificateAuthorityData: credential.CACert,
-		}
-	}
-
-	if credential.Token != nil {
-		config.AuthInfos[contextName] = &api.AuthInfo{
-			Token: *credential.Token,
-		}
-	} else if credential.ClientCert != nil && credential.ClientKey != nil {
-		config.AuthInfos[contextName] = &api.AuthInfo{
-			ClientCertificateData: credential.ClientCert,
-			ClientKeyData:         credential.ClientKey,
-		}
-	} else {
-		return nil, fmt.Errorf("no credential for the cluster")
-	}
-
-	config.Contexts[contextName] = &api.Context{
-		Cluster:  contextName,
-		AuthInfo: contextName,
-	}
-	clientConfig := clientcmd.NewNonInteractiveClientConfig(*config, contextName, &clientcmd.ConfigOverrides{Timeout: "30s"}, nil)
-	return clientConfig.ClientConfig()
-}
-
-// GetInternalRestConfig returns rest config according to cluster
-func GetInternalRestConfig(cluster *platform.Cluster, credential *platform.ClusterCredential) (*restclient.Config, error) {
-	host, err := ClusterHost(cluster)
-	if err != nil {
-		return nil, err
-	}
-	config := api.NewConfig()
-	config.CurrentContext = contextName
-
-	if credential.CACert == nil {
-		config.Clusters[contextName] = &api.Cluster{
-			Server:                fmt.Sprintf("https://%s", host),
-			InsecureSkipTLSVerify: true,
-		}
-	} else {
-		config.Clusters[contextName] = &api.Cluster{
-			Server:                   fmt.Sprintf("https://%s", host),
-			CertificateAuthorityData: credential.CACert,
-		}
-	}
-
-	if credential.Token != nil {
-		config.AuthInfos[contextName] = &api.AuthInfo{
-			Token: *credential.Token,
-		}
-	} else if credential.ClientCert != nil && credential.ClientKey != nil {
-		config.AuthInfos[contextName] = &api.AuthInfo{
-			ClientCertificateData: credential.ClientCert,
-			ClientKeyData:         credential.ClientKey,
-		}
-	} else {
-		return nil, fmt.Errorf("no credential for the cluster")
-	}
-
-	config.Contexts[contextName] = &api.Context{
-		Cluster:  contextName,
-		AuthInfo: contextName,
-	}
-	clientConfig := clientcmd.NewNonInteractiveClientConfig(*config, contextName, &clientcmd.ConfigOverrides{Timeout: "30s"}, nil)
-	return clientConfig.ClientConfig()
-}
-
-// BuildInternalDynamicClientSet creates the dynamic clientset of kubernetes by given cluster
-// object and returns it.
-func BuildInternalDynamicClientSet(cluster *platform.Cluster, credential *platform.ClusterCredential) (dynamic.Interface, error) {
-	if cluster.Status.Phase != platform.ClusterRunning {
-		return nil, fmt.Errorf("cluster %s status is abnormal", cluster.ObjectMeta.Name)
-	}
-
-	if cluster.Status.Locked != nil && *cluster.Status.Locked {
-		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
-	}
-
-	return BuildInternalDynamicClientSetNoStatus(cluster, credential)
-}
-
-// BuildInternalDynamicClientSetNoStatus creates the dynamic clientset of kubernetes by given
-// cluster object and returns it.
-func BuildInternalDynamicClientSetNoStatus(cluster *platform.Cluster, credential *platform.ClusterCredential) (dynamic.Interface, error) {
-	restConfig, err := GetInternalRestConfig(cluster, credential)
-	if err != nil {
-		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
-		return nil, err
-	}
-	return dynamic.NewForConfig(restConfig)
-}
-
 // BuildVersionedClientSet creates the clientset of kubernetes by given
 // cluster object and returns it.
 func BuildVersionedClientSet(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) (*kubernetes.Clientset, error) {
-	restConfig, err := GetExternalRestConfig(cluster, credential)
+	restConfig, err := credential.RESTConfig(cluster)
 	if err != nil {
 		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
 		return nil, err
@@ -284,185 +154,7 @@ func BuildExternalClientSetWithName(ctx context.Context, platformClient platform
 	return clientset, nil
 }
 
-// BuildExternalExtensionClientSetNoStatus creates the api extension clientset of kubernetes by given
-// cluster object and returns it.
-func BuildExternalExtensionClientSetNoStatus(ctx context.Context, cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (*apiextensionsclient.Clientset, error) {
-	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
-	if err != nil {
-		return nil, err
-	}
-
-	credential, err := provider.GetClusterCredentialV1(ctx, client, cluster, clusterprovider.AdminUsername)
-	if err != nil {
-		return nil, err
-	}
-	restConfig, err := GetExternalRestConfig(cluster, credential)
-	if err != nil {
-		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
-		return nil, err
-	}
-	return apiextensionsclient.NewForConfig(restConfig)
-}
-
-// BuildExternalExtensionClientSet creates the api extension clientset of kubernetes by given cluster
-// object and returns it.
-func BuildExternalExtensionClientSet(ctx context.Context, cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (*apiextensionsclient.Clientset, error) {
-	if cluster.Status.Locked != nil && *cluster.Status.Locked {
-		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
-	}
-
-	return BuildExternalExtensionClientSetNoStatus(ctx, cluster, client)
-}
-
-// BuildKubeAggregatorClientSetNoStatus creates the kube-aggregator clientset of kubernetes by given
-// cluster object and returns it.
-func BuildKubeAggregatorClientSetNoStatus(ctx context.Context, cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (*kubeaggregatorclientset.Clientset, error) {
-	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
-	if err != nil {
-		return nil, err
-	}
-
-	credential, err := provider.GetClusterCredentialV1(ctx, client, cluster, clusterprovider.AdminUsername)
-	if err != nil {
-		return nil, err
-	}
-	restConfig, err := GetExternalRestConfig(cluster, credential)
-	if err != nil {
-		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
-		return nil, err
-	}
-	return kubeaggregatorclientset.NewForConfig(restConfig)
-}
-
-// BuildKubeAggregatorClientSet creates the kube-aggregator clientset of kubernetes by given cluster
-// object and returns it.
-func BuildKubeAggregatorClientSet(ctx context.Context, cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (*kubeaggregatorclientset.Clientset, error) {
-	if cluster.Status.Locked != nil && *cluster.Status.Locked {
-		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
-	}
-
-	return BuildKubeAggregatorClientSetNoStatus(ctx, cluster, client)
-}
-
-// BuildExternalMonitoringClientSetNoStatus creates the monitoring clientset of prometheus operator by given
-// cluster object and returns it.
-func BuildExternalMonitoringClientSetNoStatus(ctx context.Context, cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (monitoringclient.Interface, error) {
-	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
-	if err != nil {
-		return nil, err
-	}
-
-	credential, err := provider.GetClusterCredentialV1(ctx, client, cluster, clusterprovider.AdminUsername)
-	if err != nil {
-		return nil, err
-	}
-	restConfig, err := GetExternalRestConfig(cluster, credential)
-	if err != nil {
-		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
-		return nil, err
-	}
-	return monitoringclient.NewForConfig(restConfig)
-}
-
-// BuildExternalMonitoringClientSet creates the monitoring clientset of  prometheus operator by given cluster
-// object and returns it.
-func BuildExternalMonitoringClientSet(ctx context.Context, cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (monitoringclient.Interface, error) {
-	if cluster.Status.Locked != nil && *cluster.Status.Locked {
-		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
-	}
-
-	return BuildExternalMonitoringClientSetNoStatus(ctx, cluster, client)
-}
-
-// BuildExternalDynamicClientSetNoStatus creates the dynamic clientset of kubernetes by given
-// cluster object and returns it.
-func BuildExternalDynamicClientSetNoStatus(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) (dynamic.Interface, error) {
-	restConfig, err := GetExternalRestConfig(cluster, credential)
-	if err != nil {
-		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
-		return nil, err
-	}
-	return dynamic.NewForConfig(restConfig)
-}
-
-// BuildExternalDynamicClientSet creates the dynamic clientset of kubernetes by given cluster
-// object and returns it.
-func BuildExternalDynamicClientSet(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) (dynamic.Interface, error) {
-	if cluster.Status.Locked != nil && *cluster.Status.Locked {
-		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
-	}
-
-	return BuildExternalDynamicClientSetNoStatus(cluster, credential)
-}
-
-// BuildClientSet creates client based on cluster information and returns it.
-func BuildClientSet(ctx context.Context, cluster *platform.Cluster, credential *platform.ClusterCredential) (*kubernetes.Clientset, error) {
-	if cluster.Status.Locked != nil && *cluster.Status.Locked {
-		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
-	}
-	host, err := ClusterHost(cluster)
-	if err != nil {
-		return nil, err
-	}
-	config := api.NewConfig()
-	config.CurrentContext = contextName
-
-	if credential.CACert == nil {
-		config.Clusters[contextName] = &api.Cluster{
-			Server:                fmt.Sprintf("https://%s", host),
-			InsecureSkipTLSVerify: true,
-		}
-	} else {
-		config.Clusters[contextName] = &api.Cluster{
-			Server:                   fmt.Sprintf("https://%s", host),
-			CertificateAuthorityData: credential.CACert,
-		}
-	}
-
-	if credential.Token != nil {
-		config.AuthInfos[contextName] = &api.AuthInfo{
-			Token: *credential.Token,
-		}
-	} else if credential.ClientCert != nil && credential.ClientKey != nil {
-		config.AuthInfos[contextName] = &api.AuthInfo{
-			ClientCertificateData: credential.ClientCert,
-			ClientKeyData:         credential.ClientKey,
-		}
-	} else {
-		return nil, fmt.Errorf("no credential for the cluster")
-	}
-
-	config.Contexts[contextName] = &api.Context{
-		Cluster:  contextName,
-		AuthInfo: contextName,
-	}
-	clientConfig := clientcmd.NewNonInteractiveClientConfig(*config, contextName, &clientcmd.ConfigOverrides{Timeout: "30s"}, nil)
-	restConfig, err := clientConfig.ClientConfig()
-	if err != nil {
-		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
-		return nil, err
-	}
-	restConfig.QPS = clientQPS
-	restConfig.Burst = clientBurst
-	return kubernetes.NewForConfig(restConfig)
-}
-
-// ClusterHost returns host and port for kube-apiserver of cluster.
-func ClusterHost(cluster *platform.Cluster) (string, error) {
-	address, err := ClusterAddress(cluster)
-	if err != nil {
-		return "", err
-	}
-
-	result := net.JoinHostPort(address.Host, fmt.Sprintf("%d", address.Port))
-	if address.Path != "" {
-		result = path.Join(result, address.Path)
-	}
-
-	return result, nil
-}
-
-func ClusterAddress(cluster *platform.Cluster) (*platform.ClusterAddress, error) {
+func clusterAddress(cluster *platform.Cluster) (*platform.ClusterAddress, error) {
 	addrs := make(map[platform.AddressType][]platform.ClusterAddress)
 	for _, one := range cluster.Status.Addresses {
 		addrs[one.Type] = append(addrs[one.Type], one)
@@ -483,16 +175,6 @@ func ClusterAddress(cluster *platform.Cluster) (*platform.ClusterAddress, error)
 	}
 
 	return address, nil
-}
-
-// ClusterV1Host returns host and port for kube-apiserver of versioned cluster resource.
-func ClusterV1Host(c *platformv1.Cluster) (string, error) {
-	var cluster platform.Cluster
-	err := platformv1.Convert_v1_Cluster_To_platform_Cluster(c, &cluster, nil)
-	if err != nil {
-		return "", pkgerrors.Wrap(err, "Convert_v1_Cluster_To_platform_Cluster errror")
-	}
-	return ClusterHost(&cluster)
 }
 
 func PrepareClusterScale(cluster *platform.Cluster, oldCluster *platform.Cluster) ([]platform.ClusterMachine, error) {

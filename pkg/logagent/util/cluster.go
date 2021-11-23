@@ -32,9 +32,7 @@ import (
 	restclient "k8s.io/client-go/rest"
 
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	platformv1 "tkestack.io/tke/api/platform/v1"
 	v1platform "tkestack.io/tke/api/platform/v1"
-	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/platform/util/addon"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -86,11 +84,11 @@ func APIServerLocationByCluster(ctx context.Context, clusterName string, platfor
 		return nil, nil, "", err
 	}
 
-	transport, err := BuildTransportV1(credential)
+	restConfig, err := credential.RESTConfig(cluster)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
-	host, err := util.ClusterV1Host(cluster)
+	transport, err := restclient.TransportFor(restConfig)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
@@ -101,7 +99,7 @@ func APIServerLocationByCluster(ctx context.Context, clusterName string, platfor
 	}
 	return &url.URL{
 		Scheme: "https",
-		Host:   host,
+		Host:   restConfig.Host,
 		Path:   requestInfo.Path,
 	}, transport, token, nil
 }
@@ -119,17 +117,4 @@ func GetClusterPodIP(ctx context.Context, clusterName, namespace, podName string
 		return "", err
 	}
 	return pod.Status.HostIP, nil
-}
-
-// BuildTransport create the http transport for communicate to backend
-// kubernetes api server.
-func BuildTransportV1(credential *platformv1.ClusterCredential) (http.RoundTripper, error) {
-	config := credential.RESTConfig()
-
-	transport, err := restclient.TransportFor(config)
-	if err != nil {
-		return nil, err
-	}
-
-	return transport, nil
 }

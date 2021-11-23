@@ -19,7 +19,13 @@
 package v1
 
 import (
+	"fmt"
+	"math/rand"
+	"net"
+	"path"
 	strings "strings"
+
+	pkgerrors "github.com/pkg/errors"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -387,8 +393,15 @@ func (i ImpersonateUserExtra) ExtraToHeaders() map[string][]string {
 	return res
 }
 
-func (cc ClusterCredential) RESTConfig() *rest.Config {
+func (cc ClusterCredential) RESTConfig(cls *Cluster) (*rest.Config, error) {
 	config := &rest.Config{}
+	if cls != nil {
+		host, err := clusterHost(cls)
+		if err != nil {
+			return nil, err
+		}
+		config.Host = fmt.Sprintf("https://%s", host)
+	}
 	if cc.CACert != nil {
 		config.TLSClientConfig.CAData = cc.CACert
 	} else {
@@ -406,7 +419,44 @@ func (cc ClusterCredential) RESTConfig() *rest.Config {
 	config.Impersonate.Groups = cc.ImpersonateGroups
 	config.Impersonate.Extra = cc.ImpersonateUserExtra.ExtraToHeaders()
 
-	return config
+	return config, nil
+}
+
+func clusterHost(cluster *Cluster) (string, error) {
+	address, err := clusterAddress(cluster)
+	if err != nil {
+		return "", err
+	}
+
+	result := net.JoinHostPort(address.Host, fmt.Sprintf("%d", address.Port))
+	if address.Path != "" {
+		result = path.Join(result, address.Path)
+	}
+
+	return result, nil
+}
+
+func clusterAddress(cluster *Cluster) (*ClusterAddress, error) {
+	addrs := make(map[AddressType][]ClusterAddress)
+	for _, one := range cluster.Status.Addresses {
+		addrs[one.Type] = append(addrs[one.Type], one)
+	}
+
+	var address *ClusterAddress
+	if len(addrs[AddressInternal]) != 0 {
+		address = &addrs[AddressInternal][rand.Intn(len(addrs[AddressInternal]))]
+	} else if len(addrs[AddressAdvertise]) != 0 {
+		address = &addrs[AddressAdvertise][rand.Intn(len(addrs[AddressAdvertise]))]
+	} else {
+		if len(addrs[AddressReal]) != 0 {
+			address = &addrs[AddressReal][rand.Intn(len(addrs[AddressReal]))]
+		}
+	}
+	if address == nil {
+		return nil, pkgerrors.New("no valid address for the cluster")
+	}
+
+	return address, nil
 }
 
 // +genclient:nonNamespaced

@@ -46,7 +46,7 @@ func BuildExternalMonitoringClientSetNoStatus(ctx context.Context, cluster *plat
 	if err != nil {
 		return nil, err
 	}
-	restConfig, err := util.GetExternalRestConfig(cluster, credential)
+	restConfig, err := credential.RESTConfig(cluster)
 	if err != nil {
 		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
 		return nil, err
@@ -95,7 +95,7 @@ func BuildExternalExtensionClientSetNoStatus(ctx context.Context, cluster *platf
 	if err != nil {
 		return nil, err
 	}
-	restConfig, err := util.GetExternalRestConfig(cluster, credential)
+	restConfig, err := credential.RESTConfig(cluster)
 	if err != nil {
 		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
 		return nil, err
@@ -120,7 +120,7 @@ func BuildKubeAggregatorClientSetNoStatus(ctx context.Context, cluster *platform
 	if err != nil {
 		return nil, err
 	}
-	restConfig, err := util.GetExternalRestConfig(cluster, credential)
+	restConfig, err := credential.RESTConfig(cluster)
 	if err != nil {
 		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
 		return nil, err
