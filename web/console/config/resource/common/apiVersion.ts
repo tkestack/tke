@@ -747,10 +747,9 @@ const alarmPolicyApiVersion: ApiVersion = {
     headTitle: 'AlarmRecord'
   },
   prometheus: {
-    group: apiServerVersion.group,
-    version: apiServerVersion.version,
-    basicEntry: apiServerVersion.basicUrl,
-    watchModule: ConsoleModuleEnum.PLATFORM,
+    group: monitorServerVersion.group,
+    version: monitorServerVersion.version,
+    basicEntry: monitorServerVersion.basicUrl,
     headTitle: 'Prometheus'
   }
 };
