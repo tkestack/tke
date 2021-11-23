@@ -27,12 +27,16 @@ import (
 
 	"tkestack.io/tke/pkg/monitor/util"
 	"tkestack.io/tke/pkg/monitor/util/route"
-	alertmanagerrule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 
 	"github.com/pkg/errors"
 	apierror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
+)
+
+const (
+	alertManagerConfigName = "alertmanager.yml"
+	alertManagerConfigMap  = "alertmanager-config"
 )
 
 func (h *processor) loadConfig(ctx context.Context, clusterName string) (util.GenericRouteOperator, error) {
@@ -41,17 +45,17 @@ func (h *processor) loadConfig(ctx context.Context, clusterName string) (util.Ge
 		return nil, err
 	}
 
-	configMap, err := k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, alertmanagerrule.AlertManagerConfigMap, metav1.GetOptions{})
+	configMap, err := k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, alertManagerConfigMap, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	configData, ok := configMap.Data[alertmanagerrule.AlertManagerConfigName]
+	configData, ok := configMap.Data[alertManagerConfigName]
 	if !ok {
-		return nil, errors.Errorf("%s(%s) is not found", clusterName, alertmanagerrule.AlertManagerConfigName)
+		return nil, errors.Errorf("%s(%s) is not found", clusterName, alertManagerConfigName)
 	}
 
-	log.Infof("Load rule from configMap %s(%s)", clusterName, alertmanagerrule.AlertManagerConfigName)
+	log.Infof("Load rule from configMap %s(%s)", clusterName, alertManagerConfigName)
 	routeOp := route.NewRouteOperator()
 	err = routeOp.Load(strings.NewReader(configData))
 	if err != nil {
@@ -67,15 +71,15 @@ func (h *processor) saveConfig(ctx context.Context, clusterName string, data str
 		return err
 	}
 
-	log.Infof("Save rule to configMap %s(%s)", clusterName, alertmanagerrule.AlertManagerConfigMap)
+	log.Infof("Save rule to configMap %s(%s)", clusterName, alertManagerConfigMap)
 
 	return wait.PollImmediate(time.Second, time.Second*5, func() (done bool, err error) {
-		configMap, getErr := k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, alertmanagerrule.AlertManagerConfigMap, metav1.GetOptions{})
+		configMap, getErr := k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(ctx, alertManagerConfigMap, metav1.GetOptions{})
 		if getErr != nil {
 			return false, getErr
 		}
 
-		configMap.Data[alertmanagerrule.AlertManagerConfigName] = data
+		configMap.Data[alertManagerConfigName] = data
 		_, err = k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Update(ctx, configMap, metav1.UpdateOptions{})
 		if err == nil {
 			return true, nil

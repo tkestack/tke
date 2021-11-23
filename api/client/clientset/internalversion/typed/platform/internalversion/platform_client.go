@@ -37,7 +37,6 @@ type PlatformInterface interface {
 	CronHPAsGetter
 	MachinesGetter
 	PersistentEventsGetter
-	PrometheusesGetter
 	RegistriesGetter
 	TappControllersGetter
 }
@@ -85,10 +84,6 @@ func (c *PlatformClient) Machines() MachineInterface {
 
 func (c *PlatformClient) PersistentEvents() PersistentEventInterface {
 	return newPersistentEvents(c)
-}
-
-func (c *PlatformClient) Prometheuses() PrometheusInterface {
-	return newPrometheuses(c)
 }
 
 func (c *PlatformClient) Registries() RegistryInterface {

@@ -28,7 +28,6 @@ import (
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/controller/addon/cronhpa"
 	"tkestack.io/tke/pkg/platform/controller/addon/persistentevent"
-	"tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 	"tkestack.io/tke/pkg/platform/controller/addon/storage/csioperator"
 	"tkestack.io/tke/pkg/platform/controller/addon/tappcontroller"
 	bootstrapps "tkestack.io/tke/pkg/platform/controller/bootstrapapps"
@@ -42,9 +41,6 @@ const (
 
 	eventSyncPeriod = 5 * time.Minute
 	concurrentSyncs = 10
-
-	promEventSyncPeriod = 5 * time.Minute
-	concurrentPromSyncs = 10
 )
 
 func startClusterController(ctx ControllerContext) (http.Handler, bool, error) {
@@ -152,31 +148,6 @@ func startCSIOperatorController(ctx ControllerContext) (http.Handler, bool, erro
 
 	go func() {
 		_ = ctrl.Run(concurrentSyncs, ctx.Stop)
-	}()
-
-	return nil, true, nil
-}
-
-func startPrometheusController(ctx ControllerContext) (http.Handler, bool, error) {
-	if ctx.RemoteType == "" || len(ctx.RemoteAddresses) == 0 {
-		return nil, false, nil
-	}
-
-	if !ctx.AvailableResources[schema.GroupVersionResource{Group: platformv1.GroupName, Version: "v1", Resource: "prometheuses"}] {
-		return nil, false, nil
-	}
-
-	ctrl := prometheus.NewController(
-		ctx.ClientBuilder.ClientOrDie("prometheus-controller"),
-		ctx.InformerFactory.Platform().V1().Prometheuses(),
-		promEventSyncPeriod,
-
-		ctx.RemoteAddresses,
-		ctx.RemoteType,
-	)
-
-	go func() {
-		_ = ctrl.Run(concurrentPromSyncs, ctx.Stop)
 	}()
 
 	return nil, true, nil

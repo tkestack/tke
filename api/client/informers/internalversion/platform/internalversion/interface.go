@@ -40,8 +40,6 @@ type Interface interface {
 	Machines() MachineInformer
 	// PersistentEvents returns a PersistentEventInformer.
 	PersistentEvents() PersistentEventInformer
-	// Prometheuses returns a PrometheusInformer.
-	Prometheuses() PrometheusInformer
 	// Registries returns a RegistryInformer.
 	Registries() RegistryInformer
 	// TappControllers returns a TappControllerInformer.
@@ -92,11 +90,6 @@ func (v *version) Machines() MachineInformer {
 // PersistentEvents returns a PersistentEventInformer.
 func (v *version) PersistentEvents() PersistentEventInformer {
 	return &persistentEventInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
-}
-
-// Prometheuses returns a PrometheusInformer.
-func (v *version) Prometheuses() PrometheusInformer {
-	return &prometheusInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // Registries returns a RegistryInformer.

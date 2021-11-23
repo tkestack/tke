@@ -94,9 +94,6 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&CronHPAList{},
 		&CronHPAProxyOptions{},
 
-		&Prometheus{},
-		&PrometheusList{},
-
 		&CSIOperator{},
 		&CSIOperatorList{},
 		&CSIProxyOptions{},

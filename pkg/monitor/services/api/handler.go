@@ -39,8 +39,11 @@ import (
 )
 
 const (
-	alarmPolicyPrefix = "alarmpolicies"
-	clustersPrefix    = "clusters"
+	alarmPolicyPrefix   = "alarmpolicies"
+	clustersPrefix      = "clusters"
+	prometheusService   = "prometheus"
+	prometheusRuleAlert = "prometheus-alerts"
+	prometheusCRDName   = "k8s"
 )
 
 type processor struct {

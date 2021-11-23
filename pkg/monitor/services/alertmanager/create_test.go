@@ -26,7 +26,6 @@ import (
 	alertconfig "github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	alertmanagerconfig "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 )
 
 func TestProcessor_Create(t *testing.T) {
@@ -67,7 +66,7 @@ func TestProcessor_Create(t *testing.T) {
 	}
 
 	t.Logf("Validate persistent data")
-	configMap, err := k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(context.Background(), alertmanagerconfig.AlertManagerConfigMap, metav1.GetOptions{})
+	configMap, err := k8sClient.CoreV1().ConfigMaps(metav1.NamespaceSystem).Get(context.Background(), alertManagerConfigMap, metav1.GetOptions{})
 	if err != nil {
 		t.Errorf("can't get persistent data, %v", err)
 		return
@@ -75,7 +74,7 @@ func TestProcessor_Create(t *testing.T) {
 
 	targetConfig := &alertconfig.Config{}
 	expectConfig := &alertconfig.Config{}
-	_ = yaml.Unmarshal([]byte(configMap.Data[alertmanagerconfig.AlertManagerConfigName]), targetConfig)
+	_ = yaml.Unmarshal([]byte(configMap.Data[alertManagerConfigName]), targetConfig)
 	_ = yaml.Unmarshal([]byte(exampleAlertConfig), expectConfig)
 
 	expectConfig.Route.Routes = append(expectConfig.Route.Routes, route)

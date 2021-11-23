@@ -91,12 +91,6 @@ func SetDefaults_CronHPAStatus(obj *CronHPAStatus) {
 	}
 }
 
-func SetDefaults_PrometheusStatus(obj *PrometheusStatus) {
-	if obj.Phase == "" {
-		obj.Phase = AddonPhaseInitializing
-	}
-}
-
 func SetDefaults_ClusterFeature(obj *ClusterFeature) {
 	if obj.ContainerRuntime == "" {
 		obj.ContainerRuntime = Docker

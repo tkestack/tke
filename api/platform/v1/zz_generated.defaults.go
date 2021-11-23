@@ -43,8 +43,6 @@ func RegisterDefaults(scheme *runtime.Scheme) error {
 	scheme.AddTypeDefaultingFunc(&MachineList{}, func(obj interface{}) { SetObjectDefaults_MachineList(obj.(*MachineList)) })
 	scheme.AddTypeDefaultingFunc(&PersistentEvent{}, func(obj interface{}) { SetObjectDefaults_PersistentEvent(obj.(*PersistentEvent)) })
 	scheme.AddTypeDefaultingFunc(&PersistentEventList{}, func(obj interface{}) { SetObjectDefaults_PersistentEventList(obj.(*PersistentEventList)) })
-	scheme.AddTypeDefaultingFunc(&Prometheus{}, func(obj interface{}) { SetObjectDefaults_Prometheus(obj.(*Prometheus)) })
-	scheme.AddTypeDefaultingFunc(&PrometheusList{}, func(obj interface{}) { SetObjectDefaults_PrometheusList(obj.(*PrometheusList)) })
 	scheme.AddTypeDefaultingFunc(&TappController{}, func(obj interface{}) { SetObjectDefaults_TappController(obj.(*TappController)) })
 	scheme.AddTypeDefaultingFunc(&TappControllerList{}, func(obj interface{}) { SetObjectDefaults_TappControllerList(obj.(*TappControllerList)) })
 	return nil
@@ -119,17 +117,6 @@ func SetObjectDefaults_PersistentEventList(in *PersistentEventList) {
 	for i := range in.Items {
 		a := &in.Items[i]
 		SetObjectDefaults_PersistentEvent(a)
-	}
-}
-
-func SetObjectDefaults_Prometheus(in *Prometheus) {
-	SetDefaults_PrometheusStatus(&in.Status)
-}
-
-func SetObjectDefaults_PrometheusList(in *PrometheusList) {
-	for i := range in.Items {
-		a := &in.Items[i]
-		SetObjectDefaults_Prometheus(a)
 	}
 }
 
