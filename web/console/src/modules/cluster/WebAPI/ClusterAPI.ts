@@ -95,30 +95,13 @@ export async function fetchPrometheuses() {
     url
   };
 
-  // 兼容新的monitor版本peomethus
-  const monitorParams: RequestParams = {
-    method: Method.get,
-    url: '/apis/monitor.tkestack.io/v1/prometheuses'
-  };
-
   let records = [];
   try {
-    const [response, monitorResponse] = await Promise.all([
-      reduceNetworkRequest(params),
-      reduceNetworkRequest(monitorParams)
-    ]);
+    const response = await reduceNetworkRequest(params);
     if (response.code === 0) {
       records = response.data.items.map(item => {
         return Object.assign({}, item, { id: uuid() });
       });
-    }
-
-    if (monitorResponse.code === 0) {
-      records = records.concat(
-        monitorResponse.data.items.map(item => {
-          return Object.assign({}, item, { id: uuid() });
-        })
-      );
     }
   } catch (error) {
     // 这里是搜索的时候，如果搜索不到的话，会报404的错误，只有在 resourceNotFound的时候，不把错误抛出去
