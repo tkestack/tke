@@ -84,10 +84,7 @@ func APIServerLocationByCluster(ctx context.Context, clusterName string, platfor
 		return nil, nil, "", err
 	}
 
-	restConfig, err := credential.RESTConfig(cluster)
-	if err != nil {
-		return nil, nil, "", errors.NewInternalError(err)
-	}
+	restConfig := credential.RESTConfig(cluster)
 	transport, err := restclient.TransportFor(restConfig)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)

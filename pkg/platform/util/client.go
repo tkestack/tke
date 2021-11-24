@@ -37,6 +37,7 @@ import (
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
+	"tkestack.io/tke/pkg/platform/util/credential"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -51,7 +52,7 @@ func DynamicClientByCluster(ctx context.Context, cluster *platform.Cluster, plat
 		return nil, err
 	}
 
-	restConfig, err := provider.GetK8sRestConfig(ctx, platformClient, cluster, username)
+	restConfig, err := provider.GetRestConfig(ctx, platformClient, cluster, username)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +79,7 @@ func ClientSetByCluster(ctx context.Context, cluster *platform.Cluster, platform
 		return nil, err
 	}
 
-	restConfig, err := provider.GetK8sRestConfig(ctx, platformClient, cluster, username)
+	restConfig, err := provider.GetRestConfig(ctx, platformClient, cluster, username)
 	if err != nil {
 		return nil, err
 	}
@@ -111,24 +112,15 @@ func ResourceFromKind(kind string) string {
 
 // BuildVersionedClientSet creates the clientset of kubernetes by given
 // cluster object and returns it.
-func BuildVersionedClientSet(cluster *platformv1.Cluster, credential *platformv1.ClusterCredential) (*kubernetes.Clientset, error) {
-	restConfig, err := credential.RESTConfig(cluster)
-	if err != nil {
-		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
-		return nil, err
-	}
+func BuildVersionedClientSet(cluster *platformv1.Cluster, cc *platformv1.ClusterCredential) (*kubernetes.Clientset, error) {
+	restConfig := cc.RESTConfig(cluster)
 	return kubernetes.NewForConfig(restConfig)
 }
 
 // BuildExternalClientSet creates the clientset of kubernetes by given cluster
 // object and returns it.
 func BuildExternalClientSet(ctx context.Context, cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (*kubernetes.Clientset, error) {
-	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
-	if err != nil {
-		return nil, err
-	}
-
-	credential, err := provider.GetClusterCredentialV1(ctx, client, cluster, clusterprovider.AdminUsername)
+	cc, err := credential.GetClusterCredentialV1(ctx, client, cluster, clusterprovider.AdminUsername)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +129,7 @@ func BuildExternalClientSet(ctx context.Context, cluster *platformv1.Cluster, cl
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
 	}
 
-	return BuildVersionedClientSet(cluster, credential)
+	return BuildVersionedClientSet(cluster, cc)
 }
 
 // BuildExternalClientSetWithName creates the clientset of kubernetes by given cluster

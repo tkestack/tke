@@ -102,6 +102,7 @@ func (r *TappControllerREST) Connect(ctx context.Context, clusterName string, op
 	}
 
 	username, _ := authentication.UsernameAndTenantID(ctx)
+	// TODO: replace with restconfig
 	credential, err := provider.GetClusterCredential(ctx, r.platformClient, cluster, username)
 	if err != nil {
 		return nil, err
@@ -283,10 +284,7 @@ func getTapp(ctx context.Context, cluster *platform.Cluster, credential *platfor
 	if *clusterv1.Status.Locked {
 		return nil, fmt.Errorf("cluster %s has been locked", clusterv1.ObjectMeta.Name)
 	}
-	restConfig, err := clusterCredential.RESTConfig(&clusterv1)
-	if err != nil {
-		return nil, err
-	}
+	restConfig := clusterCredential.RESTConfig(&clusterv1)
 	dynamicclient, err := dynamic.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
@@ -313,9 +311,6 @@ func buildClientSet(ctx context.Context, cluster *platform.Cluster, credential *
 	if cluster.Status.Locked != nil && *cluster.Status.Locked {
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
 	}
-	restConfig, err := credential.RESTConfig(cluster)
-	if err != nil {
-		return nil, err
-	}
+	restConfig := credential.RESTConfig(cluster)
 	return kubernetes.NewForConfig(restConfig)
 }
