@@ -393,14 +393,13 @@ func (i ImpersonateUserExtra) ExtraToHeaders() map[string][]string {
 	return res
 }
 
-func (cc ClusterCredential) RESTConfig(cls *Cluster) (*rest.Config, error) {
+func (cc ClusterCredential) RESTConfig(cls *Cluster) *rest.Config {
 	config := &rest.Config{}
 	if cls != nil {
-		host, err := clusterHost(cls)
-		if err != nil {
-			return nil, err
+		host := clusterHost(cls)
+		if len(host) != 0 {
+			config.Host = fmt.Sprintf("https://%s", host)
 		}
-		config.Host = fmt.Sprintf("https://%s", host)
 	}
 	if cc.CACert != nil {
 		config.TLSClientConfig.CAData = cc.CACert
@@ -419,13 +418,13 @@ func (cc ClusterCredential) RESTConfig(cls *Cluster) (*rest.Config, error) {
 	config.Impersonate.Groups = cc.ImpersonateGroups
 	config.Impersonate.Extra = cc.ImpersonateUserExtra.ExtraToHeaders()
 
-	return config, nil
+	return config
 }
 
-func clusterHost(cluster *Cluster) (string, error) {
+func clusterHost(cluster *Cluster) string {
 	address, err := clusterAddress(cluster)
 	if err != nil {
-		return "", err
+		return ""
 	}
 
 	result := net.JoinHostPort(address.Host, fmt.Sprintf("%d", address.Port))
@@ -433,7 +432,7 @@ func clusterHost(cluster *Cluster) (string, error) {
 		result = path.Join(result, address.Path)
 	}
 
-	return result, nil
+	return result
 }
 
 func clusterAddress(cluster *Cluster) (*ClusterAddress, error) {

@@ -88,10 +88,10 @@ type CredentialProvider interface {
 	GetClusterCredentialV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*platformv1.ClusterCredential, error)
 }
 
-type K8sRestConfigProvider interface {
-	GetK8sRestConfig(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster, username string) (*rest.Config, error)
+type RestConfigProvider interface {
+	GetRestConfig(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster, username string) (*rest.Config, error)
 	// remove this method in future
-	GetK8sRestConfigV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*rest.Config, error)
+	GetRestConfigV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*rest.Config, error)
 }
 
 // Provider defines a set of response interfaces for specific cluster
@@ -102,7 +102,7 @@ type Provider interface {
 	APIProvider
 	ControllerProvider
 	CredentialProvider
-	K8sRestConfigProvider
+	RestConfigProvider
 }
 
 var _ Provider = &DelegateProvider{}
@@ -454,27 +454,21 @@ func (p *DelegateProvider) GetClusterCredentialV1(ctx context.Context, client pl
 }
 
 // GetClusterCredential returns the cluster's credential
-func (p *DelegateProvider) GetK8sRestConfig(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster, username string) (*rest.Config, error) {
+func (p *DelegateProvider) GetRestConfig(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster, username string) (*rest.Config, error) {
 	cc, err := credential.GetClusterCredential(ctx, client, cluster, username)
 	if err != nil {
 		return nil, err
 	}
-	config, err := cc.RESTConfig(cluster)
-	if err != nil {
-		return nil, err
-	}
+	config := cc.RESTConfig(cluster)
 	return config, nil
 }
 
 // GetClusterCredentialV1 returns the versioned cluster's credential
-func (p *DelegateProvider) GetK8sRestConfigV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*rest.Config, error) {
+func (p *DelegateProvider) GetRestConfigV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*rest.Config, error) {
 	cc, err := credential.GetClusterCredentialV1(ctx, client, cluster, username)
 	if err != nil {
 		return nil, err
 	}
-	config, err := cc.RESTConfig(cluster)
-	if err != nil {
-		return nil, err
-	}
+	config := cc.RESTConfig(cluster)
 	return config, nil
 }

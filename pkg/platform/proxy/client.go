@@ -39,6 +39,7 @@ import (
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
+	"tkestack.io/tke/pkg/platform/util/credential"
 )
 
 type clientX509Pool struct {
@@ -81,18 +82,22 @@ func GetConfig(ctx context.Context, platformClient platforminternalclient.Platfo
 		return nil, err
 	}
 
-	config := &rest.Config{}
+	var config *rest.Config
 	if cluster.AuthzWebhookEnabled() {
-		clientCertData, clientKeyData, err := getOrCreateClientCert(ctx, clusterWrapper.ClusterCredential)
+		cc, err := credential.GetClusterCredential(ctx, platformClient, cluster, clusterprovider.AdminUsername)
 		if err != nil {
 			return nil, err
 		}
-		config, err = clusterWrapper.RESTConfigForClientX509(config, clientCertData, clientKeyData)
+		clientCertData, clientKeyData, err := getOrCreateClientCert(ctx, cc)
+		if err != nil {
+			return nil, err
+		}
+		config, err = clusterWrapper.RESTConfigForClientX509(clientCertData, clientKeyData)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		config, err = clusterWrapper.RESTConfig(config)
+		config, err = clusterWrapper.RESTConfig()
 		if err != nil {
 			return nil, err
 		}

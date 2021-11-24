@@ -53,7 +53,7 @@ func (t *TKEClusterProvider) RestConfig(clusterName string) (*rest.Config, error
 	if err != nil {
 		return nil, err
 	}
-	return cred.RESTConfig(cls)
+	return cred.RESTConfig(cls), nil
 }
 
 func (t *TKEClusterProvider) Client(clusterName string, scheme *runtime.Scheme) (ctrlclient.Client, error) {

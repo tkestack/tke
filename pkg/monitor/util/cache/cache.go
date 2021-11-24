@@ -287,11 +287,7 @@ func (c *cacher) getMetricServerClientSet(ctx context.Context, cls *platformv1.C
 		return nil, err
 	}
 
-	restConfig, err := cc.RESTConfig(cls)
-	if err != nil {
-		log.Error("get rest config failed", log.Any("cluster", cls.GetName()), log.Err(err))
-		return nil, err
-	}
+	restConfig := cc.RESTConfig(cls)
 
 	return metricsv.NewForConfig(restConfig)
 }
@@ -717,12 +713,10 @@ func (c *cacher) getDynamicClients(ctx context.Context) (util.ClusterSet,
 			if resClusterSet[clusterID] != nil && *resClusterSet[clusterID].Status.Locked {
 				return resClusterSet, resClusterCredentialSet, resDynamicClientSet
 			}
-			restConfig, err := resClusterCredentialSet[clusterID].RESTConfig(resClusterSet[clusterID])
+			restConfig := resClusterCredentialSet[clusterID].RESTConfig(resClusterSet[clusterID])
+			dynamicClient, err := dynamic.NewForConfig(restConfig)
 			if err == nil {
-				dynamicClient, err := dynamic.NewForConfig(restConfig)
-				if err == nil {
-					resDynamicClientSet[clusterID] = dynamicClient
-				}
+				resDynamicClientSet[clusterID] = dynamicClient
 			}
 		}
 	}

@@ -21,6 +21,10 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"strings"
+	"time"
+
 	"golang.org/x/time/rate"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -31,9 +35,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	"reflect"
-	"strings"
-	"time"
 
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1informer "tkestack.io/tke/api/client/informers/externalversions/platform/v1"
@@ -346,6 +347,7 @@ func (c *Controller) onCreate(ctx context.Context, cluster *platformv1.Cluster) 
 		if err != nil {
 			return err
 		}
+		clusterWrapper.RegisterRestConfig(clusterWrapper.ClusterCredential.RESTConfig(cluster))
 		clusterWrapper.Cluster, err = c.platformClient.Clusters().Update(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 		if err != nil {
 			return err
@@ -384,6 +386,7 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 			if err != nil {
 				return err
 			}
+			clusterWrapper.RegisterRestConfig(clusterWrapper.ClusterCredential.RESTConfig(cluster))
 		}
 		clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 		if err != nil {
@@ -406,6 +409,7 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 				if err != nil {
 					return err
 				}
+				clusterWrapper.RegisterRestConfig(clusterWrapper.ClusterCredential.RESTConfig(cluster))
 			}
 			clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 			if err != nil {

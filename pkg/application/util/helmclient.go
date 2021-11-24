@@ -51,10 +51,7 @@ func NewHelmClient(ctx context.Context,
 	}
 	credential := list.Items[0]
 
-	restConfig, err := credential.RESTConfig(cluster)
-	if err != nil {
-		return nil, fmt.Errorf("get cluster's externalRestConfig error: %w", err)
-	}
+	restConfig := credential.RESTConfig(cluster)
 	restClientGetter := &helmconfig.RESTClientGetter{RestConfig: restConfig}
 	// we should set namespace here. If not, release will be installed in target namespace, but resources will not be installed in target namespace
 	restClientGetter.Namespace = &namespace
