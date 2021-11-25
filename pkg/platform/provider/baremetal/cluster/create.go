@@ -1115,6 +1115,10 @@ func (p *Provider) EnsureStoreCredential(ctx context.Context, c *v1.Cluster) err
 		c.IsCredentialChanged = true
 	}
 
+	if c.IsCredentialChanged {
+		c.RegisterRestConfig(c.ClusterCredential.RESTConfig(c.Cluster))
+	}
+
 	return nil
 }
 

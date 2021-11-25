@@ -104,6 +104,9 @@ func (c *Cluster) RESTConfigForBootstrap() (*rest.Config, error) {
 }
 
 func (c *Cluster) setRESTConfigDefaults() error {
+	if c.restConfig == nil {
+		c.restConfig = &rest.Config{}
+	}
 	if c.restConfig.Host == "" {
 		host, err := c.Host()
 		if err != nil {
