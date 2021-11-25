@@ -1,0 +1,18 @@
+# Cluster Credential Refacotr
+
+## 最终理想状态
+
+1、彻底废弃provider要求实现的ClusterCredentialProvider接口
+2、要求实现RestConfigProvider来进行目标集群凭证获取
+3、消除接口中的版本号要求
+4、尝试移除掉接口中的client入参
+
+## 步骤
+
+1、减少util中不必要的client创建方法
+2、提供RestConfigProvider的接口
+3、在TKEStack中实现RestConfigProvider接口，替代framework中的ClusterCredentialProvider调用。其中集群生命周期中设计到对Credential进行操作的地方会在controller中监视Credential是否被修改，若修改会从Credential中重新构建restconfig（provider实现者不需要关心），可以这么做的原因是考虑到集群生命周期管理中的client构建一定使用集群的最大权限，即credential中存储的访问凭证。
+4、移除TKEStack中addon、provider等对ClusterCredentialProvider接口的依赖，彻底废弃此接口
+5、合并RestConfigProvider的多版本号实现要求
+6、尝试移除接口中的client入参
+7、隔离在声明周期中client的构建方法和其他地方用到的client构建方法
