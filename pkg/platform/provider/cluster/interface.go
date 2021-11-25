@@ -459,7 +459,10 @@ func (p *DelegateProvider) GetRestConfig(ctx context.Context, client platformint
 	if err != nil {
 		return nil, err
 	}
-	config := cc.RESTConfig(cluster)
+	config := &rest.Config{}
+	if cc != nil {
+		config = cc.RESTConfig(cluster)
+	}
 	return config, nil
 }
 
@@ -469,6 +472,9 @@ func (p *DelegateProvider) GetRestConfigV1(ctx context.Context, client platformv
 	if err != nil {
 		return nil, err
 	}
-	config := cc.RESTConfig(cluster)
+	config := &rest.Config{}
+	if cc != nil {
+		config = cc.RESTConfig(cluster)
+	}
 	return config, nil
 }
