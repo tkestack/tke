@@ -95,7 +95,6 @@ type Provider interface {
 
 	APIProvider
 	ControllerProvider
-	// CredentialProvider
 	RestConfigProvider
 }
 
@@ -437,7 +436,7 @@ func (p *DelegateProvider) getCurrentCondition(c *v1.Cluster, phase platformv1.C
 	return nil, errors.New("no condition need process")
 }
 
-// GetClusterCredential returns the cluster's credential
+// GetRestConfig returns the cluster's rest config
 func (p *DelegateProvider) GetRestConfig(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster, username string) (*rest.Config, error) {
 	cc, err := credential.GetClusterCredential(ctx, client, cluster, username)
 	if err != nil {
@@ -450,7 +449,7 @@ func (p *DelegateProvider) GetRestConfig(ctx context.Context, client platformint
 	return config, nil
 }
 
-// GetClusterCredentialV1 returns the versioned cluster's credential
+// GetRestConfigV1 returns the cluster's rest config
 func (p *DelegateProvider) GetRestConfigV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*rest.Config, error) {
 	cc, err := credential.GetClusterCredentialV1(ctx, client, cluster, username)
 	if err != nil {

@@ -98,7 +98,6 @@ func ValidateClusterAddresses(addresses []platform.ClusterAddress, fldPath *fiel
 func ValidateClusterCredentialRef(ctx context.Context, cluster *types.Cluster, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	// TODO: replace restconfig
 	credential := cluster.ClusterCredential
 
 	if credential.ClientCert == nil && credential.ClientKey != nil ||
