@@ -82,12 +82,6 @@ type ControllerProvider interface {
 	OnRunning(ctx context.Context, cluster *v1.Cluster) error
 }
 
-// remove this porvider in future
-type CredentialProvider interface {
-	GetClusterCredential(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster, username string) (*platform.ClusterCredential, error)
-	GetClusterCredentialV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*platformv1.ClusterCredential, error)
-}
-
 type RestConfigProvider interface {
 	GetRestConfig(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster, username string) (*rest.Config, error)
 	// remove this method in future
@@ -101,7 +95,7 @@ type Provider interface {
 
 	APIProvider
 	ControllerProvider
-	CredentialProvider
+	// CredentialProvider
 	RestConfigProvider
 }
 
@@ -441,16 +435,6 @@ func (p *DelegateProvider) getCurrentCondition(c *v1.Cluster, phase platformv1.C
 		}, nil
 	}
 	return nil, errors.New("no condition need process")
-}
-
-// GetClusterCredential returns the cluster's credential
-func (p *DelegateProvider) GetClusterCredential(ctx context.Context, client platforminternalclient.PlatformInterface, cluster *platform.Cluster, username string) (*platform.ClusterCredential, error) {
-	return credential.GetClusterCredential(ctx, client, cluster, username)
-}
-
-// GetClusterCredentialV1 returns the versioned cluster's credential
-func (p *DelegateProvider) GetClusterCredentialV1(ctx context.Context, client platformversionedclient.PlatformV1Interface, cluster *platformv1.Cluster, username string) (*platformv1.ClusterCredential, error) {
-	return credential.GetClusterCredentialV1(ctx, client, cluster, username)
 }
 
 // GetClusterCredential returns the cluster's credential
