@@ -710,7 +710,7 @@ func (c *cacher) getDynamicClients(ctx context.Context) (util.ClusterSet,
 		clusterID := cc.ClusterName
 		resClusterCredentialSet[clusterID] = &clusterCredentials.Items[i]
 		if _, ok := resClusterSet[clusterID]; ok {
-			if resClusterSet[clusterID] != nil && *resClusterSet[clusterID].Status.Locked {
+			if resClusterSet[clusterID] != nil && resClusterSet[clusterID].Status.Locked != nil && *resClusterSet[clusterID].Status.Locked {
 				return resClusterSet, resClusterCredentialSet, resDynamicClientSet
 			}
 			restConfig := resClusterCredentialSet[clusterID].RESTConfig(resClusterSet[clusterID])
