@@ -103,7 +103,7 @@ func (r *TappControllerREST) Connect(ctx context.Context, clusterName string, op
 	}
 
 	username, _ := authentication.UsernameAndTenantID(ctx)
-	config, err := provider.GetRestConfig(ctx, r.platformClient, cluster, username)
+	config, err := provider.GetRestConfig(ctx, cluster, username)
 	if err != nil {
 		return nil, err
 	}
