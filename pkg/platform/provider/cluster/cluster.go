@@ -123,7 +123,12 @@ func GetCluster(ctx context.Context, platformClient internalversion.PlatformInte
 	if err != nil && !apierrors.IsNotFound(err) {
 		return result, err
 	}
-	restConfig, err := provider.GetRestConfig(ctx, cluster, username)
+	clusterv1 := &platformv1.Cluster{}
+	err = platformv1.Convert_platform_Cluster_To_v1_Cluster(cluster, clusterv1, nil)
+	if err != nil {
+		return nil, err
+	}
+	restConfig, err := provider.GetRestConfig(ctx, clusterv1, username)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return result, err
 	}
@@ -153,7 +158,7 @@ func GetV1Cluster(ctx context.Context, platformClient platformversionedclient.Pl
 	if err != nil && !apierrors.IsNotFound(err) {
 		return result, err
 	}
-	restConfig, err := provider.GetRestConfigV1(ctx, cluster, username)
+	restConfig, err := provider.GetRestConfig(ctx, cluster, username)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return result, err
 	}
