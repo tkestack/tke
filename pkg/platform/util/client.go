@@ -52,7 +52,7 @@ func DynamicClientByCluster(ctx context.Context, cluster *platform.Cluster, plat
 		return nil, err
 	}
 
-	restConfig, err := provider.GetRestConfig(ctx, platformClient, cluster, username)
+	restConfig, err := provider.GetRestConfig(ctx, cluster, username)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func ClientSetByCluster(ctx context.Context, cluster *platform.Cluster, platform
 		return nil, err
 	}
 
-	restConfig, err := provider.GetRestConfig(ctx, platformClient, cluster, username)
+	restConfig, err := provider.GetRestConfig(ctx, cluster, username)
 	if err != nil {
 		return nil, err
 	}

@@ -57,7 +57,7 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, 
 		return nil, nil, "", errors.NewInternalError(err)
 	}
 
-	restconfig, err := provider.GetRestConfig(ctx, platformClient, cluster, username)
+	restconfig, err := provider.GetRestConfig(ctx, cluster, username)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
