@@ -34,7 +34,6 @@ import (
 	"k8s.io/apiserver/pkg/server/mux"
 	"k8s.io/client-go/rest"
 	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/types"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -82,9 +81,7 @@ type ControllerProvider interface {
 }
 
 type RestConfigProvider interface {
-	GetRestConfig(ctx context.Context, cluster *platform.Cluster, username string) (*rest.Config, error)
-	// remove this method in future
-	GetRestConfigV1(ctx context.Context, cluster *platformv1.Cluster, username string) (*rest.Config, error)
+	GetRestConfig(ctx context.Context, cluster *platformv1.Cluster, username string) (*rest.Config, error)
 }
 
 // Provider defines a set of response interfaces for specific cluster
@@ -436,29 +433,8 @@ func (p *DelegateProvider) getCurrentCondition(c *v1.Cluster, phase platformv1.C
 	return nil, errors.New("no condition need process")
 }
 
-// GetRestConfig returns the cluster's rest config
-func (p *DelegateProvider) GetRestConfig(ctx context.Context, cluster *platform.Cluster, username string) (*rest.Config, error) {
-	if p.PlatformClient == nil {
-		return nil, fmt.Errorf("provider platform client is nil")
-	}
-	clusterv1 := &platformv1.Cluster{}
-	err := platformv1.Convert_platform_Cluster_To_v1_Cluster(cluster, clusterv1, nil)
-	if err != nil {
-		return nil, err
-	}
-	cc, err := credential.GetClusterCredentialV1(ctx, p.PlatformClient, clusterv1, username)
-	if err != nil {
-		return nil, err
-	}
-	config := &rest.Config{}
-	if cc != nil {
-		config = cc.RESTConfig(clusterv1)
-	}
-	return config, nil
-}
-
 // GetRestConfigV1 returns the cluster's rest config
-func (p *DelegateProvider) GetRestConfigV1(ctx context.Context, cluster *platformv1.Cluster, username string) (*rest.Config, error) {
+func (p *DelegateProvider) GetRestConfig(ctx context.Context, cluster *platformv1.Cluster, username string) (*rest.Config, error) {
 	if p.PlatformClient == nil {
 		return nil, fmt.Errorf("provider platform client is nil")
 	}

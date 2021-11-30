@@ -34,6 +34,7 @@ import (
 	restclient "k8s.io/client-go/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 )
 
@@ -57,7 +58,13 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platform.Cluster, 
 		return nil, nil, "", errors.NewInternalError(err)
 	}
 
-	restconfig, err := provider.GetRestConfig(ctx, cluster, username)
+	clusterv1 := &platformv1.Cluster{}
+	err = platformv1.Convert_platform_Cluster_To_v1_Cluster(cluster, clusterv1, nil)
+	if err != nil {
+		return nil, nil, "", errors.NewInternalError(err)
+	}
+
+	restconfig, err := provider.GetRestConfig(ctx, clusterv1, username)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
