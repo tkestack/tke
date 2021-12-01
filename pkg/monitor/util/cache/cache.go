@@ -352,6 +352,10 @@ func NewCacher(platformClient platformversionedclient.PlatformV1Interface,
 
 func (c *cacher) getTApps(ctx context.Context, curDynamicClientSet util.DynamicClientSet, cluster string) int {
 	count := 0
+	if curDynamicClientSet[cluster] == nil {
+		log.Info("Query TApps failed", log.Any("cluster", cluster), log.Err(fmt.Errorf("DynamicClientSet is nil")))
+		return 0
+	}
 	content, err := curDynamicClientSet[cluster].Resource(TAppResource).
 		Namespace(AllNamespaces).List(ctx, metav1.ListOptions{})
 	if content == nil || (err != nil && !errors.IsNotFound(err)) {
