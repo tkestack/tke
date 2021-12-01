@@ -27,7 +27,6 @@ import (
 	"k8s.io/client-go/rest"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	platformutil "tkestack.io/tke/pkg/platform/util"
 )
 
 // TKEClusterProvider get kubeconfig from tkestack platform api
@@ -54,7 +53,7 @@ func (t *TKEClusterProvider) RestConfig(clusterName string) (*rest.Config, error
 	if err != nil {
 		return nil, err
 	}
-	return platformutil.GetExternalRestConfig(cls, cred)
+	return cred.RESTConfig(cls), nil
 }
 
 func (t *TKEClusterProvider) Client(clusterName string, scheme *runtime.Scheme) (ctrlclient.Client, error) {

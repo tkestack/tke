@@ -3216,10 +3216,7 @@ func (m *Chart) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -3368,10 +3365,7 @@ func (m *ChartGroup) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -3517,10 +3511,7 @@ func (m *ChartGroupImport) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -3637,10 +3628,7 @@ func (m *ChartGroupList) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -4043,10 +4031,7 @@ func (m *ChartGroupSpec) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -4265,10 +4250,7 @@ func (m *ChartGroupStatus) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -4384,10 +4366,7 @@ func (m *ChartInfo) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -4547,7 +4526,7 @@ func (m *ChartInfoSpec) Unmarshal(dAtA []byte) error {
 					if err != nil {
 						return err
 					}
-					if skippy < 0 {
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
 						return ErrInvalidLengthGenerated
 					}
 					if (iNdEx + skippy) > postIndex {
@@ -4674,7 +4653,7 @@ func (m *ChartInfoSpec) Unmarshal(dAtA []byte) error {
 					if err != nil {
 						return err
 					}
-					if skippy < 0 {
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
 						return ErrInvalidLengthGenerated
 					}
 					if (iNdEx + skippy) > postIndex {
@@ -4801,7 +4780,7 @@ func (m *ChartInfoSpec) Unmarshal(dAtA []byte) error {
 					if err != nil {
 						return err
 					}
-					if skippy < 0 {
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
 						return ErrInvalidLengthGenerated
 					}
 					if (iNdEx + skippy) > postIndex {
@@ -4884,10 +4863,7 @@ func (m *ChartInfoSpec) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -5004,10 +4980,7 @@ func (m *ChartList) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -5153,10 +5126,7 @@ func (m *ChartProxyOptions) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -5398,10 +5368,7 @@ func (m *ChartSpec) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -5654,10 +5621,7 @@ func (m *ChartStatus) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -5887,10 +5851,7 @@ func (m *ChartVersion) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -6083,7 +6044,7 @@ func (m *ConfigMap) Unmarshal(dAtA []byte) error {
 					if err != nil {
 						return err
 					}
-					if skippy < 0 {
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
 						return ErrInvalidLengthGenerated
 					}
 					if (iNdEx + skippy) > postIndex {
@@ -6211,7 +6172,7 @@ func (m *ConfigMap) Unmarshal(dAtA []byte) error {
 					if err != nil {
 						return err
 					}
-					if skippy < 0 {
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
 						return ErrInvalidLengthGenerated
 					}
 					if (iNdEx + skippy) > postIndex {
@@ -6228,10 +6189,7 @@ func (m *ConfigMap) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -6348,10 +6306,7 @@ func (m *ConfigMapList) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -6500,10 +6455,7 @@ func (m *Namespace) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -6620,10 +6572,7 @@ func (m *NamespaceList) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -6801,10 +6750,7 @@ func (m *NamespaceSpec) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -6894,10 +6840,7 @@ func (m *NamespaceStatus) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -7046,10 +6989,7 @@ func (m *Repository) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -7166,10 +7106,7 @@ func (m *RepositoryList) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -7379,10 +7316,7 @@ func (m *RepositorySpec) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -7506,10 +7440,7 @@ func (m *RepositoryStatus) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {
@@ -7656,10 +7587,7 @@ func (m *RepositoryTag) Unmarshal(dAtA []byte) error {
 			if err != nil {
 				return err
 			}
-			if skippy < 0 {
-				return ErrInvalidLengthGenerated
-			}
-			if (iNdEx + skippy) < 0 {
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
 				return ErrInvalidLengthGenerated
 			}
 			if (iNdEx + skippy) > l {

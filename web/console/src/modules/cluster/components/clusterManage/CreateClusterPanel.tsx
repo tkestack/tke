@@ -32,6 +32,7 @@ import { router } from '../../router';
 import { RootProps } from '../ClusterApp';
 import { ClusterSubpageHeaderPanel } from './ClusterSubpageHeaderPanel';
 import { KubeconfigFileParse } from './KubeconfigFileParse';
+import { AsUserExtraInput } from './AsUserExtraInput';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
@@ -57,7 +58,11 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
         name,
         token,
         clientCert,
-        clientKey
+        clientKey,
+        username,
+        as,
+        asGroups,
+        asUserExtra
       } = clusterCreationState;
     const workflow = createClusterFlow;
     const action = actions.workflow.createCluster;
@@ -73,6 +78,18 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
 
       router.navigate({}, { rid: route.queries['rid'] });
     };
+
+    function transAsUserExtra(asUserExtra: { key: string; value: string }[]) {
+      if (!asUserExtra || asUserExtra.length <= 0) return undefined;
+
+      return asUserExtra.reduce(
+        (all, { key, value }) => ({
+          ...all,
+          [key]: all?.[key] ? `${all?.[key]},${value}` : value
+        }),
+        {}
+      );
+    }
 
     const perform = () => {
       actions.validate.clusterCreation.validateclusterCreationState();
@@ -122,13 +139,15 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
             credential: {
               caCert: certIsBase64 ? clusterCreationState.certFile : window.btoa(clusterCreationState.certFile),
               clientCert: clusterCreationState.clientCert || undefined,
-              clientKey: clusterCreationState.clientKey || undefined
+              clientKey: clusterCreationState.clientKey || undefined,
+              token: clusterCreationState.token || undefined,
+              username: clusterCreationState.username || undefined,
+              as: clusterCreationState.as || undefined,
+              'as-groups': clusterCreationState.asGroups ? clusterCreationState.asGroups.split(',') : undefined,
+              'as-user-extra': transAsUserExtra(asUserExtra)
             }
           }
         };
-        if (clusterCreationState.token) {
-          data.status.credential['token'] = clusterCreationState.token;
-        }
 
         const createClusterData: CreateResource[] = [
           {
@@ -142,9 +161,8 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
         action.perform();
       }
     };
-    function parseKubeconfigSuccess({ apiServer, certFile, token, clientCert, clientKey }) {
-      console.log(apiServer, certFile, token);
-      actions.clusterCreation.updateClusterCreationState({ apiServer, certFile, token, clientCert, clientKey });
+    function parseKubeconfigSuccess(params) {
+      actions.clusterCreation.updateClusterCreationState({ ...params });
     }
 
     const failed = workflow.operationState === OperationState.Done && !isSuccessWorkflow(workflow);
@@ -220,6 +238,43 @@ export class CreateClusterPanel extends React.Component<RootProps, {}> {
                 placeholder={t('请输入Client-Key')}
                 tipMode="popup"
                 onChange={value => actions.clusterCreation.updateClusterCreationState({ clientKey: value })}
+              />
+            </FormPanel.Item>
+
+            <FormPanel.Item label="username">
+              <InputField
+                type="textarea"
+                value={username}
+                placeholder={t('请输入username')}
+                tipMode="popup"
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ username: value })}
+              />
+            </FormPanel.Item>
+
+            <FormPanel.Item label="as">
+              <InputField
+                type="textarea"
+                value={as}
+                placeholder={t('请输入as')}
+                tipMode="popup"
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ as: value })}
+              />
+            </FormPanel.Item>
+
+            <FormPanel.Item label="as-groups">
+              <InputField
+                type="textarea"
+                value={asGroups}
+                placeholder={t('请输入as-groups，多个group以逗号分隔')}
+                tipMode="popup"
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ asGroups: value })}
+              />
+            </FormPanel.Item>
+
+            <FormPanel.Item label="as-user-extra">
+              <AsUserExtraInput
+                data={asUserExtra}
+                onChange={value => actions.clusterCreation.updateClusterCreationState({ asUserExtra: value })}
               />
             </FormPanel.Item>
 

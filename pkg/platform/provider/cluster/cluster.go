@@ -33,6 +33,7 @@ import (
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/types"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/platform/util/credential"
 )
 
 var (
@@ -118,11 +119,21 @@ func GetCluster(ctx context.Context, platformClient internalversion.PlatformInte
 	if err != nil {
 		return nil, err
 	}
-	clusterCredential, err := provider.GetClusterCredential(ctx, platformClient, cluster, username)
+	clusterCredential, err := credential.GetClusterCredential(ctx, platformClient, cluster, username)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return result, err
+	}
+	clusterv1 := &platformv1.Cluster{}
+	err = platformv1.Convert_platform_Cluster_To_v1_Cluster(cluster, clusterv1, nil)
+	if err != nil {
+		return nil, err
+	}
+	restConfig, err := provider.GetRestConfig(ctx, clusterv1, username)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return result, err
 	}
 	result.ClusterCredential = clusterCredential
+	result.RegisterRestConfig(restConfig)
 
 	return result, nil
 }
@@ -143,11 +154,16 @@ func GetV1Cluster(ctx context.Context, platformClient platformversionedclient.Pl
 	if err != nil {
 		return nil, err
 	}
-	clusterCredential, err := provider.GetClusterCredentialV1(ctx, platformClient, cluster, username)
+	clusterCredential, err := credential.GetClusterCredentialV1(ctx, platformClient, cluster, username)
+	if err != nil && !apierrors.IsNotFound(err) {
+		return result, err
+	}
+	restConfig, err := provider.GetRestConfig(ctx, cluster, username)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return result, err
 	}
 	result.ClusterCredential = clusterCredential
+	result.RegisterRestConfig(restConfig)
 
 	return result, nil
 }

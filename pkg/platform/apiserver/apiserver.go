@@ -27,7 +27,6 @@ import (
 	autoscalingv2beta1 "k8s.io/api/autoscaling/v2beta1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
-	batchv2alpha1 "k8s.io/api/batch/v2alpha1"
 	certv1beta1 "k8s.io/api/certificates/v1beta1"
 	coordinationv1 "k8s.io/api/coordination/v1"
 	coordinationv1beta1 "k8s.io/api/coordination/v1beta1"
@@ -45,7 +44,6 @@ import (
 	schedulingv1 "k8s.io/api/scheduling/v1"
 	schedulingv1alpha1 "k8s.io/api/scheduling/v1alpha1"
 	schedulingv1beta "k8s.io/api/scheduling/v1beta1"
-	settingsv1alpha1 "k8s.io/api/settings/v1alpha1"
 	storagev1 "k8s.io/api/storage/v1"
 	storagev1alpha1 "k8s.io/api/storage/v1alpha1"
 	storagev1beta1 "k8s.io/api/storage/v1beta1"
@@ -54,6 +52,7 @@ import (
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	platformv1 "tkestack.io/tke/api/platform/v1"
+	"tkestack.io/tke/cmd/tke-platform-api/app/options"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	admissionrest "tkestack.io/tke/pkg/platform/proxy/admissionregistration/rest"
 	appsrest "tkestack.io/tke/pkg/platform/proxy/apps/rest"
@@ -69,7 +68,6 @@ import (
 	policyrest "tkestack.io/tke/pkg/platform/proxy/policy/rest"
 	rbacrest "tkestack.io/tke/pkg/platform/proxy/rbac/rest"
 	schedulingrest "tkestack.io/tke/pkg/platform/proxy/scheduling/rest"
-	settingsrest "tkestack.io/tke/pkg/platform/proxy/settings/rest"
 	storagerest "tkestack.io/tke/pkg/platform/proxy/storage/rest"
 	proxyrest "tkestack.io/tke/pkg/platform/registry/cluster/storage"
 	platformrest "tkestack.io/tke/pkg/platform/registry/rest"
@@ -83,6 +81,7 @@ type ExtraConfig struct {
 	StorageFactory          serverstorage.StorageFactory
 	VersionedInformers      versionedinformers.SharedInformerFactory
 	PrivilegedUsername      string
+	FeatureOptions          *options.FeatureOptions
 }
 
 // Config contains the core configuration instance of apiserver and
@@ -151,7 +150,6 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		&policyrest.StorageProvider{LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig},
 		&rbacrest.StorageProvider{LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig},
 		&schedulingrest.StorageProvider{LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig},
-		&settingsrest.StorageProvider{LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig},
 		&storagerest.StorageProvider{LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig},
 
 		&platformrest.StorageProvider{
@@ -160,11 +158,12 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		},
 	}
 
-	notFoundProxy := proxyrest.CustomResourceHandler{
-		LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
+	if c.ExtraConfig.FeatureOptions.NotFoundCRDProxy {
+		notFoundProxy := proxyrest.CustomResourceHandler{
+			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
+		}
+		m.GenericAPIServer.Handler.NonGoRestfulMux.NotFoundHandler(&notFoundProxy)
 	}
-
-	m.GenericAPIServer.Handler.NonGoRestfulMux.NotFoundHandler(&notFoundProxy)
 
 	m.InstallAPIs(c.ExtraConfig.APIResourceConfigSource, c.GenericConfig.RESTOptionsGetter, restStorageProviders...)
 
@@ -235,7 +234,6 @@ func DefaultAPIResourceConfigSource() *serverstorage.ResourceConfig {
 
 		batchv1.SchemeGroupVersion,
 		batchv1beta1.SchemeGroupVersion,
-		batchv2alpha1.SchemeGroupVersion,
 
 		corev1.SchemeGroupVersion,
 		certv1beta1.SchemeGroupVersion,
@@ -257,8 +255,6 @@ func DefaultAPIResourceConfigSource() *serverstorage.ResourceConfig {
 		schedulingv1alpha1.SchemeGroupVersion,
 		schedulingv1beta.SchemeGroupVersion,
 		schedulingv1.SchemeGroupVersion,
-
-		settingsv1alpha1.SchemeGroupVersion,
 
 		nodev1alpha1.SchemeGroupVersion,
 		nodev1beta.SchemeGroupVersion,

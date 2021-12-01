@@ -28,7 +28,6 @@ import (
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	helmconfig "tkestack.io/tke/pkg/application/helm/config"
-	platformutil "tkestack.io/tke/pkg/platform/util"
 )
 
 // NewHelmClient return a new client used to run helm cmd
@@ -52,10 +51,7 @@ func NewHelmClient(ctx context.Context,
 	}
 	credential := list.Items[0]
 
-	restConfig, err := platformutil.GetExternalRestConfig(cluster, &credential)
-	if err != nil {
-		return nil, fmt.Errorf("get cluster's externalRestConfig error: %w", err)
-	}
+	restConfig := credential.RESTConfig(cluster)
 	restClientGetter := &helmconfig.RESTClientGetter{RestConfig: restConfig}
 	// we should set namespace here. If not, release will be installed in target namespace, but resources will not be installed in target namespace
 	restClientGetter.Namespace = &namespace

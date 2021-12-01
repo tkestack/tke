@@ -30,10 +30,10 @@ import (
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/apiserver/cluster"
-	_ "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
-	_ "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
-	_ "tkestack.io/tke/pkg/platform/provider/imported/cluster"
-	_ "tkestack.io/tke/pkg/platform/provider/registered/cluster"
+	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
+	baremetalmachine "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
+	importedcluster "tkestack.io/tke/pkg/platform/provider/imported/cluster"
 	"tkestack.io/tke/test/e2e/tke"
 	tke2 "tkestack.io/tke/test/tke"
 	"tkestack.io/tke/test/util"
@@ -53,12 +53,18 @@ var (
 )
 
 var _ = BeforeSuite(func() {
+	// baremetalcluster.RegisterProvider()
+	bp, _ := baremetalcluster.NewProvider()
+	baremetalmachine.RegisterProvider()
+	importedcluster.RegisterProvider()
 	t.Create()
 
 	tkeKubeConfigFile = t.GetKubeConfigFile()
 	restConf, err := t.GetKubeConfig()
 	Expect(err).To(BeNil())
 	tkeClient := tkeclientset.NewForConfigOrDie(restConf)
+	bp.PlatformClient = tkeClient.PlatformV1()
+	clusterprovider.Register(bp.Name(), bp)
 	testTKE = tke2.Init(tkeClient, provider)
 })
 

@@ -70,7 +70,8 @@ func (config Config) New() (authorizer.Authorizer, authorizer.RuleResolver, erro
 			webhookAuthorizer, err := webhook.New(config.WebhookConfigFile,
 				config.WebhookVersion,
 				config.WebhookCacheAuthorizedTTL,
-				config.WebhookCacheUnauthorizedTTL, nil)
+				config.WebhookCacheUnauthorizedTTL,
+				*webhook.DefaultRetryBackoff(), nil)
 			if err != nil {
 				return nil, nil, err
 			}

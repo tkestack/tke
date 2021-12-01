@@ -41,4 +41,17 @@ export interface ClusterCreationState extends Identifiable {
 
   clientCert?: string;
   clientKey?: string;
+
+  username?: string;
+  as?: string;
+
+  asGroups?: string;
+
+  asUserExtra?: Array<{
+    id: string;
+    key: string;
+    value: string;
+  }>;
+
+  v_asUserExtra?: Validation;
 }

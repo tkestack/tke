@@ -343,7 +343,15 @@ export const initClusterCreationState = {
 
   jsonData: {},
 
-  currentStep: 1
+  currentStep: 1,
+
+  clientCert: '',
+  clientKey: '',
+  username: '',
+  as: '',
+  asGroups: '',
+  asUserExtra: [],
+  v_asUserExtra: initValidator
 };
 
 export const initAllcationRatioEdition = {

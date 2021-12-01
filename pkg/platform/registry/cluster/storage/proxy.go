@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2021 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -30,18 +30,18 @@ import (
 	"strings"
 	"time"
 
+	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	"tkestack.io/tke/pkg/platform/apiserver/filter"
 	"tkestack.io/tke/pkg/platform/proxy"
+	"tkestack.io/tke/pkg/platform/util"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
-	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	"tkestack.io/tke/api/platform"
-	"tkestack.io/tke/pkg/platform/apiserver/filter"
-	"tkestack.io/tke/pkg/platform/util"
 )
 
 // ProxyREST implements proxy native api request to cluster of user.

@@ -52,7 +52,6 @@ import (
 	"k8s.io/apiserver/pkg/authentication/user"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd/api"
 	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
 	certutil "k8s.io/client-go/util/cert"
@@ -2354,7 +2353,7 @@ func (t *TKE) preparePushImagesToTKERegistry(ctx context.Context) error {
 func (t *TKE) registerAPI(ctx context.Context) error {
 	caCert, _ := ioutil.ReadFile(constants.CACrtFile)
 
-	restConfig, err := t.Cluster.RESTConfigForBootstrap(&rest.Config{})
+	restConfig, err := t.Cluster.RESTConfigForBootstrap()
 	if err != nil {
 		return err
 	}

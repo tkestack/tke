@@ -39,6 +39,7 @@ import (
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
+	"tkestack.io/tke/pkg/platform/util/credential"
 )
 
 type clientX509Pool struct {
@@ -81,18 +82,22 @@ func GetConfig(ctx context.Context, platformClient platforminternalclient.Platfo
 		return nil, err
 	}
 
-	config := &rest.Config{}
+	var config *rest.Config
 	if cluster.AuthzWebhookEnabled() {
-		clientCertData, clientKeyData, err := getOrCreateClientCert(ctx, clusterWrapper.ClusterCredential)
+		cc, err := credential.GetClusterCredential(ctx, platformClient, cluster, clusterprovider.AdminUsername)
 		if err != nil {
 			return nil, err
 		}
-		config, err = clusterWrapper.RESTConfigForClientX509(config, clientCertData, clientKeyData)
+		clientCertData, clientKeyData, err := getOrCreateClientCert(ctx, cc)
+		if err != nil {
+			return nil, err
+		}
+		config, err = clusterWrapper.RESTConfigForClientX509(clientCertData, clientKeyData)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		config, err = clusterWrapper.RESTConfig(config)
+		config, err = clusterWrapper.RESTConfig()
 		if err != nil {
 			return nil, err
 		}
@@ -179,8 +184,6 @@ func RESTClientFor(clientSet *kubernetes.Clientset, apiGroup, apiVersion string)
 		return clientSet.BatchV1().RESTClient()
 	case "batch/v1beta1":
 		return clientSet.BatchV1beta1().RESTClient()
-	case "batch/v2alpha1":
-		return clientSet.BatchV2alpha1().RESTClient()
 	case "certificates.k8s.io/v1beta1":
 		return clientSet.CertificatesV1beta1().RESTClient()
 	case "events.k8s.io/v1beta1":
@@ -213,8 +216,6 @@ func RESTClientFor(clientSet *kubernetes.Clientset, apiGroup, apiVersion string)
 		return clientSet.NodeV1beta1().RESTClient()
 	case "scheduling.k8s.io/v1":
 		return clientSet.SchedulingV1().RESTClient()
-	case "settings.k8s.io/v1alpha1":
-		return clientSet.SettingsV1alpha1().RESTClient()
 	case "storage.k8s.io/v1alpha1":
 		return clientSet.StorageV1alpha1().RESTClient()
 	case "storage.k8s.io/v1":

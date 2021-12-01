@@ -84,7 +84,7 @@ func (p *Provider) EnsureRemoveNode(ctx context.Context, c *v1.Cluster) error {
 func (p *Provider) EnsureRemoveMachine(ctx context.Context, c *v1.Cluster) error {
 	log.FromContext(ctx).Info("delete machine start")
 	fieldSelector := fields.OneTermEqualSelector("spec.clusterName", c.Name).String()
-	machineList, err := p.platformClient.Machines().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
+	machineList, err := p.PlatformClient.Machines().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
 	if err != nil {
 		return err
 	}
@@ -92,14 +92,14 @@ func (p *Provider) EnsureRemoveMachine(ctx context.Context, c *v1.Cluster) error
 		return nil
 	}
 	for _, machine := range machineList.Items {
-		if err := p.platformClient.Machines().Delete(ctx, machine.Name, metav1.DeleteOptions{}); err != nil {
+		if err := p.PlatformClient.Machines().Delete(ctx, machine.Name, metav1.DeleteOptions{}); err != nil {
 			if errors.IsNotFound(err) {
 				return nil
 			}
 			return err
 		}
 
-		if err = wait.PollImmediate(5*time.Second, 5*time.Minute, waitForMachineDelete(ctx, p.platformClient, machine.Name)); err != nil {
+		if err = wait.PollImmediate(5*time.Second, 5*time.Minute, waitForMachineDelete(ctx, p.PlatformClient, machine.Name)); err != nil {
 			return err
 		}
 	}

@@ -194,7 +194,7 @@ func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Clus
 	if err != nil {
 		return err
 	}
-	machines, err := p.platformClient.Machines().List(context.TODO(), metav1.ListOptions{
+	machines, err := p.PlatformClient.Machines().List(context.TODO(), metav1.ListOptions{
 		LabelSelector: requirement.String(),
 		FieldSelector: fields.OneTermEqualSelector(platformv1.MachineClusterField, c.Name).String(),
 	})
@@ -228,7 +228,7 @@ func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Clus
 		if err != nil {
 			return err
 		}
-		upgraded, err := kubeadm.UpgradeNode(s, client, p.platformClient, logger, c, option)
+		upgraded, err := kubeadm.UpgradeNode(s, client, p.PlatformClient, logger, c, option)
 		if err != nil {
 			return err
 		}
@@ -239,10 +239,10 @@ func (p *Provider) EnsureUpgradeControlPlaneNode(ctx context.Context, c *v1.Clus
 				// set willUpgrade value to all worker node when upgraded all master nodes and upgrade mode is auto.
 				labelValue = kubeadm.WillUpgrade
 			}
-			if err := kubeadm.AddNeedUpgradeLabel(p.platformClient, c.Name, labelValue); err != nil {
+			if err := kubeadm.AddNeedUpgradeLabel(p.PlatformClient, c.Name, labelValue); err != nil {
 				return err
 			}
-			err = kubeadm.MarkNextUpgradeWorkerNode(client, p.platformClient, option.Version, c.Name)
+			err = kubeadm.MarkNextUpgradeWorkerNode(client, p.PlatformClient, option.Version, c.Name)
 			if err != nil {
 				return err
 			}

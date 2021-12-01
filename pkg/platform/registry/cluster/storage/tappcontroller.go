@@ -42,6 +42,9 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
+	restclient "k8s.io/client-go/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -100,19 +103,24 @@ func (r *TappControllerREST) Connect(ctx context.Context, clusterName string, op
 	}
 
 	username, _ := authentication.UsernameAndTenantID(ctx)
-	credential, err := provider.GetClusterCredential(ctx, r.platformClient, cluster, username)
+	clusterv1 := &platformv1.Cluster{}
+	err = platformv1.Convert_platform_Cluster_To_v1_Cluster(cluster, clusterv1, nil)
+	if err != nil {
+		return nil, err
+	}
+	config, err := provider.GetRestConfig(ctx, clusterv1, username)
 	if err != nil {
 		return nil, err
 	}
 	return &tappControllerProxyHandler{
-		location:          location,
-		transport:         transport,
-		cluster:           cluster,
-		clusterCredential: credential,
-		token:             token,
-		namespace:         proxyOpts.Namespace,
-		name:              proxyOpts.Name,
-		action:            proxyOpts.Action,
+		location:   location,
+		transport:  transport,
+		cluster:    cluster,
+		restConfig: config,
+		token:      token,
+		namespace:  proxyOpts.Namespace,
+		name:       proxyOpts.Name,
+		action:     proxyOpts.Action,
 	}, nil
 }
 
@@ -122,14 +130,14 @@ func (r *TappControllerREST) New() runtime.Object {
 }
 
 type tappControllerProxyHandler struct {
-	transport         http.RoundTripper
-	cluster           *platform.Cluster
-	clusterCredential *platform.ClusterCredential
-	location          *url.URL
-	token             string
-	namespace         string
-	name              string
-	action            string
+	transport  http.RoundTripper
+	cluster    *platform.Cluster
+	restConfig *restclient.Config
+	location   *url.URL
+	token      string
+	namespace  string
+	name       string
+	action     string
 }
 
 func (h *tappControllerProxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -190,7 +198,7 @@ func (h *tappControllerProxyHandler) serveAction(w http.ResponseWriter, req *htt
 }
 
 func (h *tappControllerProxyHandler) getPodList(ctx context.Context) (*corev1.PodList, error) {
-	tapp, err := getTapp(ctx, h.cluster, h.clusterCredential, h.namespace, h.name)
+	tapp, err := getTapp(ctx, h.cluster, h.restConfig, h.namespace, h.name)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +208,7 @@ func (h *tappControllerProxyHandler) getPodList(ctx context.Context) (*corev1.Po
 		return nil, errors.NewInternalError(err)
 	}
 
-	kubeclient, err := util.BuildClientSet(ctx, h.cluster, h.clusterCredential)
+	kubeclient, err := buildClientSet(ctx, h.cluster, h.restConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -224,12 +232,12 @@ func (h *tappControllerProxyHandler) getPodList(ctx context.Context) (*corev1.Po
 
 // Get retrieves the object from the storage. It is required to support Patch.
 func (h *tappControllerProxyHandler) getEventList(ctx context.Context) (*corev1.EventList, error) {
-	tapp, err := getTapp(ctx, h.cluster, h.clusterCredential, h.namespace, h.name)
+	tapp, err := getTapp(ctx, h.cluster, h.restConfig, h.namespace, h.name)
 	if err != nil {
 		return nil, err
 	}
 
-	kubeclient, err := util.BuildClientSet(ctx, h.cluster, h.clusterCredential)
+	kubeclient, err := buildClientSet(ctx, h.cluster, h.restConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -268,17 +276,15 @@ func (h *tappControllerProxyHandler) getEventList(ctx context.Context) (*corev1.
 	}, nil
 }
 
-func getTapp(ctx context.Context, cluster *platform.Cluster, credential *platform.ClusterCredential, namespace, name string) (*util.CustomResource, error) {
+func getTapp(ctx context.Context, cluster *platform.Cluster, restConfig *restclient.Config, namespace, name string) (*util.CustomResource, error) {
 	var clusterv1 platformv1.Cluster
 	if err := platformv1.Convert_platform_Cluster_To_v1_Cluster(cluster, &clusterv1, nil); err != nil {
 		return nil, err
 	}
-	var clusterCredential platformv1.ClusterCredential
-	if err := platformv1.Convert_platform_ClusterCredential_To_v1_ClusterCredential(credential, &clusterCredential, nil); err != nil {
-		return nil, err
+	if *clusterv1.Status.Locked {
+		return nil, fmt.Errorf("cluster %s has been locked", clusterv1.ObjectMeta.Name)
 	}
-
-	dynamicclient, err := util.BuildExternalDynamicClientSet(&clusterv1, &clusterCredential)
+	dynamicclient, err := dynamic.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -298,4 +304,11 @@ func getTapp(ctx context.Context, cluster *platform.Cluster, credential *platfor
 		return nil, err
 	}
 	return &tapp, nil
+}
+
+func buildClientSet(ctx context.Context, cluster *platform.Cluster, restConfig *restclient.Config) (*kubernetes.Clientset, error) {
+	if cluster.Status.Locked != nil && *cluster.Status.Locked {
+		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
+	}
+	return kubernetes.NewForConfig(restConfig)
 }

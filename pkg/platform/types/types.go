@@ -38,10 +38,43 @@ const (
 type Cluster struct {
 	*platform.Cluster
 	ClusterCredential *platform.ClusterCredential
+	restConfig        *rest.Config
+}
+
+func (c *Cluster) setRESTConfigDefaults() error {
+	if c.restConfig == nil {
+		c.restConfig = &rest.Config{}
+	}
+	if c.restConfig.Host == "" {
+		host, err := c.Host()
+		if err != nil {
+			return err
+		}
+		c.restConfig.Host = host
+	}
+	if c.restConfig.Timeout == 0 {
+		c.restConfig.Timeout = defaultTimeout
+	}
+	if c.restConfig.QPS == 0 {
+		c.restConfig.QPS = defaultQPS
+	}
+	if c.restConfig.Burst == 0 {
+		c.restConfig.Burst = defaultBurst
+	}
+
+	return nil
+}
+
+func (c *Cluster) RESTConfig() (*rest.Config, error) {
+	err := c.setRESTConfigDefaults()
+	if err != nil {
+		return nil, err
+	}
+	return c.restConfig, nil
 }
 
 func (c *Cluster) Clientset() (kubernetes.Interface, error) {
-	config, err := c.RESTConfig(&rest.Config{})
+	config, err := c.RESTConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -50,85 +83,40 @@ func (c *Cluster) Clientset() (kubernetes.Interface, error) {
 }
 
 func (c *Cluster) ClientsetForBootstrap() (kubernetes.Interface, error) {
-	config, err := c.RESTConfigForBootstrap(&rest.Config{})
+	config, err := c.RESTConfigForBootstrap()
 	if err != nil {
 		return nil, err
 	}
 	return kubernetes.NewForConfig(config)
 }
 
-func (c *Cluster) RESTConfigForBootstrap(config *rest.Config) (*rest.Config, error) {
+func (c *Cluster) RESTConfigForBootstrap() (*rest.Config, error) {
+	err := c.setRESTConfigDefaults()
+	if err != nil {
+		return nil, err
+	}
 	host, err := c.HostForBootstrap()
 	if err != nil {
 		return nil, err
 	}
-	config.Host = host
+	configCopy := *c.restConfig
+	configCopy.Host = host
 
-	return c.RESTConfig(config)
+	return &configCopy, nil
 }
 
-func (c *Cluster) setRESTConfigDefaults(config *rest.Config) error {
-	if config.Host == "" {
-		host, err := c.Host()
-		if err != nil {
-			return err
-		}
-		config.Host = host
-	}
-	if config.Timeout == 0 {
-		config.Timeout = defaultTimeout
-	}
-	if config.QPS == 0 {
-		config.QPS = defaultQPS
-	}
-	if config.Burst == 0 {
-		config.Burst = defaultBurst
-	}
-
-	if c.ClusterCredential != nil && c.ClusterCredential.CACert != nil {
-		config.TLSClientConfig.CAData = c.ClusterCredential.CACert
-	} else {
-		config.TLSClientConfig.Insecure = true
-	}
-
-	return nil
-}
-
-func (c *Cluster) RESTConfig(config *rest.Config) (*rest.Config, error) {
-	err := c.setRESTConfigDefaults(config)
-	if err != nil {
-		return nil, err
-	}
-
-	if c.ClusterCredential != nil && c.ClusterCredential.ClientCert != nil && c.ClusterCredential.ClientKey != nil {
-		config.TLSClientConfig.CertData = c.ClusterCredential.ClientCert
-		config.TLSClientConfig.KeyData = c.ClusterCredential.ClientKey
-	}
-
-	if c.ClusterCredential != nil && c.ClusterCredential.Token != nil {
-		config.BearerToken = *c.ClusterCredential.Token
-	}
-
-	if c.ClusterCredential != nil {
-		config.Impersonate.UserName = c.ClusterCredential.Impersonate
-		config.Impersonate.Groups = c.ClusterCredential.ImpersonateGroups
-		config.Impersonate.Extra = c.ClusterCredential.ImpersonateUserExtra.ExtraToHeaders()
-	}
-
-	return config, nil
-}
-
-func (c *Cluster) RESTConfigForClientX509(config *rest.Config, clientCertData []byte,
+func (c *Cluster) RESTConfigForClientX509(clientCertData []byte,
 	clientKeyData []byte) (*rest.Config, error) {
-	err := c.setRESTConfigDefaults(config)
+	err := c.setRESTConfigDefaults()
 	if err != nil {
 		return nil, err
 	}
+	configCopy := *c.restConfig
 
-	config.TLSClientConfig.CertData = clientCertData
-	config.TLSClientConfig.KeyData = clientKeyData
+	configCopy.TLSClientConfig.CertData = clientCertData
+	configCopy.TLSClientConfig.KeyData = clientKeyData
 
-	return config, nil
+	return &configCopy, nil
 }
 
 func (c *Cluster) HostForBootstrap() (string, error) {
@@ -139,4 +127,8 @@ func (c *Cluster) HostForBootstrap() (string, error) {
 	}
 
 	return "", errors.New("can't find bootstrap address")
+}
+
+func (c *Cluster) RegisterRestConfig(config *rest.Config) {
+	c.restConfig = config
 }

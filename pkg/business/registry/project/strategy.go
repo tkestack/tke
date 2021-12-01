@@ -141,65 +141,56 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 
 // AfterCreate implements a further operation to run after a resource is
 // created and before it is decorated, optional.
-func (s *Strategy) AfterCreate(obj runtime.Object) error {
+func (s *Strategy) AfterCreate(obj runtime.Object, options *metav1.CreateOptions) {
 	project, _ := obj.(*business.Project)
 
 	/* for in-cluster mode, create a corresponding namespace */
 	if s.features.SyncProjectsWithNamespaces {
-		if err := func() error {
-			config, err := clientrest.InClusterConfig()
-			if err != nil {
-				return err
-			}
-			client, err := kubernetes.NewForConfig(config)
-			if err != nil {
-				return err
-			}
-			ns := &corev1.Namespace{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: project.Name,
-				},
-			}
-			_, err = client.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{})
-			if err != nil && !errors.IsAlreadyExists(err) {
-				return err
-			}
-			return nil
-		}(); err != nil {
-			return fmt.Errorf("failed to create namespace '%s', for '%s'", project.Name, err)
+		config, err := clientrest.InClusterConfig()
+		if err != nil {
+			log.Error("after create project failed", log.Any("project", project.Name), log.Err(err))
+			return
+		}
+		client, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			log.Error("after create project failed", log.Any("project", project.Name), log.Err(err))
+			return
+		}
+		ns := &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: project.Name,
+			},
+		}
+		_, err = client.CoreV1().Namespaces().Create(context.Background(), ns, metav1.CreateOptions{})
+		if err != nil && !errors.IsAlreadyExists(err) {
+			log.Error("after create project failed", log.Any("project", project.Name), log.Err(err))
 		}
 	}
-
-	return nil
 }
 
 // AfterDelete implements a further operation to run after a resource
 // has been deleted.
-func (s *Strategy) AfterDelete(obj runtime.Object) error {
+func (s *Strategy) AfterDelete(obj runtime.Object, options *metav1.DeleteOptions) {
 	project, _ := obj.(*business.Project)
 
 	/* for in-cluster mode, delete the corresponding namespace within the cluster 'global' */
 	if s.features.SyncProjectsWithNamespaces {
-		if err := func() error {
-			config, err := clientrest.InClusterConfig()
-			if err != nil {
-				return err
-			}
-			client, err := kubernetes.NewForConfig(config)
-			if err != nil {
-				return err
-			}
-			err = client.CoreV1().Namespaces().Delete(context.Background(), project.Name, metav1.DeleteOptions{})
-			if err != nil && !errors.IsNotFound(err) {
-				return err
-			}
-			return nil
-		}(); err != nil {
-			return fmt.Errorf("failed to delete namespace '%s', for %s", project.Name, err)
+		config, err := clientrest.InClusterConfig()
+		if err != nil {
+			log.Error("after delete project failed", log.Any("project", project.Name), log.Err(err))
+			return
+		}
+		client, err := kubernetes.NewForConfig(config)
+		if err != nil {
+			log.Error("after delete project failed", log.Any("project", project.Name), log.Err(err))
+			return
+		}
+		err = client.CoreV1().Namespaces().Delete(context.Background(), project.Name, metav1.DeleteOptions{})
+		if err != nil && !errors.IsNotFound(err) {
+			log.Error("after delete project failed", log.Any("project", project.Name), log.Err(err))
+			return
 		}
 	}
-
-	return nil
 }
 
 // Validate validates a new project.
@@ -220,6 +211,11 @@ func (Strategy) AllowUnconditionalUpdate() bool {
 	return false
 }
 
+// WarningsOnCreate returns warnings for the creation of the given object.
+func (Strategy) WarningsOnCreate(ctx context.Context, obj runtime.Object) []string {
+	return nil
+}
+
 // Canonicalize normalizes the object after validation.
 func (Strategy) Canonicalize(obj runtime.Object) {
 }
@@ -228,6 +224,11 @@ func (Strategy) Canonicalize(obj runtime.Object) {
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
 	return ValidateProjectUpdate(ctx, obj.(*business.Project), old.(*business.Project),
 		validation.NewObjectGetter(s.businessClient), validation.NewClusterGetter(s.platformClient))
+}
+
+// WarningsOnUpdate returns warnings for the given update.
+func (Strategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Object) []string {
+	return nil
 }
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.

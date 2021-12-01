@@ -55,7 +55,6 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, notifyClient *noti
 		CreateStrategy: strategy,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
-		ExportStrategy: strategy,
 	}
 	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &genericregistry.StoreOptions{
@@ -75,20 +74,6 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, notifyClient *noti
 // ValidateGetObjectAndTenantID validate name and tenantID, if success return Template
 func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	obj, err := store.Get(ctx, name, options)
-	if err != nil {
-		return nil, err
-	}
-
-	template := obj.(*notify.Template)
-	if err := util.FilterTemplate(ctx, template); err != nil {
-		return nil, err
-	}
-	return template, nil
-}
-
-// ValidateExportObjectAndTenantID validate name and tenantID, if success return Template
-func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	obj, err := store.Export(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
@@ -131,12 +116,6 @@ func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.Valid
 // Get finds a resource in the storage by name and returns it.
 func (r *REST) Get(ctx context.Context, receiverName string, options *metav1.GetOptions) (runtime.Object, error) {
 	return ValidateGetObjectAndTenantID(ctx, r.Store, receiverName, options)
-}
-
-// Export an object.  Fields that are not user specified are stripped out
-// Returns the stripped object.
-func (r *REST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	return ValidateExportObjectAndTenantID(ctx, r.Store, name, options)
 }
 
 // Update finds a resource in the storage and updates it.

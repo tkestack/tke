@@ -37,7 +37,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/pkg/monitor/services/rest"
 	"tkestack.io/tke/pkg/monitor/util"
-	prometheusrule "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -351,9 +350,9 @@ func createProcessorServer(stopCh chan struct{}) (*fake.Clientset, string, error
 			Kind:       monitoringv1.PrometheusRuleKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      prometheusrule.PrometheusRuleAlert,
+			Name:      prometheusRuleAlert,
 			Namespace: metav1.NamespaceSystem,
-			Labels:    map[string]string{prometheusrule.PrometheusService: prometheusrule.PrometheusCRDName, "role": "alert-rules"},
+			Labels:    map[string]string{prometheusService: prometheusCRDName, "role": "alert-rules"},
 		},
 		Spec: monitoringv1.PrometheusRuleSpec{Groups: []monitoringv1.RuleGroup{}},
 	}

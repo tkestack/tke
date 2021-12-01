@@ -56,7 +56,8 @@ export const validateClusterCreationAction = {
     let status = 0,
       message = '',
       numberReg = /^\d+$/,
-      ipReg = /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/,
+      ipReg =
+        /^(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])\.(\d{1,2}|1\d\d|2[0-4]\d|25[0-5])$/,
       hostReg = /^([\w-]+\.)+[\w-]+(\/[\w- .\/?%&=]*)?$/;
     //验证集群名称
 
@@ -144,6 +145,39 @@ export const validateClusterCreationAction = {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
       const { token } = getState().clusterCreationState;
       const result = await validateClusterCreationAction._validateToken(token);
+      dispatch(clusterCreationAction.updateClusterCreationState({ v_token: result }));
+    };
+  },
+
+  _validateAsUserExtra(asUserExtra: { id: string; key: string; value: string }[]) {
+    if (!asUserExtra) {
+      return {
+        status: 1,
+        message: ''
+      };
+    }
+
+    const hasEmpty = asUserExtra.some(({ key, value }) => key === '' || value === '');
+
+    if (hasEmpty) {
+      return {
+        status: 2,
+        message: 'key和value不能为空'
+      };
+    }
+
+    return {
+      status: 1,
+      message: ''
+    };
+  },
+
+  validateAsUserExtra() {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      const { asUserExtra } = getState().clusterCreationState;
+
+      const result = await validateClusterCreationAction._validateAsUserExtra(asUserExtra);
+
       dispatch(clusterCreationAction.updateClusterCreationState({ v_token: result }));
     };
   },

@@ -22,13 +22,17 @@ import (
 	"context"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/client-go/tools/clientcmd"
+	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
+	"tkestack.io/tke/pkg/platform/provider/imported/config"
 	"tkestack.io/tke/pkg/platform/provider/imported/validation"
 	"tkestack.io/tke/pkg/platform/types"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-func init() {
+func RegisterProvider() {
 	p, err := NewProvider()
 	if err != nil {
 		log.Errorf("init cluster provider error: %s", err)
@@ -39,6 +43,7 @@ func init() {
 
 type Provider struct {
 	*clusterprovider.DelegateProvider
+	config *config.Config
 }
 
 var _ clusterprovider.Provider = &Provider{}
@@ -54,6 +59,22 @@ func NewProvider() (*Provider, error) {
 		DeleteHandlers: []clusterprovider.Handler{
 			p.EnsureCleanClusterMark,
 		},
+	}
+	cfg, err := config.New(constants.ConfigFile)
+	if err != nil {
+		return nil, err
+	}
+	p.config = cfg
+	if cfg.PlatformAPIClientConfig != "" {
+		restConfig, err := clientcmd.BuildConfigFromFlags("", cfg.PlatformAPIClientConfig)
+		if err != nil {
+			log.Errorf("read PlatformAPIClientConfig error: %w", err)
+		} else {
+			p.PlatformClient, err = platformv1client.NewForConfig(restConfig)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 	return p, nil
 }

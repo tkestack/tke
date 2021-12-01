@@ -56,7 +56,6 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername
 		CreateStrategy: strategy,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
-		ExportStrategy: strategy,
 	}
 	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &genericregistry.StoreOptions{
@@ -70,7 +69,6 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername
 
 	statusStore := *store
 	statusStore.UpdateStrategy = csioperator.NewStatusStrategy(strategy)
-	statusStore.ExportStrategy = csioperator.NewStatusStrategy(strategy)
 
 	return &Storage{
 		CSIOperator: &REST{store, privilegedUsername},
@@ -81,20 +79,6 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername
 // ValidateGetObjectAndTenantID validate name and tenantID, if success return CSIOperator
 func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	obj, err := store.Get(ctx, name, options)
-	if err != nil {
-		return nil, err
-	}
-
-	co := obj.(*platform.CSIOperator)
-	if err := util.FilterCSIOperator(ctx, co); err != nil {
-		return nil, err
-	}
-	return co, nil
-}
-
-// ValidateExportObjectAndTenantID validate name and tenantID, if success return CSIOperator
-func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	obj, err := store.Export(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
@@ -129,12 +113,6 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 // Get finds a resource in the storage by name and returns it.
 func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	return ValidateGetObjectAndTenantID(ctx, r.Store, name, options)
-}
-
-// Export an object.  Fields that are not user specified are stripped out
-// Returns the stripped object.
-func (r *REST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	return ValidateExportObjectAndTenantID(ctx, r.Store, name, options)
 }
 
 // Update finds a resource in the storage and updates it.
@@ -183,12 +161,6 @@ func (r *StatusREST) New() runtime.Object {
 // Get retrieves the object from the storage. It is required to support Patch.
 func (r *StatusREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	return ValidateGetObjectAndTenantID(ctx, r.store, name, options)
-}
-
-// Export an object.  Fields that are not user specified are stripped out
-// Returns the stripped object.
-func (r *StatusREST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	return ValidateExportObjectAndTenantID(ctx, r.store, name, options)
 }
 
 // Update alters the status subset of an object.

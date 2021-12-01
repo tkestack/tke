@@ -21,9 +21,10 @@ package cluster_test
 import (
 	"context"
 	"fmt"
-	"k8s.io/klog"
 	"os"
 	"time"
+
+	"k8s.io/klog"
 	v1 "tkestack.io/tke/api/application/v1"
 
 	. "github.com/onsi/ginkgo"
@@ -118,8 +119,8 @@ var _ = Describe("cluster", func() {
 			Expect(err).Should(BeNil(), "Upgrade cluster failed")
 			Expect(cls.Spec.Version).Should(Equal(newVersion), "Cluster version is wrong")
 		},
-		Entry("1.19.7->1.20.4", "1.19.7", "1.20.4"),
-		Entry("1.20.4->1.21.4-tke.1", "1.20.4", "1.21.4-tke.1"))
+		// Entry("1.19.7->1.20.4", "1.19.7", "1.20.4"),
+		Entry("1.20.4-tke.1->1.21.4-tke.1", "1.20.4-tke.1", "1.21.4-tke.1"))
 
 	It("Cluster scaling", func() {
 		// Prepare two instances

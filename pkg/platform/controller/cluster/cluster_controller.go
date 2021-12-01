@@ -21,7 +21,6 @@ package cluster
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"reflect"
 	"strings"
 	"time"
@@ -31,6 +30,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/util/rand"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -64,10 +64,12 @@ type Controller struct {
 	lister       platformv1lister.ClusterLister
 	listerSynced cache.InformerSynced
 
-	log               log.Logger
-	platformClient    platformversionedclient.PlatformV1Interface
-	deleter           deletion.ClusterDeleterInterface
-	healthCheckPeriod time.Duration
+	log                                        log.Logger
+	platformClient                             platformversionedclient.PlatformV1Interface
+	deleter                                    deletion.ClusterDeleterInterface
+	healthCheckPeriod                          time.Duration
+	randomeRangeLowerLimitForHealthCheckPeriod time.Duration
+	randomeRangeUpperLimitForHealthCheckPeriod time.Duration
 }
 
 // NewController creates a new Controller object.
@@ -120,6 +122,8 @@ func NewController(
 	c.lister = clusterInformer.Lister()
 	c.listerSynced = clusterInformer.Informer().HasSynced
 	c.healthCheckPeriod = configuration.HealthCheckPeriod
+	c.randomeRangeLowerLimitForHealthCheckPeriod = configuration.RandomeRangeLowerLimitForHealthCheckPeriod
+	c.randomeRangeUpperLimitForHealthCheckPeriod = configuration.RandomeRangeUpperLimitForHealthCheckPeriod
 
 	return c
 }
@@ -300,6 +304,8 @@ func (c *Controller) reconcile(ctx context.Context, key string, cluster *platfor
 		err = c.onUpdate(ctx, cluster)
 	case platformv1.ClusterUpscaling, platformv1.ClusterDownscaling:
 		err = c.onUpdate(ctx, cluster)
+	case platformv1.ClusterIdling, platformv1.ClusterConfined:
+		err = c.onUpdate(ctx, cluster)
 	case platformv1.ClusterTerminating:
 		log.FromContext(ctx).Info("Cluster has been terminated. Attempting to cleanup resources")
 		err = c.deleter.Delete(ctx, key)
@@ -341,6 +347,7 @@ func (c *Controller) onCreate(ctx context.Context, cluster *platformv1.Cluster) 
 		if err != nil {
 			return err
 		}
+		clusterWrapper.RegisterRestConfig(clusterWrapper.ClusterCredential.RESTConfig(cluster))
 		clusterWrapper.Cluster, err = c.platformClient.Clusters().Update(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 		if err != nil {
 			return err
@@ -359,7 +366,10 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 	if err != nil {
 		return err
 	}
-	if clusterWrapper.Status.Phase == platformv1.ClusterRunning || clusterWrapper.Status.Phase == platformv1.ClusterFailed {
+	if clusterWrapper.Status.Phase == platformv1.ClusterRunning ||
+		clusterWrapper.Status.Phase == platformv1.ClusterFailed ||
+		clusterWrapper.Status.Phase == platformv1.ClusterIdling ||
+		clusterWrapper.Status.Phase == platformv1.ClusterConfined {
 		err = provider.OnUpdate(ctx, clusterWrapper)
 		clusterWrapper = c.checkHealth(ctx, clusterWrapper)
 		if err != nil {
@@ -376,6 +386,7 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 			if err != nil {
 				return err
 			}
+			clusterWrapper.RegisterRestConfig(clusterWrapper.ClusterCredential.RESTConfig(cluster))
 		}
 		clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 		if err != nil {
@@ -398,6 +409,7 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 				if err != nil {
 					return err
 				}
+				clusterWrapper.RegisterRestConfig(clusterWrapper.ClusterCredential.RESTConfig(cluster))
 			}
 			clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 			if err != nil {
@@ -467,7 +479,9 @@ func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) 
 		return cluster
 	}
 
-	pseudo := time.Now().Add(time.Minute * time.Duration(rand.Intn(5)))
+	pseudo := time.Now().Add(time.Second * time.Duration(rand.Int63nRange(
+		int64(c.randomeRangeLowerLimitForHealthCheckPeriod.Seconds()),
+		int64(c.randomeRangeUpperLimitForHealthCheckPeriod.Seconds()))))
 
 	log.Infof("next heart beat time. now:%s pesudo:%s cls:%s", time.Now(), pseudo, cluster.Name)
 

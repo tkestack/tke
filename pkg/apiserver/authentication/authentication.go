@@ -21,9 +21,9 @@ package authentication
 import (
 	"fmt"
 
-	"github.com/go-openapi/spec"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 	"tkestack.io/tke/pkg/apiserver/options"
 )
 

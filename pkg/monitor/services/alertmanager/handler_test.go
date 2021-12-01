@@ -28,7 +28,6 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 	"tkestack.io/tke/pkg/monitor/services"
 	"tkestack.io/tke/pkg/monitor/util"
-	alertmanagerconfig "tkestack.io/tke/pkg/platform/controller/addon/prometheus"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -89,10 +88,10 @@ func createProcessorServer() (kubernetes.Interface, services.RouteProcessor, str
 	k8sClient := fake.NewSimpleClientset()
 	configMap := &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: alertmanagerconfig.AlertManagerConfigMap,
+			Name: alertManagerConfigMap,
 		},
 		Data: map[string]string{
-			alertmanagerconfig.AlertManagerConfigName: exampleAlertConfig,
+			alertManagerConfigName: exampleAlertConfig,
 		},
 	}
 

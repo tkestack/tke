@@ -18,7 +18,7 @@
 import { QueryState, RecordSet, uuid } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 
-import { apiServerVersion } from '../../../../config';
+import { apiServerVersion, resourceConfig } from '../../../../config';
 import {
   Method,
   operationResult,
@@ -40,13 +40,13 @@ import {
 
 export async function createPromethus(resource: CreateResource) {
   try {
-    let { mode, resourceIns, clusterId, yamlData, resourceInfo, namespace, jsonData } = resource;
+    const { mode, resourceIns, clusterId, yamlData, resourceInfo, namespace, jsonData } = resource;
 
-    let url = '/apis/monitor.tkestack.io/v1/prometheuses';
+    const url = '/apis/monitor.tkestack.io/v1/prometheuses';
     // 获取具体的请求方法，create为POST，modify为PUT
-    let method = requestMethodForAction(mode);
+    const method = requestMethodForAction(mode);
     // 这里是独立部署版 和 控制台共用的参数，只有是yamlData的时候才需要userdefinedHeader，如果是jaonData的话，就不需要了
-    let userDefinedHeader: UserDefinedHeader = yamlData
+    const userDefinedHeader: UserDefinedHeader = yamlData
       ? {
           Accept: 'application/json',
           'Content-Type': 'application/yaml'
@@ -54,14 +54,14 @@ export async function createPromethus(resource: CreateResource) {
       : {};
 
     // 构建参数
-    let params: RequestParams = {
+    const params: RequestParams = {
       method,
       url,
       userDefinedHeader,
       data: yamlData ? yamlData : jsonData
     };
 
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
     if (response.code === 0) {
       return operationResult(resource);
     } else {
@@ -74,15 +74,21 @@ export async function createPromethus(resource: CreateResource) {
 
 export async function deletePromethus(cluster: Cluster) {
   try {
+    const resourceInfo: ResourceInfo = resourceConfig().prometheus;
+    const specificName = cluster?.spec?.promethus?.metadata?.name ?? '';
+    const url = reduceK8sRestfulPath({
+      resourceInfo,
+      specificName
+    });
     const clusterId = cluster.metadata.name;
-    const url = cluster.spec.promethus.metadata.selfLink;
+
     // 构建参数 requestBody 当中
-    let params: RequestParams = {
+    const params: RequestParams = {
       method: Method.delete,
       url
     };
 
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
 
     if (response.code === 0) {
       return Promise.resolve();

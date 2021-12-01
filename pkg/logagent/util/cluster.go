@@ -20,24 +20,19 @@ package util
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"net"
 	"net/http"
 	"net/url"
 	"sync"
-	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/kubernetes"
+	restclient "k8s.io/client-go/rest"
 
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	platformv1 "tkestack.io/tke/api/platform/v1"
 	v1platform "tkestack.io/tke/api/platform/v1"
-	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/platform/util/addon"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -89,11 +84,8 @@ func APIServerLocationByCluster(ctx context.Context, clusterName string, platfor
 		return nil, nil, "", err
 	}
 
-	transport, err := BuildTransportV1(credential)
-	if err != nil {
-		return nil, nil, "", errors.NewInternalError(err)
-	}
-	host, err := util.ClusterV1Host(cluster)
+	restConfig := credential.RESTConfig(cluster)
+	transport, err := restclient.TransportFor(restConfig)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
 	}
@@ -104,7 +96,7 @@ func APIServerLocationByCluster(ctx context.Context, clusterName string, platfor
 	}
 	return &url.URL{
 		Scheme: "https",
-		Host:   host,
+		Host:   restConfig.Host,
 		Path:   requestInfo.Path,
 	}, transport, token, nil
 }
@@ -122,54 +114,4 @@ func GetClusterPodIP(ctx context.Context, clusterName, namespace, podName string
 		return "", err
 	}
 	return pod.Status.HostIP, nil
-}
-
-// BuildTransport create the http transport for communicate to backend
-// kubernetes api server.
-func BuildTransportV1(credential *platformv1.ClusterCredential) (http.RoundTripper, error) {
-	transport := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   5 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-		MaxIdleConns:        100,
-		IdleConnTimeout:     90 * time.Second,
-		TLSHandshakeTimeout: 10 * time.Second,
-	}
-	if len(credential.CACert) > 0 {
-		transport.TLSClientConfig = &tls.Config{
-			RootCAs: rootCertPool(credential.CACert),
-		}
-	} else {
-		transport.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true,
-		}
-	}
-
-	if credential.ClientKey != nil && credential.ClientCert != nil {
-		cert, err := tls.X509KeyPair(credential.ClientCert, credential.ClientKey)
-		if err != nil {
-			return nil, err
-		}
-		transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
-	}
-
-	return transport, nil
-}
-
-// rootCertPool returns nil if caData is empty.  When passed along, this will mean "use system CAs".
-// When caData is not empty, it will be the ONLY information used in the CertPool.
-func rootCertPool(caData []byte) *x509.CertPool {
-	// What we really want is a copy of x509.systemRootsPool, but that isn't exposed.  It's difficult to build (see the go
-	// code for a look at the platform specific insanity), so we'll use the fact that RootCAs == nil gives us the system values
-	// It doesn't allow trusting either/or, but hopefully that won't be an issue
-	if len(caData) == 0 {
-		return nil
-	}
-
-	// if we have caData, use it
-	certPool := x509.NewCertPool()
-	certPool.AppendCertsFromPEM(caData)
-	return certPool
 }

@@ -24,7 +24,6 @@ import (
 	"context"
 
 	batchV1Beta1 "k8s.io/api/batch/v1beta1"
-	batchV2Alpha1 "k8s.io/api/batch/v2alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
@@ -43,28 +42,6 @@ type Storage struct {
 // REST implements pkg/api/rest.StandardStorage
 type REST struct {
 	*proxy.Store
-}
-
-// NewStorageV2Alpha1 returns a Storage object that will work against resources.
-func NewStorageV2Alpha1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	replicaSetStore := &proxy.Store{
-		NewFunc:        func() runtime.Object { return &batchV2Alpha1.CronJob{} },
-		NewListFunc:    func() runtime.Object { return &batchV2Alpha1.CronJobList{} },
-		Namespaced:     true,
-		PlatformClient: platformClient,
-	}
-
-	statusStore := *replicaSetStore
-
-	return &Storage{
-		CronJob: &REST{replicaSetStore},
-		Status: &StatusREST{
-			store: &statusStore,
-		},
-		Events: &EventREST{
-			platformClient: platformClient,
-		},
-	}
 }
 
 // NewStorageV1Beta1 returns a Storage object that will work against resources.

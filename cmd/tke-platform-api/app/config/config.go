@@ -55,6 +55,7 @@ type Config struct {
 	VersionedSharedInformerFactory versionedinformers.SharedInformerFactory
 	StorageFactory                 *serverstorage.DefaultStorageFactory
 	PrivilegedUsername             string
+	FeatureOptions                 *options.FeatureOptions
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -124,5 +125,6 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		VersionedSharedInformerFactory: versionedInformers,
 		StorageFactory:                 storageFactory,
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
+		FeatureOptions:                 opts.FeatureOptions,
 	}, nil
 }

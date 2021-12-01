@@ -36,7 +36,6 @@ import (
 	csioperatorstorage "tkestack.io/tke/pkg/platform/registry/csioperator/storage"
 	machinestorage "tkestack.io/tke/pkg/platform/registry/machine/storage"
 	persistenteventstorage "tkestack.io/tke/pkg/platform/registry/persistentevent/storage"
-	promstorage "tkestack.io/tke/pkg/platform/registry/prometheus/storage"
 	registrystorage "tkestack.io/tke/pkg/platform/registry/registry/storage"
 	tappcontrollertorage "tkestack.io/tke/pkg/platform/registry/tappcontroller/storage"
 )
@@ -118,10 +117,6 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		cronHPAREST := cronhpastorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
 		storageMap["cronhpas"] = cronHPAREST.CronHPA
 		storageMap["cronhpas/status"] = cronHPAREST.Status
-
-		promREST := promstorage.NewStorage(restOptionsGetter, s.PrivilegedUsername)
-		storageMap["prometheuses"] = promREST.Prometheus
-		storageMap["prometheuses/status"] = promREST.Status
 	}
 
 	return storageMap

@@ -60,7 +60,6 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername
 		CreateStrategy: strategy,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
-		ExportStrategy: strategy,
 	}
 	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &genericregistry.StoreOptions{
@@ -74,11 +73,9 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername
 
 	statusStore := *store
 	statusStore.UpdateStrategy = channelstrategy.NewStatusStrategy(strategy)
-	statusStore.ExportStrategy = channelstrategy.NewStatusStrategy(strategy)
 
 	finalizeStore := *store
 	finalizeStore.UpdateStrategy = channelstrategy.NewFinalizerStrategy(strategy)
-	finalizeStore.ExportStrategy = channelstrategy.NewFinalizerStrategy(strategy)
 
 	return &Storage{
 		Channel:  &REST{store, privilegedUsername},
@@ -90,20 +87,6 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername
 // ValidateGetObjectAndTenantID validate name and tenantID, if success return Channel
 func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	obj, err := store.Get(ctx, name, options)
-	if err != nil {
-		return nil, err
-	}
-
-	channel := obj.(*notify.Channel)
-	if err := util.FilterChannel(ctx, channel); err != nil {
-		return nil, err
-	}
-	return channel, nil
-}
-
-// ValidateExportObjectAndTenantID validate name and tenantID, if success return Channel
-func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	obj, err := store.Export(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
@@ -146,12 +129,6 @@ func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.Valid
 // Get finds a resource in the storage by name and returns it.
 func (r *REST) Get(ctx context.Context, channelName string, options *metav1.GetOptions) (runtime.Object, error) {
 	return ValidateGetObjectAndTenantID(ctx, r.Store, channelName, options)
-}
-
-// Export an object.  Fields that are not user specified are stripped out
-// Returns the stripped object.
-func (r *REST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	return ValidateExportObjectAndTenantID(ctx, r.Store, name, options)
 }
 
 // Update finds a resource in the storage and updates it.
@@ -261,6 +238,7 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 				return existingChannel, nil
 			}),
 			dryrun.IsDryRun(options.DryRun),
+			nil,
 		)
 
 		if err != nil {
@@ -298,12 +276,6 @@ func (r *StatusREST) Get(ctx context.Context, name string, options *metav1.GetOp
 	return ValidateGetObjectAndTenantID(ctx, r.store, name, options)
 }
 
-// Export an object.  Fields that are not user specified are stripped out
-// Returns the stripped object.
-func (r *StatusREST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	return ValidateExportObjectAndTenantID(ctx, r.store, name, options)
-}
-
 // Update alters the status subset of an object.
 func (r *StatusREST) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	// We are explicitly setting forceAllowCreate to false in the call to the underlying storage because
@@ -328,12 +300,6 @@ func (r *FinalizeREST) New() runtime.Object {
 // Get retrieves the status finalizers subset of an object.
 func (r *FinalizeREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	return ValidateGetObjectAndTenantID(ctx, r.store, name, options)
-}
-
-// Export an object.  Fields that are not user specified are stripped out
-// Returns the stripped object.
-func (r *FinalizeREST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	return ValidateExportObjectAndTenantID(ctx, r.store, name, options)
 }
 
 // Update alters the status finalizers subset of an object.

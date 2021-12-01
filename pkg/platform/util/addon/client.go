@@ -36,7 +36,6 @@ import (
 	"tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/util"
-	"tkestack.io/tke/pkg/util/log"
 )
 
 // BuildExternalMonitoringClientSetNoStatus creates the monitoring clientset of prometheus operator by given
@@ -46,11 +45,7 @@ func BuildExternalMonitoringClientSetNoStatus(ctx context.Context, cluster *plat
 	if err != nil {
 		return nil, err
 	}
-	restConfig, err := util.GetExternalRestConfig(cluster, credential)
-	if err != nil {
-		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
-		return nil, err
-	}
+	restConfig := credential.RESTConfig(cluster)
 	return monitoringclient.NewForConfig(restConfig)
 }
 
@@ -95,11 +90,7 @@ func BuildExternalExtensionClientSetNoStatus(ctx context.Context, cluster *platf
 	if err != nil {
 		return nil, err
 	}
-	restConfig, err := util.GetExternalRestConfig(cluster, credential)
-	if err != nil {
-		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
-		return nil, err
-	}
+	restConfig := credential.RESTConfig(cluster)
 	return apiextensionsclient.NewForConfig(restConfig)
 }
 
@@ -120,11 +111,7 @@ func BuildKubeAggregatorClientSetNoStatus(ctx context.Context, cluster *platform
 	if err != nil {
 		return nil, err
 	}
-	restConfig, err := util.GetExternalRestConfig(cluster, credential)
-	if err != nil {
-		log.Error("Build cluster config error", log.String("clusterName", cluster.ObjectMeta.Name), log.Err(err))
-		return nil, err
-	}
+	restConfig := credential.RESTConfig(cluster)
 	return kubeaggregatorclientset.NewForConfig(restConfig)
 }
 

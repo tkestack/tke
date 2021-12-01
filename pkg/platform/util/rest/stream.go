@@ -23,21 +23,20 @@ package rest
 
 import (
 	"context"
-	"fmt"
 	"io"
+	"net/http"
+	"net/url"
+	"strings"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	genericrest "k8s.io/apiserver/pkg/registry/generic/rest"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"net/http"
-	"net/url"
-	"strings"
 )
 
 // LocationStreamer is a resource that streams the contents of a particular
 // location URL.
 type LocationStreamer struct {
-	Token           string
 	Location        *url.URL
 	Transport       http.RoundTripper
 	ContentType     string
@@ -83,10 +82,6 @@ func (s *LocationStreamer) InputStream(ctx context.Context, apiVersion, acceptHe
 	// Pass the parent context down to the request to ensure that the resources
 	// will be release properly.
 	req = req.WithContext(ctx)
-
-	if s.Token != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", strings.TrimSpace(s.Token)))
-	}
 
 	resp, err := client.Do(req)
 	if err != nil {

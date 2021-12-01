@@ -93,37 +93,17 @@ cd tke
 make
 ```
 
-If you want to refer to this repo for code integration, the `go get` will be failed as below, please add `replace` section to your `go.mod` to fix it
+If you want to refer to this repo for code integration, please add `replace` section to your `go.mod`:
 
-```
-go: tkestack.io/tke upgrade => v1.5.1
-go get: tkestack.io/tke@v1.5.1 requires
-        github.com/chartmuseum/storage@v0.8.0 requires
-        github.com/NetEase-Object-Storage/nos-golang-sdk@v0.0.0-00010101000000-000000000000: invalid version: unknown revision 000000000000
-```
-
-```
+```go
 replace (
-	github.com/chartmuseum/storage => github.com/choujimmy/storage v0.0.0-20200507092433-6aea2df34764
+	github.com/NetEase-Object-Storage/nos-golang-sdk => github.com/karuppiah7890/nos-golang-sdk v0.0.0-20191116042345-0792ba35abcc
+	github.com/chartmuseum/storage => github.com/leoryu/chartmuseum-storage v0.11.1-0.20211104032734-9da39e8f5170
+	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
+	google.golang.org/grpc => google.golang.org/grpc v1.38.0
+	k8s.io/apiserver => github.com/leoryu/k8s-apiserver v0.22.4-0.20211110063743-0341ac1e5801
+	k8s.io/client-go => k8s.io/client-go v0.22.3
 )
-
-```
-
-If you refer to this repo and get run failed messages as below, it's caused by the [etcd issue #11931](https://github.com/etcd-io/etcd/issues/11931), just replace the grpc version to v1.26.0 in the `go.mod` to fix it
-```
-# go.etcd.io/etcd/clientv3/balancer/resolver/endpoint
-../../../../../../go/pkg/mod/go.etcd.io/etcd@v0.5.0-alpha.5.0.20200401174654-e694b7bb0875/clientv3/balancer/resolver/endpoint/endpoint.go:114:78: undefined: resolver.BuildOption
-../../../../../../go/pkg/mod/go.etcd.io/etcd@v0.5.0-alpha.5.0.20200401174654-e694b7bb0875/clientv3/balancer/resolver/endpoint/endpoint.go:182:31: undefined: resolver.ResolveNowOption
-# go.etcd.io/etcd/clientv3/balancer/picker
-../../../../../../go/pkg/mod/go.etcd.io/etcd@v0.5.0-alpha.5.0.20200401174654-e694b7bb0875/clientv3/balancer/picker/err.go:37:44: undefined: balancer.PickOptions
-../../../../../../go/pkg/mod/go.etcd.io/etcd@v0.5.0-alpha.5.0.20200401174654-e694b7bb0875/clientv3/balancer/picker/roundrobin_balanced.go:55:54: undefined: balancer.PickOptions
-```
-
-```
-replace (
-	google.golang.org/grpc => google.golang.org/grpc v1.26.0
-)
-
 ```
 
 For the full story, head over to the [developer's documentation](docs/devel/development.md).

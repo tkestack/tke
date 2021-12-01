@@ -58,7 +58,6 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 		CreateStrategy:           strategy,
 		UpdateStrategy:           strategy,
 		DeleteStrategy:           strategy,
-		ExportStrategy:           strategy,
 		Decorator:                apikey.Decorator,
 
 		PredicateFunc: apikey.MatchAPIKey,
@@ -75,7 +74,6 @@ func NewStorage(optsGetter generic.RESTOptionsGetter, authClient authinternalcli
 
 	statusStore := *store
 	statusStore.UpdateStrategy = apikey.NewStatusStrategy(strategy)
-	statusStore.ExportStrategy = apikey.NewStatusStrategy(strategy)
 
 	return &Storage{
 		APIKey: &REST{store, keySigner, privilegedUsername},
@@ -106,21 +104,6 @@ func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, na
 	return o, nil
 }
 
-// ValidateExportObjectAndTenantID validate name and tenantID, if success return apiKey
-func ValidateExportObjectAndTenantID(ctx context.Context, store *registry.Store, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	obj, err := store.Export(ctx, name, options)
-	if err != nil {
-		return nil, err
-	}
-
-	o := obj.(*auth.APIKey)
-	if err := util.FilterAPIKey(ctx, o); err != nil {
-		return nil, err
-	}
-
-	return o, nil
-}
-
 // ValidateListObject validate if list by admin, if false, filter deleted apikey.
 func ValidateListObjectAndTenantID(ctx context.Context, store *registry.Store, options *metainternal.ListOptions) (runtime.Object, error) {
 	wrappedOptions := apiserverutil.PredicateListOptions(ctx, options)
@@ -147,7 +130,6 @@ var _ rest.Lister = &REST{}
 var _ rest.Updater = &REST{}
 var _ rest.Getter = &REST{}
 var _ rest.CollectionDeleter = &REST{}
-var _ rest.Exporter = &REST{}
 var _ rest.GracefulDeleter = &REST{}
 var _ rest.Scoper = &REST{}
 
@@ -177,12 +159,6 @@ func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.Valid
 // Get finds a resource in the storage by name and returns it.
 func (r *REST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	return ValidateGetObjectAndTenantID(ctx, r.Store, name, options)
-}
-
-// Export an object. Fields that are not user specified are stripped out
-// Returns the stripped object.
-func (r *REST) Export(ctx context.Context, name string, options metav1.ExportOptions) (runtime.Object, error) {
-	return ValidateExportObjectAndTenantID(ctx, r.Store, name, options)
 }
 
 // Update alters the object subset of an object.

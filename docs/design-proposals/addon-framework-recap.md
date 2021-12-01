@@ -83,7 +83,11 @@ After `tke-application` enabled, Tkestack has the ability to use `helm chart` as
 **Out-Of-Scope**: 
 
  1. Tkestack built-in component helm chart support
- 2. Define apps in `global cluster` object (temporarily)
+
+ 2. Define apps in `global cluster` object (temporarily): `tke-application` is 
+ installed after `global cluster` is created, but define apps is is 
+ dependent on `tke-application`
+
  3. Transform `tke coms` to `built-in charts` and `built-in apps` (temporarily)
 
 ## Limitation
@@ -135,7 +139,7 @@ which are default charts in `tke-installer` release package:
 
 ## User case
 
-#### Case 1. Installer install built-in apps during creating global cluster
+#### Case 1. Installer install built-in apps during creating global cluster (stage alpha)
 
 Before UI support tke-installer to set apps in `global cluster` object, hardcode some `built-in apps` in `tke-installer` and use `tke.json` with empty `PlatformApps`:
 
@@ -172,7 +176,7 @@ Before UI support tke-installer to set apps in `global cluster` object, hardcode
 
 Tkestack will manage `built-in` apps life-cycle through `built-in` labels. It means that `built-in apps` will be upgraded if Tkestack platform is upgraded.
 
-#### Case 2. Installer install expansion apps during creating global cluster
+#### Case 2. Installer install expansion apps during creating global cluster (stage alpha)
 
 Use `tke.json` with expansions apps:
 
@@ -200,9 +204,11 @@ Use `tke.json` with expansions apps:
 		"CustomExpansionDir": "data/expansions/",
 		// expansion apps
 		"PlatformApps": [
-			{
+			// use app type and chart
+			{ 
 				// app name
 				"Name": "demo",
+				// 添加优先级字段
 				// if enabled, for UI
 				"Enable": true,
 				"Chart": {
@@ -226,9 +232,11 @@ Use `tke.json` with expansions apps:
 }
 ```
 
-#### Case 3. tke-installer upgrade built-in apps
+#### Case 3. tke-installer upgrade built-in apps (stage alpha)
 
-Download next minor version of current version `tke-installer` and upgrade through `tke-installerxxx --upgrade`.
+Download next minor version of current version `tke-installer` and upgrade through `tke-installerxxx --upgrade`. This work need enable first `built-in app` in tke-installer.
+
+`https://github.com/tkestack/tke/issues/1358`
 
 #### Case 4. Define apps in cluster object and install apps during createing cluster
 
@@ -245,26 +253,57 @@ spec:
   tenantID: default
   clusterCIDR: 10.244.0.0/16
   networkDevice: eth0
+  bootstrapApps:
+  - app:
+      metadata:
+        namespace: kube-system
+      spec:
+        name: demo1
+        type: HelmV3
+        dryRun: false
+        tenantID: default
+        targetCluster: ""
+        targetNamespace: ""
+        values:
+          rawValues: 'key2: val2-override'
+        chart:
+          chartName: demo
+          chartGroupName: public
+          chartVersion: 1.0.0
+          tenantID: default
+          repoURL: ""
+          repoUsername: ""
+          repoPassword: ""
+          importedRepo: false
+  - app:
+      spec:
+        name: demo2
+        type: HelmV3
+        dryRun: false
+        tenantID: default
+        targetCluster: ""
+        targetNamespace: "kube-public"
+        values:
+          rawValues: 'key2: val2-override'
+        chart:
+          chartName: demo
+          chartGroupName: public
+          chartVersion: 1.0.0
+          tenantID: default
+          repoURL: ""
+          repoUsername: ""
+          repoPassword: ""
+          importedRepo: false
   features:
     enableMetricsServer: true
     enableCilium: false
-    platformApps:     # define apps in cluster
-    - name: demo      # app name
-      enable: true    # if enabled, for UI
-      chart:
-        name: demo    # chart name
-        tenantID: default
-        chartGroupName: public
-        version: 1.0.0
-        targetNamespace: default
-        values: 'key2: val2-override' # helm chart values
   properties:
     maxClusterServiceNum: 256
     maxNodePodNum: 256
   type: Baremetal
   version: 1.20.4-tke.1
   machines:
-  - ip: your_ip
+  - ip: {your_ip}
     port: 22
     username: root
     privateKey:
@@ -272,7 +311,117 @@ spec:
     labels: {}
 ```
 
+## Sync app/cluster controller
 
-## PR
+![Sync app controller design](../../docs/images/tkestack-sync-app-controller.png)
 
-## Reference
+### syncAppToCls controller
+
+监听App对象的update事件，通过platformclient使用最新的App数据更新到Cls对象，如果发生冲突，重新尝试更新，直到更新为期望状态。
+
+### syncClsToApp controller
+
+监听Cls对象的update事件，通过applicationclient将cls对象中需要更新/创建的app信息进行更新/创建，如果发生冲突，重新尝试更新，直到更新为期望状态。
+
+## Test cases
+
+Preparation: add an chart to tke registry.
+
+```sh
+helm repo add public http://default.registry.tke.com/chart/public --username {username} --password {password}
+
+wget https://tke-release-1251707795.cos.ap-guangzhou.myqcloud.com/res/demo-1.0.0.tgz
+
+helm push demo-1.0.0.tgz public
+```
+
+### Create cls with 2 apps
+
+```yaml
+# cls.2.apps.yaml
+---
+apiVersion: platform.tkestack.io/v1
+kind: Cluster
+metadata:
+  generateName: cls
+spec:
+  displayName: test
+  tenantID: default
+  clusterCIDR: 10.244.0.0/16
+  networkDevice: eth0
+  bootstrapApps:
+  - app:
+      metadata:
+        namespace: kube-system
+      spec:
+        name: demo1
+        type: HelmV3
+        dryRun: false
+        tenantID: default
+        targetCluster: ""
+        targetNamespace: ""
+        values:
+          rawValues: 'key2: val2-override'
+        chart:
+          chartName: demo
+          chartGroupName: public
+          chartVersion: 1.0.0
+          tenantID: default
+          repoURL: ""
+          repoUsername: ""
+          repoPassword: ""
+          importedRepo: false
+  - app:
+      spec:
+        name: demo2
+        type: HelmV3
+        dryRun: false
+        tenantID: default
+        targetCluster: ""
+        targetNamespace: "kube-public"
+        values:
+          rawValues: 'key2: val2-override'
+        chart:
+          chartName: demo
+          chartGroupName: public
+          chartVersion: 1.0.0
+          tenantID: default
+          repoURL: ""
+          repoUsername: ""
+          repoPassword: ""
+          importedRepo: false
+  features:
+    enableMetricsServer: true
+    enableCilium: false
+  properties:
+    maxClusterServiceNum: 256
+    maxNodePodNum: 256
+  type: Baremetal
+  version: 1.20.4-tke.1
+  machines:
+  - ip: {your_ip}
+    port: 22
+    username: root
+    privateKey:
+    password:
+    labels: {}
+```
+
+```sh
+kubectl create -f cls.2.apps.yaml
+# wait for cls ready
+kubectl get cls {your cls name} -o yaml | grep demo
+# get demo1 and demo2
+kubectl get apps -o custom-columns=APPNAME:.spec.name
+# get demo2
+kubectl get apps -n kube-system custom-columns=APPNAME:.spec.name
+# get demo1
+```
+
+### Update bootstrap app is not allowed
+
+```sh
+kubectl edit cls {your_cls}
+# edit bootstrapApps content will return validation err
+
+```

@@ -21,18 +21,19 @@ package options
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
+	"time"
+
 	grpcprom "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"go.etcd.io/etcd/clientv3"
-	"go.etcd.io/etcd/clientv3/namespace"
-	"go.etcd.io/etcd/pkg/transport"
+	"go.etcd.io/etcd/client/pkg/v3/transport"
+	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.etcd.io/etcd/client/v3/namespace"
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/storage/value"
-	"sync/atomic"
-	"time"
 	"tkestack.io/tke/pkg/util/log"
 )
 

@@ -19,12 +19,19 @@
 package v1
 
 import (
+	"fmt"
+	"math/rand"
+	"net"
+	"path"
 	strings "strings"
+
+	pkgerrors "github.com/pkg/errors"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/rest"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 )
 
@@ -256,6 +263,10 @@ const (
 	ClusterRunning ClusterPhase = "Running"
 	// ClusterFailed is the failed phase.
 	ClusterFailed ClusterPhase = "Failed"
+	// ClusterConfined is the Confined phase.
+	ClusterConfined ClusterPhase = "Confined"
+	// ClusterIdling is the Idling phase.
+	ClusterIdling ClusterPhase = "Idling"
 	// ClusterUpgrading means that the cluster is in upgrading process.
 	ClusterUpgrading ClusterPhase = "Upgrading"
 	// ClusterTerminating means the cluster is undergoing graceful termination.
@@ -380,6 +391,71 @@ func (i ImpersonateUserExtra) ExtraToHeaders() map[string][]string {
 		res[k] = strings.Split(v, ",")
 	}
 	return res
+}
+
+func (cc ClusterCredential) RESTConfig(cls *Cluster) *rest.Config {
+	config := &rest.Config{}
+	if cls != nil {
+		host := clusterHost(cls)
+		if len(host) != 0 {
+			config.Host = host
+		}
+	}
+	if cc.CACert != nil {
+		config.TLSClientConfig.CAData = cc.CACert
+	} else {
+		config.TLSClientConfig.Insecure = true
+	}
+	if cc.ClientCert != nil && cc.ClientKey != nil {
+		config.TLSClientConfig.CertData = cc.ClientCert
+		config.TLSClientConfig.KeyData = cc.ClientKey
+	}
+	if cc.Token != nil {
+		config.BearerToken = *cc.Token
+	}
+
+	config.Impersonate.UserName = cc.Impersonate
+	config.Impersonate.Groups = cc.ImpersonateGroups
+	config.Impersonate.Extra = cc.ImpersonateUserExtra.ExtraToHeaders()
+
+	return config
+}
+
+func clusterHost(cluster *Cluster) string {
+	address, err := clusterAddress(cluster)
+	if err != nil {
+		return ""
+	}
+
+	result := net.JoinHostPort(address.Host, fmt.Sprintf("%d", address.Port))
+	if address.Path != "" {
+		result = path.Join(result, address.Path)
+	}
+
+	return result
+}
+
+func clusterAddress(cluster *Cluster) (*ClusterAddress, error) {
+	addrs := make(map[AddressType][]ClusterAddress)
+	for _, one := range cluster.Status.Addresses {
+		addrs[one.Type] = append(addrs[one.Type], one)
+	}
+
+	var address *ClusterAddress
+	if len(addrs[AddressInternal]) != 0 {
+		address = &addrs[AddressInternal][rand.Intn(len(addrs[AddressInternal]))]
+	} else if len(addrs[AddressAdvertise]) != 0 {
+		address = &addrs[AddressAdvertise][rand.Intn(len(addrs[AddressAdvertise]))]
+	} else {
+		if len(addrs[AddressReal]) != 0 {
+			address = &addrs[AddressReal][rand.Intn(len(addrs[AddressReal]))]
+		}
+	}
+	if address == nil {
+		return nil, pkgerrors.New("no valid address for the cluster")
+	}
+
+	return address, nil
 }
 
 // +genclient:nonNamespaced
@@ -874,89 +950,6 @@ type ProxyOptions struct {
 	// Path is the URL path to use for the current proxy request.
 	// +optional
 	Path string `json:"path,omitempty" protobuf:"bytes,1,opt,name=path"`
-}
-
-// +genclient
-// +genclient:nonNamespaced
-// +genclient:skipVerbs=deleteCollection
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// Prometheus is a kubernetes package manager.
-type Prometheus struct {
-	metav1.TypeMeta `json:",inline"`
-	// +optional
-	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-
-	// Spec defines the desired identities of clusters in this set.
-	// +optional
-	Spec PrometheusSpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
-	// +optional
-	Status PrometheusStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
-}
-
-// +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
-// PrometheusList is the whole list of all prometheus which owned by a tenant.
-type PrometheusList struct {
-	metav1.TypeMeta `json:",inline"`
-	// +optional
-	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
-
-	// List of Prometheuss
-	Items []Prometheus `json:"items" protobuf:"bytes,2,rep,name=items"`
-}
-
-// PrometheusSpec describes the attributes on a Prometheus.
-type PrometheusSpec struct {
-	TenantID    string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
-	ClusterName string `json:"clusterName" protobuf:"bytes,2,opt,name=clusterName"`
-	Version     string `json:"version,omitempty" protobuf:"bytes,3,opt,name=version"`
-	// SubVersion is the components version such as node-exporter.
-	SubVersion map[string]string `json:"subVersion,omitempty" protobuf:"bytes,4,opt,name=subVersion"`
-	// RemoteAddress is the remote address for prometheus when writing/reading outside of cluster.
-	RemoteAddress PrometheusRemoteAddr `json:"remoteAddress,omitempty" protobuf:"bytes,5,opt,name=remoteAddress"`
-	// +optional
-	// NotifyWebhook is the address that alert messages send to, optional. If not set, a default webhook address "https://[notify-api-address]/webhook" will be used.
-	NotifyWebhook string `json:"notifyWebhook,omitempty" protobuf:"bytes,6,opt,name=notifyWebhook"`
-	// +optional
-	// Resources is the resource request and limit for prometheus
-	Resources ResourceRequirements `json:"resources,omitempty" protobuf:"bytes,7,opt,name=resources"`
-	// +optional
-	// RunOnMaster indicates whether to add master Affinity for all monitor components or not
-	RunOnMaster bool `json:"runOnMaster,omitempty" protobuf:"bytes,8,opt,name=runOnMaster"`
-	// +optional
-	// AlertRepeatInterval indicates repeat interval of alerts
-	AlertRepeatInterval string `json:"alertRepeatInterval,omitempty" protobuf:"bytes,9,opt,name=alertRepeatInterval"`
-	// +optional
-	// WithNPD indicates whether to deploy node-problem-detector or not
-	WithNPD bool `json:"withNPD,omitempty" protobuf:"bytes,10,opt,name=withNPD"`
-}
-
-// PrometheusStatus is information about the current status of a Prometheus.
-type PrometheusStatus struct {
-	// +optional
-	Version string `json:"version,omitempty" protobuf:"bytes,1,opt,name=version"`
-	// Phase is the current lifecycle phase of the helm of cluster.
-	// +optional
-	Phase AddonPhase `json:"phase,omitempty" protobuf:"bytes,2,opt,name=phase"`
-	// Reason is a brief CamelCase string that describes any failure.
-	// +optional
-	Reason string `json:"reason,omitempty" protobuf:"bytes,3,opt,name=reason"`
-	// RetryCount is a int between 0 and 5 that describes the time of retrying initializing.
-	// +optional
-	RetryCount int32 `json:"retryCount" protobuf:"varint,4,name=retryCount"`
-	// LastReInitializingTimestamp is a timestamp that describes the last time of retrying initializing.
-	// +optional
-	LastReInitializingTimestamp metav1.Time `json:"lastReInitializingTimestamp" protobuf:"bytes,5,name=lastReInitializingTimestamp"`
-	// SubVersion is the components version such as node-exporter.
-	SubVersion map[string]string `json:"subVersion,omitempty" protobuf:"bytes,6,opt,name=subVersion"`
-}
-
-// PrometheusRemoteAddr is the remote write/read address for prometheus
-type PrometheusRemoteAddr struct {
-	WriteAddr []string `json:"writeAddr,omitempty" protobuf:"bytes,1,opt,name=writeAddr"`
-	ReadAddr  []string `json:"readAddr,omitempty" protobuf:"bytes,2,opt,name=readAddr"`
 }
 
 // AddonPhase defines the phase of helm constructor.

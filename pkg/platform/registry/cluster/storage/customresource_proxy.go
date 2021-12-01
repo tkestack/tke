@@ -1,17 +1,32 @@
+/*
+ * Tencent is pleased to support the open source community by making TKEStack
+ * available.
+ *
+ * Copyright (C) 2012-2021 Tencent. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of the
+ * License at
+ *
+ * https://opensource.org/licenses/Apache-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package storage
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"sync"
 	"time"
 
-	"k8s.io/apimachinery/pkg/api/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,30 +34,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
-	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
-	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
-	"tkestack.io/tke/pkg/util/log"
-	"tkestack.io/tke/pkg/util/pkiutil"
+	"tkestack.io/tke/pkg/platform/proxy"
 )
 
 type CustomResourceHandler struct {
 	LoopbackClientConfig *rest.Config
-}
-
-var pool clientX509Pool
-
-type clientX509Pool struct {
-	sm sync.Map
-}
-
-type clientX509Cache struct {
-	clientCertData []byte
-	clientKeyData  []byte
 }
 
 var (
@@ -63,7 +63,7 @@ func init() {
 
 // ServeHTTP is a proxy for unregister custom resource
 func (n *CustomResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	requestInfo, ok := apirequest.RequestInfoFrom(r.Context())
+	requestInfo, ok := request.RequestInfoFrom(r.Context())
 	if !ok {
 		responsewriters.ErrorNegotiated(
 			apierrors.NewInternalError(fmt.Errorf("no RequestInfo found in the context")),
@@ -82,7 +82,7 @@ func (n *CustomResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	}
 
 	platformClient := platforminternalclient.NewForConfigOrDie(n.LoopbackClientConfig)
-	config, err := getConfig(r.Context(), platformClient)
+	config, err := proxy.GetConfig(r.Context(), platformClient)
 
 	if err != nil {
 		responsewriters.ErrorNegotiated(
@@ -95,7 +95,7 @@ func (n *CustomResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 	TLSClientConfig := &tls.Config{}
 	TLSClientConfig.InsecureSkipVerify = true
 	if config.TLSClientConfig.CertData != nil && config.TLSClientConfig.KeyData != nil {
-		cert, err := tls.X509KeyPair(nil, config.TLSClientConfig.KeyData)
+		cert, err := tls.X509KeyPair(config.TLSClientConfig.CertData, config.TLSClientConfig.KeyData)
 		if err != nil {
 			responsewriters.ErrorNegotiated(
 				apierrors.NewGenericServerResponse(http.StatusUnauthorized, requestInfo.Verb, schema.GroupResource{
@@ -158,86 +158,4 @@ func buildDirector(r *http.Request, config *rest.Config) func(req *http.Request)
 			Path:   r.RequestURI,
 		}
 	}
-}
-
-func getConfig(ctx context.Context, platformClient platforminternalclient.PlatformInterface) (*rest.Config, error) {
-
-	clusterName := filter.ClusterFrom(ctx)
-	if clusterName == "" {
-		return nil, errors.NewBadRequest("clusterName is required")
-	}
-
-	cluster, err := platformClient.Clusters().Get(ctx, clusterName, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	if cluster.Status.Locked != nil && *cluster.Status.Locked {
-		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
-	}
-
-	username, tenantID := authentication.UsernameAndTenantID(ctx)
-	if len(tenantID) > 0 && cluster.Spec.TenantID != tenantID {
-		return nil, errors.NewNotFound(platform.Resource("clusters"), cluster.ObjectMeta.Name)
-	}
-
-	clusterWrapper, err := clusterprovider.GetCluster(ctx, platformClient, cluster, username)
-	if err != nil {
-		return nil, err
-	}
-
-	config := &rest.Config{}
-	if cluster.AuthzWebhookEnabled() {
-		clientCertData, clientKeyData, err := getOrCreateClientCert(ctx, clusterWrapper.ClusterCredential)
-		if err != nil {
-			return nil, err
-		}
-		config, err = clusterWrapper.RESTConfigForClientX509(config, clientCertData, clientKeyData)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		config, err = clusterWrapper.RESTConfig(config)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return config, nil
-}
-
-func getOrCreateClientCert(ctx context.Context, credential *platform.ClusterCredential) ([]byte, []byte, error) {
-	groups := authentication.Groups(ctx)
-	username, tenantID := authentication.UsernameAndTenantID(ctx)
-	if tenantID != "" {
-		groups = append(groups, fmt.Sprintf("tenant:%s", tenantID))
-	}
-
-	ns, ok := request.NamespaceFrom(ctx)
-	if ok {
-		groups = append(groups, fmt.Sprintf("namespace:%s", ns))
-	}
-
-	cache, ok := pool.sm.Load(makeClientKey(username, groups))
-	if ok {
-		return cache.(*clientX509Cache).clientCertData, cache.(*clientX509Cache).clientKeyData, nil
-	}
-
-	clientCertData, clientKeyData, err := pkiutil.GenerateClientCertAndKey(username, groups, credential.CACert,
-		credential.CAKey)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	pool.sm.Store(makeClientKey(username, groups), &clientX509Cache{clientCertData: clientCertData,
-		clientKeyData: clientKeyData})
-
-	log.Debugf("generateClientCert success. username:%s groups:%v\n clientCertData:\n %s clientKeyData:\n %s",
-		username, groups, clientCertData, clientKeyData)
-
-	return clientCertData, clientKeyData, nil
-}
-
-func makeClientKey(username string, groups []string) string {
-	return fmt.Sprintf("%s###%v", username, groups)
 }
