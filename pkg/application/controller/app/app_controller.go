@@ -40,6 +40,7 @@ import (
 	"tkestack.io/tke/pkg/application/controller/app/action"
 	"tkestack.io/tke/pkg/application/controller/app/deletion"
 	helmutil "tkestack.io/tke/pkg/application/helm/util"
+	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
@@ -101,16 +102,29 @@ func NewController(
 	}
 
 	applicationInformer.Informer().AddEventHandlerWithResyncPeriod(
-		cache.ResourceEventHandlerFuncs{
-			AddFunc: controller.enqueue,
-			UpdateFunc: func(oldObj, newObj interface{}) {
-				old, ok1 := oldObj.(*applicationv1.App)
-				cur, ok2 := newObj.(*applicationv1.App)
-				if ok1 && ok2 && controller.needsUpdate(old, cur) {
-					controller.enqueue(newObj)
-				}
+		cache.FilteringResourceEventHandler{
+			Handler: cache.ResourceEventHandlerFuncs{
+				AddFunc: controller.enqueue,
+				UpdateFunc: func(oldObj, newObj interface{}) {
+					old, ok1 := oldObj.(*applicationv1.App)
+					cur, ok2 := newObj.(*applicationv1.App)
+					if ok1 && ok2 && controller.needsUpdate(old, cur) {
+						controller.enqueue(newObj)
+					}
+				},
+				DeleteFunc: controller.enqueue,
 			},
-			DeleteFunc: controller.enqueue,
+			FilterFunc: func(obj interface{}) bool {
+				app, ok := obj.(*applicationv1.App)
+				if !ok {
+					return false
+				}
+				provider, err := applicationprovider.GetProvider(app)
+				if err != nil {
+					return true
+				}
+				return provider.OnFilter(context.TODO(), app)
+			},
 		},
 		resyncPeriod,
 	)

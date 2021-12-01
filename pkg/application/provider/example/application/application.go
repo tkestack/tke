@@ -16,17 +16,37 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package action
+package application
 
 import (
-	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
+	"tkestack.io/tke/pkg/util/log"
 )
 
-func getHooks(app *applicationv1.App) applicationprovider.HooksProvider {
-	result, _ := applicationprovider.GetProvider(app)
-	if result == nil {
-		return applicationprovider.DelegateProvider{}
+const (
+	name = "Example"
+)
+
+// Run your register func in your main.
+func RegisterProvider() {
+	p, err := NewProvider()
+	if err != nil {
+		log.Errorf("init application provider error: %s", err)
+		return
 	}
-	return result
+	applicationprovider.Register(p.Name(), p)
+}
+
+type Provider struct {
+	*applicationprovider.DelegateProvider
+	yourconfig string
+}
+
+var _ applicationprovider.Provider = &Provider{}
+
+func NewProvider() (*Provider, error) {
+	result := new(Provider)
+	result.yourconfig = "yourconfig"
+	result.DelegateProvider.ProviderName = name
+	return result, nil
 }

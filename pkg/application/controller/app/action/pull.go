@@ -27,6 +27,7 @@ import (
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	appconfig "tkestack.io/tke/pkg/application/config"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
+	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
 	"tkestack.io/tke/pkg/application/util"
 	chartpath "tkestack.io/tke/pkg/application/util/chartpath/v1"
 )
@@ -37,7 +38,7 @@ func Pull(ctx context.Context,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
-	updateStatusFunc UpdateStatusFunc) (string, error) {
+	updateStatusFunc applicationprovider.UpdateStatusFunc) (string, error) {
 	client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
 	if err != nil {
 		return "", err
