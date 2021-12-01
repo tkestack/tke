@@ -435,9 +435,6 @@ func (p *DelegateProvider) getCurrentCondition(c *v1.Cluster, phase platformv1.C
 
 // GetRestConfigV1 returns the cluster's rest config
 func (p *DelegateProvider) GetRestConfig(ctx context.Context, cluster *platformv1.Cluster, username string) (*rest.Config, error) {
-	if p.PlatformClient == nil {
-		return nil, fmt.Errorf("provider platform client is nil")
-	}
 	cc, err := credential.GetClusterCredentialV1(ctx, p.PlatformClient, cluster, username)
 	if err != nil {
 		return nil, err
