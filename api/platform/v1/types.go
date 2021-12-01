@@ -398,7 +398,7 @@ func (cc ClusterCredential) RESTConfig(cls *Cluster) *rest.Config {
 	if cls != nil {
 		host := clusterHost(cls)
 		if len(host) != 0 {
-			config.Host = fmt.Sprintf("https://%s", host)
+			config.Host = host
 		}
 	}
 	if cc.CACert != nil {
