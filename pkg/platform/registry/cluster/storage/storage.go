@@ -76,7 +76,6 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, platformClient pla
 
 		TableConvertor: printerstorage.TableConvertor{TableGenerator: printers.NewTableGenerator().With(AddHandlers)},
 	}
-	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    clusterstrategy.GetAttrs,
