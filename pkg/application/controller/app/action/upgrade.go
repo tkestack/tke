@@ -28,6 +28,7 @@ import (
 	appconfig "tkestack.io/tke/pkg/application/config"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	helmutil "tkestack.io/tke/pkg/application/helm/util"
+	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
 	"tkestack.io/tke/pkg/application/util"
 	chartpath "tkestack.io/tke/pkg/application/util/chartpath/v1"
 )
@@ -38,7 +39,7 @@ func Upgrade(ctx context.Context,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
-	updateStatusFunc UpdateStatusFunc) (*applicationv1.App, error) {
+	updateStatusFunc applicationprovider.UpdateStatusFunc) (*applicationv1.App, error) {
 	hooks := getHooks(app)
 	err := hooks.PreUpgrade(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 	if err != nil {

@@ -27,6 +27,7 @@ import (
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	appconfig "tkestack.io/tke/pkg/application/config"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
+	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
 	"tkestack.io/tke/pkg/application/util"
 )
 
@@ -36,7 +37,7 @@ func Rollback(ctx context.Context,
 	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
-	updateStatusFunc UpdateStatusFunc) (*applicationv1.App, error) {
+	updateStatusFunc applicationprovider.UpdateStatusFunc) (*applicationv1.App, error) {
 	hooks := getHooks(app)
 	err := hooks.PreRollback(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 	if err != nil {
