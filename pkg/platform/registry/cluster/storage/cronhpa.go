@@ -36,6 +36,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 
 	"tkestack.io/tke/api/platform"
 	"tkestack.io/tke/pkg/platform/util"
@@ -74,7 +75,13 @@ func (r *CronHPAREST) Connect(ctx context.Context, clusterName string, opts runt
 	}
 	proxyOpts := opts.(*platform.CronHPAProxyOptions)
 
-	location, transport, token, err := util.APIServerLocationByCluster(ctx, cluster, r.platformClient)
+	clusterv1 := &platformv1.Cluster{}
+	err = platformv1.Convert_platform_Cluster_To_v1_Cluster(cluster, clusterv1, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	location, transport, token, err := util.APIServerLocationByCluster(ctx, clusterv1)
 	if err != nil {
 		return nil, err
 	}

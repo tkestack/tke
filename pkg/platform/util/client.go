@@ -158,20 +158,20 @@ func BuildExternalClientSetWithName(ctx context.Context, platformClient platform
 	return clientset, nil
 }
 
-func clusterAddress(cluster *platform.Cluster) (*platform.ClusterAddress, error) {
-	addrs := make(map[platform.AddressType][]platform.ClusterAddress)
+func clusterAddress(cluster *platformv1.Cluster) (*platformv1.ClusterAddress, error) {
+	addrs := make(map[platformv1.AddressType][]platformv1.ClusterAddress)
 	for _, one := range cluster.Status.Addresses {
 		addrs[one.Type] = append(addrs[one.Type], one)
 	}
 
-	var address *platform.ClusterAddress
-	if len(addrs[platform.AddressInternal]) != 0 {
-		address = &addrs[platform.AddressInternal][rand.Intn(len(addrs[platform.AddressInternal]))]
-	} else if len(addrs[platform.AddressAdvertise]) != 0 {
-		address = &addrs[platform.AddressAdvertise][rand.Intn(len(addrs[platform.AddressAdvertise]))]
+	var address *platformv1.ClusterAddress
+	if len(addrs[platformv1.AddressInternal]) != 0 {
+		address = &addrs[platformv1.AddressInternal][rand.Intn(len(addrs[platformv1.AddressInternal]))]
+	} else if len(addrs[platformv1.AddressAdvertise]) != 0 {
+		address = &addrs[platformv1.AddressAdvertise][rand.Intn(len(addrs[platformv1.AddressAdvertise]))]
 	} else {
-		if len(addrs[platform.AddressReal]) != 0 {
-			address = &addrs[platform.AddressReal][rand.Intn(len(addrs[platform.AddressReal]))]
+		if len(addrs[platformv1.AddressReal]) != 0 {
+			address = &addrs[platformv1.AddressReal][rand.Intn(len(addrs[platformv1.AddressReal]))]
 		}
 	}
 	if address == nil {
