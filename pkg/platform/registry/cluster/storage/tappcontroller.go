@@ -93,7 +93,13 @@ func (r *TappControllerREST) Connect(ctx context.Context, clusterName string, op
 	}
 	proxyOpts := opts.(*platform.TappControllerProxyOptions)
 
-	location, transport, token, err := util.APIServerLocationByCluster(ctx, cluster, r.platformClient)
+	clusterv1 := &platformv1.Cluster{}
+	err = platformv1.Convert_platform_Cluster_To_v1_Cluster(cluster, clusterv1, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	location, transport, token, err := util.APIServerLocationByCluster(ctx, clusterv1)
 	if err != nil {
 		return nil, err
 	}
@@ -103,11 +109,6 @@ func (r *TappControllerREST) Connect(ctx context.Context, clusterName string, op
 	}
 
 	username, _ := authentication.UsernameAndTenantID(ctx)
-	clusterv1 := &platformv1.Cluster{}
-	err = platformv1.Convert_platform_Cluster_To_v1_Cluster(cluster, clusterv1, nil)
-	if err != nil {
-		return nil, err
-	}
 	config, err := provider.GetRestConfig(ctx, clusterv1, username)
 	if err != nil {
 		return nil, err
