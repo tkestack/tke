@@ -52,6 +52,7 @@ import (
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
 	platformv1 "tkestack.io/tke/api/platform/v1"
+	"tkestack.io/tke/cmd/tke-platform-api/app/options"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	admissionrest "tkestack.io/tke/pkg/platform/proxy/admissionregistration/rest"
 	appsrest "tkestack.io/tke/pkg/platform/proxy/apps/rest"
@@ -68,6 +69,7 @@ import (
 	rbacrest "tkestack.io/tke/pkg/platform/proxy/rbac/rest"
 	schedulingrest "tkestack.io/tke/pkg/platform/proxy/scheduling/rest"
 	storagerest "tkestack.io/tke/pkg/platform/proxy/storage/rest"
+	proxyrest "tkestack.io/tke/pkg/platform/registry/cluster/storage"
 	platformrest "tkestack.io/tke/pkg/platform/registry/rest"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -79,6 +81,7 @@ type ExtraConfig struct {
 	StorageFactory          serverstorage.StorageFactory
 	VersionedInformers      versionedinformers.SharedInformerFactory
 	PrivilegedUsername      string
+	FeatureOptions          *options.FeatureOptions
 }
 
 // Config contains the core configuration instance of apiserver and
@@ -154,6 +157,14 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 			PrivilegedUsername:   c.ExtraConfig.PrivilegedUsername,
 		},
 	}
+
+	if c.ExtraConfig.FeatureOptions.NotFoundCRDProxy {
+		notFoundProxy := proxyrest.CustomResourceHandler{
+			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
+		}
+		m.GenericAPIServer.Handler.NonGoRestfulMux.NotFoundHandler(&notFoundProxy)
+	}
+
 	m.InstallAPIs(c.ExtraConfig.APIResourceConfigSource, c.GenericConfig.RESTOptionsGetter, restStorageProviders...)
 
 	return m, nil

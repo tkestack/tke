@@ -2,7 +2,7 @@
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
- * Copyright (C) 2012-2019 Tencent. All Rights Reserved.
+ * Copyright (C) 2012-2021 Tencent. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
  * this file except in compliance with the License. You may obtain a copy of the
@@ -39,6 +39,7 @@ type Options struct {
 	Authentication *apiserveroptions.AuthenticationWithAPIOptions
 	Authorization  *apiserveroptions.AuthorizationOptions
 	Audit          *genericapiserveroptions.AuditOptions
+	FeatureOptions *FeatureOptions
 }
 
 // NewOptions creates a new Options with a default config.
@@ -52,6 +53,7 @@ func NewOptions(serverName string) *Options {
 		Authentication: apiserveroptions.NewAuthenticationWithAPIOptions(),
 		Authorization:  apiserveroptions.NewAuthorizationOptions(),
 		Audit:          genericapiserveroptions.NewAuditOptions(),
+		FeatureOptions: NewFeatureOptions(),
 	}
 }
 
@@ -65,6 +67,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Authentication.AddFlags(fs)
 	o.Authorization.AddFlags(fs)
 	o.Audit.AddFlags(fs)
+	o.FeatureOptions.AddFlags(fs)
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -79,6 +82,7 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.Generic.ApplyFlags()...)
 	errs = append(errs, o.Authentication.ApplyFlags()...)
 	errs = append(errs, o.Authorization.ApplyFlags()...)
+	errs = append(errs, o.FeatureOptions.ApplyFlags()...)
 
 	return errs
 }
