@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -123,7 +124,8 @@ func (n *CustomResourceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 
 	reserveProxy := httputil.NewSingleHostReverseProxy(&url.URL{
 		Scheme: "https",
-		Host:   config.Host,
+		// TODO: support apiserver with path
+		Host: strings.TrimPrefix(config.Host, "https://"),
 	})
 	reserveProxy.Transport = &http.Transport{
 		DialContext: (&net.Dialer{
