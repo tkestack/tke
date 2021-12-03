@@ -141,6 +141,7 @@ func makeDirector(clusterName, userName, tenantID string, uri *url.URL, token st
 
 func makeURL(host, path string) (*url.URL, error) {
 	var port int64
+	host = strings.TrimPrefix(host, "https://")
 	hostSegment := strings.Split(host, ":")
 	if len(hostSegment) != 2 {
 		return nil, fmt.Errorf("invalid host %s", host)
