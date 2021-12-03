@@ -156,8 +156,9 @@ func buildDirector(r *http.Request, config *rest.Config) func(req *http.Request)
 		}
 		req.URL = &url.URL{
 			Scheme: "https",
-			Host:   config.Host,
-			Path:   r.RequestURI,
+			// TODO: support apiserver with path
+			Host: strings.TrimPrefix(config.Host, "https://"),
+			Path: r.RequestURI,
 		}
 	}
 }
