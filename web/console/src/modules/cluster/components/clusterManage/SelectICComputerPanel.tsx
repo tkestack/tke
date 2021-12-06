@@ -70,33 +70,33 @@ export function SelectICComputerPanel({
 }) {
   //如果使用了footer，需要在下方留出足够的空间，避免重叠
 
-  let [ipList, setIPList] = React.useState(computer ? computer.ipList : '');
-  let [ssh, setSSH] = React.useState(computer ? computer.ssh : '22');
+  const [ipList, setIPList] = React.useState(computer ? computer.ipList : '');
+  const [ssh, setSSH] = React.useState(computer ? computer.ssh : '22');
 
-  let [role, setRole] = React.useState(computer ? computer.role : computerRoleList[0].value);
-  let [labels, setLabels] = React.useState(computer ? computer.labels : []);
-  let [authType, setAuthType] = React.useState(computer ? computer.authType : authTypeList[0].value);
-  let [username, setUserName] = React.useState(computer ? computer.username : 'root');
-  let [password, setPassword] = React.useState(computer ? computer.password : '');
-  let [privateKey, setPrivateKey] = React.useState(computer ? computer.privateKey : '');
-  let [passPhrase, setPassPhrase] = React.useState(computer ? computer.passPhrase : '');
-  let [isGpu, setIsGpu] = React.useState(computer && isNeedGpu ? computer.isGpu : false);
+  const [role, setRole] = React.useState(computer ? computer.role : computerRoleList[0].value);
+  const [labels, setLabels] = React.useState(computer ? computer.labels : []);
+  const [authType, setAuthType] = React.useState(computer ? computer.authType : authTypeList[0].value);
+  const [username, setUserName] = React.useState(computer ? computer.username : 'root');
+  const [password, setPassword] = React.useState(computer ? computer.password : '');
+  const [privateKey, setPrivateKey] = React.useState(computer ? computer.privateKey : '');
+  const [passPhrase, setPassPhrase] = React.useState(computer ? computer.passPhrase : '');
+  const [isGpu, setIsGpu] = React.useState(computer && isNeedGpu ? computer.isGpu : false);
 
-  let [labelsIsValid, setLabelIsValid] = React.useState(true);
+  const [labelsIsValid, setLabelIsValid] = React.useState(true);
 
-  let [v_ipList, setV_ipList] = React.useState<Validation>(
+  const [v_ipList, setV_ipList] = React.useState<Validation>(
     computer ? validateValue(computer.ipList, rules.ipList) : initValidator
   );
-  let [v_ssh, setV_ssh] = React.useState<Validation>(
+  const [v_ssh, setV_ssh] = React.useState<Validation>(
     computer ? validateValue(computer.ipList, rules.ipList) : initValidator
   );
-  let [v_username, setV_username] = React.useState<Validation>(
+  const [v_username, setV_username] = React.useState<Validation>(
     computer && computer.authType === 'password' ? validateValue(computer.username, rules.username) : initValidator
   );
-  let [v_password, setV_password] = React.useState<Validation>(
+  const [v_password, setV_password] = React.useState<Validation>(
     computer && computer.authType === 'password' ? validateValue(computer.password, rules.password) : initValidator
   );
-  let [v_privateKey, setV_privateKey] = React.useState<Validation>(
+  const [v_privateKey, setV_privateKey] = React.useState<Validation>(
     computer && computer.authType === 'cert' ? validateValue(computer.privateKey, rules.privateKey) : initValidator
   );
   let canSave = v_ipList.status === 1 && labelsIsValid;
@@ -182,9 +182,9 @@ export function SelectICComputerPanel({
         label={t('用户名')}
         input={{
           value: username,
-          disabled: true
-          // onChange: setUserName,
-          // onBlur: () => setV_username(validateValue(username, rules.username))
+          // disabled: true
+          onChange: setUserName,
+          onBlur: () => setV_username(validateValue(username, rules.username))
         }}
         validator={v_username}
       />
