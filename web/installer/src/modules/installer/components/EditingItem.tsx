@@ -109,7 +109,7 @@ export class EditingItem extends React.Component<EditingItemProps> {
             message={machine.v_user.message}
           >
             <Input
-              disabled={true}
+              // disabled={true}
               placeholder="请输入特权用户名"
               value={machine.user}
               onChange={user => actions.installer.updateMachine({ user }, id)}
