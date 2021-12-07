@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -68,8 +69,9 @@ func (r *APIResourcesREST) Get(ctx context.Context, clusterName string, options 
 		return nil, err
 	}
 	lists, err := discoveryclient.ServerPreferredResources()
+	failedGroup := ""
 	if err != nil {
-		return nil, err
+		failedGroup = err.Error()
 	}
 	items := make([]platform.ClusterGroupAPIResourceItems, 0)
 	for _, list := range lists {
@@ -96,6 +98,7 @@ func (r *APIResourcesREST) Get(ctx context.Context, clusterName string, options 
 		})
 	}
 	return &platform.ClusterGroupAPIResourceItemsList{
-		Items: items,
+		Items:            items,
+		FailedGroupError: failedGroup,
 	}, nil
 }

@@ -52143,8 +52143,16 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItemsList(ref common.Refe
 							},
 						},
 					},
+					"failedGroupError": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Failed Group Error",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
-				Required: []string{"Items"},
+				Required: []string{"Items", "failedGroupError"},
 			},
 		},
 		Dependencies: []string{

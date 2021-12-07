@@ -1397,6 +1397,8 @@ type ClusterGroupAPIResourceItemsList struct {
 	metav1.ListMeta
 	// List of ClusterAPIResource
 	Items []ClusterGroupAPIResourceItems
+	// Failed Group Error
+	FailedGroupError string
 }
 
 // +genclient

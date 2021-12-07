@@ -1422,6 +1422,8 @@ type ClusterGroupAPIResourceItemsList struct {
 	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,3,opt,name=metadata"`
 	// List of ClusterGroupAPIResourceItems
 	Items []ClusterGroupAPIResourceItems `protobuf:"bytes,2,rep,name=items"`
+	// Failed Group Error
+	FailedGroupError string `json:"failedGroupError" protobuf:"bytes,4,rep,name=failedGroupError"`
 }
 
 // +genclient
