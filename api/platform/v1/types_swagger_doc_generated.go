@@ -267,8 +267,9 @@ func (ClusterGroupAPIResourceItems) SwaggerDoc() map[string]string {
 }
 
 var map_ClusterGroupAPIResourceItemsList = map[string]string{
-	"":      "ClusterGroupAPIResourceItemsList is the whole list of all ClusterAPIResource.",
-	"Items": "List of ClusterGroupAPIResourceItems",
+	"":                 "ClusterGroupAPIResourceItemsList is the whole list of all ClusterAPIResource.",
+	"Items":            "List of ClusterGroupAPIResourceItems",
+	"failedGroupError": "Failed Group Error",
 }
 
 func (ClusterGroupAPIResourceItemsList) SwaggerDoc() map[string]string {

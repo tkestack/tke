@@ -470,6 +470,9 @@ message ClusterGroupAPIResourceItemsList {
 
   // List of ClusterGroupAPIResourceItems
   repeated ClusterGroupAPIResourceItems items = 2;
+
+  // Failed Group Error
+  optional string failedGroupError = 4;
 }
 
 // ClusterGroupAPIResourceOptions is the query options.
