@@ -161,16 +161,22 @@ func (c *Controller) enqueue(obj *platformv1.Cluster) {
 }
 
 func (c *Controller) needsUpdate(old *platformv1.Cluster, new *platformv1.Cluster) bool {
-	switch {
-	case !reflect.DeepEqual(old.Spec, new.Spec):
+	healthCondition := new.GetCondition(conditionTypeHealthCheck)
+	if !reflect.DeepEqual(old.Spec, new.Spec) {
 		return true
-	case !reflect.DeepEqual(old.ObjectMeta.Labels, new.ObjectMeta.Labels):
+
+	}
+	if !reflect.DeepEqual(old.ObjectMeta.Labels, new.ObjectMeta.Labels) {
 		return true
-	case !reflect.DeepEqual(old.ObjectMeta.Annotations, new.ObjectMeta.Annotations):
+	}
+	if !reflect.DeepEqual(old.ObjectMeta.Annotations, new.ObjectMeta.Annotations) {
 		return true
-	case old.Status.Phase != new.Status.Phase:
+	}
+	if old.Status.Phase != new.Status.Phase {
 		return true
-	case new.Status.Phase == platformv1.ClusterInitializing:
+
+	}
+	if new.Status.Phase == platformv1.ClusterInitializing {
 		// if ResourceVersion is equal, it's an resync envent, should return true.
 		if old.ResourceVersion == new.ResourceVersion {
 			return true
@@ -181,25 +187,17 @@ func (c *Controller) needsUpdate(old *platformv1.Cluster, new *platformv1.Cluste
 		if new.Status.Conditions[len(new.Status.Conditions)-1].Status == platformv1.ConditionUnknown {
 			return true
 		}
-		// if user set last condition false block procesee
+		// if user set last condition false block procesee until resync envent
 		if new.Status.Conditions[len(new.Status.Conditions)-1].Status == platformv1.ConditionFalse {
 			return false
 		}
-		fallthrough
-	case !reflect.DeepEqual(old.Status.Conditions, new.Status.Conditions):
-		return true
-	default:
-		healthCondition := new.GetCondition(conditionTypeHealthCheck)
-		if healthCondition == nil {
-			// when healthCondition is not set, if ResourceVersion is equal, it's an resync envent, should return true.
-			return old.ResourceVersion == new.ResourceVersion
-		}
-		if time.Since(healthCondition.LastProbeTime.Time) > c.healthCheckPeriod {
-			return true
-		}
-
+	}
+	// if last health check is not long enough， return false
+	if healthCondition != nil &&
+		time.Since(healthCondition.LastProbeTime.Time) < c.healthCheckPeriod {
 		return false
 	}
+	return true
 }
 
 // Run will set up the event handlers for types we are interested in, as well

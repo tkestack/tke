@@ -20,10 +20,45 @@ package machine
 
 import (
 	"testing"
+	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 )
+
+func newMachineForTest(resourcesVersion string, spec *platformv1.MachineSpec, phase platformv1.MachinePhase, conditions []platformv1.MachineCondition) *platformv1.Machine {
+	mc := &platformv1.Machine{
+		ObjectMeta: v1.ObjectMeta{ResourceVersion: resourcesVersion},
+		Spec: platformv1.MachineSpec{
+			TenantID:    "default",
+			ClusterName: "global",
+			Type:        "Baremetal",
+			IP:          "127.0.0.1",
+			Port:        22,
+			Username:    "root",
+		},
+		Status: platformv1.MachineStatus{
+			Phase: platformv1.MachineRunning,
+			Conditions: []platformv1.MachineCondition{
+				{
+					Type:          conditionTypeHealthCheck,
+					Status:        platformv1.ConditionTrue,
+					LastProbeTime: v1.Now(),
+				},
+			},
+		},
+	}
+	if spec != nil {
+		mc.Spec = *spec
+	}
+	if len(phase) != 0 {
+		mc.Status.Phase = phase
+	}
+	if conditions != nil {
+		mc.Status.Conditions = conditions
+	}
+	return mc
+}
 
 func TestController_needsUpdate(t *testing.T) {
 	type fields struct {
@@ -47,193 +82,120 @@ func TestController_needsUpdate(t *testing.T) {
 		{
 			name: "change spec",
 			args: args{
-				old: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "old"},
-					Spec:       platformv1.MachineSpec{Type: "old"},
-				},
-				new: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "new"},
-					Spec:       platformv1.MachineSpec{Type: "nes"},
-				},
+				old: newMachineForTest("old", &platformv1.MachineSpec{IP: "127.0.0.1"}, platformv1.MachinePhase(""), nil),
+				new: newMachineForTest("new", &platformv1.MachineSpec{IP: "localhost"}, platformv1.MachinePhase(""), nil),
 			},
 			want: true,
 		},
 		{
 			name: "Initializing to Running",
 			args: args{
-				old: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "old"},
-					Status:     platformv1.MachineStatus{Phase: platformv1.MachineInitializing},
-				},
-				new: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "new"},
-					Status:     platformv1.MachineStatus{Phase: platformv1.MachineInitializing},
-				},
+				old: newMachineForTest("old", nil, platformv1.MachineInitializing, nil),
+				new: newMachineForTest("new", nil, platformv1.MachineRunning, nil),
 			},
 			want: true,
 		},
 		{
 			name: "Initializing to Failed",
 			args: args{
-				old: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "old"},
-					Status:     platformv1.MachineStatus{Phase: platformv1.MachineInitializing},
-				},
-				new: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "new"},
-					Status:     platformv1.MachineStatus{Phase: platformv1.MachineFailed},
-				},
+				old: newMachineForTest("old", nil, platformv1.MachineInitializing, nil),
+				new: newMachineForTest("new", nil, platformv1.MachineFailed, nil),
 			},
 			want: true,
 		},
 		{
 			name: "Running to Failed",
 			args: args{
-				old: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "old"},
-					Status:     platformv1.MachineStatus{Phase: platformv1.MachineRunning},
-				},
-				new: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "new"},
-					Status:     platformv1.MachineStatus{Phase: platformv1.MachineFailed},
-				},
+				old: newMachineForTest("old", nil, platformv1.MachineRunning, nil),
+				new: newMachineForTest("new", nil, platformv1.MachineFailed, nil),
 			},
 			want: true,
 		},
 		{
 			name: "Running to Terminating",
 			args: args{
-				old: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "old"},
-					Status:     platformv1.MachineStatus{Phase: platformv1.MachineRunning},
-				},
-				new: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "new"},
-					Status:     platformv1.MachineStatus{Phase: platformv1.MachineTerminating},
-				},
+				old: newMachineForTest("old", nil, platformv1.MachineRunning, nil),
+				new: newMachineForTest("new", nil, platformv1.MachineTerminating, nil),
 			},
 			want: true,
 		},
 		{
 			name: "Failed to Initializing",
 			args: args{
-				old: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "old"},
-					Status:     platformv1.MachineStatus{Phase: platformv1.MachineFailed},
-				},
-				new: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "new"},
-					Status:     platformv1.MachineStatus{Phase: platformv1.MachineInitializing},
-				},
+				old: newMachineForTest("old", nil, platformv1.MachineFailed, nil),
+				new: newMachineForTest("new", nil, platformv1.MachineInitializing, nil),
 			},
 			want: true,
 		},
 		{
 			name: "Failed to Running",
 			args: args{
-				old: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "old"},
-					Status:     platformv1.MachineStatus{Phase: platformv1.MachineFailed},
-				},
-				new: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "new"},
-					Status:     platformv1.MachineStatus{Phase: platformv1.MachineRunning},
-				},
+				old: newMachineForTest("old", nil, platformv1.MachineFailed, nil),
+				new: newMachineForTest("new", nil, platformv1.MachineRunning, nil),
 			},
 			want: true,
 		},
 		{
-			name: "Failed to Running",
+			name: "Initializing last conditon unkonwn to false",
 			args: args{
-				old: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "old"},
-					Status:     platformv1.MachineStatus{Phase: platformv1.MachineFailed},
-				},
-				new: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "new"},
-					Status:     platformv1.MachineStatus{Phase: platformv1.MachineRunning},
-				},
-			},
-			want: true,
-		},
-		{
-			name: "last conditon unkonwn to false",
-			args: args{
-				old: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "old"},
-					Status: platformv1.MachineStatus{Phase: platformv1.MachineInitializing,
-						Conditions: []platformv1.MachineCondition{{Status: platformv1.ConditionUnknown}}},
-				},
-				new: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "new"},
-					Status: platformv1.MachineStatus{Phase: platformv1.MachineInitializing,
-						Conditions: []platformv1.MachineCondition{{Status: platformv1.ConditionFalse}}},
-				},
+				old: newMachineForTest("old", nil, platformv1.MachineInitializing, []platformv1.MachineCondition{{Status: platformv1.ConditionUnknown}}),
+				new: newMachineForTest("new", nil, platformv1.MachineInitializing, []platformv1.MachineCondition{{Status: platformv1.ConditionFalse}}),
 			},
 			want: false,
 		},
 		{
 			name: "last conditon unkonwn to true",
 			args: args{
-				old: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "old"},
-					Status: platformv1.MachineStatus{Phase: platformv1.MachineInitializing,
-						Conditions: []platformv1.MachineCondition{{Status: platformv1.ConditionUnknown}}},
-				},
-				new: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "new"},
-					Status: platformv1.MachineStatus{Phase: platformv1.MachineInitializing,
-						Conditions: []platformv1.MachineCondition{{Status: platformv1.ConditionTrue}}},
-				},
+				old: newMachineForTest("old", nil, platformv1.MachinePhase(""), []platformv1.MachineCondition{{Status: platformv1.ConditionUnknown}}),
+				new: newMachineForTest("new", nil, platformv1.MachinePhase(""), []platformv1.MachineCondition{{Status: platformv1.ConditionFalse}}),
 			},
 			want: true,
 		},
 		{
-			name: "last conditon unkonwn to true resync",
-			args: args{
-				old: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "new"},
-					Status: platformv1.MachineStatus{Phase: platformv1.MachineInitializing,
-						Conditions: []platformv1.MachineCondition{{Status: platformv1.ConditionUnknown}}},
-				},
-				new: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "new"},
-					Status: platformv1.MachineStatus{Phase: platformv1.MachineInitializing,
-						Conditions: []platformv1.MachineCondition{{Status: platformv1.ConditionUnknown}}},
-				},
-			},
+			name: "Initializing last conditon false retrun true if resync",
+			args: func() args {
+				// resource version equal
+				new := newMachineForTest("new", nil, platformv1.MachineInitializing, []platformv1.MachineCondition{{Status: platformv1.ConditionFalse}})
+				return args{new, new}
+			}(),
 			want: true,
 		},
 		{
 			name: "last conditon true to unknown",
 			args: args{
-				old: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "old"},
-					Status: platformv1.MachineStatus{Phase: platformv1.MachineInitializing,
-						Conditions: []platformv1.MachineCondition{{Status: platformv1.ConditionTrue}}},
-				},
-				new: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "new"},
-					Status: platformv1.MachineStatus{Phase: platformv1.MachineInitializing,
-						Conditions: []platformv1.MachineCondition{{Status: platformv1.ConditionUnknown}}},
-				},
+				old: newMachineForTest("old", nil, platformv1.MachinePhase(""), []platformv1.MachineCondition{{Status: platformv1.ConditionTrue}}),
+				new: newMachineForTest("new", nil, platformv1.MachinePhase(""), []platformv1.MachineCondition{{Status: platformv1.ConditionUnknown}}),
 			},
 			want: true,
 		},
 		{
 			name: "last conditon false to unknown",
 			args: args{
-				old: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "old"},
-					Status: platformv1.MachineStatus{Phase: platformv1.MachineInitializing,
-						Conditions: []platformv1.MachineCondition{{Status: platformv1.ConditionFalse}}},
-				},
-				new: &platformv1.Machine{
-					ObjectMeta: v1.ObjectMeta{ResourceVersion: "new"},
-					Status: platformv1.MachineStatus{Phase: platformv1.MachineInitializing,
-						Conditions: []platformv1.MachineCondition{{Status: platformv1.ConditionUnknown}}},
-				},
+				old: newMachineForTest("old", nil, platformv1.MachinePhase(""), []platformv1.MachineCondition{{Status: platformv1.ConditionFalse}}),
+				new: newMachineForTest("new", nil, platformv1.MachinePhase(""), []platformv1.MachineCondition{{Status: platformv1.ConditionUnknown}}),
 			},
+			want: true,
+		},
+		{
+			name: "health check is not long enough",
+			args: func() args {
+				new := newMachineForTest("new", nil, platformv1.MachinePhase(""), []platformv1.MachineCondition{{
+					Type:          conditionTypeHealthCheck,
+					Status:        platformv1.ConditionTrue,
+					LastProbeTime: v1.NewTime(time.Now().Add(-resyncInternal / 2))}})
+				return args{new, new}
+			}(),
+			want: false,
+		},
+		{
+			name: "health check is long enough",
+			args: func() args {
+				new := newMachineForTest("new", nil, platformv1.MachinePhase(""), []platformv1.MachineCondition{{
+					Type:          conditionTypeHealthCheck,
+					Status:        platformv1.ConditionTrue,
+					LastProbeTime: v1.NewTime(time.Now().Add(-resyncInternal - 1))}})
+				return args{new, new}
+			}(),
 			want: true,
 		},
 		// TODO: Add test cases.
