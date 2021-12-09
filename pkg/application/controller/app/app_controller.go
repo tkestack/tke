@@ -357,7 +357,11 @@ func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedAp
 	if app.Status.Phase == applicationv1.AppPhaseSucceeded && hasSynced(app) {
 		return app, nil
 	}
-
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("syncAppFromRelease panic")
+		}
+	}()
 	newStatus := app.Status.DeepCopy()
 	rels, err := action.List(ctx, c.client.ApplicationV1(), c.platformClient, app)
 	if err != nil {
