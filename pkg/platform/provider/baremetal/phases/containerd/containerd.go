@@ -44,13 +44,20 @@ const (
 )
 
 func Install(s ssh.Interface, option *Option) error {
+	// add path to sudoers
+	cmd := `sed -i '$a\Defaults secure_path = /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin' /etc/sudoers`
+	_, err := s.CombinedOutput(cmd)
+	if err != nil {
+		return err
+	}
+
 	dstFile, err := res.Containerd.CopyToNodeWithDefault(s)
 	if err != nil {
 		return err
 	}
 
 	// Install containerd exclude cni binaries and cni config file.
-	cmd := "tar xvaf %s -C %s --exclude=etc/cni --exclude=opt"
+	cmd = "tar xvaf %s -C %s --exclude=etc/cni --exclude=opt"
 	_, stderr, exit, err := s.Execf(cmd, dstFile, "/")
 	if err != nil {
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
