@@ -31,6 +31,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // Support both GET and POST methods. We must support GET for browsers that want
@@ -64,7 +65,7 @@ func (r *ExecREST) Connect(ctx context.Context, name string, opts runtime.Object
 		return nil, fmt.Errorf("invalid options object: %#v", opts)
 	}
 
-	location, transport, token, err := util.APIServerLocation(ctx, r.platformClient)
+	location, transport, _, err := util.APIServerLocation(ctx, r.platformClient)
 	if err != nil {
 		return nil, err
 	}
@@ -101,22 +102,30 @@ func (r *ExecREST) Connect(ctx context.Context, name string, opts runtime.Object
 
 	return &execHandler{
 		upgradeAwareHandler: newThrottledUpgradeAwareProxyHandler(location, transport, false, true, responder),
-		token:               token,
 	}, nil
 }
 
 type execHandler struct {
 	upgradeAwareHandler *proxy.UpgradeAwareHandler
-	token               string
 }
 
 func (h *execHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	newReq := req.WithContext(req.Context())
-	newReq.Header = utilnet.CloneHeader(req.Header)
-	if h.token != "" {
-		newReq.Header.Add("Authorization", fmt.Sprintf("Bearer %s", h.token))
+	reqClone := utilnet.CloneRequest(req)
+	reqClone.URL.Scheme = h.upgradeAwareHandler.Location.Scheme
+	reqClone.URL.Host = h.upgradeAwareHandler.Location.Host
+	reqClone.Header = nil
+	resp, err := h.upgradeAwareHandler.Transport.RoundTrip(reqClone)
+	if err != nil {
+		log.Warnf("err %v", err)
 	}
-	h.upgradeAwareHandler.ServeHTTP(w, newReq)
+	outReq := resp.Request
+	for k, vs := range req.Header {
+		for _, v := range vs {
+			outReq.Header.Add(k, v)
+		}
+	}
+	log.Errorf("header: %v", outReq)
+	h.upgradeAwareHandler.ServeHTTP(w, outReq)
 }
 
 func newThrottledUpgradeAwareProxyHandler(location *url.URL, transport http.RoundTripper, wrapTransport, upgradeRequired bool, responder rest.Responder) *proxy.UpgradeAwareHandler {
