@@ -32,7 +32,8 @@ import { ContainerLogs, Resource } from '../models';
 import { isCanAddContainerLog } from './EditOriginContainerPanel';
 import { ContainerItemProps } from './ListOriginContainerItemPanel';
 import { clusterActions } from '@src/modules/logStash/actions/clusterActions';
-import { PlatformContext, IPlatformContext, PlatformTypeEnum } from '@/Wrapper';
+import { PlatformContext, IPlatformContext } from '@/Wrapper';
+import { PlatformTypeEnum } from '@config';
 
 insertCSS(
   'EditOriginContainerItemPanel',
@@ -52,7 +53,7 @@ insertCSS(
 `
 );
 
-let loadingElement: JSX.Element = (
+const loadingElement: JSX.Element = (
   <div>
     <i className="n-loading-icon" />
     &nbsp;{' '}
@@ -79,14 +80,14 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
      * 这里传入containerLogIndex 的原因是因为，传入id之后，还是要对 containerLogs进行遍历
      * 这样每次操作，如更改namespace，选择服务等等操作，都需要重复循环数组，效率低
      */
-    let containerLogIndex = containerLogs.findIndex(con => con.id === cKey),
+    const containerLogIndex = containerLogs.findIndex(con => con.id === cKey),
       containerLog: ContainerLogs = containerLogs[containerLogIndex];
 
-    let { canSave } = isCanAddContainerLog(containerLogs, namespaceList.data.recordCount),
+    const { canSave } = isCanAddContainerLog(containerLogs, namespaceList.data.recordCount),
       canDelete = containerLogs.length > 1;
 
     //当前可以进行下拉选择的namespace列表，需要剔除已经选择过的
-    let optinalNameSpaceList = this._getOptionalNameSpaceList();
+    const optinalNameSpaceList = this._getOptionalNameSpaceList();
 
     let selectProps = {};
 
@@ -96,7 +97,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
         return { ...gr, [cluster.metadata.name]: <Tooltip title={value}>{value}</Tooltip> };
       }, {});
 
-      let options = namespaceList.data.recordCount
+      const options = namespaceList.data.recordCount
         ? namespaceList.data.records.map(item => {
             const text = `${item.cluster.spec.displayName}-${item.namespace}`;
 
@@ -115,7 +116,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
         filter: (inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)
       };
     } else {
-      let options = namespaceList.data.recordCount
+      const options = namespaceList.data.recordCount
         ? namespaceList.data.records.map((item, index) => ({
             value: item.namespaceValue,
             text: item.cluster.metadata.name
@@ -161,7 +162,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
                               actions.namespace.selectNamespace(value);
                               // 兼容业务侧的处理
                               if (window.location.href.includes('tkestack-project')) {
-                                let namespaceFound = namespaceList.data.records.find(
+                                const namespaceFound = namespaceList.data.records.find(
                                   item => item.namespaceValue === value
                                 );
                                 actions.cluster.selectClusterFromEditNamespace(namespaceFound.cluster);
@@ -209,7 +210,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
 
   /** 处理保存按钮 */
   private _handleSaveContainerLog(canSave: boolean, containerLogIndex: number) {
-    let { actions } = this.props;
+    const { actions } = this.props;
     // 触发一下校验的动作，检查相关的项是否合法
     actions.validate.validateContainerLog(containerLogIndex);
     if (canSave) {
@@ -219,7 +220,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
 
   /** 渲染采集对象 */
   private _renderCollectorWay(containerLog: ContainerLogs, containerLogIndex: number) {
-    let { actions } = this.props;
+    const { actions } = this.props;
 
     return (
       <FormItem label={t('采集对象')}>
@@ -267,14 +268,14 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
     const { containerLogs } = logStashEdit;
 
     //获取已经选择了的namespace列表
-    let chosenNamespaceList = [];
+    const chosenNamespaceList = [];
     for (let i = 0; i < containerLogs.length; i++) {
       if (containerLogs[i].status === 'edited') {
         chosenNamespaceList.push(containerLogs[i].namespaceSelection);
       }
     }
     //筛选还没有选择过的namespaceList
-    let result = cloneDeep(namespaceList);
+    const result = cloneDeep(namespaceList);
     result.data.records = [];
     for (let i = 0; i < namespaceList.data.recordCount; i++) {
       let canPut = true;
@@ -293,7 +294,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
 
   /** 渲染按照工作负载选择 */
   private _renderCollectorByWorkload(containerLog: ContainerLogs, containerLogIndex: number) {
-    let { actions, logStashEdit } = this.props,
+    const { actions, logStashEdit } = this.props,
       { workloadType, workloadSelection, workloadListFetch, namespaceSelection } = containerLog;
 
     return (
@@ -313,7 +314,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
                 defaultValue={workloadSelection[workloadType]}
                 value={workloadSelection[workloadType]}
                 onChange={items => {
-                  let workloadSelection = Object.assign({}, containerLog.workloadSelection, {
+                  const workloadSelection = Object.assign({}, containerLog.workloadSelection, {
                     [workloadType]: items
                   });
                   actions.editLogStash.updateContainerLog({ workloadSelection }, containerLogIndex);
@@ -343,7 +344,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
   private _renderLeftSide(workloadType: string, containerLogIndex: number) {
     let { actions, route, logStashEdit } = this.props,
       { containerLogs } = logStashEdit;
-    let containerLog: ContainerLogs = containerLogs[containerLogIndex];
+    const containerLog: ContainerLogs = containerLogs[containerLogIndex];
 
     return (
       <div className="version-wrap" style={{ width: '150px' }}>
@@ -385,7 +386,7 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
                       key={index}
                       className={classnames('', { cur: item.value === workloadType })}
                       onClick={() => {
-                        let { rid, clusterId } = route.queries;
+                        const { rid, clusterId } = route.queries;
                         // 更新当前的workload的类型
                         actions.editLogStash.updateContainerLog({ workloadType: item.value }, containerLogIndex);
                         /**

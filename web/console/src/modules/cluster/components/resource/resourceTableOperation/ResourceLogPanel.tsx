@@ -27,7 +27,8 @@ import { allActions } from '../../../actions';
 import { TailList } from '../../../constants/Config';
 import { RootProps } from '../../ClusterApp';
 import { YamlEditorPanel } from '../YamlEditorPanel';
-import { PlatformContext, PlatformTypeEnum, IPlatformContext } from '@/Wrapper';
+import { PlatformContext, IPlatformContext } from '@/Wrapper';
+import { PlatformTypeEnum } from '@config';
 
 const workloadTypeList = [
   {
@@ -78,7 +79,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
   }
 
   componentWillReceiveProps(nextProps: RootProps) {
-    let { namespaceList } = nextProps;
+    const { namespaceList } = nextProps;
 
     if (
       namespaceList.fetched === true &&
@@ -92,7 +93,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
   }
 
   componentWillUnmount() {
-    let { actions } = this.props;
+    const { actions } = this.props;
     // 停止轮询 和 关闭自动刷新按钮
     this._handleSwitch(false);
     actions.resourceLog.workload.fetch({ noCache: true });
@@ -101,7 +102,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
   }
 
   render() {
-    let { logList } = this.props.subRoot.resourceLogOption;
+    const { logList } = this.props.subRoot.resourceLogOption;
 
     return (
       <React.Fragment>
@@ -113,9 +114,9 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
 
   /** 展示日志内容的部分 */
   private _renderLogContent() {
-    let { logList } = this.props.subRoot.resourceLogOption;
+    const { logList } = this.props.subRoot.resourceLogOption;
 
-    let logContent = logList.data.recordCount ? logList.data.records[0] : t('暂无日志');
+    const logContent = logList.data.recordCount ? logList.data.records[0] : t('暂无日志');
 
     return (
       <Card>
@@ -128,7 +129,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
 
   /** 展示条件筛选的部分 */
   private _renderLogFilterBar() {
-    let { subRoot, namespaceList } = this.props,
+    const { subRoot, namespaceList } = this.props,
       { addons } = subRoot,
       {
         workloadType,
@@ -143,7 +144,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
       } = subRoot.resourceLogOption;
 
     // 展示workloadType的选择列表
-    let finalWorkloadTypeList = workloadTypeList.filter(item => {
+    const finalWorkloadTypeList = workloadTypeList.filter(item => {
       if (item.value !== 'tapp') {
         return true;
       } else {
@@ -151,7 +152,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
       }
     });
 
-    let workloadTypeOptions = finalWorkloadTypeList.map((w, index) => ({
+    const workloadTypeOptions = finalWorkloadTypeList.map((w, index) => ({
       value: w.value,
       text: w.label
     }));
@@ -164,7 +165,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
         return { ...gr, [clusterName]: <Tooltip title={value}>{value}</Tooltip> };
       }, {});
 
-      let namespaceOptions = namespaceList.data.records.map(item => {
+      const namespaceOptions = namespaceList.data.records.map(item => {
         const text = `${item.clusterDisplayName}-${item.namespace}`;
 
         return {
@@ -181,7 +182,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
         filter: (inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)
       };
     } else {
-      let namespaceOptions = namespaceList.data.records.map(item => ({
+      const namespaceOptions = namespaceList.data.records.map(item => ({
         value: item.name,
         text: item.displayName
       }));
@@ -194,20 +195,20 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
     // 展示命名空间的选择列表
 
     // 展示workloadList的选择列表
-    let workloadListOptions = workloadList.data.records.map(w => ({
+    const workloadListOptions = workloadList.data.records.map(w => ({
       value: w.metadata.name,
       text: w.metadata.name
     }));
 
     // 展示podList的选择列表
-    let podListOptions = podList.data.records.map(p => ({
+    const podListOptions = podList.data.records.map(p => ({
       value: p.metadata.name,
       text: p.metadata.name
     }));
 
     // 展示container的选择列表
-    let finder = podList.data.records.find(p => p.metadata.name === podSelection);
-    let containerOptions = finder
+    const finder = podList.data.records.find(p => p.metadata.name === podSelection);
+    const containerOptions = finder
       ? finder.spec.containers.map(c => ({
           value: c.name,
           text: c.name
@@ -215,8 +216,8 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
       : [];
 
     // 展示拉取数据条数的选择列表
-    let tailOptions = TailList.map((tail, index) => {
-      let text = tail.label;
+    const tailOptions = TailList.map((tail, index) => {
+      const text = tail.label;
       return {
         value: tail.value,
         text: `${t('显示{{ text }}', { text })}`
@@ -224,7 +225,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
     });
 
     /** 加载中的样式 */
-    let loadingElement: JSX.Element = (
+    const loadingElement: JSX.Element = (
       <div style={{ display: 'inline-block' }}>
         <i className="n-loading-icon" />
         &nbsp; <span className="text">{t('加载中...')}</span>
@@ -232,7 +233,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
     );
 
     // 判断pod选项是否需要loading
-    let isPodOptionLoading =
+    const isPodOptionLoading =
       podList.fetchState === FetchState.Fetching || workloadList.fetchState === FetchState.Fetching;
 
     return (
@@ -337,7 +338,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
 
   /** workloadType的选择 */
   private _handleSelectForWorkloadType(type: string) {
-    let { actions } = this.props;
+    const { actions } = this.props;
 
     // 清除pod选项
     this._clearPodOption();
@@ -349,7 +350,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
 
   /** workload的选择 */
   private _handleSelectForWorkload(workload: string) {
-    let { actions } = this.props;
+    const { actions } = this.props;
 
     // 清空pod选项
     this._clearPodOption();
@@ -362,7 +363,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
 
   /** 选择展示条目数据的操作 */
   private _handleSelectForTailLine(tailLine: string) {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { podSelection, containerSelection } = subRoot.resourceLogOption;
 
     actions.resourceLog.log.selectTailLine(tailLine);
@@ -372,7 +373,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
 
   /** namespace的选择 */
   private _handleSelectForNamespace(namespace: string) {
-    let { actions } = this.props;
+    const { actions } = this.props;
     // 清除pod选项
     this._clearPodOption();
 
@@ -383,7 +384,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
 
   /** 开启、关闭自动刷新 */
   private _handleSwitch(isChecked: boolean) {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { podSelection, containerSelection, tailLines, isAutoRenew } = subRoot.resourceLogOption;
 
     if (!isChecked) {
@@ -397,7 +398,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
 
   /** 选择pod之后，需要进行一些操作 */
   private _handleSelectForPod(podName: string) {
-    let { actions } = this.props;
+    const { actions } = this.props;
 
     actions.resourceLog.pod.selectPod(podName);
     this._handleSelectForContainer('');
@@ -405,7 +406,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
 
   /** 选择container的时候，拉取数据 */
   private _handleSelectForContainer(containerName: string) {
-    let { actions } = this.props;
+    const { actions } = this.props;
 
     // 选择container
     actions.resourceLog.pod.selectContainer(containerName);
@@ -413,7 +414,7 @@ export class ResourceLogPanel extends React.Component<RootProps, ResourceLogPane
 
   /** 清除pod选项 */
   private _clearPodOption() {
-    let { actions } = this.props;
+    const { actions } = this.props;
     //
     actions.resourceLog.pod.fetch({ noCache: true });
     actions.resourceLog.pod.selectContainer('');
