@@ -30,6 +30,7 @@ module.exports = ({ version }) =>
       historyApiFallback: true,
       compress: true,
       open: true,
+      openPage: version === 'tke' ? '/' : '/tkestack-project',
       port: 8181,
       proxy: {
         '/api': {
