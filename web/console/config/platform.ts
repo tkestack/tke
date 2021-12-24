@@ -44,3 +44,11 @@ export enum ConsoleModuleEnum {
   /** Helm应用模块 */
   Application = 'application'
 }
+
+export enum PlatformTypeEnum {
+  /** 平台 */
+  Manager = 'manager',
+
+  /** 业务 */
+  Business = 'business'
+}

@@ -38,7 +38,7 @@ import { ChartInstancesPanel } from '@tencent/tchart';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { Justify } from '@tencent/tea-component/lib/justify';
 
-import { resourceConfig } from '../../../../../../config';
+import { resourceConfig, PlatformTypeEnum } from '../../../../../../config';
 import { dateFormatter, downloadCsv, reduceNs } from '../../../../../../helpers';
 import { DisplayFiledProps, ResourceInfo } from '../../../../common/models';
 import { includes, isEmpty } from '../../../../common/utils';
@@ -48,7 +48,7 @@ import { MonitorPanelProps, resourceMonitorFields } from '../../../models/Monito
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { TellIsNeedFetchNS } from '../ResourceSidebarPanel';
-import { PlatformContext, IPlatformContext, PlatformTypeEnum } from '@/Wrapper';
+import { PlatformContext, IPlatformContext } from '@/Wrapper';
 
 interface ResouceActionPanelState {
   /** 是否开启自动刷新 */

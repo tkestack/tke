@@ -28,7 +28,8 @@ import { Clip, FormItem, GridTable } from '../../../../common/components';
 import { allActions } from '../../../actions';
 import { Event } from '../../../models';
 import { RootProps } from '../../ClusterApp';
-import { PlatformContext, PlatformTypeEnum, IPlatformContext } from '@/Wrapper';
+import { PlatformContext, IPlatformContext } from '@/Wrapper';
+import { PlatformTypeEnum } from '@config';
 
 insertCSS(
   'ResourceEventPanel',
@@ -117,7 +118,7 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
   }
 
   componentWillReceiveProps(nextProps: RootProps) {
-    let { namespaceList } = nextProps;
+    const { namespaceList } = nextProps;
 
     if (
       namespaceList.fetched === true &&
@@ -131,7 +132,7 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
   }
 
   componentWillUnmount() {
-    let { actions, route } = this.props;
+    const { actions, route } = this.props;
     // 停止轮询
     actions.resourceEvent.fetch({ noCache: true });
     actions.resourceEvent.clearPollEvent();
@@ -150,7 +151,7 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
 
   /** 展示条件筛选的部分 */
   private _renderEventFilterBar() {
-    let { subRoot, namespaceList } = this.props,
+    const { subRoot, namespaceList } = this.props,
       { namespaceSelection, workloadType, workloadList, workloadSelection, isAutoRenew } = subRoot.resourceEventOption;
 
     // 展示命名空间的选择列表
@@ -161,7 +162,7 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
         return { ...gr, [clusterName]: <Tooltip title={value}>{value}</Tooltip> };
       }, {});
 
-      let namespaceOptions = namespaceList.data.records.map(item => {
+      const namespaceOptions = namespaceList.data.records.map(item => {
         const text = `${item.clusterDisplayName}-${item.namespace}`;
 
         return {
@@ -179,7 +180,7 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
         filter: (inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)
       };
     } else {
-      let namespaceOptions = namespaceList.data.records.map(n => {
+      const namespaceOptions = namespaceList.data.records.map(n => {
         return {
           value: n.name,
           text: n.displayName
@@ -192,13 +193,13 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
     }
 
     // 展示workloadType的选择列表
-    let workloadTypeOptions = workloadTypeList.map(w => ({
+    const workloadTypeOptions = workloadTypeList.map(w => ({
       value: w.value,
       text: w.label
     }));
 
     // 展示workloadList的选择列表
-    let workloadListOptions = workloadList.data.records.map(w => {
+    const workloadListOptions = workloadList.data.records.map(w => {
       return {
         value: w.metadata.name,
         text: w.metadata.name
@@ -206,7 +207,7 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
     });
 
     /** 加载中的样式 */
-    let loadingElement: JSX.Element = (
+    const loadingElement: JSX.Element = (
       <div style={{ display: 'inline-block' }}>
         <i className="n-loading-icon" />
         &nbsp; <span className="text">{t('加载中...')}</span>
@@ -281,7 +282,7 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
 
   /** 处理namespace的选择 */
   private _handleSelectForNamespace(namespace: string) {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { workloadType, workloadSelection } = subRoot.resourceEventOption;
     actions.resourceEvent.selectNamespace(namespace);
 
@@ -291,7 +292,7 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
 
   /** 处理workloadType的选择 */
   private _handleSelectForWorkloadType(type: string) {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { namespaceSelection } = subRoot.resourceEventOption;
     actions.resourceEvent.workload.selectWorkloadType(type);
 
@@ -304,7 +305,7 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
 
   /** 处理workload的选择 */
   private _handleSelectForWorkload(workload: string) {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { namespaceSelection, workloadType } = subRoot.resourceEventOption;
     actions.resourceEvent.workload.selectWorkload(workload);
 
@@ -314,7 +315,7 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
 
   /** 处理自动刷新按钮 */
   private _handleSwitch(isChecked: boolean) {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { namespaceSelection, workloadType, workloadSelection } = subRoot.resourceEventOption;
 
     actions.resourceEvent.toggleAutoRenew();
@@ -328,12 +329,12 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
 
   /** 展示事件列表 */
   private _renderEventTablePanel() {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { eventList, eventQuery } = subRoot.resourceEventOption;
 
     /** 处理时间 */
     const reduceTime = (time: string) => {
-      let [first, second] = dateFormatter(new Date(time), 'YYYY-MM-DD HH:mm:ss').split(' ');
+      const [first, second] = dateFormatter(new Date(time), 'YYYY-MM-DD HH:mm:ss').split(' ');
 
       return <Text>{`${first} ${second}`}</Text>;
     };
@@ -422,7 +423,7 @@ export class ResourceEventPanel extends React.Component<RootProps, ResourceEvent
       }
     ];
 
-    let emptyTips: JSX.Element = <div>{t('事件列表为空')}</div>;
+    const emptyTips: JSX.Element = <div>{t('事件列表为空')}</div>;
 
     return (
       <GridTable

@@ -19,7 +19,7 @@ import './i18n';
 import * as React from 'react';
 import { Entry, insertCSS } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Wrapper, PlatformTypeEnum } from './Wrapper';
+import { Wrapper } from './Wrapper';
 import { Addon } from './src/modules/addon';
 import { PersistentEvent } from './src/modules/persistentEvent';
 import { Audit } from './src/modules/audit';
@@ -32,6 +32,7 @@ import { Init_Forbiddent_Config } from './helpers/reduceNetwork';
 import '@tencent/tchart/build/ChartsComponents';
 import { BlankPage } from './blankPage';
 import { Overview } from '@src/modules/overview';
+import { PlatformTypeEnum } from './config';
 
 const ClusterPromise = import(/* webpackPrefetch: true */ './src/modules/cluster');
 const Cluster = React.lazy(() => ClusterPromise);

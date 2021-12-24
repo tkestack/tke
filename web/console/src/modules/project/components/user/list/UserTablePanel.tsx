@@ -39,7 +39,7 @@ export const UserTablePanel = () => {
   const [editUser, setEditUser] = useState<User | undefined>();
   const { userList, route, platformType, userManagedProjects, projectDetail } = state;
 
-  let enableOp =
+  const enableOp =
     platformType === PlatformTypeEnum.Manager ||
     (platformType === PlatformTypeEnum.Business &&
       userManagedProjects.list.data.records.find(
@@ -139,7 +139,7 @@ export const UserTablePanel = () => {
       cancelText: t('取消')
     });
     if (yes) {
-      let userInfo = {
+      const userInfo = {
         id: uuid(),
         projectId: route.queries.projectId,
         users: [{ id: user.metadata.name }],

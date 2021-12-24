@@ -208,10 +208,5 @@ export const FFReduxActionName = {
   UserManagedProjects: 'UserManagedProjects',
   UserInfo: 'UserInfo'
 };
-export enum PlatformTypeEnum {
-  /** 平台 */
-  Manager = 'manager',
 
-  /** 业务 */
-  Business = 'business'
-}
+export { PlatformTypeEnum } from '@config';
