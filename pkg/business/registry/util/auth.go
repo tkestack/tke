@@ -70,7 +70,7 @@ func FilterWithUser(ctx context.Context,
 			if user.Spec.Name == userName {
 				log.Info("user", log.Any("user", user))
 				userID = user.Name
-				if authutil.IsPlatformAdministrator(user) {
+				if authutil.IsPlatformAdministrator(authClient, user) {
 					isAdmin = true
 				}
 				break
