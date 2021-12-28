@@ -21,7 +21,6 @@ package storage
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,7 +28,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"tkestack.io/tke/api/notify"
-	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	receiverstrategy "tkestack.io/tke/pkg/notify/registry/receiver"
 	"tkestack.io/tke/pkg/notify/util"
@@ -100,9 +98,6 @@ func (r *REST) ShortNames() []string {
 // DeleteCollection selects all resources in the storage matching given 'listOptions'
 // and deletes them.
 func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternal.ListOptions) (runtime.Object, error) {
-	if !authentication.IsAdministrator(ctx, r.privilegedUsername) {
-		return nil, errors.NewMethodNotSupported(notify.Resource("receivers"), "delete collection")
-	}
 	return r.Store.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }
 

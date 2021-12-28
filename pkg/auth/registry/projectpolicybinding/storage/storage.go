@@ -39,7 +39,6 @@ import (
 
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
-	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	"tkestack.io/tke/pkg/auth/registry/projectpolicybinding"
 	"tkestack.io/tke/pkg/auth/util"
@@ -142,10 +141,6 @@ func (r *REST) ShortNames() []string {
 // DeleteCollection selects all resources in the storage matching given 'listOptions'
 // and deletes them.
 func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternal.ListOptions) (runtime.Object, error) {
-	if !authentication.IsAdministrator(ctx, r.privilegedUsername) {
-		return nil, apierrors.NewMethodNotSupported(auth.Resource("ProjectPolicyBindings"), "delete collection")
-	}
-
 	if listOptions == nil {
 		listOptions = &metainternal.ListOptions{}
 	} else {

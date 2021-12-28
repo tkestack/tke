@@ -32,7 +32,6 @@ import (
 	"tkestack.io/tke/api/business"
 	businessinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
-	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
 	"tkestack.io/tke/pkg/business/registry/emigration"
 	"tkestack.io/tke/pkg/business/util"
@@ -113,9 +112,6 @@ func (r *REST) ShortNames() []string {
 // and deletes them.
 func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc,
 	options *metav1.DeleteOptions, listOptions *metainternal.ListOptions) (runtime.Object, error) {
-	if !authentication.IsAdministrator(ctx, r.privilegedUsername) {
-		return nil, errors.NewMethodNotSupported(business.Resource("nsemigrations"), "delete collection")
-	}
 	return r.Store.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }
 

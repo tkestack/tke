@@ -144,9 +144,6 @@ func (r *REST) ShortNames() []string {
 // DeleteCollection selects all resources in the storage matching given 'listOptions'
 // and deletes them.
 func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternal.ListOptions) (runtime.Object, error) {
-	if !authentication.IsAdministrator(ctx, r.privilegedUsername) {
-		return nil, errors.NewMethodNotSupported(business.Resource("namespaces"), "delete collection")
-	}
 	return r.Store.DeleteCollection(ctx, deleteValidation, options, listOptions)
 }
 

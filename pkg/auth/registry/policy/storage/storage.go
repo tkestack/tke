@@ -37,7 +37,6 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	storageerr "k8s.io/apiserver/pkg/storage/errors"
 	"k8s.io/apiserver/pkg/util/dryrun"
-	"tkestack.io/tke/pkg/apiserver/authentication"
 
 	"tkestack.io/tke/api/auth"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
@@ -174,10 +173,6 @@ func (r *REST) List(ctx context.Context, options *metainternal.ListOptions) (run
 // DeleteCollection selects all resources in the storage matching given 'listOptions'
 // and deletes them.
 func (r *REST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternal.ListOptions) (runtime.Object, error) {
-	if !authentication.IsAdministrator(ctx, r.privilegedUsername) {
-		return nil, apierrors.NewMethodNotSupported(auth.Resource("policies"), "delete collection")
-	}
-
 	if listOptions == nil {
 		listOptions = &metainternal.ListOptions{}
 	} else {
