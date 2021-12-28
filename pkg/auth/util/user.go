@@ -32,9 +32,11 @@ import (
 
 	"github.com/casbin/casbin/v2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/errors"
+	authversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 )
 
 const (
@@ -245,9 +247,22 @@ func SetAdministrator(enforcer *casbin.SyncedEnforcer, localIdentity *auth.Local
 	}
 }
 
-func IsPlatformAdministrator(user authv1.User) bool {
+func IsPlatformAdministrator(authClient authversionedclient.AuthV1Interface, user authv1.User) bool {
 	if user.Spec.Extra != nil && user.Spec.Extra[administratorKey] == "true" {
 		return true
+	}
+	if authClient != nil {
+		idp, err := authClient.IdentityProviders().Get(context.TODO(), user.Spec.TenantID, metav1.GetOptions{})
+		if err != nil {
+			log.Errorf("get IdentityProviders failed: %v", err)
+			return false
+		}
+		administrators := idp.Spec.Administrators
+		for _, admin := range administrators {
+			if admin == user.Spec.Name {
+				return true
+			}
+		}
 	}
 	return false
 }
