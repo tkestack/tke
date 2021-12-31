@@ -559,7 +559,7 @@ const (
 	HookPreUpgrade  HookType = "PreUpgrade"
 	HookPostUpgrade HookType = "PostUpgrade"
 
-	// custer lifecycle hook
+	// cluster lifecycle hook
 	HookPreClusterInstall  HookType = "PreClusterInstall"
 	HookPostClusterInstall HookType = "PostClusterInstall"
 	HookPreClusterUpgrade  HookType = "PreClusterUpgrade"
