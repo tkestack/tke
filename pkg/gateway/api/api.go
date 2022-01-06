@@ -23,6 +23,8 @@ import (
 
 	"github.com/emicklei/go-restful"
 	"golang.org/x/oauth2"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
 	"tkestack.io/tke/pkg/gateway/requestheader"
@@ -44,5 +46,15 @@ func RegisterRoute(container *restful.Container, cfg *gatewayconfig.GatewayConfi
 	}
 	registerSysInfoRoute(container, cfg)
 	registerLogoutRoute(container)
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return err
+	}
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	registerPlatformInfoRoute(container, oidcAuthenticator, client)
+
 	return nil
 }
