@@ -31,14 +31,9 @@ function sleep(time) {
 export const getK8sValidVersions = async (): Promise<Array<string>> => {
   const {
     data: { k8sValidVersions }
-  } = await Request.get<any, { data: { k8sValidVersions: string } }>(
-    '/api/v1/namespaces/kube-public/configmaps/cluster-info',
-    {
-      headers: {
-        'X-TKE-ClusterName': 'global'
-      }
-    }
-  );
+  } = await Request.get<any, { data: { k8sValidVersions: string } }>('/apis/gateway.tkestack.io/v1/platforminfo', {
+    headers: {}
+  });
 
   try {
     return JSON.parse(k8sValidVersions);
