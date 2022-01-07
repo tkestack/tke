@@ -10,7 +10,7 @@ on:
   repository_dispatch:
     types: [release]
   schedule:
-    - cron:  '0 18 * * *'
+    - cron:  '0 18 */3 * *'
   push:
     tags:
       - 'v*.*.*'
