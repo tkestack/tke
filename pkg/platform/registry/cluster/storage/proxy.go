@@ -20,28 +20,26 @@ package storage
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strconv"
+	"path"
 	"strings"
-	"time"
-
-	"tkestack.io/tke/pkg/apiserver/authentication"
-	"tkestack.io/tke/pkg/platform/proxy"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
+	clientrest "k8s.io/client-go/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
+	"tkestack.io/tke/pkg/apiserver/authentication"
 	"tkestack.io/tke/pkg/platform/apiserver/filter"
+	"tkestack.io/tke/pkg/platform/proxy"
 	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // ProxyREST implements proxy native api request to cluster of user.
@@ -93,32 +91,15 @@ func (r *ProxyREST) Connect(ctx context.Context, clusterName string, opts runtim
 	if err != nil {
 		return nil, errors.NewBadRequest(err.Error())
 	}
-	TLSClientConfig := &tls.Config{}
-	TLSClientConfig.InsecureSkipVerify = true
 
-	if config.TLSClientConfig.CertData != nil && config.TLSClientConfig.KeyData != nil {
-		cert, err := tls.X509KeyPair(config.TLSClientConfig.CertData, config.TLSClientConfig.KeyData)
-		if err != nil {
-			return nil, err
-		}
-		TLSClientConfig.Certificates = []tls.Certificate{cert}
-	} else if config.BearerToken == "" {
-		return nil, errors.NewInternalError(fmt.Errorf("%s has NO BearerToken", clusterName))
+	transport, err := clientrest.TransportFor(config)
+	if err != nil {
+		return nil, err
 	}
 
 	return &httputil.ReverseProxy{
-		Director: makeDirector(cluster.ObjectMeta.Name, userName, tenantID, uri, config.BearerToken),
-		Transport: &http.Transport{
-			DialContext: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
-			}).DialContext,
-			MaxIdleConns:          100,
-			IdleConnTimeout:       90 * time.Second,
-			TLSHandshakeTimeout:   10 * time.Second,
-			ExpectContinueTimeout: 1 * time.Second,
-			TLSClientConfig:       TLSClientConfig,
-		},
+		Director:  makeDirector(cluster.ObjectMeta.Name, userName, tenantID, uri, config.BearerToken),
+		Transport: transport,
 	}, nil
 }
 
@@ -139,20 +120,28 @@ func makeDirector(clusterName, userName, tenantID string, uri *url.URL, token st
 	}
 }
 
-func makeURL(host, path string) (*url.URL, error) {
-	var port int64
-	host = strings.TrimPrefix(host, "https://")
-	hostSegment := strings.Split(host, ":")
-	if len(hostSegment) != 2 {
-		return nil, fmt.Errorf("invalid host %s", host)
-	}
-	var err error
-	port, err = strconv.ParseInt(hostSegment[1], 10, 32)
+//proxyPath have been decoded somewhere before passing to makeURL
+func makeURL(host, proxyPath string) (*url.URL, error) {
+	u, err := url.Parse(host) //will returen error if a host not contains a schema
 	if err != nil {
-		return nil, fmt.Errorf("invalid host port %s", hostSegment[1])
+		log.Errorf("parse host error %s\n", err)
+		return nil, err
 	}
 
-	p := strings.TrimPrefix(path, "/")
+	/* a host without a path will have a emplty u.Path, and a proxyPath may not start with "/"
+	In order to make the newPath begin with only one "/", add a "/" to empty u.Path
+	*/
+	if u.Path == "" {
+		u.Path = "/"
+	}
 
-	return url.Parse(fmt.Sprintf("https://%s:%d/%s", hostSegment[0], port, p))
+	newPath := path.Join(u.Path, proxyPath) // ensure newPath begin with "/"
+
+	newURL := fmt.Sprintf("%s://%s%s", u.Scheme, u.Host, newPath)
+	u, err = url.Parse(newURL)
+	if err != nil {
+		log.Errorf("parse new url error %s\n", err)
+		return nil, err
+	}
+	return u, nil
 }
