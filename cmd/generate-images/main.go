@@ -43,7 +43,52 @@ var (
 
 func main() {
 	archsFlag := pflag.StringSliceP("archs", "a", spec.Archs, "Only list images for specified archs")
+	baseFlag := pflag.Bool("base", false, "Only list base components")
+	extraFlag := pflag.Bool("extra", false, "Only list extra components")
 	pflag.Parse()
+	if *baseFlag {
+		for _, one := range baseComponents(*archsFlag) {
+			fmt.Println(one)
+		}
+		return
+	}
+	if *extraFlag {
+		for _, one := range exComponents(*archsFlag) {
+			fmt.Println(one)
+		}
+		return
+	}
+	for _, one := range append(baseComponents(*archsFlag), exComponents(*archsFlag)...) {
+		fmt.Println(one)
+	}
+}
+
+func baseComponents(archsFlag []string) []string {
+	supportMultiArchImages := []func() []string{
+		baremetal.List,
+		installer.ListBaseComponents,
+		galaxy.List,
+	}
+
+	var result []string
+	for _, f := range supportMultiArchImages {
+		for _, one := range f() {
+			if IsUnsupportMultiArch(one) {
+				result = append(result, one)
+			} else {
+				for _, arch := range archsFlag {
+					result = append(result, strings.ReplaceAll(one, ":", "-"+arch+":"))
+				}
+			}
+		}
+	}
+
+	result = funk.UniqString(result)
+	sort.Strings(result)
+	return result
+}
+
+func exComponents(archsFlag []string) []string {
 	unsupportMultiArchImages := []func() []string{
 		cronhpa.List,
 		persistentevent.List,
@@ -53,9 +98,7 @@ func main() {
 		logagent.List,
 	}
 	supportMultiArchImages := []func() []string{
-		baremetal.List,
-		installer.List,
-		galaxy.List,
+		installer.ListExComponents,
 		mesh.List,
 	}
 
@@ -65,7 +108,7 @@ func main() {
 			if IsUnsupportMultiArch(one) {
 				result = append(result, one)
 			} else {
-				for _, arch := range *archsFlag {
+				for _, arch := range archsFlag {
 					result = append(result, strings.ReplaceAll(one, ":", "-"+arch+":"))
 				}
 			}
@@ -79,9 +122,7 @@ func main() {
 
 	result = funk.UniqString(result)
 	sort.Strings(result)
-	for _, one := range result {
-		fmt.Println(one)
-	}
+	return result
 }
 
 func IsUnsupportMultiArch(name string) bool {

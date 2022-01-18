@@ -27,27 +27,29 @@ import (
 	"tkestack.io/tke/pkg/util/containerregistry"
 )
 
-type Components struct {
+type BaseComponents struct {
+	TKEAuthAPI            containerregistry.Image
+	TKEAuthController     containerregistry.Image
+	TKEPlatformAPI        containerregistry.Image
+	TKEPlatformController containerregistry.Image
+	TKERegistryAPI        containerregistry.Image
+	TKERegistryController containerregistry.Image
+	ProviderRes           containerregistry.Image
+	TKEGateway            containerregistry.Image
+}
+
+type ExComponents struct {
 	Registry containerregistry.Image
 	Busybox  containerregistry.Image
 	InfluxDB containerregistry.Image
 	Thanos   containerregistry.Image
 
-	ProviderRes containerregistry.Image
-
-	TKEGateway               containerregistry.Image
-	TKEAuthAPI               containerregistry.Image
-	TKEAuthController        containerregistry.Image
 	TKEBusinessAPI           containerregistry.Image
 	TKEBusinessController    containerregistry.Image
 	TKEMonitorAPI            containerregistry.Image
 	TKEMonitorController     containerregistry.Image
 	TKENotifyAPI             containerregistry.Image
 	TKENotifyController      containerregistry.Image
-	TKEPlatformAPI           containerregistry.Image
-	TKEPlatformController    containerregistry.Image
-	TKERegistryAPI           containerregistry.Image
-	TKERegistryController    containerregistry.Image
 	TKELogagentAPI           containerregistry.Image
 	TKELogagentController    containerregistry.Image
 	TKEAudit                 containerregistry.Image
@@ -55,6 +57,11 @@ type Components struct {
 	TKEApplicationController containerregistry.Image
 	TKEMeshAPI               containerregistry.Image
 	TKEMeshController        containerregistry.Image
+}
+
+type Components struct {
+	BaseComponents
+	ExComponents
 }
 
 func (c Components) Get(name string) *containerregistry.Image {
@@ -70,27 +77,18 @@ func (c Components) Get(name string) *containerregistry.Image {
 
 var Version = version.Get().GitVersion
 
-var components = Components{
+var exComponents = ExComponents{
 	Registry: containerregistry.Image{Name: "registry", Tag: "2.7.1"},
 	Busybox:  containerregistry.Image{Name: "busybox", Tag: "1.31.1"},
 	InfluxDB: containerregistry.Image{Name: "influxdb", Tag: "1.7.9"},
 	Thanos:   containerregistry.Image{Name: "thanos", Tag: "v0.15.0"},
 
-	ProviderRes: containerregistry.Image{Name: "provider-res", Tag: "v1.21.4-1"},
-
-	TKEAuthAPI:               containerregistry.Image{Name: "tke-auth-api", Tag: Version},
-	TKEAuthController:        containerregistry.Image{Name: "tke-auth-controller", Tag: Version},
 	TKEBusinessAPI:           containerregistry.Image{Name: "tke-business-api", Tag: Version},
 	TKEBusinessController:    containerregistry.Image{Name: "tke-business-controller", Tag: Version},
-	TKEGateway:               containerregistry.Image{Name: "tke-gateway", Tag: Version},
 	TKEMonitorAPI:            containerregistry.Image{Name: "tke-monitor-api", Tag: Version},
 	TKEMonitorController:     containerregistry.Image{Name: "tke-monitor-controller", Tag: Version},
 	TKENotifyAPI:             containerregistry.Image{Name: "tke-notify-api", Tag: Version},
 	TKENotifyController:      containerregistry.Image{Name: "tke-notify-controller", Tag: Version},
-	TKEPlatformAPI:           containerregistry.Image{Name: "tke-platform-api", Tag: Version},
-	TKEPlatformController:    containerregistry.Image{Name: "tke-platform-controller", Tag: Version},
-	TKERegistryAPI:           containerregistry.Image{Name: "tke-registry-api", Tag: Version},
-	TKERegistryController:    containerregistry.Image{Name: "tke-registry-controller", Tag: Version},
 	TKELogagentAPI:           containerregistry.Image{Name: "tke-logagent-api", Tag: Version},
 	TKELogagentController:    containerregistry.Image{Name: "tke-logagent-controller", Tag: Version},
 	TKEAudit:                 containerregistry.Image{Name: "tke-audit-api", Tag: Version},
@@ -99,6 +97,19 @@ var components = Components{
 	TKEMeshAPI:               containerregistry.Image{Name: "tke-mesh-api", Tag: Version},
 	TKEMeshController:        containerregistry.Image{Name: "tke-mesh-controller", Tag: Version},
 }
+
+var baseComponents = BaseComponents{
+	TKEAuthAPI:            containerregistry.Image{Name: "tke-auth-api", Tag: Version},
+	TKEAuthController:     containerregistry.Image{Name: "tke-auth-controller", Tag: Version},
+	TKEPlatformAPI:        containerregistry.Image{Name: "tke-platform-api", Tag: Version},
+	TKEPlatformController: containerregistry.Image{Name: "tke-platform-controller", Tag: Version},
+	TKERegistryAPI:        containerregistry.Image{Name: "tke-registry-api", Tag: Version},
+	TKERegistryController: containerregistry.Image{Name: "tke-registry-controller", Tag: Version},
+	ProviderRes:           containerregistry.Image{Name: "provider-res", Tag: "v1.21.4-1"},
+	TKEGateway:            containerregistry.Image{Name: "tke-gateway", Tag: Version},
+}
+
+var components = Components{baseComponents, exComponents}
 
 func List() []string {
 	var items []string
@@ -114,4 +125,28 @@ func List() []string {
 
 func Get() Components {
 	return components
+}
+
+func ListBaseComponents() []string {
+	var items []string
+	v := reflect.ValueOf(baseComponents)
+	for i := 0; i < v.NumField(); i++ {
+		v, _ := v.Field(i).Interface().(containerregistry.Image)
+		items = append(items, v.BaseName())
+	}
+	sort.Strings(items)
+
+	return items
+}
+
+func ListExComponents() []string {
+	var items []string
+	v := reflect.ValueOf(exComponents)
+	for i := 0; i < v.NumField(); i++ {
+		v, _ := v.Field(i).Interface().(containerregistry.Image)
+		items = append(items, v.BaseName())
+	}
+	sort.Strings(items)
+
+	return items
 }
