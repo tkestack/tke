@@ -70,6 +70,8 @@ import (
 	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	baremetalconfig "tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	baremetalconstants "tkestack.io/tke/pkg/platform/provider/baremetal/constants"
+	baremetal "tkestack.io/tke/pkg/platform/provider/baremetal/images"
+	galaxy "tkestack.io/tke/pkg/platform/provider/baremetal/phases/galaxy/images"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	clusterstrategy "tkestack.io/tke/pkg/platform/registry/cluster"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -224,8 +226,8 @@ func (t *TKE) initSteps() {
 	if !t.Para.Config.Registry.IsOfficial() {
 		t.steps = append(t.steps, []types.Handler{
 			{
-				Name: "Push images",
-				Func: t.pushImages,
+				Name: "Push base components images",
+				Func: t.pushBaseComImages,
 			},
 		}...)
 	}
@@ -286,15 +288,6 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
-	if t.auditEnabled() {
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Install tke audit",
-				Func: t.installTKEAudit,
-			},
-		}...)
-	}
-
 	t.steps = append(t.steps, []types.Handler{
 		{
 			Name: "Install tke-platform-api",
@@ -306,6 +299,27 @@ func (t *TKE) initSteps() {
 		},
 	}...)
 
+	if t.Para.Config.Gateway != nil {
+		if t.IncludeSelf {
+			t.steps = append(t.steps, []types.Handler{
+				{
+					Name: "Prepare images before stop local registry",
+					Func: t.prepareImages,
+				},
+				{
+					Name: "Stop local registry to give up 80/443 for tke-gateway",
+					Func: t.stopLocalRegistry,
+				},
+			}...)
+		}
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Install tke-gateway",
+				Func: t.installTKEGateway,
+			},
+		}...)
+	}
+
 	if t.Para.Config.Registry.TKERegistry != nil {
 		t.steps = append(t.steps, []types.Handler{
 			{
@@ -315,6 +329,33 @@ func (t *TKE) initSteps() {
 			{
 				Name: "Install tke-registry-controller",
 				Func: t.installTKERegistryController,
+			},
+		}...)
+	}
+
+	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
+		t.Para.Config.Registry.TKERegistry != nil {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Prepare push images to TKE registry",
+				Func: t.preparePushImagesToTKERegistry,
+			},
+			{
+				Name: "Push images to registry",
+				Func: t.pushImages,
+			},
+			{
+				Name: "Set global cluster hosts",
+				Func: t.setGlobalClusterHosts,
+			},
+		}...)
+	}
+
+	if t.auditEnabled() {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Install tke audit",
+				Func: t.installTKEAudit,
 			},
 		}...)
 	}
@@ -413,27 +454,6 @@ func (t *TKE) initSteps() {
 	// others
 
 	// Add more tke component before THIS!!!
-	if t.Para.Config.Gateway != nil {
-		if t.IncludeSelf {
-			t.steps = append(t.steps, []types.Handler{
-				{
-					Name: "Prepare images before stop local registry",
-					Func: t.prepareImages,
-				},
-				{
-					Name: "Stop local registry to give up 80/443 for tke-gateway",
-					Func: t.stopLocalRegistry,
-				},
-			}...)
-		}
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Install tke-gateway",
-				Func: t.installTKEGateway,
-			},
-		}...)
-	}
-
 	t.steps = append(t.steps, []types.Handler{
 		{
 			Name: "Register tke api into global cluster",
@@ -448,18 +468,6 @@ func (t *TKE) initSteps() {
 	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
 		t.Para.Config.Registry.TKERegistry != nil {
 		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Prepare push images to TKE registry",
-				Func: t.preparePushImagesToTKERegistry,
-			},
-			{
-				Name: "Push images to registry",
-				Func: t.pushImages,
-			},
-			{
-				Name: "Set global cluster hosts",
-				Func: t.setGlobalClusterHosts,
-			},
 			{
 				Name: "Import charts",
 				Func: t.importCharts,
@@ -2491,12 +2499,53 @@ func (t *TKE) pushImages(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	return t.dockerPush(tkeImages)
+}
+func (t *TKE) pushBaseComImages(ctx context.Context) error {
+	archsFlag := []string{"amd64", "arm64"}
+	supportMultiArchImages := []func() []string{
+		baremetal.List,
+		images.ListBaseComponents,
+		galaxy.List,
+	}
+
+	var result []string
+	for _, f := range supportMultiArchImages {
+		for _, one := range f() {
+			one := fmt.Sprintf("%s/%s/%s", t.Para.Config.Registry.Domain(),
+				t.Para.Config.Registry.Namespace(), one)
+			if isUnsupportMultiArch(one) {
+				result = append(result, one)
+			} else {
+				for _, arch := range archsFlag {
+					result = append(result, strings.ReplaceAll(one, ":", "-"+arch+":"))
+				}
+			}
+		}
+	}
+
+	result = funk.UniqString(result)
+	return t.dockerPush(result)
+}
+
+func isUnsupportMultiArch(name string) bool {
+	specialUnsupportMultiArch := []string{"nvidia-device-plugin", "gpu"}
+	for _, one := range specialUnsupportMultiArch {
+		if strings.Contains(name, one) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (t *TKE) dockerPush(tkeImages []string) error {
 	sort.Strings(tkeImages)
 	tkeImagesSet := sets.NewString(tkeImages...)
 	manifestSet := sets.NewString()
 
 	// clear all local manifest lists before create any manifest list
-	err = t.docker.ClearLocalManifests()
+	err := t.docker.ClearLocalManifests()
 	if err != nil {
 		return err
 	}
