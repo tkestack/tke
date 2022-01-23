@@ -21,7 +21,6 @@ package storage
 import (
 	"context"
 
-	networkingV1 "k8s.io/api/networking/v1"
 	networkingV1Beta1 "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -56,28 +55,6 @@ func NewStorageV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platf
 
 	return &Storage{
 		Ingress: &REST{networkPolicyStore},
-		Status: &StatusREST{
-			store: &statusStore,
-		},
-		Events: &EventREST{
-			platformClient: platformClient,
-		},
-	}
-}
-
-// NewStorageV1 returns a Storage object that will work against resources.
-func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platforminternalclient.PlatformInterface) *Storage {
-	ingressStore := &proxy.Store{
-		NewFunc:        func() runtime.Object { return &networkingV1.Ingress{} },
-		NewListFunc:    func() runtime.Object { return &networkingV1.IngressList{} },
-		Namespaced:     true,
-		PlatformClient: platformClient,
-	}
-
-	statusStore := *ingressStore
-
-	return &Storage{
-		Ingress: &REST{ingressStore},
 		Status: &StatusREST{
 			store: &statusStore,
 		},
