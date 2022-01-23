@@ -66,10 +66,14 @@ func (*StorageProvider) GroupName() string {
 func (s *StorageProvider) v1Storage(restOptionsGetter generic.RESTOptionsGetter, loopbackClientConfig *restclient.Config) map[string]rest.Storage {
 	platformClient := platforminternalclient.NewForConfigOrDie(loopbackClientConfig)
 
+	ingressStorage := ingressstorage.NewStorageV1(restOptionsGetter, platformClient)
 	networkPolicyStore := networkpolicystorage.NewStorageV1(restOptionsGetter, platformClient)
 
 	storageMap := map[string]rest.Storage{
-		"networkpolicies": networkPolicyStore.NetworkPolicy,
+		"ingresses":        ingressStorage.Ingress,
+		"ingresses/status": ingressStorage.Status,
+		"ingresses/events": ingressStorage.Events,
+		"networkpolicies":  networkPolicyStore.NetworkPolicy,
 	}
 
 	return storageMap
