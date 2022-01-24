@@ -299,6 +299,19 @@ func (t *TKE) initSteps() {
 		},
 	}...)
 
+	if t.Para.Config.Registry.TKERegistry != nil {
+		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Install tke-registry-api",
+				Func: t.installTKERegistryAPI,
+			},
+			{
+				Name: "Install tke-registry-controller",
+				Func: t.installTKERegistryController,
+			},
+		}...)
+	}
+
 	if t.Para.Config.Gateway != nil {
 		if t.IncludeSelf {
 			t.steps = append(t.steps, []types.Handler{
@@ -316,19 +329,6 @@ func (t *TKE) initSteps() {
 			{
 				Name: "Install tke-gateway",
 				Func: t.installTKEGateway,
-			},
-		}...)
-	}
-
-	if t.Para.Config.Registry.TKERegistry != nil {
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Install tke-registry-api",
-				Func: t.installTKERegistryAPI,
-			},
-			{
-				Name: "Install tke-registry-controller",
-				Func: t.installTKERegistryController,
 			},
 		}...)
 	}
