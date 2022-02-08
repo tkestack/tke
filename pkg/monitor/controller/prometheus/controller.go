@@ -27,6 +27,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+
 	"tkestack.io/tke/pkg/platform/util/addon"
 
 	"github.com/coreos/prometheus-operator/pkg/apis/monitoring"
@@ -965,7 +966,7 @@ func serviceAccountPrometheusOperator() *corev1.ServiceAccount {
 func clusterRolePrometheusOperator() *rbacv1.ClusterRole {
 	return &rbacv1.ClusterRole{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "rbac.authorization.k8s.io/v1beta1",
+			APIVersion: "rbac.authorization.k8s.io/v1",
 			Kind:       "ClusterRole",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -1171,7 +1172,7 @@ func serviceAccountPrometheus() *corev1.ServiceAccount {
 func clusterRolePrometheus() *rbacv1.ClusterRole {
 	return &rbacv1.ClusterRole{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "rbac.authorization.k8s.io/v1beta1",
+			APIVersion: "rbac.authorization.k8s.io/v1",
 			Kind:       "ClusterRole",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -1763,7 +1764,7 @@ func createServiceAccountForMetrics() *corev1.ServiceAccount {
 func createClusterRoleForMetrics() *rbacv1.ClusterRole {
 	return &rbacv1.ClusterRole{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "rbac.authorization.k8s.io/v1beta1",
+			APIVersion: "rbac.authorization.k8s.io/v1",
 			Kind:       "ClusterRole",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -1864,7 +1865,7 @@ func createClusterRoleBindingForMetrics() *rbacv1.ClusterRoleBinding {
 func createRoleForMetrics() *rbacv1.Role {
 	return &rbacv1.Role{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "rbac.authorization.k8s.io/v1beta1",
+			APIVersion: "rbac.authorization.k8s.io/v1",
 			Kind:       "Role",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -2434,7 +2435,7 @@ func createServiceAccountForNPD() *corev1.ServiceAccount {
 func createClusterRoleForNPD() *rbacv1.ClusterRole {
 	return &rbacv1.ClusterRole{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "rbac.authorization.k8s.io/v1beta1",
+			APIVersion: "rbac.authorization.k8s.io/v1",
 			Kind:       "ClusterRole",
 		},
 		ObjectMeta: metav1.ObjectMeta{

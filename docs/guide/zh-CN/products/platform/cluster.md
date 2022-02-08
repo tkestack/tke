@@ -110,7 +110,7 @@ TKEStack还可以另外**新建独立集群**以及**导入已有集群**实现*
       ```yaml
       cat <<EOF | kubectl apply -f -
       kind: ClusterRoleBinding
-      apiVersion: rbac.authorization.k8s.io/v1beta1
+      apiVersion: rbac.authorization.k8s.io/v1
       metadata:
         name: admin
         annotations:
