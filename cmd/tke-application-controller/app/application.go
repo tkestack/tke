@@ -20,16 +20,10 @@ package app
 
 import (
 	"net/http"
-	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	"tkestack.io/tke/pkg/application/controller/app"
-)
-
-const (
-	applicationSyncPeriod      = 30 * time.Second
-	concurrentApplicationSyncs = 10
 )
 
 func startAppController(ctx ControllerContext) (http.Handler, bool, error) {
@@ -42,11 +36,11 @@ func startAppController(ctx ControllerContext) (http.Handler, bool, error) {
 		ctx.PlatformClient,
 		ctx.Repo,
 		ctx.InformerFactory.Application().V1().Apps(),
-		applicationSyncPeriod,
+		ctx.Config.AppControllerConfiguration.SyncPeriod,
 		applicationv1.AppFinalize,
 	)
 
-	go ctrl.Run(concurrentApplicationSyncs, ctx.Stop)
+	go ctrl.Run(ctx.Config.AppControllerConfiguration.ConcurrentSyncs, ctx.Stop)
 
 	return nil, true, nil
 }

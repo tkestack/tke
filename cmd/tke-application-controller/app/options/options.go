@@ -19,10 +19,17 @@
 package options
 
 import (
+	"time"
+
 	"github.com/spf13/pflag"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
 	controlleroptions "tkestack.io/tke/pkg/controller/options"
 	"tkestack.io/tke/pkg/util/log"
+)
+
+const (
+	defaultSyncPeriod      = 30 * time.Second
+	defaultconcurrentSyncs = 10
 )
 
 // Options is the main context object for the TKE controller manager.
