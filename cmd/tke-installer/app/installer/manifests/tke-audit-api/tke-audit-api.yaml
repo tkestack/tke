@@ -21,7 +21,7 @@ metadata:
   name: tke-audit-api
   namespace: tke
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   labels:
@@ -35,7 +35,7 @@ rules:
     resourceNames: ["tke-audit-api"]
     verbs: ["get", "update"]
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   annotations:
