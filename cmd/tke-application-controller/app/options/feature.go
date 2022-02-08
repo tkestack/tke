@@ -20,6 +20,7 @@ package options
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -27,6 +28,8 @@ import (
 )
 
 const (
+	flagConcurrentSyncs   = "concurrent-app-syncs"
+	flagSyncAppPeriod     = "sync-app-period"
 	flagRepoScheme        = "features-repo-scheme"
 	flagRepoDomainSuffix  = "features-repo-domain-suffix"
 	flagRepoCaFile        = "features-repo-cafile"
@@ -35,11 +38,13 @@ const (
 )
 
 const (
-	configRepoScheme        = "features.repo.scheme"
-	configRepoDomainSuffix  = "features.repo.domain_suffix"
-	configRepoCaFile        = "features.repo.cafile"
-	configRepoAdmin         = "features.repo.admin"
-	configRepoAdminPassword = "features.repo.admin_password"
+	configSyncAppPeriod      = "controller.sync_app_period"
+	configConcurrentAppSyncs = "controller.concurrent_app_syncs"
+	configRepoScheme         = "features.repo.scheme"
+	configRepoDomainSuffix   = "features.repo.domain_suffix"
+	configRepoCaFile         = "features.repo.cafile"
+	configRepoAdmin          = "features.repo.admin"
+	configRepoAdminPassword  = "features.repo.admin_password"
 )
 
 // RepoOptions contains configuration items related to application attributes.
@@ -51,14 +56,26 @@ type RepoOptions struct {
 	AdminPassword string
 }
 
+// ControllerOptions contains configuration items related to application attributes.
+type AppControllerOptions struct {
+	SyncAppPeriod      time.Duration
+	ConcurrentAppSyncs int
+}
+
 // FeatureOptions contains configuration items related to application attributes.
 type FeatureOptions struct {
-	Repo RepoOptions
+	Repo          RepoOptions
+	AppController AppControllerOptions
 }
 
 // NewFeatureOptions creates a FeatureOptions object with default parameters.
 func NewFeatureOptions() *FeatureOptions {
-	return &FeatureOptions{}
+	return &FeatureOptions{
+		AppController: AppControllerOptions{
+			SyncAppPeriod:      defaultSyncPeriod,
+			ConcurrentAppSyncs: defaultconcurrentSyncs,
+		},
+	}
 }
 
 // AddFlags adds flags for console to the specified FlagSet object.
@@ -82,6 +99,12 @@ func (o *FeatureOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.String(flagRepoAdminPassword, o.Repo.AdminPassword,
 		"Repo admin user password.")
 	_ = viper.BindPFlag(configRepoAdminPassword, fs.Lookup(flagRepoAdminPassword))
+
+	fs.DurationVar(&o.AppController.SyncAppPeriod, flagSyncAppPeriod, o.AppController.SyncAppPeriod, "The period for app health checks")
+	_ = viper.BindPFlag(configSyncAppPeriod, fs.Lookup(flagSyncAppPeriod))
+
+	fs.IntVar(&o.AppController.ConcurrentAppSyncs, flagConcurrentSyncs, o.AppController.ConcurrentAppSyncs, "The number of app objects that are allowed to sync concurrently. Larger number = more responsive app termination, but more CPU (and network) load")
+	_ = viper.BindPFlag(configConcurrentAppSyncs, fs.Lookup(flagConcurrentSyncs))
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -103,6 +126,8 @@ func (o *FeatureOptions) ApplyFlags() []error {
 	o.Repo.Admin = viper.GetString(configRepoAdmin)
 	o.Repo.AdminPassword = viper.GetString(configRepoAdminPassword)
 
+	o.AppController.SyncAppPeriod = viper.GetDuration(configSyncAppPeriod)
+	o.AppController.ConcurrentAppSyncs = viper.GetInt(configConcurrentAppSyncs)
 	return errs
 }
 
@@ -117,6 +142,18 @@ func (o *RepoOptions) ApplyTo(cfg *appconfig.RepoConfiguration) error {
 	cfg.CaFile = o.CaFile
 	cfg.Admin = o.Admin
 	cfg.AdminPassword = o.AdminPassword
+
+	return nil
+}
+
+// ApplyTo fills up Debugging config with options.
+func (o *AppControllerOptions) ApplyTo(cfg *appconfig.AppControllerConfiguration) error {
+	if o == nil {
+		return nil
+	}
+
+	cfg.ConcurrentSyncs = o.ConcurrentAppSyncs
+	cfg.SyncPeriod = o.SyncAppPeriod
 
 	return nil
 }

@@ -50,6 +50,7 @@ type Config struct {
 	// the rest config for the platform apiserver
 	PlatformAPIServerClientConfig *restclient.Config
 	RepoConfiguration             appconfig.RepoConfiguration
+	AppControllerConfiguration    appconfig.AppControllerConfiguration
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -93,6 +94,9 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		PlatformAPIServerClientConfig:    platformAPIServerClientConfig,
 	}
 
+	if err := (&opts.FeatureOptions.AppController).ApplyTo(&controllerManagerConfig.AppControllerConfiguration); err != nil {
+		return nil, err
+	}
 	if err := (&opts.FeatureOptions.Repo).ApplyTo(&controllerManagerConfig.RepoConfiguration); err != nil {
 		return nil, err
 	}

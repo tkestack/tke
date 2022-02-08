@@ -18,6 +18,8 @@
 
 package config
 
+import "time"
+
 // RepoConfiguration contains options to connect to a chart repo.
 type RepoConfiguration struct {
 	Scheme        string
@@ -25,4 +27,9 @@ type RepoConfiguration struct {
 	CaFile        string
 	Admin         string
 	AdminPassword string
+}
+
+type AppControllerConfiguration struct {
+	SyncPeriod      time.Duration
+	ConcurrentSyncs int
 }

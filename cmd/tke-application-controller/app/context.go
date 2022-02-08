@@ -50,6 +50,9 @@ type ControllerContext struct {
 	// InformerFactory gives access to informers for the controller.
 	InformerFactory versionedinformers.SharedInformerFactory
 
+	// Config provides access to init options for a given controller
+	Config config.Config
+
 	// DeferredDiscoveryRESTMapper is a RESTMapper that will defer
 	// initialization of the RESTMapper until the first mapping is
 	// requested.
@@ -114,6 +117,7 @@ func CreateControllerContext(cfg *config.Config, rootClientBuilder controller.Cl
 	ctx := ControllerContext{
 		ClientBuilder:           rootClientBuilder,
 		InformerFactory:         sharedInformers,
+		Config:                  *cfg,
 		RESTMapper:              restMapper,
 		AvailableResources:      availableResources,
 		Stop:                    stop,
