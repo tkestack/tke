@@ -27,6 +27,7 @@ import (
 	"tkestack.io/tke/cmd/tke-platform-api/app"
 	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	baremetalmachine "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
+	edgecluster "tkestack.io/tke/pkg/platform/provider/edge/cluster"
 	importedcluster "tkestack.io/tke/pkg/platform/provider/imported/cluster"
 )
 
@@ -39,6 +40,7 @@ func main() {
 	baremetalcluster.RegisterProvider()
 	baremetalmachine.RegisterProvider()
 	importedcluster.RegisterProvider()
+	edgecluster.RegisterProvider()
 
 	app.NewApp("tke-platform-api").Run()
 }
