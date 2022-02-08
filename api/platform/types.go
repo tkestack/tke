@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"os"
 	"path"
 	"strings"
 
@@ -391,7 +392,8 @@ func (cc ClusterCredential) RESTConfig(cls *Cluster) *rest.Config {
 			config.Host = fmt.Sprintf("https://%s", host)
 		}
 	}
-	if cc.CACert != nil {
+	// If api-server does not sign the ip in address, set ca then request, it will report x509 certificate error, need to ignore the certificate
+	if os.Getenv("TKE_IGNORE_CA") != "true" && cc.CACert != nil {
 		config.TLSClientConfig.CAData = cc.CACert
 	} else {
 		config.TLSClientConfig.Insecure = true
