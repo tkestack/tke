@@ -341,8 +341,6 @@ func (c *Controller) handlePhase(ctx context.Context, key string, cachedApp *cac
 		return c.syncAppFromRelease(ctx, cachedApp, app)
 	case applicationv1.AppPhaseRollbackFailed:
 		break
-	case applicationv1.AppPhaseChartFetched:
-		break
 	case applicationv1.AppPhaseChartFetchFailed:
 		break
 	case applicationv1.AppPhaseSyncFailed:
