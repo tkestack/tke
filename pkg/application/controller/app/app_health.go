@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
@@ -85,7 +84,7 @@ func (c *Controller) watchAppHealth(ctx context.Context, key string) func() (boo
 			return true, nil
 		}
 
-		app, err := c.client.ApplicationV1().Apps(namespace).Get(ctx, name, metav1.GetOptions{})
+		app, err := c.lister.Apps(namespace).Get(name)
 		if err != nil && errors.IsNotFound(err) {
 			log.Error("App not found, to exit the health check loop",
 				log.String("name", name))
