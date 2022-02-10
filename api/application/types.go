@@ -226,9 +226,6 @@ const (
 type AppPhase string
 
 const (
-	// ChartFetched means the chart to which the App refers
-	// has been fetched successfully
-	AppPhaseChartFetched AppPhase = "ChartFetched"
 	// ChartFetchedFailed means the chart to which the App
 	// refers could not be fetched.
 	AppPhaseChartFetchFailed AppPhase = "ChartFetchFailed"

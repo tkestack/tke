@@ -61,14 +61,6 @@ func Pull(ctx context.Context,
 			updateStatusFunc(ctx, app, &app.Status, newStatus)
 			return destfile, err
 		}
-		newStatus.Phase = applicationv1.AppPhaseChartFetched
-		newStatus.Message = ""
-		newStatus.Reason = ""
-		newStatus.LastTransitionTime = metav1.Now()
-		_, err := updateStatusFunc(ctx, app, &app.Status, newStatus)
-		if err != nil {
-			return destfile, err
-		}
 	}
 	return destfile, err
 }
