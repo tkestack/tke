@@ -4,11 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "common_pre": "rm -rf node_modules && npm i && npm run unzip_third_party",
-    "unzip_third_party": "unzip -n -q -d ./node_modules ../../third_party/fe_node_modules.zip",
     "dev": "cross-env NODE_OPTIONS=--max_old_space_size=2048 NODE_ENV=development Version=tke node ./develop/index.ts",
     "cp_public": "mkdir -p build && cp -r public/* build",
-    "prebuild": "npm run cp_public && npm run common_pre",
+    "prebuild": "npm run cp_public && npm install",
     "build": "cross-env NODE_ENV=production Version=tke webpack --config webpack/webpack.prod.js",
     "eslint": "eslint src --ext .ts,.tsx --fix",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -48,6 +46,7 @@
     "react-router": "^5.0.1",
     "redux-logger": "^3.0.6",
     "redux-thunk": "=2.0.1",
+    "tea-component": "^2.7.3",
     "tslint": "^5.12.1",
     "typescript": "^4.0.3",
     "webpack-bundle-analyzer": "^3.5.2"

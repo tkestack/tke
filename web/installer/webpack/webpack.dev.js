@@ -111,16 +111,13 @@ module.exports = {
   resolve: {
     extensions: ['.tsx', '.ts', '.js', '.jsx', '.json', 'css'],
     alias: {
-      '@tea/app': path.resolve(__dirname, '../node_modules/@tencent/tea-app'),
-      '@tea/app/*': path.resolve(__dirname, '../node_modules/@tencent/tea-app/lib/*'),
-      '@tea/component': path.resolve(__dirname, '../node_modules/@tencent/tea-component/lib'),
-      '@tea/component/*': path.resolve(__dirname, '../node_modules/@tencent/tea-component/lib/*'),
       '@tencent/ff-validator': path.resolve(__dirname, '../lib/ff-validator'),
       '@tencent/ff-validator/*': path.resolve(__dirname, '../lib/ff-validator/*'),
       '@tencent/ff-redux': path.resolve(__dirname, '../lib/ff-redux'),
       '@tencent/ff-redux/*': path.resolve(__dirname, '../lib/ff-redux/*'),
       '@tencent/ff-component': path.resolve(__dirname, '../lib/ff-component'),
-      '@tencent/ff-component/*': path.resolve(__dirname, '../lib/ff-component/*')
+      '@tencent/ff-component/*': path.resolve(__dirname, '../lib/ff-component/*'),
+      '@tencent/tea-component': path.resolve(__dirname, '../node_modules/tea-component')
     }
   },
 

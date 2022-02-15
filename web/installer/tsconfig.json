@@ -16,16 +16,13 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "@tea/app": ["./node_modules/@tencent/tea-app"],
-      "@tea/app/*": ["./node_modules/@tencent/tea-app/lib/*"],
-      "@tea/component": ["./node_modules/@tencent/tea-component/lib"],
-      "@tea/component/*": ["./node_modules/@tencent/tea-component/lib/*"],
       "@tencent/ff-validator": ["./lib/ff-validator"],
       "@tencent/ff-validator/*": ["./lib/ff-validator/*"],
       "@tencent/ff-redux": ["./lib/ff-redux"],
       "@tencent/ff-redux/*": ["./lib/ff-redux/*"],
       "@tencent/ff-component": ["./lib/ff-component/"],
-      "@tencent/ff-component/*": ["./lib/ff-component/*"]
+      "@tencent/ff-component/*": ["./lib/ff-component/*"],
+      "@tencent/tea-component": ["./node_modules/tea-component/"]
     }
   },
   "exclude": ["node_modules", "dist", "build", "lib"],
