@@ -111,8 +111,6 @@ func (r *ProxyREST) New() runtime.Object {
 func makeDirector(clusterName, userName, tenantID string, uri *url.URL, token string) func(req *http.Request) {
 	return func(req *http.Request) {
 		req.Header.Set(filter.ClusterNameHeaderKey, clusterName)
-		req.Header.Set("X-Remote-User", userName)
-		req.Header.Set("X-Remote-Extra-TenantID", tenantID)
 		if token != "" {
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 		}
