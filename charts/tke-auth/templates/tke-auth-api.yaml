@@ -1,0 +1,187 @@
+---
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1.auth.tkestack.io
+spec:
+  caBundle: {{ .Values.caCrt | b64enc }}
+  group: auth.tkestack.io
+  groupPriorityMinimum: 1000
+  service:
+    name: tke-auth-api
+    namespace: tke
+    port: 443
+  version: v1
+  versionPriority: 5
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: tke-auth-api
+  namespace: tke
+  annotations:
+    tke.prometheus.io/scrape: "true"
+    prometheus.io/scheme: https
+spec:
+  type: NodePort
+  selector:
+    app: tke-auth-api
+  ports:
+    - protocol: TCP
+      port: 443
+      targetPort: 9451
+      nodePort: {{ .Values.api.nodePort }}
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  labels:
+    app: tke-auth-api
+  name: tke-auth-api
+  namespace: tke
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels:
+      app: tke-auth-api
+  template:
+    metadata:
+      labels:
+        app: tke-auth-api
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
+      containers:
+        - name: tke-auth-api
+          image: {{ .Values.api.image }}
+          args:
+            - -C=/app/conf/tke-auth-api.toml
+{{- if .Values.api.enableAudit }}
+            - --audit-policy-file=/app/conf/audit-policy.yaml
+            - --audit-webhook-config-file=/app/conf/audit-api-client-config.yaml
+{{- end }}
+          volumeMounts:
+            - name: certs-volume
+              mountPath: /app/certs
+            - name: tke-auth-api-volume
+              mountPath: /app/conf
+          ports:
+            - containerPort: 9451
+          readinessProbe:
+            httpGet:
+              port: 9451
+              path: /healthz/ping
+              scheme: HTTPS
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 9451
+              path: /healthz
+              scheme: HTTPS
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: certs-volume
+          configMap:
+            name: certs
+        - name: tke-auth-api-volume
+          configMap:
+            name: tke-auth-api
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tke-auth-api
+  namespace: tke
+data:
+  abac-policy.json: |
+    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"system:kube-*|system:serviceaccount:kube-system:*","namespace":"*", "resource":"*","apiGroup":"*tkestack.io", "group": "*", "nonResourcePath":"*"}}
+    {"apiVersion":"abac.authorization.kubernetes.io/v1beta1","kind":"Policy","spec":{"user":"^system:serviceaccount:tke:default$","namespace":"*", "resource":"*","apiGroup":"*", "group": "*", "nonResourcePath":"*"}}
+  tke-auth-api.toml: |
+    [secure_serving]
+    tls_cert_file = "/app/certs/server.crt"
+    tls_private_key_file = "/app/certs/server.key"
+
+    [etcd]
+    servers = [
+      "{{ .Values.etcd.host }}"
+    ]
+    cafile = "/app/certs/etcd-ca.crt"
+    certfile = "/app/certs/etcd.crt"
+    keyfile = "/app/certs/etcd.key"
+
+    [generic]
+    external_hostname = "tke-auth-api"
+    external_port = 443
+
+    [authorization]
+    policy_file="/app/conf/abac-policy.json"
+
+    [authentication]
+    token_auth_file = "/app/certs/token.csv"
+    client_ca_file = "/app/certs/ca.crt"
+    privileged_username = "{{ .Values.api.adminUsername }}"
+
+      [authentication.requestheader]
+      client_ca_file = "/app/certs/front-proxy-ca.crt"
+      username_headers = "X-Remote-User"
+      group_headers = "X-Remote-Group"
+      extra_headers_prefix = "X-Remote-Extra-"
+
+    [auth]
+    assets_path = "/app/web/auth"
+    init_client_id = "{{ .Values.api.tenantID }}"
+    init_client_secret = "{{ .Values.api.oIDCClientSecret }}"
+    init_client_redirect_uris = [
+{{- range $element := .Values.api.RedirectHosts}}
+  {{ printf `      "http://%s/callback",` $element}}
+  {{ printf `      "https://%s/callback",` $element}}
+{{- end}}
+    ]
+
+{{- if .Values.api.enableAudit }}
+  audit-policy.yaml: |
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    omitStages:
+    - "RequestReceived"
+    - "ResponseStarted"
+    rules:
+    - level: None
+      resources:
+      - group: "auth.tkestack.io"
+        resources: ["configmaps", "*/status"]
+    - level: RequestResponse
+      verbs: ["create", "update", "patch", "delete", "deletecollection"]
+
+  audit-api-client-config.yaml: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: tke
+        cluster:
+          insecure-skip-tls-verify: true
+          server: https://tke-audit-api/apis/audit.tkestack.io/v1/events/sink/control-plane
+    current-context: tke
+    contexts:
+      - context:
+          cluster: tke
+        name: tke
+
+{{- end }}
