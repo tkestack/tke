@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keepalived-manifests
+  namespace: tke
+data:
+  keepalived.conf: |
+    global_defs {
+        enable_script_security
+        script_user root
+     }
+
+     vrrp_script chk {
+        script "/bin/bash -c 'curl -m1 -k -s https://127.0.0.1:6443/healthz -o/dev/null'"
+        interval 2
+        weight -10
+        fall 3
+        rise 1
+     }
+
+     vrrp_instance VI_1 {
+         state BACKUP
+         interface {{ .Interface }}
+         virtual_router_id {{ .VRID }}
+         priority 100
+         advert_int 1
+         authentication {
+             auth_type PASS
+             auth_pass 1111
+         }
+         virtual_ipaddress {
+             {{ .VIP }}
+         }
+         track_script {
+           chk
+         }
+     }
+  keepalived.yaml: |-
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ""
+      name: keepalived
+      namespace: kube-system
+    spec:
+      containers:
+        - image: {{ .Image }}
+          name: keepalived
+          args:
+            - --log-console
+            - --dont-fork
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+          volumeMounts:
+            - mountPath: /etc/keepalived/
+              name: conf-volume
+      hostNetwork: true
+      priorityClassName: system-cluster-critical
+      volumes:
+        - hostPath:
+            path: /etc/keepalived/
+            type: DirectoryOrCreate
+          name: conf-volume
