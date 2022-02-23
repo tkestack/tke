@@ -289,7 +289,7 @@ func deleteApplication(ctx context.Context,
 	repo appconfig.RepoConfiguration) error {
 	_, err := action.Uninstall(ctx, deleter.applicationClient, deleter.platformClient, app, repo)
 	if err != nil {
-		if strings.Contains(err.Error(), "release: not found") {
+		if strings.Contains(err.Error(), "release: not found") || errors.IsNotFound(err) {
 			log.Warn(err.Error())
 			return nil
 		}

@@ -21,7 +21,6 @@ package action
 import (
 	"context"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
@@ -51,16 +50,5 @@ func Pull(ctx context.Context,
 	destfile, err := client.Pull(&helmaction.PullOptions{
 		ChartPathOptions: chartPathBasicOptions,
 	})
-	if updateStatusFunc != nil {
-		newStatus := app.Status.DeepCopy()
-		if err != nil {
-			newStatus.Phase = applicationv1.AppPhaseChartFetchFailed
-			newStatus.Message = "fetch chart failed"
-			newStatus.Reason = err.Error()
-			newStatus.LastTransitionTime = metav1.Now()
-			updateStatusFunc(ctx, app, &app.Status, newStatus)
-			return destfile, err
-		}
-	}
 	return destfile, err
 }
