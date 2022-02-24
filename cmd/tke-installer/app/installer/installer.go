@@ -2550,7 +2550,7 @@ func (t *TKE) dockerPush(tkeImages []string) error {
 		return err
 	}
 
-	manifestsChan := make(chan string, 50)
+	manifestsChan := make(chan string, 10)
 
 	for _, image := range tkeImages {
 		go func(image string) {
