@@ -226,21 +226,18 @@ const (
 type AppPhase string
 
 const (
-	// ChartFetchedFailed means the chart to which the App
-	// refers could not be fetched.
-	AppPhaseChartFetchFailed AppPhase = "ChartFetchFailed"
-
 	// Installing means the installation for the App is running.
 	AppPhaseInstalling AppPhase = "Installing"
+	// InstallFailed means the installation for the App failed.
+	AppPhaseInstallFailed AppPhase = "InstallFailed"
 	// Upgrading means the upgrade for the App is running.
 	AppPhaseUpgrading AppPhase = "Upgrading"
 	// Succeeded means the dry-run, installation, or upgrade for the
 	// App succeeded.
 	AppPhaseSucceeded AppPhase = "Succeeded"
-	// Failed means the installation or upgrade for the App
+	// Failed means the upgrade for the App
 	// failed.
-	AppPhaseFailed AppPhase = "Failed"
-
+	AppPhaseUpgradFailed AppPhase = "UpgradFailed"
 	// RollingBack means a rollback for the App is running.
 	AppPhaseRollingBack AppPhase = "RollingBack"
 	// RolledBack means the App has been rolled back.
