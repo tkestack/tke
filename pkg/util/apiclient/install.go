@@ -40,6 +40,8 @@ import (
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	kubeaggregator "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	"tkestack.io/tke/pkg/util/template"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	aaclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 )
 
 type object struct {
@@ -49,11 +51,13 @@ type object struct {
 var (
 	handlers   map[string]func(context.Context, kubernetes.Interface, []byte) error
 	kaHandlers map[string]func(context.Context, kubeaggregator.Interface, []byte) error
+	aaHandlers map[string]func(context.Context, aaclientset.Interface, []byte) error
 )
 
 func init() {
 	handlers = make(map[string]func(context.Context, kubernetes.Interface, []byte) error)
 	kaHandlers = make(map[string]func(context.Context, kubeaggregator.Interface, []byte) error)
+	aaHandlers = make(map[string]func(context.Context, aaclientset.Interface, []byte) error)
 
 	// apiregistration
 	kaHandlers["APIService"] = func(ctx context.Context, client kubeaggregator.Interface, data []byte) error {
@@ -62,6 +66,19 @@ func init() {
 			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
 		}
 		err := CreateOrUpdateAPIService(ctx, client, obj)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	//add CustomResourceDefinition
+	aaHandlers["CustomResourceDefinition"] = func(ctx context.Context, client aaclientset.Interface, data []byte) error {
+		obj := new(apiextensionsv1.CustomResourceDefinition)
+		if err := kuberuntime.DecodeInto(clientsetscheme.Codecs.UniversalDecoder(), data, obj); err != nil {
+			return errors.Wrapf(err, "unable to decode %s", reflect.TypeOf(obj).String())
+		}
+		err := CreateOrUpdateCustomResourceDefinition(ctx, client, obj)
 		if err != nil {
 			return err
 		}
@@ -389,6 +406,58 @@ func CreateKAResourceWithFile(ctx context.Context, client kubernetes.Interface, 
 				return errors.Errorf("unsupport kind %q", obj.Kind)
 			}
 			err = f(ctx, kaClient, objBytes)
+			if err != nil {
+				return err
+			}
+		} else {
+			f, ok := handlers[obj.Kind]
+			if !ok {
+				return errors.Errorf("unsupport kind %q", obj.Kind)
+			}
+			err = f(ctx, client, objBytes)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+
+
+// CreateAsResourceWithFile create k8s and apiextensions-apiserver resource with file
+func CreateAsResourceWithFile(ctx context.Context, client kubernetes.Interface, aaClient aaclientset.Interface, filename string, option interface{}) error {
+	var (
+		data []byte
+		err  error
+	)
+	if option != nil {
+		data, err = template.ParseFile(filename, option)
+	} else {
+		data, err = ioutil.ReadFile(filename)
+	}
+	if err != nil {
+		return err
+	}
+
+	items := strings.Split(string(data), "\n---")
+	for _, item := range items {
+		objBytes := []byte(item)
+		obj := new(object)
+		err := yaml.Unmarshal(objBytes, obj)
+		if err != nil {
+			return err
+		}
+		if obj.Kind == "" {
+			continue
+		}
+		if obj.Kind == "CustomResourceDefinition" {
+			f, ok := aaHandlers[obj.Kind]
+			if !ok {
+				return errors.Errorf("unsupport kind %q", obj.Kind)
+			}
+			err = f(ctx, aaClient, objBytes)
 			if err != nil {
 				return err
 			}
