@@ -28,7 +28,6 @@ import (
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 
@@ -156,16 +155,7 @@ func GetClusterCredentialV1(ctx context.Context, client platformversionedclient.
 			return nil, err
 		}
 	} else {
-		clusterName := cluster.Name
-		fieldSelector := fields.OneTermEqualSelector("clusterName", clusterName).String()
-		clusterCredentials, err := client.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
-		if err != nil {
-			return nil, err
-		}
-		if len(clusterCredentials.Items) == 0 {
-			return nil, errors.NewNotFound(platform.Resource("ClusterCredential"), clusterName)
-		}
-		credential = &clusterCredentials.Items[0]
+		return nil, errors.NewNotFound(platform.Resource("ClusterCredential"), cluster.Name)
 	}
 
 	return credential, nil
