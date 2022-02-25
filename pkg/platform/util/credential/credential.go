@@ -23,7 +23,6 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
@@ -43,16 +42,7 @@ func GetClusterCredential(ctx context.Context, client platforminternalclient.Pla
 			return nil, err
 		}
 	} else if client != nil {
-		clusterName := cluster.Name
-		fieldSelector := fields.OneTermEqualSelector("clusterName", clusterName).String()
-		clusterCredentials, err := client.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
-		if err != nil && !apierrors.IsNotFound(err) {
-			return nil, err
-		}
-		if clusterCredentials == nil || clusterCredentials.Items == nil || len(clusterCredentials.Items) == 0 {
-			return nil, apierrors.NewNotFound(platform.Resource("ClusterCredential"), clusterName)
-		}
-		credential = &clusterCredentials.Items[0]
+		return nil, apierrors.NewNotFound(platform.Resource("ClusterCredential"), cluster.Name)
 	}
 
 	return credential, nil
@@ -71,16 +61,7 @@ func GetClusterCredentialV1(ctx context.Context, client platformversionedclient.
 			return nil, err
 		}
 	} else if client != nil {
-		clusterName := cluster.Name
-		fieldSelector := fields.OneTermEqualSelector("clusterName", clusterName).String()
-		clusterCredentials, err := client.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
-		if err != nil {
-			return nil, err
-		}
-		if clusterCredentials == nil || clusterCredentials.Items == nil || len(clusterCredentials.Items) == 0 {
-			return nil, apierrors.NewNotFound(platform.Resource("ClusterCredential"), clusterName)
-		}
-		credential = &clusterCredentials.Items[0]
+		return nil, apierrors.NewNotFound(platform.Resource("ClusterCredential"), cluster.Name)
 	}
 
 	return credential, nil
