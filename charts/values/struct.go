@@ -1,37 +1,44 @@
 package main
 
+type ClusterInfoPatch struct {
+	Data struct {
+		K8sValidVersions string `yaml:"k8sValidVersions"`
+		TkeVersion       string `yaml:"tkeVersion"`
+	}
+}
+
 type EtcdConfig struct {
 	Host string `yaml:"host"`
 }
 
 type AuthChartValue struct {
-	Cacrt           string            `yaml:"caCrt"`
-	CaKey           string            `yaml:"caKey"`
-	AdminCrt        string            `yaml:"adminCrt"`
-	AdminKey        string            `yaml:"adminKey"`
-	ServerCrt       string            `yaml:"serverCrt"`
-	ServerKey       string            `yaml:"serverKey"`
-	WebhookCrt      string            `yaml:"webhookCrt"`
-	WebHookKey      string            `yaml:"webhookKey"`
-	EtcdCaCrt       string            `yaml:"etcdCaCrt"`
-	EtcdCrt         string            `yaml:"etcdCrt"`
-	EtcdKey         string            `yaml:"etcdKey"`
-	FrontProxyCaCrt string            `yaml:"frontProxyCaCrt"`
-	PasswordCsv     string            `yaml:"passwordCsv"`
-	TokenCsv        string            `yaml:"tokenCsv"`
-	Etcd            *EtcdConfig       `yaml:"etcd"`
-	TkeAuth         *AuthCustomConfig `yaml:"inline"`
+	Cacrt           string           `yaml:"caCrt"`
+	CaKey           string           `yaml:"caKey"`
+	AdminCrt        string           `yaml:"adminCrt"`
+	AdminKey        string           `yaml:"adminKey"`
+	ServerCrt       string           `yaml:"serverCrt"`
+	ServerKey       string           `yaml:"serverKey"`
+	WebhookCrt      string           `yaml:"webhookCrt"`
+	WebHookKey      string           `yaml:"webhookKey"`
+	EtcdCaCrt       string           `yaml:"etcdCaCrt"`
+	EtcdCrt         string           `yaml:"etcdCrt"`
+	EtcdKey         string           `yaml:"etcdKey"`
+	FrontProxyCaCrt string           `yaml:"frontProxyCaCrt"`
+	PasswordCsv     string           `yaml:"passwordCsv"`
+	TokenCsv        string           `yaml:"tokenCsv"`
+	Etcd            *EtcdConfig      `yaml:"etcd"`
+	TKEAuth         AuthCustomConfig `yaml:",inline"`
 }
 
 type PlatformChartValue struct {
-	Cacrt       string                `yaml:"caCrt"`
-	Etcd        *EtcdConfig           `yaml:"etcd"`
-	TKEPlatform *PlatformCustomConfig `yaml:",inline"`
+	Cacrt       string               `yaml:"caCrt"`
+	Etcd        *EtcdConfig          `yaml:"etcd"`
+	TKEPlatform PlatformCustomConfig `yaml:",inline"`
 }
 
 type GatewayChartValue struct {
-	Etcd       *EtcdConfig          `yaml:"etcd"`
-	TKEGateway *GatewayCustomConfig `yaml:",inline"`
+	Etcd       *EtcdConfig         `yaml:"etcd"`
+	TKEGateway GatewayCustomConfig `yaml:",inline"`
 }
 
 type CustomConfig struct {
@@ -55,7 +62,7 @@ type BaseCustomConfig struct {
 
 type AuthCustomConfig struct {
 	API struct {
-		BaseCustomConfig
+		BaseCustomConfig `yaml:",inline"`
 		RedirectHosts    []string `yaml:"redirectHosts,flow"`
 		NodePort         string   `yaml:"nodePort,omitempty"`
 		EnableAudit      string   `yaml:"enableAudit,omitempty"`
@@ -64,23 +71,26 @@ type AuthCustomConfig struct {
 		AdminUsername    string   `yaml:"adminUsername,omitempty"`
 	}
 	Controller struct {
-		BaseCustomConfig
-		AdminUsername string `yaml:"adminUsername,omitempty"`
-		AdminPassword []byte `yaml:"adminPassword,omitempty"`
+		BaseCustomConfig `yaml:",inline"`
+		AdminUsername    string `yaml:"adminUsername,omitempty"`
+		AdminPassword    string `yaml:"adminPassword,omitempty"`
 	}
 }
 
 type PlatformCustomConfig struct {
-	API struct {
-		BaseCustomConfig
-		EnableAuth    string `yaml:"enableAuth,omitempty"`
-		EnableAudit   string `yaml:"enableAudit,omitempty"`
-		OIDCClientID  string `yaml:"oIDCClientID,omitempty"`
-		OIDCIssuerURL string `yaml:"oIDCIssuerURL,omitempty"`
-		UseOIDCCA     string `yaml:"useOIDCCA,omitempty"`
+	PublicIP           string `yaml:"publicIP"`
+	MetricsServerImage string `yaml:"metricsServerImage"`
+	AddonResizerImage  string `yaml:"addonResizerImage"`
+	API                struct {
+		BaseCustomConfig `yaml:",inline"`
+		EnableAuth       string `yaml:"enableAuth,omitempty"`
+		EnableAudit      string `yaml:"enableAudit,omitempty"`
+		OIDCClientID     string `yaml:"oIDCClientID,omitempty"`
+		OIDCIssuerURL    string `yaml:"oIDCIssuerURL,omitempty"`
+		UseOIDCCA        string `yaml:"useOIDCCA,omitempty"`
 	}
 	Controller struct {
-		BaseCustomConfig
+		BaseCustomConfig        `yaml:",inline"`
 		ProviderResImage        string `yaml:"providerResImage"`
 		RegistryDomain          string `yaml:"registryDomain,omitempty"`
 		RegistryNamespace       string `yaml:"registryNamespace,omitempty"`

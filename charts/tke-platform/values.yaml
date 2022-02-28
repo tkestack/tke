@@ -20,6 +20,10 @@ caCrt: |
   eZ/xXk09Jv0wxUL5CEO2+Dka3B3IHHaUQiArMqNBqxEqVwTh573XDKRsqf/6Rs9T
   tSxiymcibA7vb0m2uDSt5kk=
   -----END CERTIFICATE-----
+# 必填 公网可访问的集群IP
+publicIP: 43.156.24.48
+metricsServerImage: tkestack/metrics-server:v0.3.6
+addonResizerImage: tkestack/addon-resizer:1.8.11
 api:
   replicas: 1
   image: "tkestack/tke-platform-api-amd64:9345fd17ebc963a7c71af962a5427bde7b2dc6c3"
@@ -35,8 +39,8 @@ controller:
   replicas: 1
   providerResImage: "tkestack/provider-res-amd64:v1.21.4-1"
   image: "tkestack/tke-platform-controller-amd64:9345fd17ebc963a7c71af962a5427bde7b2dc6c3"
-  registryDomain: registry.tke.com
-  registryNamespace: library
+  registryDomain: docker.io
+  registryNamespace: tkestack
   # 监控存储类型
   monitorStorageType: influxdb
   # 监控存储地址，为tke集群master ip地址加8086端口

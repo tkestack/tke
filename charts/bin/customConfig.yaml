@@ -1,0 +1,98 @@
+# 必填，etcd访问地址，形式如https://172.19.0.2:2379
+etcd:
+  host: https://172.18.0.2:2379 
+# 必填，服务器ip，数组形式
+serverIPs:
+  - 172.18.0.2
+# 访问的域名，数组形式
+dnsNames:
+  - tke.gateway
+# 必填，集群front-proxy-ca.crt文件地址，默认位置为/etc/kubernetes/pki/front-proxy-ca.crt
+frontProxyCaCrtAbsPath: /etc/kubernetes/pki/front-proxy-ca.crt
+# 必填，集群etcd的ca.crt文件地址，默认位置为/etc/kubernetes/pki/etcd/ca.crt
+etcdCrtAbsPath: /etc/kubernetes/pki/etcd/ca.crt
+# 必填，集群etcd的ca.key文件地址，默认位置为/etc/kubernetes/pki/etcd/ca.key
+etcdKeyAbsPath: /etc/kubernetes/pki/etcd/ca.key
+tke-auth:
+  api:
+    # 必填
+    replicas: 1
+    # 必填
+    image: tkestack/tke-auth-api-amd64:74592a3bceb5bebca602bea21aaebf78007a3bb2
+    # 必填，数组形式，auth的重定向访问地址，包括集群服务器ip地址（必填）、tke-gateway的域名（可选）、集群高可用的VIP地址（可选）和集群的公共可访问域名（可选）
+    redirectHosts: 
+      - 172.18.0.2
+    enableAudit: 
+    # tke-auth-api组件在node上的对外暴露端口，默认31138
+    nodePort: 
+    # tke集群的租户id，默认default
+    tenantID: 
+    # OIDC认证方式的secret，默认自动生成
+    oIDCClientSecret: 
+    # authentication用户名，默认为admin
+    adminUsername: 
+  controller:
+    # 必填
+    replicas: 1
+    # 必填
+    image: tkestack/tke-auth-controller-amd64:74592a3bceb5bebca602bea21aaebf78007a3bb2
+    # tke集群的用户名，默认为admin
+    adminUsername: 
+    # tke集群的密码，默认自动生成
+    adminPassword: 
+tke-platform:
+  # 必填 VIP，或者公网可访问的集群IP
+  publicIP:
+  metricsServerImage: tkestack/metrics-server:v0.3.6
+  addonResizerImage: tkestack/addon-resizer:1.8.11
+  api:
+    # 必填
+    replicas: 1
+    # 必填
+    image: tkestack/tke-platform-api-amd64:bc48bed59bff2022d87db5e1484481715357ee7c
+    enableAuth: true
+    enableAudit: 
+    # OIDC认证方式客户端id，默认为default
+    oIDCClientID: 
+    # OIDC认证方式的issuer_url，默认为https://tke-auth-api/oidc
+    oIDCIssuerURL: 
+    # 是否开启OIDC认证，默认不开启，值为空
+    useOIDCCA:
+  controller:
+    # 必填
+    replicas: 1
+    # 必填
+    providerResImage: tkestack/provider-res-amd64:v1.21.4-1
+    # 必填
+    image: tkestack/tke-platform-controller-amd64:bc48bed59bff2022d87db5e1484481715357ee7c
+    # 默认为docker.io
+    registryDomain:
+    # 默认为tkestack
+    registryNamespace:
+    # 监控存储类型，默认为influxdb
+    monitorStorageType: 
+    # 监控存储地址，为tke集群master ip地址加8086端口
+    monitorStorageAddresses:
+tke-gateway:
+  # 必填
+  image: tkestack/tke-gateway-amd64:bc48bed59bff2022d87db5e1484481715357ee7c
+  # 默认为docker.io
+  registryDomainSuffix:
+  # tke集群的租户id，默认default
+  tenantID:
+  # OIDC认证方式的secret，默认自动生成
+  oIDCClientSecret:
+  # 是否开启自签名，默认为true
+  selfSigned: true
+  # 第三方cert证书，在selfSigned为false时需要填值
+  serverCrt:
+  # 第三方certKey，在selfSigned为false时需要填值
+  serverKey:
+  enableAuth: true
+  enableBusiness:
+  enableMonitor:
+  enableRegistry:
+  enableLogagent:
+  enableAudit:
+  enableApplication:
+  enableMesh:

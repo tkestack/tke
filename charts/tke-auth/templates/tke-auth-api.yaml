@@ -149,7 +149,7 @@ data:
     init_client_id = "{{ .Values.api.tenantID }}"
     init_client_secret = "{{ .Values.api.oIDCClientSecret }}"
     init_client_redirect_uris = [
-{{- range $element := .Values.api.RedirectHosts}}
+{{- range $element := .Values.api.redirectHosts}}
   {{ printf `      "http://%s/callback",` $element}}
   {{ printf `      "https://%s/callback",` $element}}
 {{- end}}
