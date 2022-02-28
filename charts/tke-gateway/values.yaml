@@ -1,7 +1,7 @@
 etcd:
   host: https://172.19.0.2:2379
 image: tkestack/tke-gateway-amd64:bc48bed59bff2022d87db5e1484481715357ee7c
-registryDomainSuffix: registry.tke.com
+registryDomainSuffix: docker.io
 # tke集群的租户id，默认default
 tenantID: default
 # OIDC认证方式的secret，默认自动生成

@@ -171,7 +171,7 @@ data:
           serviceAccountName: metrics-server
           containers:
           - name: metrics-server
-            image: {{ .MetricsServerImage }}
+            image: {{ .Values.metricsServerImage }}
             command:
             - /metrics-server
             - --metric-resolution=30s
@@ -191,7 +191,7 @@ data:
               mountPath: /etc/kubernetes/pki/
               readOnly: true
           - name: metrics-server-nanny
-            image: {{ .AddonResizerImage }}
+            image: {{ .Values.addonResizerImage }}
             resources:
               limits:
                 cpu: 100m

@@ -115,8 +115,8 @@ data:
     platformAPIClientConfig: conf/tke-platform-config.yaml
     applicationAPIClientConfig: conf/tke-application-config.yaml
     registry:
-      prefix: registry.tke.com/library
-      ip: 175.27.192.172
+      prefix: {{ .Values.controller.registryDomain }}/{{ .Values.controller.registryNamespace }}
+      ip: {{ .Values.publicIP }}
     audit:
       address: ""
     feature:
@@ -132,7 +132,7 @@ data:
     scheduler:
       extraArgs: {}
     authzWebhook:
-      endpoint: https://175.27.192.172:31138/auth/authz
+      endpoint: https://{{ .Values.publicIP }}:31138/auth/authz
     business:
       enabled: true
   sysctl.conf: |-
