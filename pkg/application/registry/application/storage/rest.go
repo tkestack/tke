@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"helm.sh/helm/v3/pkg/release"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -232,11 +233,9 @@ func (rs *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 		}
 	}
 
-	// if app.Status.RollbackRevision > 0 {
-	// app.Status.Phase = applicationapi.AppPhaseRollingBack
-	// } else {
-	app.Status.Phase = applicationapi.AppPhaseUpgrading
-	// }
+	if !reflect.DeepEqual(oldApp.Spec, app.Spec) {
+		app.Status.Phase = applicationapi.AppPhaseUpgrading
+	}
 
 	return rs.application.Update(ctx, name, rest.DefaultUpdatedObjectInfo(app), createValidation, updateValidation, forceAllowCreate, options)
 }
