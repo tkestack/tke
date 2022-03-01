@@ -90,7 +90,7 @@
         ├── kube-apiserver-amd64.tar
         ├── kube-controller-manager-amd64.tar
         ├── kube-proxy-amd64.tar
-        └── kube-schedular-amd64.tar
+        └── kube-scheduler-amd64.tar
 ```
 
 ### kubeconfig 文件
