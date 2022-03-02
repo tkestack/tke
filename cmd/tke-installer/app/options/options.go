@@ -46,7 +46,7 @@ type Options struct {
 }
 
 // NewOptions creates a new Options with a default config.
-func NewOptions(serverName string) *Options {
+func NewOptions() *Options {
 	return &Options{
 		Log: log.NewOptions(),
 	}

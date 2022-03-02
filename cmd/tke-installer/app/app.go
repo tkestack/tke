@@ -29,7 +29,7 @@ const commandDesc = `The TKE Installer is used to setup the first kubernetes clu
 
 // NewApp creates a App object with default parameters.
 func NewApp(basename string) *app.App {
-	opts := options.NewOptions(basename)
+	opts := options.NewOptions()
 	application := app.NewApp("Tencent Kubernetes Engine Installer",
 		basename,
 		app.WithOptions(opts),
