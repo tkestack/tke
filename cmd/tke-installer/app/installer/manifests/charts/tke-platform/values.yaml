@@ -1,0 +1,23 @@
+api:
+  replicas:
+  image:
+  enableAuth:
+  enableAudit:
+  # OIDC认证方式客户端id，默认为default
+  oIDCClientID:
+  # OIDC认证方式的issuer_url，默认为https://tke-auth-api/oidc
+  oIDCIssuerURL:
+  # 是否开启OIDC认证，默认不开启
+  useOIDCCA:
+  # apiservice cabundle
+  caCrt:
+controller:
+  replicas: 
+  image:
+  providerResImage:
+  registryDomain:
+  registryNamespace:
+  # 监控存储类型
+  monitorStorageType:
+  # 监控存储地址，为tke集群master ip地址加8086端口
+  monitorStorageAddresses:

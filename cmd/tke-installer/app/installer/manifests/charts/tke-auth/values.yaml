@@ -1,0 +1,23 @@
+api:
+  # tke-auth-api组件在node上的对外暴露端口，默认31138
+  nodePort:
+  replicas:
+  image:
+  enableAudit:
+  # auth的重定向访问地址，包括集群服务器ip地址（必填）、tke-gateway的域名（可选）、集群高可用的VIP地址（可选）和集群的公共可访问域名（可选）
+  redirectHosts:
+  # tke集群的租户id，默认default
+  tenantID:
+  # OIDC认证方式的secret，默认自动生成
+  oIDCClientSecret:
+  # authentication用户名，默认为admin
+  adminUsername:
+  # apiservice cabundle
+  caCrt:
+controller:
+  replicas:
+  image:
+  # tke集群的用户名，默认为admin
+  adminUsername:
+  # tke集群的密码，默认自动生成
+  adminPassword:

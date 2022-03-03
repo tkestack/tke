@@ -1,0 +1,20 @@
+image:
+# OIDC认证方式的secret，默认自动生成
+oIDCClientSecret:
+# 是否开启自签名，默认为true
+selfSigned:
+enableRegistry:
+enableAuth:
+enableMonitor:
+enableBusiness:
+enableLogagent:
+enableAudit:
+enableApplication:
+enableMesh:
+registryDomainSuffix:
+# tke集群的租户id，默认default
+tenantID:
+# 第三方cert证书，在selfSigned为false时需要填值
+serverCrt:
+# 第三方certKey，在selfSigned为false时需要填值
+serverKey:

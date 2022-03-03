@@ -32,6 +32,8 @@ import (
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
+	"tkestack.io/tke/pkg/application/helm/action"
+	helmconfig "tkestack.io/tke/pkg/application/helm/config"
 )
 
 const (
@@ -62,6 +64,17 @@ func (c *Cluster) ClientsetForBootstrap() (kubernetes.Interface, error) {
 		return nil, err
 	}
 	return kubernetes.NewForConfig(config)
+}
+
+func (c *Cluster) HelmClientsetForBootstrap(namespace string) (*action.Client, error) {
+	config, err := c.RESTConfigForBootstrap()
+	if err != nil {
+		return nil, err
+	}
+	restClientGetter := &helmconfig.RESTClientGetter{RestConfig: config}
+	restClientGetter.Namespace = &namespace
+	client := action.NewClient("", restClientGetter)
+	return client, nil
 }
 
 func (c *Cluster) PlatformClientsetForBootstrap() (platformversionedclient.PlatformV1Interface, error) {

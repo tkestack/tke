@@ -22,6 +22,7 @@ const (
 	DataDir        = "data/"
 	ClusterFile    = DataDir + "tke.json"
 	ClusterLogFile = DataDir + "tke.log"
+	ChartDirName   = "manifests/charts/"
 
 	DefaultCustomResourceDir  = DataDir + "custom_upgrade_resource"
 	DefaultCustomChartsName   = "custom.charts.tar.gz"

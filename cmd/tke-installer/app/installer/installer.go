@@ -67,6 +67,7 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
+	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 	baremetalconfig "tkestack.io/tke/pkg/platform/provider/baremetal/config"
 	baremetalconstants "tkestack.io/tke/pkg/platform/provider/baremetal/constants"
@@ -76,6 +77,7 @@ import (
 	clusterstrategy "tkestack.io/tke/pkg/platform/registry/cluster"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	platformutil "tkestack.io/tke/pkg/platform/util"
+
 	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/containerregistry"
@@ -112,6 +114,7 @@ type TKE struct {
 	docker *docker.Docker
 
 	globalClient      kubernetes.Interface
+	helmClient        *helmaction.Client
 	platformClient    tkeclientset.PlatformV1Interface
 	registryClient    registryclientset.RegistryV1Interface
 	applicationClient applicationclientset.ApplicationV1Interface
@@ -278,24 +281,16 @@ func (t *TKE) initSteps() {
 	if t.Para.Config.Auth.TKEAuth != nil {
 		t.steps = append(t.steps, []types.Handler{
 			{
-				Name: "Install tke-auth-api",
-				Func: t.installTKEAuthAPI,
-			},
-			{
-				Name: "Install tke-auth-controller",
-				Func: t.installTKEAuthController,
+				Name: "Install tke-auth chart",
+				Func: t.installTKEAuthChart,
 			},
 		}...)
 	}
 
 	t.steps = append(t.steps, []types.Handler{
 		{
-			Name: "Install tke-platform-api",
-			Func: t.installTKEPlatformAPI,
-		},
-		{
-			Name: "Install tke-platform-controller",
-			Func: t.installTKEPlatformController,
+			Name: "Install tke-platform chart",
+			Func: t.installTKEPlatformChart,
 		},
 	}...)
 
@@ -327,8 +322,8 @@ func (t *TKE) initSteps() {
 		}
 		t.steps = append(t.steps, []types.Handler{
 			{
-				Name: "Install tke-gateway",
-				Func: t.installTKEGateway,
+				Name: "Install tke-gateway chart",
+				Func: t.installTKEGatewayChart,
 			},
 		}...)
 	}
@@ -1313,6 +1308,11 @@ func (t *TKE) initDataForDeployTKE() error {
 		return err
 	}
 
+	t.helmClient, err = t.Cluster.HelmClientsetForBootstrap(t.namespace)
+	if err != nil {
+		return err
+	}
+
 	t.platformClient, err = t.Cluster.PlatformClientsetForBootstrap()
 	if err != nil {
 		return err
@@ -1575,32 +1575,20 @@ func (t *TKE) stopLocalRegistry(ctx context.Context) error {
 	return nil
 }
 
-func (t *TKE) installTKEGateway(ctx context.Context) error {
-	option := map[string]interface{}{
-		"Image":             images.Get().TKEGateway.FullName(),
-		"OIDCClientSecret":  t.readOrGenerateString(constants.OIDCClientSecretFile),
-		"SelfSigned":        t.Para.Config.Gateway.Cert.SelfSignedCert != nil,
-		"EnableRegistry":    t.Para.Config.Registry.TKERegistry != nil,
-		"EnableAuth":        t.Para.Config.Auth.TKEAuth != nil,
-		"EnableMonitor":     t.Para.Config.Monitor != nil,
-		"EnableBusiness":    t.businessEnabled(),
-		"EnableLogagent":    t.Para.Config.Logagent != nil,
-		"EnableAudit":       t.auditEnabled(),
-		"EnableApplication": t.Para.Config.Application != nil,
-		"EnableMesh":        t.Para.Config.Mesh != nil,
+func (t *TKE) installTKEGatewayChart(ctx context.Context) error {
+	values := t.getTKEGatewayOptions(ctx)
+	chartPathOptions := &helmaction.ChartPathOptions{}
+	installOptions := &helmaction.InstallOptions{
+		Namespace:        t.namespace,
+		ReleaseName:      "tke-gateway",
+		DependencyUpdate: false,
+		Values:           values,
+		Timeout:          60 * time.Second,
+		ChartPathOptions: *chartPathOptions,
 	}
-	if t.Para.Config.Registry.TKERegistry != nil {
-		option["RegistryDomainSuffix"] = t.Para.Config.Registry.TKERegistry.Domain
-	}
-	if t.Para.Config.Auth.TKEAuth != nil {
-		option["TenantID"] = t.Para.Config.Auth.TKEAuth.TenantID
-	}
-	if t.Para.Config.Gateway.Cert.ThirdPartyCert != nil {
-		option["ServerCrt"] = string(t.Para.Config.Gateway.Cert.ThirdPartyCert.Certificate)
-		option["ServerKey"] = string(t.Para.Config.Gateway.Cert.ThirdPartyCert.PrivateKey)
-	}
-	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-gateway/*.yaml", option)
-	if err != nil {
+
+	chartFilePath := constants.ChartDirName + "tke-gateway/"
+	if _, err := t.helmClient.InstallWithLocal(installOptions, chartFilePath); err != nil {
 		return err
 	}
 
@@ -1611,6 +1599,33 @@ func (t *TKE) installTKEGateway(ctx context.Context) error {
 		}
 		return ok, nil
 	})
+}
+
+func (t *TKE) getTKEGatewayOptions(ctx context.Context) map[string]interface{} {
+	option := map[string]interface{}{
+		"image":             images.Get().TKEGateway.FullName(),
+		"oIDCClientSecret":  t.readOrGenerateString(constants.OIDCClientSecretFile),
+		"selfSigned":        t.Para.Config.Gateway.Cert.SelfSignedCert != nil,
+		"enableRegistry":    t.Para.Config.Registry.TKERegistry != nil,
+		"enableAuth":        t.Para.Config.Auth.TKEAuth != nil,
+		"enableMonitor":     t.Para.Config.Monitor != nil,
+		"enableBusiness":    t.businessEnabled(),
+		"enableLogagent":    t.Para.Config.Logagent != nil,
+		"enableAudit":       t.auditEnabled(),
+		"enableApplication": t.Para.Config.Application != nil,
+		"enableMesh":        t.Para.Config.Mesh != nil,
+	}
+	if t.Para.Config.Registry.TKERegistry != nil {
+		option["registryDomainSuffix"] = t.Para.Config.Registry.TKERegistry.Domain
+	}
+	if t.Para.Config.Auth.TKEAuth != nil {
+		option["tenantID"] = t.Para.Config.Auth.TKEAuth.TenantID
+	}
+	if t.Para.Config.Gateway.Cert.ThirdPartyCert != nil {
+		option["serverCrt"] = string(t.Para.Config.Gateway.Cert.ThirdPartyCert.Certificate)
+		option["serverKey"] = string(t.Para.Config.Gateway.Cert.ThirdPartyCert.PrivateKey)
+	}
+	return option
 }
 
 func (t *TKE) installTKELogagentAPI(ctx context.Context) error {
@@ -1669,7 +1684,44 @@ func (t *TKE) installETCD(ctx context.Context) error {
 	return apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/etcd/*.yaml", nil)
 }
 
-func (t *TKE) installTKEAuthAPI(ctx context.Context) error {
+func (t *TKE) installTKEAuthChart(ctx context.Context) error {
+	apiOptions, err := t.getTKEAuthAPIOptions(ctx)
+	if err != nil {
+		return err
+	}
+	values := map[string]interface{}{
+		"api":        apiOptions,
+		"controller": t.getTKEAuthControllerOptions(ctx),
+	}
+	chartPathOptions := &helmaction.ChartPathOptions{}
+	installOptions := &helmaction.InstallOptions{
+		Namespace:        t.namespace,
+		ReleaseName:      "tke-auth",
+		DependencyUpdate: false,
+		Values:           values,
+		Timeout:          60 * time.Second,
+		ChartPathOptions: *chartPathOptions,
+	}
+
+	chartFilePath := constants.ChartDirName + "tke-auth/"
+	if _, err := t.helmClient.InstallWithLocal(installOptions, chartFilePath); err != nil {
+		return err
+	}
+
+	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+		apiOk, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-auth-api")
+		if err != nil {
+			return false, nil
+		}
+		controllerOk, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-auth-controller")
+		if err != nil {
+			return false, nil
+		}
+		return apiOk && controllerOk, nil
+	})
+}
+
+func (t *TKE) getTKEAuthAPIOptions(ctx context.Context) (map[string]interface{}, error) {
 	redirectHosts := t.servers
 	redirectHosts = append(redirectHosts, "tke-gateway")
 	if t.Para.Config.Gateway != nil && t.Para.Config.Gateway.Domain != "" {
@@ -1681,50 +1733,33 @@ func (t *TKE) installTKEAuthAPI(ctx context.Context) error {
 	if t.Para.Cluster.Spec.PublicAlternativeNames != nil {
 		redirectHosts = append(redirectHosts, t.Para.Cluster.Spec.PublicAlternativeNames...)
 	}
+	cacrt, err := ioutil.ReadFile(constants.DataDir + "ca.crt")
+	if err != nil {
+		return nil, err
+	}
 
 	option := map[string]interface{}{
-		"Replicas":         t.Config.Replicas,
-		"Image":            images.Get().TKEAuthAPI.FullName(),
-		"OIDCClientSecret": t.readOrGenerateString(constants.OIDCClientSecretFile),
-		"AdminUsername":    t.Para.Config.Auth.TKEAuth.Username,
-		"TenantID":         t.Para.Config.Auth.TKEAuth.TenantID,
-		"RedirectHosts":    redirectHosts,
-		"NodePort":         constants.AuthzWebhookNodePort,
-		"EnableAudit":      t.auditEnabled(),
+		"replicas":         t.Config.Replicas,
+		"image":            images.Get().TKEAuthAPI.FullName(),
+		"oIDCClientSecret": t.readOrGenerateString(constants.OIDCClientSecretFile),
+		"adminUsername":    t.Para.Config.Auth.TKEAuth.Username,
+		"tenantID":         t.Para.Config.Auth.TKEAuth.TenantID,
+		"redirectHosts":    redirectHosts,
+		"nodePort":         constants.AuthzWebhookNodePort,
+		"enableAudit":      t.auditEnabled(),
+		"caCrt":            string(cacrt),
 	}
-	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-auth-api/*.yaml", option)
-	if err != nil {
-		return err
-	}
-
-	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-auth-api")
-		if err != nil {
-			return false, nil
-		}
-		return ok, nil
-	})
+	return option, nil
 }
 
-func (t *TKE) installTKEAuthController(ctx context.Context) error {
-	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-auth-controller/*.yaml",
-		map[string]interface{}{
-			"Replicas":      t.Config.Replicas,
-			"Image":         images.Get().TKEAuthController.FullName(),
-			"AdminUsername": t.Para.Config.Auth.TKEAuth.Username,
-			"AdminPassword": string(t.Para.Config.Auth.TKEAuth.Password),
-		})
-	if err != nil {
-		return err
+func (t *TKE) getTKEAuthControllerOptions(ctx context.Context) map[string]interface{} {
+	option := map[string]interface{}{
+		"replicas":      t.Config.Replicas,
+		"image":         images.Get().TKEAuthController.FullName(),
+		"adminUsername": t.Para.Config.Auth.TKEAuth.Username,
+		"adminPassword": string(t.Para.Config.Auth.TKEAuth.Password),
 	}
-
-	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-auth-controller")
-		if err != nil {
-			return false, nil
-		}
-		return ok, nil
-	})
+	return option
 }
 
 func (t *TKE) installTKEAudit(ctx context.Context) error {
@@ -1761,47 +1796,78 @@ func (t *TKE) installTKEAudit(ctx context.Context) error {
 	})
 }
 
-func (t *TKE) installTKEPlatformAPI(ctx context.Context) error {
-	options := map[string]interface{}{
-		"Replicas":    t.Config.Replicas,
-		"Image":       images.Get().TKEPlatformAPI.FullName(),
-		"EnableAuth":  t.Para.Config.Auth.TKEAuth != nil,
-		"EnableAudit": t.auditEnabled(),
-	}
-	if t.Para.Config.Auth.OIDCAuth != nil {
-		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
-		options["OIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
-		options["UseOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
-	}
-	err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-platform-api/*.yaml", options)
+func (t *TKE) installTKEPlatformChart(ctx context.Context) error {
+	apiOptions, err := t.getTKEPlatformAPIOptions(ctx)
 	if err != nil {
+		return err
+	}
+	values := map[string]interface{}{
+		"api":        apiOptions,
+		"controller": t.getTKEPlatformControllerOptions(ctx),
+	}
+	chartPathOptions := &helmaction.ChartPathOptions{}
+	installOptions := &helmaction.InstallOptions{
+		Namespace:        t.namespace,
+		ReleaseName:      "tke-platform",
+		DependencyUpdate: false,
+		Values:           values,
+		Timeout:          60 * time.Second,
+		ChartPathOptions: *chartPathOptions,
+	}
+
+	chartFilePath := constants.ChartDirName + "tke-platform/"
+	if _, err := t.helmClient.InstallWithLocal(installOptions, chartFilePath); err != nil {
 		return err
 	}
 
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-platform-api")
+		apiOk, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-platform-api")
 		if err != nil {
 			return false, nil
 		}
-		return ok, nil
+		controllerOk, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-platform-controller")
+		if err != nil {
+			return false, nil
+		}
+		return apiOk && controllerOk, nil
 	})
 }
 
-func (t *TKE) installTKEPlatformController(ctx context.Context) error {
-	params := map[string]interface{}{
-		"Replicas":                t.Config.Replicas,
-		"Image":                   images.Get().TKEPlatformController.FullName(),
-		"ProviderResImage":        images.Get().ProviderRes.FullName(),
-		"RegistryDomain":          t.Para.Config.Registry.Domain(),
-		"RegistryNamespace":       t.Para.Config.Registry.Namespace(),
-		"MonitorStorageType":      "",
-		"MonitorStorageAddresses": "",
+func (t *TKE) getTKEPlatformAPIOptions(ctx context.Context) (map[string]interface{}, error) {
+	cacrt, err := ioutil.ReadFile(constants.DataDir + "ca.crt")
+	if err != nil {
+		return nil, err
+	}
+	options := map[string]interface{}{
+		"replicas":    t.Config.Replicas,
+		"image":       images.Get().TKEPlatformAPI.FullName(),
+		"enableAuth":  t.Para.Config.Auth.TKEAuth != nil,
+		"enableAudit": t.auditEnabled(),
+		"caCrt":       string(cacrt),
+	}
+	if t.Para.Config.Auth.OIDCAuth != nil {
+		options["oIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
+		options["oIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
+		options["useOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
+	}
+	return options, nil
+}
+
+func (t *TKE) getTKEPlatformControllerOptions(ctx context.Context) map[string]interface{} {
+	options := map[string]interface{}{
+		"replicas":                t.Config.Replicas,
+		"image":                   images.Get().TKEPlatformController.FullName(),
+		"providerResImage":        images.Get().ProviderRes.FullName(),
+		"registryDomain":          t.Para.Config.Registry.Domain(),
+		"registryNamespace":       t.Para.Config.Registry.Namespace(),
+		"monitorStorageType":      "",
+		"monitorStorageAddresses": "",
 	}
 	if t.Para.Config.Monitor != nil {
 		if t.Para.Config.Monitor.InfluxDBMonitor != nil {
-			params["MonitorStorageType"] = "influxdb"
+			options["monitorStorageType"] = "influxdb"
 			if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
-				params["MonitorStorageAddresses"] = fmt.Sprintf("http://%s:8086", t.servers[0])
+				options["monitorStorageAddresses"] = fmt.Sprintf("http://%s:8086", t.servers[0])
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor != nil {
 				address := t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.URL
 				if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username != "" {
@@ -1810,10 +1876,10 @@ func (t *TKE) installTKEPlatformController(ctx context.Context) error {
 				if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password != nil {
 					address = address + "&p=" + string(t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password)
 				}
-				params["MonitorStorageAddresses"] = address
+				options["monitorStorageAddresses"] = address
 			}
 		} else if t.Para.Config.Monitor.ESMonitor != nil {
-			params["MonitorStorageType"] = "elasticsearch"
+			options["monitorStorageType"] = "elasticsearch"
 			address := t.Para.Config.Monitor.ESMonitor.URL
 			if t.Para.Config.Monitor.ESMonitor.Username != "" {
 				address = address + "&u=" + t.Para.Config.Monitor.ESMonitor.Username
@@ -1821,25 +1887,14 @@ func (t *TKE) installTKEPlatformController(ctx context.Context) error {
 			if t.Para.Config.Monitor.ESMonitor.Password != nil {
 				address = address + "&p=" + string(t.Para.Config.Monitor.ESMonitor.Password)
 			}
-			params["MonitorStorageAddresses"] = address
+			options["monitorStorageAddresses"] = address
 		} else if t.Para.Config.Monitor.ThanosMonitor != nil {
-			params["MonitorStorageType"] = "thanos"
+			options["monitorStorageType"] = "thanos"
 			// thanos receive remote-write node-port address
-			params["MonitorStorageAddresses"] = fmt.Sprintf("http://%s:31141", t.servers[0])
+			options["monitorStorageAddresses"] = fmt.Sprintf("http://%s:31141", t.servers[0])
 		}
 	}
-
-	if err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-platform-controller/*.yaml", params); err != nil {
-		return err
-	}
-
-	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-platform-controller")
-		if err != nil {
-			return false, nil
-		}
-		return ok, nil
-	})
+	return options
 }
 
 func (t *TKE) installTKEBusinessAPI(ctx context.Context) error {
