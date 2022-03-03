@@ -107,3 +107,7 @@ kubectl get -n tke cm certs -o yaml > certs.bak.yaml
 # 替换configmap data中的etcd.crt和etcd.key下的内容
 kubectl edit -n tke cm certs -o yaml
 ```
+
+## 其他注意事项
+
+如果发现任何 pod 执行了将近 1 年时间，报错证书相关问题，有可能是 https://github.com/kubernetes/kubernetes/issues/86552 导致的，通过重启 pod 可解决问题。
