@@ -20,6 +20,7 @@ package action
 
 import (
 	"os"
+	"path/filepath"
 	"time"
 
 	securejoin "github.com/cyphar/filepath-securejoin"
@@ -81,8 +82,13 @@ func (cp ChartPathOptions) ApplyTo(opt *action.ChartPathOptions) {
 	opt.Version = cp.Version
 }
 
-// Install installs a chart archive
 func (c *Client) Install(options *InstallOptions) (*release.Release, error) {
+	return c.InstallWithLocal(options, "")
+}
+
+// Install installs a chart archive
+// if chartLocalFile is not empty, chart files exists in the project
+func (c *Client) InstallWithLocal(options *InstallOptions, chartLocalFile string) (*release.Release, error) {
 	actionConfig, err := c.buildActionConfig(options.Namespace)
 	if err != nil {
 		return nil, err
@@ -115,14 +121,23 @@ func (c *Client) Install(options *InstallOptions) (*release.Release, error) {
 			os.RemoveAll(temp)
 		}()
 	}
-	chartDir, err := securejoin.SecureJoin(root, options.Chart)
-	if err != nil {
-		return nil, err
-	}
 
-	cp, err := client.ChartPathOptions.LocateChart(chartDir, settings)
-	if err != nil {
-		return nil, err
+	var cp string
+	if len(chartLocalFile) == 0 {
+		chartDir, err := securejoin.SecureJoin(root, options.Chart)
+		if err != nil {
+			return nil, err
+		}
+
+		cp, err = client.ChartPathOptions.LocateChart(chartDir, settings)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		cp, err = filepath.Abs(chartLocalFile)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	p := getter.All(settings)
