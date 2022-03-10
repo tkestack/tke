@@ -24,6 +24,7 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
+	machineprovider "tkestack.io/tke/pkg/platform/provider/machine"
 )
 
 func newMachineForTest(resourcesVersion string, spec *platformv1.MachineSpec, phase platformv1.MachinePhase, conditions []platformv1.MachineCondition) *platformv1.Machine {
@@ -41,7 +42,7 @@ func newMachineForTest(resourcesVersion string, spec *platformv1.MachineSpec, ph
 			Phase: platformv1.MachineRunning,
 			Conditions: []platformv1.MachineCondition{
 				{
-					Type:          conditionTypeHealthCheck,
+					Type:          machineprovider.ConditionTypeHealthCheck,
 					Status:        platformv1.ConditionTrue,
 					LastProbeTime: v1.Now(),
 				},
@@ -180,7 +181,7 @@ func TestController_needsUpdate(t *testing.T) {
 			name: "health check is not long enough",
 			args: func() args {
 				new := newMachineForTest("new", nil, platformv1.MachinePhase(""), []platformv1.MachineCondition{{
-					Type:          conditionTypeHealthCheck,
+					Type:          machineprovider.ConditionTypeHealthCheck,
 					Status:        platformv1.ConditionTrue,
 					LastProbeTime: v1.NewTime(time.Now().Add(-resyncInternal / 2))}})
 				return args{new, new}
@@ -191,7 +192,7 @@ func TestController_needsUpdate(t *testing.T) {
 			name: "health check is long enough",
 			args: func() args {
 				new := newMachineForTest("new", nil, platformv1.MachinePhase(""), []platformv1.MachineCondition{{
-					Type:          conditionTypeHealthCheck,
+					Type:          machineprovider.ConditionTypeHealthCheck,
 					Status:        platformv1.ConditionTrue,
 					LastProbeTime: v1.NewTime(time.Now().Add(-resyncInternal - 1))}})
 				return args{new, new}

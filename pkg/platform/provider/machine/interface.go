@@ -27,11 +27,13 @@ import (
 	"strings"
 	"time"
 
+	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/log"
 
 	"github.com/thoas/go-funk"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/platform"
+
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 )
@@ -44,6 +46,9 @@ const (
 	ReasonFailedDelete = "FailedDelete"
 
 	ConditionTypeDone = "EnsureDone"
+
+	ConditionTypeHealthCheck = "HealthCheck"
+	FailedHealthCheckReason  = "FailedHealthCheck"
 )
 
 type APIProvider interface {
@@ -62,6 +67,9 @@ type ControllerProvider interface {
 	OnCreate(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error
 	OnUpdate(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error
 	OnDelete(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error
+	// OnHealthCheck could be implemented by user, and default implementation is checking
+	// tenant cluster node status by machine IP
+	OnHealthCheck(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) *platformv1.Machine
 }
 
 // Provider defines a set of response interfaces for specific machine
@@ -232,6 +240,44 @@ func (p *DelegateProvider) OnDelete(ctx context.Context, machine *platformv1.Mac
 	cluster.Status.Message = ""
 
 	return nil
+}
+
+func (p *DelegateProvider) OnHealthCheck(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) *platformv1.Machine {
+	if !(machine.Status.Phase == platformv1.MachineRunning ||
+		machine.Status.Phase == platformv1.MachineFailed) {
+		return machine
+	}
+
+	healthCheckCondition := platformv1.MachineCondition{
+		Type:   ConditionTypeHealthCheck,
+		Status: platformv1.ConditionFalse,
+	}
+
+	clientset, err := cluster.Clientset()
+	if err != nil {
+		machine.Status.Phase = platformv1.MachineFailed
+
+		healthCheckCondition.Reason = FailedHealthCheckReason
+		healthCheckCondition.Message = err.Error()
+	} else {
+		_, err = apiclient.GetNodeByMachineIP(ctx, clientset, machine.Spec.IP)
+		if err != nil {
+			machine.Status.Phase = platformv1.MachineFailed
+
+			healthCheckCondition.Reason = FailedHealthCheckReason
+			healthCheckCondition.Message = err.Error()
+		} else {
+			machine.Status.Phase = platformv1.MachineRunning
+
+			healthCheckCondition.Status = platformv1.ConditionTrue
+		}
+	}
+
+	machine.SetCondition(healthCheckCondition)
+
+	log.FromContext(ctx).Info("Update machine health status", "phase", machine.Status.Phase)
+
+	return machine
 }
 
 func (p *DelegateProvider) NeedUpdate(old, new *platformv1.Machine) bool {
