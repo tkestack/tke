@@ -120,7 +120,7 @@ var _ = Describe("cluster", func() {
 			Expect(cls.Spec.Version).Should(Equal(newVersion), "Cluster version is wrong")
 		},
 		// Entry("1.19.7->1.20.4", "1.19.7", "1.20.4"),
-		Entry("1.20.4-tke.1->1.21.4-tke.1", "1.20.4-tke.1", "1.21.4-tke.1"))
+		Entry("1.20.6-tke.2->1.21.4-tke.2", "1.20.6-tke.2", "1.21.4-tke.2"))
 
 	It("Cluster scaling", func() {
 		// Prepare two instances
