@@ -28,6 +28,7 @@ import (
 	gatewayconfig "tkestack.io/tke/pkg/gateway/apis/config"
 	"tkestack.io/tke/pkg/gateway/assets"
 	"tkestack.io/tke/pkg/gateway/proxy"
+	"tkestack.io/tke/pkg/gateway/websocket"
 	"tkestack.io/tke/pkg/gateway/webtty"
 )
 
@@ -99,6 +100,9 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 	}
 
 	if err := webtty.RegisterRoute(s.Handler.NonGoRestfulMux, c.ExtraConfig.GatewayConfig); err != nil {
+		return nil, err
+	}
+	if err := websocket.RegisterRoute(s.Handler.NonGoRestfulMux, c.ExtraConfig.GatewayConfig); err != nil {
 		return nil, err
 	}
 
