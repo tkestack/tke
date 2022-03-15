@@ -1583,12 +1583,21 @@ func (t *TKE) installTKEGatewayChart(ctx context.Context) error {
 		ReleaseName:      "tke-gateway",
 		DependencyUpdate: false,
 		Values:           values,
-		Timeout:          60 * time.Second,
+		Timeout:          10 * time.Minute,
 		ChartPathOptions: *chartPathOptions,
 	}
 
 	chartFilePath := constants.ChartDirName + "tke-gateway/"
 	if _, err := t.helmClient.InstallWithLocal(installOptions, chartFilePath); err != nil {
+		uninstallOptions := helmaction.UninstallOptions{
+			Timeout:     10 * time.Minute,
+			ReleaseName: "tke-gateway",
+			Namespace:   t.namespace,
+		}
+		reponse, err := t.helmClient.Uninstall(&uninstallOptions)
+		if err != nil {
+			return fmt.Errorf("%s uninstall fail, err = %s", reponse.Release.Name, err.Error())
+		}
 		return err
 	}
 
@@ -1699,12 +1708,21 @@ func (t *TKE) installTKEAuthChart(ctx context.Context) error {
 		ReleaseName:      "tke-auth",
 		DependencyUpdate: false,
 		Values:           values,
-		Timeout:          60 * time.Second,
+		Timeout:          10 * time.Minute,
 		ChartPathOptions: *chartPathOptions,
 	}
 
 	chartFilePath := constants.ChartDirName + "tke-auth/"
 	if _, err := t.helmClient.InstallWithLocal(installOptions, chartFilePath); err != nil {
+		uninstallOptions := helmaction.UninstallOptions{
+			Timeout:     10 * time.Minute,
+			ReleaseName: "tke-auth",
+			Namespace:   t.namespace,
+		}
+		reponse, err := t.helmClient.Uninstall(&uninstallOptions)
+		if err != nil {
+			return fmt.Errorf("%s uninstall fail, err = %s", reponse.Release.Name, err.Error())
+		}
 		return err
 	}
 
@@ -1811,12 +1829,21 @@ func (t *TKE) installTKEPlatformChart(ctx context.Context) error {
 		ReleaseName:      "tke-platform",
 		DependencyUpdate: false,
 		Values:           values,
-		Timeout:          60 * time.Second,
+		Timeout:          10 * time.Minute,
 		ChartPathOptions: *chartPathOptions,
 	}
 
 	chartFilePath := constants.ChartDirName + "tke-platform/"
 	if _, err := t.helmClient.InstallWithLocal(installOptions, chartFilePath); err != nil {
+		uninstallOptions := helmaction.UninstallOptions{
+			Timeout:     10 * time.Minute,
+			ReleaseName: "tke-platform",
+			Namespace:   t.namespace,
+		}
+		reponse, err := t.helmClient.Uninstall(&uninstallOptions)
+		if err != nil {
+			return fmt.Errorf("%s uninstall fail, err = %s", reponse.Release.Name, err.Error())
+		}
 		return err
 	}
 
