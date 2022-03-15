@@ -86,7 +86,8 @@ func Install(s ssh.Interface, option *Option) error {
 	cmd := "tar -C %s -xvaf %s %s --strip-components=3"
 	_, stderr, exit, err := s.Execf(cmd, constants.DstBinDir, dstFile, constants.KubeadmPathInNodePackge)
 	if err != nil || exit != 0 {
-		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+		cmdStr := fmt.Sprintf(cmd, constants.DstBinDir, dstFile, constants.KubeadmPathInNodePackge)
+		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmdStr, exit, stderr, err.Error())
 	}
 
 	data, err := template.ParseFile(path.Join(constants.ConfDir, "kubeadm/10-kubeadm.conf"), option)
