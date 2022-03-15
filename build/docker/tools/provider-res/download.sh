@@ -134,7 +134,7 @@ function download::pkgs() {
     exit 1
   fi
   docker_arch=${archMap[${arch}]}
-  docker pull --config=${DOCKER_PULL_CONFIG} --platform=${docker_arch} centos:7
+  docker --config=${DOCKER_PULL_CONFIG} pull --platform=${docker_arch} centos:7
   for pkg in ${PKGS}; do
     docker run --platform="${docker_arch}" -e OS="${os}" -e ARCH="${arch}" -e PKG="${pkg}" --rm -v"${SCRIPT_DIR}":/tmp/bin -v$(realpath $(pwd)):/output centos:7 /tmp/bin/run.sh
   done
