@@ -27,6 +27,7 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 	application "tkestack.io/tke/api/application"
 	auth "tkestack.io/tke/api/auth"
+	authz "tkestack.io/tke/api/authz"
 	business "tkestack.io/tke/api/business"
 	logagent "tkestack.io/tke/api/logagent"
 	mesh "tkestack.io/tke/api/mesh"
@@ -101,6 +102,16 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Rules().Informer()}, nil
 	case auth.SchemeGroupVersion.WithResource("users"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Auth().InternalVersion().Users().Informer()}, nil
+
+		// Group=authz.tkestack.io, Version=internalVersion
+	case authz.SchemeGroupVersion.WithResource("configmaps"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Authz().InternalVersion().ConfigMaps().Informer()}, nil
+	case authz.SchemeGroupVersion.WithResource("multiclusterrolebindings"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Authz().InternalVersion().MultiClusterRoleBindings().Informer()}, nil
+	case authz.SchemeGroupVersion.WithResource("policies"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Authz().InternalVersion().Policies().Informer()}, nil
+	case authz.SchemeGroupVersion.WithResource("roles"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Authz().InternalVersion().Roles().Informer()}, nil
 
 		// Group=business.tkestack.io, Version=internalVersion
 	case business.SchemeGroupVersion.WithResource("chartgroups"):

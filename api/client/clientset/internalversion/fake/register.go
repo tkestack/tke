@@ -28,6 +28,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	applicationinternalversion "tkestack.io/tke/api/application"
 	authinternalversion "tkestack.io/tke/api/auth"
+	authzinternalversion "tkestack.io/tke/api/authz"
 	businessinternalversion "tkestack.io/tke/api/business"
 	logagentinternalversion "tkestack.io/tke/api/logagent"
 	meshinternalversion "tkestack.io/tke/api/mesh"
@@ -43,6 +44,7 @@ var codecs = serializer.NewCodecFactory(scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
 	applicationinternalversion.AddToScheme,
 	authinternalversion.AddToScheme,
+	authzinternalversion.AddToScheme,
 	businessinternalversion.AddToScheme,
 	logagentinternalversion.AddToScheme,
 	meshinternalversion.AddToScheme,

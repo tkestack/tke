@@ -1,0 +1,72 @@
+[
+  {
+    "metadata": {
+      "name": "cluster-admin",
+      "namespace": "default",
+      "creationTimestamp": null
+    },
+    "displayName": "cluster-admin",
+    "description": "对所有命名空间下资源的读写权限，拥有集群节点、存储卷、命名空间、配额的读写权限",
+    "scope": "MultiCluster",
+    "tenantID": "default",
+    "username": "default",
+    "rules": [
+      {
+        "apiGroups": [
+          "*"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "*"
+        ]
+      },
+      {
+        "nonResourceURLs": [
+          "*"
+        ],
+        "verbs": [
+          "*"
+        ]
+      }
+    ]
+  },
+  {
+    "metadata": {
+      "name": "view",
+      "namespace": "default",
+      "creationTimestamp": null
+    },
+    "displayName": "view",
+    "description": "对所有资源拥有只读权限",
+    "scope": "MultiCluster",
+    "tenantID": "default",
+    "username": "default",
+    "rules": [
+      {
+        "apiGroups": [
+          "*"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "nonResourceURLs": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      }
+    ]
+  }
+]

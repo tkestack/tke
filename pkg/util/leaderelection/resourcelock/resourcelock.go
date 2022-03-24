@@ -22,6 +22,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applicationv1 "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	authv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
+	authzv1 "tkestack.io/tke/api/client/clientset/versioned/typed/authz/v1"
 	businessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	logagentv1 "tkestack.io/tke/api/client/clientset/versioned/typed/logagent/v1"
 	meshv1 "tkestack.io/tke/api/client/clientset/versioned/typed/mesh/v1"
@@ -132,6 +133,17 @@ func NewLogagent(name string, client logagentv1.LogagentV1Interface, rlc Config)
 // NewApplication will create a lock of a given type according to the input parameters
 func NewApplication(name string, client applicationv1.ApplicationV1Interface, rlc Config) Interface {
 	return &ApplicationConfigMapLock{
+		ConfigMapMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Client:     client,
+		LockConfig: rlc,
+	}
+}
+
+// NewAuthz will create a lock of a given type according to the input parameters
+func NewAuthz(name string, client authzv1.AuthzV1Interface, rlc Config) Interface {
+	return &AuthzConfigMapLock{
 		ConfigMapMeta: metav1.ObjectMeta{
 			Name: name,
 		},
