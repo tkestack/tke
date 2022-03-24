@@ -31,6 +31,8 @@ import (
 	fakeapplicationinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/application/internalversion/fake"
 	authinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	fakeauthinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion/fake"
+	authzinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/authz/internalversion"
+	fakeauthzinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/authz/internalversion/fake"
 	businessinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
 	fakebusinessinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion/fake"
 	logagentinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/logagent/internalversion"
@@ -105,6 +107,11 @@ func (c *Clientset) Application() applicationinternalversion.ApplicationInterfac
 // Auth retrieves the AuthClient
 func (c *Clientset) Auth() authinternalversion.AuthInterface {
 	return &fakeauthinternalversion.FakeAuth{Fake: &c.Fake}
+}
+
+// Authz retrieves the AuthzClient
+func (c *Clientset) Authz() authzinternalversion.AuthzInterface {
+	return &fakeauthzinternalversion.FakeAuthz{Fake: &c.Fake}
 }
 
 // Business retrieves the BusinessClient

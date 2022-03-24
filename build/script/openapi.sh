@@ -53,6 +53,7 @@ input_dirs=(
   "${API_PACKAGE}"/logagent/v1
   "${API_PACKAGE}"/application/v1
   "${API_PACKAGE}"/mesh/v1
+  "${API_PACKAGE}"/authz/v1
 )
 
 echo "$(IFS=,; echo "${input_dirs[*]}")"

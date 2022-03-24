@@ -28,6 +28,7 @@ import (
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
 	applicationv1 "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	authv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
+	authzv1 "tkestack.io/tke/api/client/clientset/versioned/typed/authz/v1"
 	businessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	logagentv1 "tkestack.io/tke/api/client/clientset/versioned/typed/logagent/v1"
 	meshv1 "tkestack.io/tke/api/client/clientset/versioned/typed/mesh/v1"
@@ -41,6 +42,7 @@ type Interface interface {
 	Discovery() discovery.DiscoveryInterface
 	ApplicationV1() applicationv1.ApplicationV1Interface
 	AuthV1() authv1.AuthV1Interface
+	AuthzV1() authzv1.AuthzV1Interface
 	BusinessV1() businessv1.BusinessV1Interface
 	LogagentV1() logagentv1.LogagentV1Interface
 	MeshV1() meshv1.MeshV1Interface
@@ -56,6 +58,7 @@ type Clientset struct {
 	*discovery.DiscoveryClient
 	applicationV1 *applicationv1.ApplicationV1Client
 	authV1        *authv1.AuthV1Client
+	authzV1       *authzv1.AuthzV1Client
 	businessV1    *businessv1.BusinessV1Client
 	logagentV1    *logagentv1.LogagentV1Client
 	meshV1        *meshv1.MeshV1Client
@@ -73,6 +76,11 @@ func (c *Clientset) ApplicationV1() applicationv1.ApplicationV1Interface {
 // AuthV1 retrieves the AuthV1Client
 func (c *Clientset) AuthV1() authv1.AuthV1Interface {
 	return c.authV1
+}
+
+// AuthzV1 retrieves the AuthzV1Client
+func (c *Clientset) AuthzV1() authzv1.AuthzV1Interface {
+	return c.authzV1
 }
 
 // BusinessV1 retrieves the BusinessV1Client
@@ -139,6 +147,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
+	cs.authzV1, err = authzv1.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.businessV1, err = businessv1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -181,6 +193,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
 	cs.applicationV1 = applicationv1.NewForConfigOrDie(c)
 	cs.authV1 = authv1.NewForConfigOrDie(c)
+	cs.authzV1 = authzv1.NewForConfigOrDie(c)
 	cs.businessV1 = businessv1.NewForConfigOrDie(c)
 	cs.logagentV1 = logagentv1.NewForConfigOrDie(c)
 	cs.meshV1 = meshv1.NewForConfigOrDie(c)
@@ -198,6 +211,7 @@ func New(c rest.Interface) *Clientset {
 	var cs Clientset
 	cs.applicationV1 = applicationv1.New(c)
 	cs.authV1 = authv1.New(c)
+	cs.authzV1 = authzv1.New(c)
 	cs.businessV1 = businessv1.New(c)
 	cs.logagentV1 = logagentv1.New(c)
 	cs.meshV1 = meshv1.New(c)

@@ -28,6 +28,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	authv1 "tkestack.io/tke/api/auth/v1"
+	authzv1 "tkestack.io/tke/api/authz/v1"
 	businessv1 "tkestack.io/tke/api/business/v1"
 	logagentv1 "tkestack.io/tke/api/logagent/v1"
 	meshv1 "tkestack.io/tke/api/mesh/v1"
@@ -43,6 +44,7 @@ var ParameterCodec = runtime.NewParameterCodec(Scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
 	applicationv1.AddToScheme,
 	authv1.AddToScheme,
+	authzv1.AddToScheme,
 	businessv1.AddToScheme,
 	logagentv1.AddToScheme,
 	meshv1.AddToScheme,

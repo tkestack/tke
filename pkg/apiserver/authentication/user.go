@@ -20,6 +20,8 @@ package authentication
 
 import (
 	"context"
+	"encoding/json"
+	"tkestack.io/tke/pkg/util/log"
 
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
@@ -61,6 +63,20 @@ func GetUID(ctx context.Context) (uid string) {
 		return ""
 	}
 	return userInfo.GetUID()
+}
+
+func GetExtraValue(key string, ctx context.Context) []string {
+	userInfo, ok := request.UserFrom(ctx)
+	if !ok {
+		return nil
+	}
+	extra := userInfo.GetExtra()
+	marshal, _ := json.Marshal(extra)
+	log.Infof("extra '%s'", marshal)
+	if len(extra) > 0 {
+		return extra[key]
+	}
+	return nil
 }
 
 // IsAdministrator check whether administrator
