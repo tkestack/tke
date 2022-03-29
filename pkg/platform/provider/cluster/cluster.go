@@ -58,6 +58,17 @@ func Register(name string, provider Provider) {
 	providers[name] = provider
 }
 
+// re register provider, if provider's name exists, new provider will replace old provider
+func ReRegister(name string, provider Provider) error {
+	providersMu.Lock()
+	defer providersMu.Unlock()
+	if provider == nil {
+		return fmt.Errorf("cluster: Register provider is nil")
+	}
+	providers[name] = provider
+	return nil
+}
+
 // RegisterHandler register all provider's hanlder.
 func RegisterHandler(mux *mux.PathRecorderMux) {
 	for _, p := range providers {

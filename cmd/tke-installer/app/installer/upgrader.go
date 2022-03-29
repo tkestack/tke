@@ -56,6 +56,7 @@ import (
 
 	// import platform schema
 	_ "tkestack.io/tke/api/platform/install"
+	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
 )
 
 const (
@@ -347,6 +348,17 @@ func (t *TKE) prepareForUpgrade(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	provider, err := baremetalcluster.NewProvider()
+	if err != nil {
+		return err
+	}
+	provider.PlatformClient = t.platformClient
+	if err := clusterprovider.ReRegister(provider.Name(), provider); err != nil {
+		return err
+	}
+	t.clusterProvider = provider
+
 	t.Cluster, err = clusterprovider.GetV1ClusterByName(ctx, t.platformClient, "global", clusterprovider.AdminUsername)
 	if err != nil {
 		return err
