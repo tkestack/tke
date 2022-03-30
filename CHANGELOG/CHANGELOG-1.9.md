@@ -1,6 +1,5 @@
 ## [1.9.0](https://github.com/tkestack/tke/compare/v1.8.0...v1.9.0) (2022-03-30)
 
-
 ### Bug Fixes
 
 * **application:** exposed UpdateStatusFunc add Pre\PostUninstall repo ([#1633](https://github.com/tkestack/tke/issues/1633)) ([e030f1b](https://github.com/tkestack/tke/commit/e030f1b373394b243be4e69a640145f57210babd))
@@ -24,11 +23,13 @@
 * **installer:** client is nil in preparation ([#1686](https://github.com/tkestack/tke/issues/1686)) ([91bf13e](https://github.com/tkestack/tke/commit/91bf13e77f98e59bde59b049305c4809d28aa403))
 * **installer:** cover nil credential case ([#1673](https://github.com/tkestack/tke/issues/1673)) ([1888e23](https://github.com/tkestack/tke/commit/1888e23104f70929a116fc0923008c415a3b4a4e))
 * **installer:** deploy registry earlier ([#1753](https://github.com/tkestack/tke/issues/1753)) ([66b2563](https://github.com/tkestack/tke/commit/66b25639326f1b3a3c9b214a2e91b45a1d4b0f40))
+* **installer:** failed to start docker daemon ([#1813](https://github.com/tkestack/tke/issues/1813)) ([1847720](https://github.com/tkestack/tke/commit/184772097141dc650c607700c12a9af92c5921b2))
 * **installer:** fix provider res docker config wrong place ([#1794](https://github.com/tkestack/tke/issues/1794)) ([531ecf2](https://github.com/tkestack/tke/commit/531ecf2821c7cfbb4b098bf7639759c700294826))
 * **installer:** helm uninstall chart after helm install chart wrong ([#1793](https://github.com/tkestack/tke/issues/1793)) ([8c7a53b](https://github.com/tkestack/tke/commit/8c7a53b824d9219b1ce9ecb9d1ee47e9974af892))
 * **installer:** installer restconfig always nil ([#1675](https://github.com/tkestack/tke/issues/1675)) ([d639abb](https://github.com/tkestack/tke/commit/d639abbcd73903373ba802968a00b7a3ffa419b7))
 * **installer:** modify the thanos components replicas and volume mounts ([#1291](https://github.com/tkestack/tke/issues/1291)) ([24f26a6](https://github.com/tkestack/tke/commit/24f26a6fac9693b1ad61908f16437612b65dc932))
 * **installer:** set fewer chans for docker push ([#1775](https://github.com/tkestack/tke/issues/1775)) ([a77aefd](https://github.com/tkestack/tke/commit/a77aefd8de888107539e5f1a4631787bdd2c433c))
+* **installer:** update platform chart enable audit ([#1816](https://github.com/tkestack/tke/issues/1816)) ([a4242ca](https://github.com/tkestack/tke/commit/a4242ca6ea817c59f1a2e150f60f1f04ee296578))
 * **monitor:** cluster dynamic client is nil ([#1685](https://github.com/tkestack/tke/issues/1685)) ([c03474e](https://github.com/tkestack/tke/commit/c03474e2658d1d628e2e0d39cb0ee5598730884d))
 * **monitor:** dynamic clientset is nil ([#1679](https://github.com/tkestack/tke/issues/1679)) ([027e078](https://github.com/tkestack/tke/commit/027e07832aabba078824db153bc7cb0f32246f5d))
 * **monitor:** status locked may be nil ([#1677](https://github.com/tkestack/tke/issues/1677)) ([55cdb50](https://github.com/tkestack/tke/commit/55cdb50b33282ce406b41b589200eaf1cc57c5b3))
@@ -98,7 +99,5 @@
 
 ### Reverts
 
+* Revert "fix(installer): failed to start docker daemon (#1813)" (#1817) ([7cff5a0](https://github.com/tkestack/tke/commit/7cff5a011a98388cf0d633da326f283ebf6c3762)), closes [#1813](https://github.com/tkestack/tke/issues/1813) [#1817](https://github.com/tkestack/tke/issues/1817)
 * Revert "fix(platform): support bridge in galaxy cni (#1795)" (#1796) ([c2cfc95](https://github.com/tkestack/tke/commit/c2cfc9592ba222c41790841b57fadb9fa72b6d0c)), closes [#1795](https://github.com/tkestack/tke/issues/1795) [#1796](https://github.com/tkestack/tke/issues/1796)
-
-
-
