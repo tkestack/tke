@@ -46,6 +46,7 @@ import (
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	vendor "tkestack.io/tke/pkg/platform/util/kubevendor"
+	workqueue_extension "tkestack.io/tke/pkg/platform/util/workqueue"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
@@ -79,13 +80,8 @@ func NewController(
 	configuration clusterconfig.ClusterControllerConfiguration,
 	finalizerToken platformv1.FinalizerName) *Controller {
 	rand.Seed(time.Now().Unix())
-	rateLimit := workqueue.NewMaxOfRateLimiter(
-		workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 1000*time.Second),
-		&workqueue.BucketRateLimiter{Limiter: rate.NewLimiter(rate.Limit(configuration.BucketRateLimiterLimit), configuration.BucketRateLimiterBurst)},
-	)
-	c := &Controller{
-		queue: workqueue.NewNamedRateLimitingQueue(rateLimit, "cluster"),
 
+	c := &Controller{
 		log:            log.WithName("ClusterController"),
 		platformClient: platformClient,
 		deleter: deletion.NewClusterDeleter(platformClient.Clusters(),
@@ -93,6 +89,13 @@ func NewController(
 			finalizerToken,
 			true),
 	}
+	rateLimit := workqueue.NewMaxOfRateLimiter(
+		workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 1000*time.Second),
+		&workqueue.BucketRateLimiter{Limiter: rate.NewLimiter(rate.Limit(configuration.BucketRateLimiterLimit), configuration.BucketRateLimiterBurst)},
+	)
+	c.queue = workqueue_extension.NewNamedRateLimitingWithCustomQueue(rateLimit,
+		workqueue_extension.NewNamed("platform", 12, c.getPriority),
+		"cluster")
 
 	if platformClient != nil && platformClient.RESTClient().GetRateLimiter() != nil {
 		_ = metrics.RegisterMetricAndTrackRateLimiterUsage("cluster_controller", platformClient.RESTClient().GetRateLimiter())
@@ -126,6 +129,54 @@ func NewController(
 	c.randomeRangeUpperLimitForHealthCheckPeriod = configuration.RandomeRangeUpperLimitForHealthCheckPeriod
 
 	return c
+}
+
+// The higher the priority value, the higher the priority, such as priorityInitializing(10) > priorityTerminating(8)
+const (
+	priorityIdling       int = 2
+	priorityFailed       int = 4
+	priorityRunning      int = 6
+	priorityTerminating  int = 8
+	priorityInitializing int = 10
+)
+
+func (c *Controller) getPriority(item interface{}) int {
+	var key string
+	var ok bool
+	if key, ok = item.(string); !ok {
+		return priorityRunning
+	}
+
+	_, name, err := cache.SplitMetaNamespaceKey(key)
+	if err != nil {
+		return priorityRunning
+	}
+
+	cluster, err := c.lister.Get(name)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			log.Infof("getPriority item is not found, item: %v", item)
+		}
+		return priorityRunning
+	}
+	if cluster == nil {
+		return priorityRunning
+	}
+
+	switch {
+	case cluster.Status.Phase == platformv1.ClusterPhase("Idling"):
+		return priorityIdling
+	case cluster.Status.Phase == platformv1.ClusterFailed:
+		return priorityFailed
+	case cluster.Status.Phase == platformv1.ClusterRunning:
+		return priorityRunning
+	case cluster.Status.Phase == platformv1.ClusterTerminating:
+		return priorityTerminating
+	case cluster.Status.Phase == platformv1.ClusterInitializing:
+		return priorityInitializing
+	}
+
+	return priorityRunning
 }
 
 func (c *Controller) addCluster(obj interface{}) {
