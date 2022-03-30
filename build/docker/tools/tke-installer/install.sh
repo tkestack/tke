@@ -51,6 +51,8 @@ RegistryHTTPOptions="--name registry-http -d --net=host --restart=always -p 80:5
 RegistryHTTPSOptions="--name registry-https -d --net=host --restart=always -p 443:443
 -v $REGISTRY_DIR:/var/lib/registry
 -v registry-certs:/certs
+-v /tmp:/tmp 
+-v /lib/modules/:/lib/modules/
 -e REGISTRY_HTTP_ADDR=0.0.0.0:443
 -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/server.crt
 -e REGISTRY_HTTP_TLS_KEY=/certs/server.key
