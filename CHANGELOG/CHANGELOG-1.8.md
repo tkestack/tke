@@ -1,18 +1,18 @@
-## [1.8.1](https://github.com/leoryu/tke/compare/v1.8.0...v1.8.1) (2021-12-09)
+## [1.8.1](https://github.com/tkestack/tke/compare/v1.8.0...v1.8.1) (2021-12-09)
 
 
 ### Bug Fixes
 
-* **console:** when query value is empty ,url is wrong ([#1707](https://github.com/leoryu/tke/issues/1707)) ([93916cd](https://github.com/leoryu/tke/commit/93916cdf2b088a50e436f293ea7129e54ef1ce54))
-* **monitor:** dynamic clientset is nil ([#1678](https://github.com/leoryu/tke/issues/1678)) ([a7509d9](https://github.com/leoryu/tke/commit/a7509d908a02e0d923588f300c90ef729a2dca31))
-* **platform:** get mode from flags ([#1619](https://github.com/leoryu/tke/issues/1619)) ([ada3a7a](https://github.com/leoryu/tke/commit/ada3a7a1d00f96bcba1c10d0040026f6c8957deb))
-* **platform:** healcheck resync internal not work ([#1708](https://github.com/leoryu/tke/issues/1708)) ([3904581](https://github.com/leoryu/tke/commit/39045813e55c8bd0076622ddd0a4ca4c251d8de6))
-* **platform:** support sudo with non-root user ([#1700](https://github.com/leoryu/tke/issues/1700)) ([c223f9b](https://github.com/leoryu/tke/commit/c223f9bf9b3c37dba738e1c7a9d310d00682954d))
+* **console:** when query value is empty ,url is wrong ([#1707](https://github.com/tkestack/tke/issues/1707)) ([93916cd](https://github.com/tkestack/tke/commit/93916cdf2b088a50e436f293ea7129e54ef1ce54))
+* **monitor:** dynamic clientset is nil ([#1678](https://github.com/tkestack/tke/issues/1678)) ([a7509d9](https://github.com/tkestack/tke/commit/a7509d908a02e0d923588f300c90ef729a2dca31))
+* **platform:** get mode from flags ([#1619](https://github.com/tkestack/tke/issues/1619)) ([ada3a7a](https://github.com/tkestack/tke/commit/ada3a7a1d00f96bcba1c10d0040026f6c8957deb))
+* **platform:** healcheck resync internal not work ([#1708](https://github.com/tkestack/tke/issues/1708)) ([3904581](https://github.com/tkestack/tke/commit/39045813e55c8bd0076622ddd0a4ca4c251d8de6))
+* **platform:** support sudo with non-root user ([#1700](https://github.com/tkestack/tke/issues/1700)) ([c223f9b](https://github.com/tkestack/tke/commit/c223f9bf9b3c37dba738e1c7a9d310d00682954d))
 
 
 ### Features
 
-* **console:** enable edit username when add machine ([#1699](https://github.com/leoryu/tke/issues/1699)) ([7e20349](https://github.com/leoryu/tke/commit/7e20349b7df26c85792246a56f7a30e2953accb5))
+* **console:** enable edit username when add machine ([#1699](https://github.com/tkestack/tke/issues/1699)) ([7e20349](https://github.com/tkestack/tke/commit/7e20349b7df26c85792246a56f7a30e2953accb5))
 
 
 ## [1.8.0](https://github.com/tkestack/tke/compare/v1.7.0...v1.8.0) (2021-09-28)
