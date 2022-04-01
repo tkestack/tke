@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kubelet
+  namespace: tke
+data:
+  kubelet.service: |
+    [Unit]
+    Description=kubelet: The Kubernetes Node Agent
+    Documentation=https://kubernetes.io/docs/
+
+    [Service]
+    User=root
+    ExecStart=/usr/bin/kubelet
+    Restart=always
+    StartLimitInterval=0
+    RestartSec=10
+
+    [Install]
+    WantedBy=multi-user.target
