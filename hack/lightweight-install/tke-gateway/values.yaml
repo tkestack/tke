@@ -1,0 +1,23 @@
+etcd:
+  host: https://172.19.0.2:2379
+image: tkestack/tke-gateway-amd64:bc48bed59bff2022d87db5e1484481715357ee7c
+registryDomainSuffix: docker.io
+# tke集群的租户id，默认default
+tenantID: default
+# OIDC认证方式的secret，默认自动生成
+oIDCClientSecret: 25DheusyQkiexUz2NPDqlHBoNqM
+# 是否开启自签名，默认为true
+selfSigned: true
+# 第三方cert证书，在selfSigned为false时需要填值
+serverCrt:
+# 第三方certKey，在selfSigned为false时需要填值
+serverKey:
+enableRegistry:
+enableAuth: true
+enableBusiness:
+enableMonitor:
+enableRegistry:
+enableLogagent:
+enableAudit:
+enableApplication:
+enableMesh:
