@@ -262,10 +262,15 @@ func (customConfig *CustomConfig) GenerateAuthChartValuesYaml(oIDCClientSecret s
 	if len(originAuthCustomConfig.Controller.Image) == 0 {
 		return errors.New("auth custom config api image nil")
 	}
-	if len(originAuthCustomConfig.Controller.AdminUsername) == 0 {
+	if len(originAuthCustomConfig.Controller.AdminUsername) == 0 && len(originAuthCustomConfig.Controller.AdminPassword) == 0 {
 		originAuthCustomConfig.Controller.AdminUsername = "admin"
+		originAuthCustomConfig.Controller.AdminPassword = base64.StdEncoding.EncodeToString([]byte(originAuthCustomConfig.Controller.AdminUsername))
+	} else if len(originAuthCustomConfig.Controller.AdminUsername) == 0 {
+		return errors.New("auth controller admin userName empty when admin password exists")
+	} else if len(originAuthCustomConfig.Controller.AdminPassword) == 0 {
+		return errors.New("auth controller admin password empty when admin userName exists")
 	}
-	originAuthCustomConfig.Controller.AdminPassword = base64.StdEncoding.EncodeToString([]byte(originAuthCustomConfig.Controller.AdminUsername))
+
 	obj.TKEAuth = *originAuthCustomConfig
 
 	bytes, errMarshal := yaml.Marshal(obj)
