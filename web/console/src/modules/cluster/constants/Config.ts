@@ -327,6 +327,10 @@ export const ServiceWorkloadList = [
   {
     value: 'tapp',
     name: 'TApp'
+  },
+  {
+    value: 'vmi',
+    name: 'VirtualMachineInstance'
   }
 ];
 

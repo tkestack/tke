@@ -143,40 +143,64 @@ export const updateCluster = ({
   maxUnready,
   autoMode
 }: UpdateClusterConfig) => {
-  return Request.patch(`/apis/platform.tkestack.io/v1/clusters/${clusterName}`, {
-    spec: {
-      version,
-      features: {
-        upgrade: {
-          mode: autoMode ? 'Auto' : 'Manual',
-          strategy: autoMode
-            ? {
-                drainNodeBeforeUpgrade,
-                maxUnready: maxUnready + '%'
-              }
-            : undefined
+  return Request.patch(
+    `/apis/platform.tkestack.io/v1/clusters/${clusterName}`,
+    {
+      spec: {
+        version,
+        features: {
+          upgrade: {
+            mode: autoMode ? 'Auto' : 'Manual',
+            strategy: autoMode
+              ? {
+                  drainNodeBeforeUpgrade,
+                  maxUnready: maxUnready + '%'
+                }
+              : undefined
+          }
         }
       }
+    },
+    {
+      headers: {
+        'Content-Type': 'application/strategic-merge-patch+json'
+      }
     }
-  });
+  );
 };
 
 export const updateSingleWorker = async (mchineName: string) => {
-  await Request.patch(`/apis/platform.tkestack.io/v1/machines/${mchineName}`, {
-    status: {
-      phase: 'Upgrading'
+  await Request.patch(
+    `/apis/platform.tkestack.io/v1/machines/${mchineName}`,
+    {
+      status: {
+        phase: 'Upgrading'
+      }
+    },
+    {
+      headers: {
+        'Content-Type': 'application/strategic-merge-patch+json'
+      }
     }
-  });
+  );
 };
 
 export const addUpgradeLabelToMachine = async (mchineName: string) => {
-  await Request.patch(`/apis/platform.tkestack.io/v1/machines/${mchineName}`, {
-    metadata: {
-      labels: {
-        'platform.tkestack.io/need-upgrade': 'willUpgrade'
+  await Request.patch(
+    `/apis/platform.tkestack.io/v1/machines/${mchineName}`,
+    {
+      metadata: {
+        labels: {
+          'platform.tkestack.io/need-upgrade': 'willUpgrade'
+        }
+      }
+    },
+    {
+      headers: {
+        'Content-Type': 'application/strategic-merge-patch+json'
       }
     }
-  });
+  );
 };
 
 export const updateWorkers = async ({
@@ -190,18 +214,26 @@ export const updateWorkers = async ({
   clusterName: string;
   drainNodeBeforeUpgrade: boolean;
 }) => {
-  await Request.patch(`/apis/platform.tkestack.io/v1/clusters/${clusterName}`, {
-    spec: {
-      features: {
-        upgrade: {
-          strategy: {
-            maxUnready: maxUnready + '%',
-            drainNodeBeforeUpgrade
+  await Request.patch(
+    `/apis/platform.tkestack.io/v1/clusters/${clusterName}`,
+    {
+      spec: {
+        features: {
+          upgrade: {
+            strategy: {
+              maxUnready: maxUnready + '%',
+              drainNodeBeforeUpgrade
+            }
           }
         }
       }
+    },
+    {
+      headers: {
+        'Content-Type': 'application/strategic-merge-patch+json'
+      }
     }
-  });
+  );
 
   await Promise.all(mchineNames.map(n => addUpgradeLabelToMachine(n)));
 

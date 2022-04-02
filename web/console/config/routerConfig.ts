@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations under the License.
  */
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { virtualMachineAPI } from '@src/webApi';
 
 export const firstRouterNameMap = {
   overview: t('概览'),
@@ -83,6 +84,11 @@ const clusterSubRouterConfig = [
       {
         name: 'CronJob',
         path: 'cronjob'
+      },
+      {
+        name: 'VirtualMachine',
+        path: 'virtual-machine',
+        visible: ({ clusterId }) => virtualMachineAPI.checkVmEnable(clusterId)
       }
     ]
   },

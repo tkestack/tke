@@ -74,6 +74,7 @@ class ClusterApp extends React.Component<RootProps, {}> {
   render() {
     const { route } = this.props;
     const urlParam = router.resolve(route);
+
     if (!urlParam['sub']) {
       return (
         <ContentView>
@@ -99,9 +100,9 @@ class ClusterApp extends React.Component<RootProps, {}> {
     } else if (urlParam['sub'] === 'config-promethus') {
       return <ConfigPromethus {...this.props} />;
     } else if (urlParam['sub'] === 'cluster-update') {
-      return <ClusterUpdate {...this.props}/>;
+      return <ClusterUpdate {...this.props} />;
     } else if (urlParam['sub'] === 'worker-update') {
-      return <WorkerUpdate {...this.props}/>;
+      return <WorkerUpdate {...this.props} />;
     }
   }
 }

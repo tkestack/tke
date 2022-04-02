@@ -50,7 +50,7 @@ export const validateServiceActions = {
 
   validateServiceName() {
     return async (dispatch, getState: GetState) => {
-      let { serviceEdit } = getState().subRoot,
+      const { serviceEdit } = getState().subRoot,
         { serviceName } = serviceEdit;
 
       const result = await validateServiceActions._validateServiceName(serviceName);
@@ -81,7 +81,7 @@ export const validateServiceActions = {
 
   validateServiceDesp() {
     return async (dispatch, getState: GetState) => {
-      let { description } = getState().subRoot.serviceEdit;
+      const { description } = getState().subRoot.serviceEdit;
 
       const result = await validateServiceActions._validateServiceDesp(description);
 
@@ -111,7 +111,7 @@ export const validateServiceActions = {
 
   validateNamespace() {
     return async (dispatch, getState: GetState) => {
-      let { namespace } = getState().subRoot.serviceEdit;
+      const { namespace } = getState().subRoot.serviceEdit;
       const result = validateServiceActions._validateNamespace(namespace);
       dispatch({
         type: ActionType.SV_Namespace,
@@ -143,8 +143,8 @@ export const validateServiceActions = {
 
   validatePortProtocol(protocol: string, portMapId: string) {
     return async (dispatch, getState: GetState) => {
-      let { portsMap, communicationType } = getState().subRoot.serviceEdit;
-      let newPortsMap: PortMap[] = cloneDeep(portsMap),
+      const { portsMap, communicationType } = getState().subRoot.serviceEdit;
+      const newPortsMap: PortMap[] = cloneDeep(portsMap),
         portIndex = newPortsMap.findIndex(p => p.id === portMapId),
         result = validateServiceActions._validatePortProtocol(protocol, newPortsMap, communicationType);
 
@@ -159,7 +159,7 @@ export const validateServiceActions = {
   _validateAllProtocol(ports: PortMap[], communicationType: string) {
     let result = true;
     ports.forEach(item => {
-      let temp = validateServiceActions._validatePortProtocol(item.protocol, ports, communicationType);
+      const temp = validateServiceActions._validatePortProtocol(item.protocol, ports, communicationType);
       result = result && temp.status === 1;
     });
     return result;
@@ -167,7 +167,7 @@ export const validateServiceActions = {
 
   validateAllProtocol() {
     return async (dispatch, getState: GetState) => {
-      let ports = getState().subRoot.serviceEdit.portsMap;
+      const ports = getState().subRoot.serviceEdit.portsMap;
       ports.forEach(item => {
         dispatch(validateServiceActions.validatePortProtocol(item.protocol, item.id + ''));
       });
@@ -198,7 +198,7 @@ export const validateServiceActions = {
 
   validateTargetPort(targetPort: string, tId: string) {
     return async (dispatch, getState: GetState) => {
-      let portMaps: PortMap[] = cloneDeep(getState().subRoot.serviceEdit.portsMap),
+      const portMaps: PortMap[] = cloneDeep(getState().subRoot.serviceEdit.portsMap),
         portIndex = portMaps.findIndex(p => p.id === tId),
         result = validateServiceActions._validateTargetPort(targetPort, portMaps, portMaps[portIndex].protocol);
 
@@ -214,7 +214,7 @@ export const validateServiceActions = {
   _validateAllTargetPort(ports: PortMap[]) {
     let result = true;
     ports.forEach(item => {
-      let temp = validateServiceActions._validateTargetPort(item.targetPort, ports, item.protocol);
+      const temp = validateServiceActions._validateTargetPort(item.targetPort, ports, item.protocol);
       result = result && temp.status === 1;
     });
     return result;
@@ -222,7 +222,7 @@ export const validateServiceActions = {
 
   validateAllTargetPort() {
     return async (dispatch, getState: GetState) => {
-      let ports = getState().subRoot.serviceEdit.portsMap;
+      const ports = getState().subRoot.serviceEdit.portsMap;
       ports.forEach(p => {
         dispatch(validateServiceActions.validateTargetPort(p.targetPort, p.id + ''));
       });
@@ -259,7 +259,7 @@ export const validateServiceActions = {
 
   validateNodePort(nodePort: string, nId: string) {
     return async (dispatch, getState: GetState) => {
-      let portMaps: PortMap[] = cloneDeep(getState().subRoot.serviceEdit.portsMap),
+      const portMaps: PortMap[] = cloneDeep(getState().subRoot.serviceEdit.portsMap),
         portIndex = portMaps.findIndex(p => p.id === nId),
         result = validateServiceActions._validateNodePort(nodePort, portMaps);
 
@@ -274,7 +274,7 @@ export const validateServiceActions = {
   _validateAllNodePort(ports: PortMap[]) {
     let result = true;
     ports.forEach(item => {
-      let temp = validateServiceActions._validateNodePort(item.nodePort, ports);
+      const temp = validateServiceActions._validateNodePort(item.nodePort, ports);
       result = result && temp.status === 1;
     });
     return result;
@@ -282,7 +282,7 @@ export const validateServiceActions = {
 
   validateAllNodePort() {
     return async (dispatch, getState: GetState) => {
-      let ports = getState().subRoot.serviceEdit.portsMap;
+      const ports = getState().subRoot.serviceEdit.portsMap;
       ports.forEach(item => {
         dispatch(validateServiceActions.validateNodePort(item.nodePort, item.id + ''));
       });
@@ -318,7 +318,7 @@ export const validateServiceActions = {
 
   validateServicePort(port: string, sId: string) {
     return async (dispatch, getState: GetState) => {
-      let portMaps: PortMap[] = cloneDeep(getState().subRoot.serviceEdit.portsMap),
+      const portMaps: PortMap[] = cloneDeep(getState().subRoot.serviceEdit.portsMap),
         portIndex = portMaps.findIndex(p => p.id === sId),
         result = validateServiceActions._validateServicePort(port, portMaps, portMaps[portIndex].protocol);
 
@@ -334,7 +334,7 @@ export const validateServiceActions = {
   _validateAllServicePort(ports: PortMap[]) {
     let result = true;
     ports.forEach(item => {
-      let temp = validateServiceActions._validateServicePort(item.port, ports, item.protocol);
+      const temp = validateServiceActions._validateServicePort(item.port, ports, item.protocol);
       result = result && temp.status === 1;
     });
     return result;
@@ -342,7 +342,7 @@ export const validateServiceActions = {
 
   validateAllServicePort() {
     return async (dispatch, getState: GetState) => {
-      let ports = getState().subRoot.serviceEdit.portsMap;
+      const ports = getState().subRoot.serviceEdit.portsMap;
       ports.forEach(p => {
         dispatch(validateServiceActions.validateServicePort(p.port, p.id + ''));
       });
@@ -352,19 +352,17 @@ export const validateServiceActions = {
   /**
    * 校验selectors填入值的正确性
    */
-  _validateSelectorContent(data: string, isKey: boolean = false) {
+  _validateSelectorContent(data: string, isKey = false) {
     let status = 0,
       message = '',
-      reg = /^[a-z]([-a-z0-9]*[a-z0-9])?$/;
+      reg = /^([A-Za-z0-9][-A-Za-z0-9_./]*)?[A-Za-z0-9]$/;
 
     if (!data) {
       status = 2;
       message = t('值不能为空');
     } else if (!reg.test(data)) {
       status = 2;
-      message = isKey
-        ? t('格式不正确，只能包含小写字母、数字及分隔符("-")，且必须以小写字母开头，数字或小写字母结尾')
-        : t('格式不正确');
+      message = isKey ? t('格式不正确，只能包含小写字母、数字及 "-" "_" "/" "."') : t('格式不正确');
     } else {
       status = 1;
       message = '';
@@ -375,7 +373,7 @@ export const validateServiceActions = {
 
   validateSelectorContent(obj: any, sId: string) {
     return async (dispatch, getState: GetState) => {
-      let selectors: Selector[] = cloneDeep(getState().subRoot.serviceEdit.selector),
+      const selectors: Selector[] = cloneDeep(getState().subRoot.serviceEdit.selector),
         sIndex = selectors.findIndex(s => s.id === sId),
         keyName = Object.keys(obj)[0],
         result = validateServiceActions._validateSelectorContent(obj[keyName], keyName === 'key');
@@ -391,7 +389,7 @@ export const validateServiceActions = {
   _validateAllSelectorContent(selector: Selector[]) {
     let result = true;
     selector.forEach(s => {
-      let keyResult = validateServiceActions._validateSelectorContent(s.key),
+      const keyResult = validateServiceActions._validateSelectorContent(s.key),
         valueResult = validateServiceActions._validateSelectorContent(s.value);
 
       result = result && keyResult.status === 1 && valueResult.status === 1;
@@ -401,7 +399,7 @@ export const validateServiceActions = {
 
   validateAllSelectorContent() {
     return async (dispatch, getState: GetState) => {
-      let selectors = getState().subRoot.serviceEdit.selector;
+      const selectors = getState().subRoot.serviceEdit.selector;
       selectors.forEach(s => {
         dispatch(validateServiceActions.validateSelectorContent({ key: s.key }, s.id + ''));
         dispatch(validateServiceActions.validateSelectorContent({ value: s.value }, s.id + ''));
@@ -413,7 +411,7 @@ export const validateServiceActions = {
    * 校验整个表单是否正确
    */
   _validateServiceEdit(serviceEdit: ServiceEdit) {
-    let {
+    const {
       serviceName,
       description,
       namespace,
@@ -439,7 +437,7 @@ export const validateServiceActions = {
       result = result && validateServiceActions._validateAllSelectorContent(selector);
     }
 
-    let isNodePort = communicationType === 'NodePort';
+    const isNodePort = communicationType === 'NodePort';
 
     // 只有非 clusterIP的访问类型，才有 nodePort的设置
     if (isNodePort) {
@@ -472,7 +470,7 @@ export const validateServiceActions = {
       // 只有 selector 数组存在时，才校验
       selector.length >= 1 && dispatch(validateServiceActions.validateAllSelectorContent());
 
-      let isNodePort = communicationType === 'NodePort';
+      const isNodePort = communicationType === 'NodePort';
 
       // 只有访问类型为 非 ClusterIP，才需要校验nodePort
       if (isNodePort) {
@@ -488,7 +486,7 @@ export const validateServiceActions = {
 
   /** 校验更新访问方式 */
   _validateUpdateServiceAccessEdit(serviceEdit: ServiceEdit) {
-    let { portsMap, communicationType, sessionAffinity, sessionAffinityTimeout } = serviceEdit;
+    const { portsMap, communicationType, sessionAffinity, sessionAffinityTimeout } = serviceEdit;
 
     let result = true;
     result =
@@ -497,7 +495,7 @@ export const validateServiceActions = {
       validateServiceActions._validateAllServicePort(portsMap) &&
       validateServiceActions._validateAllTargetPort(portsMap);
 
-    let isNodePort = communicationType === 'NodePort';
+    const isNodePort = communicationType === 'NodePort';
 
     // 只有非 clusterIP的访问类型，才有 nodePort的设置
     if (isNodePort) {
@@ -515,13 +513,13 @@ export const validateServiceActions = {
 
   validateUpdateServiceAccessEdit() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { communicationType, sessionAffinity } = getState().subRoot.serviceEdit;
+      const { communicationType, sessionAffinity } = getState().subRoot.serviceEdit;
 
       dispatch(validateServiceActions.validateAllProtocol());
       dispatch(validateServiceActions.validateAllTargetPort());
       dispatch(validateServiceActions.validateAllServicePort());
 
-      let isNodePort = communicationType === 'NodePort';
+      const isNodePort = communicationType === 'NodePort';
 
       // 只有访问类型为 非 ClusterIP，才需要校验nodePort
       if (isNodePort) {
@@ -572,8 +570,8 @@ export const validateServiceActions = {
 
   validatesessionAffinityTimeout() {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { sessionAffinityTimeout, communicationType } = getState().subRoot.serviceEdit;
-      let result = validateServiceActions._validatesessionAffinityTimeout(sessionAffinityTimeout, communicationType);
+      const { sessionAffinityTimeout, communicationType } = getState().subRoot.serviceEdit;
+      const result = validateServiceActions._validatesessionAffinityTimeout(sessionAffinityTimeout, communicationType);
       dispatch({
         type: ActionType.SV_sessionAffinityTimeout,
         payload: result

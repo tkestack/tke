@@ -31,6 +31,7 @@ import { Icon, Text, Bubble, NavMenu, List, ExternalLink, StatusTip } from 'tea-
 import { TkeVersion } from '@/src/modules/common/components/tke-version';
 import { ConsoleModuleEnum } from '@config/platform';
 import 'tea-component/dist/tea.css';
+require('promise.prototype.finally').shim();
 
 const { LoadingTip } = StatusTip;
 

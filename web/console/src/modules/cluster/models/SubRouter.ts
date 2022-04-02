@@ -31,6 +31,8 @@ export interface BasicRouter {
 
   /** 非嵌套路由需要标识一个basic */
   basicUrl?: string;
+
+  visible?: (_: any) => boolean;
 }
 
 export interface SubRouterFilter {
@@ -38,4 +40,6 @@ export interface SubRouterFilter {
   module: 'cluster' | 'mesh';
   /** sub 一级路由的名称 */
   sub: string;
+
+  clusterId?: string;
 }

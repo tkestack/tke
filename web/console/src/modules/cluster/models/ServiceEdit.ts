@@ -76,6 +76,8 @@ export interface ServiceEdit extends Identifiable {
   sessionAffinityTimeout?: number;
 
   v_sessionAffinityTimeout?: Validation;
+
+  vmiIsEnable?: boolean;
 }
 
 export interface CLB extends Identifiable {

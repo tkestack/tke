@@ -72,7 +72,9 @@ const TempReducer = combineReducers({
 
   sessionAffinityTimeout: reduceToPayload(ActionType.S_InputsessionAffinityTimeout, 30),
 
-  v_sessionAffinityTimeout: reduceToPayload(ActionType.SV_sessionAffinityTimeout, initValidator)
+  v_sessionAffinityTimeout: reduceToPayload(ActionType.SV_sessionAffinityTimeout, initValidator),
+
+  vmiIsEnable: reduceToPayload(ActionType.S_VMI_IsEnable, false)
 });
 
 export const ServiceEditReducer = (state, action) => {

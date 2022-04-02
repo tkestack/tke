@@ -28,11 +28,13 @@ export * from './WebAPI/index';
  * @param query subRouter列表的查询
  */
 export async function fetchSubRouterList(query: QueryState<SubRouterFilter>) {
-  let response = subRouterConfig(query.filter.module);
+  const { module, clusterId } = query.filter;
 
-  let subRouterList = response.map(item => {
-    return Object.assign({}, item, { id: uuid() });
-  });
+  const response = subRouterConfig(module);
+
+  console.log(response);
+
+  const subRouterList: any = await checkRouterVisible(response, { clusterId });
 
   const result: RecordSet<SubRouter> = {
     recordCount: subRouterList.length,
@@ -40,4 +42,20 @@ export async function fetchSubRouterList(query: QueryState<SubRouterFilter>) {
   };
 
   return result;
+}
+
+async function checkRouterVisible(routeList, { clusterId }) {
+  const list = await Promise.all(
+    routeList?.map(async ({ visible = _ => Promise.resolve(true), sub, ...other }) => ({
+      ...other,
+
+      visible: await visible({ clusterId }),
+
+      sub: sub && (await checkRouterVisible(sub, { clusterId })),
+
+      id: uuid()
+    }))
+  );
+
+  return list?.filter(({ visible }) => visible) ?? [];
 }

@@ -158,6 +158,7 @@ export const S_ChooseExternalTrafficPolicy = 'S_ChooseExternalTrafficPolicy';
 export const S_ChoosesessionAffinity = 'S_ChoosesessionAffinity';
 export const S_InputsessionAffinityTimeout = 'S_InputsessionAffinityTimeout';
 export const SV_sessionAffinityTimeout = 'SV_sessionAffinityTimeout';
+export const S_VMI_IsEnable = 'S_VMI_IsEnable';
 
 /** ============================== end 创建服务 Service 相关 =============================== */
 

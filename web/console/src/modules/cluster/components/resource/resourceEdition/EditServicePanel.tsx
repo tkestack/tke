@@ -53,10 +53,10 @@ export const ServiceTypeMap = {
  * @param ports: Portmap
  */
 export const ReduceServicePorts = (portsMap: PortMap[], communicationType: string) => {
-  let isNotClusterIP = communicationType !== 'ClusterIP';
+  const isNotClusterIP = communicationType !== 'ClusterIP';
 
   return portsMap.map(port => {
-    let tmp: ServicePorts = {
+    const tmp: ServicePorts = {
       name: port.protocol.toLocaleLowerCase() + '-' + port.targetPort + '-' + port.port,
       nodePort: isNotClusterIP && port.nodePort ? +port.nodePort : undefined,
       port: +port.port,
@@ -74,9 +74,9 @@ export const ReduceServicePorts = (portsMap: PortMap[], communicationType: strin
  * @param clusterId: string 当前的集群Id
  */
 export const ReduceServiceAnnotations = (serviceEdit: ServiceEdit, clusterId: string) => {
-  let { description } = serviceEdit;
+  const { description } = serviceEdit;
 
-  let annotations = {};
+  const annotations = {};
 
   if (description) {
     annotations['description'] = description;
@@ -107,7 +107,7 @@ export const ReduceServiceJSONData = (dataObj: {
   isOpenHeadless: boolean;
   sessionConfig: any;
 }) => {
-  let {
+  const {
     resourceInfo,
     ports,
     annotations,
@@ -119,7 +119,7 @@ export const ReduceServiceJSONData = (dataObj: {
     sessionConfig
   } = dataObj;
 
-  let jsonData: ServiceEditJSONYaml = {
+  const jsonData: ServiceEditJSONYaml = {
     kind: resourceInfo.headTitle,
     apiVersion: (resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
     metadata: {
@@ -165,14 +165,16 @@ export class EditServicePanel extends React.Component<RootProps, EditServicePane
     };
   }
   componentWillUnmount() {
-    let { actions } = this.props;
+    const { actions } = this.props;
     actions.editSerivce.clearServiceEdit();
   }
 
   componentDidMount() {
-    let { actions, route } = this.props;
+    const { actions, route } = this.props;
     // 初始化namespace
     actions.editSerivce.selectNamespace(route.queries['np']);
+
+    actions.editSerivce.checkVmiEnable();
   }
 
   render() {
@@ -197,7 +199,7 @@ export class EditServicePanel extends React.Component<RootProps, EditServicePane
     let { actions, subRoot, namespaceList } = this.props,
       { serviceEdit } = subRoot;
 
-    let namespaceOptions = namespaceList.data.records.map(item => ({
+    const namespaceOptions = namespaceList.data.records.map(item => ({
       value: item.name,
       text: item.displayName
     }));
@@ -257,7 +259,7 @@ export class EditServicePanel extends React.Component<RootProps, EditServicePane
 
   /** Service设置信息的填写 */
   private _renderServiceSetting() {
-    let { subRoot, actions, cluster } = this.props,
+    const { subRoot, actions, cluster } = this.props,
       { serviceEdit, isNeedExistedLb } = subRoot,
       { communicationType, portsMap, isOpenHeadless } = serviceEdit;
 
@@ -305,7 +307,7 @@ export class EditServicePanel extends React.Component<RootProps, EditServicePane
   }
 
   private _renderAdvancePanel() {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { serviceEdit } = subRoot;
     return (
       <div>
@@ -348,12 +350,12 @@ export class EditServicePanel extends React.Component<RootProps, EditServicePane
 
   /** Service的 deployment绑定 */
   private _renderBindWorkload() {
-    let { actions, subRoot, route } = this.props,
+    const { actions, subRoot, route } = this.props,
       urlParams = router.resolve(route),
       { modifyResourceFlow, serviceEdit } = subRoot,
       { selector } = serviceEdit;
 
-    let failed = modifyResourceFlow.operationState === OperationState.Done && !isSuccessWorkflow(modifyResourceFlow);
+    const failed = modifyResourceFlow.operationState === OperationState.Done && !isSuccessWorkflow(modifyResourceFlow);
 
     return (
       <div>
@@ -465,29 +467,29 @@ export class EditServicePanel extends React.Component<RootProps, EditServicePane
     actions.validate.service.validateServiceEdit();
 
     if (validateServiceActions._validateServiceEdit(serviceEdit)) {
-      let { portsMap, communicationType, selector, namespace, serviceName, isOpenHeadless } = serviceEdit;
+      const { portsMap, communicationType, selector, namespace, serviceName, isOpenHeadless } = serviceEdit;
 
       // 构建端口映射
-      let ports = ReduceServicePorts(portsMap, communicationType);
+      const ports = ReduceServicePorts(portsMap, communicationType);
 
       // vpc内访问、购买lb带宽等，都放置在annotations里面实现
-      let annotations = ReduceServiceAnnotations(serviceEdit, route.queries['clusterId']);
+      const annotations = ReduceServiceAnnotations(serviceEdit, route.queries['clusterId']);
 
       // selector
-      let selectorObj = {};
+      const selectorObj = {};
       if (selector.length) {
         selector.forEach(s => {
           selectorObj[s.key] = s.value;
         });
       }
 
-      let sessionConfig = {
+      const sessionConfig = {
         externalTrafficPolicy: serviceEdit.externalTrafficPolicy,
         sessionAffinity: serviceEdit.sessionAffinity,
         sessionAffinityTimeout: serviceEdit.sessionAffinityTimeout
       };
       // 构建创建service 的json的格式
-      let jsonData: ServiceEditJSONYaml = ReduceServiceJSONData({
+      const jsonData: ServiceEditJSONYaml = ReduceServiceJSONData({
         resourceInfo,
         ports,
         annotations,
@@ -499,7 +501,7 @@ export class EditServicePanel extends React.Component<RootProps, EditServicePane
         sessionConfig
       });
 
-      let resource: CreateResource = {
+      const resource: CreateResource = {
         id: uuid(),
         resourceInfo,
         mode,
