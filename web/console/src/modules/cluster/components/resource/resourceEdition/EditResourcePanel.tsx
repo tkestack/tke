@@ -37,6 +37,7 @@ import { EditResourceVisualizationPanel } from './EditResourceVisualizationPanel
 import { EditSecretPanel } from './EditSecretPanel';
 import { EditServicePanel } from './EditServicePanel';
 import { SubHeaderPanel } from './SubHeaderPanel';
+import { VMCreatePanel } from '../virtual-machine';
 
 interface EditResourcePanelState {
   /** edited data */
@@ -53,7 +54,7 @@ export class EditResourcePanel extends React.Component<RootProps, EditResourcePa
   }
 
   componentDidMount() {
-    let { subRoot, actions, route } = this.props,
+    const { subRoot, actions, route } = this.props,
       urlParams = router.resolve(route),
       { resourceInfo } = subRoot;
 
@@ -62,7 +63,7 @@ export class EditResourcePanel extends React.Component<RootProps, EditResourcePa
   }
 
   componentWillReceiveProps(nextProps: RootProps) {
-    let oldYamlList = this.props.subRoot.resourceDetailState.yamlList,
+    const oldYamlList = this.props.subRoot.resourceDetailState.yamlList,
       newYamlList = nextProps.subRoot.resourceDetailState.yamlList,
       resourceSelection = this.props.subRoot.resourceOption.ffResourceList.selection,
       newResourceSelection = nextProps.subRoot.resourceOption.ffResourceList.selection,
@@ -79,7 +80,7 @@ export class EditResourcePanel extends React.Component<RootProps, EditResourcePa
   }
 
   componentWillUnmount() {
-    let { actions } = this.props;
+    const { actions } = this.props;
     actions.resourceDetail.clearDetail();
     // 清除modifyResource workflow的信息
     actions.workflow.modifyResource.reset();
@@ -88,7 +89,7 @@ export class EditResourcePanel extends React.Component<RootProps, EditResourcePa
   }
 
   render() {
-    let { subRoot, route } = this.props,
+    const { subRoot, route } = this.props,
       urlParams = router.resolve(route),
       { mode } = subRoot;
 
@@ -96,12 +97,14 @@ export class EditResourcePanel extends React.Component<RootProps, EditResourcePa
     let content: JSX.Element;
 
     // 如果 模式为 modify，只提供 Yaml创建
-    let resourceType = urlParams['resourceName'];
-    let kind = urlParams['type'];
+    const resourceType = urlParams['resourceName'];
+    const kind = urlParams['type'];
     let headTitle = resourceConfig()[resourceType] ? typeMapName[mode] + resourceConfig()[resourceType].headTitle : '';
 
     if (resourceType === 'svc' && mode === 'create') {
       content = <EditServicePanel />;
+    } else if (resourceType === 'virtual-machine' && mode === 'create') {
+      return <VMCreatePanel />;
     } else if (kind === 'resource' && mode === 'create') {
       content = <EditResourceVisualizationPanel />;
       headTitle = typeMapName[mode] + 'Workload';
@@ -140,14 +143,15 @@ export class EditResourcePanel extends React.Component<RootProps, EditResourcePa
       { modifyResourceFlow, mode, resourceDetailState, applyResourceFlow } = subRoot,
       { yamlList } = resourceDetailState;
 
-    let failed = modifyResourceFlow.operationState === OperationState.Done && !isSuccessWorkflow(modifyResourceFlow);
-    let isNeedLoading =
+    const failed = modifyResourceFlow.operationState === OperationState.Done && !isSuccessWorkflow(modifyResourceFlow);
+    const isNeedLoading =
       mode !== 'apply' &&
       mode !== 'create' &&
       (yamlList.fetched !== true || yamlList.fetchState === FetchState.Fetching);
 
     // 创建多种资源的错误判断
-    let applyFailed = applyResourceFlow.operationState === OperationState.Done && !isSuccessWorkflow(applyResourceFlow);
+    const applyFailed =
+      applyResourceFlow.operationState === OperationState.Done && !isSuccessWorkflow(applyResourceFlow);
 
     return (
       <MainBodyLayout>
@@ -209,7 +213,7 @@ export class EditResourcePanel extends React.Component<RootProps, EditResourcePa
       { ffResourceList } = resourceOption;
 
     if (this.state.config !== '') {
-      let resource: CreateResource = {
+      const resource: CreateResource = {
         id: uuid(),
         resourceInfo,
         mode,

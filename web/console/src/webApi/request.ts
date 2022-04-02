@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations under the License.
  */
 import { changeForbiddentConfig } from '@/index.tke';
-import { Method } from '@helper';
 import Axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -24,12 +23,12 @@ const instance = Axios.create({
   timeout: 10000
 });
 
+// strategic-
+
 instance.interceptors.request.use(
   config => {
     Object.assign(config.headers, {
-      'X-Remote-Extra-RequestID': uuidv4(),
-      'Content-Type':
-        config.method === 'patch' ? 'application/strategic-merge-patch+json' : config.headers['Content-Type']
+      'X-Remote-Extra-RequestID': uuidv4()
     });
     return config;
   },
@@ -67,3 +66,12 @@ instance.interceptors.response.use(
 );
 
 export default instance;
+
+export const Request = instance;
+
+export const generateQueryString = (query: Record<string, any>) => {
+  return Object.entries(query)
+    .filter(([_, value]) => value !== undefined && value !== null && value !== '')
+    .map(([key, value]) => `${key}=${value}`)
+    .join('&');
+};

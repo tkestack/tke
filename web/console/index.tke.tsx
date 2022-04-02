@@ -33,6 +33,7 @@ import '@tencent/tchart/build/ChartsComponents';
 import { BlankPage } from './blankPage';
 import { Overview } from '@src/modules/overview';
 import { PlatformTypeEnum } from './config';
+import { VNCPage } from '@src/modules/vnc';
 
 const ClusterPromise = import(/* webpackPrefetch: true */ './src/modules/cluster');
 const Cluster = React.lazy(() => ClusterPromise);
@@ -368,6 +369,14 @@ Entry.register({
           <BlankPage />
         </Wrapper>
       )
+    },
+
+    /**
+     * @url https://{{domain}}/tkestack/vnc
+     */
+    vnc: {
+      title: t('VNC'),
+      container: <VNCPage />
     }
   }
 });

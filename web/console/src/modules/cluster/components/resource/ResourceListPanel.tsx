@@ -45,8 +45,9 @@ import { ResourceDeleteDialog } from './resourceTableOperation/ResourceDeleteDia
 import { ResourceEventPanel } from './resourceTableOperation/ResourceEventPanel';
 import { ResourceLogPanel } from './resourceTableOperation/ResourceLogPanel';
 import { ResourceTablePanel } from './resourceTableOperation/ResourceTablePanel';
-import { HPAPanel }  from '../scale/hpa';
+import { HPAPanel } from '../scale/hpa';
 import { CronHpaPanel } from '../scale/cronhpa';
+import { VMListPanel } from './virtual-machine';
 
 const loadingElement: JSX.Element = (
   <div>
@@ -60,18 +61,18 @@ export interface ResourceListPanelProps extends RootProps {
   subRouterList: SubRouter[];
 }
 
-const mapDispatchToProps = (dispatch) =>
+const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), { dispatch });
 
-@connect((state) => state, mapDispatchToProps)
+@connect(state => state, mapDispatchToProps)
 export class ResourceListPanel extends React.Component<ResourceListPanelProps, {}> {
   render() {
-    let { subRoot, route, subRouterList } = this.props,
+    const { subRoot, route, subRouterList, actions } = this.props,
       urlParams = router.resolve(route),
       { resourceInfo } = subRoot;
     let content: JSX.Element;
-    let headTitle: string = '';
-    let resource = urlParams['resourceName'];
+    let headTitle = '';
+    const resource = urlParams['resourceName'];
     // 判断应该展示什么组件
     switch (resource) {
       case 'info':
@@ -120,6 +121,11 @@ export class ResourceListPanel extends React.Component<ResourceListPanelProps, {
         headTitle = t('CronHPA');
         break;
 
+      case 'virtual-machine':
+        content = <VMListPanel route={route} />;
+        headTitle = 'Virtual Machine';
+        break;
+
       default:
         content = isEmpty(resourceInfo) ? (
           loadingElement
@@ -141,7 +147,9 @@ export class ResourceListPanel extends React.Component<ResourceListPanelProps, {
           <ContentView.Header>
             <ResourceHeaderPanel />
           </ContentView.Header>
-          <ContentView.Body sidebar={<ResourceSidebarPanel subRouterList={subRouterList} />}>
+          <ContentView.Body
+            sidebar={<ResourceSidebarPanel route={route} actions={actions} subRouterList={subRouterList} />}
+          >
             <ContentView>
               <ContentView.Header>
                 <Justify

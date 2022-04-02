@@ -26,6 +26,7 @@ import { initPortsMap, initSelector } from '../constants/initState';
 import { PortMap, Resource, RootState, Selector, ServicePorts } from '../models';
 import * as WebAPI from '../WebAPI';
 import { validateServiceActions } from './validateServiceActions';
+import { virtualMachineAPI } from '@src/webApi';
 
 type GetState = () => RootState;
 const fetchOptions: FetchOptions = {
@@ -36,20 +37,30 @@ const fetchOptions: FetchOptions = {
 const fetchWorkloadActions = generateFetcherActionCreator({
   actionType: ActionType.S_FetchWorkloadList,
   fetcher: async (getState: GetState, fetchOptions, dispatch) => {
-    let { subRoot, clusterVersion } = getState(),
+    const { subRoot, clusterVersion, route } = getState(),
       { serviceEdit } = subRoot,
       { workloadQuery, workloadType } = serviceEdit;
 
-    let workloadResourceInfo = resourceConfig(clusterVersion)[workloadType];
-    let isClearData = fetchOptions && fetchOptions.noCache ? true : false;
-    let response = await WebAPI.fetchResourceList(workloadQuery, {
+    if (workloadType === 'vmi') {
+      const { clusterId, namespace } = workloadQuery?.filter ?? {};
+      const { items } = await virtualMachineAPI.fetchVMList({ clusterId, namespace }, {});
+
+      return {
+        records: items ?? [],
+        recordCount: items?.length
+      };
+    }
+
+    const workloadResourceInfo = resourceConfig(clusterVersion)[workloadType];
+    const isClearData = fetchOptions && fetchOptions.noCache ? true : false;
+    const response = await WebAPI.fetchResourceList(workloadQuery, {
       resourceInfo: workloadResourceInfo,
       isClearData
     });
     return response;
   },
   finish: async (dispatch, getState: GetState) => {
-    let { workloadList } = getState().subRoot.serviceEdit;
+    const { workloadList } = getState().subRoot.serviceEdit;
 
     // 如果拉回来的列表有数据，则默认选择第一项
     if (workloadList.data.recordCount) {
@@ -89,7 +100,7 @@ const restActions = {
   /** 是否展示workloadDialog */
   toggleIsShowWorkloadDialog: () => {
     return async (dispatch, getState: GetState) => {
-      let { isShowWorkloadDialog } = getState().subRoot.serviceEdit;
+      const { isShowWorkloadDialog } = getState().subRoot.serviceEdit;
       dispatch({
         type: ActionType.S_IsShowWorkloadDialog,
         payload: !isShowWorkloadDialog
@@ -124,7 +135,7 @@ export const serviceEditActions = {
   /** 选择命名空间 */
   selectNamespace: (namespace: string) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { route } = getState();
+      const { route } = getState();
 
       dispatch({
         type: ActionType.S_Namespace,
@@ -145,10 +156,23 @@ export const serviceEditActions = {
     };
   },
 
+  checkVmiEnable: () => {
+    return async (dispatch: Redux.Dispatch, getState: GetState) => {
+      const { route } = getState();
+
+      const isEnable = await virtualMachineAPI.checkVmEnable(route.queries['clusterId']);
+
+      dispatch({
+        type: ActionType.S_VMI_IsEnable,
+        payload: isEnable
+      });
+    };
+  },
+
   /** 选择访问的方式 */
   selectCommunicationType: (communication: string) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { isOpenHeadless } = getState().subRoot.serviceEdit;
+      const { isOpenHeadless } = getState().subRoot.serviceEdit;
 
       dispatch({
         type: ActionType.S_CommunicationType,
@@ -165,11 +189,11 @@ export const serviceEditActions = {
   /** 更新端口映射 */
   updatePortMap: (obj: any, portMapId: string) => {
     return async (dispatch, getState: GetState) => {
-      let { portsMap } = getState().subRoot.serviceEdit;
-      let newPortsMap: PortMap[] = cloneDeep(portsMap);
+      const { portsMap } = getState().subRoot.serviceEdit;
+      const newPortsMap: PortMap[] = cloneDeep(portsMap);
 
-      let portsIndex = newPortsMap.findIndex(item => item.id === portMapId);
-      let keyArr = Object.keys(obj);
+      const portsIndex = newPortsMap.findIndex(item => item.id === portMapId);
+      const keyArr = Object.keys(obj);
       keyArr.forEach(item => {
         newPortsMap[portsIndex][item] = obj[item];
       });
@@ -184,10 +208,10 @@ export const serviceEditActions = {
   /** 删除端口映射 */
   deletePortMap: (portMapId: string) => {
     return async (dispatch, getState: GetState) => {
-      let { portsMap } = getState().subRoot.serviceEdit;
-      let newPortsMap: PortMap[] = cloneDeep(portsMap);
+      const { portsMap } = getState().subRoot.serviceEdit;
+      const newPortsMap: PortMap[] = cloneDeep(portsMap);
 
-      let portsIndex = newPortsMap.findIndex(item => item.id === portMapId);
+      const portsIndex = newPortsMap.findIndex(item => item.id === portMapId);
       newPortsMap.splice(portsIndex, 1);
 
       dispatch({
@@ -200,8 +224,8 @@ export const serviceEditActions = {
   /** 增加端口映射 */
   addPortMap: () => {
     return async (dispatch, getState: GetState) => {
-      let { portsMap } = getState().subRoot.serviceEdit;
-      let newPortsMap: PortMap[] = cloneDeep(portsMap);
+      const { portsMap } = getState().subRoot.serviceEdit;
+      const newPortsMap: PortMap[] = cloneDeep(portsMap);
       newPortsMap.push(
         Object.assign({}, initPortsMap, {
           id: uuid()
@@ -228,7 +252,7 @@ export const serviceEditActions = {
   /** 增加selector 配置项 */
   addSelector: () => {
     return async (dispatch, getState: GetState) => {
-      let selectors = cloneDeep(getState().subRoot.serviceEdit.selector);
+      const selectors = cloneDeep(getState().subRoot.serviceEdit.selector);
 
       selectors.push(
         Object.assign({}, initSelector, {
@@ -245,10 +269,10 @@ export const serviceEditActions = {
   /** 更新Selectors的操作 */
   updateSelectorConfig: (obj: any, sId: string) => {
     return async (dispatch, getState: GetState) => {
-      let selectors: Selector[] = cloneDeep(getState().subRoot.serviceEdit.selector),
+      const selectors: Selector[] = cloneDeep(getState().subRoot.serviceEdit.selector),
         sIndex = selectors.findIndex(s => s.id === sId);
 
-      let keyName = Object.keys(obj)[0];
+      const keyName = Object.keys(obj)[0];
 
       selectors[sIndex][keyName] = obj[keyName];
       dispatch({
@@ -269,7 +293,7 @@ export const serviceEditActions = {
   /** 删除selector的操作 */
   deleteSelectorContent: (sId: string) => {
     return async (dispatch, getState: GetState) => {
-      let selectors: Selector[] = cloneDeep(getState().subRoot.serviceEdit.selector),
+      const selectors: Selector[] = cloneDeep(getState().subRoot.serviceEdit.selector),
         sIndex = selectors.findIndex(s => s.id === sId);
 
       selectors.splice(sIndex, 1);
@@ -286,7 +310,7 @@ export const serviceEditActions = {
       let newPortsMap: PortMap[] = [];
 
       newPortsMap = portsMap.map(item => {
-        let tmp: PortMap = Object.assign({}, initPortsMap, {
+        const tmp: PortMap = Object.assign({}, initPortsMap, {
           id: uuid(),
           protocol: item.protocol,
           targetPort: item.targetPort + '',
@@ -307,9 +331,9 @@ export const serviceEditActions = {
   /** 更新访问方式的时候，初始化一些数据 */
   initServiceEditForUpdate: (resource: Resource) => {
     return async (dispatch, getState: GetState) => {
-      let annotations = resource['metadata']['annotations'];
+      const annotations = resource['metadata']['annotations'];
 
-      let resourceType = resource.spec.type;
+      const resourceType = resource.spec.type;
 
       // 如果是ClusterIP的方式，并且clusterIP为None，则开启headless的设置
       if (resourceType === 'ClusterIP' && resource.spec.clusterIP === 'None') {

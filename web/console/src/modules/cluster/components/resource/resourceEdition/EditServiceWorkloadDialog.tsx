@@ -47,9 +47,14 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class EditServiceWorkloadDialog extends React.Component<RootProps, {}> {
   render() {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { serviceEdit } = subRoot,
-      { isShowWorkloadDialog, workloadType, workloadList, workloadSelection } = serviceEdit;
+      { isShowWorkloadDialog, workloadType, workloadList, workloadSelection, vmiIsEnable } = serviceEdit;
+
+    const FinalServiceWorkloadList = ServiceWorkloadList.map(item => ({
+      ...item,
+      disabled: item.value === 'vmi' && !vmiIsEnable
+    }));
 
     // 如果不需要展示 workload的弹窗选择
     if (!isShowWorkloadDialog) {
@@ -57,10 +62,15 @@ export class EditServiceWorkloadDialog extends React.Component<RootProps, {}> {
     }
 
     /** 渲染资源类型列表，目前仅支持 deployment 和 statefulset */
-    let selectWorkloadType = ServiceWorkloadList.find(item => item.value === workloadType);
+    const selectWorkloadType = ServiceWorkloadList.find(item => item.value === workloadType);
+
+    let labels = workloadSelection?.[0]?.metadata?.labels ?? {};
+    if (selectWorkloadType?.value === 'vmi') {
+      labels = workloadSelection?.[0]?.spec?.template?.metadata?.labels ?? {};
+    }
 
     /** 渲染资源列表 */
-    let workloadListOptions = workloadList.data.recordCount
+    const workloadListOptions = workloadList.data.recordCount
       ? workloadList.data.records.map((item, index) => {
           return (
             <option key={index} value={item.metadata.name}>
@@ -81,10 +91,10 @@ export class EditServiceWorkloadDialog extends React.Component<RootProps, {}> {
 
     const perform = () => {
       if (workloadSelection.length) {
-        let labelsObj = workloadSelection[0].metadata.labels || {},
+        const labelsObj = workloadSelection[0].metadata.labels || {},
           labelsKey = Object.keys(labelsObj);
 
-        let initSelectors: Selector[] = labelsKey.map(item => {
+        const initSelectors: Selector[] = labelsKey.map(item => {
           return Object.assign({}, initSelector, {
             id: uuid(),
             key: item,
@@ -107,7 +117,7 @@ export class EditServiceWorkloadDialog extends React.Component<RootProps, {}> {
                   <div className="form-unit" style={ButtonBarStyle}>
                     <ButtonBar
                       size="m"
-                      list={ServiceWorkloadList}
+                      list={FinalServiceWorkloadList}
                       selected={selectWorkloadType}
                       onSelect={item => {
                         actions.editSerivce.workload.selectWorkloadType(item.value + '');
@@ -153,21 +163,9 @@ export class EditServiceWorkloadDialog extends React.Component<RootProps, {}> {
                     loadingElement
                   ) : (
                     <div className="form-unit">
-                      {workloadSelection[0] ? (
-                        workloadSelection[0].metadata.labels ? (
-                          Object.keys(workloadSelection[0].metadata.labels).map((item, index) => {
-                            return (
-                              <p style={{ fontSize: '12px' }} key={index}>
-                                {item + ': ' + workloadSelection[0].metadata.labels[item]}
-                              </p>
-                            );
-                          })
-                        ) : (
-                          <p style={{ fontSize: '12px' }}>{t('Workload未设置Labels')}</p>
-                        )
-                      ) : (
-                        <p style={{ fontSize: '12px' }}>{t('请先选择Workload')}</p>
-                      )}
+                      {Object.entries(labels).map(([key, value]) => (
+                        <p style={{ fontSize: 12 }} key={key}>{`${key}:${value}`}</p>
+                      ))}
                     </div>
                   )}
                 </FormItem>
@@ -187,7 +185,7 @@ export class EditServiceWorkloadDialog extends React.Component<RootProps, {}> {
 
   /** 资源控制台的体验 */
   private _handleClickForCreateWorkload() {
-    let { actions, subRoot, route } = this.props,
+    const { actions, subRoot, route } = this.props,
       urlParams = router.resolve(route),
       { serviceEdit } = subRoot;
 

@@ -39,8 +39,11 @@ module.exports = ({ version }) =>
           changeOrigin: true,
           headers: { Cookie }
         },
-        '/apis': {
-          target: Host,
+
+        '/websocket': {
+          target: 'ws://43.129.38.165',
+          ws: true,
+          logLevel: 'debug',
           secure: false,
           changeOrigin: true,
           headers: { Cookie }
