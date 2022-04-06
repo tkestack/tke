@@ -46,8 +46,8 @@ const (
 	ReasonFailedInit   = "FailedInit"
 	ReasonFailedUpdate = "FailedUpdate"
 	ReasonFailedDelete = "FailedDelete"
-
-	ConditionTypeDone = "EnsureDone"
+	ConditionTypeDone  = "EnsureDone"
+	defaultQPS         = -1
 )
 
 type APIProvider interface {
@@ -433,7 +433,7 @@ func (p *DelegateProvider) getCurrentCondition(c *v1.Cluster, phase platformv1.C
 	return nil, errors.New("no condition need process")
 }
 
-// GetRestConfigV1 returns the cluster's rest config
+// GetRestConfig returns the cluster's rest config
 func (p *DelegateProvider) GetRestConfig(ctx context.Context, cluster *platformv1.Cluster, username string) (*rest.Config, error) {
 	cc, err := credential.GetClusterCredentialV1(ctx, p.PlatformClient, cluster, username)
 	if err != nil {
@@ -442,6 +442,9 @@ func (p *DelegateProvider) GetRestConfig(ctx context.Context, cluster *platformv
 	config := &rest.Config{}
 	if cc != nil {
 		config = cc.RESTConfig(cluster)
+	}
+	if config.QPS == 0 {
+		config.QPS = defaultQPS
 	}
 	return config, nil
 }
