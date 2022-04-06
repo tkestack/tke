@@ -143,7 +143,6 @@ func NewProvider() (*Provider, error) {
 
 			p.bCluster.EnsureCleanup,
 			p.bCluster.EnsureCreateClusterMark,
-			p.bCluster.EnsureDisableOffloading, // will remove it when upgrade to k8s v1.18.5
 			p.bCluster.EnsurePostInstallHook,
 			p.bCluster.EnsurePostClusterInstallHook,
 		},

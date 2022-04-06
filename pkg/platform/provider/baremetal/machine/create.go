@@ -26,6 +26,7 @@ import (
 	"path"
 	"strings"
 	"time"
+
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/image"
 
 	"github.com/imdario/mergo"
@@ -229,20 +230,6 @@ func (p *Provider) EnsureDisableSwap(ctx context.Context, machine *platformv1.Ma
 	}
 
 	_, err = machineSSH.CombinedOutput(`swapoff -a && sed -i "s/^[^#]*swap/#&/" /etc/fstab`)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (p *Provider) EnsureDisableOffloading(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	machineSSH, err := machine.Spec.SSH()
-	if err != nil {
-		return err
-	}
-
-	_, err = machineSSH.CombinedOutput(`ethtool --offload flannel.1 rx off tx off || true`)
 	if err != nil {
 		return err
 	}
