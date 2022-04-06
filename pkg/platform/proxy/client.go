@@ -180,6 +180,8 @@ func RESTClientFor(clientSet *kubernetes.Clientset, apiGroup, apiVersion string)
 		return clientSet.AutoscalingV1().RESTClient()
 	case "autoscaling/v2beta1":
 		return clientSet.AutoscalingV2beta1().RESTClient()
+	case "autoscaling/v2beta2":
+		return clientSet.AutoscalingV2beta2().RESTClient()
 	case "batch/v1":
 		return clientSet.BatchV1().RESTClient()
 	case "batch/v1beta1":

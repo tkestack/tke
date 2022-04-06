@@ -34,6 +34,7 @@ import (
 	appsv1beta2 "k8s.io/api/apps/v1beta2"
 	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	autoscalingv2beta1 "k8s.io/api/autoscaling/v2beta1"
+	autoscalingv2Beta2 "k8s.io/api/autoscaling/v2beta2"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	certV1beta1 "k8s.io/api/certificates/v1beta1"
@@ -79,7 +80,9 @@ func Install(scheme *runtime.Scheme) {
 
 	runtimeutil.Must(autoscalingv1.AddToScheme(scheme))
 	runtimeutil.Must(autoscalingv2beta1.AddToScheme(scheme))
-	runtimeutil.Must(scheme.SetVersionPriority(autoscalingv1.SchemeGroupVersion, autoscalingv2beta1.SchemeGroupVersion))
+	runtimeutil.Must(autoscalingv2Beta2.AddToScheme(scheme))
+	runtimeutil.Must(scheme.SetVersionPriority(autoscalingv1.SchemeGroupVersion, autoscalingv2beta1.SchemeGroupVersion,
+		autoscalingv2Beta2.SchemeGroupVersion))
 
 	runtimeutil.Must(appsv1.AddToScheme(scheme))
 	runtimeutil.Must(appsv1beta1.AddToScheme(scheme))
