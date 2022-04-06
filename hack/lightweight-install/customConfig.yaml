@@ -1,10 +1,10 @@
 # 必填，etcd访问地址，形式如https://172.19.0.2:2379
 etcd:
   host: https://172.18.0.2:2379 
-# 必填，服务器ip，数组形式
+# 必填，服务器内网ip，数组形式
 serverIPs:
   - 172.18.0.2
-# 访问的域名，数组形式
+# 必填，公网可访问的ip地址以及要使用的域名，数组形式
 dnsNames:
   - tke.gateway
 # 必填，集群front-proxy-ca.crt文件地址，默认位置为/etc/kubernetes/pki/front-proxy-ca.crt
@@ -19,7 +19,7 @@ tke-auth:
     replicas: 1
     # 必填
     image: tkestack/tke-auth-api-amd64:74592a3bceb5bebca602bea21aaebf78007a3bb2
-    # 必填，数组形式，auth的重定向访问地址，包括集群服务器ip地址（必填）、tke-gateway的域名（可选）、集群高可用的VIP地址（可选）和集群的公共可访问域名（可选）
+    # 必填，数组形式，auth的重定向访问地址，包括集群服务器ip地址（必填）、tke-gateway的域名（可选）、集群高可用的VIP地址（可选，有的话需要填写）和集群的公共可访问域名（可选，，有的话需要填写）
     redirectHosts: 
       - 172.18.0.2
     enableAudit: 
@@ -36,9 +36,9 @@ tke-auth:
     replicas: 1
     # 必填
     image: tkestack/tke-auth-controller-amd64:74592a3bceb5bebca602bea21aaebf78007a3bb2
-    # tke集群的用户名，默认为admin
+    # 控制台登陆的用户名，默认为 admin
     adminUsername: 
-    # tke集群的密码，默认自动生成
+    # 控制台登陆的密码，默认自动生成
     adminPassword: 
 tke-platform:
   # 必填 VIP，或者公网可访问的集群IP
