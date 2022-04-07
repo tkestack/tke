@@ -26,7 +26,6 @@ import (
 	"time"
 
 	"tkestack.io/tke/pkg/util/http"
-	utilhttp "tkestack.io/tke/pkg/util/http"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
@@ -200,6 +199,6 @@ func (in *Cluster) AuthzWebhookBuiltinEndpoint() (string, bool) {
 		}
 	}
 
-	return utilhttp.MakeEndpoint("https", endPointHost,
+	return http.MakeEndpoint("https", endPointHost,
 		constants.AuthzWebhookNodePort, "/auth/authz"), true
 }
