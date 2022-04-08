@@ -42,6 +42,8 @@ OPTIONS="--name tke-installer -d --privileged --net=host --restart=always
 -v $INSTALL_DIR/conf:/app/conf
 -v registry-certs:/app/certs
 -v tke-installer-bin:/app/bin
+-v /tmp:/tmp 
+-v /lib/modules/:/lib/modules/
 "
 
 RegistryHTTPOptions="--name registry-http -d --net=host --restart=always -p 80:5000
