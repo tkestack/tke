@@ -170,11 +170,16 @@ export const VMCreatePanel = () => {
             <Form.Item label="镜像" {...getReactHookFormStatusWithMessage(others)}>
               <Select
                 type="simulate"
+                matchButtonWidth
+                style={{ width: 200 }}
                 searchable
                 appearence="button"
-                size="auto"
                 options={mirrorListLoadable?.state === 'hasValue' ? mirrorListLoadable?.contents : []}
                 {...field}
+                onChange={value => {
+                  field.onChange(value);
+                  field.onBlur();
+                }}
               />
             </Form.Item>
           )}

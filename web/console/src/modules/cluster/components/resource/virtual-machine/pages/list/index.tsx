@@ -157,7 +157,9 @@ export const VMListPanel = ({ route }) => {
     {
       mode: 'continue',
       defaultPageSize,
-      fetchAble: !!(clusterId && namespace)
+      fetchAble: !!(clusterId && namespace),
+      polling: true,
+      pollingDelay: 30 * 1000
     }
   );
 
