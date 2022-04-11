@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import RFB from '@novnc/novnc/core/rfb';
 import { Text, Dropdown, List } from 'tea-component';
 import { encode } from 'js-base64';
-import { VNCStatusEnum, vncStatusToText, ShortcutKeyOptions } from './constants';
+import { VNCStatusEnum, vncStatusToText, ShortcutKeyOptions, pasteStringToVnc } from './constants';
+import { VncClipboard } from './vncClipboard';
 
 let rfb;
 
@@ -27,8 +28,12 @@ export const VNCPage = () => {
       setVncStatus(VNCStatusEnum.Connected);
     });
 
-    rfb.addEventListener('disconnect', e => {
+    rfb.addEventListener('disconnect', () => {
       setVncStatus(VNCStatusEnum.Disconnected);
+    });
+
+    rfb.addEventListener('clipboard', e => {
+      console.log('clipboard', e?.detail?.text);
     });
   }, []);
 
@@ -54,7 +59,19 @@ export const VNCPage = () => {
           </List>
         </Dropdown>
 
-        <Text style={{ color: 'white' }}>状态：{vncStatusToText[vncStatus]}</Text>
+        <Text style={{ color: 'white' }}>
+          状态：{vncStatusToText[vncStatus]}
+          {vncStatus === VNCStatusEnum.Connected && (
+            <>
+              。如需粘贴命令，请点击
+              <VncClipboard
+                onConfirm={content => {
+                  pasteStringToVnc(rfb, content);
+                }}
+              />
+            </>
+          )}
+        </Text>
 
         <Text style={{ color: 'white' }}>虚拟机名称：{name}</Text>
       </div>

@@ -33,3 +33,22 @@ export const ShortcutKeyOptions = [
     }
   }
 ];
+
+// paste string to noVNC
+export const pasteStringToVnc = (rfb, str) => {
+  rfb.focus();
+
+  str.split('').forEach(char => {
+    const code = char.charCodeAt();
+    const needsShift = char.match(/[A-Z!@#$%^&*()_+{}:\"<>?~|]/);
+    if (needsShift) {
+      rfb.sendKey(KeyTable.XK_Shift_L, 'ShiftLeft', true);
+    }
+
+    rfb.sendKey(code);
+
+    if (needsShift) {
+      rfb.sendKey(KeyTable.XK_Shift_L, 'ShiftLeft', false);
+    }
+  });
+};
