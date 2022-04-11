@@ -330,7 +330,7 @@ export const ServiceWorkloadList = [
   },
   {
     value: 'vmi',
-    name: 'VirtualMachineInstance'
+    name: 'VirtualMachines'
   }
 ];
 
