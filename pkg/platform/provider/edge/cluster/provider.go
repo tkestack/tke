@@ -135,6 +135,11 @@ func NewProvider() (*Provider, error) {
 			p.bCluster.EnsureKeepalivedWithLBOption,
 			p.bCluster.EnsureThirdPartyHA,
 			p.bCluster.EnsureModifyAPIServerHost,
+
+			// provider SuperEdge edge cluster
+			p.EnsurePrepareEgdeCluster, // todo Prepare EgdeCluster
+			p.EnsureApplyEdgeApps,      // todo Apply SuperEdge EdgeApps
+
 			// deploy apps
 			p.bCluster.EnsureNvidiaDevicePlugin,
 			p.bCluster.EnsureGPUManager,
