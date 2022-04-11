@@ -41,7 +41,7 @@ module.exports = ({ version }) =>
         },
 
         '/websocket': {
-          target: 'ws://43.129.38.165',
+          target: `ws://${Host.split('//')?.[1]}`,
           ws: true,
           logLevel: 'debug',
           secure: false,

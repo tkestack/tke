@@ -17,7 +17,8 @@ export const mirrorListState = selector({
     return (
       items?.map(({ metadata }) => ({
         text: metadata?.annotations?.['tkestack.io/image-display-name'],
-        value: metadata?.name
+        value: metadata?.name,
+        tooltip: metadata?.annotations?.['tkestack.io/image-display-name']
       })) ?? []
     );
   }
@@ -39,7 +40,7 @@ export const diskListState = atom<DiskInterface[]>({
       id: uuidv4(),
       name: 'datavolume1',
       type: DiskTypeEnum.Data,
-      volumeMode: VolumeModeEnum.Block,
+      volumeMode: VolumeModeEnum.Filesystem,
       storageClass: null,
       size: 50
     }

@@ -67,7 +67,7 @@
     "redux": "^4.0.1",
     "redux-logger": "^3.0.6",
     "redux-thunk": "=2.0.1",
-    "tea-component": "^2.6.22",
+    "tea-component": "^2.7.3",
     "ts-optchain": "^0.1.7",
     "use-immer": "^0.4.1",
     "uuid": "^8.3.1",

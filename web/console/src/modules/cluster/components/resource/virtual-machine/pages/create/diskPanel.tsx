@@ -22,7 +22,7 @@ export const DiskPanel = () => {
         id: uuidv4(),
         name: '',
         type: DiskTypeEnum.Data,
-        volumeMode: VolumeModeEnum.Block,
+        volumeMode: VolumeModeEnum.Filesystem,
         storageClass: null,
         size: 50
       }
@@ -64,22 +64,22 @@ export const DiskPanel = () => {
       }
     },
 
-    {
-      key: 'volumeMode',
-      header: '卷模式',
-      render({ volumeMode, id }) {
-        return (
-          <Form.Control>
-            <Select
-              size="s"
-              value={volumeMode}
-              options={VolumeModeOptions}
-              onChange={volumeMode => modifyDiskItem({ volumeMode, id })}
-            />
-          </Form.Control>
-        );
-      }
-    },
+    // {
+    //   key: 'volumeMode',
+    //   header: '卷模式',
+    //   render({ volumeMode, id }) {
+    //     return (
+    //       <Form.Control>
+    //         <Select
+    //           size="s"
+    //           value={volumeMode}
+    //           options={VolumeModeOptions}
+    //           onChange={volumeMode => modifyDiskItem({ volumeMode, id })}
+    //         />
+    //       </Form.Control>
+    //     );
+    //   }
+    // },
 
     {
       key: 'storageClass',
