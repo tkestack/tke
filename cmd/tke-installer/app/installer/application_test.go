@@ -3,10 +3,11 @@ package installer
 import (
 	"context"
 	"fmt"
-	"helm.sh/helm/v3/pkg/chartutil"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"testing"
+
+	"helm.sh/helm/v3/pkg/chartutil"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/config"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
@@ -61,21 +62,21 @@ func TestTKE_installApplication(t *testing.T) {
 		TargetNamespace: "default",
 		Values:          chartutil.Values{},
 	}
-	platformApp := config.PlatformApp{
+	expansionApp := config.ExpansionApp{
 		Name:   name,
 		Enable: true,
 		Chart:  *chart,
 	}
 
-	if tke.applicationAlreadyInstalled(platformApp, apps.Items) {
+	if tke.applicationAlreadyInstalled(expansionApp, apps.Items) {
 		t.Log("already installed")
 	} else {
-		err = tke.installApplication(context.Background(), platformApp)
+		err = tke.installApplication(context.Background(), expansionApp)
 		if err != nil {
 			t.Fatal(err)
 		}
 	}
-	b, err := json.MarshalIndent([]config.PlatformApp{
+	b, err := json.MarshalIndent([]config.ExpansionApp{
 		{
 			Name:   name,
 			Enable: true,

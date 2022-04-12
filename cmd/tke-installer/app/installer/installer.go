@@ -278,19 +278,14 @@ func (t *TKE) initSteps() {
 		},
 	}...)
 
-	if t.Para.Config.Auth.TKEAuth != nil {
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Install tke-auth chart",
-				Func: t.installTKEAuthChart,
-			},
-		}...)
-	}
-
 	t.steps = append(t.steps, []types.Handler{
 		{
-			Name: "Install tke-platform chart",
-			Func: t.installTKEPlatformChart,
+			Name: "Init Platform Applications",
+			Func: t.initPlatformApps,
+		},
+		{
+			Name: "Install Platform Applications",
+			Func: t.installPlatformApps,
 		},
 	}...)
 
@@ -474,7 +469,7 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
-	if len(t.Config.PlatformApps) > 0 {
+	if len(t.Config.ExpansionApps) > 0 {
 		t.steps = append(t.steps, []types.Handler{
 			{
 				Name: "Install Applications",
@@ -668,7 +663,7 @@ func (t *TKE) prepare() apierrors.APIStatus {
 		}
 	}
 
-	err = t.completePlatformApps()
+	err = t.completeExpansionApps()
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -1693,52 +1688,6 @@ func (t *TKE) installETCD(ctx context.Context) error {
 	return apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/etcd/*.yaml", nil)
 }
 
-func (t *TKE) installTKEAuthChart(ctx context.Context) error {
-	apiOptions, err := t.getTKEAuthAPIOptions(ctx)
-	if err != nil {
-		return err
-	}
-	values := map[string]interface{}{
-		"api":        apiOptions,
-		"controller": t.getTKEAuthControllerOptions(ctx),
-	}
-	chartPathOptions := &helmaction.ChartPathOptions{}
-	installOptions := &helmaction.InstallOptions{
-		Namespace:        t.namespace,
-		ReleaseName:      "tke-auth",
-		DependencyUpdate: false,
-		Values:           values,
-		Timeout:          10 * time.Minute,
-		ChartPathOptions: *chartPathOptions,
-	}
-
-	chartFilePath := constants.ChartDirName + "tke-auth/"
-	if _, err := t.helmClient.InstallWithLocal(installOptions, chartFilePath); err != nil {
-		uninstallOptions := helmaction.UninstallOptions{
-			Timeout:     10 * time.Minute,
-			ReleaseName: "tke-auth",
-			Namespace:   t.namespace,
-		}
-		reponse, err := t.helmClient.Uninstall(&uninstallOptions)
-		if err != nil {
-			return fmt.Errorf("%s uninstall fail, err = %s", reponse.Release.Name, err.Error())
-		}
-		return err
-	}
-
-	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		apiOk, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-auth-api")
-		if err != nil {
-			return false, nil
-		}
-		controllerOk, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-auth-controller")
-		if err != nil {
-			return false, nil
-		}
-		return apiOk && controllerOk, nil
-	})
-}
-
 func (t *TKE) getTKEAuthAPIOptions(ctx context.Context) (map[string]interface{}, error) {
 	redirectHosts := t.servers
 	redirectHosts = append(redirectHosts, "tke-gateway")
@@ -1811,52 +1760,6 @@ func (t *TKE) installTKEAudit(ctx context.Context) error {
 			return false, nil
 		}
 		return ok, nil
-	})
-}
-
-func (t *TKE) installTKEPlatformChart(ctx context.Context) error {
-	apiOptions, err := t.getTKEPlatformAPIOptions(ctx)
-	if err != nil {
-		return err
-	}
-	values := map[string]interface{}{
-		"api":        apiOptions,
-		"controller": t.getTKEPlatformControllerOptions(ctx),
-	}
-	chartPathOptions := &helmaction.ChartPathOptions{}
-	installOptions := &helmaction.InstallOptions{
-		Namespace:        t.namespace,
-		ReleaseName:      "tke-platform",
-		DependencyUpdate: false,
-		Values:           values,
-		Timeout:          10 * time.Minute,
-		ChartPathOptions: *chartPathOptions,
-	}
-
-	chartFilePath := constants.ChartDirName + "tke-platform/"
-	if _, err := t.helmClient.InstallWithLocal(installOptions, chartFilePath); err != nil {
-		uninstallOptions := helmaction.UninstallOptions{
-			Timeout:     10 * time.Minute,
-			ReleaseName: "tke-platform",
-			Namespace:   t.namespace,
-		}
-		reponse, err := t.helmClient.Uninstall(&uninstallOptions)
-		if err != nil {
-			return fmt.Errorf("%s uninstall fail, err = %s", reponse.Release.Name, err.Error())
-		}
-		return err
-	}
-
-	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		apiOk, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-platform-api")
-		if err != nil {
-			return false, nil
-		}
-		controllerOk, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-platform-controller")
-		if err != nil {
-			return false, nil
-		}
-		return apiOk && controllerOk, nil
 	})
 }
 
