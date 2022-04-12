@@ -1,0 +1,454 @@
+---
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+
+serviceAccounts:
+  nodeplugin:
+    # Specifies whether a ServiceAccount should be created
+    create: true
+    # The name of the ServiceAccount to use.
+    # If not set and create is true, a name is generated using the fullname
+    name:
+  provisioner:
+    # Specifies whether a ServiceAccount should be created
+    create: true
+    # The name of the ServiceAccount to use.
+    # If not set and create is true, a name is generated using the fullname
+    name:
+
+# Configuration for the CSI to connect to the cluster
+# Ref: https://github.com/ceph/ceph-csi/blob/devel/examples/README.md
+# Example:
+# csiConfig:
+#   - clusterID: "<cluster-id>"
+#     monitors:
+#       - "<MONValue1>"
+#       - "<MONValue2>"
+csiConfig: []
+
+# Configuration details of clusterID,PoolID and FscID mapping
+# csiMapping:
+#  - clusterIDMapping:
+#     clusterID on site1: clusterID on site2
+#    RBDPoolIDMapping:
+#    - poolID on site1: poolID on site2
+#    CephFSFscIDMapping:
+#    - CephFS FscID on site1: CephFS FscID on site2
+csiMapping: []
+
+# Configuration for the encryption KMS
+# Ref: https://github.com/ceph/ceph-csi/blob/devel/docs/deploy-rbd.md
+# Example:
+# encryptionKMSConfig:
+#   vault-unique-id-1:
+#     encryptionKMSType: vault
+#     vaultAddress: https://vault.example.com
+#     vaultAuthPath: /v1/auth/kubernetes/login
+#     vaultRole: csi-kubernetes
+#     vaultPassphraseRoot: /v1/secret
+#     vaultPassphrasePath: ceph-csi/
+#     vaultCAVerify: "false"
+encryptionKMSConfig: {}
+
+# Set logging level for csi containers.
+# Supported values from 0 to 5. 0 for general useful logs,
+# 5 for trace level verbosity.
+logLevel: 5
+
+nodeplugin:
+  name: nodeplugin
+  # set user created priorityclassName for csi plugin pods. default is
+  # system-node-critical which is high priority
+  priorityClassName: system-node-critical
+  # if you are using rbd-nbd client set this value to OnDelete
+  updateStrategy: RollingUpdate
+
+  httpMetrics:
+    # Metrics only available for cephcsi/cephcsi => 1.2.0
+    # Specifies whether http metrics should be exposed
+    enabled: true
+    # The port of the container to expose the metrics
+    containerPort: 8080
+
+    service:
+      # Specifies whether a service should be created for the metrics
+      enabled: true
+      # The port to use for the service
+      servicePort: 8080
+      type: ClusterIP
+
+      # Annotations for the service
+      # Example:
+      # annotations:
+      #   prometheus.io/scrape: "true"
+      #   prometheus.io/port: "8080"
+      annotations: {}
+
+      clusterIP: ""
+
+      ## List of IP addresses at which the stats-exporter service is available
+      ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+      ##
+      externalIPs: []
+
+      loadBalancerIP: ""
+      loadBalancerSourceRanges: []
+
+  profiling:
+    # enable profiling to check for memory leaks
+    enabled: false
+
+  registrar:
+    image:
+      repository: k8s.gcr.io/sig-storage/csi-node-driver-registrar
+      tag: v2.4.0
+      pullPolicy: IfNotPresent
+    resources: {}
+
+  plugin:
+    image:
+      repository: quay.io/cephcsi/cephcsi
+      tag: v3.6.0
+      pullPolicy: IfNotPresent
+    resources: {}
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  # If true, create & use Pod Security Policy resources
+  # https://kubernetes.io/docs/concepts/policy/pod-security-policy/
+  podSecurityPolicy:
+    enabled: false
+
+provisioner:
+  name: provisioner
+  replicaCount: 3
+  strategy:
+    # RollingUpdate strategy replaces old pods with new ones gradually,
+    # without incurring downtime.
+    type: RollingUpdate
+    rollingUpdate:
+      # maxUnavailable is the maximum number of pods that can be
+      # unavailable during the update process.
+      maxUnavailable: 50%
+  # if fstype is not specified in storageclass, ext4 is default
+  defaultFSType: ext4
+  # deployController to enable or disable the deployment of controller which
+  # generates the OMAP data if its not Present.
+  deployController: true
+  # Timeout for waiting for creation or deletion of a volume
+  timeout: 60s
+  # Hard limit for maximum number of nested volume clones that are taken before
+  # a flatten occurs
+  hardMaxCloneDepth: 8
+  # Soft limit for maximum number of nested volume clones that are taken before
+  # a flatten occurs
+  softMaxCloneDepth: 4
+  # Maximum number of snapshots allowed on rbd image without flattening
+  maxSnapshotsOnImage: 450
+  # Minimum number of snapshots allowed on rbd image to trigger flattening
+  minSnapshotsOnImage: 250
+  # skip image flattening if kernel support mapping of rbd images
+  # which has the deep-flatten feature
+  # skipForceFlatten: false
+
+  # set user created priorityclassName for csi provisioner pods. default is
+  # system-cluster-critical which is less priority than system-node-critical
+  priorityClassName: system-cluster-critical
+
+  httpMetrics:
+    # Metrics only available for cephcsi/cephcsi => 1.2.0
+    # Specifies whether http metrics should be exposed
+    enabled: true
+    # The port of the container to expose the metrics
+    containerPort: 8080
+
+    service:
+      # Specifies whether a service should be created for the metrics
+      enabled: true
+      # The port to use for the service
+      servicePort: 8080
+      type: ClusterIP
+
+      # Annotations for the service
+      # Example:
+      # annotations:
+      #   prometheus.io/scrape: "true"
+      #   prometheus.io/port: "8080"
+      annotations: {}
+
+      clusterIP: ""
+
+      ## List of IP addresses at which the stats-exporter service is available
+      ## Ref: https://kubernetes.io/docs/user-guide/services/#external-ips
+      ##
+      externalIPs: []
+
+      loadBalancerIP: ""
+      loadBalancerSourceRanges: []
+
+  profiling:
+    # enable profiling to check for memory leaks
+    enabled: false
+
+  provisioner:
+    image:
+      repository: k8s.gcr.io/sig-storage/csi-provisioner
+      tag: v3.1.0
+      pullPolicy: IfNotPresent
+    resources: {}
+
+  attacher:
+    name: attacher
+    enabled: true
+    image:
+      repository: k8s.gcr.io/sig-storage/csi-attacher
+      tag: v3.4.0
+      pullPolicy: IfNotPresent
+    resources: {}
+
+  resizer:
+    name: resizer
+    enabled: true
+    image:
+      repository: k8s.gcr.io/sig-storage/csi-resizer
+      tag: v1.4.0
+      pullPolicy: IfNotPresent
+    resources: {}
+
+  snapshotter:
+    image:
+      repository: k8s.gcr.io/sig-storage/csi-snapshotter
+      tag: v4.2.0
+      pullPolicy: IfNotPresent
+    resources: {}
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+  # If true, create & use Pod Security Policy resources
+  # https://kubernetes.io/docs/concepts/policy/pod-security-policy/
+  podSecurityPolicy:
+    enabled: false
+
+topology:
+  # Specifies whether topology based provisioning support should
+  # be exposed by CSI
+  enabled: false
+  # domainLabels define which node labels to use as domains
+  # for CSI nodeplugins to advertise their domains
+  # NOTE: the value here serves as an example and needs to be
+  # updated with node labels that define domains of interest
+  domainLabels:
+    - failure-domain/region
+    - failure-domain/zone
+
+storageClass:
+  # Specifies whether the storageclass should be created
+  create: false
+  name: csi-rbd-sc
+
+  # Annotations for the storage class
+  # Example:
+  # annotations:
+  #   storageclass.kubernetes.io/is-default-class: "true"
+  annotations: {}
+
+  # (required) String representing a Ceph cluster to provision storage from.
+  # Should be unique across all Ceph clusters in use for provisioning,
+  # cannot be greater than 36 bytes in length, and should remain immutable for
+  # the lifetime of the StorageClass in use.
+  clusterID: <cluster-ID>
+
+  # (optional) If you want to use erasure coded pool with RBD, you need to
+  # create two pools. one erasure coded and one replicated.
+  # You need to specify the replicated pool here in the `pool` parameter, it is
+  # used for the metadata of the images.
+  # The erasure coded pool must be set as the `dataPool` parameter below.
+  # dataPool: <ec-data-pool>
+  dataPool: ""
+
+  # (required) Ceph pool into which the RBD image shall be created
+  # eg: pool: replicapool
+  pool: replicapool
+
+  # (optional) RBD image features, CSI creates image with image-format 2 CSI
+  # RBD currently supports `layering`, `journaling`, `exclusive-lock`,
+  # `object-map`, `fast-diff`, `deep-flatten` features.
+  # Refer https://docs.ceph.com/en/latest/rbd/rbd-config-ref/#image-features
+  # for image feature dependencies.
+  # imageFeatures: layering,journaling,exclusive-lock,object-map,fast-diff
+  imageFeatures: "layering"
+
+  # (optional) Specifies whether to try other mounters in case if the current
+  # mounter fails to mount the rbd image for any reason. True means fallback
+  # to next mounter, default is set to false.
+  # Note: tryOtherMounters is currently useful to fallback from krbd to rbd-nbd
+  # in case if any of the specified imageFeatures is not supported by krbd
+  # driver on node scheduled for application pod launch, but in the future this
+  # should work with any mounter type.
+  # tryOtherMounters: false
+
+  # (optional) uncomment the following to use rbd-nbd as mounter
+  # on supported nodes
+  # mounter: rbd-nbd
+  mounter: ""
+
+  # (optional) ceph client log location, eg: rbd-nbd
+  # By default host-path /var/log/ceph of node is bind-mounted into
+  # csi-rbdplugin pod at /var/log/ceph mount path. This is to configure
+  # target bindmount path used inside container for ceph clients logging.
+  # See docs/rbd-nbd.md for available configuration options.
+  # cephLogDir: /var/log/ceph
+  cephLogDir: ""
+
+  # (optional) ceph client log strategy
+  # By default, log file belonging to a particular volume will be deleted
+  # on unmap, but you can choose to just compress instead of deleting it
+  # or even preserve the log file in text format as it is.
+  # Available options `remove` or `compress` or `preserve`
+  # cephLogStrategy: remove
+  cephLogStrategy: ""
+
+  # (optional) Prefix to use for naming RBD images.
+  # If omitted, defaults to "csi-vol-".
+  # volumeNamePrefix: "foo-bar-"
+  volumeNamePrefix: ""
+
+  # (optional) Instruct the plugin it has to encrypt the volume
+  # By default it is disabled. Valid values are "true" or "false".
+  # A string is expected here, i.e. "true", not true.
+  # encrypted: "true"
+  encrypted: ""
+
+  # (optional) Use external key management system for encryption passphrases by
+  # specifying a unique ID matching KMS ConfigMap. The ID is only used for
+  # correlation to configmap entry.
+  encryptionKMSID: ""
+
+  # Add topology constrained pools configuration, if topology based pools
+  # are setup, and topology constrained provisioning is required.
+  # For further information read TODO<doc>
+  # topologyConstrainedPools: |
+  #   [{"poolName":"pool0",
+  #     "dataPool":"ec-pool0" # optional, erasure-coded pool for data
+  #     "domainSegments":[
+  #       {"domainLabel":"region","value":"east"},
+  #       {"domainLabel":"zone","value":"zone1"}]},
+  #    {"poolName":"pool1",
+  #     "dataPool":"ec-pool1" # optional, erasure-coded pool for data
+  #     "domainSegments":[
+  #       {"domainLabel":"region","value":"east"},
+  #       {"domainLabel":"zone","value":"zone2"}]},
+  #    {"poolName":"pool2",
+  #     "dataPool":"ec-pool2" # optional, erasure-coded pool for data
+  #     "domainSegments":[
+  #       {"domainLabel":"region","value":"west"},
+  #       {"domainLabel":"zone","value":"zone1"}]}
+  #   ]
+  topologyConstrainedPools: []
+
+  # (optional) mapOptions is a comma-separated list of map options.
+  # For krbd options refer
+  # https://docs.ceph.com/docs/master/man/8/rbd/#kernel-rbd-krbd-options
+  # For nbd options refer
+  # https://docs.ceph.com/docs/master/man/8/rbd-nbd/#options
+  # Format:
+  # mapOptions: "<mounter>:op1,op2;<mounter>:op1,op2"
+  # An empty mounter field is treated as krbd type for compatibility.
+  # eg:
+  # mapOptions: "krbd:lock_on_read,queue_depth=1024;nbd:try-netlink"
+  mapOptions: ""
+
+  # (optional) unmapOptions is a comma-separated list of unmap options.
+  # For krbd options refer
+  # https://docs.ceph.com/docs/master/man/8/rbd/#kernel-rbd-krbd-options
+  # For nbd options refer
+  # https://docs.ceph.com/docs/master/man/8/rbd-nbd/#options
+  # Format:
+  # unmapOptions: "<mounter>:op1,op2;<mounter>:op1,op2"
+  # An empty mounter field is treated as krbd type for compatibility.
+  # eg:
+  # unmapOptions: "krbd:force;nbd:force"
+  unmapOptions: ""
+
+  # The secrets have to contain Ceph credentials with required access
+  # to the 'pool'.
+  provisionerSecret: csi-rbd-secret
+  # If Namespaces are left empty, the secrets are assumed to be in the
+  # Release namespace.
+  provisionerSecretNamespace: ""
+  controllerExpandSecret: csi-rbd-secret
+  controllerExpandSecretNamespace: ""
+  nodeStageSecret: csi-rbd-secret
+  nodeStageSecretNamespace: ""
+  # Specify the filesystem type of the volume. If not specified,
+  # csi-provisioner will set default as `ext4`.
+  fstype: ext4
+  reclaimPolicy: Delete
+  allowVolumeExpansion: true
+  mountOptions: []
+  # Mount Options
+  # Example:
+  # mountOptions:
+  #   - discard
+
+# Mount the host /etc/selinux inside pods to support
+# selinux-enabled filesystems
+selinuxMount: true
+
+secret:
+  # Specifies whether the secret should be created
+  create: false
+  name: csi-rbd-secret
+  # Key values correspond to a user name and its key, as defined in the
+  # ceph cluster. User ID should have required access to the 'pool'
+  # specified in the storage class
+  userID: <plaintext ID>
+  userKey: <Ceph auth key corresponding to userID above>
+  # Encryption passphrase
+  encryptionPassphrase: test_passphrase
+
+# This is a sample configmap that helps define a Ceph configuration as required
+# by the CSI plugins.
+# Sample ceph.conf available at
+# https://github.com/ceph/ceph/blob/master/src/sample.ceph.conf Detailed
+# documentation is available at
+# https://docs.ceph.com/en/latest/rados/configuration/ceph-conf/
+cephconf: |
+  [global]
+    auth_cluster_required = cephx
+    auth_service_required = cephx
+    auth_client_required = cephx
+
+#########################################################
+# Variables for 'internal' use please use with caution! #
+#########################################################
+
+# The filename of the provisioner socket
+provisionerSocketFile: csi-provisioner.sock
+# The filename of the plugin socket
+pluginSocketFile: csi.sock
+# kubelet working directory,can be set using `--root-dir` when starting kubelet.
+kubeletDir: /var/lib/kubelet
+# Host path location for ceph client processes logging, ex: rbd-nbd
+cephLogDirHostPath: /var/log/ceph
+# Name of the csi-driver
+driverName: rbd.csi.ceph.com
+# Name of the configmap used for state
+configMapName: ceph-csi-config
+# Key to use in the Configmap if not config.json
+# configMapKey:
+# Use an externally provided configmap
+externallyManagedConfigmap: false
+# Name of the configmap used for ceph.conf
+cephConfConfigMapName: ceph-config
+# Name of the configmap used for encryption kms configuration
+kmsConfigMapName: ceph-csi-encryption-kms-config
