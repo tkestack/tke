@@ -94,11 +94,12 @@ func APIServerLocationByCluster(ctx context.Context, clusterName string, platfor
 	if credential.Token != nil {
 		token = *credential.Token
 	}
-	return &url.URL{
-		Scheme: "https",
-		Host:   restConfig.Host,
-		Path:   requestInfo.Path,
-	}, transport, token, nil
+	apiserver, err := url.Parse(restConfig.Host)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	apiserver.Path = requestInfo.Path
+	return apiserver, transport, token, nil
 }
 
 //use cache to optimize this function
