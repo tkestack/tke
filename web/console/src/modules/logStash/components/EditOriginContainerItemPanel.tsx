@@ -99,12 +99,12 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
 
       const options = namespaceList.data.recordCount
         ? namespaceList.data.records.map(item => {
-            const text = `${item.cluster.spec.displayName}-${item.namespace}`;
+            const text = `${item?.cluster?.spec?.displayName}-${item.namespace}`;
 
             return {
               value: item.namespaceValue,
               text: <Tooltip title={text}>{text}</Tooltip>,
-              groupKey: item.cluster.metadata.name,
+              groupKey: item?.cluster?.metadata?.name,
               realText: text
             };
           })
@@ -117,9 +117,9 @@ export class EditOriginContainerItemPanel extends React.Component<ContainerItemP
       };
     } else {
       const options = namespaceList.data.recordCount
-        ? namespaceList.data.records.map((item, index) => ({
+        ? namespaceList.data.records.map(item => ({
             value: item.namespaceValue,
-            text: item.cluster.metadata.name
+            text: item?.namespace
           }))
         : [{ value: '', text: t('无可用命名空间'), disabled: true }];
 
