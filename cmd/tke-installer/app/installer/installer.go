@@ -284,6 +284,10 @@ func (t *TKE) initSteps() {
 			Func: t.initPlatformApps,
 		},
 		{
+			Name: "Preprocess Platform Applications",
+			Func: t.preprocessPlatformApps,
+		},
+		{
 			Name: "Install Platform Applications",
 			Func: t.installPlatformApps,
 		},
@@ -292,12 +296,8 @@ func (t *TKE) initSteps() {
 	if t.Para.Config.Registry.TKERegistry != nil {
 		t.steps = append(t.steps, []types.Handler{
 			{
-				Name: "Install tke-registry-api",
-				Func: t.installTKERegistryAPI,
-			},
-			{
-				Name: "Install tke-registry-controller",
-				Func: t.installTKERegistryController,
+				Name: "Install tke-registry chart",
+				Func: t.installTKERegistryChart,
 			},
 		}...)
 	}
@@ -469,7 +469,7 @@ func (t *TKE) initSteps() {
 		}...)
 	}
 
-	if len(t.Config.ExpansionApps) > 0 {
+	if len(t.Para.Config.ExpansionApps) > 0 {
 		t.steps = append(t.steps, []types.Handler{
 			{
 				Name: "Install Applications",
@@ -1216,7 +1216,11 @@ func (t *TKE) createGlobalCluster(ctx context.Context) error {
 }
 
 func (t *TKE) backup() error {
-	data, _ := json.MarshalIndent(t, "", " ")
+	data, err := json.MarshalIndent(t, "", " ")
+	if err != nil {
+		t.log.Infof("json marshal tke failed, err = %s", err.Error())
+		return err
+	}
 	return ioutil.WriteFile(constants.ClusterFile, data, 0777)
 }
 func (t *TKE) loadImages(ctx context.Context) error {
@@ -2107,95 +2111,152 @@ func (t *TKE) installTKENotifyController(ctx context.Context) error {
 	})
 }
 
-func (t *TKE) installTKERegistryAPI(ctx context.Context) error {
-
-	node, err := apiclient.GetNodeByMachineIP(ctx, t.globalClient, t.servers[0])
+func (t *TKE) installTKERegistryChart(ctx context.Context) error {
+	registryAPIOptions, err := t.getTKERegistryAPIOptions(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("get tke-registry-api options failed: %v", err)
 	}
-
-	options := map[string]interface{}{
-		"Replicas":       t.Config.Replicas,
-		"Image":          images.Get().TKERegistryAPI.FullName(),
-		"NodeName":       node.Name,
-		"AdminUsername":  t.Para.Config.Registry.TKERegistry.Username,
-		"AdminPassword":  string(t.Para.Config.Registry.TKERegistry.Password),
-		"EnableAuth":     t.Para.Config.Auth.TKEAuth != nil,
-		"EnableBusiness": t.businessEnabled(),
-		"DomainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
-		"EnableAudit":    t.auditEnabled(),
-		"HarborEnabled":  t.Para.Config.Registry.TKERegistry.HarborEnabled,
-		"HarborCAFile":   t.Para.Config.Registry.TKERegistry.HarborCAFile,
-	}
-	//check if s3 enabled
-	storageConfig := t.Para.Config.Registry.TKERegistry.Storage
-	s3Enabled := (storageConfig != nil && storageConfig.S3 != nil)
-	options["S3Enabled"] = s3Enabled
-	if s3Enabled {
-		options["S3Storage"] = storageConfig.S3
-	}
-	//or enable filesystem by default
-	options["FilesystemEnabled"] = !s3Enabled
-
-	if t.Para.Config.Auth.OIDCAuth != nil {
-		options["OIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
-		options["OIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
-		options["UseOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
-	}
-	err = apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-registry-api/*.yaml", options)
+	registryControllerOptions, err := t.getTKERegistryControllerOptions(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("get tke-registry-controller options failed: %v", err)
 	}
-
-	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-registry-api")
-		if err != nil {
-			return false, nil
-		}
-		return ok, nil
-	})
+	tkeRegistry := &types.PlatformApp{
+		HelmInstallOptions: &helmaction.InstallOptions{
+			Namespace:   t.namespace,
+			ReleaseName: "tke-registry",
+			Values: map[string]interface{}{
+				"api":        registryAPIOptions,
+				"controller": registryControllerOptions,
+			},
+			DependencyUpdate: false,
+			ChartPathOptions: helmaction.ChartPathOptions{},
+		},
+		LocalChartPath: constants.ChartDirName + "tke-registry/",
+		Enable:         true,
+		ConditionFunc: func() (bool, error) {
+			apiOk, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-registry-api")
+			if err != nil {
+				return false, nil
+			}
+			controllerOk, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-registry-controller")
+			if err != nil {
+				return false, nil
+			}
+			return apiOk && controllerOk, nil
+		},
+	}
+	return t.installPlatformApp(ctx, tkeRegistry)
 }
 
-func (t *TKE) installTKERegistryController(ctx context.Context) error {
-
-	node, err := apiclient.GetNodeByMachineIP(ctx, t.globalClient, t.servers[0])
-	if err != nil {
-		return err
-	}
+func (t *TKE) getTKERegistryAPIOptions(ctx context.Context) (map[string]interface{}, error) {
 
 	options := map[string]interface{}{
-		"Replicas":           t.Config.Replicas,
-		"Image":              images.Get().TKERegistryController.FullName(),
-		"NodeName":           node.Name,
-		"AdminUsername":      t.Para.Config.Registry.TKERegistry.Username,
-		"AdminPassword":      string(t.Para.Config.Registry.TKERegistry.Password),
-		"EnableAuth":         t.Para.Config.Auth.TKEAuth != nil,
-		"EnableBusiness":     t.businessEnabled(),
-		"DomainSuffix":       t.Para.Config.Registry.TKERegistry.Domain,
-		"DefaultChartGroups": defaultChartGroupsStringConfig,
+		"replicas":       t.Config.Replicas,
+		"namespace":      t.namespace,
+		"image":          images.Get().TKERegistryAPI.FullName(),
+		"adminUsername":  t.Para.Config.Registry.TKERegistry.Username,
+		"adminPassword":  string(t.Para.Config.Registry.TKERegistry.Password),
+		"enableAuth":     t.Para.Config.Auth.TKEAuth != nil,
+		"enableBusiness": t.businessEnabled(),
+		"domainSuffix":   t.Para.Config.Registry.TKERegistry.Domain,
+		"enableAudit":    t.auditEnabled(),
+		"harborEnabled":  t.Para.Config.Registry.TKERegistry.HarborEnabled,
+		"harborCAFile":   t.Para.Config.Registry.TKERegistry.HarborCAFile,
 	}
 	//check if s3 enabled
 	storageConfig := t.Para.Config.Registry.TKERegistry.Storage
 	s3Enabled := (storageConfig != nil && storageConfig.S3 != nil)
-	options["S3Enabled"] = s3Enabled
+	options["s3Enabled"] = s3Enabled
 	if s3Enabled {
-		options["S3Storage"] = storageConfig.S3
+		options["s3Storage"] = storageConfig.S3
 	}
 	//or enable filesystem by default
-	options["FilesystemEnabled"] = !s3Enabled
-
-	err = apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-registry-controller/*.yaml", options)
-	if err != nil {
-		return err
+	options["filesystemEnabled"] = !s3Enabled
+	if options["filesystemEnabled"] == true {
+		useCephRbd, useNFS := false, false
+		for _, platformApp := range t.Para.Config.PlatformApps {
+			if !platformApp.Enable || !platformApp.Installed {
+				continue
+			}
+			if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.CephRBDChartReleaseName) {
+				useCephRbd = true
+				options["cephRbd"] = true
+				options["cephRbdPVCName"] = "ceph-rbd-registry-pvc"
+				options["cephRbdStorageClassName"] = constants.CephRBDStorageClassName
+				break
+			}
+			if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.NFSChartReleaseName) {
+				useNFS = true
+				options["nfs"] = true
+				options["nfsPVCName"] = "nfs-registry-pvc"
+				options["nfsStorageClassName"] = constants.NFSStorageClassName
+				break
+			}
+		}
+		if !(useCephRbd || useNFS) {
+			options["baremetalStorage"] = true
+			node, err := apiclient.GetNodeByMachineIP(ctx, t.globalClient, t.servers[0])
+			if err != nil {
+				return nil, err
+			}
+			options["nodeName"] = node.Name
+		}
 	}
 
-	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-registry-controller")
-		if err != nil {
-			return false, nil
+	if t.Para.Config.Auth.OIDCAuth != nil {
+		options["oIDCClientID"] = t.Para.Config.Auth.OIDCAuth.ClientID
+		options["oIDCIssuerURL"] = t.Para.Config.Auth.OIDCAuth.IssuerURL
+		options["useOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
+	}
+
+	return options, nil
+}
+
+func (t *TKE) getTKERegistryControllerOptions(ctx context.Context) (map[string]interface{}, error) {
+
+	node, err := apiclient.GetNodeByMachineIP(ctx, t.globalClient, t.servers[0])
+	if err != nil {
+		return nil, err
+	}
+
+	options := map[string]interface{}{
+		"replicas":           t.Config.Replicas,
+		"image":              images.Get().TKERegistryController.FullName(),
+		"nodeName":           node.Name,
+		"adminUsername":      t.Para.Config.Registry.TKERegistry.Username,
+		"adminPassword":      string(t.Para.Config.Registry.TKERegistry.Password),
+		"enableAuth":         t.Para.Config.Auth.TKEAuth != nil,
+		"enableBusiness":     t.businessEnabled(),
+		"domainSuffix":       t.Para.Config.Registry.TKERegistry.Domain,
+		"defaultChartGroups": defaultChartGroupsStringConfig,
+	}
+	//check if s3 enabled
+	storageConfig := t.Para.Config.Registry.TKERegistry.Storage
+	s3Enabled := (storageConfig != nil && storageConfig.S3 != nil)
+	options["s3Enabled"] = s3Enabled
+	if s3Enabled {
+		options["s3Storage"] = storageConfig.S3
+	}
+	//or enable filesystem by default
+	options["filesystemEnabled"] = !s3Enabled
+	if options["filesystemEnabled"] == true {
+		useCephRbd, useNFS := false, false
+		for _, platformApp := range t.Para.Config.PlatformApps {
+			if !platformApp.Enable || !platformApp.Installed {
+				continue
+			}
+			if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.CephRBDChartReleaseName) {
+				useCephRbd = true
+				break
+			}
+			if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.NFSChartReleaseName) {
+				useNFS = true
+				break
+			}
 		}
-		return ok, nil
-	})
+		options["baremetalStorage"] = !(useCephRbd || useNFS)
+	}
+	return options, nil
 }
 
 func (t *TKE) installTKEApplicationAPI(ctx context.Context) error {

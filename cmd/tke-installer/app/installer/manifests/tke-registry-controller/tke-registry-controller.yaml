@@ -54,7 +54,7 @@ spec:
             requests:
               cpu: 50m
               memory: 128Mi
-{{- if .FilesystemEnabled }}
+{{- if .baremetalStorage }}
       nodeName: {{ .NodeName }}
 {{- end }}
       volumes:

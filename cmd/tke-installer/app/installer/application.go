@@ -21,13 +21,15 @@ package installer
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	applicationv1 "tkestack.io/tke/api/application/v1"
-	"tkestack.io/tke/cmd/tke-installer/app/config"
 	"tkestack.io/tke/cmd/tke-installer/app/installer/constants"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/images"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	helmutil "tkestack.io/tke/pkg/application/helm/util"
 	"tkestack.io/tke/pkg/util/apiclient"
@@ -35,11 +37,11 @@ import (
 
 func (t *TKE) completeExpansionApps() error {
 
-	if len(t.Config.ExpansionApps) == 0 {
+	if len(t.Para.Config.ExpansionApps) == 0 {
 		return nil
 	}
 
-	for _, expansionApp := range t.Config.ExpansionApps {
+	for _, expansionApp := range t.Para.Config.ExpansionApps {
 		if !expansionApp.Enable {
 			continue
 		}
@@ -54,7 +56,7 @@ func (t *TKE) completeExpansionApps() error {
 	return nil
 }
 
-func (t *TKE) completeChart(chart *config.Chart) error {
+func (t *TKE) completeChart(chart *types.Chart) error {
 
 	_, err := chart.Values.YAML()
 	if err != nil {
@@ -85,7 +87,7 @@ func (t *TKE) completeChart(chart *config.Chart) error {
 
 func (t *TKE) installApplications(ctx context.Context) error {
 
-	if len(t.Config.ExpansionApps) == 0 {
+	if len(t.Para.Config.ExpansionApps) == 0 {
 		return nil
 	}
 
@@ -103,7 +105,7 @@ func (t *TKE) installApplications(ctx context.Context) error {
 		return fmt.Errorf("list all applications failed %v", err)
 	}
 
-	for _, expansionApp := range t.Config.ExpansionApps {
+	for _, expansionApp := range t.Para.Config.ExpansionApps {
 		if !expansionApp.Enable {
 			continue
 		}
@@ -121,7 +123,7 @@ func (t *TKE) installApplications(ctx context.Context) error {
 	return nil
 }
 
-func (t *TKE) applicationAlreadyInstalled(expansionApp config.ExpansionApp, installedApps []applicationv1.App) bool {
+func (t *TKE) applicationAlreadyInstalled(expansionApp *types.ExpansionApp, installedApps []applicationv1.App) bool {
 
 	for _, installedApp := range installedApps {
 		// if there's an existed application with the same namespace+name, we consider it as already exists
@@ -132,7 +134,7 @@ func (t *TKE) applicationAlreadyInstalled(expansionApp config.ExpansionApp, inst
 	return false
 }
 
-func (t *TKE) installApplication(ctx context.Context, expansionApp config.ExpansionApp) error {
+func (t *TKE) installApplication(ctx context.Context, expansionApp *types.ExpansionApp) error {
 
 	chart := expansionApp.Chart
 
@@ -170,14 +172,14 @@ func (t *TKE) installApplication(ctx context.Context, expansionApp config.Expans
 	return nil
 }
 func (t *TKE) initPlatformApps(ctx context.Context) error {
-	defaultPlatformApps := []config.PlatformApp{}
+	defaultPlatformApps := []*types.PlatformApp{}
 	if t.Para.Config.Auth.TKEAuth != nil {
 		authAPIOptions, err := t.getTKEAuthAPIOptions(ctx)
 		if err != nil {
 			return fmt.Errorf("get tke-auth-api options failed: %v", err)
 		}
-		tkeAuth := config.PlatformApp{
-			HelmInstallOptions: helmaction.InstallOptions{
+		tkeAuth := &types.PlatformApp{
+			HelmInstallOptions: &helmaction.InstallOptions{
 				Namespace:   t.namespace,
 				ReleaseName: "tke-auth",
 				Values: map[string]interface{}{
@@ -207,8 +209,8 @@ func (t *TKE) initPlatformApps(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("get tke-platform-api options failed: %v", err)
 	}
-	tkePlatform := config.PlatformApp{
-		HelmInstallOptions: helmaction.InstallOptions{
+	tkePlatform := &types.PlatformApp{
+		HelmInstallOptions: &helmaction.InstallOptions{
 			Namespace:   t.namespace,
 			ReleaseName: "tke-platform",
 			Values: map[string]interface{}{
@@ -233,53 +235,151 @@ func (t *TKE) initPlatformApps(ctx context.Context) error {
 		},
 	}
 	defaultPlatformApps = append(defaultPlatformApps, tkePlatform)
-	t.Config.PlatformApps = append(defaultPlatformApps, t.Config.PlatformApps...)
+	t.Para.Config.PlatformApps = append(defaultPlatformApps, t.Para.Config.PlatformApps...)
 	return nil
 }
 
-func (t *TKE) installPlatformApps(ctx context.Context) error {
+func (t *TKE) preprocessPlatformApps(ctx context.Context) error {
 
-	if len(t.Config.PlatformApps) == 0 {
-		return nil
-	}
-	for i, platformApp := range t.Config.PlatformApps {
+	for _, platformApp := range t.Para.Config.PlatformApps {
 		if !platformApp.Enable || platformApp.Installed {
 			continue
 		}
-		t.log.Infof("Start instal platform app %s in %s namespace", platformApp.HelmInstallOptions.ReleaseName, platformApp.HelmInstallOptions.Namespace)
-		err := t.installPlatformApp(ctx, platformApp)
-		if err != nil {
-			t.log.Errorf("Install %s failed", platformApp.HelmInstallOptions.ReleaseName)
-		}
-		t.Config.PlatformApps[i].Installed = true
-		t.log.Infof("End instal platform app %s in %s namespace", platformApp.HelmInstallOptions.ReleaseName, platformApp.HelmInstallOptions.Namespace)
-	}
+		if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.CephRBDChartReleaseName) {
+			platformApp.ConditionFunc = func() (bool, error) {
+				provisionerOk, err := apiclient.CheckDeployment(ctx, t.globalClient, platformApp.HelmInstallOptions.Namespace, "ceph-csi-rbd-provisioner")
+				if err != nil {
+					return false, nil
+				}
+				nodepluginOk, err := apiclient.CheckDaemonset(ctx, t.globalClient, platformApp.HelmInstallOptions.Namespace, "ceph-csi-rbd-nodeplugin")
+				if err != nil {
+					return false, nil
+				}
+				return provisionerOk && nodepluginOk, nil
+			}
+			platformApp.LocalChartPath = constants.ChartDirName + "ceph-csi-rbd/"
 
+			if err := t.mergePlatformAppValues(platformApp); err != nil {
+				return err
+			}
+			values := platformApp.HelmInstallOptions.Values
+			if values["csiConfig"] == nil {
+				return fmt.Errorf("ceph-csi-rbd platformAPP csiConfig nil")
+			}
+			if values["secret"] == nil || len(values["secret"].(map[string]interface{})["userID"].(string)) == 0 || len(values["secret"].(map[string]interface{})["userKey"].(string)) == 0 {
+				return fmt.Errorf("ceph-csi-rbd platformAPP secret userID | userKey nil")
+			}
+			if values["storageClass"] == nil || len(values["storageClass"].(map[string]interface{})["clusterID"].(string)) == 0 {
+				return fmt.Errorf("ceph-csi-rbd platformAPP storageClass clusterID nil")
+			}
+
+			values["images"] = map[string]interface{}{
+				"enable": true,
+				"nodeplugin": map[string]interface{}{
+					"registrar": images.Get().CsiNodeDriverRegistrar.FullName(),
+					"plugin":    images.Get().CephCsi.FullName(),
+				},
+				"provisioner": map[string]interface{}{
+					"provisioner": images.Get().CsiNodeDriverRegistrar.FullName(),
+					"attacher":    images.Get().CsiAttacher.FullName(),
+					"resizer":     images.Get().CsiResizer.FullName(),
+					"snapshotter": images.Get().CsiSnapshotter.FullName(),
+				},
+			}
+			if values["storageClass"] == nil {
+				values["storageClass"] = map[string]interface{}{
+					"replicaCount": t.Config.Replicas,
+				}
+			} else {
+				values["storageClass"].(map[string]interface{})["replicaCount"] = t.Config.Replicas
+			}
+			values["namespace"] = platformApp.HelmInstallOptions.Namespace
+		}
+		if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.NFSChartReleaseName) {
+			platformApp.ConditionFunc = func() (bool, error) {
+				provisionerOk, err := apiclient.CheckDeployment(ctx, t.globalClient, platformApp.HelmInstallOptions.Namespace, "nfs-subdir-external-provisioner")
+				if err != nil {
+					return false, nil
+				}
+				return provisionerOk, nil
+			}
+			platformApp.LocalChartPath = constants.ChartDirName + "nfs-subdir-external-provisioner/"
+
+			if err := t.mergePlatformAppValues(platformApp); err != nil {
+				return err
+			}
+			values := platformApp.HelmInstallOptions.Values
+			if values == nil || values["nfs"] == nil || len(values["nfs"].(map[string]interface{})["server"].(string)) == 0 || len(values["nfs"].(map[string]interface{})["path"].(string)) == 0 {
+				return fmt.Errorf("nfs-subdir-external-provisioner platformApp lack nfs.server or nfs.path")
+			}
+			values["replicaCount"] = t.Config.Replicas
+			values["namespace"] = platformApp.HelmInstallOptions.Namespace
+			if values["images"] == nil {
+				values["images"] = map[string]interface{}{
+					"repository": images.Get().NFSProvisioner.FullName(),
+				}
+			} else {
+				values["images"].(map[string]interface{})["repository"] = images.Get().NFSProvisioner.FullName()
+			}
+		}
+	}
 	return nil
 }
 
-func (t *TKE) installPlatformApp(ctx context.Context, platformApp config.PlatformApp) error {
-	platformApp.HelmInstallOptions.Timeout = 10 * time.Minute
+func (t *TKE) mergePlatformAppValues(platformApp *types.PlatformApp) error {
 	if len(platformApp.RawValues) != 0 || len(platformApp.Values) != 0 {
 		values, err := helmutil.MergeValues(platformApp.Values, platformApp.RawValues, string(platformApp.RawValuesType))
 		if err != nil {
 			return err
 		}
 		platformApp.HelmInstallOptions.Values = values
+		platformApp.RawValues = ""
+		platformApp.Values = nil
 	}
+	return nil
+}
+
+func (t *TKE) installPlatformApps(ctx context.Context) error {
+
+	if len(t.Para.Config.PlatformApps) == 0 {
+		return nil
+	}
+	for i, platformApp := range t.Para.Config.PlatformApps {
+		if !platformApp.Enable || platformApp.Installed {
+			continue
+		}
+		err := t.installPlatformApp(ctx, platformApp)
+		if err != nil {
+			t.log.Errorf("Install %s failed", platformApp.HelmInstallOptions.ReleaseName)
+			return err
+		}
+		t.Para.Config.PlatformApps[i].Installed = true
+	}
+
+	return nil
+}
+
+func (t *TKE) installPlatformApp(ctx context.Context, platformApp *types.PlatformApp) error {
+	platformApp.HelmInstallOptions.Timeout = 10 * time.Minute
+	if err := t.mergePlatformAppValues(platformApp); err != nil {
+		return err
+	}
+	// TODO currently only support local chart install
 	if len(platformApp.LocalChartPath) != 0 {
-		if _, err := t.helmClient.InstallWithLocal(&platformApp.HelmInstallOptions, platformApp.LocalChartPath); err != nil {
+		t.log.Infof("Start instal platform app %s in %s namespace", platformApp.HelmInstallOptions.ReleaseName, platformApp.HelmInstallOptions.Namespace)
+		if _, err := t.helmClient.InstallWithLocal(platformApp.HelmInstallOptions, platformApp.LocalChartPath); err != nil {
 			uninstallOptions := helmaction.UninstallOptions{
 				Timeout:     10 * time.Minute,
 				ReleaseName: platformApp.HelmInstallOptions.ReleaseName,
 				Namespace:   platformApp.HelmInstallOptions.Namespace,
 			}
-			reponse, err := t.helmClient.Uninstall(&uninstallOptions)
-			if err != nil {
-				return fmt.Errorf("clean %s failed %v", reponse.Release.Name, err)
+			_, uninstallErr := t.helmClient.Uninstall(&uninstallOptions)
+			if uninstallErr != nil {
+				return fmt.Errorf("clean %s failed %v", platformApp.HelmInstallOptions.ReleaseName, uninstallErr)
 			}
 			return err
 		}
+		t.log.Infof("End instal platform app %s in %s namespace", platformApp.HelmInstallOptions.ReleaseName, platformApp.HelmInstallOptions.Namespace)
 	}
 	if platformApp.ConditionFunc != nil {
 		err := wait.PollImmediate(5*time.Second, 10*time.Minute, platformApp.ConditionFunc)

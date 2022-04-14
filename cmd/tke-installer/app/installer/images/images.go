@@ -36,6 +36,15 @@ type BaseComponents struct {
 	TKERegistryController containerregistry.Image
 	ProviderRes           containerregistry.Image
 	TKEGateway            containerregistry.Image
+
+	NFSProvisioner containerregistry.Image
+
+	CsiNodeDriverRegistrar containerregistry.Image
+	CsiProvisioner         containerregistry.Image
+	CsiAttacher            containerregistry.Image
+	CsiResizer             containerregistry.Image
+	CsiSnapshotter         containerregistry.Image
+	CephCsi                containerregistry.Image
 }
 
 type ExComponents struct {
@@ -107,6 +116,15 @@ var baseComponents = BaseComponents{
 	TKERegistryController: containerregistry.Image{Name: "tke-registry-controller", Tag: Version},
 	ProviderRes:           containerregistry.Image{Name: "provider-res", Tag: "v1.21.4-3"},
 	TKEGateway:            containerregistry.Image{Name: "tke-gateway", Tag: Version},
+
+	NFSProvisioner: containerregistry.Image{Name: "nfs-subdir-external-provisioner", Tag: "v4.0.2"},
+
+	CsiNodeDriverRegistrar: containerregistry.Image{Name: "csi-node-driver-registrar", Tag: "v2.4.0"},
+	CsiProvisioner:         containerregistry.Image{Name: "csi-provisioner", Tag: "v3.1.0"},
+	CsiAttacher:            containerregistry.Image{Name: "csi-attacher", Tag: "v3.4.0"},
+	CsiResizer:             containerregistry.Image{Name: "csi-resizer", Tag: "v1.4.0"},
+	CsiSnapshotter:         containerregistry.Image{Name: "csi-snapshotter", Tag: "v4.2.0"},
+	CephCsi:                containerregistry.Image{Name: "cephcsi", Tag: "v3.6.0"},
 }
 
 var components = Components{baseComponents, exComponents}

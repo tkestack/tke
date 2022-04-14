@@ -85,7 +85,7 @@ spec:
             requests:
               cpu: 50m
               memory: 128Mi
-{{- if .FilesystemEnabled }}
+{{- if .baremetalStorage }}
       nodeName: {{ .NodeName }}
 {{- end }}
       volumes:
@@ -97,15 +97,59 @@ spec:
             name: tke-registry-api
 {{- if .FilesystemEnabled }}
         - name: registry-data
+  {{- if .baremetalStorage }}
           hostPath:
             path: /var/lib/tke-registry-api
             type: DirectoryOrCreate
+  {{- end }}
+  {{- if .cephRbd }}
+          persistentVolumeClaim:
+            claimName: {{ .cephRbdPVCName }}
+  {{- end }}
+  {{- if .nfs }}
+          persistentVolumeClaim:
+            claimName: {{ .nfsPVCName }}
+  {{- end }}
 {{- end }}
         - name: tke-registry-api-secret
           secret:
             secretName: tke-registry-api
 
 ---
+{{- if .cephRbd }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .cephRbdPVCName }}
+  namespace: {{ .Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 40Gi
+  storageClassName: {{ .cephRbdStorageClassName }}
+
+---
+{{- end }}
+{{- if .nfs }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .nfsPVCName }}
+  namespace: {{ .Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 40Gi
+  storageClassName: {{ .nfsStorageClassName }}
+
+---
+{{- end }}
 apiVersion: v1
 kind: Secret
 metadata:
