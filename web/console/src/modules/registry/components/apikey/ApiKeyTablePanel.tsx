@@ -253,7 +253,7 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
                 <Clip target="#loginDocker" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="loginDocker">{`sudo docker login -u tkestack -p [访问凭证] ${this.props.dockerRegistryUrl.data}`}</p>
+                <p id="loginDocker">{`sudo nerdctl --insecure-registry login -u tkestack -p [访问凭证] ${this.props.dockerRegistryUrl.data}`}</p>
               </code>
               <p className="text-weak">
                 <Trans>[访问凭证]需要在有效期内而且是“启用”状态下，否则会无法登录，请重新选择有效凭证或新建。</Trans>
@@ -269,7 +269,7 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
                 <Clip target="#fetchRegistry" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="fetchRegistry">{`sudo docker pull ${this.props.dockerRegistryUrl.data}/[命名空间]/nginx:latest`}</p>
+                <p id="fetchRegistry">{`sudo nerdctl --insecure-registry pull ${this.props.dockerRegistryUrl.data}/[命名空间]/nginx:latest`}</p>
               </code>
               <p className="text-weak">
                 <Trans>以拉取命名空间下名为 nginx 的镜像仓库内版本为 latest 的容器镜像为例</Trans>
@@ -285,14 +285,14 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
                 <Clip target="#pushRegistry2" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="pushRegistry2">{`sudo docker tag nginx:latest ${this.props.dockerRegistryUrl.data}/[命名空间]/nginx:latest`}</p>
+                <p id="pushRegistry2">{`sudo  tag nginx:latest ${this.props.dockerRegistryUrl.data}/[命名空间]/nginx:latest`}</p>
               </code>
               <br />
               <code>
                 <Clip target="#pushRegistry3" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="pushRegistry3">{`sudo docker push ${this.props.dockerRegistryUrl.data}/[命名空间]/nginx:latest`}</p>
+                <p id="pushRegistry3">{`sudo nerdctl --insecure-registry push ${this.props.dockerRegistryUrl.data}/[命名空间]/nginx:latest`}</p>
               </code>
               <p className="text-weak">
                 <Trans>以推送本地最新版本 nginx 镜像到容器镜像服务内 [命名空间]/nginx 镜像仓库为例</Trans>
