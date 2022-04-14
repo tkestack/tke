@@ -42,7 +42,11 @@ spec:
           # created by privileged CSI driver container.
           securityContext:
             privileged: true
-          image: "{{ .Values.nodeplugin.registrar.image.repository }}:{{ .Values.nodeplugin.registrar.image.tag }}"
+{{- if .Values.images.enable }}
+          image: "{{ .Values.images.nodeplugin.registrar }}"
+{{- else }}
+          image: "{{ .Values.nodeplugin.registrar.image.repository }}"
+{{- end }}
           imagePullPolicy: {{ .Values.nodeplugin.registrar.image.pullPolicy }}
           args:
             - "--v={{ .Values.logLevel }}"
@@ -61,7 +65,11 @@ spec:
           resources:
 {{ toYaml .Values.nodeplugin.registrar.resources | indent 12 }}
         - name: csi-rbdplugin
-          image: "{{ .Values.nodeplugin.plugin.image.repository }}:{{ .Values.nodeplugin.plugin.image.tag }}"
+{{- if .Values.images.enable }}
+          image: "{{ .Values.images.nodeplugin.plugin }}"
+{{- else }}
+          image: "{{ .Values.nodeplugin.plugin.image.repository }}"
+{{- end }}
           imagePullPolicy: {{ .Values.nodeplugin.plugin.image.pullPolicy }}
           args:
             - "--nodeid=$(NODE_ID)"
@@ -142,7 +150,11 @@ spec:
         - name: liveness-prometheus
           securityContext:
             privileged: true
-          image: "{{ .Values.nodeplugin.plugin.image.repository }}:{{ .Values.nodeplugin.plugin.image.tag }}"
+  {{- if .Values.images.enable }}
+          image: "{{ .Values.images.nodeplugin.plugin }}"
+  {{- else }}
+          image: "{{ .Values.nodeplugin.plugin.image.repository }}"
+  {{- end }}
           imagePullPolicy: {{ .Values.nodeplugin.plugin.image.pullPolicy }}
           args:
             - "--type=liveness"

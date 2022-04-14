@@ -5,6 +5,7 @@ metadata:
   labels:
     {{- include "nfs-subdir-external-provisioner.labels" . | nindent 4 }}
   name: {{ .Values.storageClass.name }}
+  namespace: {{ .Values.namespace }}
   annotations:
   {{- if .Values.storageClass.defaultClass }}
     storageclass.kubernetes.io/is-default-class: "true"

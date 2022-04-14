@@ -53,7 +53,11 @@ spec:
 {{- end }}
       containers:
         - name: csi-provisioner
-          image: "{{ .Values.provisioner.provisioner.image.repository }}:{{ .Values.provisioner.provisioner.image.tag }}"
+{{- if .Values.images.enable }}
+          image: "{{ .Values.images.provisioner.provisioner }}"
+{{- else }}
+          image: "{{ .Values.provisioner.provisioner.image.repository }}"
+{{- end }}
           imagePullPolicy: {{ .Values.provisioner.provisioner.image.pullPolicy }}
           args:
             - "--csi-address=$(ADDRESS)"
@@ -76,7 +80,11 @@ spec:
 {{ toYaml .Values.provisioner.provisioner.resources | indent 12 }}
 {{- if .Values.provisioner.resizer.enabled }}
         - name: csi-resizer
-          image: "{{ .Values.provisioner.resizer.image.repository }}:{{ .Values.provisioner.resizer.image.tag }}"
+  {{- if .Values.images.enable }}
+          image: "{{ .Values.images.provisioner.resizer }}"
+  {{- else }}
+          image: "{{ .Values.provisioner.resizer.image.repository }}"
+  {{- end }}
           imagePullPolicy: {{ .Values.provisioner.resizer.image.pullPolicy }}
           args:
             - "--v={{ .Values.logLevel }}"
@@ -95,7 +103,11 @@ spec:
 {{ toYaml .Values.provisioner.resizer.resources | indent 12 }}
 {{- end }}
         - name: csi-snapshotter
-          image: {{ .Values.provisioner.snapshotter.image.repository }}:{{ .Values.provisioner.snapshotter.image.tag }}
+{{- if .Values.images.enable }}
+          image: {{ .Values.images.provisioner.snapshotter }}
+{{- else }}
+          image: {{ .Values.provisioner.snapshotter.image.repository }}
+{{- end }}
           imagePullPolicy: {{ .Values.provisioner.snapshotter.image.pullPolicy }}
           args:
             - "--csi-address=$(ADDRESS)"
@@ -112,7 +124,11 @@ spec:
 {{ toYaml .Values.provisioner.snapshotter.resources | indent 12 }}
 {{- if .Values.provisioner.attacher.enabled }}
         - name: csi-attacher
-          image: "{{ .Values.provisioner.attacher.image.repository }}:{{ .Values.provisioner.attacher.image.tag }}"
+  {{- if .Values.images.enable }}
+          image: "{{ .Values.images.provisioner.attacher }}"
+  {{- else }}
+          image: "{{ .Values.provisioner.attacher.image.repository }}"
+  {{- end }}
           imagePullPolicy: {{ .Values.provisioner.attacher.image.pullPolicy }}
           args:
             - "--v={{ .Values.logLevel }}"
@@ -129,7 +145,11 @@ spec:
 {{ toYaml .Values.provisioner.attacher.resources | indent 12 }}
 {{- end }}
         - name: csi-rbdplugin
-          image: "{{ .Values.nodeplugin.plugin.image.repository }}:{{ .Values.nodeplugin.plugin.image.tag }}"
+{{- if .Values.images.enable }}
+          image: "{{ .Values.images.nodeplugin.plugin }}"
+{{- else }}
+          image: "{{ .Values.nodeplugin.plugin.image.repository }}"
+{{- end }}
           imagePullPolicy: {{ .Values.nodeplugin.plugin.image.pullPolicy }}
           args:
             - "--nodeid=$(NODE_ID)"
@@ -190,7 +210,11 @@ spec:
 {{ toYaml .Values.nodeplugin.plugin.resources | indent 12 }}
 {{- if .Values.provisioner.deployController }}
         - name: csi-rbdplugin-controller
-          image: "{{ .Values.nodeplugin.plugin.image.repository }}:{{ .Values.nodeplugin.plugin.image.tag }}"
+  {{- if .Values.images.enable }}
+          image: "{{ .Values.images.nodeplugin.plugin }}"
+  {{- else }}
+          image: "{{ .Values.nodeplugin.plugin.image.repository }}"
+  {{- end }}
           imagePullPolicy: {{ .Values.nodeplugin.plugin.image.pullPolicy }}
           args:
             - "--type=controller"
@@ -216,7 +240,11 @@ spec:
 {{- end }}
 {{- if .Values.provisioner.httpMetrics.enabled }}
         - name: liveness-prometheus
-          image: "{{ .Values.nodeplugin.plugin.image.repository }}:{{ .Values.nodeplugin.plugin.image.tag }}"
+  {{- if .Values.images.enable }}
+          image: "{{ .Values.images.nodeplugin.plugin }}"
+  {{- else }}  
+          image: "{{ .Values.nodeplugin.plugin.image.repository }}"
+  {{- end }}
           imagePullPolicy: {{ .Values.nodeplugin.plugin.image.pullPolicy }}
           args:
             - "--type=liveness"
