@@ -1,0 +1,45 @@
+api:
+  adminPassword:
+  adminUsername:
+  baremetalStorage:
+  cephRbd:
+  cephRbdPVCName:
+  cephRbdStorageClassName:
+  domainSuffix:
+  enableAudit:
+  enableAuth:
+  enableBusiness: 
+  filesystemEnabled:
+  harborCAFile:
+  harborEnabled:
+  image:
+  namespace: 
+  nfs: 
+  nfsPVCName: 
+  nfsStorageClassName: 
+  nodeName:
+  oIDCIssuerURL:
+  oIDCClientID:
+  replicas:
+  s3Enabled:
+  s3Storage:
+  useOIDCCA:
+controller:
+  adminPassword:
+  adminUsername:
+  baremetalStorage:
+  defaultChartGroups:
+  domainSuffix:
+  enableAuth:
+  enableBusiness:
+  filesystemEnabled:
+  image:
+  nodeName:
+  replicas:
+  s3Enabled:
+  s3Storage:
+
+
+
+
+
