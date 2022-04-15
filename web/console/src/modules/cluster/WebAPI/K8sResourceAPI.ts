@@ -181,6 +181,7 @@ export async function fetchResourceList(
     isNeedDes?: boolean;
     isNeedSpecific?: boolean;
     isContinue?: boolean;
+    extraResource?: string;
   }
 ) {
   let { filter, search, paging, continueToken } = query,
@@ -192,7 +193,8 @@ export async function fetchResourceList(
     k8sQueryObj = {},
     isNeedDes = false,
     isNeedSpecific = true,
-    isContinue = false
+    isContinue = false,
+    extraResource = ''
   } = options;
   let resourceList = [];
   let nextContinueToken: string;
@@ -207,7 +209,8 @@ export async function fetchResourceList(
         namespace,
         specificName: isNeedSpecific ? search : '',
         clusterId,
-        meshId
+        meshId,
+        extraResource
       });
     } else {
       k8sUrl = reduceK8sRestfulPath({
@@ -215,7 +218,8 @@ export async function fetchResourceList(
         namespace,
         specificName: isNeedSpecific ? specificName : '',
         clusterId,
-        meshId
+        meshId,
+        extraResource
       });
     }
 

@@ -44,7 +44,7 @@ const fetchPodActions = generateFetcherActionCreator({
   fetcher: async (getState: GetState, fetchOptions, dispatch) => {
     // fetch之前先清空之前的轮训
     dispatch(resourcePodActions.clearPollEvent());
-    const { subRoot, route, clusterVersion, namespaceSelection } = getState(),
+    const { subRoot, route, clusterVersion } = getState(),
       urlParams = router.resolve(route),
       { resourceDetailState, resourceInfo } = subRoot,
       { podQuery, podFilterInNode } = resourceDetailState;
@@ -61,23 +61,23 @@ const fetchPodActions = generateFetcherActionCreator({
     const podVersionInfo = apiVersion[ResourceConfigVersionMap(clusterVersion)]['pods'];
     const { podName, phase, namespace, ip } = podFilterInNode;
     // pods的resourceInfo的配置
-    const podResourceInfo: ResourceInfo = {
-      basicEntry: podVersionInfo.basicEntry,
-      version: podVersionInfo.version,
-      group: podVersionInfo.group,
-      namespaces: '',
-      requestType: {
-        list: 'pods'
-      }
-    };
 
-    let k8sQueryObj = {};
+    let fetchParams;
 
     if (isInNodeManager) {
       // pods的resourceInfo的配置
+      const podResourceInfo: ResourceInfo = {
+        basicEntry: podVersionInfo.basicEntry,
+        version: podVersionInfo.version,
+        group: podVersionInfo.group,
+        namespaces: '',
+        requestType: {
+          list: 'pods'
+        }
+      };
 
       // 过滤条件
-      k8sQueryObj = {
+      const k8sQueryObj = {
         fieldSelector: {
           'spec.nodeName': route.queries['resourceIns'] ? route.queries['resourceIns'] : undefined,
           'metadata.namespace': namespace ? namespace : undefined,
@@ -85,26 +85,38 @@ const fetchPodActions = generateFetcherActionCreator({
           'status.phase': phase ? phase : undefined
         }
       };
+
+      fetchParams = {
+        resourceInfo: podResourceInfo,
+        isClearData,
+        k8sQueryObj,
+        isNeedSpecific: false,
+        isContinue: true
+      };
     } else {
-      podResourceInfo.namespaces = 'namespaces';
-      k8sQueryObj = {
-        labelSelector: resourceDetailState?.resourceDetailInfo?.selection?.spec?.selector?.matchLabels,
+      const k8sQueryObj = {
         fieldSelector: {
           'metadata.name': podName ? podName : undefined,
           'status.phase': phase ? phase : undefined,
           'status.podIP': ip
         }
       };
+
+      fetchParams = {
+        resourceInfo,
+        isClearData,
+        k8sQueryObj,
+        isNeedSpecific: true,
+        isContinue: true,
+        extraResource: 'pods'
+      };
+
+      podQuery.search = '';
+
+      podQuery.filter.specificName = route?.queries?.resourceIns;
     }
 
-    k8sQueryObj = JSON.parse(JSON.stringify(k8sQueryObj));
-    const { records, continueToken } = await WebAPI.fetchResourceList(podQuery, {
-      resourceInfo: podResourceInfo,
-      isClearData,
-      k8sQueryObj,
-      isNeedSpecific: false,
-      isContinue: true
-    });
+    const { records, continueToken } = await WebAPI.fetchResourceList(podQuery, fetchParams);
 
     dispatch(resourcePodActions.changeContinueToken(continueToken));
 
