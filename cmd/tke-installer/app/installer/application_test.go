@@ -9,7 +9,7 @@ import (
 	"helm.sh/helm/v3/pkg/chartutil"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
-	"tkestack.io/tke/cmd/tke-installer/app/config"
+	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	applicationutil "tkestack.io/tke/pkg/application/util"
 	"tkestack.io/tke/pkg/mesh/util/json"
@@ -53,7 +53,7 @@ func TestTKE_installApplication(t *testing.T) {
 	}
 
 	name := "demo"
-	chart := &config.Chart{
+	chart := &types.Chart{
 		Name:            name,
 		TenantID:        "default",
 		ChartGroupName:  "public",
@@ -62,7 +62,7 @@ func TestTKE_installApplication(t *testing.T) {
 		TargetNamespace: "default",
 		Values:          chartutil.Values{},
 	}
-	expansionApp := config.ExpansionApp{
+	expansionApp := &types.ExpansionApp{
 		Name:   name,
 		Enable: true,
 		Chart:  *chart,
@@ -76,7 +76,7 @@ func TestTKE_installApplication(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	b, err := json.MarshalIndent([]config.ExpansionApp{
+	b, err := json.MarshalIndent([]types.ExpansionApp{
 		{
 			Name:   name,
 			Enable: true,

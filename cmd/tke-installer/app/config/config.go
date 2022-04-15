@@ -19,11 +19,7 @@
 package config
 
 import (
-	"helm.sh/helm/v3/pkg/chartutil"
-	"k8s.io/apimachinery/pkg/util/wait"
-	applicationv1 "tkestack.io/tke/api/application/v1"
 	"tkestack.io/tke/cmd/tke-installer/app/options"
-	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -55,41 +51,6 @@ type Config struct {
 	EnableCustomExpansion bool
 	// CustomExpansionDir path to expansions. default `data/expansions`
 	CustomExpansionDir string
-	ExpansionApps      []ExpansionApp
-	PlatformApps       []PlatformApp
-}
-type ExpansionApp struct {
-	Name   string
-	Enable bool
-	Chart  Chart
-}
-
-type Chart struct {
-	Name           string
-	TenantID       string
-	ChartGroupName string
-	// install options
-	Version string
-	// install options
-	TargetCluster string
-	// install options
-	TargetNamespace string
-	// install options
-	// chartutil.ReadValues/ReadValuesFile
-	Values chartutil.Values
-}
-
-type PlatformApp struct {
-	HelmInstallOptions helmaction.InstallOptions
-	LocalChartPath     string
-	ConditionFunc      wait.ConditionFunc
-	Enable             bool
-	Installed          bool
-	// rawValues: json format or yaml format
-	RawValues     string
-	RawValuesType applicationv1.RawValuesType
-	// values: can specify multiple or separate values: key1=val1,key2=val2
-	Values []string
 }
 
 // CreateConfigFromOptions creates a running configuration instance based

@@ -24,7 +24,11 @@ import (
 
 	"github.com/thoas/go-funk"
 
+	"helm.sh/helm/v3/pkg/chartutil"
+	"k8s.io/apimachinery/pkg/util/wait"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 	v1 "tkestack.io/tke/api/platform/v1"
+	helmaction "tkestack.io/tke/pkg/application/helm/action"
 )
 
 type CreateClusterPara struct {
@@ -41,18 +45,20 @@ func (c *CreateClusterPara) RegistryIP() string {
 
 // Config is the installer config
 type Config struct {
-	Basic       *Basic       `json:"basic"`
-	Auth        Auth         `json:"auth"`
-	Registry    Registry     `json:"registry"`
-	Business    *Business    `json:"business,omitempty"`
-	Monitor     *Monitor     `json:"monitor,omitempty"`
-	Logagent    *Logagent    `json:"logagent,omitempty"`
-	HA          *HA          `json:"ha,omitempty"`
-	Gateway     *Gateway     `json:"gateway,omitempty"`
-	Audit       *Audit       `json:"audit,omitempty"`
-	Application *Application `json:"application,omitempty"`
-	Mesh        *Mesh        `json:"mesh,omitempty"`
-	SkipSteps   []string     `json:"skipSteps,omitempty"`
+	Basic         *Basic          `json:"basic"`
+	Auth          Auth            `json:"auth"`
+	Registry      Registry        `json:"registry"`
+	Business      *Business       `json:"business,omitempty"`
+	Monitor       *Monitor        `json:"monitor,omitempty"`
+	Logagent      *Logagent       `json:"logagent,omitempty"`
+	HA            *HA             `json:"ha,omitempty"`
+	Gateway       *Gateway        `json:"gateway,omitempty"`
+	Audit         *Audit          `json:"audit,omitempty"`
+	Application   *Application    `json:"application,omitempty"`
+	Mesh          *Mesh           `json:"mesh,omitempty"`
+	SkipSteps     []string        `json:"skipSteps,omitempty"`
+	ExpansionApps []*ExpansionApp `json:"expansionApps,omitempty"`
+	PlatformApps  []*PlatformApp  `json:"platformApps,omitempty"`
 }
 
 type Basic struct {
@@ -94,6 +100,40 @@ type ElasticSearch struct {
 	Username    string `json:"username"`
 	Password    string `json:"password"`
 	Index       string `json:"index"`
+}
+
+type ExpansionApp struct {
+	Name   string
+	Enable bool
+	Chart  Chart
+}
+
+type Chart struct {
+	Name           string
+	TenantID       string
+	ChartGroupName string
+	// install options
+	Version string
+	// install options
+	TargetCluster string
+	// install options
+	TargetNamespace string
+	// install options
+	// chartutil.ReadValues/ReadValuesFile
+	Values chartutil.Values
+}
+
+type PlatformApp struct {
+	HelmInstallOptions *helmaction.InstallOptions
+	LocalChartPath     string
+	ConditionFunc      wait.ConditionFunc `json:"-"`
+	Enable             bool
+	Installed          bool
+	// rawValues: json format or yaml format
+	RawValues     string
+	RawValuesType applicationv1.RawValuesType
+	// values: can specify multiple or separate values: key1=val1,key2=val2
+	Values []string
 }
 
 func (r *Registry) Domain() string {
