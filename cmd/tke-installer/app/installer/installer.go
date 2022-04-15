@@ -1758,6 +1758,10 @@ func (t *TKE) installTKEAudit(ctx context.Context) error {
 		return err
 	}
 
+	if t.Para.Config.Audit.ElasticSearch != nil && strings.Compare(t.Para.Config.Audit.ElasticSearch.Username, "skipTKEAuditHealthCheck") == 0 {
+		return nil
+	}
+
 	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
 		ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "tke-audit-api")
 		if err != nil {
