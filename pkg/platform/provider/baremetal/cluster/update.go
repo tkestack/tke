@@ -84,7 +84,7 @@ func (p *Provider) EnsureRenewCerts(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error {
-	kubeadmConfig := p.GetKubeadmInitConfig(c)
+	kubeadmConfig := p.getKubeadmInitConfig(c)
 	exptectCertSANs := GetAPIServerCertSANs(c.Cluster)
 
 	needUpload := false

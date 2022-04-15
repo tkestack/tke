@@ -38,7 +38,7 @@ import (
 	"tkestack.io/tke/pkg/util/version"
 )
 
-func (p *Provider) GetKubeadmInitConfig(c *v1.Cluster) *kubeadm.InitConfig {
+func (p *Provider) getKubeadmInitConfig(c *v1.Cluster) *kubeadm.InitConfig {
 	config := new(kubeadm.InitConfig)
 	config.InitConfiguration = p.getInitConfiguration(c)
 	config.ClusterConfiguration = p.getClusterConfiguration(c)

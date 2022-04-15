@@ -3,9 +3,15 @@ package cluster
 import (
 	"context"
 	"fmt"
-	superedgecommon "github.com/superedge/superedge/pkg/edgeadm/common"
 	"io/ioutil"
+	"os"
+
+	superedgecommon "github.com/superedge/superedge/pkg/edgeadm/common"
+	"k8s.io/apimachinery/pkg/runtime"
+	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
+
 	platformv1 "tkestack.io/tke/api/platform/v1"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 )
 
@@ -25,31 +31,6 @@ func (p *Provider) EnsurePrepareEgdeCluster(ctx context.Context, c *v1.Cluster) 
 }
 
 func (p *Provider) EnsureApplyEdgeApps(ctx context.Context, c *v1.Cluster) error {
-	// create edge cluster kubeconfig
-	kubeadmConfig := p.bCluster.GetKubeadmInitConfig(c)
-	configData, err := kubeadmConfig.Marshal()
-	if err != nil {
-		return err
-	}
-	kubeconfigFile := fmt.Sprintf("/tmp/%s-kubeconfig", c.Name)
-	err = ioutil.WriteFile(kubeconfigFile, []byte(configData), 0644)
-	if err != nil {
-		return err
-	}
-
-	// create edge cluster car key cart
-	caKeyFile := fmt.Sprintf("/tmp/%s.key", c.Name)
-	err = ioutil.WriteFile(caKeyFile, c.ClusterCredential.CAKey, 0644)
-	if err != nil {
-		return err
-	}
-
-	caCertFile := fmt.Sprintf("/tmp/%s.crt", c.Name)
-	err = ioutil.WriteFile(caCertFile, c.ClusterCredential.CACert, 0644)
-	if err != nil {
-		return err
-	}
-
 	// get kube-apiserver ip
 	apiserverIP := c.Spec.Machines[0].IP
 	if c.Spec.Features.HA != nil {
@@ -60,8 +41,36 @@ func (p *Provider) EnsureApplyEdgeApps(ctx context.Context, c *v1.Cluster) error
 			apiserverIP = c.Spec.Features.HA.ThirdPartyHA.VIP
 		}
 	}
-
 	masterPublicAddr := apiserverIP
+
+	// create edge cluster kubeconfig
+	kubeAPIAddr := fmt.Sprintf("https://%s:6443", masterPublicAddr)
+	config := kubeconfig.CreateWithToken(kubeAPIAddr, c.Name,
+		"kubernetes-admin", c.ClusterCredential.CACert, *c.ClusterCredential.Token)
+	configData, err := runtime.Encode(clientcmdlatest.Codec, config)
+	if err != nil {
+		return err
+	}
+	os.MkdirAll(fmt.Sprintf("/tmp/%s", c.Name), os.ModePerm)
+	kubeconfigFile := fmt.Sprintf("/tmp/%s/%s-kubeconfig", c.Name, c.Name)
+	err = ioutil.WriteFile(kubeconfigFile, configData, 0644)
+	if err != nil {
+		return err
+	}
+
+	// create edge cluster car key cart
+	caKeyFile := fmt.Sprintf("/tmp/%s/%s.key", c.Name, c.Name)
+	err = ioutil.WriteFile(caKeyFile, c.ClusterCredential.CAKey, 0644)
+	if err != nil {
+		return err
+	}
+
+	caCertFile := fmt.Sprintf("/tmp/%s/%s.crt", c.Name, c.Name)
+	err = ioutil.WriteFile(caCertFile, c.ClusterCredential.CACert, 0644)
+	if err != nil {
+		return err
+	}
+
 	certSANs := []string{masterPublicAddr}
 	for _, machine := range c.Spec.Machines {
 		certSANs = append(certSANs, machine.IP)
