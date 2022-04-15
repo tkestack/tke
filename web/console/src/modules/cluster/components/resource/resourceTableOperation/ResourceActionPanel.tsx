@@ -184,10 +184,15 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
 
   /** render新建按钮 */
   private _renderCreateButton() {
-    const { subRoot } = this.props,
+    const { subRoot, namespaceList } = this.props,
       { resourceInfo } = subRoot;
 
-    const isShow = !isEmpty(resourceInfo) && resourceInfo.actionField && resourceInfo.actionField.create.isAvailable;
+    const isShow =
+      !isEmpty(resourceInfo) &&
+      resourceInfo.actionField &&
+      resourceInfo?.actionField?.create?.isAvailable &&
+      namespaceList?.data?.recordCount > 0;
+
     return isShow ? (
       <Button
         type="primary"
