@@ -97,6 +97,8 @@ insertCSS(
 interface TempWrapperProps {
   /** 当前业务的businessKey */
   businessKey: string;
+
+  children: React.ReactNode;
 }
 
 class TempWrapper extends React.Component<TempWrapperProps, any> {
