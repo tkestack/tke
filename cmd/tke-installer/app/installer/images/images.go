@@ -48,10 +48,11 @@ type BaseComponents struct {
 }
 
 type ExComponents struct {
-	Registry containerregistry.Image
-	Busybox  containerregistry.Image
-	InfluxDB containerregistry.Image
-	Thanos   containerregistry.Image
+	Registry     containerregistry.Image
+	Busybox      containerregistry.Image
+	InfluxDB     containerregistry.Image
+	Thanos       containerregistry.Image
+	NginxIngress containerregistry.Image
 
 	TKEBusinessAPI           containerregistry.Image
 	TKEBusinessController    containerregistry.Image
@@ -87,10 +88,11 @@ func (c Components) Get(name string) *containerregistry.Image {
 var Version = version.Get().GitVersion
 
 var exComponents = ExComponents{
-	Registry: containerregistry.Image{Name: "registry", Tag: "2.7.1"},
-	Busybox:  containerregistry.Image{Name: "busybox", Tag: "1.31.1"},
-	InfluxDB: containerregistry.Image{Name: "influxdb", Tag: "1.7.9"},
-	Thanos:   containerregistry.Image{Name: "thanos", Tag: "v0.15.0"},
+	Registry:     containerregistry.Image{Name: "registry", Tag: "2.7.1"},
+	Busybox:      containerregistry.Image{Name: "busybox", Tag: "1.31.1"},
+	InfluxDB:     containerregistry.Image{Name: "influxdb", Tag: "1.7.9"},
+	Thanos:       containerregistry.Image{Name: "thanos", Tag: "v0.15.0"},
+	NginxIngress: containerregistry.Image{Name: "ingress-nginx-controller", Tag: "v1.1.3"},
 
 	TKEBusinessAPI:           containerregistry.Image{Name: "tke-business-api", Tag: Version},
 	TKEBusinessController:    containerregistry.Image{Name: "tke-business-controller", Tag: Version},
