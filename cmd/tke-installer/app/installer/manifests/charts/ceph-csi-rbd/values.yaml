@@ -69,13 +69,13 @@ nodeplugin:
     # Specifies whether http metrics should be exposed
     enabled: true
     # The port of the container to expose the metrics
-    containerPort: 8080
+    containerPort: 8681
 
     service:
       # Specifies whether a service should be created for the metrics
       enabled: true
       # The port to use for the service
-      servicePort: 8080
+      servicePort: 8681
       type: ClusterIP
 
       # Annotations for the service
@@ -101,15 +101,13 @@ nodeplugin:
 
   registrar:
     image:
-      repository: k8s.gcr.io/sig-storage/csi-node-driver-registrar
-      tag: v2.4.0
+      repository: tkestack/csi-node-driver-registrar:v2.4.0
       pullPolicy: IfNotPresent
     resources: {}
 
   plugin:
     image:
-      repository: quay.io/cephcsi/cephcsi
-      tag: v3.6.0
+      repository: tkestack/cephcsi:v3.6.0
       pullPolicy: IfNotPresent
     resources: {}
 
@@ -165,13 +163,13 @@ provisioner:
     # Specifies whether http metrics should be exposed
     enabled: true
     # The port of the container to expose the metrics
-    containerPort: 8080
+    containerPort: 8681
 
     service:
       # Specifies whether a service should be created for the metrics
       enabled: true
       # The port to use for the service
-      servicePort: 8080
+      servicePort: 8681
       type: ClusterIP
 
       # Annotations for the service
@@ -197,8 +195,7 @@ provisioner:
 
   provisioner:
     image:
-      repository: k8s.gcr.io/sig-storage/csi-provisioner
-      tag: v3.1.0
+      repository: tkestack/csi-provisioner:v3.1.0
       pullPolicy: IfNotPresent
     resources: {}
 
@@ -206,8 +203,7 @@ provisioner:
     name: attacher
     enabled: true
     image:
-      repository: k8s.gcr.io/sig-storage/csi-attacher
-      tag: v3.4.0
+      repository: tkestack/csi-attacher:v3.4.0
       pullPolicy: IfNotPresent
     resources: {}
 
@@ -215,15 +211,13 @@ provisioner:
     name: resizer
     enabled: true
     image:
-      repository: k8s.gcr.io/sig-storage/csi-resizer
-      tag: v1.4.0
+      repository: tkestack/csi-resizer:v1.4.0
       pullPolicy: IfNotPresent
     resources: {}
 
   snapshotter:
     image:
-      repository: k8s.gcr.io/sig-storage/csi-snapshotter
-      tag: v4.2.0
+      repository: tkestack/csi-snapshotter:v4.2.0
       pullPolicy: IfNotPresent
     resources: {}
 
@@ -252,7 +246,7 @@ topology:
 
 storageClass:
   # Specifies whether the storageclass should be created
-  create: false
+  create: true
   name: csi-rbd-sc
 
   # Annotations for the storage class
@@ -277,7 +271,7 @@ storageClass:
 
   # (required) Ceph pool into which the RBD image shall be created
   # eg: pool: replicapool
-  pool: replicapool
+  pool: csp
 
   # (optional) RBD image features, CSI creates image with image-format 2 CSI
   # RBD currently supports `layering`, `journaling`, `exclusive-lock`,
@@ -406,7 +400,7 @@ selinuxMount: true
 
 secret:
   # Specifies whether the secret should be created
-  create: false
+  create: true
   name: csi-rbd-secret
   # Key values correspond to a user name and its key, as defined in the
   # ceph cluster. User ID should have required access to the 'pool'
@@ -452,3 +446,13 @@ externallyManagedConfigmap: false
 cephConfConfigMapName: ceph-config
 # Name of the configmap used for encryption kms configuration
 kmsConfigMapName: ceph-csi-encryption-kms-config
+images:
+  enable: false
+  nodeplugin:
+    registrar:
+    plugin:
+  provisioner:
+    provisioner:
+    attacher:
+    resizer:
+    snapshotter:

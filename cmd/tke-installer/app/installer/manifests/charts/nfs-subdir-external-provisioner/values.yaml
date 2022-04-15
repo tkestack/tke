@@ -1,9 +1,8 @@
-replicaCount: 1
+replicaCount: 2
 strategyType: Recreate
 
 image:
-  repository: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner
-  tag: v4.0.2
+  repository: tkestack/nfs-subdir-external-provisioner:v4.0.2
   pullPolicy: IfNotPresent
 imagePullSecrets: []
 
@@ -28,7 +27,7 @@ storageClass:
 
   # Set a StorageClass name
   # Ignored if storageClass.create is false
-  name: nfs-client
+  name: nfs-sc
 
   # Allow volume to be expanded dynamically
   allowVolumeExpansion: true
@@ -105,3 +104,5 @@ affinity: {}
 
 # Additional labels for any resource created
 labels: {}
+
+namespace: 

@@ -3,6 +3,7 @@ apiVersion: {{ template "podSecurityPolicy.apiVersion" . }}
 kind: PodSecurityPolicy
 metadata:
   name: {{ template "nfs-subdir-external-provisioner.fullname" . }}
+  namespace: {{ .Values.namespace }}
   labels:
     {{- include "nfs-subdir-external-provisioner.labels" . | nindent 4 }}
 spec:
