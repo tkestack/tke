@@ -349,17 +349,16 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
   private _handleClickForTagSearch(tags) {
     const finalTags = tags.filter(({ attr }) => attr);
 
-    if (finalTags.length <= 0) return;
-
-    const { actions, subRoot } = this.props,
-      { resourceOption } = subRoot,
-      { ffResourceList } = resourceOption;
-
-    // 这里是控制tagSearch的展示
     this.setState({
       searchBoxValues: finalTags,
       searchBoxLength: finalTags.length
     });
+
+    if (finalTags.length <= 0) return;
+
+    const { actions } = this.props;
+
+    // 这里是控制tagSearch的展示
 
     const resourceName = finalTags.find(({ attr: { key } }) => key === 'resourceName')?.values?.[0]?.name ?? '';
     const labelSelector = finalTags.find(({ attr: { key } }) => key === 'labelSelector')?.values?.[0]?.name;
