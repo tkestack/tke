@@ -15,10 +15,8 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
-import * as React from 'react';
-import * as ReactDom from 'react-dom';
 
-import { isInWhitelist } from './Whitelist';
+import { createRoot, Root } from 'react-dom/client';
 
 export interface PageOptions {
   businessKey: string;
@@ -61,6 +59,7 @@ export class Page {
   private requires: any;
   private rendered: boolean;
   private destroyed: boolean;
+  private root: Root;
 
   constructor(options: PageOptions) {
     const { businessKey, id, title, component } = options;
@@ -115,15 +114,16 @@ export class Page {
       // 可能加载完依赖之后，用户已经切走了，此时 nmc.render() 不会执行
       nmc.render(`<div id="${this.id}"></div>`, this.businessKey);
       if ((this.container = document.getElementById(this.id))) {
-        currentReactRoot = ReactDom.render(this.component, this.container);
+        const root = createRoot(this.container);
+        root.render(this.component);
+        this.root = root;
       }
     });
   }
 
   destroy() {
-    if (this.container) {
-      ReactDom.unmountComponentAtNode(this.container);
-      this.container = null;
+    if (this.root) {
+      this.root.unmount();
     }
   }
 }

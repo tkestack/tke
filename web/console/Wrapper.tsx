@@ -274,6 +274,8 @@ interface ConsoleWrapperProps {
 
   /** 是否需要侧边导航栏 */
   sideBar?: boolean;
+
+  children: React.ReactNode;
 }
 
 interface UserInfo {

@@ -40,10 +40,7 @@ const mapDispatchToProps = dispatch =>
     dispatch
   });
 
-@connect(
-  state => state,
-  mapDispatchToProps
-)
+@connect(state => state, mapDispatchToProps)
 export class EditOriginContainerFilePanel extends React.Component<PropTypes, {}> {
   render() {
     let { actions, logStashEdit, route, clusterList, logSelection, namespaceList } = this.props,
@@ -59,18 +56,18 @@ export class EditOriginContainerFilePanel extends React.Component<PropTypes, {}>
         resourceList,
         podList
       } = logStashEdit;
-    let mode = router.resolve(route)['mode'];
-    let isNamespaceNeedLoading =
+    const mode = router.resolve(route)['mode'];
+    const isNamespaceNeedLoading =
       clusterList.fetchState === FetchState.Fetching || namespaceList.fetchState === FetchState.Fetching;
-    let isWorkloadNeedLoading =
+    const isWorkloadNeedLoading =
       clusterList.fetchState === FetchState.Fetching ||
       resourceList.fetchState === FetchState.Fetching ||
       isNamespaceNeedLoading;
 
     //是否可以更改容器文件路径的输出
-    let ifCanUpdateContainerFile = logSelection[0] && logSelection[0].inputType === 'pod-log' && mode === 'update';
+    const ifCanUpdateContainerFile = logSelection[0] && logSelection[0].inputType === 'pod-log' && mode === 'update';
     return (
-      <FormPanel.Item label={t('日志源')} isShow={logMode === logModeList.containerFile.value}>
+      <FormPanel.Item label={t('日志源')} isShow={false}>
         <FormPanel isNeedCard={false} fixed style={{ minWidth: 600, padding: '30px ' }}>
           <FormPanel.Item label={t('工作负载选项')}>
             <div
@@ -99,7 +96,7 @@ export class EditOriginContainerFilePanel extends React.Component<PropTypes, {}>
                     actions.namespace.selectNamespace(value);
                     // 兼容业务侧的处理
                     if (window.location.href.includes('tkestack-project')) {
-                      let namespaceFound = namespaceList.data.records.find(item => item.namespaceValue === value);
+                      const namespaceFound = namespaceList.data.records.find(item => item.namespaceValue === value);
                       actions.cluster.selectClusterFromEditNamespace(namespaceFound.cluster);
                     }
                   }}
@@ -200,7 +197,7 @@ export class EditOriginContainerFilePanel extends React.Component<PropTypes, {}>
     const { containerFilePaths, podList } = logStashEdit;
 
     //因为原始的podList的需要显示的字段在spec字段的container字段里的name字段里，并没有直接在直接字段里面，所以直接拿来podList的recodeData展示展示不出来，需要做修改
-    let selectPodList = cloneDeep(podList);
+    const selectPodList = cloneDeep(podList);
     selectPodList.data.records = [];
     podList.data.records.forEach(pod => {
       pod.spec.containers.forEach(container => {

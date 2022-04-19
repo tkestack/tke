@@ -75,10 +75,10 @@ export const logModeList = {
     value: 'container',
     name: '容器标准输出'
   },
-  containerFile: {
-    value: 'containerFile',
-    name: '容器文件路径'
-  },
+  // containerFile: {
+  //   value: 'containerFile',
+  //   name: '容器文件路径'
+  // },
   node: {
     value: 'node',
     name: '节点文件路径'
@@ -104,10 +104,10 @@ export const originModeList = [
  * pre: 消费端类型
  */
 export const consumerModeList = [
-  {
-    value: 'kafka',
-    name: 'Kafka'
-  },
+  // {
+  //   value: 'kafka',
+  //   name: 'Kafka'
+  // },
   {
     value: 'es',
     name: 'Elasticsearch'

@@ -29,16 +29,16 @@ import { getStatus } from '../../../../common/validate';
 const { useState, useEffect, useRef } = React;
 const { scrollable, selectable, removeable } = Table.addons;
 
-export const BaseInfoPanel = (props) => {
-  const state = useSelector((state) => state);
+export const BaseInfoPanel = props => {
+  const state = useSelector(state => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
 
   const { userPlainList, policyPlainList } = state;
   const userList = userPlainList.list.data.records || [];
   let strategyList = policyPlainList.list.data.records || [];
-  strategyList = strategyList.filter((item) => ['平台管理员', '平台用户', '租户'].includes(item.displayName) === false);
-  const tenantID = strategyList.filter((item) => item.displayName === '平台管理员').tenantID;
+  strategyList = strategyList.filter(item => ['平台管理员', '平台用户', '租户'].includes(item.displayName) === false);
+  const tenantID = strategyList.filter(item => item.displayName === '平台管理员').tenantID;
 
   const [inputValue, setInputValue] = useState('');
   const [targetKeys, setTargetKeys] = useState([]);
@@ -68,15 +68,15 @@ export const BaseInfoPanel = (props) => {
           displayName,
           description,
           extra: {
-            policies: role === 'custom' ? targetKeys.join(',') : role,
-          },
+            policies: role === 'custom' ? targetKeys.join(',') : role
+          }
         },
         status: {
-          users: userTargetKeys.map((id) => ({
-            id,
-          })),
-        },
-      },
+          users: userTargetKeys.map(id => ({
+            id
+          }))
+        }
+      }
     ]);
     actions.group.create.addGroupWorkflow.perform();
   }
@@ -94,7 +94,7 @@ export const BaseInfoPanel = (props) => {
       const errors = {
         displayName: undefined,
         description: undefined,
-        role: undefined,
+        role: undefined
       };
       if (!displayName) {
         errors.displayName = t('请输入用户账号');
@@ -111,7 +111,7 @@ export const BaseInfoPanel = (props) => {
       }
 
       return errors;
-    },
+    }
   });
 
   const displayName = useField('displayName', form);
@@ -185,20 +185,20 @@ export const BaseInfoPanel = (props) => {
                     scrollable={false}
                     title="当前用户组可关联以下用户"
                     tip="支持按住 shift 键进行多选"
-                    header={<SearchBox value={userInputValue} onChange={(value) => setUserInputValue(value)} />}
+                    header={<SearchBox value={userInputValue} onChange={value => setUserInputValue(value)} />}
                   >
                     <UserAssociateSourceTable
-                      dataSource={userList.filter((i) => i.displayName.includes(userInputValue))}
+                      dataSource={userList.filter(i => i.displayName.includes(userInputValue))}
                       targetKeys={userTargetKeys}
-                      onChange={(keys) => setUserTargetKeys(keys)}
+                      onChange={keys => setUserTargetKeys(keys)}
                     />
                   </Transfer.Cell>
                 }
                 rightCell={
                   <Transfer.Cell title={`已选择 (${userTargetKeys.length})`}>
                     <UserAssociateTargetTable
-                      dataSource={userList.filter((i) => userTargetKeys.includes(i.id))}
-                      onRemove={(key) => setUserTargetKeys(userTargetKeys.filter((i) => i !== key))}
+                      dataSource={userList.filter(i => userTargetKeys.includes(i.id))}
+                      onRemove={key => setUserTargetKeys(userTargetKeys.filter(i => i !== key))}
                     />
                   </Transfer.Cell>
                 }
@@ -225,30 +225,32 @@ export const BaseInfoPanel = (props) => {
                 </Radio>
                 <Radio name="custom">
                   <Text>自定义</Text>
-                  <Transfer
-                    leftCell={
-                      <Transfer.Cell
-                        scrollable={false}
-                        title="为这个用户自定义独立的权限"
-                        tip="支持按住 shift 键进行多选"
-                        header={<SearchBox value={inputValue} onChange={(value) => setInputValue(value)} />}
-                      >
-                        <SourceTable
-                          dataSource={strategyList.filter((i) => i.displayName.includes(inputValue))}
-                          targetKeys={targetKeys}
-                          onChange={(keys) => setTargetKeys(keys)}
-                        />
-                      </Transfer.Cell>
-                    }
-                    rightCell={
-                      <Transfer.Cell title={`已选择 (${targetKeys.length})`}>
-                        <TargetTable
-                          dataSource={strategyList.filter((i) => targetKeys.includes(i.id))}
-                          onRemove={(key) => setTargetKeys(targetKeys.filter((i) => i !== key))}
-                        />
-                      </Transfer.Cell>
-                    }
-                  />
+                  {roleValue === 'custom' && (
+                    <Transfer
+                      leftCell={
+                        <Transfer.Cell
+                          scrollable={false}
+                          title="为这个用户自定义独立的权限"
+                          tip="支持按住 shift 键进行多选"
+                          header={<SearchBox value={inputValue} onChange={value => setInputValue(value)} />}
+                        >
+                          <SourceTable
+                            dataSource={strategyList.filter(i => i.displayName.includes(inputValue))}
+                            targetKeys={targetKeys}
+                            onChange={keys => setTargetKeys(keys)}
+                          />
+                        </Transfer.Cell>
+                      }
+                      rightCell={
+                        <Transfer.Cell title={`已选择 (${targetKeys.length})`}>
+                          <TargetTable
+                            dataSource={strategyList.filter(i => targetKeys.includes(i.id))}
+                            onRemove={key => setTargetKeys(targetKeys.filter(i => i !== key))}
+                          />
+                        </Transfer.Cell>
+                      }
+                    />
+                  )}
                 </Radio>
               </Radio.Group>
             </Form.Item>
@@ -261,7 +263,7 @@ export const BaseInfoPanel = (props) => {
             <Form.Action style={{ borderTop: 0, marginTop: 0, paddingTop: 0 }}>
               <Button type="primary">保存</Button>
               <Button
-                onClick={(e) => {
+                onClick={e => {
                   e.preventDefault();
                   router.navigate({ module: 'user', sub: 'group' });
                 }}
@@ -280,8 +282,8 @@ const userAssociateColumns = [
   {
     key: 'name',
     header: t('ID/名称'),
-    render: (user: UserPlain) => <p>{`${user.displayName}(${user.name})`}</p>,
-  },
+    render: (user: UserPlain) => <p>{`${user.displayName}(${user.name})`}</p>
+  }
 ];
 
 function UserAssociateSourceTable({ dataSource, targetKeys, onChange }) {
@@ -293,13 +295,13 @@ function UserAssociateSourceTable({ dataSource, targetKeys, onChange }) {
       addons={[
         scrollable({
           maxHeight: 310,
-          onScrollBottom: () => console.log('到达底部'),
+          onScrollBottom: () => console.log('到达底部')
         }),
         selectable({
           value: targetKeys,
           onChange,
-          rowSelect: true,
-        }),
+          rowSelect: true
+        })
       ]}
     />
   );
@@ -315,14 +317,14 @@ const columns = [
   {
     key: 'displayName',
     header: '策略名称',
-    render: (strategy) => <p>{strategy.displayName}</p>,
+    render: strategy => <p>{strategy.displayName}</p>
   },
   {
     key: 'description',
     header: '描述',
     width: 300,
-    render: (strategy) => <p>{strategy.description || '-'}</p>,
-  },
+    render: strategy => <p>{strategy.description || '-'}</p>
+  }
 ];
 
 function SourceTable({ dataSource, targetKeys, onChange }) {
@@ -334,13 +336,13 @@ function SourceTable({ dataSource, targetKeys, onChange }) {
       addons={[
         scrollable({
           maxHeight: 310,
-          onScrollBottom: () => console.log('到达底部'),
+          onScrollBottom: () => console.log('到达底部')
         }),
         selectable({
           value: targetKeys,
           onChange,
-          rowSelect: true,
-        }),
+          rowSelect: true
+        })
       ]}
     />
   );

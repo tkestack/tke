@@ -24,12 +24,12 @@ import { generateQueryReducer } from '@tencent/qcloud-redux-query';
 import { initValidator, Namespace, NamespaceFilter } from '../../common/models';
 import * as ActionType from '../constants/ActionType';
 import {
-    initContainerFilePath, initContainerFileWorkloadType, initContainerInputOption,
-    initResourceTarget
+  initContainerFilePath,
+  initContainerFileWorkloadType,
+  initContainerInputOption,
+  initResourceTarget
 } from '../constants/initState';
-import {
-    Ckafka, CkafkaFilter, Cls, ClsTopic, CTopic, CTopicFilter, Pod, Resource
-} from '../models';
+import { Ckafka, CkafkaFilter, Cls, ClsTopic, CTopic, CTopicFilter, Pod, Resource } from '../models';
 
 const TempReducer = combineReducers({
   logStashName: reduceToPayload(ActionType.LogStashName, ''),
@@ -50,7 +50,7 @@ const TempReducer = combineReducers({
 
   metadatas: reduceToPayload(ActionType.UpdateMetadata, []),
 
-  consumerMode: reduceToPayload(ActionType.ChangeConsumerMode, 'kafka'),
+  consumerMode: reduceToPayload(ActionType.ChangeConsumerMode, 'es'),
 
   addressIP: reduceToPayload(ActionType.AddressIP, ''),
 

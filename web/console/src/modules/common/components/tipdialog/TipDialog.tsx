@@ -42,11 +42,13 @@ interface TipDialogProps extends BaseReactProps {
 
   /**取消操作 */
   cancelAction?: (value?: any) => void;
+
+  children?: React.ReactNode;
 }
 
 export class TipDialog extends React.Component<TipDialogProps, {}> {
   render() {
-    let { isShow, caption, body, width, performAction, cancelAction, children, footerButton } = this.props;
+    const { isShow, caption, body, width, performAction, cancelAction, children, footerButton } = this.props;
     const cancel = () => {
       cancelAction(false);
     };

@@ -17,7 +17,7 @@
  */
 import React from 'react';
 import { FormPanel } from '@tencent/ff-component';
-import { Table, TableColumn, Button, Icon, Bubble } from '@tea/component';
+import { Table, TableColumn, Button, Icon } from '@tea/component';
 import { RootProps } from '../../ClusterApp';
 import { FetchState } from '@tencent/ff-redux';
 import { router } from '../../../router';
@@ -68,8 +68,6 @@ export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, ro
       key: 'action',
       header: '操作',
       render({ action, type }) {
-        const disabled = type === PlugType.LogAgent && isContainerd;
-
         return action ? (
           <>
             <Button type="link" onClick={close(type)}>
@@ -77,11 +75,9 @@ export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, ro
             </Button>
           </>
         ) : (
-          <Bubble content={disabled ? '运行时为containerd的集群不支持开启日志采集' : ''}>
-            <Button type="link" disabled={disabled} onClick={open(type)}>
-              开启
-            </Button>
-          </Bubble>
+          <Button type="link" onClick={open(type)}>
+            开启
+          </Button>
         );
       }
     }
@@ -110,12 +106,7 @@ export const ClusterPlugInfoPanel: React.FC<RootProps> = ({ cluster, actions, ro
       {cluster.list.fetched !== true || cluster.list.fetchState === FetchState.Fetching ? (
         <Icon type="loading" />
       ) : (
-        <Table
-          columns={columns}
-          records={records}
-          recordKey="des"
-          rowDisabled={({ type }) => type === PlugType.LogAgent && isContainerd}
-        />
+        <Table columns={columns} records={records} recordKey="des" />
       )}
     </FormPanel>
   );

@@ -169,6 +169,9 @@ export class ResourcePodActionPanel extends React.Component<RootProps, ResourceP
 
     const type = urlParams['type'];
     const isInNodeManage = IsInNodeManageDetail(type);
+
+    if (!isInNodeManage) return null;
+
     const { subRoot, namespaceList } = this.props;
 
     /** podFilter的选择项 */
