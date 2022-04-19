@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/cloudindustry"
 
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
@@ -228,11 +229,12 @@ func (c completedConfig) registerHooks(dexHandler *identityprovider.DexHander, s
 
 	localIdpHook := local.NewLocalHookHandler(authClient)
 	ldapIdpHook := ldap.NewLdapHookHandler(authClient)
+	cloudIndustryIdpHook := cloudindustry.NewCloudIndustryHookHandler(authClient)
 
 	authVersionedClient := versionedclientset.NewForConfigOrDie(s.LoopbackClientConfig)
 	adapterHook := local2.NewAdapterHookHandler(authVersionedClient, c.ExtraConfig.CasbinEnforcer, c.ExtraConfig.VersionedInformers, c.ExtraConfig.CasbinReloadInterval)
 
-	return []genericapiserver.PostStartHookProvider{dexHook, apiSigningKeyHook, localIdpHook, ldapIdpHook, adapterHook}
+	return []genericapiserver.PostStartHookProvider{dexHook, apiSigningKeyHook, localIdpHook, ldapIdpHook, cloudIndustryIdpHook, adapterHook}
 }
 
 // installCasbinPreStopHook is used to register preStop hook to stop casbin enforcer sync.
