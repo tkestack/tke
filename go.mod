@@ -6,7 +6,7 @@ replace (
 	github.com/NetEase-Object-Storage/nos-golang-sdk => github.com/karuppiah7890/nos-golang-sdk v0.0.0-20191116042345-0792ba35abcc
 	github.com/chartmuseum/storage => github.com/leoryu/chartmuseum-storage v0.11.1-0.20211104032734-9da39e8f5170
 	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
-	github.com/superedge/superedge => github.com/attlee-wang/superedge v0.8.2
+	github.com/superedge/superedge => github.com/attlee-wang/superedge v0.8.9
 	google.golang.org/grpc => google.golang.org/grpc v1.38.0
 	k8s.io/api => k8s.io/api v0.22.3
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.22.3
