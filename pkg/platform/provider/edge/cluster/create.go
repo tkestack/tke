@@ -7,24 +7,75 @@ import (
 	"os"
 
 	superedgecommon "github.com/superedge/superedge/pkg/edgeadm/common"
+	"github.com/superedge/superedge/pkg/edgeadm/constant"
+	"github.com/superedge/superedge/pkg/util"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientcmdlatest "k8s.io/client-go/tools/clientcmd/api/latest"
 
-	platformv1 "tkestack.io/tke/api/platform/v1"
+	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeconfig"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 func (p *Provider) EnsurePrepareEgdeCluster(ctx context.Context, c *v1.Cluster) error {
-	machines := map[bool][]platformv1.ClusterMachine{
-		true:  c.Spec.ScalingMachines,
-		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+	// prepare egde cluster config info
+	apiserverIP := c.Spec.Machines[0].IP
+	if c.Spec.Features.HA != nil {
+		if c.Spec.Features.HA.TKEHA != nil {
+			apiserverIP = c.Spec.Features.HA.TKEHA.VIP
+		}
+		if c.Spec.Features.HA.ThirdPartyHA != nil {
+			apiserverIP = c.Spec.Features.HA.ThirdPartyHA.VIP
+		}
+	}
 
-	for _, machine := range machines {
-		_, err := machine.SSH()
-		if err != nil {
+	domains := []string{
+		constants.APIServerHostName,
+		p.bconfig.Registry.Domain,
+		c.Cluster.Spec.TenantID + p.bconfig.Registry.Domain,
+	}
+
+	hostsConfig := ""
+	for _, one := range domains {
+		hostsConfig += fmt.Sprintf("%s %s\n", apiserverIP, one)
+	}
+	edgeInfoCM := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: constant.EdgeCertCM,
+		},
+		Data: map[string]string{
+			constant.EdgeNodeHostConfig: hostsConfig,
+		},
+	}
+
+	clientSet, err := c.Clientset()
+	if err != nil {
+		return err
+	}
+	if err := superedgecommon.EnsureEdgeSystemNamespace(clientSet); err != nil {
+		return err
+	}
+	if _, err := clientSet.CoreV1().ConfigMaps(constant.NamespaceEdgeSystem).
+		Get(context.TODO(), constant.EdgeCertCM, metav1.GetOptions{}); err != nil {
+		if apierrors.IsNotFound(err) {
+			cm, err := clientSet.CoreV1().ConfigMaps(constant.NamespaceEdgeSystem).Create(context.TODO(), edgeInfoCM, metav1.CreateOptions{})
+			if err != nil {
+				return err
+			}
+			log.Infof("Create configMap: %s success!", constant.EdgeNodeHostConfig, util.ToJson(cm))
+			return nil
+		} else {
 			return err
 		}
+	}
+
+	if _, err := clientSet.CoreV1().ConfigMaps(constant.NamespaceEdgeSystem).
+		Update(context.TODO(), edgeInfoCM, metav1.UpdateOptions{}); err != nil {
+		return err
 	}
 
 	return nil
@@ -41,10 +92,9 @@ func (p *Provider) EnsureApplyEdgeApps(ctx context.Context, c *v1.Cluster) error
 			apiserverIP = c.Spec.Features.HA.ThirdPartyHA.VIP
 		}
 	}
-	masterPublicAddr := apiserverIP
 
 	// create edge cluster kubeconfig
-	kubeAPIAddr := fmt.Sprintf("https://%s:6443", masterPublicAddr)
+	kubeAPIAddr := fmt.Sprintf("https://%s:6443", apiserverIP)
 	config := kubeconfig.CreateWithToken(kubeAPIAddr, c.Name,
 		"kubernetes-admin", c.ClusterCredential.CACert, *c.ClusterCredential.Token)
 	configData, err := runtime.Encode(clientcmdlatest.Codec, config)
@@ -71,7 +121,7 @@ func (p *Provider) EnsureApplyEdgeApps(ctx context.Context, c *v1.Cluster) error
 		return err
 	}
 
-	certSANs := []string{masterPublicAddr}
+	certSANs := []string{apiserverIP}
 	for _, machine := range c.Spec.Machines {
 		certSANs = append(certSANs, machine.IP)
 	}
@@ -81,7 +131,7 @@ func (p *Provider) EnsureApplyEdgeApps(ctx context.Context, c *v1.Cluster) error
 	if err != nil {
 		return err
 	}
-	err = superedgecommon.DeployEdgeAPPS(clientset, "", caCertFile, caKeyFile, masterPublicAddr, certSANs, kubeconfigFile)
+	err = superedgecommon.DeployEdgeAPPS(clientset, "", caCertFile, caKeyFile, apiserverIP, certSANs, kubeconfigFile)
 	if err != nil {
 		return err
 	}
