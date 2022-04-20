@@ -22,36 +22,40 @@ import (
 )
 
 func (p *Provider) EnsurePrepareEgdeCluster(ctx context.Context, c *v1.Cluster) error {
-	// prepare egde cluster config info
-	apiserverIP := c.Spec.Machines[0].IP
-	if c.Spec.Features.HA != nil {
-		if c.Spec.Features.HA.TKEHA != nil {
-			apiserverIP = c.Spec.Features.HA.TKEHA.VIP
-		}
-		if c.Spec.Features.HA.ThirdPartyHA != nil {
-			apiserverIP = c.Spec.Features.HA.ThirdPartyHA.VIP
-		}
+	// prepare node delay domain
+	nodeDelayDomain := ""
+	nodeDelayDomains := []string{constants.APIServerHostName}
+	for _, domain := range nodeDelayDomains {
+		nodeDelayDomain += fmt.Sprintf("%s\n", domain)
 	}
 
-	domains := []string{
-		constants.APIServerHostName,
+	// prepare node hosts config
+	nodeDomains := []string{
 		p.bconfig.Registry.Domain,
-		c.Cluster.Spec.TenantID + p.bconfig.Registry.Domain,
+		c.Cluster.Spec.TenantID + "." + p.bconfig.Registry.Domain,
+	}
+	hostsConfig := ""
+	for _, one := range nodeDomains {
+		hostsConfig += fmt.Sprintf("%s %s\n", p.bconfig.Registry.IP, one)
 	}
 
-	hostsConfig := ""
-	for _, one := range domains {
-		hostsConfig += fmt.Sprintf("%s %s\n", apiserverIP, one)
+	// prepare insecure registry config
+	insecureRegistries := ""
+	for _, registrie := range nodeDomains {
+		insecureRegistries += fmt.Sprintf("%s\n", registrie)
 	}
+
+	// create edge-info configMap
 	edgeInfoCM := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: constant.EdgeCertCM,
 		},
 		Data: map[string]string{
-			constant.EdgeNodeHostConfig: hostsConfig,
+			constant.EdgeNodeHostConfig:  hostsConfig,
+			constant.EdgeNodeDelayDomain: nodeDelayDomain,
+			constant.InsecureRegistries:  insecureRegistries,
 		},
 	}
-
 	clientSet, err := c.Clientset()
 	if err != nil {
 		return err
@@ -62,11 +66,12 @@ func (p *Provider) EnsurePrepareEgdeCluster(ctx context.Context, c *v1.Cluster) 
 	if _, err := clientSet.CoreV1().ConfigMaps(constant.NamespaceEdgeSystem).
 		Get(context.TODO(), constant.EdgeCertCM, metav1.GetOptions{}); err != nil {
 		if apierrors.IsNotFound(err) {
-			cm, err := clientSet.CoreV1().ConfigMaps(constant.NamespaceEdgeSystem).Create(context.TODO(), edgeInfoCM, metav1.CreateOptions{})
+			cm, err := clientSet.CoreV1().ConfigMaps(
+				constant.NamespaceEdgeSystem).Create(context.TODO(), edgeInfoCM, metav1.CreateOptions{})
 			if err != nil {
 				return err
 			}
-			log.Infof("Create configMap: %s success!", constant.EdgeNodeHostConfig, util.ToJson(cm))
+			log.Infof("Create success configMap: %v", constant.EdgeNodeHostConfig, util.ToJson(cm))
 			return nil
 		} else {
 			return err

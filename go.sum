@@ -244,6 +244,8 @@ github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535 h1:4daAzAu0
 github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535/go.mod h1:oGkLhpf+kjZl6xBf758TQhh5XrAeiJv/7FRz/2spLIg=
 github.com/attlee-wang/superedge v0.8.9 h1:0EAk5yoSsUGyJNsM25i9aLzn8fcnQxFFLjEiRRqBoiQ=
 github.com/attlee-wang/superedge v0.8.9/go.mod h1:EdS47RIIx0uf+5v9JTwG/OqXXs6QJGk7ysrioZ31zdk=
+github.com/attlee-wang/superedge v0.8.13 h1:8fkKWRo3vv/YLnhHnJIOV9VcA6GcUUXdZ1fhucFXyFw=
+github.com/attlee-wang/superedge v0.8.13/go.mod h1:EdS47RIIx0uf+5v9JTwG/OqXXs6QJGk7ysrioZ31zdk=
 github.com/auth0/go-jwt-middleware v0.0.0-20170425171159-5493cabe49f7/go.mod h1:LWMyo4iOLWXHGdBki7NIht1kHru/0wM179h+d3g8ATM=
 github.com/aws/aws-lambda-go v1.13.3/go.mod h1:4UKl9IzQMoD+QF79YdCuzCwp8VbmG4VAQwij/eHl5CU=
 github.com/aws/aws-sdk-go v1.6.10/go.mod h1:ZRmQr0FajVIyZ4ZzBYKG5P3ZqPz9IHG41ZoMu1ADI3k=
