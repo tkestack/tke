@@ -160,7 +160,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
                 <Clip target="#pushHelmDir" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="pushHelmDir">{`helm push ./myapp ${this.props.chartGroupName}`}</p>
+                <p id="pushHelmDir">{`helm cm-push ./myapp ${this.props.chartGroupName}`}</p>
               </code>
             </li>
             <li>
@@ -171,7 +171,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
                 <Clip target="#pushHelmTar" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="pushHelmTar">{`helm push myapp-1.0.1.tgz ${this.props.chartGroupName}`}</p>
+                <p id="pushHelmTar">{`helm cm-push myapp-1.0.1.tgz ${this.props.chartGroupName}`}</p>
               </code>
             </li>
             <li>
