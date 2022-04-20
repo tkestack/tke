@@ -242,7 +242,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#downloadChart" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="downloadChart">{`$ helm fetch ${this.props.route.queries['cgName']}/myapp`}</p>
+                <p id="downloadChart">{`$ helm pull ${this.props.route.queries['cgName']}/myapp`}</p>
               </code>
             </li>
             <li>
@@ -253,7 +253,7 @@ export class ChartTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#downloadSChart" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="downloadSChart">{`$ helm fetch ${this.props.route.queries['cgName']}/myapp --version 1.0.1`}</p>
+                <p id="downloadSChart">{`$ helm pull ${this.props.route.queries['cgName']}/myapp --version 1.0.1`}</p>
               </code>
             </li>
           </ul>
