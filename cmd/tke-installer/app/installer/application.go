@@ -280,7 +280,7 @@ func (t *TKE) preprocessPlatformApps(ctx context.Context) error {
 					"plugin":    images.Get().CephCsi.FullName(),
 				},
 				"provisioner": map[string]interface{}{
-					"provisioner": images.Get().CsiNodeDriverRegistrar.FullName(),
+					"provisioner": images.Get().CsiProvisioner.FullName(),
 					"attacher":    images.Get().CsiAttacher.FullName(),
 					"resizer":     images.Get().CsiResizer.FullName(),
 					"snapshotter": images.Get().CsiSnapshotter.FullName(),
@@ -289,9 +289,11 @@ func (t *TKE) preprocessPlatformApps(ctx context.Context) error {
 			if values["storageClass"] == nil {
 				values["storageClass"] = map[string]interface{}{
 					"replicaCount": t.Config.Replicas,
+					"name":         constants.CephRBDStorageClassName,
 				}
 			} else {
 				values["storageClass"].(map[string]interface{})["replicaCount"] = t.Config.Replicas
+				values["storageClass"].(map[string]interface{})["name"] = constants.CephRBDStorageClassName
 			}
 			values["namespace"] = platformApp.HelmInstallOptions.Namespace
 		}
@@ -366,7 +368,7 @@ func (t *TKE) installPlatformApp(ctx context.Context, platformApp *types.Platfor
 	}
 	// TODO currently only support local chart install
 	if len(platformApp.LocalChartPath) != 0 {
-		t.log.Infof("Start instal platform app %s in %s namespace", platformApp.HelmInstallOptions.ReleaseName, platformApp.HelmInstallOptions.Namespace)
+		t.log.Infof("Start install platform app %s in %s namespace", platformApp.HelmInstallOptions.ReleaseName, platformApp.HelmInstallOptions.Namespace)
 		if _, err := t.helmClient.InstallWithLocal(platformApp.HelmInstallOptions, platformApp.LocalChartPath); err != nil {
 			uninstallOptions := helmaction.UninstallOptions{
 				Timeout:     10 * time.Minute,
@@ -379,7 +381,7 @@ func (t *TKE) installPlatformApp(ctx context.Context, platformApp *types.Platfor
 			}
 			return err
 		}
-		t.log.Infof("End instal platform app %s in %s namespace", platformApp.HelmInstallOptions.ReleaseName, platformApp.HelmInstallOptions.Namespace)
+		t.log.Infof("End install platform app %s in %s namespace", platformApp.HelmInstallOptions.ReleaseName, platformApp.HelmInstallOptions.Namespace)
 	}
 	if platformApp.ConditionFunc != nil {
 		err := wait.PollImmediate(5*time.Second, 10*time.Minute, platformApp.ConditionFunc)
