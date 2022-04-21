@@ -355,7 +355,7 @@ func (c *cacher) getTApps(ctx context.Context, curDynamicClientSet util.DynamicC
 	content, err := curDynamicClientSet[cluster].Resource(TAppResource).
 		Namespace(AllNamespaces).List(ctx, metav1.ListOptions{})
 	if content == nil || (err != nil && !errors.IsNotFound(err)) {
-		log.Error("Query TApps failed", log.Any("cluster", cluster), log.Err(err))
+		log.Debug("Query TApps failed", log.Any("cluster", cluster), log.Err(err))
 		return 0
 	}
 	count += len(content.Items)
