@@ -38,7 +38,7 @@ import (
 
 const (
 	defaultTimeout = 30 * time.Second
-	defaultQPS     = 100
+	defaultQPS     = -1
 	defaultBurst   = 200
 )
 

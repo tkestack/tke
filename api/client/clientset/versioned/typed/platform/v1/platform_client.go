@@ -133,6 +133,9 @@ func setConfigDefaults(config *rest.Config) error {
 		config.UserAgent = rest.DefaultKubernetesUserAgent()
 	}
 
+	if config.QPS == 0 {
+		config.QPS = -1
+	}
 	return nil
 }
 
