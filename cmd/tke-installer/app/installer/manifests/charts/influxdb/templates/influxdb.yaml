@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: influxdb
-        image: {{ .image }}
+        image: {{ .Values.image }}
         livenessProbe:
           tcpSocket:
             port: 8086
@@ -33,31 +33,31 @@ spec:
         - name: data
           mountPath: /var/lib/influxdb
           subPath:
-{{- if .baremetalStorage }}
-      nodeName: {{ .nodeName }}
+{{- if .Values.baremetalStorage }}
+      nodeName: {{ .Values.nodeName }}
 {{- end }}
       hostNetwork: true
       volumes:
       - name: data
-{{- if .baremetalStorage }}
+{{- if .Values.baremetalStorage }}
         hostPath:
           path: /var/lib/influxdb
           type: DirectoryOrCreate
 {{- end }}
-{{- if .cephRbd }}
+{{- if .Values.cephRbd }}
         persistentVolumeClaim:
-          claimName: {{ .cephRbdPVCName }}
+          claimName: {{ .Values.cephRbdPVCName }}
 {{- end }}
-{{- if .nfs }}
+{{- if .Values.nfs }}
         persistentVolumeClaim:
-          claimName: {{ .nfsPVCName }}
+          claimName: {{ .Values.nfsPVCName }}
 {{- end }}
-{{- if .cephRbd }}
+{{- if .Values.cephRbd }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .cephRbdPVCName }}
+  name: {{ .Values.cephRbdPVCName }}
   namespace: tke
 spec:
   accessModes:
@@ -66,14 +66,14 @@ spec:
   resources:
     requests:
       storage: 40Gi
-  storageClassName: {{ .cephRbdStorageClassName }}
+  storageClassName: {{ .Values.cephRbdStorageClassName }}
 {{- end }}
-{{- if .nfs }}
+{{- if .Values.nfs }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ .nfsPVCName }}
+  name: {{ .Values.nfsPVCName }}
   namespace: tke
 spec:
   accessModes:
@@ -82,5 +82,5 @@ spec:
   resources:
     requests:
       storage: 40Gi
-  storageClassName: {{ .nfsStorageClassName }}
+  storageClassName: {{ .Values.nfsStorageClassName }}
 {{- end }}

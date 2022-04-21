@@ -1,0 +1,9 @@
+image:
+nodeName:
+baremetalStorage:
+cephRbd:
+cephRbdPVCName:
+cephRbdStorageClassName:
+nfs: 
+nfsPVCName: 
+nfsStorageClassName: 
