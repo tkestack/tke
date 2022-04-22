@@ -2155,7 +2155,7 @@ func (t *TKE) installTKERegistryChart(ctx context.Context) error {
 func (t *TKE) getTKERegistryAPIOptions(ctx context.Context) (map[string]interface{}, error) {
 
 	options := map[string]interface{}{
-		"replicas":       t.Config.Replicas,
+		"replicas":       1,
 		"namespace":      t.namespace,
 		"image":          images.Get().TKERegistryAPI.FullName(),
 		"adminUsername":  t.Para.Config.Registry.TKERegistry.Username,
