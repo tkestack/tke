@@ -381,7 +381,6 @@ func (t *TKE) installPlatformApp(ctx context.Context, platformApp *types.Platfor
 			}
 			return err
 		}
-		t.log.Infof("End install platform app %s in %s namespace", platformApp.HelmInstallOptions.ReleaseName, platformApp.HelmInstallOptions.Namespace)
 	}
 	if platformApp.ConditionFunc != nil {
 		err := wait.PollImmediate(5*time.Second, 10*time.Minute, platformApp.ConditionFunc)
@@ -389,5 +388,6 @@ func (t *TKE) installPlatformApp(ctx context.Context, platformApp *types.Platfor
 			return err
 		}
 	}
+	t.log.Infof("End install platform app %s in %s namespace", platformApp.HelmInstallOptions.ReleaseName, platformApp.HelmInstallOptions.Namespace)
 	return nil
 }
