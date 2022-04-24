@@ -81,8 +81,9 @@ func (p *Provider) EnsurePrepareEgdeCluster(ctx context.Context, c *v1.Cluster) 
 	if err := superedgecommon.EnsureEdgeSystemNamespace(clientSet); err != nil {
 		return err
 	}
-	if _, err := clientSet.CoreV1().ConfigMaps(constant.NamespaceEdgeSystem).
-		Get(context.TODO(), constant.EdgeCertCM, metav1.GetOptions{}); err != nil {
+	alreayEdgeInfoCM, err := clientSet.CoreV1().ConfigMaps(constant.NamespaceEdgeSystem).
+		Get(context.TODO(), constant.EdgeCertCM, metav1.GetOptions{})
+	if err != nil {
 		if apierrors.IsNotFound(err) {
 			cm, err := clientSet.CoreV1().ConfigMaps(
 				constant.NamespaceEdgeSystem).Create(context.TODO(), edgeInfoCM, metav1.CreateOptions{})
@@ -91,13 +92,15 @@ func (p *Provider) EnsurePrepareEgdeCluster(ctx context.Context, c *v1.Cluster) 
 			}
 			log.Infof("Create success configMap: %v", constant.EdgeNodeHostConfig, util.ToJson(cm))
 			return nil
-		} else {
-			return err
 		}
+		return err
 	}
 
+	alreayEdgeInfoCM.Data[constant.EdgeNodeHostConfig] = hostsConfig
+	alreayEdgeInfoCM.Data[constant.EdgeNodeHostConfig] = hostsConfig
+	alreayEdgeInfoCM.Data[constant.EdgeNodeHostConfig] = hostsConfig
 	if _, err := clientSet.CoreV1().ConfigMaps(constant.NamespaceEdgeSystem).
-		Update(context.TODO(), edgeInfoCM, metav1.UpdateOptions{}); err != nil {
+		Update(context.TODO(), alreayEdgeInfoCM, metav1.UpdateOptions{}); err != nil {
 		return err
 	}
 
