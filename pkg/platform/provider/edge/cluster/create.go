@@ -3,12 +3,14 @@ package cluster
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	superedgecommon "github.com/superedge/superedge/pkg/edgeadm/common"
 	"github.com/superedge/superedge/pkg/edgeadm/constant"
+	"github.com/superedge/superedge/pkg/edgeadm/constant/manifests"
 	"github.com/superedge/superedge/pkg/util"
+	"github.com/superedge/superedge/pkg/util/kubeclient"
+	"io/ioutil"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +22,22 @@ import (
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
+
+func (p *Provider) EnsureEdgeFlannel(ctx context.Context, c *v1.Cluster) error {
+	// Deploy edge flannel
+	clientSet, err := c.Clientset()
+	if err != nil {
+		return err
+	}
+	option := map[string]interface{}{
+		"PodNetworkCidr": c.Spec.ClusterCIDR,
+	}
+	err = kubeclient.CreateResourceWithFile(clientSet, manifests.KubeFlannelYaml, option)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func (p *Provider) EnsurePrepareEgdeCluster(ctx context.Context, c *v1.Cluster) error {
 	// prepare node delay domain
