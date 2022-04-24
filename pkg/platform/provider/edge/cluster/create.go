@@ -89,6 +89,9 @@ func (p *Provider) EnsurePrepareEgdeCluster(ctx context.Context, c *v1.Cluster) 
 func (p *Provider) EnsureApplyEdgeApps(ctx context.Context, c *v1.Cluster) error {
 	// get kube-apiserver ip
 	apiserverIP := c.Spec.Machines[0].IP
+	if len(c.Spec.PublicAlternativeNames) > 0 {
+		apiserverIP = c.Spec.PublicAlternativeNames[0]
+	}
 	if c.Spec.Features.HA != nil {
 		if c.Spec.Features.HA.TKEHA != nil {
 			apiserverIP = c.Spec.Features.HA.TKEHA.VIP
@@ -129,6 +132,9 @@ func (p *Provider) EnsureApplyEdgeApps(ctx context.Context, c *v1.Cluster) error
 	certSANs := []string{apiserverIP}
 	for _, machine := range c.Spec.Machines {
 		certSANs = append(certSANs, machine.IP)
+	}
+	if len(c.Spec.PublicAlternativeNames) > 0 {
+		certSANs = append(certSANs, c.Spec.PublicAlternativeNames...)
 	}
 
 	// deploy superedge edge cluster apps

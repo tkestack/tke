@@ -1,43 +1,31 @@
 apiVersion: platform.tkestack.io/v1
-kind: Cluster
-metadata:
-  annotations:
-    platform.tkestack.io/gpu-quota-admission-ip: 10.244.255.9
-  name: attlee-edge
-spec:
-  clusterCIDR: 10.244.0.0/16
-  displayName: attlee
-  dnsDomain: cluster.local
-  etcd:
-    local:
-      dataDir: ""
-      serverCertSANs:
-        - etcd
-        - etcd.kube-system
-  features:
-    authzWebhookAddr:
-      builtin: {}
-    enableMetricsServer: true
-    skipConditions:
-      - EnsureCilium
-    upgrade:
-      mode: Auto
-      strategy:
-        drainNodeBeforeUpgrade: false
-        maxUnready: 0
-  finalizers:
-    - cluster
-  machines:
-    - ip: 10.0.200.46
-      password: base64Password
-      port: 22
-      username: root
-  networkArgs:
-    networkMode: overlay
-  networkDevice: eth0
-  properties:
-    maxClusterServiceNum: 256
-    maxNodePodNum: 256
-  tenantID: default
-  type: Edge
-  version: 1.21.4-tke.1
+  kind: Cluster
+  metadata:
+    name: attlee-superedge
+  spec:
+    displayName: attlee-superedge-demo
+    etcd:
+      local:
+        dataDir: ""
+        serverCertSANs:
+          - etcd
+          - etcd.kube-system
+    features:
+      containerRuntime: docker
+      skipConditions:
+        - EnsureCilium
+    machines:
+      - ip: 10.0.200.98
+        password: PasswordBase64
+        port: 22
+        username: root
+    networkDevice: eth0
+    clusterCIDR: 192.168.0.0/16
+    properties:
+      maxClusterServiceNum: 256
+      maxNodePodNum: 256
+    publicAlternativeNames:
+      - 106.52.199.103
+    tenantID: default
+    type: Edge
+    version: 1.21.4-tke.1
