@@ -122,7 +122,7 @@ func NewProvider() (*Provider, error) {
 			p.bCluster.EnsureKubeadmInitPhaseAddon,
 
 			//p.bCluster.EnsureGalaxy,
-			//p.bCluster.EnsureCilium,
+			p.bCluster.EnsureCilium,
 			p.EnsureEdgeFlannel,
 
 			p.bCluster.EnsureJoinPhasePreflight,
