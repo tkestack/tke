@@ -12,8 +12,6 @@ apiVersion: platform.tkestack.io/v1
           - etcd.kube-system
     features:
       containerRuntime: docker
-      skipConditions:
-        - EnsureCilium
     machines:
       - ip: 10.0.200.98
         password: PasswordBase64

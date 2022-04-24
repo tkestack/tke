@@ -63,12 +63,13 @@
 			p.EnsurePreClusterInstallHook,
 			p.EnsurePreInstallHook,
 			...
+            // 准备创建SuperEdge边缘节点的逻辑
+            EnsurePrepareEgdeCluster
+            // Add-on SuperEdge 组件的逻辑
+            EnsureApplyEdgeApps
+            ...
 			p.EnsurePostInstallHook,
 			p.EnsurePostClusterInstallHook,
-			
-			// Addon SuperEdge 组件的逻辑
-			....
-			// 准备添加边缘节点的逻辑
 	},
 ```
 
@@ -93,8 +94,6 @@ apiVersion: platform.tkestack.io/v1
           - etcd.kube-system
     features:
       containerRuntime: docker
-      skipConditions:
-        - EnsureCilium
     machines:
       - ip: 10.0.200.98
         password: PasswordBase64
@@ -163,7 +162,7 @@ kubeadm join 127.0.0.1:6443 --token n6hdw6.jbr9778iqoebekyv --discovery-token-ca
 [root@attlee]# ./edgeadm join 106.52.199.103:6443 --token n6hdw6.jbr9778iqoebekyv --discovery-token-ca-cert-hash sha256:b1a00ff33fba4f9a6e63ebbee777120bfbe252a27eeb86d78eaa44799c7a9415 --install-pkg-path ./kube-linux-amd64-v1.20.6.tar.gz
 ```
 
-更好资料可产看[用edgeadm一键安装边缘独立Kubernetes 集群](https://github.com/superedge/superedge/blob/main/docs/installation/install_edge_kubernetes_CN.md)。
+更好资料可产看[Addon SuperEdge 让原生Kuberntes集群具备边缘能力](https://github.com/superedge/superedge/blob/main/docs/installation/addon_superedge_CN.md)。
 
 ## 5. Plan
 
