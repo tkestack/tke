@@ -212,7 +212,7 @@ export function createVM({
             },
 
             volumeMode: item.volumeMode,
-            storageClass: item.storageClass
+            storageClassName: item.storageClass
           },
 
           source:
