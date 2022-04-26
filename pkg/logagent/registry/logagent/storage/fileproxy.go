@@ -3,11 +3,12 @@ package storage
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"time"
+
+	"k8s.io/apimachinery/pkg/api/errors"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -51,7 +52,7 @@ func (r *LogfileProxyREST) Connect(ctx context.Context, clusterName string, opts
 		return nil, errors.NewInternalError(fmt.Errorf("unable to get host ip with config %+v", *proxyOpts))
 	}
 	return &logFileProxyHandler{
-		location:  &url.URL{Scheme: "http", Host: hostIP + ":8090"},
+		location:  &url.URL{Scheme: "http", Host: hostIP + ":" + util.LogagentPort},
 		namespace: proxyOpts.Namespace,
 		pod:       proxyOpts.Pod,
 		container: proxyOpts.Container,
