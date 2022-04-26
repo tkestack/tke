@@ -135,7 +135,7 @@ module.exports = ({ version, mode }) => ({
       '@tencent/qcloud-redux-query': path.resolve(__dirname, '../lib/ff-redux/libs/qcloud-redux-query/'),
       '@tencent/qcloud-redux-workflow': path.resolve(__dirname, '../lib/ff-redux/libs/qcloud-redux-workflow/'),
       '@': path.resolve(__dirname, '../'),
-      moment: path.resolve(__dirname, '../node_modules/dayjs'),
+      // moment: path.resolve(__dirname, '../node_modules/dayjs'),
       '@tencent/tea-component': path.resolve(__dirname, '../node_modules/tea-component'),
       '@tencent/tea-component/lib/*': path.resolve(__dirname, '../node_modules/tea-component/es/*')
     }
