@@ -20,7 +20,8 @@ export interface ChartInstancesPanelProps {
     list: Array<any>;
   };
   projectId: string;
-  platformType: any
+  platformType: any;
+  children?: React.ReactNode;
 }
 
 interface ChartInstancesPanelState {

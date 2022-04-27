@@ -1,6 +1,6 @@
 import * as React from "react";
 import classnames from "classnames";
-import { BaseReactProps } from "tea-components/libs/types/BaseReactProps";
+import { BaseReactProps } from "../../tea-components/libs/types/BaseReactProps";
 
 export interface BubbleProps extends BaseReactProps {
     /**

@@ -524,9 +524,8 @@ export default abstract class Graph {
         this._options.axisColor
       );
       // 刻度值
-      const labelText = visibleLabels.length < 10? dayjs(label).format("MM-DD HH:mm"): utils.TIME.FormatTime(label)
       this._mainPanel.drawText(
-        labelText,
+        utils.TIME.FormatTime(label),
         xAxisTickMark,
         textY,
         this._options.fontColor,
