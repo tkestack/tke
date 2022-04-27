@@ -106,7 +106,7 @@ export namespace CHART_PANEL {
       return `${temp}${unit[unitRound]}`;
     }
     const period = Period(startTime, endTime);
-    const l = moment(endTime).diff(moment(startTime));
+    const l = moment(endTime).diff(moment(startTime)) / 1000;
     return periods.filter(d => d>=period && d < l).map(item => {
       return {
         value: item as any,

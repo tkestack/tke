@@ -1,9 +1,9 @@
 import * as React from "react";
-import { Icon, Table, StatusTip, TableAddon, Button, Form, Select, TagSearchBox } from "@tencent/tea-component";
-import { TagSearchBox as SingleTagSearchBox } from "tea-components/tagsearchbox/index";
-import Chart from "charts/index";
+import { Icon, Table, StatusTip, TableAddon, Button, Form, Select, TagSearchBox } from "tea-component";
+import { TagSearchBox as SingleTagSearchBox } from "tea-component";
+import Chart from "../../charts/index";
 import { ModelType } from "core/model";
-import * as utils from "core/utils";
+import * as utils from "../../core/utils";
 import PureChart from "./PureChart";
 import { STORE } from "../helper";
 import { Kilobyte, QUERY } from "../constants";

@@ -18,8 +18,6 @@
     "paths": {
       "@i18n/translation": ["i18n/translation/zh.js"],
       "@i18n/translation_en": ["i18n/translation/en.js"],
-      "@tea/app": ["./node_modules/@tencent/tea-app"],
-      "@tea/app/*": ["./node_modules/@tencent/tea-app/lib/*"],
       "@tea/component": ["./node_modules/tea-component/lib"],
       "@tea/component/*": ["./node_modules/tea-component/es/*"],
       "d3": ["./node_modules/d3"],
@@ -40,7 +38,9 @@
       "@tencent/qcloud-redux-workflow": ["./lib/ff-redux/libs/qcloud-redux-workflow/"],
       "@/*": ["./*"],
       "@tencent/tea-component": ["./node_modules/tea-component"],
-      "@tencent/tea-component/*": ["./node_modules/tea-component/*"]
+      "@tencent/tea-component/*": ["./node_modules/tea-component/*"],
+      "@tencent/tchart": ["./tencent/tchart/src/panel/index.tsx"],
+      "@tencent/tea-app/*": ["./tencent/tea-app/*"]
     }
   },
   "exclude": ["node_modules", "dist", "build", "develop", "loader", "public", "webpack", "tencent"],

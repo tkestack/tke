@@ -26,7 +26,7 @@ import { TipDialog } from '@src/modules/common';
 import { Button, Alert, Text } from '@tencent/tea-component';
 import { PersistentEvent } from '@src/modules/persistentEvent';
 // 公有云的图表组件为异步加载，这里为了减少路径配置，还是保留为同步加载，预先import即可变成不split
-import '@tencent/tchart/build/ChartsComponents';
+// import '@tencent/tchart/build/ChartsComponents';
 import { PlatformTypeEnum } from './config';
 
 const ApplicationPromise = import(/* webpackPrefetch: true */ './src/modules/cluster/index.project');

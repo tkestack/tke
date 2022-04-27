@@ -1,5 +1,5 @@
 import * as React from "react";
-import Chart from "charts/index";
+import Chart from "../../charts/index";
 import { Kilobyte } from "../constants";
 import { CHART_PANEL } from "../core";
 

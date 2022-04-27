@@ -1,20 +1,20 @@
-import { ColorTypes } from 'charts/index';
+import { ColorTypes } from '../charts/index';
 import * as React from "react";
 
-import { setLocale } from "@tencent/tea-component/lib/i18n";
+import { setLocale } from "tea-component/lib/i18n";
 
 import { ChartFilterPanelProps } from "./containers/Filter";
 import { ChartInstancesPanelProps } from "./containers/Instances";
 import { ChartPanelProps } from "./containers/Pure";
 
-setLocale((window as any).VERSION);
+// setLocale((window as any).VERSION);
 export { request } from "../tce/request";
 export { TransformField } from "./helper";
 
 export const ChartPanel = dynamicComponent("ChartPanel");
 export const ChartFilterPanel = dynamicComponent("ChartFilterPanel");
 export const ChartInstancesPanel = dynamicComponent("ChartInstancesPanel");
-export { ColorTypes } from "charts/index";
+export { ColorTypes } from "../charts/index";
 export default ChartPanel;
 
 /**
