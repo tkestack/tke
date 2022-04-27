@@ -26,6 +26,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/cloudindustry"
 
 	"github.com/casbin/casbin/v2"
 	casbinlog "github.com/casbin/casbin/v2/log"
@@ -182,6 +183,11 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		}
 	case ldap.ConnectorType:
 		err = setupLDAPConnector(opts.Auth)
+		if err != nil {
+			return nil, err
+		}
+	case cloudindustry.ConnectorType:
+		err = setupCloudIndustryConnector(opts.Auth)
 		if err != nil {
 			return nil, err
 		}
@@ -362,11 +368,30 @@ func setupLDAPConnector(auth *options.AuthOptions) error {
 	if err != nil {
 		return err
 	}
+	identityprovider.SetIdentityProvider(auth.InitTenantID, idp)
+	return nil
+}
 
-	if _, ok := identityprovider.GetIdentityProvider(auth.InitTenantID); !ok {
-		identityprovider.SetIdentityProvider(auth.InitTenantID, idp)
+func setupCloudIndustryConnector(auth *options.AuthOptions) error {
+	log.Info("setup cloud industry connector", log.Any("tenantID", auth.InitTenantID))
+	const errFmt = "failed to load cloud industry config file %s, error %v"
+	// compute absolute path based on current working dir
+	cloudIndustryConfigFile, err := filepath.Abs(auth.CloudIndustryConfigFile)
+	if err != nil {
+		return fmt.Errorf(errFmt, cloudIndustryConfigFile, err)
 	}
 
+	bytes, err := ioutil.ReadFile(cloudIndustryConfigFile)
+	var sdkConfig cloudindustry.SDKConfig
+	if err := json.Unmarshal(bytes, &sdkConfig); err != nil {
+		return fmt.Errorf(errFmt, cloudIndustryConfigFile, err)
+	}
+
+	idp, err := cloudindustry.NewCloudIndustryIdentityProvider(auth.InitTenantID, auth.InitIDPAdmins, &sdkConfig)
+	if err != nil {
+		return err
+	}
+	identityprovider.SetIdentityProvider(auth.InitTenantID, idp)
 	return nil
 }
 
@@ -383,20 +408,25 @@ func setupDefaultClient(store dexstorage.Storage, auth *options.AuthOptions) err
 			continue
 		}
 	}
+	cli := dexstorage.Client{
+		ID:           auth.InitClientID,
+		Secret:       auth.InitClientSecret,
+		Name:         auth.InitClientID,
+		RedirectURIs: auth.InitClientRedirectUris,
+	}
 	if !exists {
-		cli := dexstorage.Client{
-			ID:           auth.InitClientID,
-			Secret:       auth.InitClientSecret,
-			Name:         auth.InitClientID,
-			RedirectURIs: auth.InitClientRedirectUris,
-		}
-
 		// Create a default connector
 		if err = store.CreateClient(cli); err != nil && err != dexstorage.ErrAlreadyExists {
 			return err
 		}
+	} else {
+		// Update default connector
+		if err = store.UpdateClient(auth.InitClientID, func(old dexstorage.Client) (dexstorage.Client, error) {
+			return cli, nil
+		}); err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 

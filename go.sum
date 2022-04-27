@@ -265,6 +265,8 @@ github.com/bugsnag/panicwrap v0.0.0-20151223152923-e2c28503fcd0/go.mod h1:D/8v3k
 github.com/caddyserver/caddy v1.0.5 h1:5B1Hs0UF2x2tggr2X9jL2qOZtDXbIWQb9YLbmlxHSuM=
 github.com/caddyserver/caddy v1.0.5/go.mod h1:AnFHB+/MrgRC+mJAvuAgQ38ePzw+wKeW0wzENpdQQKY=
 github.com/campoy/embedmd v1.0.0/go.mod h1:oxyr9RCiSXg0M3VJ3ks0UGfp98BpSSGr0kpiX3MzVl8=
+github.com/caryxychen/cloudindustry-sdk-go v1.0.0 h1:bsdS6BP49K+VCzHbsa+hUEmOfryXuDpxdFrA24Z67vo=
+github.com/caryxychen/cloudindustry-sdk-go v1.0.0/go.mod h1:ZqQXwtco2MGa2s6MAP6snl5bg/M+0rufb7E8zDuCn1M=
 github.com/casbin/casbin/v2 v2.1.2/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
 github.com/casbin/casbin/v2 v2.2.1 h1:ijrSMfBfbQlDc4LnMTGtGYWmhKuuR6RLSQRj8vHrMzc=
 github.com/casbin/casbin/v2 v2.2.1/go.mod h1:YcPU1XXisHhLzuxH9coDNf2FbKpjGlbCg3n9yuLkIJQ=
