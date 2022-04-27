@@ -285,7 +285,7 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
                 <Clip target="#pushRegistry2" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="pushRegistry2">{`sudo  tag nginx:latest ${this.props.dockerRegistryUrl.data}/[命名空间]/nginx:latest`}</p>
+                <p id="pushRegistry2">{`sudo nerdctl tag nginx:latest ${this.props.dockerRegistryUrl.data}/[命名空间]/nginx:latest`}</p>
               </code>
               <br />
               <code>

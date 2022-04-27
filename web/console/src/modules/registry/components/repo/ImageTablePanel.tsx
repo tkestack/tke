@@ -228,7 +228,7 @@ export class ImageTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#loginDocker" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="loginDocker">{`sudo docker login -u tkestack -p [访问凭证] ${this.props.dockerRegistryUrl.data}`}</p>
+                <p id="loginDocker">{`sudo nerdctl --insecure-registry login -u tkestack -p [访问凭证] ${this.props.dockerRegistryUrl.data}`}</p>
               </code>
               <p className="text-weak">
                 <Trans>
@@ -254,7 +254,7 @@ export class ImageTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#fetchRegistry" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="fetchRegistry">{`sudo docker pull ${this.props.dockerRegistryUrl.data}/${this.props.route.queries['nsName']}/nginx:latest`}</p>
+                <p id="fetchRegistry">{`sudo nerdctl --insecure-registry pull ${this.props.dockerRegistryUrl.data}/${this.props.route.queries['nsName']}/nginx:latest`}</p>
               </code>
               <p className="text-weak">
                 {t('以拉取 {{namespace}} 命名空间下名为 nginx 的镜像仓库内版本为 latest 的容器镜像为例', {
@@ -272,14 +272,14 @@ export class ImageTablePanel extends React.Component<RootProps, any> {
                 <Clip target="#pushRegistry2" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="pushRegistry2">{`sudo docker tag nginx:latest ${this.props.dockerRegistryUrl.data}/${this.props.route.queries['nsName']}/nginx:latest`}</p>
+                <p id="pushRegistry2">{`sudo nerdctl tag nginx:latest ${this.props.dockerRegistryUrl.data}/${this.props.route.queries['nsName']}/nginx:latest`}</p>
               </code>
               <br />
               <code>
                 <Clip target="#pushRegistry3" className="copy-btn">
                   <Trans>复制</Trans>
                 </Clip>
-                <p id="pushRegistry3">{`sudo docker push ${this.props.dockerRegistryUrl.data}/${this.props.route.queries['nsName']}/nginx:latest`}</p>
+                <p id="pushRegistry3">{`sudo nerdctl --insecure-registry push ${this.props.dockerRegistryUrl.data}/${this.props.route.queries['nsName']}/nginx:latest`}</p>
               </code>
               <p className="text-weak">
                 <Trans>
