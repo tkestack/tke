@@ -1,4 +1,4 @@
-import { CHART } from 'core/theme';
+import { CHART } from './theme';
 import { GRAPH } from './utils';
 
 

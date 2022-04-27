@@ -8,7 +8,6 @@
   },
   "scripts": {
     "preinstall": "rm -rf node_modules",
-    "postinstall": "cp -r ./tencent/ ./node_modules/@tencent",
     "prestart-tke": "npm  install",
     "start-tke": "webpack server  --config ./webpack/webpack.dev.js --progress --color --env version=tke",
     "prestart-project": "npm install",
@@ -111,6 +110,8 @@
     "gulp-uglify": "^3.0.2",
     "html-webpack-plugin": "^5.3.1",
     "husky": "^6.0.0",
+    "less": "^4.1.2",
+    "less-loader": "^10.2.0",
     "lint-staged": "^11.0.0",
     "prettier": "^2.3.2",
     "readable-stream": "^3.6.0",

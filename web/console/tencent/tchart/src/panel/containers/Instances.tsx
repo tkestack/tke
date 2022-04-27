@@ -1,11 +1,11 @@
 import * as React from "react";
-import { Toolbar } from "../components/Toolbar";
+import { Toolbar } from "../components/toolbar";
 import MetricCharts from "../components/MetricCharts";
 import InstanceList, { ColumnType } from "../components/InstanceList";
 import { TIME_PICKER, QUERY } from "../constants";
 import { NameValueType, CHART_PANEL } from "../core";
 import { Period, TransformField } from "../helper";
-import { Select } from "@tencent/tea-component";
+import { Select } from "tea-component";
 
 require("./Instances.less");
 
@@ -20,7 +20,7 @@ export interface ChartInstancesPanelProps {
     list: Array<any>;
   };
   projectId: string;
-  platformType: 
+  platformType: any
 }
 
 interface ChartInstancesPanelState {

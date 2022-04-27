@@ -1,6 +1,6 @@
 import * as React from "react";
 import classNames from "classnames";
-import { OnOuterClick } from "tea-components/libs/decorators/OnOuterClick";
+import { OnOuterClick } from "../libs/decorators/OnOuterClick";
 import { Bubble, BubbleWrapper } from "../bubble";
 import * as ReactDOM from "react-dom";
 
