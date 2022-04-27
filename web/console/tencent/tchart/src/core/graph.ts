@@ -5,6 +5,7 @@ import * as utils from "./utils";
 import { COLORS, LINE, CHART } from "./theme";
 import { FormatStringNoHTMLSharp, GRAPH } from "./utils";
 import { OverlayModel, Model, SeriesModel } from "./model";
+import dayjs from 'dayjs'
 
 /**
  * 设置options后要先进行相关参数的计算，在 setOptions 方法中进行。
@@ -523,8 +524,9 @@ export default abstract class Graph {
         this._options.axisColor
       );
       // 刻度值
+      const labelText = visibleLabels.length < 10? dayjs(label).format("MM-DD HH:mm"): utils.TIME.FormatTime(label)
       this._mainPanel.drawText(
-        utils.TIME.FormatTime(label),
+        labelText,
         xAxisTickMark,
         textY,
         this._options.fontColor,
