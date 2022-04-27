@@ -37,6 +37,8 @@ type IDTokenClaims struct {
 
 // FederatedIDClaims represents the extension struct of claims.
 type FederatedIDClaims struct {
+	// 租户ID
 	ConnectorID string `json:"connector_id,omitempty"`
+	// 用户ID
 	UserID      string `json:"user_id,omitempty"`
 }

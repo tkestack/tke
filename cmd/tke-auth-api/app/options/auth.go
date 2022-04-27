@@ -21,6 +21,7 @@ package options
 import (
 	"fmt"
 	"time"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/cloudindustry"
 
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/ldap"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/local"
@@ -30,43 +31,46 @@ import (
 )
 
 const (
-	flagAuthAssetsPath             = "assets-path"
-	flagAuthIDTokenTimeout         = "id-token-timeout"
-	flagAuthInitTenantType         = "init-tenant-type"
-	flagAuthInitTenantID           = "init-tenant-id"
-	flagAuthInitIDPAdmins          = "init-idp-administrators"
-	flagAuthLDAPConfigFile         = "ldap-config-file"
-	flagAuthInitClientID           = "init-client-id"
-	flagAuthInitClientSecret       = "init-client-secret"
-	flagAuthInitClientRedirectUris = "init-client-redirect-uris"
-	flagAuthPasswordGrantConnID    = "password-grant-conn-id"
+	flagAuthAssetsPath              = "assets-path"
+	flagAuthIDTokenTimeout          = "id-token-timeout"
+	flagAuthInitTenantType          = "init-tenant-type"
+	flagAuthInitTenantID            = "init-tenant-id"
+	flagAuthInitIDPAdmins           = "init-idp-administrators"
+	flagAuthLDAPConfigFile          = "ldap-config-file"
+	flagAuthCloudIndustryConfigFile = "cloudindustry-config-file"
+	flagAuthInitClientID            = "init-client-id"
+	flagAuthInitClientSecret        = "init-client-secret"
+	flagAuthInitClientRedirectUris  = "init-client-redirect-uris"
+	flagAuthPasswordGrantConnID     = "password-grant-conn-id"
 )
 
 const (
-	configAuthAssetsPath             = "auth.assets_path"
-	configAuthIDTokenTimeout         = "auth.id_token_timeout"
-	configAuthInitTenantType         = "auth.init_tenant_type"
-	configAuthInitTenantID           = "auth.init_tenant_id"
-	configAuthInitIDPAdmins          = "auth.init_idp_administrators"
-	configAuthLDAPConfigFile         = "auth.ldap_config_file"
-	configAuthInitClientID           = "auth.init_client_id"
-	configAuthInitClientSecret       = "auth.init_client_secret"
-	configAuthInitClientRedirectUris = "auth.init_client_redirect_uris"
-	configAuthPasswordGrantConnID    = "auth.password_grant_conn_id"
+	configAuthAssetsPath              = "auth.assets_path"
+	configAuthIDTokenTimeout          = "auth.id_token_timeout"
+	configAuthInitTenantType          = "auth.init_tenant_type"
+	configAuthInitTenantID            = "auth.init_tenant_id"
+	configAuthInitIDPAdmins           = "auth.init_idp_administrators"
+	configAuthLDAPConfigFile          = "auth.ldap_config_file"
+	configAuthCloudIndustryConfigFile = "auth.cloudindustry_config_file"
+	configAuthInitClientID            = "auth.init_client_id"
+	configAuthInitClientSecret        = "auth.init_client_secret"
+	configAuthInitClientRedirectUris  = "auth.init_client_redirect_uris"
+	configAuthPasswordGrantConnID     = "auth.password_grant_conn_id"
 )
 
 // AuthOptions contains configuration items related to auth attributes.
 type AuthOptions struct {
-	AssetsPath             string
-	IDTokenTimeout         time.Duration
-	InitTenantType         string
-	InitTenantID           string
-	InitIDPAdmins          []string
-	LdapConfigFile         string
-	InitClientID           string
-	InitClientSecret       string
-	InitClientRedirectUris []string
-	PasswordGrantConnID    string
+	AssetsPath              string
+	IDTokenTimeout          time.Duration
+	InitTenantType          string
+	InitTenantID            string
+	InitIDPAdmins           []string
+	LdapConfigFile          string
+	CloudIndustryConfigFile string
+	InitClientID            string
+	InitClientSecret        string
+	InitClientRedirectUris  []string
+	PasswordGrantConnID     string
 }
 
 // NewAuthOptions creates a AuthOptions object with default parameters.
@@ -102,8 +106,12 @@ func (o *AuthOptions) AddFlags(fs *pflag.FlagSet) {
 	_ = viper.BindPFlag(configAuthInitIDPAdmins, fs.Lookup(flagAuthInitIDPAdmins))
 
 	fs.String(flagAuthLDAPConfigFile, o.LdapConfigFile,
-		"Config file path for ldap ldap, must specify if init-tenant-type is ldap.")
+		"Config file path for ldap identity provider, must specify if init-tenant-type is ldap.")
 	_ = viper.BindPFlag(configAuthLDAPConfigFile, fs.Lookup(flagAuthLDAPConfigFile))
+
+	fs.String(flagAuthCloudIndustryConfigFile, o.CloudIndustryConfigFile,
+		"Config file path for cloud industry identity provider, must specify if init-tenant-type is cloudindustry.")
+	_ = viper.BindPFlag(configAuthCloudIndustryConfigFile, fs.Lookup(flagAuthCloudIndustryConfigFile))
 
 	fs.String(flagAuthInitClientID, o.InitClientID,
 		"Default client id will be created when started.")
@@ -140,6 +148,12 @@ func (o *AuthOptions) ApplyFlags() []error {
 	if o.InitTenantType == ldap.ConnectorType && o.LdapConfigFile == "" {
 		errs = append(errs, fmt.Errorf("--%s must be specified for ldap type tenant", flagAuthLDAPConfigFile))
 	}
+
+	o.CloudIndustryConfigFile = viper.GetString(configAuthCloudIndustryConfigFile)
+	if o.InitTenantType == cloudindustry.ConnectorType && o.CloudIndustryConfigFile == "" {
+		errs = append(errs, fmt.Errorf("--%s must be specified for ldap type tenant", flagAuthCloudIndustryConfigFile))
+	}
+
 	o.InitTenantID = viper.GetString(configAuthInitTenantID)
 	if len(o.InitTenantID) == 0 {
 		errs = append(errs, fmt.Errorf("--%s must be specified", flagAuthInitTenantID))

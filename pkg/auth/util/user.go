@@ -257,8 +257,8 @@ func IsPlatformAdministrator(authClient authversionedclient.AuthV1Interface, use
 			log.Errorf("get IdentityProviders failed: %v", err)
 			return false
 		}
-		administrators := idp.Spec.Administrators
-		for _, admin := range administrators {
+		log.Debugf("userName '%s', administrator '%v'", user.Spec.Name, idp.Spec.Administrators)
+		for _, admin := range idp.Spec.Administrators {
 			if admin == user.Spec.Name {
 				return true
 			}

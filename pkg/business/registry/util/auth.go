@@ -64,6 +64,7 @@ func FilterWithUser(ctx context.Context,
 			).String(),
 		})
 		if err != nil {
+			log.Warnf("failed to list user for tenant '%s', err '%v'", tenantID, err)
 			return false, nil, err
 		}
 		for _, user := range userList.Items {
