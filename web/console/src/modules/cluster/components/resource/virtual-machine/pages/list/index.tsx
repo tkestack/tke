@@ -165,7 +165,7 @@ export const VMListPanel = ({ route }) => {
 
   return (
     <>
-      <VMListActionPanel route={route} reFetch={reFetch} />
+      <VMListActionPanel route={route} reFetch={reFetch} vmList={vmList ?? []} />
       <Table
         columns={columns}
         records={vmList ?? []}

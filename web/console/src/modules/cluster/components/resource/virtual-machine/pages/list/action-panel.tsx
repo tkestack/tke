@@ -1,26 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Justify, Button, Select, TagSearchBox, Text } from 'tea-component';
-import { useRecoilValueLoadable, useRecoilState } from 'recoil';
-import { namespaceListState, namespaceSelectionState } from '../../store/base';
+import { useRecoilValueLoadable, useRecoilState, useRecoilValue } from 'recoil';
+import { namespaceListState, namespaceSelectionState, clusterIdState } from '../../store/base';
 import { router } from '@src/modules/cluster/router';
+import { VmMonitorDialog } from '../../components';
 
-export const VMListActionPanel = ({ route, reFetch }) => {
+export const VMListActionPanel = ({ route, reFetch, vmList }) => {
   const namespaceListLoadable = useRecoilValueLoadable(namespaceListState);
   const [namespaceSelection, setNamespaceSelection] = useRecoilState(namespaceSelectionState);
+
+  const clusterId = useRecoilValue(clusterIdState);
 
   return (
     <Table.ActionPanel>
       <Justify
         left={
-          <Button
-            type="primary"
-            onClick={() => {
-              const urlParams = router.resolve(route);
-              router.navigate(Object.assign({}, urlParams, { mode: 'create' }), route.queries);
-            }}
-          >
-            新建
-          </Button>
+          <>
+            <Button
+              type="primary"
+              onClick={() => {
+                const urlParams = router.resolve(route);
+                router.navigate(Object.assign({}, urlParams, { mode: 'create' }), route.queries);
+              }}
+            >
+              新建
+            </Button>
+
+            <VmMonitorDialog clusterId={clusterId} namespace={namespaceSelection} vmList={vmList} />
+          </>
         }
         right={
           <>
