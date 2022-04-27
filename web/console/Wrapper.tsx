@@ -579,9 +579,9 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
         }
         right={
           <React.Fragment>
-            <NavMenu.Item>
+            {/* <NavMenu.Item>
               <ExternalLink href={'https://tkestack.github.io/docs/'}>容器服务帮助手册</ExternalLink>
-            </NavMenu.Item>
+            </NavMenu.Item> */}
 
             <NavMenu.Item
               type="dropdown"
