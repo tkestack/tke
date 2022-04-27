@@ -97,7 +97,7 @@ module.exports = ({ version, mode }) => ({
       {
         test: /\.(js|jsx)$/,
         use: ['thread-loader', 'babel-loader'],
-        exclude: [path.resolve(__dirname, '../node_modules')]
+        exclude: [path.resolve(__dirname, '../node_modules'), path.resolve(__dirname, '../tencent/tea-app')]
       },
 
       {
