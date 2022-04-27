@@ -19,8 +19,8 @@ import * as React from 'react';
 import { Card, Row, Col, MetricsBoard, Icon, Text, Bubble } from '@tencent/tea-component';
 import { ClusterOverview } from '../models/RootState';
 export function ClusterOverviewPanel(props: { clusterData: ClusterOverview }) {
-  let { clusterData } = props;
-  let isLodingDone = !!clusterData;
+  const { clusterData } = props;
+  const isLodingDone = !!clusterData;
 
   function projectRender(count) {
     if (count === -1) {
@@ -109,7 +109,7 @@ export function ClusterOverviewPanel(props: { clusterData: ClusterOverview }) {
               }
             />
           </Col>
-          <Col>
+          {/* <Col>
             <MetricsBoard
               title="业务"
               value={
@@ -127,7 +127,7 @@ export function ClusterOverviewPanel(props: { clusterData: ClusterOverview }) {
                 )
               }
             />
-          </Col>
+          </Col> */}
         </Row>
       </Card.Body>
     </Card>

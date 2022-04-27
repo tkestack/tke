@@ -324,10 +324,10 @@ export const ServiceWorkloadList = [
     value: 'daemonset',
     name: 'DaemonSet'
   },
-  {
-    value: 'tapp',
-    name: 'TApp'
-  },
+  // {
+  //   value: 'tapp',
+  //   name: 'TApp'
+  // },
   {
     value: 'vmi',
     name: 'VirtualMachines'

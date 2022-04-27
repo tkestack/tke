@@ -59,7 +59,7 @@ const mapDispatchToProps = dispatch =>
 @((router.serve as any)())
 class OverviewApp extends React.Component<RootProps, {}> {
   render() {
-    let { clusterOverview } = this.props;
+    const { clusterOverview } = this.props;
     return (
       <ContentView>
         <ContentView.Header>
@@ -67,7 +67,7 @@ class OverviewApp extends React.Component<RootProps, {}> {
         </ContentView.Header>
         <ContentView.Body>
           <Row>
-            <Col span={18}>
+            <Col>
               <ClusterOverviewPanel
                 clusterData={clusterOverview.object && clusterOverview.object.data ? clusterOverview.object.data : null}
               />
@@ -75,10 +75,10 @@ class OverviewApp extends React.Component<RootProps, {}> {
                 clusterData={clusterOverview.object && clusterOverview.object.data ? clusterOverview.object.data : null}
               />
             </Col>
-            <Col span={6}>
+            {/* <Col span={6}>
               <QuickHelpPanel />
               <TipsPanel />
-            </Col>
+            </Col> */}
           </Row>
         </ContentView.Body>
       </ContentView>

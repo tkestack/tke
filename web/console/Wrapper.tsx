@@ -80,16 +80,16 @@ const commonRouterConfig: RouterConfig[] = [
     title: '集群管理',
     watchModule: ConsoleModuleEnum.PLATFORM
   },
-  {
-    url: '/tkestack/project',
-    title: '业务管理',
-    watchModule: ConsoleModuleEnum.Business
-  },
-  {
-    url: '/tkestack/addon',
-    title: '扩展组件',
-    watchModule: ConsoleModuleEnum.PLATFORM
-  },
+  // {
+  //   url: '/tkestack/project',
+  //   title: '业务管理',
+  //   watchModule: ConsoleModuleEnum.Business
+  // },
+  // {
+  //   url: '/tkestack/addon',
+  //   title: '扩展组件',
+  //   watchModule: ConsoleModuleEnum.PLATFORM
+  // },
   {
     title: '组织资源',
     watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.Auth],
@@ -177,11 +177,11 @@ const commonRouterConfig: RouterConfig[] = [
         title: '日志采集',
         watchModule: ConsoleModuleEnum.LogAgent
       },
-      {
-        url: '/tkestack/persistent-event',
-        title: '事件持久化',
-        watchModule: ConsoleModuleEnum.PLATFORM
-      },
+      // {
+      //   url: '/tkestack/persistent-event',
+      //   title: '事件持久化',
+      //   watchModule: ConsoleModuleEnum.PLATFORM
+      // },
       {
         url: '/tkestack/audit',
         title: '审计记录',
