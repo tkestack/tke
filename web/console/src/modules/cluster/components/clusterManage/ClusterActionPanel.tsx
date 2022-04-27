@@ -37,11 +37,11 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class ClusterActionPanel extends React.Component<RootProps, any> {
   downloadHandle(clusters: Cluster[]) {
-    let rows = [];
-    let head = ['ID', t('集群状态'), t('K8S版本'), t('集群类型'), t('创建时间')];
+    const rows = [];
+    const head = ['ID', t('集群状态'), t('K8S版本'), t('集群类型'), t('创建时间')];
 
     clusters.forEach((item: Cluster) => {
-      let row = [
+      const row = [
         item.metadata.name,
         item.status.phase,
         item.status.version,
@@ -55,26 +55,26 @@ export class ClusterActionPanel extends React.Component<RootProps, any> {
   }
 
   render() {
-    let { actions, cluster, route } = this.props;
+    const { actions, cluster, route } = this.props;
 
-    let bubbleContent = null;
+    const bubbleContent = null;
 
     return (
       <Table.ActionPanel>
         <Justify
-          left={
-            <Bubble placement="right" content={bubbleContent}>
-              <Button type="primary" onClick={() => router.navigate({ sub: 'create' }, { rid: route.queries['rid'] })}>
-                {t('导入集群')}
-              </Button>
-              <Button
-                type="primary"
-                onClick={() => router.navigate({ sub: 'createIC' }, { rid: route.queries['rid'] })}
-              >
-                {t('新建独立集群')}
-              </Button>
-            </Bubble>
-          }
+          // left={
+          //   <Bubble placement="right" content={bubbleContent}>
+          //     <Button type="primary" onClick={() => router.navigate({ sub: 'create' }, { rid: route.queries['rid'] })}>
+          //       {t('导入集群')}
+          //     </Button>
+          //     <Button
+          //       type="primary"
+          //       onClick={() => router.navigate({ sub: 'createIC' }, { rid: route.queries['rid'] })}
+          //     >
+          //       {t('新建独立集群')}
+          //     </Button>
+          //   </Bubble>
+          // }
           right={
             <React.Fragment>
               <SearchBox

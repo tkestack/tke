@@ -46,9 +46,9 @@ export class EditResourceChannel extends EditResource {
         <Form.Item label={t('渠道')}>
           <Radio.Group value={resource.properties.spec.pick} onChange={onChange(resource.properties.spec)}>
             <Radio name="smtp">{t('邮件')}</Radio>
-            <Radio name="tencentCloudSMS">{t('短信')}</Radio>
+            {/* <Radio name="tencentCloudSMS">{t('短信')}</Radio>
             <Radio name="wechat">{t('微信公众号')}</Radio>
-            <Radio name="webhook">{t('webhook')}</Radio>
+            <Radio name="webhook">{t('webhook')}</Radio> */}
           </Radio.Group>
         </Form.Item>
         {this.renderFields(resource.properties.spec.properties[resource.properties.spec['pick']])}

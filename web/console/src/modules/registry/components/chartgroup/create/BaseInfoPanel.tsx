@@ -107,7 +107,7 @@ export class BaseInfoPanel extends React.Component<RootProps, {}> {
             value={chartGroupCreation.spec.visibility}
             options={[
               { value: 'User', text: '指定用户' },
-              { value: 'Project', text: '指定业务' },
+              // { value: 'Project', text: '指定业务' },
               { value: 'Public', text: '公共' }
             ]}
             onChange={value => {

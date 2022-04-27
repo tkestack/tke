@@ -155,7 +155,7 @@ export class EditResourceContainerItem extends React.Component<ContainerItemProp
 
                   <EditResourceContainerLimitItem cKey={cKey} />
 
-                  <FormItem label={t('GPU限制')} isShow={canUseGpu || canUseGpuManager}>
+                  <FormItem label={t('GPU限制')} isShow={false && (canUseGpu || canUseGpuManager)}>
                     {canUseGpuManager ? (
                       <React.Fragment>
                         <Row>
