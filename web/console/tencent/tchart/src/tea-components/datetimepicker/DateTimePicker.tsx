@@ -1,6 +1,6 @@
 import * as React from 'react';
 import classNames from 'classnames';
-import { OnOuterClick } from "tea-components/libs/decorators/OnOuterClick";
+import { OnOuterClick } from "../libs/decorators/OnOuterClick";
 import { SingleDatePicker, SingleDatePickerValue, SingleDatePickerRange } from './SingleDatePicker';
 import { TimePicker, TimePickerValue, TimePickerRange } from '../timepicker';
 import * as languages from '../../i18n';

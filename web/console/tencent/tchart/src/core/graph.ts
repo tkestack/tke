@@ -3,8 +3,9 @@ import Tooltip, { TooltipContentType } from "./tooltip";
 import Event from "./event";
 import * as utils from "./utils";
 import { COLORS, LINE, CHART } from "./theme";
-import { FormatStringNoHTMLSharp, GRAPH } from "core/utils";
-import { OverlayModel, Model, SeriesModel } from "core/model";
+import { FormatStringNoHTMLSharp, GRAPH } from "./utils";
+import { OverlayModel, Model, SeriesModel } from "./model";
+import dayjs from 'dayjs'
 
 /**
  * 设置options后要先进行相关参数的计算，在 setOptions 方法中进行。

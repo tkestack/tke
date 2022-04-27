@@ -1,6 +1,6 @@
 import * as React from "react";
-import { Card, Form, Select } from "@tencent/tea-component";
-import { Toolbar } from "../components/Toolbar";
+import { Card, Form, Select } from "tea-component";
+import { Toolbar } from "../components/toolbar";
 import PureChart from "../components/PureChart";
 import { TransformField } from "../helper";
 import { TIME_PICKER, QUERY } from "../constants";
