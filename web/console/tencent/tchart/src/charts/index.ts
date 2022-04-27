@@ -1,13 +1,13 @@
-import LineChart from "charts/line";
-import AreaChart from "charts/area";
-import BarChart from "charts/bar";
-import SeriesChart from "charts/series";
-import { COLORS } from "core/theme";
+import LineChart from "./line";
+import AreaChart from "./area";
+import BarChart from "./bar";
+import SeriesChart from "./series";
+import { COLORS } from "../core/theme";
 
 
 export const ColorTypes = COLORS.Types;
 
-export { ModelType } from "core/model";
+export { ModelType } from "../core/model";
 /**
  * 图表类型
  */

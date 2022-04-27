@@ -1,6 +1,6 @@
 import * as React from "react";
-import { Icon, Card, TagSearchBox, Select, Form, Button } from "@tencent/tea-component";
-import { Toolbar } from "../components/Toolbar";
+import { Icon, Card, TagSearchBox, Select, Form, Button } from "tea-component";
+import { Toolbar } from "../components/toolbar";
 import { FilterTableChart } from "../components/FilterTableChart";
 import { CHART_PANEL, NameValueType } from "../core";
 import { CHART } from "../constants";

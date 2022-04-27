@@ -1,5 +1,5 @@
 import moment from 'moment';
-import { ModelType } from 'core/model';
+import { ModelType } from '../core/model';
 import { Period } from './helper';
 import { OneDayMillisecond, QUERY } from './constants';
 import { request } from '../tce/request';
@@ -10,7 +10,7 @@ import { request } from '../tce/request';
 
 // 基本的名值类型
 export interface NameValueType {
-  name: string;
+  name?: string;
   value: string;
 }
 
@@ -25,7 +25,7 @@ export namespace CHART_PANEL {
    */
   export interface MetricType {
     expr: string;
-    thousands: number;
+    thousands?: number;
     alias: string;
     unit?: string;
     storeKey?: string;                      // 传递key则缓存上次某指标图表搜索条件
@@ -106,7 +106,7 @@ export namespace CHART_PANEL {
       return `${temp}${unit[unitRound]}`;
     }
     const period = Period(startTime, endTime);
-    const l = moment(endTime).diff(moment(startTime));
+    const l = moment(endTime).diff(moment(startTime)) / 1000;
     return periods.filter(d => d>=period && d < l).map(item => {
       return {
         value: item as any,

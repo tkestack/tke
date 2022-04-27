@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations under the License.
  */
 // 导入依赖
-import { i18n } from '@tea/app';
+import { i18n } from '@tencent/tea-app/lib';
 // 导入词条
 import { translation } from '@i18n/translation';
 

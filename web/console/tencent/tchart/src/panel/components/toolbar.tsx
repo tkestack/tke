@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { DateTimePicker } from 'tea-components/datetimepicker/index';
+import { DateTimePicker } from '../../tea-components/datetimepicker/index';
 import { TIME_PICKER } from '../constants';
 
 

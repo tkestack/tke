@@ -97,12 +97,17 @@ module.exports = ({ version, mode }) => ({
       {
         test: /\.(js|jsx)$/,
         use: ['thread-loader', 'babel-loader'],
-        exclude: [path.resolve(__dirname, '../node_modules')]
+        exclude: [path.resolve(__dirname, '../node_modules'), path.resolve(__dirname, '../tencent/tea-app')]
       },
 
       {
         test: /\.css$/,
         use: ['style-loader', 'css-loader']
+      },
+
+      {
+        test: /\.less$/,
+        use: ['style-loader', 'css-loader', 'less-loader']
       }
     ]
   },
@@ -114,8 +119,6 @@ module.exports = ({ version, mode }) => ({
       // 国际化语言包覆盖
       '@i18n/translation': path.resolve(__dirname, `../i18n/translation/zh.js`),
       '@i18n/translation_en': path.resolve(__dirname, `../i18n/translation/en.js`),
-      '@tea/app': path.resolve(__dirname, '../node_modules/@tencent/tea-app'),
-      '@tea/app/*': path.resolve(__dirname, '../node_modules/@tencent/tea-app/lib/*'),
       '@tea/component': path.resolve(__dirname, '../node_modules/tea-component/es'),
       '@tea/component/*': path.resolve(__dirname, '../node_modules/tea-component/es/*'),
       '@paas/paas-lib': path.resolve(__dirname, '../lib'),
@@ -137,7 +140,9 @@ module.exports = ({ version, mode }) => ({
       '@': path.resolve(__dirname, '../'),
       // moment: path.resolve(__dirname, '../node_modules/dayjs'),
       '@tencent/tea-component': path.resolve(__dirname, '../node_modules/tea-component'),
-      '@tencent/tea-component/lib/*': path.resolve(__dirname, '../node_modules/tea-component/es/*')
+      '@tencent/tea-component/lib/*': path.resolve(__dirname, '../node_modules/tea-component/es/*'),
+      '@tencent/tchart': path.resolve(__dirname, '../tencent/tchart/src/panel/index.tsx'),
+      '@tencent/tea-app': path.resolve(__dirname, '../tencent/tea-app')
     }
   },
 

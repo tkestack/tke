@@ -1,4 +1,4 @@
-import Graph from "core/graph";
+import Graph from "../core/graph";
 
 
 /**
