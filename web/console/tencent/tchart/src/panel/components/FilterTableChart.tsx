@@ -1,14 +1,16 @@
 import * as React from "react";
 import { Icon, Table, StatusTip, TableAddon, Button, Form, Select, TagSearchBox } from "tea-component";
-import { TagSearchBox as SingleTagSearchBox } from "tea-component";
+import { TagSearchBox as SingleTagSearchBox , } from "tea-component";
 import Chart from "../../charts/index";
-import { ModelType } from "core/model";
+import { ModelType } from "../../core/model";
 import * as utils from "../../core/utils";
 import PureChart from "./PureChart";
 import { STORE } from "../helper";
 import { Kilobyte, QUERY } from "../constants";
 import { CHART_PANEL, NameValueType } from "../core";
 import * as languages from "../../i18n";
+
+
 
 const version = (window as any).VERSION || "zh";
 const language = languages[version];
@@ -234,7 +236,7 @@ export class FilterTableChart extends React.Component<FilterTableChartProps, Fil
     // 生成维度和筛选条件选项
     const dimensionOptions = dimensions.map(item => {
       return {
-        type: "onlyKey",
+        type: "single",
         key: item.value,
         name: item.name,
         value: item.value
@@ -255,8 +257,8 @@ export class FilterTableChart extends React.Component<FilterTableChartProps, Fil
           <Form.Item label="维度" style={{ width: "calc(100% - 300px)" }}>
             <SingleTagSearchBox
               minWidth={"100%"}
-              attributes={dimensionOptions}
-              tipZh={"请选择维度"}
+              attributes={dimensionOptions as any}
+              tips={"请选择维度"}
               value={tagDimensions}
               onChange={tags => {
                 if (dimensionOptions.length === 0) {
@@ -273,7 +275,7 @@ export class FilterTableChart extends React.Component<FilterTableChartProps, Fil
                 this.updateState({ tagDimensions });
               }}
             />
-            />
+            
           </Form.Item>
           <Form.Item label="统计粒度">
             <Select
@@ -306,7 +308,7 @@ export class FilterTableChart extends React.Component<FilterTableChartProps, Fil
           <Form.Item label="筛选条件" style={{ width: "100%" }}>
             <TagSearchBox
               minWidth={"100%"}
-              attributes={conditionOptions}
+              attributes={conditionOptions as any}
               value={tagConditions}
               onChange={tags => {
                 if (conditionOptions.length === 0) {
