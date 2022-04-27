@@ -39,7 +39,7 @@ interface ChartActionState {
 export class ChartActionPanel extends React.Component<RootProps, ChartActionState> {
   constructor(props, context) {
     super(props, context);
-    let { route } = props;
+    const { route } = props;
     this.state = {
       scene: 'all',
       projectID: ''
@@ -49,13 +49,13 @@ export class ChartActionPanel extends React.Component<RootProps, ChartActionStat
 
   render() {
     const { actions, route, chartList, projectList } = this.props;
-    let urlParam = router.resolve(route);
+    const urlParam = router.resolve(route);
 
-    let { scene, projectID } = this.state;
-    let sceneOptions = [
+    const { scene, projectID } = this.state;
+    const sceneOptions = [
       { value: 'all', text: t('所有模板') },
       { value: 'user', text: t('用户模板') },
-      { value: 'project', text: t('业务模板') },
+      // { value: 'project', text: t('业务模板') },
       { value: 'public', text: t('公共模板') }
     ];
 
