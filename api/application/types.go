@@ -260,6 +260,7 @@ const (
 	AppTypeHelmV3 AppType = "HelmV3"
 )
 
+// +k8s:conversion-gen:explicit-from=net/url.Values
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // RollbackProxyOptions is the query options to an app rollback proxy call.
