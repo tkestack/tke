@@ -148,6 +148,7 @@ module.exports = ({ version, mode }) => ({
 
   plugins: [
     new ForkTsCheckerWebpackPlugin({
+      async: false,
       eslint: {
         files: './src/**/*.{ts,tsx,js,jsx}'
       },
@@ -187,7 +188,5 @@ module.exports = ({ version, mode }) => ({
         ])
   ],
 
-  stats: {
-    warningsFilter: /export .* was not found in/
-  }
+  ignoreWarnings: [/export .* was not found in/]
 });
