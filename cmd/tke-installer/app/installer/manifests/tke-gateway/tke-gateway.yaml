@@ -12,14 +12,16 @@ spec:
   selector:
     app: tke-gateway
   ports:
-    - name: http
-      protocol: TCP
-      port: 80
-      targetPort: 80
-    - name: https
-      protocol: TCP
-      port: 443
-      targetPort: 443
+  - name: http
+    nodePort: 31180
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  - name: https
+    nodePort: 31443
+    port: 443
+    protocol: TCP
+    targetPort: 443
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -36,7 +38,6 @@ spec:
         app: tke-gateway
     spec:
       dnsPolicy: ClusterFirstWithHostNet
-      hostNetwork: true
       nodeSelector:
         node-role.kubernetes.io/master: ""
       containers:
