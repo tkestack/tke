@@ -143,5 +143,6 @@ var (
 		"Storage.InfluxDB.Servers[*].TimeoutSeconds",
 		"Storage.InfluxDB.Servers[*].Username",
 		"Storage.Thanos.Servers[*].Address",
+		"Storage.InfluxDB.RetentionDays",
 	)
 )
