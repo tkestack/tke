@@ -21,12 +21,13 @@ package metric
 import (
 	"encoding/json"
 	"fmt"
-	influxclient "github.com/influxdata/influxdb1-client/v2"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sort"
 	"strings"
 	"time"
+
+	influxclient "github.com/influxdata/influxdb1-client/v2"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/monitor"
 	"tkestack.io/tke/pkg/monitor/storage/types"
 	"tkestack.io/tke/pkg/monitor/util"
@@ -100,7 +101,8 @@ func (s *InfluxDB) buildMetricsRequest(query *monitor.MetricQuery) (map[string]s
 				cluster = v.Value
 				continue
 			}
-			conditionStr += fmt.Sprintf("%s%s'%s' and ", v.Key, v.Expr, v.Value)
+			//change all key from key to "key" in where clause to avoid passing a keyword in influxdb
+			conditionStr += fmt.Sprintf("\"%s\"%s'%s' and ", v.Key, v.Expr, v.Value)
 		}
 	}
 	cluster = util.RenameInfluxDB(cluster)
@@ -121,8 +123,18 @@ func (s *InfluxDB) buildMetricsRequest(query *monitor.MetricQuery) (map[string]s
 	}
 
 	// parse group by
-	byStr := strings.Join(query.GroupBy, ",")
+	byStr := ""
+	for _, item := range query.GroupBy {
+		//replace name to "name", for name is keyward in influx db, name is tag in vm metrics
+		//influxdb keywards refers to https://github.com/influxdata/influxql/blob/master/README.md#keywords
+		if item == "name" {
+			item = "\"name\""
+		}
+		byStr += fmt.Sprintf("%s,", item)
+	}
+	byStr = strings.Trim(byStr, ",")
 	byStr = strings.ReplaceAll(byStr, "timestamp", "time")
+
 	if len(byStr) == 0 {
 		byStr = "time(60s)"
 	}

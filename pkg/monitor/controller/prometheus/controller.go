@@ -1268,7 +1268,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 				rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 					{
 						SourceLabels: []string{"__name__"},
-						Regex:        "istio_(.*)|envoy_(.*)|pilot_(.*)|k8s_(.*)|apiserver_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)|grpc_(.*)|process_(.*)|scheduler_(.*)|workqueue_(.*)|rest_client_requests_(.*)|go_goroutines|kubelet_(.*)|volume_manager_(.*)|storage_operation_(.*)|coredns_(.*)|up",
+						Regex:        "istio_(.*)|envoy_(.*)|pilot_(.*)|k8s_(.*)|apiserver_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)|grpc_(.*)|process_(.*)|scheduler_(.*)|workqueue_(.*)|rest_client_requests_(.*)|go_goroutines|kubelet_(.*)|volume_manager_(.*)|storage_operation_(.*)|coredns_(.*)|up|vm_(.*)",
 						Action:       "keep",
 					},
 				}
@@ -1284,7 +1284,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
-					Regex:        "istio_(.*)|envoy_(.*)|pilot_(.*)|project_(.*)|apiserver_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)|grpc_(.*)|process_(.*)|scheduler_(.*)|workqueue_(.*)|rest_client_requests_(.*)|go_goroutines|kubelet_(.*)|volume_manager_(.*)|storage_operation_(.*)|coredns_(.*)|up",
+					Regex:        "istio_(.*)|envoy_(.*)|pilot_(.*)|project_(.*)|apiserver_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)|grpc_(.*)|process_(.*)|scheduler_(.*)|workqueue_(.*)|rest_client_requests_(.*)|go_goroutines|kubelet_(.*)|volume_manager_(.*)|storage_operation_(.*)|coredns_(.*)|up|vm_(.*)",
 					Action:       "keep",
 				},
 			}
@@ -1299,7 +1299,7 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 			rw.WriteRelabelConfigs = []monitoringv1.RelabelConfig{
 				{
 					SourceLabels: []string{"__name__"},
-					Regex:        "istio_(.*)|envoy_(.*)|pilot_(.*)|project_(.*)|apiserver_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)|grpc_(.*)|process_(.*)|scheduler_(.*)|workqueue_(.*)|rest_client_requests_(.*)|go_goroutines|kubelet_(.*)|volume_manager_(.*)|storage_operation_(.*)|coredns_(.*)|up",
+					Regex:        "istio_(.*)|envoy_(.*)|pilot_(.*)|project_(.*)|apiserver_(.*)|k8s_(.*)|kube_pod_labels|kube_node_labels|kube_namespace_labels|etcd_(.*)|grpc_(.*)|process_(.*)|scheduler_(.*)|workqueue_(.*)|rest_client_requests_(.*)|go_goroutines|kubelet_(.*)|volume_manager_(.*)|storage_operation_(.*)|coredns_(.*)|up|vm_(.*)",
 					Action:       "keep",
 				},
 			}

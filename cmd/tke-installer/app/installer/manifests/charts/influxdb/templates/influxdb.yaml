@@ -84,3 +84,18 @@ spec:
       storage: 40Gi
   storageClassName: {{ .Values.nfsStorageClassName }}
 {{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: influxdb
+  namespace: tke
+spec:
+  ports:
+    - name: remote-write
+      port: 8086
+      targetPort: 8086
+      protocol: TCP
+  selector:
+    app: influxdb
