@@ -323,7 +323,7 @@ func (t *TKE) TKERegistryAPI() (option Options) {
 }
 
 func (t *TKE) getLocalInfluxdbAddress() string {
-	var influxdbAddress string = "http://influxdb.tke.svc.cluster.local:8086"
+	var influxdbAddress string = fmt.Sprintf("http://%s:30086", t.Servers[0])
 	if t.Para.Config.HA != nil && len(t.Para.Config.HA.VIP()) > 0 {
 		vip := t.Para.Config.HA.VIP()
 		influxdbAddress = fmt.Sprintf("http://%s:30086", vip) // influxdb svc must be set as NodePort type, and the nodePort is 30086

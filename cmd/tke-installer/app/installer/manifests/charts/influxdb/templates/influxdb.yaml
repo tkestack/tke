@@ -117,9 +117,7 @@ spec:
       port: 8086
       targetPort: 8086
       protocol: TCP
-{{- if .Values.HA }}
       nodePort: 30086
   type: NodePort
-{{- end }}
   selector:
     app: influxdb
