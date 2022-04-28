@@ -57,6 +57,7 @@ import (
 	certutil "k8s.io/client-go/util/cert"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationclientset "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryclientset "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
@@ -316,6 +317,10 @@ func (t *TKE) initSteps() {
 			}...)
 		}
 		t.steps = append(t.steps, []types.Handler{
+			{
+				Name: "Install ingress-nginx chart",
+				Func: t.installIngressChart,
+			},
 			{
 				Name: "Install tke-gateway chart",
 				Func: t.installTKEGatewayChart,
@@ -1553,10 +1558,17 @@ func (t *TKE) prepareImages(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		cmdString := fmt.Sprintf("nerdctl --insecure-registry --namespace k8s.io pull %s", images.Get().TKEGateway.FullName())
-		_, err = machineSSH.CombinedOutput(cmdString)
-		if err != nil {
-			return errors.Wrap(err, machine.IP)
+		needPushImages := []string{images.Get().TKEGateway.FullName(),
+			images.Get().TKERegistryAPI.FullName(),
+			images.Get().TKERegistryController.FullName(),
+			images.Get().NginxIngress.FullName(),
+			images.Get().KebeWebhookCertgen.FullName()}
+		for _, name := range needPushImages {
+			cmdString := fmt.Sprintf("nerdctl --insecure-registry --namespace k8s.io pull %s", name)
+			_, err = machineSSH.CombinedOutput(cmdString)
+			if err != nil {
+				return errors.Wrap(err, machine.IP)
+			}
 		}
 	}
 	return nil
@@ -2192,6 +2204,61 @@ func (t *TKE) installTKERegistryChart(ctx context.Context) error {
 				return false, nil
 			}
 			return apiOk && controllerOk, nil
+		},
+	}
+	return t.installPlatformApp(ctx, tkeRegistry)
+}
+
+func (t *TKE) installIngressChart(ctx context.Context) error {
+	rawValues := `
+controller:
+  name: controller
+  image:
+    registry: registry.tke.com
+    image: library/ingress-nginx-controller
+    tag: "v1.1.3"
+    digest: ""
+    pullPolicy: IfNotPresent
+    runAsUser: 101
+    allowPrivilegeEscalation: true
+  containerName: controller
+  containerPort:
+    http: 80
+    https: 443
+  dnsPolicy: ClusterFirstWithHostNet
+  hostNetwork: true
+  ingressClass: nginx
+  kind: DaemonSet
+  nodeSelector:
+    node-role.kubernetes.io/master: ""
+  service:
+    enabled: false
+  admissionWebhooks:
+    patch:
+      enabled: true
+      image:
+        registry: registry.tke.com
+        image: library/kube-webhook-certgen
+        tag: "v1.1.1"
+        digest: ""
+`
+	tkeRegistry := &types.PlatformApp{
+		HelmInstallOptions: &helmaction.InstallOptions{
+			Namespace:        t.namespace,
+			ReleaseName:      "ingress-nginx",
+			DependencyUpdate: false,
+			ChartPathOptions: helmaction.ChartPathOptions{},
+		},
+		LocalChartPath: constants.ChartDirName + "ingress-nginx/",
+		Enable:         true,
+		RawValues:      rawValues,
+		RawValuesType:  applicationv1.RawValuesTypeYaml,
+		ConditionFunc: func() (bool, error) {
+			ok, err := apiclient.CheckDaemonset(ctx, t.globalClient, t.namespace, "ingress-nginx-controller")
+			if err != nil {
+				return false, nil
+			}
+			return ok, nil
 		},
 	}
 	return t.installPlatformApp(ctx, tkeRegistry)
