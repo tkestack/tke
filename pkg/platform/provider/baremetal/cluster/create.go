@@ -752,7 +752,8 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 		return errors.Wrap(err, "parse schedulerPolicyConfig error")
 	}
 	auditWebhookConfig, err := template.ParseString(auditWebhookConfig, map[string]interface{}{
-		"AuditBackendAddress": p.config.Audit.Address,
+		// for ingress case, use gateway nodeport
+		"AuditBackendAddress": p.config.Audit.Address + ":31443",
 		"ClusterName":         c.Name,
 	})
 	if err != nil {

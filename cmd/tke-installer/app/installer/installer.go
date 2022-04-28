@@ -1700,6 +1700,8 @@ func (t *TKE) getTKEAuthAPIOptions(ctx context.Context) (map[string]interface{},
 	}
 	if t.Para.Config.HA != nil {
 		redirectHosts = append(redirectHosts, t.Para.Config.HA.VIP())
+		redirectHosts = append(redirectHosts, t.Para.Config.HA.VIP()+":31443")
+		redirectHosts = append(redirectHosts, t.Para.Config.HA.VIP()+":31180")
 	}
 	if t.Para.Cluster.Spec.PublicAlternativeNames != nil {
 		redirectHosts = append(redirectHosts, t.Para.Cluster.Spec.PublicAlternativeNames...)
