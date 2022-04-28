@@ -404,8 +404,10 @@ export const validatorActions = {
   _validateEsAddress(address: string) {
     let status = 0,
       message = '',
-      hostReg = /^((http|https):\/\/)((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d):([0-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-4]\d{4}|65[0-4]\d{2}|655[0-2]\d|6553[0-5])$/,
-      domainReg = /^((http|https):\/\/)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]:([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/;
+      hostReg =
+        /^((http|https):\/\/)((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d):([0-9]|[1-9]\d{1,3}|[1-5]\d{4}|6[0-4]\d{4}|65[0-4]\d{2}|655[0-2]\d|6553[0-5])$/,
+      domainReg =
+        /^((http|https):\/\/)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]:([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/;
 
     if (!address) {
       status = 2;
@@ -478,6 +480,7 @@ export const validatorActions = {
       logMode,
       isSelectedAllNamespace,
       containerLogs,
+      nodeLogPathType,
       nodeLogPath,
       metadatas,
       consumerMode,
@@ -507,7 +510,7 @@ export const validatorActions = {
         });
       }
     } else if (logMode === 'node') {
-      result = result && (await validatorActions._validateNodeLogPath(nodeLogPath)).status === 1;
+      result = result && nodeLogPathType && (await validatorActions._validateNodeLogPath(nodeLogPath)).status === 1;
       if (result && metadatas.length) {
         result = result && validatorActions._validateAllMetadataItem(metadatas);
       }

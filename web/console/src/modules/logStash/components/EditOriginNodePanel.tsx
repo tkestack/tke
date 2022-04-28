@@ -23,7 +23,7 @@ import { Button, Input, Text } from '@tea/component';
 import { FormPanel } from '@tencent/ff-component';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { Bubble, Icon } from '@tencent/tea-component';
+import { Bubble, Icon, Segment } from '@tencent/tea-component';
 
 import { LinkButton } from '../../common/components';
 import { allActions } from '../actions';
@@ -41,8 +41,8 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class EditOriginNodePanel extends React.Component<RootProps, any> {
   render() {
-    let { actions, logStashEdit } = this.props,
-      { v_nodeLogPath, nodeLogPath, metadatas, logMode } = logStashEdit;
+    const { actions, logStashEdit } = this.props,
+      { v_nodeLogPath, nodeLogPath, metadatas, logMode, nodeLogPathType } = logStashEdit;
 
     let isCanNotAdd = false;
     metadatas.forEach(item => {
@@ -54,6 +54,28 @@ export class EditOriginNodePanel extends React.Component<RootProps, any> {
     return (
       <FormPanel.Item label={t('日志源')} isShow={logMode === logModeList.node.value} style={{ minWidth: '550px' }}>
         <FormPanel isNeedCard={false} fixed style={{ minWidth: 600, padding: '30px' }}>
+          <FormPanel.Item
+            label={t('路径类型')}
+            required
+            validator={nodeLogPathType ? {} : { status: 2, message: t('路径类型必选!') }}
+          >
+            <Segment
+              value={nodeLogPathType}
+              onChange={(value: 'host' | 'container') => actions.editLogStash.setNodeLogPathType(value)}
+              options={[
+                {
+                  value: 'host',
+                  text: '主机路径'
+                },
+
+                {
+                  value: 'container',
+                  text: '容器路径'
+                }
+              ]}
+            />
+          </FormPanel.Item>
+
           <FormPanel.Item
             label={t('收集路径')}
             message={t('指定采集日志的文件路径，支持通配符(*)，支持通配符（*），必须以`/`开头')}
@@ -97,7 +119,7 @@ export class EditOriginNodePanel extends React.Component<RootProps, any> {
 
   /** 渲染metadata的编辑项 */
   private _renderMetadataItemList() {
-    let { actions, logStashEdit } = this.props,
+    const { actions, logStashEdit } = this.props,
       { metadatas } = logStashEdit;
 
     return metadatas.map((metadata, index) => {
