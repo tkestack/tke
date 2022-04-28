@@ -26,7 +26,7 @@ import { emptyTips, LinkButton } from '../../common/components';
 import { allActions } from '../actions';
 import { AlarmRecord } from '../models';
 import { dateFormatter } from '@helper/dateFormatter';
-const { useState, useEffect } = React;
+import { useRafInterval } from 'ahooks';
 
 export const AlarmRecordPanel = () => {
   const state = useSelector(state => state);
@@ -35,13 +35,17 @@ export const AlarmRecordPanel = () => {
   const { alarmRecord, route } = state;
   const selectedClusterId = route.queries.clusterId;
 
-  useEffect(() => {
-    if (selectedClusterId) {
-      actions.alarmRecord.applyFilter({ clusterID: selectedClusterId });
-    } else {
-      actions.alarmRecord.clear();
-    }
-  }, [selectedClusterId]);
+  useRafInterval(
+    () => {
+      if (selectedClusterId) {
+        actions.alarmRecord.applyFilter({ clusterID: selectedClusterId });
+      } else {
+        actions.alarmRecord.clear();
+      }
+    },
+    5000,
+    { immediate: true }
+  );
 
   const formatManager = managers => {
     if (managers) {
