@@ -79,7 +79,7 @@ export const RootReducer = combineReducers({
     actionType: ActionType.QueryNamespaceList
   }),
 
-  namespaceSelection: reduceToPayload(ActionType.NamespaceSelection, ''),
+  namespaceSelection: reduceToPayload(ActionType.NamespaceSelection, null),
 
   logQuery: generateQueryReducer({
     actionType: ActionType.QueryLogList

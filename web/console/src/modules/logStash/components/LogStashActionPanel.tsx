@@ -107,7 +107,7 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
   };
 
   render() {
-    let {
+    const {
       actions,
       clusterSelection,
       logQuery,
@@ -118,22 +118,22 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
       namespaceList,
       namespaceSelection
     } = this.props;
-    let { isBusiness } = this.state;
+    const { isBusiness } = this.state;
 
     let logAgentName = '';
     if (clusterSelection && clusterSelection[0]) {
       logAgentName = clusterSelection[0].spec.logAgentName;
     }
     // 判断当前是否能够新建日志收集规则
-    let { canCreate, tip } = isCanCreateLogStash(
+    const { canCreate, tip } = isCanCreateLogStash(
       clusterSelection[0],
       logList.data.records,
       isDaemonsetNormal,
       isOpenLogStash
     );
-    let ifFetchLogList = logAgentName || includes(canFetchLogList, isDaemonsetNormal.phase);
-    let handleNamespaceSwitched = namespaceSelection => {
-      let namespaceFound = namespaceList.data.records.find(item => item.namespace === namespaceSelection);
+    const ifFetchLogList = logAgentName || includes(canFetchLogList, isDaemonsetNormal.phase);
+    const handleNamespaceSwitched = namespaceSelection => {
+      const namespaceFound = namespaceList.data.records.find(item => item.namespace === namespaceSelection);
       actions.cluster.selectClusterFromNamespace(namespaceFound.cluster);
     };
 
@@ -145,7 +145,7 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
         return { ...gr, [cluster.metadata.name]: <Tooltip title={value}>{value}</Tooltip> };
       }, {});
 
-      let options = namespaceList.data.recordCount
+      const options = namespaceList.data.recordCount
         ? namespaceList.data.records.map(item => {
             const text = `${item.cluster.spec.displayName}-${item.namespace}`;
 
@@ -164,12 +164,12 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
         filter: (inputValue, { realText }: any) => (realText ? realText.includes(inputValue) : true)
       };
     } else {
-      let options = namespaceList.data.recordCount
+      const options = namespaceList.data.recordCount
         ? namespaceList.data.records.map((item, index) => ({
             value: item.name,
             text: item.name
           }))
-        : [{ value: '', text: t('无可用命名空间'), disabled: true }];
+        : [];
 
       selectProps = {
         options
@@ -204,6 +204,7 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
                   style={{ width: '130px', marginRight: '5px' }}
                   value={namespaceSelection}
                   placeholder={namespaceList.data.recordCount ? t('请选择命名空间') : t('无可用命名空间')}
+                  disabled={namespaceList.data.recordCount <= 0}
                   onChange={this.handleNamespaceChanged}
                 />
               </div>
@@ -255,9 +256,9 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
   }
 
   getList = namespaceValue => {
-    let { actions, namespaceList, route, namespaceSelection, isDaemonsetNormal, clusterSelection } = this.props;
-    let { isBusiness } = this.state;
-    let {
+    const { actions, namespaceList, route, namespaceSelection, isDaemonsetNormal, clusterSelection } = this.props;
+    const { isBusiness } = this.state;
+    const {
       namespace: { selectNamespace },
       cluster: { selectClusterFromNamespace },
       log: { applyFilter, fetch }
@@ -271,7 +272,7 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
     // 兼容业务侧对集群的处理，从命名空间关联到集群
     let namespace = namespaceValue;
     if (isBusiness) {
-      let namespaceFound = namespaceList.data.records.find(item => item.namespaceValue === namespaceValue);
+      const namespaceFound = namespaceList.data.records.find(item => item.namespaceValue === namespaceValue);
       if (namespaceFound !== undefined) {
         // 业务侧下再覆盖namespace
         namespace = namespaceFound.namespace;
@@ -281,7 +282,7 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
         selectClusterFromNamespace(namespaceFound.cluster);
       }
     }
-    let ifFetchLogList = logAgentName || includes(canFetchLogList, isDaemonsetNormal.phase);
+    const ifFetchLogList = logAgentName || includes(canFetchLogList, isDaemonsetNormal.phase);
     if (ifFetchLogList) {
       applyFilter({
         clusterId,
@@ -296,8 +297,8 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
   };
 
   private handleNamespaceChanged = value => {
-    let { actions, namespaceList, route, namespaceSelection, isDaemonsetNormal, clusterSelection } = this.props;
-    let {
+    const { actions, namespaceList, route, namespaceSelection, isDaemonsetNormal, clusterSelection } = this.props;
+    const {
       namespace: { selectNamespace },
       cluster: { selectClusterFromNamespace },
       log: { applyFilter, fetch }
@@ -335,11 +336,11 @@ export class LogStashActionPanel extends React.Component<RootProps, any> {
 
   /** 下载操作 */
   private _downloadHandle(logList: Log[], isDaemonsetNormal: LogDaemonSetStatus) {
-    let rows = [],
+    const rows = [],
       head = [t('名称'), t('状态'), t('日志类型'), t('命名空间'), t('创建时间')];
 
     logList.forEach((item: Log) => {
-      let row = [
+      const row = [
         item.metadata.name,
         collectorStatus[isDaemonsetNormal.phase].text,
         logModeMap[item.spec.input.type],

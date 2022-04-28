@@ -27,7 +27,7 @@ import { bindActionCreators, OperationState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 import { dateFormatter, RouteState } from '../../../../../../helpers';
-import { Clip, GridTable, HeadBubble, LinkButton } from '../../../../common/components';
+import { GridTable, HeadBubble, LinkButton } from '../../../../common/components';
 import { TableLayout } from '../../../../common/layouts';
 import { isEmpty } from '../../../../common/utils';
 import { execColumnWidth } from '../../../../common/utils/tea_adapter';
@@ -38,6 +38,8 @@ import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { IsInNodeManageDetail } from './ResourceDetail';
 import { PodTabel } from './ResourcePodTable';
+import { Copy } from 'tea-component';
+
 const moment = require('moment');
 moment.locale('zh-CN');
 
@@ -176,19 +178,21 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
         header: t('实例名称'),
         width: '10%',
         render: x => (
-          <Bubble content={x.metadata.name || null}>
-            <span id={x.id + ''} className="text-overflow m-width" style={{ maxWidth: '72%' }}>
-              <a
-                href="javascript:;"
-                title={x.metadata.name}
-                className={classnames('expander', { expanded: this._isExpanded(x.id + '') })}
-                onClick={() => this._toggle(x.id + '')}
-              >
-                {x.metadata.name}
-              </a>
-            </span>
-            <Clip target={'#' + x.id} className="hover-icon" />
-          </Bubble>
+          <>
+            <Bubble content={x.metadata.name || null}>
+              <span id={x.id + ''} className="text-overflow m-width" style={{ maxWidth: '72%' }}>
+                <a
+                  href="javascript:;"
+                  title={x.metadata.name}
+                  className={classnames('expander', { expanded: this._isExpanded(x.id + '') })}
+                  onClick={() => this._toggle(x.id + '')}
+                >
+                  {x.metadata.name}
+                </a>
+              </span>
+            </Bubble>
+            <Copy text={x?.metadata?.name} />
+          </>
         )
       },
       {
@@ -217,7 +221,7 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
             <span id={'nodeIp' + x.id} className="text-overflow m-width" title={x.status.hostIP || '-'}>
               {x.status.hostIP ? x.status.hostIP : '-'}
             </span>
-            <Clip target={'#nodeIp' + x.id} className="hover-icon" isShow={!!x.status.hostIP} />
+            {x?.status?.hostIP && <Copy text={x?.status?.hostIP} />}
           </div>
         )
       },
@@ -235,7 +239,7 @@ export class ResourcePodPanel extends React.Component<RootProps, ResourcePodPane
             >
               {x.status.podIP ? x.status.podIP : '-'}
             </span>
-            <Clip target={'#podIP' + x.id} className="hover-icon" isShow={!!x.status.podIP} />
+            {x?.status?.podIP && <Copy text={x?.status?.podIP} />}
           </div>
         )
       },
@@ -740,7 +744,10 @@ class ResourcePodContainerTable extends React.Component<ResourcePodContainerTabl
                         <span id={'cId' + container.id} className="text-overflow m-width" style={{ maxWidth: '74%' }}>
                           {containerStatus.length ? reduceContainerId(containerStatus, container.name) : '-'}
                         </span>
-                        <Clip target={'#cId' + container.id} className="hover-icon" />
+
+                        {containerStatus.length ? (
+                          <Copy text={reduceContainerId(containerStatus, container.name)} />
+                        ) : null}
                       </div>
                     </td>
 

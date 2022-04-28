@@ -81,7 +81,7 @@ export const logModeList = {
   // },
   node: {
     value: 'node',
-    name: '节点文件路径'
+    name: '文件路径'
   }
 };
 

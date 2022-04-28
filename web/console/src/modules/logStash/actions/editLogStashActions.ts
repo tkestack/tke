@@ -209,6 +209,14 @@ export const editLogStashActions = {
     };
   },
 
+  // 设置文件路径类型
+  setNodeLogPathType: (pathType: 'host' | 'container'): ReduxAction<string> => {
+    return {
+      type: ActionType.NodeLogPathType,
+      payload: pathType
+    };
+  },
+
   /** 输入主机文件的收集路径 */
   inputNodeLogPath: (path: string): ReduxAction<string> => {
     return {

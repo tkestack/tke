@@ -52,6 +52,7 @@ export const IsSelectedAllNamespace = 'IsSelectedAllNamespace';
 export const UpdateContainerLogs = 'UpdateContainerLogs';
 export const NodeLogPath = 'NodeLogPath';
 export const V_NodeLogPath = 'V_NodeLogPath';
+export const NodeLogPathType = 'NodeLogPathType';
 export const UpdateMetadata = 'UpdateMetadata';
 export const ChangeConsumerMode = 'ChangeConsumerMode';
 export const IsCanUseCkafka = 'IsCanUseCkafka';

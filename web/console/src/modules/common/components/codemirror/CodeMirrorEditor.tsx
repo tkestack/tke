@@ -191,7 +191,7 @@ export class CodeMirrorEditor extends React.Component<CodeMirrorEditorProps, Cod
               )}
 
               <li>
-                <Clip isShowTip={true} tipDirection="top" target="#copy-area" />
+                <Clip isShowTip={true} target="#copy-area" />
               </li>
             </ul>
           </div>

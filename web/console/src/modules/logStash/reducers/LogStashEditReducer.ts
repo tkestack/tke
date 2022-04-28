@@ -48,6 +48,8 @@ const TempReducer = combineReducers({
 
   v_nodeLogPath: reduceToPayload(ActionType.V_NodeLogPath, initValidator),
 
+  nodeLogPathType: reduceToPayload(ActionType.NodeLogPathType, null),
+
   metadatas: reduceToPayload(ActionType.UpdateMetadata, []),
 
   consumerMode: reduceToPayload(ActionType.ChangeConsumerMode, 'es'),
