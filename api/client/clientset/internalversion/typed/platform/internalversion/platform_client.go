@@ -134,7 +134,10 @@ func setConfigDefaults(config *rest.Config) error {
 	config.NegotiatedSerializer = scheme.Codecs
 
 	if config.QPS == 0 {
-		config.QPS = -1
+		config.QPS = 5
+	}
+	if config.Burst == 0 {
+		config.Burst = 10
 	}
 
 	return nil
