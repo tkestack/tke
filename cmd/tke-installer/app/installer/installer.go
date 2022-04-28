@@ -926,6 +926,9 @@ func (t *TKE) completeProviderConfigForRegistry() error {
 
 	if t.Para.Config.Registry.TKERegistry != nil {
 		ip, err := utilnet.GetSourceIP(t.Para.Cluster.Spec.Machines[0].IP)
+		if t.Para.Config.HA != nil && len(t.Para.Config.HA.VIP()) > 0 {
+			ip = t.Para.Config.HA.VIP()
+		}
 		if err != nil {
 			return errors.Wrap(err, "get ip for registry error")
 		}
@@ -2483,14 +2486,20 @@ func (t *TKE) preparePushImagesToTKERegistry(ctx context.Context) error {
 		t.Para.Config.Registry.Domain(),
 		constants.DefaultTeantID + "." + t.Para.Config.Registry.Domain(),
 	}
+
+	ip := t.servers[0]
+	if t.Para.Config.HA != nil && len(t.Para.Config.HA.VIP()) > 0 {
+		ip = t.Para.Config.HA.VIP()
+	}
+
 	for _, domain := range domains {
 		localHosts := hosts.LocalHosts{Host: domain, File: "hosts"}
-		err := localHosts.Set(t.servers[0])
+		err := localHosts.Set(ip)
 		if err != nil {
 			return err
 		}
 		localHosts.File = "/app/hosts"
-		err = localHosts.Set(t.servers[0])
+		err = localHosts.Set(ip)
 		if err != nil {
 			return err
 		}
@@ -2855,6 +2864,11 @@ func (t *TKE) setGlobalClusterHosts(ctx context.Context) error {
 		t.Cluster.Spec.TenantID + "." + t.Para.Config.Registry.Domain(),
 	}
 
+	ip := t.Cluster.Spec.Machines[0].IP
+	if t.Para.Config.HA != nil && len(t.Para.Config.HA.VIP()) > 0 {
+		ip = t.Para.Config.HA.VIP()
+	}
+
 	for _, machine := range t.Cluster.Spec.Machines {
 		sshConfig := &ssh.Config{
 			User:       machine.Username,
@@ -2870,7 +2884,7 @@ func (t *TKE) setGlobalClusterHosts(ctx context.Context) error {
 		}
 		for _, one := range domains {
 			remoteHosts := hosts.RemoteHosts{Host: one, SSH: s}
-			err := remoteHosts.Set(t.Cluster.Spec.Machines[0].IP)
+			err := remoteHosts.Set(ip)
 			if err != nil {
 				return err
 			}
