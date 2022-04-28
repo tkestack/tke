@@ -2,7 +2,6 @@ package options
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 
 	platformv1 "tkestack.io/tke/api/platform/v1"
@@ -159,7 +158,7 @@ func (t *TKE) TKEPlatformController() (option Options) {
 		if t.Para.Config.Monitor.InfluxDBMonitor != nil {
 			option["MonitorStorageType"] = "influxdb"
 			if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
-				option["MonitorStorageAddresses"] = fmt.Sprintf("http://%s:8086", t.Servers[0])
+				option["MonitorStorageAddresses"] = "http://influxdb.tke.svc.cluster.local:8086"
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor != nil {
 				address := t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.URL
 				if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username != "" {
@@ -247,7 +246,7 @@ func (t *TKE) TKEMonitorAPI() (option Options) {
 				option["StoragePassword"] = string(t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password)
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
 				// todo
-				option["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.Servers[0])
+				option["StorageAddress"] = "http://influxdb.tke.svc.cluster.local:8086"
 			}
 		}
 	}
@@ -275,7 +274,7 @@ func (t *TKE) TKEMonitorController() (option Options) {
 				option["StorageUsername"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username
 				option["StoragePassword"] = string(t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password)
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
-				option["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.Servers[0])
+				option["StorageAddress"] = "http://influxdb.tke.svc.cluster.local:8086"
 			}
 		}
 	}

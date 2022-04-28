@@ -1226,8 +1226,43 @@ groups:
 
   - record: k8s_component_etcd_version
     expr: label_replace(max(etcd_server_version) by (server_version),"gitVersion", "$1", "server_version", "(.*)")
-`
 
+  - record: vm_cpu_core_total
+    expr: count(count(kubevirt_vmi_vcpu_seconds) without (state)) by (name, namespace, node)
+
+  - record: vm_cpu_usage_rate
+    expr: (sum by (node, name, namespace)(rate(kubevirt_vmi_vcpu_seconds{state="running"}[5m])))*100
+
+  - record: vm_memory_total
+    expr: sum(kubevirt_vmi_memory_available_bytes) by (node, name, namespace)/(1024*1024)
+
+  - record: vm_memory_usage_rate
+    expr: (kubevirt_vmi_memory_available_bytes-kubevirt_vmi_memory_unused_bytes)*100 / on(node, name, namespace) kubevirt_vmi_memory_available_bytes
+  
+  - record: vm_network_transmit_bw
+    expr: (sum by (node, name, namespace, interface)(rate(kubevirt_vmi_network_transmit_bytes_total[5m])))*8/(1024*1024)
+  
+  - record: vm_network_receive_bw
+    expr: (sum by (node, name, namespace, interface)(rate(kubevirt_vmi_network_receive_bytes_total[5m])))*8/(1024*1024)
+
+  - record: vm_network_transmit_packets_rate
+    expr: sum by (node, name, namespace, interface)(rate(kubevirt_vmi_network_transmit_packets_total[5m]))
+
+  - record: vm_network_receive_packets_rate
+    expr: sum by (node, name, namespace, interface)(rate(kubevirt_vmi_network_receive_packets_total[5m]))
+
+  - record: vm_storage_read_bw
+    expr: sum by (node, name, namespace, drive)(rate(kubevirt_vmi_storage_read_traffic_bytes_total{drive!~"cloudinitdisk"}[5m]))/(1024*1024)
+
+  - record: vm_storage_write_bw
+    expr: sum by(node, name, namespace, drive)(rate(kubevirt_vmi_storage_write_traffic_bytes_total{drive!~"cloudinitdisk"}[5m]))/(1024*1024)
+
+  - record: vm_storage_read_iops
+    expr: sum by (node, name, namespace, drive)(rate(kubevirt_vmi_storage_iops_read_total{drive!~"cloudinitdisk"}[5m]))
+
+  - record: vm_storage_write_iops
+    expr: sum by (node, name, namespace, drive)(rate(kubevirt_vmi_storage_iops_write_total{drive!~"cloudinitdisk"}[5m]))
+`
 	return rules
 }
 
