@@ -297,6 +297,10 @@ func (t *TKE) initSteps() {
 	if t.Para.Config.Registry.TKERegistry != nil {
 		t.steps = append(t.steps, []types.Handler{
 			{
+				Name: "Prepare pull images",
+				Func: t.prepareImages,
+			},
+			{
 				Name: "Install tke-registry chart",
 				Func: t.installTKERegistryChart,
 			},
@@ -306,10 +310,6 @@ func (t *TKE) initSteps() {
 	if t.Para.Config.Gateway != nil {
 		if t.IncludeSelf {
 			t.steps = append(t.steps, []types.Handler{
-				{
-					Name: "Prepare images before stop local registry",
-					Func: t.prepareImages,
-				},
 				{
 					Name: "Stop local registry to give up 80/443 for tke-gateway",
 					Func: t.stopLocalRegistry,
