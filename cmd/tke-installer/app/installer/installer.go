@@ -921,9 +921,6 @@ func (t *TKE) completeProviderConfigForRegistry() error {
 
 	if t.Para.Config.Registry.TKERegistry != nil {
 		ip, err := utilnet.GetSourceIP(t.Para.Cluster.Spec.Machines[0].IP)
-		if t.Para.Config.HA != nil && len(t.Para.Config.HA.VIP()) > 0 {
-			ip = t.Para.Config.HA.VIP()
-		}
 		if err != nil {
 			return errors.Wrap(err, "get ip for registry error")
 		}
