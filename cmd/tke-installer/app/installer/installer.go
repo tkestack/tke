@@ -318,12 +318,12 @@ func (t *TKE) initSteps() {
 		}
 		t.steps = append(t.steps, []types.Handler{
 			{
-				Name: "Install ingress-nginx chart",
-				Func: t.installIngressChart,
-			},
-			{
 				Name: "Install tke-gateway chart",
 				Func: t.installTKEGatewayChart,
+			},
+			{
+				Name: "Install ingress-nginx chart",
+				Func: t.installIngressChart,
 			},
 		}...)
 	}
@@ -1600,15 +1600,15 @@ func (t *TKE) installTKEGatewayChart(ctx context.Context) error {
 
 	chartFilePath := constants.ChartDirName + "tke-gateway/"
 	if _, err := t.helmClient.InstallWithLocal(installOptions, chartFilePath); err != nil {
-		uninstallOptions := helmaction.UninstallOptions{
-			Timeout:     10 * time.Minute,
-			ReleaseName: "tke-gateway",
-			Namespace:   t.namespace,
-		}
-		reponse, err := t.helmClient.Uninstall(&uninstallOptions)
-		if err != nil {
-			return fmt.Errorf("%s uninstall fail, err = %s", reponse.Release.Name, err.Error())
-		}
+		// uninstallOptions := helmaction.UninstallOptions{
+		// 	Timeout:     10 * time.Minute,
+		// 	ReleaseName: "tke-gateway",
+		// 	Namespace:   t.namespace,
+		// }
+		// reponse, err := t.helmClient.Uninstall(&uninstallOptions)
+		// if err != nil {
+		// 	return fmt.Errorf("%s uninstall fail, err = %s", reponse.Release.Name, err.Error())
+		// }
 		return err
 	}
 
