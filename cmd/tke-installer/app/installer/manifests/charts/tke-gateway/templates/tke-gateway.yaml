@@ -123,6 +123,7 @@ metadata:
 spec:
   selector:
     app: tke-gateway
+  type: NodePort
   ports:
     - name: http
       nodePort: 31180

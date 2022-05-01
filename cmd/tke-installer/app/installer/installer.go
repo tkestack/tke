@@ -311,7 +311,7 @@ func (t *TKE) initSteps() {
 		if t.IncludeSelf {
 			t.steps = append(t.steps, []types.Handler{
 				{
-					Name: "Stop local registry to give up 80/443 for tke-gateway",
+					Name: "Stop local registry to give up 80/443 for ingress",
 					Func: t.stopLocalRegistry,
 				},
 			}...)
