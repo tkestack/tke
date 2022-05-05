@@ -1819,7 +1819,7 @@ func (t *TKE) getTKEPlatformControllerOptions(ctx context.Context) map[string]in
 		if t.Para.Config.Monitor.InfluxDBMonitor != nil {
 			options["monitorStorageType"] = "influxdb"
 			if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
-				options["monitorStorageAddresses"] = fmt.Sprintf("http://%s:8086", t.servers[0])
+				options["monitorStorageAddresses"] = "http://influxdb.tke.svc.cluster.local:8086"
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor != nil {
 				address := t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.URL
 				if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username != "" {
@@ -2040,7 +2040,7 @@ func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 				options["StoragePassword"] = string(t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password)
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
 				// todo
-				options["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.servers[0])
+				options["StorageAddress"] = "http://influxdb.tke.svc.cluster.local:8086"
 			}
 		} else if t.Para.Config.Monitor.ThanosMonitor != nil {
 			options["StorageType"] = "thanos"
@@ -2103,8 +2103,8 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 				}
 				params["MonitorStorageAddresses"] = address
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
-				params["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.servers[0])
-				params["MonitorStorageAddresses"] = fmt.Sprintf("http://%s:8086", t.servers[0])
+				params["StorageAddress"] = "http://influxdb.tke.svc.cluster.local:8086"
+				params["MonitorStorageAddresses"] = "http://influxdb.tke.svc.cluster.local:8086"
 			}
 		} else if t.Para.Config.Monitor.ThanosMonitor != nil {
 			params["StorageType"] = "thanos"
