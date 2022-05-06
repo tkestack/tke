@@ -360,7 +360,7 @@ func (c *Controller) handlePhase(ctx context.Context, key string, cachedApp *cac
 }
 
 func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedApp, app *applicationv1.App) (*applicationv1.App, error) {
-	if hasSynced(app) {
+	if app.Status.Phase == applicationv1.AppPhaseSucceeded && hasSynced(app) {
 		return app, nil
 	}
 	defer func() {
