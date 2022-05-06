@@ -24,7 +24,7 @@ import { router } from '../router';
 import * as WebAPI from '../WebAPI';
 
 type GetState = () => RootState;
-let rc = resourceConfig();
+const rc = resourceConfig();
 
 export const resourceActions = {
   channel: createFFListActionsFactory('channel'),
@@ -37,13 +37,14 @@ function createFFListActionsFactory(resourceName) {
   return createFFListActions<Resource, ResourceFilter>({
     actionName: resourceName,
     fetcher: async (query, getState: GetState, fetchOptions) => {
-      let resourceInfo: ResourceInfo = rc[resourceName];
-      let resourceItems = await WebAPI.fetchResourceList(query, resourceInfo);
+      const resourceInfo: ResourceInfo = rc[resourceName];
+      // 这里获取列表的时候都不需要namespace，但是template的resourceInfo上namespaces为true
+      const resourceItems = await WebAPI.fetchResourceList(query, { ...resourceInfo, namespaces: false });
 
-      let { route, receiverGroup } = getState();
-      let urlParams = router.resolve(route);
+      const { route, receiverGroup } = getState();
+      const urlParams = router.resolve(route);
       if (resourceName === 'receiver' && urlParams.resourceName === 'receiverGroup' && urlParams.mode === 'detail') {
-        let rg = receiverGroup.list.data.records.find(rg => rg.metadata.name === route.queries.resourceIns);
+        const rg = receiverGroup.list.data.records.find(rg => rg.metadata.name === route.queries.resourceIns);
         if (rg) {
           resourceItems.records = resourceItems.records.filter(item =>
             rg.spec.receivers.find(r => r === item.metadata.name)
@@ -56,12 +57,12 @@ function createFFListActionsFactory(resourceName) {
       }
 
       resourceItems.recordCount = resourceItems.records.length;
-      let response = resourceItems;
+      const response = resourceItems;
 
       // 告警编辑页里有receiver group 根据id过滤，选中对应id
       if (fetchOptions && fetchOptions.data) {
         fetchOptions.data.forEach(item => {
-          let finder = response.records.find(group => group.metadata.name === item);
+          const finder = response.records.find(group => group.metadata.name === item);
           finder && (finder.selected = true);
         });
       }
@@ -71,7 +72,7 @@ function createFFListActionsFactory(resourceName) {
       return getState()[resourceName];
     },
     onFinish: (record, dispatch) => {
-      let selects = record.data.records.filter(r => r.selected);
+      const selects = record.data.records.filter(r => r.selected);
       // 告警编辑页里有receiver group 根据id过滤，选中对应id
       if (selects) {
         dispatch(resourceActions[resourceName].selects(selects));

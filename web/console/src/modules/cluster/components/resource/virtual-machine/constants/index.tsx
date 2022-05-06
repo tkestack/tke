@@ -79,7 +79,7 @@ export const vmMonitorFields: Array<{
   },
 
   {
-    expr: mean('vm_cpu_usage'),
+    expr: mean('vm_cpu_usage_rate'),
     alias: 'CPU 使用率',
     unit: '%'
   },
@@ -91,19 +91,19 @@ export const vmMonitorFields: Array<{
   },
 
   {
-    expr: mean('vm_memory_usage'),
+    expr: mean('vm_memory_usage_rate'),
     alias: '内存使用率',
     unit: '%'
   },
 
   {
-    expr: mean('vm_network_transmit_bytes_bw'),
+    expr: mean('vm_network_transmit_bw'),
     alias: '网络上行带宽 （基于每个网卡）',
     unit: 'Mbps'
   },
 
   {
-    expr: mean('vm_network_receive_bytes_bw'),
+    expr: mean('vm_network_receive_bw'),
     alias: '网络下行带宽 （基于每个网卡）',
     unit: 'Mbps'
   },
