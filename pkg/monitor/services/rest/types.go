@@ -53,6 +53,7 @@ const (
 	alarmPolicyTypeCluster = "cluster"
 	alarmPolicyTypeNode    = "node"
 	alarmPolicyTypePod     = "pod"
+	alarmPolicyTypeVM      = "virtualMachine"
 	alarmPolicyTypeKey     = "alarmPolicyType"
 	alarmObjectsTypeKey    = "alarmObjectsType"
 	filterNamespaceKey     = "namespace"
@@ -350,6 +351,21 @@ func (r *AlarmMetric) GetExpr(alarmPolicy *AlarmPolicy) string {
 		} else {
 			metric = r.MetricName
 		}
+	case alarmPolicyTypeVM:
+		filter := MetricFilter{}
+		if alarmPolicy.AlarmPolicySettings.AlarmObjects != "" {
+			alarmObjects := strings.Split(alarmPolicy.AlarmPolicySettings.AlarmObjects, ",")
+			filter.WorkloadName = strings.Join(alarmObjects, "|")
+		}
+		if alarmPolicy.Namespace != "" {
+			filter.Namespace = alarmPolicy.Namespace
+		}
+		if filter.WorkloadName != "" || filter.Namespace != "" {
+			metric = fmt.Sprintf("%s{%s}", r.MetricName, filter.ToStr())
+			metric = strings.ReplaceAll(metric, "workload_name", "name") //In vm metrics label, use name to replace workload_name
+		} else {
+			metric = r.MetricName
+		}
 	}
 	var value string
 	b, err := parseBool(r.Evaluator.Value)
@@ -407,6 +423,10 @@ func (r *AlarmMetric) GetAnnotations(alarmPolicy *AlarmPolicy) map[string]string
 	annotations[alarmObjectsTypeKey] = alarmPolicySettings.AlarmObjectsType
 	annotations[measurementKey] = r.Measurement
 	annotations[valueKey] = valueStr
+
+	if r.Unit == "%" { // if value is a percentage type, format the value for readable
+		annotations[valueKey] = "{{ $value | printf \"%.2f\" }}"
+	}
 	annotations[metricDisplayNameKey] = r.MetricDisplayName
 
 	return annotations
