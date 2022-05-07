@@ -395,6 +395,11 @@ func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedAp
 		newStatus.LastTransitionTime = metav1.Now()
 		return c.updateStatus(ctx, app, &app.Status, newStatus)
 	}
+	app.Spec.Chart.ChartVersion = rel.Chart.Metadata.Version
+	_, err = c.client.ApplicationV1().Apps(app.Namespace).Update(ctx, app, metav1.UpdateOptions{})
+	if err != nil {
+		return app, fmt.Errorf("update chart version failed %v", err)
+	}
 
 	newStatus.Phase = applicationv1.AppPhaseSucceeded
 	newStatus.Message = ""
