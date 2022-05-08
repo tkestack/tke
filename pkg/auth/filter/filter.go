@@ -24,6 +24,7 @@ import (
 	"net/http/httputil"
 	"strconv"
 	"strings"
+	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"unicode"
 
 	"github.com/go-openapi/inflect"
@@ -37,6 +38,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	genericfilter "tkestack.io/tke/pkg/apiserver/filter"
 
 	"tkestack.io/tke/api/business"
 	"tkestack.io/tke/api/registry"
@@ -133,15 +135,32 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 			reason     string
 		)
 
+		tenantID := ""
+		extra := attributes.GetUser().GetExtra()
+		if len(extra) > 0 {
+			if tenantIDs, ok := extra[genericoidc.TenantIDKey]; ok {
+				if len(tenantIDs) > 0 {
+					tenantID = tenantIDs[0]
+				} else {
+					tenantID = "default"
+				}
+			}
+		}
+		find := false
+		if tenantID == "" {
+			find, tenantID = genericfilter.FindValueFromGroups(attributes.GetUser().GetGroups(), "tenant")
+			if find && tenantID == "" {
+				tenantID = "default"
+			}
+		}
+
 		// firstly check if resource is unprotected
 		authorized = UnprotectedAuthorized(attributes)
 		if authorized != authorizer.DecisionAllow {
-			authorized, reason, err = a.Authorize(ctx, attributes)
-		}
-
-		// secondly check k8s resource authz result
-		if authorized != authorizer.DecisionAllow {
-			attributes = ConvertTKEAttributes(ctx, attributes)
+			if tenantID != "" {
+				log.Debugf("TKEStack user '%v'", attributes.GetUser())
+				attributes = ConvertTKEAttributes(ctx, attributes)
+			}
 			authorized, reason, err = a.Authorize(ctx, attributes)
 		} else {
 			setK8sDecision(req, true)
@@ -194,7 +213,7 @@ func UnprotectedAuthorized(attributes authorizer.Attributes) authorizer.Decision
 }
 
 // specialSubResources contains resources which get verb use get instead of list
-var specialSubResources = sets.NewString("status", "log", "finalize")
+var specialSubResources = sets.NewString("status", "log", "finalize", "proxy")
 
 // ConvertTKEAttributes converts attributes parsed by apiserver compatible with casbin enforcer
 func ConvertTKEAttributes(ctx context.Context, attr authorizer.Attributes) authorizer.Attributes {
