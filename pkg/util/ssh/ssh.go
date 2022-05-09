@@ -358,10 +358,11 @@ func (s *SSH) newClient() (*ssh.Client, func(), error) {
 	}
 	client, err := s.dialer.Dial("tcp", s.addr(), config)
 	if err != nil {
-		err = wait.Poll(5*time.Second, time.Duration(s.Retry)*5*time.Second, func() (bool, error) {
+		wait.Poll(5*time.Second, time.Duration(s.Retry)*5*time.Second, func() (bool, error) {
 			if client, err = s.dialer.Dial("tcp", s.addr(), config); err != nil {
-				return false, err
+				return false, nil
 			}
+			err = nil
 			return true, nil
 		})
 	}
