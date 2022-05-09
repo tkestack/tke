@@ -59,7 +59,16 @@ export class AlarmPolicyTablePanel extends React.Component<RootProps, {}> {
         key: 'PolicyType',
         header: t('策略类型'),
         width: '8%',
-        render: x => (x.alarmPolicyType === 'cluster' ? t('集群') : x.alarmPolicyType === 'node' ? t('节点') : 'Pod')
+        render: x => {
+          const map = {
+            cluster: t('集群'),
+            node: t('节点'),
+            pod: t('Pod'),
+            virtualMachine: t('虚拟机')
+          };
+
+          return map?.[x?.alarmPolicyType] ?? '-';
+        }
       },
       {
         key: 'PolicyRule',

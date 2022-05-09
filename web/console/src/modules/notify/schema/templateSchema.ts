@@ -47,7 +47,12 @@ export const templateSchema = {
           properties: {
             body: { ...TYPES.string, required: true, placeholder: '请输入body', bodyTip: true },
             sign: { ...TYPES.string, required: true, placeholder: '请输入腾讯云短信服务签名ID', smsSignTip: true },
-            templateID: { ...TYPES.string, required: true, placeholder: '请输入腾讯云短信服务消息模板ID', smsTemplateIDTip: true }
+            templateID: {
+              ...TYPES.string,
+              required: true,
+              placeholder: '请输入腾讯云短信服务消息模板ID',
+              smsTemplateIDTip: true
+            }
           }
         },
         wechat: {
@@ -60,10 +65,16 @@ export const templateSchema = {
         },
         webhook: {
           properties: {
-            body: { ...TYPES.string, required: true, placeholder: '请输入body', bodyTip: true, value: '{{.summary}}' },
+            body: {
+              ...TYPES.string,
+              required: true,
+              placeholder: '请输入body,例如：{{.summary}}',
+              bodyTip: true,
+              value: ''
+            },
             header: { ...TYPES.string, required: true, placeholder: '请输入消息头' }
           }
-        },
+        }
       }
     }
   }

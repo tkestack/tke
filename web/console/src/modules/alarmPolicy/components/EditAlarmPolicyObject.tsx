@@ -27,14 +27,14 @@ import { RootProps } from './AlarmPolicyApp';
 
 export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
   renderPodList() {
-    let Tip = content => {
+    const Tip = content => {
       return (
         <div className="colony" style={{ fontSize: '12px' }}>
           <span>{content}</span>
         </div>
       );
     };
-    let { workloadList, alarmPolicyEdition, actions } = this.props;
+    const { workloadList, alarmPolicyEdition, actions } = this.props;
     if (workloadList.fetchState === FetchState.Fetching) {
       return Tip(t('加载中'));
     } else if (workloadList.fetchState === FetchState.Failed) {
@@ -43,37 +43,31 @@ export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
       return Tip(t('该命名空间下无workload'));
     } else {
       // 根据 PodList 初始化 checkedList
-      let checkedList = [];
-      let checkboxList = workloadList.data.records.map(workload => {
-        let checkbox = <Checkbox name={workload.metadata.name}>{workload.metadata.name}</Checkbox>;
-        if (alarmPolicyEdition.alarmObjects.find(object => object === workload.metadata.name)) {
-          checkedList.push(workload.metadata.name);
-        }
+      const workloadOptions = workloadList?.data?.records?.map(workload => workload?.metadata?.name) ?? [];
 
-        return checkbox;
-      });
+      const checkedList = alarmPolicyEdition?.alarmObjects?.filter(item => workloadOptions.includes(item));
+
       return (
         <Checkbox.Group
           onChange={items => {
-            // let checkedArray = items.map(item => item);
             actions.alarmPolicy.inputAlarmPolicyObjects(items);
           }}
           value={checkedList}
           layout="column"
         >
-          {checkboxList}
+          {workloadOptions.map(name => <Checkbox name={name}>{name}</Checkbox>) ?? null}
         </Checkbox.Group>
       );
     }
   }
 
   renderRadioList(type) {
-    let { alarmPolicyEdition, actions, namespaceList, addons } = this.props;
+    const { alarmPolicyEdition, actions, namespaceList, addons } = this.props;
     if (type === 'cluster' || type === '') {
       return <noscript />;
     }
-    let finalWorkloadTypeList = workloadTypeList.slice();
-    let finalWorkloadNsList = namespaceList.data.records.map(ns => ({
+    const finalWorkloadTypeList = workloadTypeList.slice();
+    const finalWorkloadNsList = namespaceList.data.records.map(ns => ({
       value: ns.name,
       label: ns.displayName
     }));
@@ -94,7 +88,7 @@ export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
         label: 'ALL'
       });
     }
-    let radioList: JSX.Element[] = [];
+    const radioList: JSX.Element[] = [];
     AlarmObjectsType[type].forEach((item, index) => {
       radioList.push(
         <div className="form-unit unit-group new-strategy-alarm-object">
@@ -177,9 +171,9 @@ export class EditAlarmPolicyObject extends React.Component<RootProps, {}> {
     return radioList;
   }
   render() {
-    let { actions, alarmPolicyEdition } = this.props;
+    const { actions, alarmPolicyEdition } = this.props;
 
-    let isShow = alarmPolicyEdition.alarmPolicyType !== 'cluster' && alarmPolicyEdition.alarmPolicyType !== '';
+    const isShow = alarmPolicyEdition.alarmPolicyType !== 'cluster' && alarmPolicyEdition.alarmPolicyType !== '';
     return (
       <FormItem isShow={isShow} label={t('告警对象')} isNeedFormInput={false}>
         <Radio.Group

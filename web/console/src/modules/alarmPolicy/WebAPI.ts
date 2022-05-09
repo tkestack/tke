@@ -47,14 +47,14 @@ function humanizeDuration4Time(initSecons: number) {
   let result = '';
 
   if (seconds > 3600) {
-    let hours = Math.floor(seconds / 3600);
+    const hours = Math.floor(seconds / 3600);
     result += hours >= 10 ? `${hours}:` : `0${hours}:`;
     seconds -= hours * 3600;
   } else {
     result += `00:`;
   }
   if (seconds > 60) {
-    let minutes = Math.floor(seconds / 60);
+    const minutes = Math.floor(seconds / 60);
     result += minutes >= 10 ? `${minutes}:` : `0${minutes}:`;
     seconds -= minutes * 60;
   } else {
@@ -73,13 +73,13 @@ function operationResult<T>(target: T[] | T, error?: any): OperationResult<T>[] 
 
 /**获取Alarm列表 */
 export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
-  let {
+  const {
     paging,
     filter: { clusterId, namespace, alarmPolicyType }
   } = query;
   let alarmPolicyList: AlarmPolicy[] = [];
-  let resourceInfo: ResourceInfo = resourceConfig().alarmPolicy;
-  let url = reduceK8sRestfulPath({
+  const resourceInfo: ResourceInfo = resourceConfig().alarmPolicy;
+  const url = reduceK8sRestfulPath({
     resourceInfo: {
       ...resourceInfo,
       requestType: {
@@ -87,12 +87,12 @@ export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
       }
     }
   });
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.get,
     url
   };
   if (paging) {
-    let { pageIndex, pageSize } = paging;
+    const { pageIndex, pageSize } = paging;
     params['page'] = pageIndex;
     params['page_size'] = pageSize;
 
@@ -113,7 +113,7 @@ export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
   let total = 0;
   let items = [];
   try {
-    let response = await reduceNetworkRequest(params);
+    const response = await reduceNetworkRequest(params);
     if (response.code === 0) {
       items = response.data.data.alarmPolicies.map(item => {
         return Object.assign({}, item, { id: uuid() });
@@ -130,12 +130,12 @@ export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
   // let response = await sendCapiRequest('tke', 'DescribeAlarmPolicies', params, query.filter.regionId);
 
   alarmPolicyList = items.map(item => {
-    let alarmPolicyMetricsConfig =
+    const alarmPolicyMetricsConfig =
       (item.AlarmPolicySettings.AlarmPolicyType === 'cluster'
         ? AlarmPolicyMetrics['independentClusetr']
         : AlarmPolicyMetrics[item.AlarmPolicySettings.AlarmPolicyType]) || [];
     item.ShieldSettings = item.ShieldSettings || {};
-    let temp = {
+    const temp = {
       id: item.AlarmPolicyId || item.AlarmPolicySettings.AlarmPolicyName,
       alarmPolicyId: item.AlarmPolicyId || item.AlarmPolicySettings.AlarmPolicyName,
       clusterId: query.filter.clusterId,
@@ -168,8 +168,8 @@ export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
       temp.alarmObjetcs = item.AlarmPolicySettings.AlarmObjects ? item.AlarmPolicySettings.AlarmObjects.split(',') : [];
     }
     item.AlarmPolicySettings.AlarmMetrics.forEach(metric => {
-      let finder = alarmPolicyMetricsConfig.find(config => config.metricName === metric.MetricName);
-      let tempMetrics = {
+      const finder = alarmPolicyMetricsConfig.find(config => config.metricName === metric.MetricName);
+      const tempMetrics = {
         type: finder ? finder.type : 'percent',
         measurement: metric.Measurement,
         metricId: metric.MetricId,
@@ -201,8 +201,93 @@ export async function fetchAlarmPolicy(query: QueryState<AlarmPolicyFilter>) {
   return result;
 }
 
+function getAlarmPolicyParams_({
+  alarmPolicyEdition,
+  clusterId,
+  receiverGroups
+}: {
+  alarmPolicyEdition: AlarmPolicyEdition;
+  clusterId: string;
+  receiverGroups: any;
+}) {
+  let Namespace = undefined;
+  let WorkloadType = undefined;
+  const AlarmObjects = alarmPolicyEdition.alarmObjects.join(',');
+
+  if (alarmPolicyEdition?.alarmPolicyType === 'pod' || alarmPolicyEdition?.alarmPolicyType === 'virtualMachine') {
+    if (alarmPolicyEdition?.alarmObjectsType === 'all') {
+      if (alarmPolicyEdition.alarmObjectNamespace !== 'ALL') {
+        Namespace = reduceNs(alarmPolicyEdition.alarmObjectNamespace);
+      }
+      if (alarmPolicyEdition.alarmObjectWorkloadType !== 'ALL') {
+        WorkloadType = alarmPolicyEdition.alarmObjectWorkloadType;
+      }
+    } else {
+      Namespace = reduceNs(alarmPolicyEdition?.alarmObjectNamespace);
+      WorkloadType = alarmPolicyEdition?.alarmObjectWorkloadType;
+    }
+  }
+
+  return {
+    ClusterInstanceId: clusterId,
+    AlarmPolicyId: alarmPolicyEdition.alarmPolicyId,
+    AlarmPolicySettings: {
+      AlarmPolicyName: alarmPolicyEdition.alarmPolicyName,
+      AlarmPolicyDescription: alarmPolicyEdition.alarmPolicyDescription,
+      AlarmPolicyType: alarmPolicyEdition.alarmPolicyType,
+      statisticsPeriod: alarmPolicyEdition.statisticsPeriod * 60,
+      AlarmObjects,
+      AlarmObjectsType: alarmPolicyEdition.alarmObjectsType,
+
+      AlarmMetrics: alarmPolicyEdition?.alarmMetrics
+        ?.filter(({ enable }) => enable)
+        ?.map(
+          ({
+            measurement,
+            metricName,
+            metricDisplayName,
+            evaluatorType,
+            evaluatorValue,
+            continuePeriod,
+            unit,
+            metricId
+          }) => {
+            const isPodMem = ['k8s_pod_mem_no_cache_bytes', 'k8s_pod_mem_usage_bytes'].includes(metricName);
+
+            return {
+              Measurement: measurement,
+              MetricName: metricName,
+              MetricDisplayName: metricDisplayName,
+              Evaluator: {
+                Type: evaluatorType,
+                Value: isPodMem ? +evaluatorValue * 1024 * 1024 + '' : evaluatorValue
+              },
+              ContinuePeriod: continuePeriod,
+              Unit: isPodMem ? 'B' : unit,
+              MetricId: metricId || undefined
+            };
+          }
+        )
+    },
+    NotifySettings: {
+      ReceiverGroups: receiverGroups?.selections?.map(group => group.metadata.name),
+      NotifyWay: alarmPolicyEdition?.notifyWays?.map(({ channel, template }) => ({
+        ChannelName: channel,
+        TemplateName: template
+      }))
+    },
+
+    ShieldSettings: {
+      EnableShield: false
+    },
+
+    Namespace,
+    WorkloadType
+  };
+}
+
 function getAlarmPolicyParams(alarmPolicyEdition: AlarmPolicyEdition[], opreator: AlarmPolicyOperator, receiverGroups) {
-  let params = {
+  const params = {
     ClusterInstanceId: opreator.clusterId,
     AlarmPolicyId: alarmPolicyEdition[0].alarmPolicyId,
     AlarmPolicySettings: {
@@ -241,7 +326,7 @@ function getAlarmPolicyParams(alarmPolicyEdition: AlarmPolicyEdition[], opreator
 
   alarmPolicyEdition[0].alarmMetrics.forEach(item => {
     if (item.enable) {
-      let metrics = {
+      const metrics = {
         Measurement: item.measurement,
         // StatisticsPeriod: item.statisticsPeriod * 60,
         MetricName: item.metricName,
@@ -273,10 +358,15 @@ export async function editAlarmPolicy(
   opreator: AlarmPolicyOperator,
   receiverGroup
 ) {
-  let params = getAlarmPolicyParams(alarmPolicyEdition, opreator, receiverGroup);
-  let clusterId = opreator.clusterId;
+  const clusterId = opreator.clusterId;
 
-  let resourceInfo: ResourceInfo = resourceConfig().alarmPolicy;
+  const params = getAlarmPolicyParams_({
+    alarmPolicyEdition: alarmPolicyEdition?.[0],
+    clusterId,
+    receiverGroups: receiverGroup
+  });
+
+  const resourceInfo: ResourceInfo = resourceConfig().alarmPolicy;
   let url = reduceK8sRestfulPath({
     resourceInfo: {
       ...resourceInfo,
@@ -291,7 +381,7 @@ export async function editAlarmPolicy(
   }
 
   try {
-    let response = await reduceNetworkRequest({
+    const response = await reduceNetworkRequest({
       method: params.AlarmPolicyId ? Method.put : Method.post,
       data: params,
       url
@@ -312,9 +402,9 @@ export async function editAlarmPolicy(
 
 /**删除告警设置列表 */
 export async function deleteAlarmPolicy(alarmPolicys: AlarmPolicy[], opreator: AlarmPolicyOperator) {
-  let clusterId = opreator.clusterId;
-  let resourceInfo: ResourceInfo = resourceConfig().alarmPolicy;
-  let url = reduceK8sRestfulPath({
+  const clusterId = opreator.clusterId;
+  const resourceInfo: ResourceInfo = resourceConfig().alarmPolicy;
+  const url = reduceK8sRestfulPath({
     resourceInfo: {
       ...resourceInfo,
       requestType: {
@@ -323,7 +413,7 @@ export async function deleteAlarmPolicy(alarmPolicys: AlarmPolicy[], opreator: A
     }
   });
   try {
-    let response = await Promise.all(
+    const response = await Promise.all(
       alarmPolicys.map(alarmPolicy =>
         reduceNetworkRequest({
           method: Method.delete,
@@ -350,11 +440,11 @@ export async function deleteAlarmPolicy(alarmPolicys: AlarmPolicy[], opreator: A
  * @param namespaceInfo 当前namespace查询api的配置
  */
 export async function fetchNamespaceList(query: QueryState<NamespaceFilter>, namespaceInfo: ResourceInfo) {
-  let { filter, search } = query;
-  let { clusterId, regionId } = filter;
+  const { filter, search } = query;
+  const { clusterId, regionId } = filter;
   let namespaceList = [];
 
-  let k8sUrl = `/${namespaceInfo.basicEntry}/${namespaceInfo.version}/${namespaceInfo.requestType['list']}`;
+  const k8sUrl = `/${namespaceInfo.basicEntry}/${namespaceInfo.version}/${namespaceInfo.requestType['list']}`;
   let url = k8sUrl;
 
   if (search) {
@@ -362,7 +452,7 @@ export async function fetchNamespaceList(query: QueryState<NamespaceFilter>, nam
   }
 
   /** 构建参数 */
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.get,
     url,
     apiParams: {
@@ -381,10 +471,10 @@ export async function fetchNamespaceList(query: QueryState<NamespaceFilter>, nam
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
 
     if (response.code === 0) {
-      let list = JSON.parse(response.data.ResponseBody);
+      const list = JSON.parse(response.data.ResponseBody);
       if (list.items) {
         namespaceList = list.items.map(item => {
           return {
@@ -421,15 +511,15 @@ export async function fetchNamespaceList(query: QueryState<NamespaceFilter>, nam
  * @param resourceInfo: ResouceInfo 当前请求数据url的基本配置
  */
 export async function fetchUserPortal(resourceInfo: ResourceInfo) {
-  let url = reduceK8sRestfulPath({ resourceInfo });
+  const url = reduceK8sRestfulPath({ resourceInfo });
 
   // 构建参数
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.get,
     url
   };
 
-  let response = await reduceNetworkRequest(params);
+  const response = await reduceNetworkRequest(params);
   return response.data;
 }
 
@@ -438,25 +528,25 @@ export async function fetchUserPortal(resourceInfo: ResourceInfo) {
  * @param query Namespace查询的一些过滤条件
  */
 export async function fetchProjectNamespaceList(query: QueryState<ResourceFilter>) {
-  let { filter } = query;
-  let NamespaceResourceInfo: ResourceInfo = resourceConfig().namespaces;
-  let url = reduceK8sRestfulPath({
+  const { filter } = query;
+  const NamespaceResourceInfo: ResourceInfo = resourceConfig().namespaces;
+  const url = reduceK8sRestfulPath({
     resourceInfo: NamespaceResourceInfo,
     specificName: filter.specificName,
     extraResource: 'namespaces'
   });
   /** 构建参数 */
-  let method = 'GET';
-  let params: RequestParams = {
+  const method = 'GET';
+  const params: RequestParams = {
     method,
     url
   };
 
-  let response = await reduceNetworkRequest(params);
+  const response = await reduceNetworkRequest(params);
   let namespaceList = [],
     total = 0;
   if (response.code === 0) {
-    let list = response.data;
+    const list = response.data;
     total = list.items.length;
     namespaceList = list.items.map(item => {
       return Object.assign({}, item, { id: uuid(), name: item.metadata.name });
@@ -472,17 +562,17 @@ export async function fetchProjectNamespaceList(query: QueryState<ResourceFilter
 }
 
 export async function fetchPrometheuses() {
-  let resourceInfo: ResourceInfo = resourceConfig().prometheus;
-  let url = reduceK8sRestfulPath({
+  const resourceInfo: ResourceInfo = resourceConfig().prometheus;
+  const url = reduceK8sRestfulPath({
     resourceInfo
   });
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.get,
     url
   };
   let records = [];
   try {
-    let response = await reduceNetworkRequest(params);
+    const response = await reduceNetworkRequest(params);
     if (response.code === 0) {
       records = response.data.items.map(item => {
         return Object.assign({}, item, { id: uuid() });
