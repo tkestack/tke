@@ -18,7 +18,7 @@
 import classNames from 'classnames';
 import * as React from 'react';
 
-import { Bubble, Button, Col, ExternalLink, Row, Select } from '@tea/component';
+import { Bubble, Button, Col, ExternalLink, Form, Row, Select } from '@tea/component';
 import { isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
@@ -41,6 +41,7 @@ import { router } from '../router';
 import { RootProps } from './AlarmPolicyApp';
 import { EditAlarmPolicyObject } from './EditAlarmPolicyObject';
 import { EditAlarmPolicyReceiverGroup } from './EditAlarmPolicyReceiverGroup';
+import { EditAlarmPolicyVM } from './EditAlarmPolicyVM';
 
 export class EditAlarmPolicyPanel extends React.Component<RootProps, {}> {
   componentWillUnmount() {
@@ -50,12 +51,11 @@ export class EditAlarmPolicyPanel extends React.Component<RootProps, {}> {
   }
   _renderAlarmMetrics(alarmMetrics: MetricsObjectEdition[]) {
     const { actions, alarmPolicyEdition, channel, template } = this.props;
-    const width = alarmPolicyEdition.alarmPolicyType === 'pod' ? 190 : 150;
     const content: JSX.Element[] = [];
     alarmMetrics.forEach((item, index) => {
       content.push(
         <div key={index}>
-          <label className="form-ctrl-label" style={{ display: 'inline-block', width }}>
+          <label className="form-ctrl-label" style={{ display: 'inline-block', width: 195 }}>
             <input
               type="checkbox"
               className="tc-15-checkbox"
@@ -135,7 +135,7 @@ export class EditAlarmPolicyPanel extends React.Component<RootProps, {}> {
               className="tc-15-input-text s "
               value={item.unit}
               readOnly={true}
-              style={{ width: 40, marginTop: 6, marginRight: 10 }}
+              style={{ width: 55, marginTop: 6, marginRight: 10 }}
             />
           </div>
           <SelectList
@@ -168,7 +168,8 @@ export class EditAlarmPolicyPanel extends React.Component<RootProps, {}> {
       alarmPolicyCreateWorkflow,
       alarmPolicyUpdateWorkflow,
       channel,
-      template
+      template,
+      namespaceList
     } = this.props;
     const urlParams = router.resolve(route);
     const workflow = urlParams['sub'] === 'update' ? alarmPolicyUpdateWorkflow : alarmPolicyCreateWorkflow;
@@ -245,7 +246,22 @@ export class EditAlarmPolicyPanel extends React.Component<RootProps, {}> {
                   /// #endif
                 }
 
-                <EditAlarmPolicyObject {...this.props} />
+                {alarmPolicyEdition.alarmPolicyType === 'virtualMachine' ? (
+                  <FormItem label={t('告警对象')} isNeedFormInput={false}>
+                    <EditAlarmPolicyVM
+                      clusterId={cluster?.selection?.metadata?.name}
+                      namespaceList={namespaceList?.data?.records ?? []}
+                      type={alarmPolicyEdition?.alarmObjectsType}
+                      setType={actions?.alarmPolicy?.inputAlarmPolicyObjectsType}
+                      namespaceSelection={alarmPolicyEdition?.alarmObjectNamespace}
+                      setNamespaceSelection={actions?.alarmPolicy?.selectsWorkLoadNamespace}
+                      vmSelections={alarmPolicyEdition?.alarmObjects}
+                      setVmSelections={actions?.alarmPolicy?.inputAlarmPolicyObjects}
+                    />
+                  </FormItem>
+                ) : (
+                  <EditAlarmPolicyObject {...this.props} />
+                )}
 
                 <FormItem label={t('统计周期')}>
                   <SelectList

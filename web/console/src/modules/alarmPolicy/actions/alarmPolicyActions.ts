@@ -42,7 +42,7 @@ const _alarmPolicyActions = createFFListActions<AlarmPolicy, AlarmPolicyFilter>(
     return getState().alarmPolicy;
   },
   onFinish: (record, dispatch, getState: GetState) => {
-    let { sub } = router.resolve(getState().route);
+    const { sub } = router.resolve(getState().route);
     if (sub !== '') {
       dispatch(alarmPolicyActions.initAlarmPolicyData());
     }
@@ -72,7 +72,7 @@ const editActions = {
         type: ActionType.InputAlarmPolicyType,
         payload: alarmpolicy.alarmPolicyType
       });
-      if (alarmpolicy.alarmPolicyType === 'pod') {
+      if (alarmpolicy.alarmPolicyType === 'pod' || alarmpolicy.alarmPolicyType === 'virtualMachine') {
         dispatch({
           type: ActionType.InputAlarmPolicyObjectsType,
           payload: 'part'
@@ -101,40 +101,31 @@ const editActions = {
         type: ActionType.InputAlarmPolicyId,
         payload: alarmpolicy.alarmPolicyId
       });
+
       if (alarmpolicy.alarmPolicyType !== 'cluster') {
         dispatch(alarmPolicyActions.inputAlarmPolicyObjectsType(alarmpolicy.alarmObjetcsType));
         //告警对象是workload且选择按工作负载选择初始化
+
         if (alarmpolicy.alarmPolicyType === 'pod') {
-          let namespace;
-          let workType;
-          if (alarmpolicy.alarmObjetcsType === 'part') {
-            namespace = reverseReduceNs(alarmpolicy.clusterId, alarmpolicy.alarmObjectNamespace);
-            workType = alarmpolicy.alarmObjectWorkloadType;
-            dispatch(alarmPolicyActions.inputAlarmPolicyObjects(alarmpolicy.alarmObjetcs));
-          } else {
-            if (alarmpolicy.alarmObjectNamespace) {
-              namespace = reverseReduceNs(alarmpolicy.clusterId, alarmpolicy.alarmObjectNamespace);
-            } else {
-              namespace = 'ALL';
-            }
-            if (alarmpolicy.alarmObjectWorkloadType) {
-              workType = alarmpolicy.alarmObjectWorkloadType;
-            } else {
-              workType = 'ALL';
-            }
-          }
+          dispatch(alarmPolicyActions.inputAlarmObjectWorkloadType(alarmpolicy.alarmObjectWorkloadType));
+        }
+
+        if (alarmpolicy.alarmPolicyType === 'pod' || alarmpolicy.alarmPolicyType === 'virtualMachine') {
+          const hasNamespace = alarmpolicy?.alarmObjetcsType === 'part' || alarmpolicy?.alarmObjectNamespace;
+
           dispatch({
             type: ActionType.InputAlarmWorkLoadNameSpace,
-            payload: namespace
+            payload: hasNamespace ? reverseReduceNs(alarmpolicy.clusterId, alarmpolicy.alarmObjectNamespace) : 'ALL'
           });
-          dispatch(alarmPolicyActions.inputAlarmObjectWorkloadType(alarmpolicy.alarmObjectWorkloadType));
+
+          dispatch(alarmPolicyActions.inputAlarmPolicyObjects(alarmpolicy.alarmObjetcs));
         }
       }
     };
   },
   initAlarmPolicyData: () => {
     return (dispatch, getState: GetState) => {
-      let { route, alarmPolicy } = getState(),
+      const { route, alarmPolicy } = getState(),
         urlParams = router.resolve(route),
         mode = urlParams['sub'];
       dispatch(resourceActions.channel.fetch());
@@ -155,8 +146,8 @@ const editActions = {
         dispatch(alarmPolicyActions.inputAlarmPolicyType('pod'));
         /// #endif
       } else if (mode === 'update' || mode === 'copy') {
-        let alarmPolicyId = route.queries['alarmPolicyId'];
-        let finder = alarmPolicy.list.data.records.find(item => item.id === alarmPolicyId);
+        const alarmPolicyId = route.queries['alarmPolicyId'];
+        const finder = alarmPolicy.list.data.records.find(item => item.id === alarmPolicyId);
 
         dispatch(
           resourceActions.receiverGroup.fetch({
@@ -165,7 +156,7 @@ const editActions = {
         );
         //初始化workload列表不使用初始值
         /// #if tke
-        if (mode === 'update' && finder.alarmPolicyType === 'pod') {
+        if (mode === 'update' && ['pod', 'virtualMachine'].includes(finder?.alarmPolicyType)) {
           dispatch(
             namespaceActions.applyFilter({
               regionId: route.queries['rid'],
@@ -190,8 +181,8 @@ const editActions = {
           dispatch(alarmPolicyActions.initAlarmPolicyEditionForCopy(finder));
         }
       } else if (mode === 'detail') {
-        let alarmPolicyId = route.queries['alarmPolicyId'];
-        let finder = alarmPolicy.list.data.records.find(item => item.id === alarmPolicyId);
+        const alarmPolicyId = route.queries['alarmPolicyId'];
+        const finder = alarmPolicy.list.data.records.find(item => item.id === alarmPolicyId);
         dispatch(alarmPolicyActions.fetchAlarmPolicyDetail(finder));
       }
     };
@@ -231,14 +222,14 @@ const editActions = {
       });
     };
   },
-  //策略类型cluster//nodo//pod
+  //策略类型cluster//nodo//pod/vm
   inputAlarmPolicyType: alarmPolicyType => {
     return (dispatch, getState: GetState) => {
       dispatch({
         type: ActionType.InputAlarmPolicyType,
         payload: alarmPolicyType
       });
-      let defaultAlarmPolicyObjectsType = alarmPolicyType === 'pod' ? 'part' : 'all';
+      const defaultAlarmPolicyObjectsType = 'all';
       dispatch({
         type: ActionType.InputAlarmPolicyObjectsType,
         payload: defaultAlarmPolicyObjectsType
@@ -268,7 +259,7 @@ const editActions = {
   //alarm选择告警对象类型
   inputAlarmPolicyObjectsType: objectType => {
     return (dispatch, getState: GetState) => {
-      let { alarmPolicyEdition, namespaceList } = getState();
+      const { alarmPolicyEdition, namespaceList } = getState();
       dispatch({
         type: ActionType.InputAlarmPolicyObjectsType,
         payload: objectType
@@ -298,9 +289,9 @@ const editActions = {
 
   inputAlarmMetrics: (id: string, Obj: Object) => {
     return (dispatch, getState: GetState) => {
-      let { alarmPolicyEdition } = getState(),
+      const { alarmPolicyEdition } = getState(),
         { alarmMetrics } = alarmPolicyEdition;
-      let newAlarmMetrics = deepClone(alarmMetrics),
+      const newAlarmMetrics = deepClone(alarmMetrics),
         index = newAlarmMetrics.findIndex(e => e.id === id),
         objKeys = Object.keys(Obj);
       objKeys.forEach(item => {
@@ -316,20 +307,12 @@ const editActions = {
   //将配置中
   initAlarmMetricsForUpdate: (alarmMetrics, alarmPolicyType) => {
     return (dispatch, getState: GetState) => {
-      let finalType = alarmPolicyType;
-      if (alarmPolicyType === 'cluster') {
-        let { cluster } = getState(),
-          finder = cluster.list.data.records.find(
-            record => cluster.selection && record.metadata.name === cluster.selection.metadata.name
-          );
-        // if (finder.clusterType === 'INDEPENDENT_CLUSTER') {
-        //   finalType = 'independentClusetr';
-        // }
-      }
-      let alarmPolicyMetricsConfig = deepClone(AlarmPolicyMetrics[finalType]);
-      let initalarmMetrics = alarmMetrics.length
+      const finalType = alarmPolicyType;
+
+      const alarmPolicyMetricsConfig = deepClone(AlarmPolicyMetrics[finalType]);
+      const initalarmMetrics = alarmMetrics.length
         ? alarmMetrics.map(item => {
-            let index = alarmPolicyMetricsConfig.findIndex(metrics => metrics.metricName === item.metricName);
+            const index = alarmPolicyMetricsConfig.findIndex(metrics => metrics.metricName === item.metricName);
             if (index !== -1) {
               alarmPolicyMetricsConfig.splice(index, 1);
             }
@@ -360,9 +343,9 @@ const editActions = {
   //告警设置不同类型不同初始值
   initAlarmMetrics: (type: string) => {
     return (dispatch, getState: GetState) => {
-      let finalType = type;
+      const finalType = type;
       if (type === AlarmPolicyType[0].value) {
-        let { cluster } = getState(),
+        const { cluster } = getState(),
           finder = cluster.list.data.records.find(
             record => cluster.selection && record.metadata.name === cluster.selection.metadata.name
           );
@@ -371,7 +354,7 @@ const editActions = {
         // }
       }
 
-      let items = AlarmPolicyMetrics[finalType],
+      const items = AlarmPolicyMetrics[finalType],
         alarmMetrics = items
           ? items.map(item => {
               return Object.assign({}, item, {
@@ -389,7 +372,7 @@ const editActions = {
 
   inputAlarmNotifyWays: notifyWays => {
     return (dispatch, getState: GetState) => {
-      let newNotifyWays = deepClone(notifyWays);
+      const newNotifyWays = deepClone(notifyWays);
 
       dispatch({
         type: ActionType.InputAlarmNotifyWay,
@@ -400,9 +383,9 @@ const editActions = {
 
   inputAlarmNotifyWay: (id: string, obj: Object) => {
     return (dispatch, getState: GetState) => {
-      let { alarmPolicyEdition } = getState(),
+      const { alarmPolicyEdition } = getState(),
         { notifyWays } = alarmPolicyEdition;
-      let newNotifyWays = deepClone(notifyWays),
+      const newNotifyWays = deepClone(notifyWays),
         index = newNotifyWays.findIndex(e => e.id === id),
         objKeys = Object.keys(obj);
       objKeys.forEach(item => {
@@ -417,9 +400,9 @@ const editActions = {
 
   deleteAlarmNotifyWay: (id: string) => {
     return (dispatch, getState: GetState) => {
-      let { alarmPolicyEdition } = getState(),
+      const { alarmPolicyEdition } = getState(),
         { notifyWays } = alarmPolicyEdition;
-      let newNotifyWays = deepClone(notifyWays),
+      const newNotifyWays = deepClone(notifyWays),
         index = newNotifyWays.findIndex(e => e.id === id);
       newNotifyWays.splice(index, 1);
       dispatch({
@@ -431,9 +414,9 @@ const editActions = {
 
   addAlarmNotifyWay: () => {
     return (dispatch, getState: GetState) => {
-      let { alarmPolicyEdition } = getState(),
+      const { alarmPolicyEdition } = getState(),
         { notifyWays } = alarmPolicyEdition;
-      let newNotifyWays = deepClone(notifyWays);
+      const newNotifyWays = deepClone(notifyWays);
       newNotifyWays.push({ id: uuid(), channel: undefined, template: undefined });
       dispatch({
         type: ActionType.InputAlarmNotifyWay,
@@ -496,7 +479,7 @@ const editActions = {
   },
   selectsWorkLoadNamespace: namespace => {
     return (dispatch, getState: GetState) => {
-      let { regionSelection, cluster, alarmPolicyEdition } = getState();
+      const { regionSelection, cluster, alarmPolicyEdition } = getState();
       dispatch({
         type: ActionType.InputAlarmWorkLoadNameSpace,
         payload: namespace
@@ -505,7 +488,10 @@ const editActions = {
         type: ActionType.InputAlarmPolicyObjects,
         payload: []
       });
-      if (alarmPolicyEdition.alarmPolicyType === 'pod' && alarmPolicyEdition.alarmObjectsType === 'all') {
+      if (
+        (alarmPolicyEdition.alarmPolicyType === 'pod' && alarmPolicyEdition.alarmObjectsType === 'all') ||
+        alarmPolicyEdition.alarmPolicyType === 'virtualMachine'
+      ) {
         //
       } else {
         dispatch(
@@ -521,7 +507,7 @@ const editActions = {
   },
   inputAlarmObjectWorkloadType: (type: string) => {
     return (dispatch, getState: GetState) => {
-      let { regionSelection, cluster, alarmPolicyEdition } = getState();
+      const { regionSelection, cluster, alarmPolicyEdition } = getState();
       dispatch({
         type: ActionType.InputAlarmObjectWorkloadType,
         payload: type

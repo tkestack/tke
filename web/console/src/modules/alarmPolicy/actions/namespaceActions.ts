@@ -32,16 +32,16 @@ type GetState = () => RootState;
 const fetchNamespaceActions = generateFetcherActionCreator({
   actionType: ActionType.FetchNamespaceList,
   fetcher: async (getState: GetState, fetchOptions, dispatch: Redux.Dispatch) => {
-    let { clusterVersion } = getState();
-    let namespaceInfo: ResourceInfo = resourceConfig(clusterVersion)['np'];
-    let response = await WebAPI.fetchNamespaceList(getState().namespaceQuery, namespaceInfo);
+    const { clusterVersion } = getState();
+    const namespaceInfo: ResourceInfo = resourceConfig(clusterVersion)['np'];
+    const response = await WebAPI.fetchNamespaceList(getState().namespaceQuery, namespaceInfo);
     return response;
   },
   finish: (dispatch: Redux.Dispatch, getState: GetState) => {
-    let { namespaceList, route, namespaceQuery } = getState();
+    const { namespaceList, route, namespaceQuery } = getState();
 
     if (namespaceQuery.filter.default) {
-      let defauleNamespace =
+      const defauleNamespace =
         (namespaceList.data.recordCount && namespaceList.data.records.find(n => n.name === 'default').name) ||
         'default';
 
