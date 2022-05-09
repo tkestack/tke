@@ -59,6 +59,7 @@ const (
 	filterNamespaceKey     = "namespace"
 	filterWorkloadKindKey  = "workload_kind"
 	filterWorkloadNameKey  = "workload_name"
+	filterWorkloadVMKey    = "name"
 	measurementKey         = "measurement"
 	valueKey               = "value"
 	valueStr               = "{{ $value }}"
@@ -457,6 +458,8 @@ func NewMetricFilterFromExpr(expr string) *MetricFilter {
 		case strings.HasPrefix(str, filterWorkloadKindKey):
 			filter.WorkloadKind = strings.Split(str, "\"")[1]
 		case strings.HasPrefix(str, filterWorkloadNameKey):
+			filter.WorkloadName = strings.Split(str, "\"")[1]
+		case strings.HasPrefix(str, filterWorkloadVMKey):
 			filter.WorkloadName = strings.Split(str, "\"")[1]
 		}
 	}
