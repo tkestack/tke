@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"strings"
 
 	genericfilter "tkestack.io/tke/pkg/apiserver/filter"
@@ -41,6 +42,10 @@ import (
 var (
 	debugKey = "debug"
 )
+
+// the kube verb associated with API requests (this includes get, list, watch, create, update, patch, delete, deletecollection, and proxy),
+// or the lowercased HTTP verb associated with non-API requests (this includes get, put, post, patch, and delete)
+var verbMap = sets.NewString("get", "list", "watch", "create", "update", "patch", "delete", "proxy", "put", "post", "deletecollection")
 
 // Authorizer implement the authorize interface that use local repository to
 // authorize the subject access review.
@@ -75,6 +80,8 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		if tenantIDs, ok := extra[genericoidc.TenantIDKey]; ok {
 			if len(tenantIDs) > 0 {
 				tenantID = tenantIDs[0]
+			} else {
+				tenantID = "default"
 			}
 		}
 
@@ -84,8 +91,12 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 			}
 		}
 	}
+	find := false
 	if tenantID == "" {
-		tenantID = genericfilter.GetValueFromGroups(attr.GetUser().GetGroups(), "tenant")
+		find, tenantID = genericfilter.FindValueFromGroups(attr.GetUser().GetGroups(), "tenant")
+		if find && tenantID == "" {
+			tenantID = "default"
+		}
 	}
 	projectID = genericfilter.GetValueFromGroups(attr.GetUser().GetGroups(), "project")
 	log.Debug("Authorize", log.String("subject", subject), log.String("action", action),
@@ -139,6 +150,28 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		}
 	}
 
+	if tenantID != "" && verbMap.Has(action) {
+		record := &authorizer.AttributesRecord{
+			User:            attr.GetUser(),
+			Verb:            attr.GetVerb(),
+			Namespace:       attr.GetNamespace(),
+			APIGroup:        attr.GetAPIGroup(),
+			Resource:        attr.GetResource(),
+			Subresource:     attr.GetSubresource(),
+			Name:            attr.GetName(),
+			ResourceRequest: attr.IsResourceRequest(),
+			Path:            attr.GetPath(),
+		}
+		tkeAttributes := filter.ConvertTKEAttributes(ctx, record)
+		attrStr, _ := json.Marshal(attr)
+		tkeAttributesStr, _ := json.Marshal(tkeAttributes)
+		log.Debugf("Attribute '%s' converted to TKEAttributes '%s'", string(attrStr), string(tkeAttributesStr))
+		attr = tkeAttributes
+	}
+	return a.casbinDecision(attr, tenantID, subject, projectID, attr.GetResource(), attr.GetVerb(), debug)
+}
+
+func (a *Authorizer) casbinDecision(attr authorizer.Attributes, tenantID, subject, projectID, resource, action string, debug bool) (authorized authorizer.Decision, reason string, err error) {
 	allow, err := a.enforcer.Enforce(authutil.UserKey(tenantID, subject), projectID, resource, action)
 	if err != nil {
 		log.Error("Casbin enforcer failed", log.Any("att", attr), log.String("projectID", projectID), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.Err(err))
@@ -156,6 +189,5 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		return authorizer.DecisionDeny, fmt.Sprintf("permission for %s on %s not verify", action, resource), nil
 	}
 	log.Debug("Casbin enforcer: ", log.Any("att", attr), log.String("projectID", projectID), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.String("allow", "true"))
-
 	return authorizer.DecisionAllow, reason, nil
 }

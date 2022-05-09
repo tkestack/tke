@@ -189,6 +189,16 @@ func GroupWithProject(project string) string {
 	return fmt.Sprintf("project:%s", project)
 }
 
+func FindValueFromGroups(groups []string, key string) (bool, string) {
+	prefix := fmt.Sprintf("%s:", key)
+	for _, group := range groups {
+		if strings.HasPrefix(group, prefix) {
+			return true, strings.TrimPrefix(group, prefix)
+		}
+	}
+	return false, ""
+}
+
 func GetValueFromGroups(groups []string, key string) string {
 	prefix := fmt.Sprintf("%s:", key)
 	for _, group := range groups {
