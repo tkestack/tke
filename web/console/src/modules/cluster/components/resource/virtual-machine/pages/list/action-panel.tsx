@@ -5,7 +5,7 @@ import { namespaceListState, namespaceSelectionState, clusterIdState } from '../
 import { router } from '@src/modules/cluster/router';
 import { VmMonitorDialog } from '../../components';
 
-export const VMListActionPanel = ({ route, reFetch, vmList }) => {
+export const VMListActionPanel = ({ route, reFetch, vmList, onQueryChange }) => {
   const namespaceListLoadable = useRecoilValueLoadable(namespaceListState);
   const [namespaceSelection, setNamespaceSelection] = useRecoilState(namespaceSelectionState);
 
@@ -47,6 +47,23 @@ export const VMListActionPanel = ({ route, reFetch, vmList }) => {
                   : []
               }
               onChange={value => setNamespaceSelection(value)}
+            />
+
+            <TagSearchBox
+              tips=""
+              style={{ width: 300 }}
+              attributes={[
+                {
+                  type: 'input',
+                  key: 'name',
+                  name: '虚拟机名称'
+                }
+              ]}
+              onChange={tags => {
+                const name = tags?.find(item => item?.attr?.key === 'name')?.values?.[0]?.name ?? '';
+
+                onQueryChange(name);
+              }}
             />
 
             <Button icon="refresh" onClick={reFetch} />
