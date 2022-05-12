@@ -155,7 +155,7 @@ export function createVM({
 
               interfaces: [
                 {
-                  model: 'e1000',
+                  model: 'virtio',
                   name: 'default',
                   bridge: {}
                 }
