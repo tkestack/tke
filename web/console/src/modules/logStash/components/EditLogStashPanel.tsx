@@ -48,6 +48,7 @@ import { EditOriginNodePanel } from './EditOriginNodePanel';
 import { isCanCreateLogStash } from './LogStashActionPanel';
 import { RootProps } from './LogStashApp';
 import { Base64 } from 'js-base64';
+import { HOST_LOG_INPUT_PATH_PREFIX } from '../constants/Config';
 
 /** 日志采集类型的提示 */
 const logModeTip = {
@@ -459,10 +460,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         const hostLogInput: HostLogInput = {
           host_log_input: {
             labels,
-            path:
-              nodeLogPathType === 'container'
-                ? `/run/containerd/io.containerd.runtime.v2.task/k8s.io/*/rootfs${nodeLogPath}`
-                : nodeLogPath
+            path: nodeLogPathType === 'container' ? `${HOST_LOG_INPUT_PATH_PREFIX}${nodeLogPath}` : nodeLogPath
           },
           type: 'host-log'
         };
