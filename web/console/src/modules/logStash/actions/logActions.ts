@@ -15,9 +15,7 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
-import {
-    extend, generateQueryActionCreator, QueryState, RecordSet, ReduxAction, uuid
-} from '@tencent/ff-redux';
+import { extend, generateQueryActionCreator, QueryState, RecordSet, ReduxAction, uuid } from '@tencent/ff-redux';
 import { generateFetcherActionCreator } from '@tencent/qcloud-redux-fetcher';
 
 import { resourceConfig } from '../../../../config';
@@ -26,15 +24,14 @@ import { ResourceInfo } from '../../common/models';
 import { cloneDeep } from '../../common/utils';
 import * as ActionType from '../constants/ActionType';
 import { inputTypeMap, outputTypeMap } from '../constants/Config';
-import {
-    initContainerFilePath, initContainerInputOption, initMetadata
-} from '../constants/initState';
+import { initContainerFilePath, initContainerInputOption, initMetadata } from '../constants/initState';
 import { ContainerLogs, Log, LogFilter, ResourceFilter, RootState } from '../models';
 import { Resource } from '../models/Resource';
 import { editLogStashActions } from './editLogStashActions';
 import { podActions } from './podActions';
 import { resourceActions } from './resourceActions';
 import { Base64 } from 'js-base64';
+import { HOST_LOG_INPUT_PATH_PREFIX } from '../constants/Config';
 
 type GetState = () => RootState;
 
@@ -42,10 +39,10 @@ type GetState = () => RootState;
 const fetchLogListActions = generateFetcherActionCreator({
   actionType: ActionType.FetchLogList,
   fetcher: async (getState: GetState, fetchOptions, dispatch: Redux.Dispatch) => {
-    let { logQuery, clusterVersion } = getState();
-    let resourceInfo = resourceConfig(clusterVersion)['logcs'];
-    let isClearData = fetchOptions && fetchOptions.noCache ? true : false;
-    let response = await CommonAPI.fetchResourceList({ resourceInfo, query: logQuery, isClearData });
+    const { logQuery, clusterVersion } = getState();
+    const resourceInfo = resourceConfig(clusterVersion)['logcs'];
+    const isClearData = fetchOptions && fetchOptions.noCache ? true : false;
+    const response = await CommonAPI.fetchResourceList({ resourceInfo, query: logQuery, isClearData });
     return response;
   }
 });
@@ -68,11 +65,11 @@ export const restActions = {
   /** 拉取单个日志采集规则的 */
   fetchSpecificLog: (name: string, clusterId: string, namespace: string, mode: string) => {
     return async (dispatch: Redux.Dispatch, getState: GetState) => {
-      let { clusterVersion, route, clusterSelection } = getState();
-      let logAgentName = clusterSelection && clusterSelection[0] && clusterSelection[0].spec.logAgentName || '';
-      let resourceInfo = resourceConfig(clusterVersion)['logcs'];
-      let { clusterId, regionId } = route.queries;
-      let result = await CommonAPI.fetchResourceList({
+      const { clusterVersion, route, clusterSelection } = getState();
+      const logAgentName = (clusterSelection && clusterSelection[0] && clusterSelection[0].spec.logAgentName) || '';
+      const resourceInfo = resourceConfig(clusterVersion)['logcs'];
+      const { clusterId, regionId } = route.queries;
+      const result = await CommonAPI.fetchResourceList({
         query: {
           filter: {
             namespace,
@@ -92,12 +89,12 @@ export const restActions = {
         payload: result.records
       });
 
-      let log = getState().logSelection[0];
+      const log = getState().logSelection[0];
       if (mode === 'update' || mode === 'detail') {
         let inputOption; //输入端选项
         let outputOption; //输出端选项
-        let inputMode = log.spec.input.type ? inputTypeMap[log.spec.input.type] : ''; //输入端类型
-        let consumerMode = log.spec.output.type ? outputTypeMap[log.spec.output.type] : ''; //输出端类型
+        const inputMode = log.spec.input.type ? inputTypeMap[log.spec.input.type] : ''; //输入端类型
+        const consumerMode = log.spec.output.type ? outputTypeMap[log.spec.output.type] : ''; //输出端类型
         dispatch(editLogStashActions.inputStashName(log.metadata.name));
         dispatch(editLogStashActions.changeLogMode(inputMode)); //选择mode
         dispatch(editLogStashActions.changeConsumerMode(consumerMode));
@@ -116,7 +113,7 @@ export const restActions = {
             //选择了所有容器，则需要帮忙选择指定容器业务,
             //只有在update的时候才需要去获取resource、
             if (mode === 'update') {
-              let containerLogsArr: ContainerLogs[] = cloneDeep(getState().logStashEdit.containerLogs);
+              const containerLogsArr: ContainerLogs[] = cloneDeep(getState().logStashEdit.containerLogs);
               containerLogsArr[0].namespaceSelection = 'default';
               dispatch({
                 type: ActionType.UpdateContainerLogs,
@@ -135,9 +132,9 @@ export const restActions = {
           } else {
             //选择了指定容器
             dispatch(editLogStashActions.selectAllNamespace('selectOne'));
-            let containerArr = [];
+            const containerArr = [];
             inputOption.namespaces.forEach(item => {
-              let tmp = cloneDeep(initContainerInputOption);
+              const tmp = cloneDeep(initContainerInputOption);
               tmp.id = uuid();
               tmp.collectorWay = item.all_containers ? 'container' : 'workload';
               tmp.namespaceSelection = item.namespace;
@@ -160,9 +157,9 @@ export const restActions = {
             if (mode === 'update') {
               containerArr.forEach(item => {
                 Object.keys(item.workloadList).forEach(async workloadType => {
-                  let resourceInfo: ResourceInfo = resourceConfig(clusterVersion)[workloadType];
+                  const resourceInfo: ResourceInfo = resourceConfig(clusterVersion)[workloadType];
 
-                  let resourceQuery: QueryState<ResourceFilter> = {
+                  const resourceQuery: QueryState<ResourceFilter> = {
                     filter: {
                       clusterId,
                       logAgentName,
@@ -172,7 +169,7 @@ export const restActions = {
                       regionId: +route.queries['rid']
                     }
                   };
-                  let response = await CommonAPI.fetchResourceList({
+                  const response = await CommonAPI.fetchResourceList({
                     query: resourceQuery,
                     resourceInfo,
                     isClearData: false
@@ -190,7 +187,7 @@ export const restActions = {
         } else if (inputMode === inputTypeMap['pod-log']) {
           //如果为容器文件路径
           inputOption = log.spec.input.pod_log_input;
-          let { namespace } = log.metadata,
+          const { namespace } = log.metadata,
             containerLogFiles = inputOption.container_log_files,
             workload = inputOption.workload.name,
             workloadType = inputOption.workload.type;
@@ -203,8 +200,8 @@ export const restActions = {
             payload: workloadType
           });
           //拉取数据
-          let resourceInfo = resourceConfig(clusterVersion)[workloadType];
-          let responseWorkloadList: RecordSet<Resource> = await CommonAPI.fetchResourceList({
+          const resourceInfo = resourceConfig(clusterVersion)[workloadType];
+          const responseWorkloadList: RecordSet<Resource> = await CommonAPI.fetchResourceList({
             resourceInfo,
             query: {
               filter: {
@@ -237,10 +234,10 @@ export const restActions = {
               isCanFetchPodList: namespace && workload ? true : false
             })
           );
-          let containerFilePathArr = [];
+          const containerFilePathArr = [];
           Object.keys(containerLogFiles).forEach(item => {
             containerLogFiles[item].forEach(element => {
-              let containerFilePath = cloneDeep(initContainerFilePath);
+              const containerFilePath = cloneDeep(initContainerFilePath);
               containerFilePath.containerName = item;
               containerFilePath.containerFilePath = element.path;
               containerFilePathArr.push(containerFilePath);
@@ -253,11 +250,22 @@ export const restActions = {
         } else if (inputMode === inputTypeMap['host-log']) {
           //如果为主机文件路径
           inputOption = log.spec.input.host_log_input;
-          dispatch(editLogStashActions.inputNodeLogPath(inputOption.path));
-          let metedataKeys = Object.keys(inputOption.labels);
+
+          let inputPath = inputOption?.path ?? '';
+
+          const nodeInputPathType = inputPath.includes(HOST_LOG_INPUT_PATH_PREFIX) ? 'container' : 'host';
+
+          dispatch(editLogStashActions.setNodeLogPathType(nodeInputPathType));
+
+          if (nodeInputPathType === 'container') {
+            inputPath = inputPath.replace(HOST_LOG_INPUT_PATH_PREFIX, '');
+          }
+
+          dispatch(editLogStashActions.inputNodeLogPath(inputPath));
+          const metedataKeys = Object.keys(inputOption.labels);
           if (metedataKeys.length) {
-            let labels = metedataKeys.map((key, index) => {
-              let newLabel = Object.assign({}, initMetadata, {
+            const labels = metedataKeys.map((key, index) => {
+              const newLabel = Object.assign({}, initMetadata, {
                 id: uuid(),
                 metadataKey: key,
                 metadataValue: inputOption.labels[key]
