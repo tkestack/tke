@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 interface IPaging {
   pageIndex: number;
@@ -66,9 +66,9 @@ export function useFetch<T>(
   }
 
   // 定时相关
-  const [timer, setTimer] = useState(null);
+  const timer = useRef(null);
   useEffect(() => {
-    clearInterval(timer);
+    clearInterval(timer.current);
 
     const _timer = setInterval(() => {
       if (!polling) return;
@@ -78,9 +78,9 @@ export function useFetch<T>(
       fetchData(true);
     }, pollingDelay);
 
-    setTimer(_timer);
+    timer.current = _timer;
 
-    return () => clearInterval(timer);
+    return () => clearInterval(timer.current);
   }, [polling, status, pollingDelay]);
 
   // 普通翻页相关的
