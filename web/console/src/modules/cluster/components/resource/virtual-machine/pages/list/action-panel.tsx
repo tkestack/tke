@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Table, Justify, Button, Select, TagSearchBox, Text } from 'tea-component';
 import { useRecoilValueLoadable, useRecoilState } from 'recoil';
 import { namespaceListState, namespaceSelectionState } from '../../store/base';
 import { router } from '@src/modules/cluster/router';
 
-export const VMListActionPanel = ({ route, reFetch }) => {
+export const VMListActionPanel = ({ route, reFetch, onQueryChange }) => {
   const namespaceListLoadable = useRecoilValueLoadable(namespaceListState);
   const [namespaceSelection, setNamespaceSelection] = useRecoilState(namespaceSelectionState);
 
@@ -40,6 +40,23 @@ export const VMListActionPanel = ({ route, reFetch }) => {
                   : []
               }
               onChange={value => setNamespaceSelection(value)}
+            />
+
+            <TagSearchBox
+              tips=""
+              style={{ width: 300 }}
+              attributes={[
+                {
+                  type: 'input',
+                  key: 'name',
+                  name: '虚拟机名称'
+                }
+              ]}
+              onChange={tags => {
+                const name = tags?.find(item => item?.attr?.key === 'name')?.values?.[0]?.name ?? '';
+
+                onQueryChange(name);
+              }}
             />
 
             <Button icon="refresh" onClick={reFetch} />
