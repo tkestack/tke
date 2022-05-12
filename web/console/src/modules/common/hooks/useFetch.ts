@@ -27,11 +27,12 @@ interface IUseFetchOptions<T> {
   fetchAble?: boolean;
   polling?: boolean;
   pollingDelay?: number;
+  needClearData?: boolean;
 }
 
 type IUseFetchQuery<T> = (params?: IQueryParams) => Promise<IQueryResponse<T>>;
 
-type IStatus = 'idle' | 'loading' | 'success' | 'error';
+type IStatus = 'idle' | 'loading' | 'success' | 'error' | 'loading-polling';
 
 export function useFetch<T>(
   query: IUseFetchQuery<T>,
@@ -46,7 +47,8 @@ export function useFetch<T>(
     defaultPageSize = 20,
     fetchAble = true,
     polling = false,
-    pollingDelay = 5000
+    pollingDelay = 5000,
+    needClearData = true
   } = options ?? {};
 
   const [data, _setData] = useState<T>(null);
@@ -71,9 +73,9 @@ export function useFetch<T>(
     const _timer = setInterval(() => {
       if (!polling) return;
 
-      if (status === 'loading') return;
+      if (status === 'loading' || status === 'loading-polling') return;
 
-      reFetch();
+      fetchData(true);
     }, pollingDelay);
 
     setTimer(_timer);
@@ -110,11 +112,13 @@ export function useFetch<T>(
     setPageIndex(pre => pre - 1);
   }
 
-  async function fetchData() {
-    setData(null);
+  async function fetchData(isPolling = false) {
+    if (needClearData) {
+      setData(null);
+    }
 
     try {
-      setStatus('loading');
+      setStatus(isPolling ? 'loading-polling' : 'loading');
       const paging = { pageIndex, pageSize };
 
       switch (mode) {
@@ -198,4 +202,5 @@ export function useFetch<T>(
 /* TODO:
 - 边界条件
 - 无限分页
+- 轮训的时候不想出现loading，但是其他时候需要 - done
  */
