@@ -31,6 +31,7 @@ import { editLogStashActions } from './editLogStashActions';
 import { podActions } from './podActions';
 import { resourceActions } from './resourceActions';
 import { Base64 } from 'js-base64';
+import { HOST_LOG_INPUT_PATH_PREFIX } from '../constants/Config';
 
 type GetState = () => RootState;
 
@@ -252,13 +253,12 @@ export const restActions = {
 
           let inputPath = inputOption?.path ?? '';
 
-          const containerPrefix = '/run/containerd/io.containerd.runtime.v2.task/k8s.io/*/rootfs';
-          const nodeInputPathType = inputPath.includes(containerPrefix) ? 'container' : 'host';
+          const nodeInputPathType = inputPath.includes(HOST_LOG_INPUT_PATH_PREFIX) ? 'container' : 'host';
 
           dispatch(editLogStashActions.setNodeLogPathType(nodeInputPathType));
 
           if (nodeInputPathType === 'container') {
-            inputPath = inputPath.replace(containerPrefix, '');
+            inputPath = inputPath.replace(HOST_LOG_INPUT_PATH_PREFIX, '');
           }
 
           dispatch(editLogStashActions.inputNodeLogPath(inputPath));

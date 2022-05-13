@@ -132,7 +132,7 @@ func (p *provider) CreateInstances(count int64) ([]cloudprovider.Instance, error
 			Port:        int(ins.Port),
 			Password:    ins.Password,
 			DialTimeOut: 30 * time.Second,
-			Retry:       5,
+			Retry:       50,
 		})
 		if err != nil {
 			return nil, err

@@ -45,6 +45,7 @@ const (
 	workloadKindKey       = "workloadKind"
 	namespaceKey          = "namespace"
 	workloadNameKey       = "workloadName"
+	virtualMachineKey     = "virtualMachine"
 	podNameKey            = "podName"
 	nodeNameKey           = "nodeName"
 	nodeRoleKey           = "nodeRole"
@@ -259,6 +260,11 @@ func getVariables(alert Alert) map[string]string {
 		summary = fmt.Sprintf("%s\n工作负载名称：%s", summary, workloadNameValue)
 	}
 
+	virtualMachineName, ok := labels["name"]
+	if ok {
+		summary = fmt.Sprintf("%s\n虚拟机名称：%s", summary, virtualMachineName)
+	}
+
 	namespaceValue, ok := labels["namespace"]
 	if ok {
 		summary = fmt.Sprintf("%s\n命名空间：%s", summary, namespaceValue)
@@ -297,6 +303,7 @@ func getVariables(alert Alert) map[string]string {
 	variables[evaluateValueKey] = evaluateValue
 	variables[metricDisplayNameKey] = metricDisplayNameValue
 	variables[summaryKey] = summary
+	variables[virtualMachineKey] = virtualMachineName
 
 	return variables
 }

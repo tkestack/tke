@@ -82,8 +82,18 @@ export async function fetchVMIList({ clusterId, namespace }) {
   );
 }
 
-export async function fetchVMListWithVMI({ clusterId, namespace }, { limit, continueToken }) {
-  const { items, metadata } = await fetchVMList({ clusterId, namespace }, { limit, continueToken });
+export async function fetchVMListWithVMI({ clusterId, namespace }, { limit, continueToken, query }) {
+  let items, metadata;
+
+  if (query) {
+    const vm = await fetchVM({ clusterId, namespace, name: query });
+    items = vm ? [vm] : [];
+  } else {
+    const rsp = await fetchVMList({ clusterId, namespace }, { limit, continueToken });
+
+    items = rsp?.items ?? [];
+    metadata = rsp?.metadata;
+  }
 
   return {
     items: await Promise.all(
@@ -155,7 +165,7 @@ export function createVM({
 
               interfaces: [
                 {
-                  model: 'e1000',
+                  model: 'virtio',
                   name: 'default',
                   bridge: {}
                 }

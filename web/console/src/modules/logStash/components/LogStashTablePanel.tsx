@@ -34,6 +34,7 @@ import { Log } from '../models';
 import { router } from '../router';
 import { isCanCreateLogStash } from './LogStashActionPanel';
 import { RootProps } from './LogStashApp';
+import { HOST_LOG_INPUT_PATH_PREFIX } from '../constants/Config';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
@@ -92,7 +93,14 @@ export class LogStashTablePanel extends React.Component<RootProps, any> {
         key: 'logType',
         header: t('类型'),
         width: '15%',
-        render: x => <Text overflow>{logModeMap[x.spec.input.type]}</Text>
+        render: x => {
+          let type = x?.spec?.input?.type;
+          if (x?.spec?.input?.host_log_input?.path?.includes(HOST_LOG_INPUT_PATH_PREFIX)) {
+            type = 'pod-log';
+          }
+
+          return <Text overflow>{logModeMap?.[type] ?? '-'}</Text>;
+        }
       },
       {
         key: 'Namespace',
@@ -108,9 +116,14 @@ export class LogStashTablePanel extends React.Component<RootProps, any> {
       }
     ];
 
-    let { canCreate, tip } = isCanCreateLogStash(clusterSelection[0], logList.data.records, isDaemonsetNormal, isOpenLogStash);
+    const { canCreate, tip } = isCanCreateLogStash(
+      clusterSelection[0],
+      logList.data.records,
+      isDaemonsetNormal,
+      isOpenLogStash
+    );
 
-    let emptyTips: JSX.Element = (
+    const emptyTips: JSX.Element = (
       <React.Fragment>
         <Trans>
           <Text verticalAlign="middle">{t('您选择的该集群的日志采集规则列表为空，您可以')}</Text>
@@ -144,7 +157,7 @@ export class LogStashTablePanel extends React.Component<RootProps, any> {
     let { actions, isOpenLogStash, route, clusterSelection } = this.props,
       urlParams = router.resolve(route);
 
-    if (clusterSelection && clusterSelection[0] && clusterSelection[0].spec.logAgentName || isOpenLogStash) {
+    if ((clusterSelection && clusterSelection[0] && clusterSelection[0].spec.logAgentName) || isOpenLogStash) {
       router.navigate(Object.assign({}, urlParams, { mode: 'create' }), route.queries);
     } else {
       actions.workflow.authorizeOpenLog.start();
@@ -153,7 +166,7 @@ export class LogStashTablePanel extends React.Component<RootProps, any> {
 
   /** 获取当前的Daemonset的状态 */
   private _getDaemonsetStatus() {
-    let { isDaemonsetNormal } = this.props;
+    const { isDaemonsetNormal } = this.props;
     let content: JSX.Element;
 
     content = (
@@ -177,7 +190,7 @@ export class LogStashTablePanel extends React.Component<RootProps, any> {
   private _renderOperationCell(logStash: Log) {
     let { actions, route, clusterVersion, clusterSelection } = this.props,
       urlParams = router.resolve(route);
-    let logAgentName = clusterSelection && clusterSelection[0] && clusterSelection[0].spec.logAgentName || '';
+    const logAgentName = (clusterSelection && clusterSelection[0] && clusterSelection[0].spec.logAgentName) || '';
 
     // 编辑日志采集器规则的按钮
     const renderEditButton = () => {
@@ -207,7 +220,7 @@ export class LogStashTablePanel extends React.Component<RootProps, any> {
         <LinkButton
           key={logStash.id + 'delete'}
           onClick={() => {
-            let resource: CreateResource = {
+            const resource: CreateResource = {
               id: uuid(),
               namespace: logStash.metadata.namespace,
               clusterId: route.queries['clusterId'],
@@ -223,7 +236,7 @@ export class LogStashTablePanel extends React.Component<RootProps, any> {
       );
     };
 
-    let btns = [];
+    const btns = [];
     btns.push(renderEditButton());
     btns.push(renderDeleteButton());
 

@@ -177,3 +177,5 @@ export const ResourceListMapForPodLog = [
     value: 'cronjob'
   }
 ];
+
+export const HOST_LOG_INPUT_PATH_PREFIX = '/run/containerd/io.containerd.runtime.v2.task/k8s.io/*/rootfs';
