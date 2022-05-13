@@ -68,7 +68,7 @@ func RetrieveToken(request *http.Request) (*Token, error) {
 // OAuth2 token.
 func ResponseToken(t *oauth2.Token, writer http.ResponseWriter) error {
 	idToken, ok := t.Extra("id_token").(string)
-	if !ok {
+	if !ok || idToken == "" {
 		log.Error("Failed to extra oauth2 token to id token", log.Any("token", t))
 		return fmt.Errorf("failed to extra oauth2 token to id token")
 	}
