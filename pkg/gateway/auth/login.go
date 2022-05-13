@@ -30,7 +30,11 @@ const RedirectURIKey = "redirect_uri"
 
 // RedirectLogin to redirect the http request to login page.
 func RedirectLogin(w http.ResponseWriter, r *http.Request, oauthConfig *oauth2.Config, disableOIDCProxy bool) {
-	oauthURL := oauthConfig.AuthCodeURL(r.URL.String(), oauth2.AccessTypeOffline)
+	state := r.URL.String()
+	if state == "" || state == "/" {
+		state = "/tkestack"
+	}
+	oauthURL := oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 	if !disableOIDCProxy {
 		originOAuthURL, err := url.Parse(oauthURL)
 		if err != nil {
