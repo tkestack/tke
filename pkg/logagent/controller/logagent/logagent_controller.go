@@ -571,6 +571,7 @@ func genCRB() *rbacv1.ClusterRoleBinding {
 }
 
 func (c *Controller) genDaemonSet(version string) *appsv1.DaemonSet {
+	propagationHostToContainer := corev1.MountPropagationHostToContainer
 	daemon := &appsv1.DaemonSet{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DaemonSet",
@@ -625,15 +626,15 @@ func (c *Controller) genDaemonSet(version string) *appsv1.DaemonSet {
 								{Name: "K8S_NODE_NAME", ValueFrom: &corev1.EnvVarSource{FieldRef: &corev1.ObjectFieldSelector{FieldPath: "spec.nodeName"}}},
 							},
 							VolumeMounts: []corev1.VolumeMount{
-								{Name: "sock", MountPath: "/var/run/docker.sock"},
-								{Name: "rootfs", MountPath: "/rootfs"},
-								{Name: "varlogpods", MountPath: "/var/log/pods"},
-								{Name: "varlogcontainers", MountPath: "/var/log/containers"},
-								{Name: "varlibdockercontainers", MountPath: "/var/lib/docker/containers"},
-								{Name: "datadocker", MountPath: "/data/docker"},
-								{Name: "optdocker", MountPath: "/opt/docker"},
-								{Name: "tdagent", MountPath: "/var/log/td-agent"},
-								{Name: "localtime", MountPath: "/etc/localtime"},
+								{Name: "sock", MountPath: "/var/run/docker.sock", MountPropagation: &propagationHostToContainer},
+								{Name: "rootfs", MountPath: "/rootfs", MountPropagation: &propagationHostToContainer},
+								{Name: "varlogpods", MountPath: "/var/log/pods", MountPropagation: &propagationHostToContainer},
+								{Name: "varlogcontainers", MountPath: "/var/log/containers", MountPropagation: &propagationHostToContainer},
+								{Name: "varlibdockercontainers", MountPath: "/var/lib/docker/containers", MountPropagation: &propagationHostToContainer},
+								{Name: "datadocker", MountPath: "/data/docker", MountPropagation: &propagationHostToContainer},
+								{Name: "optdocker", MountPath: "/opt/docker", MountPropagation: &propagationHostToContainer},
+								{Name: "tdagent", MountPath: "/var/log/td-agent", MountPropagation: &propagationHostToContainer},
+								{Name: "localtime", MountPath: "/etc/localtime", MountPropagation: &propagationHostToContainer},
 							},
 						},
 						{
