@@ -36,7 +36,6 @@ spec:
 {{- if .Values.baremetalStorage }}
       nodeName: {{ .Values.nodeName }}
 {{- end }}
-      hostNetwork: true
       volumes:
       - name: data
 {{- if .Values.baremetalStorage }}
