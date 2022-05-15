@@ -23,12 +23,25 @@ The hardware requirements for nodes mostly depend on your workloads, the minimum
 
 > Note: Installer node need extra 25GB /var/lib/ disk to store images and temporary files, 50GB /opt disk to uncompress installer package
 
+> Note: If the directory /var/lib or /opt can not meet the requirements,you can use bind mount to resolve the problem.
+>Before bind mount please backup the files under /opt and /var/lib to prevent the files loss.
+```
+vi /etc/fstab
+```
+Add the following context into fstab file and make sure the /data directory has enough capacity to use,
+you must create the test directory before the mount command.
+```
+/opt        /data/test/opt          none    bind        0 0
+/var/lib    /data/test/lib          none    bind        0 0
+```
+Then reboot the node to automatically mount /opt to /data/test/opt directory.
+
 TKEStack is tested on the following operating system:
 
 * Operating Systems
   * Ubuntu 16.04/18.04  LTS (64-bit)
   * CentOS Linux 7.6 (64-bit)
-  * Tencent Linux 2.2 
+  * Tencent Linux 2.2
 
 Please refer to [ installation requirements](docs/guide/zh-CN/installation/installation-requirement.md) for more information
 
@@ -50,9 +63,9 @@ First Log in to your Linux host and install tke-installer via this command:
 Open your browser to http://`INSTALLER-NODE-IP`:8080/index.html, the Web GUI will guide you to initialize and install the TKEStack.
 
 1. Set the account information and **HA VIP（Not necessary）**
-  
+
    ![](../../images/step-1.png)
-  
+
 2. Configure the global cluster, set cluster's nic, GPU type and container network, specify the master node information，advance option enable you to set customized parameters
 
    > Note: The addresses of all nodes should preferably use **intranet addresses**.
