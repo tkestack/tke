@@ -3,7 +3,7 @@ import { Table, Button, TableColumn, Text, Pagination, Dropdown, List } from 'te
 import { VMListActionPanel } from './action-panel';
 import { useFetch } from '@src/modules/common/hooks';
 import * as dayjs from 'dayjs';
-import { useSetRecoilState, useRecoilValueLoadable, useRecoilState, useRecoilValue } from 'recoil';
+import { useSetRecoilState, useRecoilState, useRecoilValue } from 'recoil';
 import { clusterIdState, namespaceSelectionState, vmSelectionState } from '../../store/base';
 import { virtualMachineAPI } from '@src/webApi';
 import { router } from '@src/modules/cluster/router';
@@ -17,6 +17,8 @@ export const VMListPanel = ({ route }) => {
   const [clusterId, setClusterId] = useRecoilState(clusterIdState);
   const namespace = useRecoilValue(namespaceSelectionState);
   const setVMSelection = useSetRecoilState(vmSelectionState);
+
+  const [query, setQuery] = useState('');
 
   const columns: TableColumn[] = [
     {
@@ -131,7 +133,7 @@ export const VMListPanel = ({ route }) => {
     async ({ paging, continueToken }) => {
       const { items, newContinueToken, restCount } = await virtualMachineAPI.fetchVMListWithVMI(
         { clusterId, namespace },
-        { limit: paging?.pageSize, continueToken }
+        { limit: paging?.pageSize, continueToken, query }
       );
       return {
         data:
@@ -153,19 +155,20 @@ export const VMListPanel = ({ route }) => {
         totalCount: (paging.pageIndex - 1) * paging.pageSize + items.length + restCount
       };
     },
-    [clusterId, namespace],
+    [clusterId, namespace, query],
     {
       mode: 'continue',
       defaultPageSize,
       fetchAble: !!(clusterId && namespace),
       polling: true,
-      pollingDelay: 30 * 1000
+      pollingDelay: 30 * 1000,
+      needClearData: false
     }
   );
 
   return (
     <>
-      <VMListActionPanel route={route} reFetch={reFetch} />
+      <VMListActionPanel route={route} reFetch={reFetch} onQueryChange={setQuery} />
       <Table
         columns={columns}
         records={vmList ?? []}
