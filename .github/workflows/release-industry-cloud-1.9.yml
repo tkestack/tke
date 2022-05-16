@@ -10,7 +10,7 @@ on:
   repository_dispatch:
     types: [release-industry-cloud-1.9]
   schedule:
-    - cron: "0 18 */3 * *"
+    - cron: "0 18 * * *"
   push:
     tags:
       - "v*.*.*"
@@ -38,9 +38,7 @@ jobs:
     steps:
       - name: Set VERSION
         run: |
-          echo ${GITHUB_REF#refs/*/}
-          echo ${GITHUB_REF}
-          echo "VERSION=${industry-cloud-1.9#refs/*/}" >> $GITHUB_ENV
+          echo "VERSION=industry-cloud-1.9" >> $GITHUB_ENV
       - uses: actions/checkout@v2
         with:
           ref: ${{ env.VERSION }}
