@@ -184,7 +184,7 @@ Make sure remove all the annotations on the json files before you use it.
         },
         "ha":{ // enable ha
             "tke":{
-                "vip":"xxxxx" // vip address tke provide
+                "vip":"xxxxx" // vip address tke provided
             }
         },
         "gateway":{
