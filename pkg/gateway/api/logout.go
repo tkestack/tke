@@ -21,9 +21,9 @@ package api
 import (
 	"fmt"
 	"github.com/emicklei/go-restful"
-	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	"net/http"
 	"tkestack.io/tke/pkg/gateway/token"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // Empty defines a data structure containing nothing.
@@ -39,7 +39,7 @@ func registerLogoutRoute(container *restful.Container) {
 		GET("/").
 		Doc("logout current user").
 		Operation("doLogout").
-		Returns(http.StatusOK, "Ok", Empty{}).
+		Returns(http.StatusFound, "Found", Empty{}).
 		To(handleLogoutFunc()))
 	container.Add(ws)
 }
@@ -47,6 +47,11 @@ func registerLogoutRoute(container *restful.Container) {
 func handleLogoutFunc() func(*restful.Request, *restful.Response) {
 	return func(request *restful.Request, response *restful.Response) {
 		token.DeleteCookie(response.ResponseWriter)
-		responsewriters.WriteRawJSON(http.StatusOK, Empty{}, response.ResponseWriter)
+		returnTo := request.QueryParameter("return_to")
+		if returnTo == "" {
+			returnTo = "/tkestack"
+		}
+		log.Debugf("redirect to '%s'", returnTo)
+		http.Redirect(response.ResponseWriter, request.Request, returnTo, http.StatusFound)
 	}
 }
