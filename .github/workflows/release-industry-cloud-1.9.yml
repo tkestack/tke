@@ -38,6 +38,8 @@ jobs:
     steps:
       - name: Set VERSION
         run: |
+          echo ${GITHUB_REF#refs/*/}
+          echo ${GITHUB_REF}
           echo "VERSION=${industry-cloud-1.9#refs/*/}" >> $GITHUB_ENV
       - uses: actions/checkout@v2
         with:
