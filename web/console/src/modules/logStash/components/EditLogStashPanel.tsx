@@ -198,18 +198,6 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
           label={t('所属集群')}
           message={
             <React.Fragment>
-              <Text parent="p">
-                <Trans>
-                  如现有的集群不合适，您可以去控制台
-                  <ExternalLink href={`/tkestack/cluster/create?rid=${route.queries['rid']}`} target="_self">
-                    导入集群
-                  </ExternalLink>
-                  或者
-                  <ExternalLink href={`/tkestack/cluster/createIC?rid=${route.queries['rid']}`} target="_self">
-                    新建一个独立集群
-                  </ExternalLink>
-                </Trans>
-              </Text>
               {!(
                 (clusterSelection && clusterSelection[0] && clusterSelection[0].spec.logAgentName) ||
                 isOpenLogStash
