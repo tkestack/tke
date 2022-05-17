@@ -25,9 +25,7 @@ import { Select } from '@tencent/tea-component';
 
 import { FormItem } from '../../../../common';
 import { allActions } from '../../../actions';
-import {
-    FloatingIPReleasePolicy, WorkloadNetworkType, WorkloadNetworkTypeEnum
-} from '../../../constants/Config';
+import { FloatingIPReleasePolicy, WorkloadNetworkType, WorkloadNetworkTypeEnum } from '../../../constants/Config';
 import { RootProps } from '../../ClusterApp';
 import { EditResourceAnnotations } from './EditResourceAnnotations';
 import { EditResourceImagePullSecretsPanel } from './EditResourceImagePullSecretsPanel';
@@ -44,7 +42,7 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class EditResourceAdvancedPanel extends React.Component<EditResourceAdvancedPanelProps, {}> {
   render() {
-    let { isOpenAdvanced, subRoot, actions } = this.props,
+    const { isOpenAdvanced, subRoot, actions } = this.props,
       { workloadEdit } = subRoot,
       { networkType, floatingIPReleasePolicy } = workloadEdit;
 
@@ -55,7 +53,7 @@ export class EditResourceAdvancedPanel extends React.Component<EditResourceAdvan
         <EditResourceImagePullSecretsPanel />
         <EditResourceNodeAffinityPanel />
         <EditResourceAnnotations />
-        <FormItem label={t('网络模式')}>
+        <FormItem label={t('网络模式')} isShow={false}>
           <Select
             size="m"
             options={WorkloadNetworkType}
