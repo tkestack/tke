@@ -171,7 +171,7 @@ Entry.register({
      * @url https://{{domain}}/tkestack
      */
     index: {
-      title: 'TKEStack',
+      title: 'TKE Anywhere',
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
@@ -183,7 +183,7 @@ Entry.register({
      * @url https://{{domain}}/tkestack/overview
      */
     overview: {
-      title: t('概览 - TKEStack'),
+      title: t('概览 - TKE Anywhere'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
@@ -195,7 +195,7 @@ Entry.register({
      * @url https://{{domain}}/tkestack/cluster
      */
     cluster: {
-      title: t('集群管理 - TKEStack'),
+      title: t('集群管理 - TKE Anywhere'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
@@ -208,7 +208,7 @@ Entry.register({
      * @url https://{{domain}}/tkestack/project
      */
     project: {
-      title: t('业务管理 - TKEStack'),
+      title: t('业务管理 - TKE Anywhere'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
@@ -221,7 +221,7 @@ Entry.register({
      * @url https://{{domain}}/tkestack/addon
      */
     addon: {
-      title: t('扩展组件 - TKEStack'),
+      title: t('扩展组件 - TKE Anywhere'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
@@ -234,7 +234,7 @@ Entry.register({
      * @url https://dev.console.tke.com/tke/regitry
      */
     registry: {
-      title: t('组织资源 - TKEStack'),
+      title: t('组织资源 - TKE Anywhere'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
@@ -247,7 +247,7 @@ Entry.register({
      * @url https://{{domain}}/tkestack/access
      */
     uam: {
-      title: t('访问管理 - TKEStack'),
+      title: t('访问管理 - TKE Anywhere'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
@@ -260,7 +260,7 @@ Entry.register({
      * @url https://{{domain}}/tkestack/alarm
      */
     alarm: {
-      title: t('告警设置 - TKEStack'),
+      title: t('告警设置 - TKE Anywhere'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
@@ -273,7 +273,7 @@ Entry.register({
      * @url https://{{domain}}/tkestack/notify
      */
     notify: {
-      title: t('通知设置 - TKEStack'),
+      title: t('通知设置 - TKE Anywhere'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
@@ -286,7 +286,7 @@ Entry.register({
      * @url https://{{domain}}/tkestack/alarm-record
      */
     'alarm-record': {
-      title: t('告警记录 - TKEStack'),
+      title: t('告警记录 - TKE Anywhere'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
@@ -299,7 +299,7 @@ Entry.register({
      * @url https://{{domain}}/tkestack/application
      */
     application: {
-      title: t('Helm 应用 - TKEStack'),
+      title: t('Helm 应用 - TKE Anywhere'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
@@ -312,7 +312,7 @@ Entry.register({
      * @url https://{{domain}}/tkestack/helm
      */
     helm: {
-      title: t('Helm2 应用 - TKEStack'),
+      title: t('Helm2 应用 - TKE Anywhere'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
@@ -325,7 +325,7 @@ Entry.register({
      * @url https://{{domian}}/tkestack/log
      */
     log: {
-      title: t('日志采集 - TKEStack'),
+      title: t('日志采集 - TKE Anywhere'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
@@ -338,7 +338,7 @@ Entry.register({
      * @url https://{{domain}}/tkestack/persistent-event
      */
     'persistent-event': {
-      title: t('事件持久化 - TKEStack'),
+      title: t('事件持久化 - TKE Anywhere'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />
@@ -351,7 +351,7 @@ Entry.register({
      * @url https://{{domain}}/tkestack/audit
      */
     audit: {
-      title: t('审计记录 - TKEStack'),
+      title: t('审计记录 - TKE Anywhere'),
       container: (
         <Wrapper platformType={PlatformTypeEnum.Manager}>
           <ForbiddentDialog />

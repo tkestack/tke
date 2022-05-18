@@ -54,7 +54,7 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
                   <Button
                     type="primary"
                     onClick={() => {
-                      let urlParams = router.resolve(this.props.route);
+                      const urlParams = router.resolve(this.props.route);
                       router.navigate(Object.assign({}, urlParams, { sub: 'apikey', mode: 'create' }), {});
                     }}
                   >
@@ -87,8 +87,8 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
         key: 'name',
         header: t('凭证'),
         render: x => {
-          let _startEight = x.spec.apiKey.substring(0, 8);
-          let _endEight = x.spec.apiKey.substring(Math.max(x.spec.apiKey.length - 8, 0), x.spec.apiKey.length);
+          const _startEight = x.spec.apiKey.substring(0, 8);
+          const _endEight = x.spec.apiKey.substring(Math.max(x.spec.apiKey.length - 8, 0), x.spec.apiKey.length);
           return (
             <React.Fragment>
               <p className="tea-text-overflow" style={{ position: 'relative' }}>
@@ -246,7 +246,7 @@ export class ApiKeyTablePanel extends React.Component<RootProps, ApiKeyState> {
             <li>
               <p>
                 <strong>
-                  <Trans>登录</Trans> TKEStack Docker Registry
+                  <Trans>登录</Trans> TKE Anywhere 的 Docker Registry
                 </strong>
               </p>
               <code>
