@@ -105,7 +105,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
             </li>
             <li>
               <p>
-                <Trans>本地 Helm 客户端添加 TKEStack 的 repo.</Trans>
+                <Trans>本地 Helm 客户端添加 TKE Anywhere 的 repo.</Trans>
               </p>
               <code>
                 <Clip target="#addTkeRepo" className="copy-btn">
