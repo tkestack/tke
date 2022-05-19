@@ -297,6 +297,58 @@ func (t *TKE) preprocessPlatformApps(ctx context.Context) error {
 			}
 			values["namespace"] = platformApp.HelmInstallOptions.Namespace
 		}
+		if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.CephFSChartReleaseName) {
+			platformApp.ConditionFunc = func() (bool, error) {
+				provisionerOk, err := apiclient.CheckDeployment(ctx, t.globalClient, platformApp.HelmInstallOptions.Namespace, "ceph-csi-cephfs-provisioner")
+				if err != nil {
+					return false, nil
+				}
+				nodepluginOk, err := apiclient.CheckDaemonset(ctx, t.globalClient, platformApp.HelmInstallOptions.Namespace, "ceph-csi-cephfs-nodeplugin")
+				if err != nil {
+					return false, nil
+				}
+				return provisionerOk && nodepluginOk, nil
+			}
+			platformApp.LocalChartPath = constants.ChartDirName + "ceph-csi-cephfs/"
+
+			if err := t.mergePlatformAppValues(platformApp); err != nil {
+				return err
+			}
+			values := platformApp.HelmInstallOptions.Values
+			if values["csiConfig"] == nil {
+				return fmt.Errorf("ceph-csi-cephfs platformAPP csiConfig nil")
+			}
+			if values["secret"] == nil || len(values["secret"].(map[string]interface{})["userID"].(string)) == 0 || len(values["secret"].(map[string]interface{})["userKey"].(string)) == 0 {
+				return fmt.Errorf("ceph-csi-cephfs platformAPP secret userID | userKey nil")
+			}
+			if values["storageClass"] == nil || len(values["storageClass"].(map[string]interface{})["clusterID"].(string)) == 0 {
+				return fmt.Errorf("ceph-csi-cephfs platformAPP storageClass clusterID nil")
+			}
+
+			values["images"] = map[string]interface{}{
+				"enable": true,
+				"nodeplugin": map[string]interface{}{
+					"registrar": images.Get().CsiNodeDriverRegistrar.FullName(),
+					"plugin":    images.Get().CephCsi.FullName(),
+				},
+				"provisioner": map[string]interface{}{
+					"provisioner": images.Get().CsiProvisioner.FullName(),
+					"attacher":    images.Get().CsiAttacher.FullName(),
+					"resizer":     images.Get().CsiResizer.FullName(),
+					"snapshotter": images.Get().CsiSnapshotter.FullName(),
+				},
+			}
+			if values["storageClass"] == nil {
+				values["storageClass"] = map[string]interface{}{
+					"replicaCount": t.Config.Replicas,
+					"name":         constants.CephFSStorageClassName,
+				}
+			} else {
+				values["storageClass"].(map[string]interface{})["replicaCount"] = t.Config.Replicas
+				values["storageClass"].(map[string]interface{})["name"] = constants.CephFSStorageClassName
+			}
+			values["namespace"] = platformApp.HelmInstallOptions.Namespace
+		}
 		if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.NFSChartReleaseName) {
 			platformApp.ConditionFunc = func() (bool, error) {
 				provisionerOk, err := apiclient.CheckDeployment(ctx, t.globalClient, platformApp.HelmInstallOptions.Namespace, "nfs-subdir-external-provisioner")

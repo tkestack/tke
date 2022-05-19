@@ -108,6 +108,8 @@ const (
 const (
 	CephRBDStorageClassName = "csi-rbd-sc"
 	CephRBDChartReleaseName = "ceph-csi-rbd"
+	CephFSStorageClassName  = "csi-cephfs-sc"
+	CephFSChartReleaseName  = "ceph-csi-cephfs"
 	NFSStorageClassName     = "nfs-sc"
 	NFSChartReleaseName     = "nfs-subdir-external-provisioner"
 )
