@@ -168,6 +168,9 @@ data:
     storage:
 {{- if eq .StorageType "influxDB" }}
       influxDB:
+{{- if .RetentionDays }}
+        retentionDays: {{ .RetentionDays }}
+{{- end }}
         servers:
           - address: {{ .StorageAddress }}
             username: {{ .StorageUsername }}

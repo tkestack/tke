@@ -267,6 +267,7 @@ type Monitor struct {
 	ThanosMonitor   *ThanosMonitor   `json:"thanos,omitempty"`
 	ESMonitor       *ESMonitor       `json:"es,omitempty"`
 	InfluxDBMonitor *InfluxDBMonitor `json:"influxDB,omitempty"`
+	RetentionDays   *int             `json:"retentionDays,omitempty"`
 }
 
 type ThanosMonitor struct {
