@@ -1236,6 +1236,9 @@ groups:
   - record: vm_memory_total
     expr: sum(kubevirt_vmi_memory_available_bytes) by (node, name, namespace)/(1024*1024)
 
+  - record: vm_memory_usage
+    expr: sum(kubevirt_vmi_memory_available_bytes-kubevirt_vmi_memory_unused_bytes) by (node, name, namespace)/(1024*1024)
+
   - record: vm_memory_usage_rate
     expr: (kubevirt_vmi_memory_available_bytes-kubevirt_vmi_memory_unused_bytes)*100 / on(node, name, namespace) kubevirt_vmi_memory_available_bytes
   
