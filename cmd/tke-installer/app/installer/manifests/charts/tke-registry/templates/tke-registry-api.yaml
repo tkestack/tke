@@ -27,6 +27,8 @@ spec:
   selector:
     matchLabels:
       app: tke-registry-api
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
