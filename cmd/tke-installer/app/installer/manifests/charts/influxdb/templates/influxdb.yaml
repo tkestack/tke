@@ -7,7 +7,6 @@ metadata:
     app: influxdb
 spec:
   replicas: 1
-  serviceName: influxdb
   selector:
     matchLabels:
       app: influxdb
