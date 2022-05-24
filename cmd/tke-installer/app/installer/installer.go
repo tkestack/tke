@@ -1561,6 +1561,10 @@ func (t *TKE) prepareImages(ctx context.Context) error {
 		needPushImages := []string{images.Get().TKEGateway.FullName(),
 			images.Get().TKERegistryAPI.FullName(),
 			images.Get().TKERegistryController.FullName(),
+			images.Get().TKEAuthAPI.FullName(),
+			images.Get().TKEAuthController.FullName(),
+			images.Get().TKEPlatformAPI.FullName(),
+			images.Get().TKEPlatformController.FullName(),
 			images.Get().NginxIngress.FullName(),
 			images.Get().KebeWebhookCertgen.FullName()}
 		for _, name := range needPushImages {
