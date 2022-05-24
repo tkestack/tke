@@ -68,6 +68,22 @@ spec:
       storage: 40Gi
   storageClassName: {{ .Values.cephRbdStorageClassName }}
 {{- end }}
+{{- if .Values.cephFS }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.cephFSPVCName }}
+  namespace: tke
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 40Gi
+  storageClassName: {{ .Values.cephFSStorageClassName }}
+{{- end }}
 {{- if .Values.nfs }}
 ---
 apiVersion: v1
