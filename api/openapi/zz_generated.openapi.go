@@ -51944,7 +51944,7 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItem(ref common.Reference
 				Description: "ClusterGroupAPIResourceItem specifies the name of a resource and whether it is namespaced.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"Name": {
+					"name": {
 						SchemaProps: spec.SchemaProps{
 							Description: "name is the plural name of the resource.",
 							Default:     "",
@@ -51952,7 +51952,7 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItem(ref common.Reference
 							Format:      "",
 						},
 					},
-					"SingularName": {
+					"singularName": {
 						SchemaProps: spec.SchemaProps{
 							Description: "singularName is the singular name of the resource.  This allows clients to handle plural and singular opaquely. The singularName is more correct for reporting status on a single item and both singular and plural are allowed from the kubectl CLI interface.",
 							Default:     "",
@@ -51960,7 +51960,7 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItem(ref common.Reference
 							Format:      "",
 						},
 					},
-					"Namespaced": {
+					"namespaced": {
 						SchemaProps: spec.SchemaProps{
 							Description: "namespaced indicates if a resource is namespaced or not.",
 							Default:     false,
@@ -51968,7 +51968,7 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItem(ref common.Reference
 							Format:      "",
 						},
 					},
-					"Group": {
+					"group": {
 						SchemaProps: spec.SchemaProps{
 							Description: "group is the preferred group of the resource.  Empty implies the group of the containing resource list. For subresources, this may have a different value, for example: Scale\".",
 							Default:     "",
@@ -51976,7 +51976,7 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItem(ref common.Reference
 							Format:      "",
 						},
 					},
-					"Version": {
+					"version": {
 						SchemaProps: spec.SchemaProps{
 							Description: "version is the preferred version of the resource.  Empty implies the version of the containing resource list For subresources, this may have a different value, for example: v1 (while inside a v1beta1 version of the core resource's group)\".",
 							Default:     "",
@@ -51984,7 +51984,7 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItem(ref common.Reference
 							Format:      "",
 						},
 					},
-					"Kind": {
+					"kind": {
 						SchemaProps: spec.SchemaProps{
 							Description: "kind is the kind for the resource (e.g. 'Foo' is the kind for a resource 'foo')",
 							Default:     "",
@@ -51992,7 +51992,7 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItem(ref common.Reference
 							Format:      "",
 						},
 					},
-					"Verbs": {
+					"verbs": {
 						SchemaProps: spec.SchemaProps{
 							Description: "verbs is a list of supported kube verbs (this includes get, list, watch, create, update, patch, delete, deletecollection, and proxy)",
 							Type:        []string{"array"},
@@ -52007,7 +52007,7 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItem(ref common.Reference
 							},
 						},
 					},
-					"ShortNames": {
+					"shortNames": {
 						SchemaProps: spec.SchemaProps{
 							Description: "shortNames is a list of suggested short names of the resource.",
 							Type:        []string{"array"},
@@ -52022,7 +52022,7 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItem(ref common.Reference
 							},
 						},
 					},
-					"Categories": {
+					"categories": {
 						SchemaProps: spec.SchemaProps{
 							Description: "categories is a list of the grouped resources this resource belongs to (e.g. 'all')",
 							Type:        []string{"array"},
@@ -52038,7 +52038,7 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItem(ref common.Reference
 						},
 					},
 				},
-				Required: []string{"Name", "SingularName", "Namespaced", "Group", "Version", "Kind", "Verbs", "ShortNames", "Categories"},
+				Required: []string{"name", "singularName", "namespaced", "group", "version", "kind", "verbs", "shortNames", "categories"},
 			},
 		},
 	}
@@ -52079,7 +52079,7 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItems(ref common.Referenc
 							Format:      "",
 						},
 					},
-					"apiResources": {
+					"resources": {
 						SchemaProps: spec.SchemaProps{
 							Description: "resources contains the name of the resources and if they are namespaced.",
 							Type:        []string{"array"},
@@ -52094,7 +52094,7 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItems(ref common.Referenc
 						},
 					},
 				},
-				Required: []string{"groupVersion", "apiResources"},
+				Required: []string{"groupVersion", "resources"},
 			},
 		},
 		Dependencies: []string{
@@ -52129,7 +52129,7 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItemsList(ref common.Refe
 							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
-					"Items": {
+					"items": {
 						SchemaProps: spec.SchemaProps{
 							Description: "List of ClusterGroupAPIResourceItems",
 							Type:        []string{"array"},
@@ -52152,7 +52152,7 @@ func schema_tke_api_platform_v1_ClusterGroupAPIResourceItemsList(ref common.Refe
 						},
 					},
 				},
-				Required: []string{"Items", "failedGroupError"},
+				Required: []string{"items", "failedGroupError"},
 			},
 		},
 		Dependencies: []string{
