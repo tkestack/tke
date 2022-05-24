@@ -259,6 +259,7 @@ func (t *TKE) preprocessPlatformApps(ctx context.Context) error {
 			}
 			platformApp.LocalChartPath = constants.ChartDirName + "ceph-csi-rbd/"
 
+			// TODO: little confused in preprocess step
 			if err := t.mergePlatformAppValues(platformApp); err != nil {
 				return err
 			}
@@ -266,9 +267,11 @@ func (t *TKE) preprocessPlatformApps(ctx context.Context) error {
 			if values["csiConfig"] == nil {
 				return fmt.Errorf("ceph-csi-rbd platformAPP csiConfig nil")
 			}
+			// TODO: little confused in preprocess step
 			if values["secret"] == nil || len(values["secret"].(map[string]interface{})["userID"].(string)) == 0 || len(values["secret"].(map[string]interface{})["userKey"].(string)) == 0 {
 				return fmt.Errorf("ceph-csi-rbd platformAPP secret userID | userKey nil")
 			}
+			// TODO: little confused in preprocess step
 			if values["storageClass"] == nil || len(values["storageClass"].(map[string]interface{})["clusterID"].(string)) == 0 {
 				return fmt.Errorf("ceph-csi-rbd platformAPP storageClass clusterID nil")
 			}
@@ -318,11 +321,13 @@ func (t *TKE) preprocessPlatformApps(ctx context.Context) error {
 			if values["csiConfig"] == nil {
 				return fmt.Errorf("ceph-csi-cephfs platformAPP csiConfig nil")
 			}
-			if values["secret"] == nil || len(values["secret"].(map[string]interface{})["userID"].(string)) == 0 || len(values["secret"].(map[string]interface{})["userKey"].(string)) == 0 {
-				return fmt.Errorf("ceph-csi-cephfs platformAPP secret userID | userKey nil")
+			// TODO: little confused in preprocess step
+			if values["secret"] == nil || len(values["secret"].(map[string]interface{})["adminID"].(string)) == 0 || len(values["secret"].(map[string]interface{})["adminKey"].(string)) == 0 {
+				return fmt.Errorf("ceph-csi-cephfs platformAPP secret adminID | adminKey nil")
 			}
-			if values["storageClass"] == nil || len(values["storageClass"].(map[string]interface{})["clusterID"].(string)) == 0 {
-				return fmt.Errorf("ceph-csi-cephfs platformAPP storageClass clusterID nil")
+			// TODO: little confused in preprocess step
+			if values["storageClass"] == nil || len(values["storageClass"].(map[string]interface{})["clusterID"].(string)) == 0 || len(values["storageClass"].(map[string]interface{})["fsName"].(string)) == 0 {
+				return fmt.Errorf("ceph-csi-cephfs platformAPP storageClass clusterID| fsName nil")
 			}
 
 			values["images"] = map[string]interface{}{

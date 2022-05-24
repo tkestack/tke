@@ -213,7 +213,7 @@ topology:
 
 storageClass:
   # Specifies whether the Storage class should be created
-  create: false
+  create: true
   name: csi-cephfs-sc
   # Annotations for the storage class
   # Example:
@@ -228,7 +228,7 @@ storageClass:
   clusterID: <cluster-ID>
   # (required) CephFS filesystem name into which the volume shall be created
   # eg: fsName: myfs
-  fsName: myfs
+  fsName: ""
   # (optional) Ceph pool into which volume data shall be stored
   # pool: <cephfs-data-pool>
   # For eg:
@@ -271,7 +271,7 @@ storageClass:
 
 secret:
   # Specifies whether the secret should be created
-  create: false
+  create: true
   name: csi-cephfs-secret
   # Key values correspond to a user name and its key, as defined in the
   # ceph cluster. User ID should have required access to the 'pool'
