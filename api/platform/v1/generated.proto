@@ -460,16 +460,16 @@ message ClusterGroupAPIResourceItems {
   optional string groupVersion = 2;
 
   // resources contains the name of the resources and if they are namespaced.
-  repeated ClusterGroupAPIResourceItem apiResources = 3;
+  repeated ClusterGroupAPIResourceItem resources = 3;
 }
 
 // ClusterGroupAPIResourceItemsList is the whole list of all ClusterAPIResource.
 message ClusterGroupAPIResourceItemsList {
   // +optional
-  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 3;
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 2;
 
   // List of ClusterGroupAPIResourceItems
-  repeated ClusterGroupAPIResourceItems items = 2;
+  repeated ClusterGroupAPIResourceItems items = 3;
 
   // Failed Group Error
   optional string failedGroupError = 4;
