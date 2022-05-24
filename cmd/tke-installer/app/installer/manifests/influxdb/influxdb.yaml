@@ -61,7 +61,7 @@ metadata:
   namespace: tke
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   volumeMode: Filesystem
   resources:
     requests:
@@ -77,7 +77,7 @@ metadata:
   namespace: tke
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   volumeMode: Filesystem
   resources:
     requests:
