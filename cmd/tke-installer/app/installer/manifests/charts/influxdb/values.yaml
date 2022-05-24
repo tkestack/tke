@@ -4,6 +4,9 @@ baremetalStorage:
 cephRbd:
 cephRbdPVCName:
 cephRbdStorageClassName:
-nfs: 
-nfsPVCName: 
-nfsStorageClassName: 
+cephFS:
+cephFSPVCName:
+cephFSStorageClassName:
+nfs:
+nfsPVCName:
+nfsStorageClassName:
