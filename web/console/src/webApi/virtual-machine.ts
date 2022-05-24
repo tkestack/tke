@@ -214,7 +214,7 @@ export function createVM({
 
         spec: {
           pvc: {
-            accessModes: ['ReadWriteOnce'],
+            accessModes: ['ReadWriteMany'],
             resources: {
               requests: {
                 storage: `${item.size}Gi`

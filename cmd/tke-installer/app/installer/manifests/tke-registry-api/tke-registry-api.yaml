@@ -124,7 +124,7 @@ metadata:
   namespace: {{ .Namespace }}
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   volumeMode: Filesystem
   resources:
     requests:
@@ -141,7 +141,7 @@ metadata:
   namespace: {{ .Namespace }}
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   volumeMode: Filesystem
   resources:
     requests:
