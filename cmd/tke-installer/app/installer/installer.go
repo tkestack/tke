@@ -2123,6 +2123,7 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 			// thanos-query address
 			params["MonitorStorageAddresses"] = "http://thanos-query.tke.svc.cluster.local:9090"
 		}
+		params["RetentionDays"] = t.Para.Config.Monitor.RetentionDays //can accept a nil value
 	}
 
 	if err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-monitor-controller/*.yaml", params); err != nil {

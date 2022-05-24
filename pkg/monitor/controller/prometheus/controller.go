@@ -184,12 +184,14 @@ type Controller struct {
 	// RemoteAddress for prometheus
 	remoteClients []remoteClient
 	remoteType    string
+	retentionDays int
 	// NotifyApiAddress
 	notifyAPIAddress string
 }
 
 // NewController creates a new Controller object.
-func NewController(client clientset.Interface, platformClient platformv1client.PlatformV1Interface, prometheusInformer monitorv1informer.PrometheusInformer, resyncPeriod time.Duration, remoteAddress []string, remoteType string) *Controller {
+// retentionDays is used only when storage is influx db. Controller will create database in inluxdb, and set the retention policy
+func NewController(client clientset.Interface, platformClient platformv1client.PlatformV1Interface, prometheusInformer monitorv1informer.PrometheusInformer, resyncPeriod time.Duration, remoteAddress []string, remoteType string, retentionDays int) *Controller {
 	// create the controller so we can inject the enqueue function
 	controller := &Controller{
 		client:         client,
@@ -197,6 +199,7 @@ func NewController(client clientset.Interface, platformClient platformv1client.P
 		cache:          &prometheusCache{prometheusMap: make(map[string]*cachedPrometheus)},
 		queue:          workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "prometheus"),
 		remoteType:     remoteType,
+		retentionDays:  retentionDays,
 	}
 
 	if client != nil && client.MonitorV1().RESTClient().GetRateLimiter() != nil {
@@ -302,14 +305,18 @@ func (c *Controller) Run(workers int, stopCh <-chan struct{}) error {
 				if client.influxdb.client == nil {
 					return false, nil
 				}
-
-				log.Debugf("query sql: %s", query.Command)
+				log.Debugf("create database  sql: %s", query.Command)
 				resp, err := client.influxdb.client.Query(query)
 				if err != nil {
 					log.Errorf("Create database %s for %s failed: %v", monitorutil.ProjectDatabaseName, client.influxdb.address, err)
 					return false, nil
 				} else if resp.Error() != nil {
 					log.Errorf("Create database %s for %s failed: %v", monitorutil.ProjectDatabaseName, client.influxdb.address, resp.Error())
+					return false, nil
+				}
+				// create of alter retention policy 'tke'
+				err = createOrAlterRetention(client, monitorutil.ProjectDatabaseName, c.retentionDays)
+				if err != nil {
 					return false, nil
 				}
 			}
@@ -3137,6 +3144,7 @@ func (c *Controller) initInfluxdb(dbName string) ([]string, error) {
 	// create database/user, and grant privilege
 	cmdDB := fmt.Sprintf("create database %s; create user %s with password '%s'; grant all on %s to %s; grant write on %s to %s",
 		db, usr, passwd, db, usr, monitorutil.ProjectDatabaseName, usr)
+
 	log.Debugf("Create influxdb table: %s", cmdDB)
 	queryDB := influxApi.Query{
 		Command:  cmdDB,
@@ -3153,6 +3161,12 @@ func (c *Controller) initInfluxdb(dbName string) ([]string, error) {
 		} else if resp.Error() != nil {
 			return nil, resp.Error()
 		}
+
+		err = createOrAlterRetention(client, db, c.retentionDays)
+		if err != nil {
+			return nil, err
+		}
+
 		queryStr = append(queryStr, []string{
 			fmt.Sprintf("%s/api/v1/prom/write?db=%s&u=%s&p=%s", client.influxdb.address, db, usr, passwd),
 			fmt.Sprintf("%s/api/v1/prom/write?db=%s&u=%s&p=%s", client.influxdb.address, monitorutil.ProjectDatabaseName, usr, passwd),
@@ -3322,4 +3336,43 @@ func (c *Controller) initThanos() ([]string, error) {
 
 func boolPointer(value bool) *bool {
 	return &value
+}
+
+func createOrAlterRetention(client remoteClient, db string, duration int) error {
+	createRPSQL := influxApi.Query{
+		Command:  fmt.Sprintf("create retention policy tke on %s duration %dd replication 1 default", db, duration),
+		Database: monitorutil.ProjectDatabaseName,
+	}
+	alterRPSQL := influxApi.Query{
+		Command:  fmt.Sprintf("alter retention policy tke on %s duration %dd", db, duration),
+		Database: monitorutil.ProjectDatabaseName,
+	}
+
+	log.Debugf("create retention policy sql: %s", createRPSQL.Command)
+	resp, err := client.influxdb.client.Query(createRPSQL) // create retention policy first
+	if err != nil {
+		log.Errorf("create retention policy 'tke' failed on db %s with client %s , err: %v", db, client.influxdb.address, err)
+		return err
+	}
+	if resp.Error() != nil {
+		if !strings.EqualFold(resp.Error().Error(), "retention policy already exists") { //other errors
+			log.Errorf("create retention policy 'tke' failed on db %s with client %s , err: %v", db, client.influxdb.address, resp.Error())
+			return resp.Error()
+		}
+
+		log.Debugf("alter retention policy sql: %s", alterRPSQL.Command)
+		resp, err = client.influxdb.client.Query(alterRPSQL) //alter exist retetntion policy
+		if err != nil {
+			log.Errorf("alter retention policy 'tke' failed on db %s with client %s , err: %v", db, client.influxdb.address, err)
+			return err
+		}
+		if resp.Error() != nil {
+			log.Errorf("alter retention policy 'tke' failed on db %s with client %s , err: %v", db, client.influxdb.address, resp.Error())
+			return resp.Error()
+		}
+		log.Infof("success to alter retention policy 'tke' on db %s with client %s", db, client.influxdb.address)
+		return nil
+	}
+	log.Infof("success to create retention policy 'tke' on db %s with client %s", db, client.influxdb.address)
+	return nil
 }

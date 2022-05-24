@@ -165,6 +165,7 @@ func Convert_config_ElasticSearchStorageServer_To_v1_ElasticSearchStorageServer(
 }
 
 func autoConvert_v1_InfluxDBStorage_To_config_InfluxDBStorage(in *InfluxDBStorage, out *config.InfluxDBStorage, s conversion.Scope) error {
+	out.RetentionDays = (*int)(unsafe.Pointer(in.RetentionDays))
 	out.Servers = *(*[]config.InfluxDBStorageServer)(unsafe.Pointer(&in.Servers))
 	return nil
 }
@@ -175,6 +176,7 @@ func Convert_v1_InfluxDBStorage_To_config_InfluxDBStorage(in *InfluxDBStorage, o
 }
 
 func autoConvert_config_InfluxDBStorage_To_v1_InfluxDBStorage(in *config.InfluxDBStorage, out *InfluxDBStorage, s conversion.Scope) error {
+	out.RetentionDays = (*int)(unsafe.Pointer(in.RetentionDays))
 	out.Servers = *(*[]InfluxDBStorageServer)(unsafe.Pointer(&in.Servers))
 	return nil
 }
