@@ -79,3 +79,27 @@ func RegisterMetricAndTrackRateLimiterUsage(ownerName string, rateLimiter flowco
 	// }, updatePeriod, rateLimiterMetrics[ownerName].stopCh)
 	return nil
 }
+
+var (
+	GaugeApplicationInstallFailed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "applicationInstallFailed",
+		Help: "application install failed count",
+	}, []string{"cluster", "application"})
+	GaugeApplicationUpgradeFailed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "applicationUpgradeFailed",
+		Help: "application upgrade failed count",
+	}, []string{"cluster", "application"})
+	GaugeApplicationRollbackFailed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "applicationRollbackFailed",
+		Help: "application rollback failed count",
+	}, []string{"cluster", "application"})
+	GaugeApplicationSyncFailed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "applicationSyncFailed",
+		Help: "application sync failed count",
+	}, []string{"cluster", "application"})
+)
+
+func init() {
+	// Register the summary and the histogram with Prometheus's default registry.
+	prometheus.MustRegister(GaugeApplicationInstallFailed, GaugeApplicationUpgradeFailed, GaugeApplicationRollbackFailed, GaugeApplicationSyncFailed)
+}
