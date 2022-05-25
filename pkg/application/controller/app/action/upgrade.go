@@ -33,6 +33,7 @@ import (
 	"tkestack.io/tke/pkg/application/util"
 	chartpath "tkestack.io/tke/pkg/application/util/chartpath/v1"
 	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/metrics"
 )
 
 // Upgrade upgrade a helm release
@@ -58,6 +59,7 @@ func Upgrade(ctx context.Context,
 		if updateStatusFunc != nil {
 			if app.Status.Phase == applicationv1.AppPhaseUpgradFailed {
 				log.Error(fmt.Sprintf("upgrade app failed, helm pull err: %s", err.Error()))
+				metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 				// delayed retry, queue.AddRateLimited does not meet the demand
 				return app, nil
 			}
@@ -66,6 +68,7 @@ func Upgrade(ctx context.Context,
 			newStatus.Reason = err.Error()
 			newStatus.LastTransitionTime = metav1.Now()
 			updateStatusFunc(ctx, app, &app.Status, newStatus)
+			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 		}
 		return nil, err
 	}
@@ -102,6 +105,7 @@ func Upgrade(ctx context.Context,
 		if err != nil {
 			if app.Status.Phase == applicationv1.AppPhaseUpgradFailed {
 				log.Error(fmt.Sprintf("upgrade app failed, helm upgrade err: %s", err.Error()))
+				metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 				// delayed retry, queue.AddRateLimited does not meet the demand
 				return app, nil
 			}
@@ -109,6 +113,7 @@ func Upgrade(ctx context.Context,
 			newStatus.Message = "upgrade app failed"
 			newStatus.Reason = err.Error()
 			newStatus.LastTransitionTime = metav1.Now()
+			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 		} else {
 			newStatus.Phase = applicationv1.AppPhaseSucceeded
 			newStatus.Message = ""
