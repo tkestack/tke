@@ -20,10 +20,13 @@ package main
 
 import (
 	"math/rand"
+	"net/http"
 	"os"
 	"runtime"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"k8s.io/klog"
 	"tkestack.io/tke/cmd/tke-application-controller/app"
 )
 
@@ -32,6 +35,14 @@ func main() {
 	if len(os.Getenv("GOMAXPROCS")) == 0 {
 		runtime.GOMAXPROCS(runtime.NumCPU())
 	}
+
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+	go func() {
+		if err := http.ListenAndServe(":9464", mux); err != nil {
+			klog.Fatal(err)
+		}
+	}()
 
 	app.NewApp("tke-application-controller").Run()
 }
