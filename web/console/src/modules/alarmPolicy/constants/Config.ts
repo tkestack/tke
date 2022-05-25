@@ -583,7 +583,7 @@ export const AlarmPolicyMetrics = {
       metricName: 'vm_network_transmit_bw',
       evaluatorType: 'gt',
       evaluatorValue: '',
-      metricDisplayName: t('网络上行带宽 （基于每个网卡）'),
+      metricDisplayName: t('网络入带宽'),
       continuePeriod: 5,
       type: '',
       unit: 'Mbps'
@@ -596,7 +596,7 @@ export const AlarmPolicyMetrics = {
       metricName: 'vm_network_receive_bw',
       evaluatorType: 'gt',
       evaluatorValue: '',
-      metricDisplayName: t('网络下行带宽 （基于每个网卡）'),
+      metricDisplayName: t('网络出带宽'),
       continuePeriod: 5,
       type: '',
       unit: 'Mbps'
@@ -609,10 +609,10 @@ export const AlarmPolicyMetrics = {
       metricName: 'vm_network_transmit_packets_rate',
       evaluatorType: 'gt',
       evaluatorValue: '',
-      metricDisplayName: t('网络收包速率 （基于每个网卡）'),
+      metricDisplayName: t('网络入包量'),
       continuePeriod: 5,
       type: '',
-      unit: 'PPS'
+      unit: '个/s'
     },
 
     {
@@ -622,10 +622,10 @@ export const AlarmPolicyMetrics = {
       metricName: 'vm_network_receive_packets_rate',
       evaluatorType: 'gt',
       evaluatorValue: '',
-      metricDisplayName: t('网络发包速率 （基于每个网卡）'),
+      metricDisplayName: t('网络出包量'),
       continuePeriod: 5,
       type: '',
-      unit: 'PPS'
+      unit: '个/s'
     },
 
     {
@@ -635,7 +635,7 @@ export const AlarmPolicyMetrics = {
       metricName: 'vm_storage_read_bw',
       evaluatorType: 'gt',
       evaluatorValue: '',
-      metricDisplayName: t('磁盘读带宽 （基于每块磁盘）'),
+      metricDisplayName: t('磁盘读流量'),
       continuePeriod: 5,
       type: '',
       unit: 'MB/s'
@@ -648,7 +648,7 @@ export const AlarmPolicyMetrics = {
       metricName: 'vm_storage_write_bw',
       evaluatorType: 'gt',
       evaluatorValue: '',
-      metricDisplayName: t('磁盘写带宽 （基于每块磁盘）'),
+      metricDisplayName: t('磁盘写流量'),
       continuePeriod: 5,
       type: '',
       unit: 'MB/s'
@@ -664,7 +664,7 @@ export const AlarmPolicyMetrics = {
       metricDisplayName: t('磁盘读IOPS （基于每块磁盘）'),
       continuePeriod: 5,
       type: '',
-      unit: 'IOPS'
+      unit: '次/s'
     },
 
     {
@@ -677,7 +677,7 @@ export const AlarmPolicyMetrics = {
       metricDisplayName: t('磁盘写IOPS （基于每块磁盘）'),
       continuePeriod: 5,
       type: '',
-      unit: 'IOPS'
+      unit: '次/s'
     }
   ]
 };

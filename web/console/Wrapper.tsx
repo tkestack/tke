@@ -29,7 +29,8 @@ import {
   Method,
   reduceK8sRestfulPath,
   reduceNetworkRequest,
-  setConsoleAPIAddress
+  setConsoleAPIAddress,
+  isInIframe
 } from './helpers';
 import { RequestParams, ResourceInfo } from './src/modules/common/models';
 import { isEmpty } from './src/modules/common/utils';
@@ -594,7 +595,11 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
         <React.Fragment>
           {this._renderTopBar(query)}
 
-          <div className="qc-animation-empty container container-tke2-cluster" id="tkestack" style={{ left: 0 }}>
+          <div
+            className="qc-animation-empty container container-tke2-cluster"
+            id="tkestack"
+            style={{ left: 0, top: isInIframe() ? 0 : undefined }}
+          >
             {sideBar && this._renderSideBar(query)}
 
             <div id="appArea" className="main" style={sideBar ? {} : { left: 0 }}>
