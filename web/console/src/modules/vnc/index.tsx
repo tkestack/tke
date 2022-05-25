@@ -15,7 +15,9 @@ export const VNCPage = () => {
 
   const encodePath = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/proxy?path=/apis/subresources.kubevirt.io/v1/namespaces/${namespace}/virtualmachineinstances/${name}/vnc`;
 
-  const vncUrl = `ws://${location.host}/websocket?clusterName=${clusterId}&encodePath=${encode(encodePath)}`;
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+  const vncUrl = `${protocol}://${location.host}/websocket?clusterName=${clusterId}&encodePath=${encode(encodePath)}`;
 
   const vncBox = useRef(null);
 
