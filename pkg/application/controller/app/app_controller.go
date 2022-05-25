@@ -373,6 +373,7 @@ func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedAp
 	if err != nil {
 		if app.Status.Phase == applicationv1.AppPhaseSyncFailed {
 			log.Error(fmt.Sprintf("sync app failed, helm list failed, err: %s", err.Error()))
+			metrics.GaugeApplicationSyncFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 			// delayed retry, queue.AddRateLimited does not meet the demand
 			return app, nil
 		}
@@ -380,12 +381,14 @@ func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedAp
 		newStatus.Message = "sync app failed"
 		newStatus.Reason = err.Error()
 		newStatus.LastTransitionTime = metav1.Now()
+		metrics.GaugeApplicationSyncFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 		return c.updateStatus(ctx, app, &app.Status, newStatus)
 	}
 	rel, found := helmutil.Filter(rels, app.Spec.TargetNamespace, app.Spec.Name)
 	if !found {
 		if app.Status.Phase == applicationv1.AppPhaseSyncFailed {
 			log.Error(fmt.Sprintf("sync app failed, release not found: %s/%s", app.Spec.TargetNamespace, app.Spec.Name))
+			metrics.GaugeApplicationSyncFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 			// delayed retry, queue.AddRateLimited does not meet the demand
 			return app, nil
 		}
@@ -393,6 +396,7 @@ func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedAp
 		newStatus.Message = "sync app failed"
 		newStatus.Reason = fmt.Sprintf("release not found: %s/%s", app.Spec.TargetNamespace, app.Spec.Name)
 		newStatus.LastTransitionTime = metav1.Now()
+		metrics.GaugeApplicationSyncFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 		return c.updateStatus(ctx, app, &app.Status, newStatus)
 	}
 	app.Spec.Chart.ChartVersion = rel.Chart.Metadata.Version
