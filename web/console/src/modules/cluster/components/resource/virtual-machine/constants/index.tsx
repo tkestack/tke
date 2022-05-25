@@ -73,20 +73,14 @@ export const vmMonitorFields: Array<{
   unit: string;
 }> = [
   {
-    expr: mean('vm_cpu_core_total'),
-    alias: 'CPU 核数',
-    unit: '核'
-  },
-
-  {
     expr: mean('vm_cpu_usage_rate'),
     alias: 'CPU 使用率',
     unit: '%'
   },
 
   {
-    expr: mean('vm_memory_total'),
-    alias: '内存大小',
+    expr: mean('vm_memory_usage'),
+    alias: '内存使用量',
     unit: 'MB'
   },
 
@@ -98,49 +92,49 @@ export const vmMonitorFields: Array<{
 
   {
     expr: mean('vm_network_transmit_bw'),
-    alias: '网络上行带宽 （基于每个网卡）',
+    alias: '网络入带宽',
     unit: 'Mbps'
   },
 
   {
     expr: mean('vm_network_receive_bw'),
-    alias: '网络下行带宽 （基于每个网卡）',
+    alias: '网络出带宽',
     unit: 'Mbps'
   },
 
   {
     expr: mean('vm_network_transmit_packets_rate'),
-    alias: '网络收包速率 （基于每个网卡）',
-    unit: 'PPS'
+    alias: '网络入包量',
+    unit: '个/s'
   },
 
   {
     expr: mean('vm_network_receive_packets_rate'),
-    alias: '网络发包速率 （基于每个网卡）',
-    unit: 'PPS'
+    alias: '网络出包量',
+    unit: '个/s'
   },
 
   {
     expr: mean('vm_storage_read_bw'),
-    alias: '磁盘读带宽 （基于每块磁盘）',
+    alias: '磁盘读流量',
     unit: 'MB/s'
   },
 
   {
     expr: mean('vm_storage_write_bw'),
-    alias: '磁盘写带宽 （基于每块磁盘）',
+    alias: '磁盘写流量',
     unit: 'MB/s'
   },
 
   {
     expr: mean('vm_storage_read_iops'),
     alias: '磁盘读IOPS （基于每块磁盘）',
-    unit: 'IOPS'
+    unit: '次/s'
   },
 
   {
     expr: mean('vm_storage_write_iops'),
     alias: '磁盘写IOPS （基于每块磁盘）',
-    unit: 'IOPS'
+    unit: '次/s'
   }
 ];

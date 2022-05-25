@@ -3,7 +3,7 @@ import { Modal, Button } from 'tea-component';
 import { ChartInstancesPanel } from '@tencent/tchart';
 import { vmMonitorFields } from '../constants';
 
-export const VmMonitorDialog = ({ clusterId, namespace, vmList }) => {
+const _VmMonitorDialog = ({ clusterId, namespace, vmList }) => {
   const [visible, setVisible] = useState(false);
 
   const monitorProps = useMemo(() => {
@@ -46,3 +46,15 @@ export const VmMonitorDialog = ({ clusterId, namespace, vmList }) => {
     </>
   );
 };
+
+export const VmMonitorDialog = React.memo(_VmMonitorDialog, (preProps, currentProps) => {
+  if (
+    preProps.clusterId === currentProps.clusterId &&
+    preProps.namespace === currentProps.namespace &&
+    JSON.stringify(preProps.vmList) === JSON.stringify(currentProps.vmList)
+  ) {
+    return true;
+  }
+
+  return false;
+});
