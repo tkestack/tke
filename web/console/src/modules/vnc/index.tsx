@@ -17,7 +17,7 @@ export const VNCPage = () => {
 
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
-  const vncUrl = `${protocol}://${location.host}/websocket?clusterName=${clusterId}&encodePath=${encode(encodePath)}`;
+  const vncUrl = `${protocol}//${location.host}/websocket?clusterName=${clusterId}&encodePath=${encode(encodePath)}`;
 
   const vncBox = useRef(null);
 

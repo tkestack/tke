@@ -448,6 +448,9 @@ export const validatorActions = {
     } else if (indexName.length > 60) {
       status = 2;
       message = '索引名不能超过60个字符';
+    } else if (!indexName.startsWith('tke-log-')) {
+      status = 2;
+      message = '索引名必须以tke-log-开头';
     } else {
       status = 1;
       message = '';

@@ -71,17 +71,19 @@ export class EditConsumerPanel extends React.Component<PropTypes, any> {
   async esDetection() {
     this.changeESStatus(2);
 
-    let { logStashEdit } = this.props;
-    let { esAddress, esUsername, esPassword } = logStashEdit;
-    let [scheme, address] = esAddress.split('://');
-    let [host, port] = address.split(':');
-    let ret = await WebAPI.fetchEsDetection({
+    const { logStashEdit } = this.props;
+    const { esAddress, esUsername, esPassword } = logStashEdit;
+    const [scheme, address] = esAddress.split('://');
+    const [host, port] = address.split(':');
+    const ret = (await WebAPI.fetchEsDetection({
       scheme: scheme,
       host: host,
       port: port,
       user: esUsername,
       password: esPassword
-    }) ? 3 : 4;
+    }))
+      ? 3
+      : 4;
 
     this.changeESStatus(ret);
   }
@@ -94,20 +96,20 @@ export class EditConsumerPanel extends React.Component<PropTypes, any> {
   }
 
   render() {
-    let { actions, logStashEdit } = this.props,
+    const { actions, logStashEdit } = this.props,
       { consumerMode } = logStashEdit;
 
     /**
      * 渲染消费端的类型
      */
-    let afterConsumerModeList: SegmentOption[] = consumerModeList.map(mode => {
+    const afterConsumerModeList: SegmentOption[] = consumerModeList.map(mode => {
       return {
         value: mode.value,
         text: mode.name
       };
     });
 
-    let selectedConsumerMode = consumerModeList.find(item => item.value === consumerMode);
+    const selectedConsumerMode = consumerModeList.find(item => item.value === consumerMode);
 
     return (
       <FormPanel.Item label={t('消费端')}>
@@ -142,7 +144,7 @@ export class EditConsumerPanel extends React.Component<PropTypes, any> {
 
   /** 渲染kafaka 类型的编辑项 */
   private _renderKafkaOption() {
-    let { actions, logStashEdit } = this.props,
+    const { actions, logStashEdit } = this.props,
       { addressIP, v_addressIP, addressPort, v_addressPort, topic, v_topic, consumerMode } = logStashEdit;
 
     return consumerMode !== 'kafka' ? (
@@ -190,7 +192,7 @@ export class EditConsumerPanel extends React.Component<PropTypes, any> {
 
   /** 渲染Elasticsearch */
   private _renderESOption() {
-    let { actions, logStashEdit } = this.props,
+    const { actions, logStashEdit } = this.props,
       { consumerMode, esAddress, v_esAddress, indexName, v_indexName, esUsername, esPassword } = logStashEdit;
 
     const checkESStatus = this.state.checkESStatus;
@@ -237,7 +239,7 @@ export class EditConsumerPanel extends React.Component<PropTypes, any> {
           label={t('索引')}
           key={1}
           validator={v_indexName}
-          message={t('最长60个字符，只能包含小写字母、数字及分隔符("-"、"_"、"+")，且必须以小写字母开头')}
+          message={t('最长60个字符，只能包含小写字母、数字及分隔符("-"、"_"、"+")，且必须以tke-log-开头')}
           input={{
             placeholder: 'eg: fluentd',
             value: indexName,

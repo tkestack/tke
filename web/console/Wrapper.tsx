@@ -578,7 +578,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
         left={
           <React.Fragment>
             <NavMenu.Item>
-              <H2 style={{ color: '#fff' }}>TKE Anywhere</H2>
+              <img src="/static/icon/tkeAnywhere-logo-white-text.svg" style={{ height: 35 }} alt="logo" />
             </NavMenu.Item>
           </React.Fragment>
         }
