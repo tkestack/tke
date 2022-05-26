@@ -99,11 +99,11 @@ const clusterSubRouterConfig = [
       {
         name: 'HPA',
         path: 'hpa'
-      },
-      {
-        name: 'CronHPA',
-        path: 'cronhpa'
       }
+      // {
+      //   name: 'CronHPA',
+      //   path: 'cronhpa'
+      // }
     ]
   },
   {

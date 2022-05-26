@@ -21,13 +21,14 @@ import {
   reduceK8sRestfulPath,
   Method,
   reduceNetworkRequest,
-  setConsoleAPIAddress
+  setConsoleAPIAddress,
+  isInIframe
 } from './helpers';
 import { ResourceInfo, RequestParams } from './src/modules/common/models';
 import { resourceConfig, PlatformTypeEnum } from './config';
 import { isEmpty } from './src/modules/common/utils';
 import * as classnames from 'classnames';
-import { Icon, Text, Bubble, NavMenu, List, ExternalLink, StatusTip } from 'tea-component';
+import { Icon, Text, Bubble, NavMenu, List, ExternalLink, StatusTip, H2 } from 'tea-component';
 import { TkeVersion } from '@/src/modules/common/components/tke-version';
 import { ConsoleModuleEnum } from '@config/platform';
 import 'tea-component/dist/tea.css';
@@ -531,7 +532,11 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
         <React.Fragment>
           {this._renderTopBar(query)}
 
-          <div className="qc-animation-empty container container-tke2-cluster" id="tkestack" style={{ left: 0 }}>
+          <div
+            className="qc-animation-empty container container-tke2-cluster"
+            id="tkestack"
+            style={{ left: 0, top: isInIframe() ? 0 : undefined }}
+          >
             {sideBar && this._renderSideBar(query)}
 
             <div id="appArea" className="main" style={sideBar ? {} : { left: 0 }}>
@@ -573,7 +578,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
         left={
           <React.Fragment>
             <NavMenu.Item>
-              <img src="/static/icon/logo.svg" style={{ height: '30px' }} alt="logo" />
+              <H2 style={{ color: '#fff' }}>TKE Anywhere</H2>
             </NavMenu.Item>
           </React.Fragment>
         }

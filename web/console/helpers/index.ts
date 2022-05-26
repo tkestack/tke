@@ -38,3 +38,4 @@ export { getCookie } from './cookieUtil';
 export { reduceK8sQueryString, reduceK8sRestfulPath, reduceNs, parseQueryString, cutNsStartClusterId } from './urlUtil';
 export * from './request';
 export * from './format';
+export * from './isInIframe';

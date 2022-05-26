@@ -20,11 +20,12 @@ package config
 
 import (
 	"fmt"
+	"net"
+
 	"k8s.io/apiserver/pkg/authentication/request/anonymous"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	apiserver "k8s.io/apiserver/pkg/server"
 	restclient "k8s.io/client-go/rest"
-	"net"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	monitorapiconfig "tkestack.io/tke/cmd/tke-monitor-api/app/config"
 	monitorapioptions "tkestack.io/tke/cmd/tke-monitor-api/app/options"
@@ -85,10 +86,16 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 
 	// load config file, if provided
 	if configFile := opts.MonitorConfig; len(configFile) > 0 {
+		var defaultRetentionDays int = 15 //set default retention value as 15 days for influxdb
 		monitorConfig, err = monitorapiconfig.LoadConfigFile(configFile)
 		if err != nil {
 			log.Error("Failed to load monitor configuration file", log.String("configFile", configFile), log.Err(err))
 			return nil, err
+		}
+
+		if monitorConfig.Storage.InfluxDB != nil && monitorConfig.Storage.InfluxDB.RetentionDays == nil {
+			log.Info("don't set retention times in config, use the default one")
+			monitorConfig.Storage.InfluxDB.RetentionDays = &defaultRetentionDays
 		}
 	}
 

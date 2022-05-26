@@ -221,7 +221,7 @@ export class ImageTablePanel extends React.Component<RootProps, any> {
             <li>
               <p>
                 <strong>
-                  <Trans>登录</Trans> TKEStack Docker Registry
+                  <Trans>登录</Trans> TKE Anywhere 的 Docker Registry
                 </strong>
               </p>
               <code>
@@ -236,7 +236,7 @@ export class ImageTablePanel extends React.Component<RootProps, any> {
                   <a
                     href="javascript:;"
                     onClick={() => {
-                      let urlParams = router.resolve(this.props.route);
+                      const urlParams = router.resolve(this.props.route);
                       router.navigate(Object.assign({}, urlParams, { sub: 'apikey', mode: '', tab: '' }), {});
                     }}
                   >

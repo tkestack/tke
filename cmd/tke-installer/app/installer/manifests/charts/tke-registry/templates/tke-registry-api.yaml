@@ -27,6 +27,8 @@ spec:
   selector:
     matchLabels:
       app: tke-registry-api
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -124,12 +126,29 @@ metadata:
   namespace: {{ .Values.api.namespace }}
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   volumeMode: Filesystem
   resources:
     requests:
       storage: 40Gi
   storageClassName: {{ .Values.api.cephRbdStorageClassName }}
+
+---
+{{- end }}
+{{- if .Values.api.cephFS }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.api.cephFSPVCName }}
+  namespace: {{ .Values.api.namespace }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 40Gi
+  storageClassName: {{ .Values.api.cephFSStorageClassName }}
 
 ---
 {{- end }}
@@ -141,7 +160,7 @@ metadata:
   namespace: {{ .Values.api.namespace }}
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   volumeMode: Filesystem
   resources:
     requests:

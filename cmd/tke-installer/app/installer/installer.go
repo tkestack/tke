@@ -1561,6 +1561,10 @@ func (t *TKE) prepareImages(ctx context.Context) error {
 		needPushImages := []string{images.Get().TKEGateway.FullName(),
 			images.Get().TKERegistryAPI.FullName(),
 			images.Get().TKERegistryController.FullName(),
+			images.Get().TKEAuthAPI.FullName(),
+			images.Get().TKEAuthController.FullName(),
+			images.Get().TKEPlatformAPI.FullName(),
+			images.Get().TKEPlatformController.FullName(),
 			images.Get().NginxIngress.FullName(),
 			images.Get().KebeWebhookCertgen.FullName()}
 		for _, name := range needPushImages {
@@ -1934,7 +1938,7 @@ func (t *TKE) getInfluxDBOptions(ctx context.Context) (map[string]interface{}, e
 		"image": images.Get().InfluxDB.FullName(),
 	}
 
-	useCephRbd, useNFS := false, false
+	useCephRbd, useCephFS, useNFS := false, false, false
 	for _, platformApp := range t.Para.Config.PlatformApps {
 		if !platformApp.Enable || !platformApp.Installed {
 			continue
@@ -1946,6 +1950,13 @@ func (t *TKE) getInfluxDBOptions(ctx context.Context) (map[string]interface{}, e
 			options["cephRbdStorageClassName"] = constants.CephRBDStorageClassName
 			break
 		}
+		if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.CephFSChartReleaseName) {
+			useCephFS = true
+			options["cephFS"] = true
+			options["cephFSPVCName"] = "ceph-fs-influxdb-pvc"
+			options["cephFSStorageClassName"] = constants.CephFSStorageClassName
+			break
+		}
 		if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.NFSChartReleaseName) {
 			useNFS = true
 			options["nfs"] = true
@@ -1955,7 +1966,7 @@ func (t *TKE) getInfluxDBOptions(ctx context.Context) (map[string]interface{}, e
 		}
 	}
 
-	if !(useCephRbd || useNFS) {
+	if !(useCephRbd || useNFS || useCephFS) {
 		options["baremetalStorage"] = true
 		node, err := apiclient.GetNodeByMachineIP(ctx, t.globalClient, t.servers[0])
 		if err != nil {
@@ -2112,6 +2123,7 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 			// thanos-query address
 			params["MonitorStorageAddresses"] = "http://thanos-query.tke.svc.cluster.local:9090"
 		}
+		params["RetentionDays"] = t.Para.Config.Monitor.RetentionDays //can accept a nil value
 	}
 
 	if err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-monitor-controller/*.yaml", params); err != nil {
@@ -2289,7 +2301,7 @@ func (t *TKE) getTKERegistryAPIOptions(ctx context.Context) (map[string]interfac
 	//or enable filesystem by default
 	options["filesystemEnabled"] = !s3Enabled
 	if options["filesystemEnabled"] == true {
-		useCephRbd, useNFS := false, false
+		useCephRbd, useCephFS, useNFS := false, false, false
 		for _, platformApp := range t.Para.Config.PlatformApps {
 			if !platformApp.Enable || !platformApp.Installed {
 				continue
@@ -2301,6 +2313,13 @@ func (t *TKE) getTKERegistryAPIOptions(ctx context.Context) (map[string]interfac
 				options["cephRbdStorageClassName"] = constants.CephRBDStorageClassName
 				break
 			}
+			if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.CephFSChartReleaseName) {
+				useCephFS = true
+				options["cephFS"] = true
+				options["cephFSPVCName"] = "ceph-fs-registry-pvc"
+				options["cephFSStorageClassName"] = constants.CephFSStorageClassName
+				break
+			}
 			if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.NFSChartReleaseName) {
 				useNFS = true
 				options["nfs"] = true
@@ -2309,7 +2328,7 @@ func (t *TKE) getTKERegistryAPIOptions(ctx context.Context) (map[string]interfac
 				break
 			}
 		}
-		if !(useCephRbd || useNFS) {
+		if !(useCephRbd || useCephFS || useNFS) {
 			options["baremetalStorage"] = true
 			node, err := apiclient.GetNodeByMachineIP(ctx, t.globalClient, t.servers[0])
 			if err != nil {

@@ -29,6 +29,7 @@ import (
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
 	"tkestack.io/tke/pkg/application/util"
+	"tkestack.io/tke/pkg/util/metrics"
 )
 
 // Rollback roll back to the previous release
@@ -62,6 +63,7 @@ func Rollback(ctx context.Context,
 			newStatus.Message = "rollback app failed"
 			newStatus.Reason = err.Error()
 			newStatus.LastTransitionTime = metav1.Now()
+			metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 		} else {
 			newStatus.Phase = applicationv1.AppPhaseRolledBack
 			newStatus.Message = ""
