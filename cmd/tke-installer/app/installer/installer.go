@@ -1922,7 +1922,7 @@ func (t *TKE) installInfluxDBChart(ctx context.Context) error {
 		LocalChartPath: constants.ChartDirName + "influxdb/",
 		Enable:         true,
 		ConditionFunc: func() (bool, error) {
-			ok, err := apiclient.CheckStatefulSet(ctx, t.globalClient, t.namespace, "influxdb")
+			ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "influxdb")
 			if err != nil || !ok {
 				return false, nil
 			}
