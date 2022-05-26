@@ -49,6 +49,10 @@ spec:
         persistentVolumeClaim:
           claimName: {{ .Values.cephRbdPVCName }}
 {{- end }}
+{{- if .Values.cephFS }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.cephFSPVCName }}
+{{- end }}
 {{- if .Values.nfs }}
         persistentVolumeClaim:
           claimName: {{ .Values.nfsPVCName }}
