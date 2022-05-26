@@ -202,7 +202,7 @@ data:
       username_prefix ="-"
       username_claim = "name"
       tenantid_claim = "federated_claims"
-      token_review_path = "/auth/authn"
+      token_review_path = "https://tke-auth-api/auth/authn"
 {{- else }}
       client_id = {{ .Values.api.oIDCClientID }}
       issuer_url = {{ .Values.api.oIDCIssuerURL }}
