@@ -113,9 +113,8 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 			RegistryConfig:       c.ExtraConfig.RegistryConfig,
 			ExternalScheme:       c.ExtraConfig.ExternalScheme,
 			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
-			OIDCCAFile:           c.ExtraConfig.OIDCCAFile,
-			OIDCTokenReviewPath:  c.ExtraConfig.OIDCTokenReviewPath,
-			OIDCIssuerURL:        c.ExtraConfig.OIDCIssuerURL,
+			TokenReviewCAFile:    c.ExtraConfig.ExternalCAFile,
+			TokenReviewPath:      c.ExtraConfig.OIDCTokenReviewPath,
 		}
 		if err := distribution.RegisterRoute(s.Handler.NonGoRestfulMux, distributionOpts); err != nil {
 			return nil, err
@@ -124,9 +123,8 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		chartmuseumOpts := &chartmuseum.Options{
 			RegistryConfig:       c.ExtraConfig.RegistryConfig,
 			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
-			OIDCCAFile:           c.ExtraConfig.OIDCCAFile,
-			OIDCTokenReviewPath:  c.ExtraConfig.OIDCTokenReviewPath,
-			OIDCIssuerURL:        c.ExtraConfig.OIDCIssuerURL,
+			TokenReviewCAFile:    c.ExtraConfig.OIDCCAFile,
+			TokenReviewURL:       c.ExtraConfig.OIDCTokenReviewPath,
 			ExternalScheme:       c.ExtraConfig.ExternalScheme,
 			Authorizer:           c.GenericConfig.Authorization.Authorizer,
 		}
