@@ -50,6 +50,8 @@ type Storage struct {
 	Etcd *EtcdStorage
 	// +optional
 	Delete *Delete
+	// +optional
+	Maintenance *Maintenance
 }
 type EtcdStorage struct {
 	CAFile    string
@@ -116,6 +118,15 @@ type S3Storage struct {
 
 // Delete cloud enable the deletion of image blobs and manifests by digest.
 type Delete struct {
+	Enabled bool
+}
+
+// Maintenance ReadOnly enabled set to true, clients will not be allowed to write to the registry.
+type Maintenance struct {
+	ReadOnly ReadOnly
+}
+
+type ReadOnly struct {
 	Enabled bool
 }
 
