@@ -37,7 +37,6 @@ spec:
 {{- if .Values.baremetalStorage }}
       nodeName: {{ .Values.nodeName }}
 {{- end }}
-      hostNetwork: true
       volumes:
       - name: data
 {{- if .Values.baremetalStorage }}
@@ -118,5 +117,9 @@ spec:
       port: 8086
       targetPort: 8086
       protocol: TCP
+{{- if .Values.HA }}
+      nodePort: 30086
+  type: NodePort
+{{- end }}
   selector:
     app: influxdb
