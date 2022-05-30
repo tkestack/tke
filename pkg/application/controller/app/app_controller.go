@@ -399,11 +399,6 @@ func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedAp
 		metrics.GaugeApplicationSyncFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 		return c.updateStatus(ctx, app, &app.Status, newStatus)
 	}
-	app.Spec.Chart.ChartVersion = rel.Chart.Metadata.Version
-	_, err = c.client.ApplicationV1().Apps(app.Namespace).Update(ctx, app, metav1.UpdateOptions{})
-	if err != nil {
-		return app, fmt.Errorf("update chart version failed %v", err)
-	}
 
 	newStatus.Phase = applicationv1.AppPhaseSucceeded
 	newStatus.Message = ""
@@ -419,6 +414,16 @@ func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedAp
 	newStatus.ObservedGeneration = app.Generation
 	// clean revision
 	newStatus.RollbackRevision = 0
+	if app.Status.Phase == applicationv1.AppPhaseRolledBack && app.Spec.Chart.ChartVersion != rel.Chart.Metadata.Version {
+		newObj := app.DeepCopy()
+		newObj.Spec.Chart.ChartVersion = rel.Chart.Metadata.Version
+		newObj.Status = *newStatus
+		_, err = c.client.ApplicationV1().Apps(app.Namespace).Update(ctx, newObj, metav1.UpdateOptions{})
+		if err != nil {
+			return app, fmt.Errorf("update chart version failed %v", err)
+		}
+		return app, err
+	}
 	return c.updateStatus(ctx, app, &app.Status, newStatus)
 }
 
