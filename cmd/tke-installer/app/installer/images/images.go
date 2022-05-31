@@ -55,6 +55,7 @@ type ExComponents struct {
 	Busybox  containerregistry.Image
 	InfluxDB containerregistry.Image
 	Thanos   containerregistry.Image
+	Kubectl  containerregistry.Image
 
 	TKEBusinessAPI           containerregistry.Image
 	TKEBusinessController    containerregistry.Image
@@ -94,6 +95,7 @@ var exComponents = ExComponents{
 	Busybox:  containerregistry.Image{Name: "busybox", Tag: "1.31.1"},
 	InfluxDB: containerregistry.Image{Name: "influxdb", Tag: "1.7.9"},
 	Thanos:   containerregistry.Image{Name: "thanos", Tag: "v0.15.0"},
+	Kubectl:  containerregistry.Image{Name: "kubectl", Tag: "1.22.7"},
 
 	TKEBusinessAPI:           containerregistry.Image{Name: "tke-business-api", Tag: Version},
 	TKEBusinessController:    containerregistry.Image{Name: "tke-business-controller", Tag: Version},
