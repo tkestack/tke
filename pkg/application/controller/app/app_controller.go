@@ -404,6 +404,7 @@ func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedAp
 	newStatus.Message = ""
 	newStatus.Reason = ""
 	newStatus.LastTransitionTime = metav1.Now()
+	metrics.GaugeApplicationSyncFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 
 	newStatus.ReleaseStatus = string(rel.Info.Status)
 	newStatus.Revision = int64(rel.Version)

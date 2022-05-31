@@ -58,7 +58,7 @@ func Install(ctx context.Context,
 		if updateStatusFunc != nil {
 			if app.Status.Phase == applicationv1.AppPhaseInstallFailed {
 				log.Error(fmt.Sprintf("install app failed, helm pull err: %s", err.Error()))
-				metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+				metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 				// delayed retry, queue.AddRateLimited does not meet the demand
 				return app, nil
 			}
@@ -67,7 +67,7 @@ func Install(ctx context.Context,
 			newStatus.Reason = err.Error()
 			newStatus.LastTransitionTime = metav1.Now()
 			_, updateStatusErr := updateStatusFunc(ctx, app, &app.Status, newStatus)
-			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+			metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 			if updateStatusErr != nil {
 				return nil, updateStatusErr
 			}
@@ -104,7 +104,7 @@ func Install(ctx context.Context,
 		if err != nil {
 			if app.Status.Phase == applicationv1.AppPhaseInstallFailed {
 				log.Error(fmt.Sprintf("install app failed, helm install err: %s", err.Error()))
-				metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+				metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 				// delayed retry, queue.AddRateLimited does not meet the demand
 				return app, nil
 			}
@@ -112,12 +112,13 @@ func Install(ctx context.Context,
 			newStatus.Message = "install app failed"
 			newStatus.Reason = err.Error()
 			newStatus.LastTransitionTime = metav1.Now()
-			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+			metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 		} else {
 			newStatus.Phase = applicationv1.AppPhaseSucceeded
 			newStatus.Message = ""
 			newStatus.Reason = ""
 			newStatus.LastTransitionTime = metav1.Now()
+			metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 		}
 		newApp, updateStatusErr = updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
 		if updateStatusErr != nil {
