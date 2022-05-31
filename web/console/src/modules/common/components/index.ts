@@ -50,3 +50,4 @@ export { TipInfo } from './tipinfo';
 export { TransferTable, TransferTableProps } from './transferTable';
 export { WorkflowDialog } from './workflowdialog';
 export * from './yamleditor';
+export * from './monitorPanel';
