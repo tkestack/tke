@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, TableColumn, Text, Pagination, Dropdown, List } from 'tea-component';
+import { Table, Button, TableColumn, Text, Pagination, Dropdown, List, Icon, Bubble } from 'tea-component';
 import { VMListActionPanel } from './action-panel';
 import { useFetch } from '@src/modules/common/hooks';
 import * as dayjs from 'dayjs';
@@ -45,10 +45,25 @@ export const VMListPanel = ({ route }) => {
     {
       key: 'status',
       header: '状态',
-      render({ status }) {
+      render({ status, failureCondition }) {
         const theme = status === 'Running' ? 'success' : 'danger';
 
-        return <Text theme={theme}>{status}</Text>;
+        const bubbleContent = Object.entries(failureCondition || {}).map(([key, value]) => (
+          <Text parent="p">
+            {key}: {value}
+          </Text>
+        ));
+
+        return (
+          <>
+            <Text theme={theme}>{status}</Text>
+            {failureCondition && (
+              <Bubble content={<> {bubbleContent}</>}>
+                <Icon style={{ marginLeft: 5 }} type="info" />
+              </Bubble>
+            )}
+          </>
+        );
       }
     },
 
@@ -140,6 +155,8 @@ export const VMListPanel = ({ route }) => {
           items.map(({ metadata, status, spec, vmi }) => ({
             name: metadata?.name,
             status: status?.printableStatus,
+            failureCondition:
+              status?.printableStatus === 'Stopped' ? status?.conditions?.find(({ type }) => type === 'Failure') : null,
             mirror: metadata?.annotations?.['tkestack.io/image-display-name'] ?? '-',
             ip: vmi?.status?.interfaces?.[0]?.ipAddress ?? '-',
             hardware: `${spec?.template?.spec?.domain?.cpu?.cores ?? '-'}核 / ${
