@@ -90,25 +90,25 @@ export const vmMonitorGroups = [
 
       {
         expr: mean('vm_network_transmit_bw'),
-        alias: '网络入带宽',
-        unit: 'Mbps'
-      },
-
-      {
-        expr: mean('vm_network_receive_bw'),
         alias: '网络出带宽',
         unit: 'Mbps'
       },
 
       {
+        expr: mean('vm_network_receive_bw'),
+        alias: '网络入带宽',
+        unit: 'Mbps'
+      },
+
+      {
         expr: mean('vm_network_transmit_packets_rate'),
-        alias: '网络入包量',
+        alias: '网络出包量',
         unit: '个/s'
       },
 
       {
         expr: mean('vm_network_receive_packets_rate'),
-        alias: '网络出包量',
+        alias: '网络入包量',
         unit: '个/s'
       }
     ]
