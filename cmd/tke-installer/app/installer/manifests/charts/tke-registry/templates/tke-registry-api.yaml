@@ -306,6 +306,9 @@ data:
 {{- end }}
       delete:
         enabled: true
+      maintenance:
+        readonly:
+          enabled: false
     security:
       tokenPrivateKeyFile: /etc/registry/private_key.pem
       tokenPublicKeyFile: /etc/registry/public_key.crt

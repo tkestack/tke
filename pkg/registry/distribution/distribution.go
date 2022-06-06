@@ -268,5 +268,10 @@ func buildStorageConfiguration(opts *Options) map[string]configuration.Parameter
 		deleteDriver["enabled"] = storageCfg.Delete.Enabled
 		storage["delete"] = deleteDriver
 	}
+	if storageCfg.Maintenance != nil {
+		storage["maintenance"] = configuration.Parameters{
+			"readonly": map[interface{}]interface{}{"enabled": storageCfg.Maintenance.ReadOnly.Enabled},
+		}
+	}
 	return storage
 }
