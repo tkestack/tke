@@ -72,6 +72,10 @@ func GetConfig(ctx context.Context, platformClient platforminternalclient.Platfo
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
 	}
 
+	if cluster.Status.Phase != platform.ClusterRunning {
+		return nil, fmt.Errorf("cluster %s status is abnormal", cluster.ObjectMeta.Name)
+	}
+
 	username, tenantID := authentication.UsernameAndTenantID(ctx)
 	if len(tenantID) > 0 && cluster.Spec.TenantID != tenantID {
 		return nil, errors.NewNotFound(platform.Resource("clusters"), cluster.ObjectMeta.Name)

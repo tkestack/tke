@@ -69,8 +69,12 @@ func DynamicClientByCluster(ctx context.Context, cluster *platform.Cluster, plat
 	if cluster.Status.Locked != nil && *cluster.Status.Locked {
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
 	}
-	return dynamic.NewForConfig(restConfig)
 
+	if cluster.Status.Phase != platform.ClusterRunning {
+		return nil, fmt.Errorf("cluster %s status is abnormal", cluster.ObjectMeta.Name)
+	}
+
+	return dynamic.NewForConfig(restConfig)
 }
 
 // ClientSetByCluster returns the backend kubernetes clientSet by given cluster object
@@ -139,6 +143,10 @@ func BuildExternalClientSet(ctx context.Context, cluster *platformv1.Cluster, cl
 
 	if cluster.Status.Locked != nil && *cluster.Status.Locked {
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
+	}
+
+	if cluster.Status.Phase != platformv1.ClusterRunning {
+		return nil, fmt.Errorf("cluster %s status is abnormal", cluster.ObjectMeta.Name)
 	}
 
 	return BuildVersionedClientSet(cluster, cc)

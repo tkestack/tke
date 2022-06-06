@@ -55,6 +55,10 @@ func BuildExternalMonitoringClientSet(ctx context.Context, cluster *platformv1.C
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
 	}
 
+	if cluster.Status.Phase != platformv1.ClusterRunning {
+		return nil, fmt.Errorf("cluster %s status is abnormal", cluster.ObjectMeta.Name)
+	}
+
 	return BuildExternalMonitoringClientSetNoStatus(ctx, cluster, client)
 }
 
@@ -79,6 +83,10 @@ func BuildKubeAggregatorClientSet(ctx context.Context, cluster *platformv1.Clust
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
 	}
 
+	if cluster.Status.Phase != platformv1.ClusterRunning {
+		return nil, fmt.Errorf("cluster %s status is abnormal", cluster.ObjectMeta.Name)
+	}
+
 	return BuildKubeAggregatorClientSetNoStatus(ctx, cluster, client)
 }
 
@@ -98,6 +106,10 @@ func BuildExternalExtensionClientSetNoStatus(ctx context.Context, cluster *platf
 func BuildExternalExtensionClientSet(ctx context.Context, cluster *platformv1.Cluster, client platformversionedclient.PlatformV1Interface) (*apiextensionsclient.Clientset, error) {
 	if cluster.Status.Locked != nil && *cluster.Status.Locked {
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
+	}
+
+	if cluster.Status.Phase != platformv1.ClusterRunning {
+		return nil, fmt.Errorf("cluster %s status is abnormal", cluster.ObjectMeta.Name)
 	}
 
 	return BuildExternalExtensionClientSetNoStatus(ctx, cluster, client)
@@ -137,6 +149,10 @@ func BuildExternalClientSet(ctx context.Context, cluster *platformv1.Cluster, cl
 
 	if cluster.Status.Locked != nil && *cluster.Status.Locked {
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
+	}
+
+	if cluster.Status.Phase != platformv1.ClusterRunning {
+		return nil, fmt.Errorf("cluster %s status is abnormal", cluster.ObjectMeta.Name)
 	}
 
 	return util.BuildVersionedClientSet(cluster, credential)

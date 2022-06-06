@@ -311,5 +311,10 @@ func buildClientSet(ctx context.Context, cluster *platform.Cluster, restConfig *
 	if cluster.Status.Locked != nil && *cluster.Status.Locked {
 		return nil, fmt.Errorf("cluster %s has been locked", cluster.ObjectMeta.Name)
 	}
+
+	if cluster.Status.Phase != platform.ClusterRunning {
+		return nil, fmt.Errorf("cluster %s status is abnormal", cluster.ObjectMeta.Name)
+	}
+
 	return kubernetes.NewForConfig(restConfig)
 }

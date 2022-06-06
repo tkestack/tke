@@ -53,6 +53,10 @@ func APIServerLocationByCluster(ctx context.Context, cluster *platformv1.Cluster
 		return nil, nil, "", errors.NewForbidden(platform.Resource("clusters"), cluster.ObjectMeta.Name, fmt.Errorf("cluster is been locked"))
 	}
 
+	if cluster.Status.Phase != platformv1.ClusterRunning {
+		return nil, nil, "", fmt.Errorf("cluster %s status is abnormal", cluster.ObjectMeta.Name)
+	}
+
 	provider, err := clusterprovider.GetProvider(cluster.Spec.Type)
 	if err != nil {
 		return nil, nil, "", errors.NewInternalError(err)
