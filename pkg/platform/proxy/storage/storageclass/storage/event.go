@@ -29,8 +29,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/pkg/platform/proxy"
+	"tkestack.io/tke/pkg/util/apiclient"
 )
 
 // EventREST implements the REST endpoint for find events by a storageclass.
@@ -61,7 +63,30 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, err
 	}
 
+	if apiclient.ClusterVersionIsAfter122(client) {
+		return listEventsByV1(ctx, client, name, options)
+	}
+	return listEventsByV1beta1(ctx, client, name, options)
+}
+
+func listEventsByV1beta1(ctx context.Context, client *kubernetes.Clientset, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	storageClass, err := client.StorageV1beta1().StorageClasses().Get(ctx, name, *options)
+	if err != nil {
+		return nil, errors.NewNotFound(extensionsv1beta1.Resource("storageclasses/events"), name)
+	}
+
+	selector := fields.AndSelectors(
+		fields.OneTermEqualSelector("involvedObject.uid", string(storageClass.UID)),
+		fields.OneTermEqualSelector("involvedObject.name", storageClass.Name),
+		fields.OneTermEqualSelector("involvedObject.kind", "StorageClass"))
+	listOptions := metav1.ListOptions{
+		FieldSelector: selector.String(),
+	}
+	return client.CoreV1().Events("").List(ctx, listOptions)
+}
+
+func listEventsByV1(ctx context.Context, client *kubernetes.Clientset, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	storageClass, err := client.StorageV1().StorageClasses().Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("storageclasses/events"), name)
 	}
