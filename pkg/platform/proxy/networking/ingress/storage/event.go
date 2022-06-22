@@ -21,11 +21,9 @@ package storage
 import (
 	"context"
 
-	"tkestack.io/tke/pkg/platform/proxy"
-	"tkestack.io/tke/pkg/util/apiclient"
-
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	networkingv1beta1 "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,6 +34,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	"tkestack.io/tke/pkg/platform/proxy"
+	"tkestack.io/tke/pkg/util/apiclient"
 )
 
 // EventREST implements the REST endpoint for find events by a daemonset.
@@ -74,6 +74,9 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 	if apiclient.ClusterVersionIsBefore116(client) {
 		return listEventsByExtensions(ctx, client, namespaceName, name, options)
 	}
+	if apiclient.ClusterVersionIsAfter122(client) {
+		return listEventsByNetworkingsV1(ctx, client, namespaceName, name, options)
+	}
 	return listEventsByNetworkings(ctx, client, namespaceName, name, options)
 }
 
@@ -98,6 +101,23 @@ func listEventsByNetworkings(ctx context.Context, client *kubernetes.Clientset, 
 	ingress, err := client.NetworkingV1beta1().Ingresses(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(networkingv1beta1.Resource("ingresses/events"), name)
+	}
+
+	selector := fields.AndSelectors(
+		fields.OneTermEqualSelector("involvedObject.uid", string(ingress.UID)),
+		fields.OneTermEqualSelector("involvedObject.name", ingress.Name),
+		fields.OneTermEqualSelector("involvedObject.namespace", ingress.Namespace),
+		fields.OneTermEqualSelector("involvedObject.kind", "Ingress"))
+	listOptions := metav1.ListOptions{
+		FieldSelector: selector.String(),
+	}
+	return client.CoreV1().Events(namespaceName).List(ctx, listOptions)
+}
+
+func listEventsByNetworkingsV1(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	ingress, err := client.NetworkingV1().Ingresses(namespaceName).Get(ctx, name, *options)
+	if err != nil {
+		return nil, errors.NewNotFound(networkingv1.Resource("ingresses/events"), name)
 	}
 
 	selector := fields.AndSelectors(
