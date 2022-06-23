@@ -1823,7 +1823,7 @@ func (t *TKE) getTKEPlatformControllerOptions(ctx context.Context) map[string]in
 		if t.Para.Config.Monitor.InfluxDBMonitor != nil {
 			options["monitorStorageType"] = "influxdb"
 			if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
-				options["monitorStorageAddresses"] = "http://influxdb.tke.svc.cluster.local:8086"
+				options["monitorStorageAddresses"] = t.getLocalInfluxdbAddress()
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor != nil {
 				address := t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.URL
 				if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username != "" {
@@ -1922,7 +1922,7 @@ func (t *TKE) installInfluxDBChart(ctx context.Context) error {
 		LocalChartPath: constants.ChartDirName + "influxdb/",
 		Enable:         true,
 		ConditionFunc: func() (bool, error) {
-			ok, err := apiclient.CheckStatefulSet(ctx, t.globalClient, t.namespace, "influxdb")
+			ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "influxdb")
 			if err != nil || !ok {
 				return false, nil
 			}
@@ -1974,7 +1974,9 @@ func (t *TKE) getInfluxDBOptions(ctx context.Context) (map[string]interface{}, e
 		}
 		options["nodeName"] = node.Name
 	}
-
+	if t.Para.Config.HA != nil && len(t.Para.Config.HA.VIP()) > 0 {
+		options["HA"] = true //for HA mode, enable NodePort
+	}
 	return options, nil
 }
 
@@ -2051,7 +2053,7 @@ func (t *TKE) installTKEMonitorAPI(ctx context.Context) error {
 				options["StoragePassword"] = string(t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password)
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
 				// todo
-				options["StorageAddress"] = "http://influxdb.tke.svc.cluster.local:8086"
+				options["StorageAddress"] = t.getLocalInfluxdbAddress()
 			}
 		} else if t.Para.Config.Monitor.ThanosMonitor != nil {
 			options["StorageType"] = "thanos"
@@ -2114,8 +2116,8 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 				}
 				params["MonitorStorageAddresses"] = address
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
-				params["StorageAddress"] = "http://influxdb.tke.svc.cluster.local:8086"
-				params["MonitorStorageAddresses"] = "http://influxdb.tke.svc.cluster.local:8086"
+				params["StorageAddress"] = t.getLocalInfluxdbAddress()
+				params["MonitorStorageAddresses"] = t.getLocalInfluxdbAddress()
 			}
 		} else if t.Para.Config.Monitor.ThanosMonitor != nil {
 			params["StorageType"] = "thanos"
@@ -2963,4 +2965,13 @@ func (t *TKE) patchClusterInfo(ctx context.Context, patchData interface{}) error
 	}
 	_, err = t.globalClient.CoreV1().ConfigMaps("kube-public").Patch(ctx, "cluster-info", k8stypes.MergePatchType, patchByte, metav1.PatchOptions{})
 	return err
+}
+
+func (t *TKE) getLocalInfluxdbAddress() string {
+	var influxdbAddress string = "http://influxdb.tke.svc.cluster.local:8086"
+	if t.Para.Config.HA != nil && len(t.Para.Config.HA.VIP()) > 0 {
+		vip := t.Para.Config.HA.VIP()
+		influxdbAddress = fmt.Sprintf("http://%s:30086", vip) // influxdb svc must be set as NodePort type, and the nodePort is 30086
+	}
+	return influxdbAddress
 }

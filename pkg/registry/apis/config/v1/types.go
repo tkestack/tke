@@ -50,6 +50,8 @@ type Storage struct {
 	Etcd *EtcdStorage `json:"etcd,omitempty" yaml:"etcd,omitempty"`
 	// +optional
 	Delete *Delete `json:"delete,omitempty" yaml:"delete,omitempty"`
+	// +optional
+	Maintenance *Maintenance `json:"maintenance,omitempty" yaml:"maintenance,omitempty"`
 }
 
 type EtcdStorage struct {
@@ -117,6 +119,15 @@ type S3Storage struct {
 
 // Delete cloud enable the deletion of image blobs and manifests by digest.
 type Delete struct {
+	Enabled bool `json:"enabled" yaml:"enabled"`
+}
+
+// Maintenance ReadOnly enabled set to true, clients will not be allowed to write to the registry.
+type Maintenance struct {
+	ReadOnly ReadOnly `json:"readonly" yaml:"readonly"`
+}
+
+type ReadOnly struct {
 	Enabled bool `json:"enabled" yaml:"enabled"`
 }
 

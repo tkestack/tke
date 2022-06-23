@@ -108,6 +108,10 @@ spec:
           persistentVolumeClaim:
             claimName: {{ .Values.api.cephRbdPVCName }}
   {{- end }}
+  {{- if .Values.api.cephFS }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.api.cephFSPVCName }}
+  {{- end }}
   {{- if .Values.api.nfs }}
           persistentVolumeClaim:
             claimName: {{ .Values.api.nfsPVCName }}
@@ -325,6 +329,9 @@ data:
 {{- end }}
       delete:
         enabled: true
+      maintenance:
+        readonly:
+          enabled: false
     security:
       tokenPrivateKeyFile: /etc/registry/private_key.pem
       tokenPublicKeyFile: /etc/registry/public_key.crt

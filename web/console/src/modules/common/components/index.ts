@@ -49,3 +49,4 @@ export { TransferTable, TransferTableProps } from './transferTable';
 export { emptyTips } from './empty';
 export { NavigateLink } from './NavigateLink';
 export * from './yamleditor';
+export * from './monitorPanel';
