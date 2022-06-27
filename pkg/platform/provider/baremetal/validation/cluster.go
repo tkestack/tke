@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
 	apimachineryvalidation "k8s.io/apimachinery/pkg/api/validation"
@@ -153,7 +154,21 @@ func ValidateClusterMachines(machines []platform.ClusterMachine, fldPath *field.
 
 	var masters []*ssh.SSH
 	for i, one := range machines {
-		sshErrors := ValidateSSH(fldPath.Index(i), one.IP, int(one.Port), one.Username, one.Password, one.PrivateKey, one.PassPhrase)
+		var proxy ssh.Proxy
+		switch one.Proxy.Type {
+		case platform.SSHJumpServer:
+			sshproxy := ssh.JumpServer{}
+			sshproxy.Host = one.Proxy.IP
+			sshproxy.Port = int(one.Proxy.Port)
+			sshproxy.User = one.Proxy.Username
+			sshproxy.Password = string(one.Proxy.Password)
+			sshproxy.PrivateKey = one.Proxy.PrivateKey
+			sshproxy.PassPhrase = one.Proxy.PassPhrase
+			sshproxy.DialTimeOut = time.Second
+			sshproxy.Retry = 0
+			proxy = sshproxy
+		}
+		sshErrors := ValidateSSH(fldPath.Index(i), one.IP, int(one.Port), one.Username, one.Password, one.PrivateKey, one.PassPhrase, proxy)
 		if sshErrors != nil {
 			allErrs = append(allErrs, sshErrors...)
 		} else {

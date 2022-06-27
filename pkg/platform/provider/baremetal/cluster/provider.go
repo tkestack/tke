@@ -109,14 +109,14 @@ func NewProvider() (*Provider, error) {
 			p.EnsureKubeadmInitPhaseBootstrapToken,
 			p.EnsureKubeadmInitPhaseAddon,
 
-			p.EnsureGalaxy,
-			p.EnsureCilium,
-
 			p.EnsureJoinPhasePreflight,
 			p.EnsureJoinPhaseControlPlanePrepare,
 			p.EnsureJoinPhaseKubeletStart,
 			p.EnsureJoinPhaseControlPlaneJoinETCD,
 			p.EnsureJoinPhaseControlPlaneJoinUpdateStatus,
+
+			p.EnsureGalaxy,
+			p.EnsureCilium,
 
 			p.EnsurePatchAnnotation, // wait rest master ready
 			p.EnsureMarkControlPlane,

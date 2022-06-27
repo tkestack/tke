@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
-	"net/http"
 	"os"
 	"path"
 	"reflect"
@@ -1194,17 +1193,15 @@ func (p *Provider) EnsureKubeadmInitPhaseWaitControlPlane(ctx context.Context, c
 	if c.Status.Phase == platformv1.ClusterUpscaling {
 		return nil
 	}
+	machineSSH, err := c.Spec.Machines[0].SSH()
+	if err != nil {
+		return err
+	}
 	return wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		clientset, err := c.ClientsetForBootstrap()
+		cmd := "kubectl get node"
+		_, stderr, exit, err := machineSSH.Exec(cmd)
 		if err != nil {
-			log.FromContext(ctx).Error(err, "Create clientset error")
-			return false, nil
-		}
-		result := clientset.Discovery().RESTClient().Get().AbsPath("/healthz").Do(ctx)
-		statusCode := 0
-		result.StatusCode(&statusCode)
-		if statusCode != http.StatusOK {
-			log.FromContext(ctx).Error(result.Error(), "check healthz error", "statusCode", statusCode)
+			log.FromContext(ctx).Error(fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err), "check apiserver error")
 			return false, nil
 		}
 

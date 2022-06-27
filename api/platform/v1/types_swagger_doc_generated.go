@@ -302,6 +302,14 @@ func (ClusterMachine) SwaggerDoc() map[string]string {
 	return map_ClusterMachine
 }
 
+var map_ClusterMachineProxy = map[string]string{
+	"": "ClusterMachine is the proxy definition of ClusterMachine.",
+}
+
+func (ClusterMachineProxy) SwaggerDoc() map[string]string {
+	return map_ClusterMachineProxy
+}
+
 var map_ClusterProperty = map[string]string{
 	"": "ClusterProperty records the attribute information of the cluster.",
 }

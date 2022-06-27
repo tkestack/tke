@@ -43,6 +43,19 @@ func (in *ClusterMachine) SSH() (*ssh.SSH, error) {
 		DialTimeOut: time.Second,
 		Retry:       0,
 	}
+	switch in.Proxy.Type {
+	case SSHJumpServer:
+		proxy := ssh.JumpServer{}
+		proxy.Host = in.Proxy.IP
+		proxy.Port = int(in.Proxy.Port)
+		proxy.User = in.Proxy.Username
+		proxy.Password = string(in.Proxy.Password)
+		proxy.PrivateKey = in.Proxy.PrivateKey
+		proxy.PassPhrase = in.Proxy.PassPhrase
+		proxy.DialTimeOut = time.Second
+		proxy.Retry = 0
+		sshConfig.Proxy = proxy
+	}
 	return ssh.New(sshConfig)
 }
 

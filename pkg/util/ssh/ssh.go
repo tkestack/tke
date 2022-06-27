@@ -63,6 +63,7 @@ type Config struct {
 	// seconds). This timeout is only intended to catch otherwise uncaught hangs.
 	DialTimeOut time.Duration
 	Retry       int
+	Proxy       Proxy
 }
 
 func (c *Config) addr() string {
@@ -356,25 +357,60 @@ func (s *SSH) newClient() (*ssh.Client, func(), error) {
 		Auth:            s.authMethods,
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
-	client, err := s.dialer.Dial("tcp", s.addr(), config)
-	if err != nil {
-		wait.Poll(5*time.Second, time.Duration(s.Retry)*5*time.Second, func() (bool, error) {
-			if client, err = s.dialer.Dial("tcp", s.addr(), config); err != nil {
-				return false, nil
-			}
-			err = nil
-			return true, nil
-		})
+
+	var client *ssh.Client
+	var closer func()
+	var err error
+
+	if s.Proxy != nil {
+		client, closer, err = s.proxyClientConn(config)
+		if err != nil {
+			wait.Poll(5*time.Second, time.Duration(s.Retry)*5*time.Second, func() (bool, error) {
+				if client, closer, err = s.proxyClientConn(config); err != nil {
+					return false, nil
+				}
+				err = nil
+				return true, nil
+			})
+		}
+	} else {
+		client, err = s.dialer.Dial("tcp", s.addr(), config)
+		if err != nil {
+			wait.Poll(5*time.Second, time.Duration(s.Retry)*5*time.Second, func() (bool, error) {
+				if client, err = s.dialer.Dial("tcp", s.addr(), config); err != nil {
+					return false, nil
+				}
+				err = nil
+				return true, nil
+			})
+		}
 	}
+
 	if err != nil {
 		return nil, nil, err
 	}
 
 	return client,
 		func() {
+			if closer != nil {
+				closer()
+			}
 			client.Close()
 		},
 		nil
+}
+
+func (s *SSH) proxyClientConn(config *ssh.ClientConfig) (*ssh.Client, func(), error) {
+	conn, closer, err := s.Proxy.ProxyConn(s.addr())
+	if err != nil {
+		return nil, nil, err
+	}
+	nconn, chans, reqs, err := ssh.NewClientConn(conn, s.addr(), config)
+	if err != nil {
+		return nil, nil, err
+	}
+	return ssh.NewClient(nconn, chans, reqs), closer, nil
+
 }
 
 // Interface to allow mocking of ssh.Dial, for testing SSH

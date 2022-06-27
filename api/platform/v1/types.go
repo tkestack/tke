@@ -83,7 +83,33 @@ type ClusterMachine struct {
 	// If specified, the node's taints.
 	// +optional
 	Taints []corev1.Taint `json:"taints,omitempty" protobuf:"bytes,8,opt,name=taints"`
+	// +optional
+	Proxy ClusterMachineProxy `json:"proxy,omitempty" protobuf:"bytes,9,opt,name=proxy"`
 }
+
+// ClusterMachine is the proxy definition of ClusterMachine.
+type ClusterMachineProxy struct {
+	Type ProxyType `json:"type" protobuf:"bytes,1,opt,name=type"`
+	IP   string    `json:"ip" protobuf:"bytes,2,opt,name=ip"`
+	Port int32     `json:"port" protobuf:"varint,3,opt,name=port"`
+	// +optional
+	Username string `json:"username,omitempty" protobuf:"bytes,4,opt,name=username"`
+	// +optional
+	Password []byte `json:"password,omitempty" protobuf:"bytes,5,opt,name=password"`
+	// +optional
+	PrivateKey []byte `json:"privateKey,omitempty" protobuf:"bytes,6,opt,name=privateKey"`
+	// +optional
+	PassPhrase []byte `json:"passPhrase,omitempty" protobuf:"bytes,7,opt,name=passPhrase"`
+}
+
+// ProxyType describes diffirent type of proxy
+type ProxyType string
+
+const (
+	// SSH jumper server proxy
+	SSHJumpServer ProxyType = "SSHJumpServer"
+	// SOCKS5 ProxyType = "SOCKS5"
+)
 
 // KubeVendorType describe the kubernetes provider of the cluster
 // ref https://github.com/open-cluster-management/multicloud-operators-foundation/blob/e94b719de6d5f3541e948dd70ad8f1ff748aa452/pkg/apis/internal.open-cluster-management.io/v1beta1/clusterinfo_types.go#L137

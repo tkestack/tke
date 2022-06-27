@@ -1033,6 +1033,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.ClusterGroupAPIResourceOptions":              schema_tke_api_platform_v1_ClusterGroupAPIResourceOptions(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterList":                                 schema_tke_api_platform_v1_ClusterList(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterMachine":                              schema_tke_api_platform_v1_ClusterMachine(ref),
+		"tkestack.io/tke/api/platform/v1.ClusterMachineProxy":                         schema_tke_api_platform_v1_ClusterMachineProxy(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterProperty":                             schema_tke_api_platform_v1_ClusterProperty(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterResource":                             schema_tke_api_platform_v1_ClusterResource(ref),
 		"tkestack.io/tke/api/platform/v1.ClusterSpec":                                 schema_tke_api_platform_v1_ClusterSpec(ref),
@@ -52312,12 +52313,77 @@ func schema_tke_api_platform_v1_ClusterMachine(ref common.ReferenceCallback) com
 							},
 						},
 					},
+					"proxy": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("tkestack.io/tke/api/platform/v1.ClusterMachineProxy"),
+						},
+					},
 				},
 				Required: []string{"ip", "port", "username"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.Taint"},
+			"k8s.io/api/core/v1.Taint", "tkestack.io/tke/api/platform/v1.ClusterMachineProxy"},
+	}
+}
+
+func schema_tke_api_platform_v1_ClusterMachineProxy(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ClusterMachine is the proxy definition of ClusterMachine.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"ip": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"port": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int32",
+						},
+					},
+					"username": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"password": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
+					"privateKey": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
+					"passPhrase": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
+				},
+				Required: []string{"type", "ip", "port"},
+			},
+		},
 	}
 }
 
