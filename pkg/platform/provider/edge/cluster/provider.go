@@ -121,8 +121,9 @@ func NewProvider() (*Provider, error) {
 			p.bCluster.EnsureKubeadmInitPhaseBootstrapToken,
 			p.bCluster.EnsureKubeadmInitPhaseAddon,
 
-			p.bCluster.EnsureGalaxy,
+			//p.bCluster.EnsureGalaxy,
 			p.bCluster.EnsureCilium,
+			p.EnsureEdgeFlannel,
 
 			p.bCluster.EnsureJoinPhasePreflight,
 			p.bCluster.EnsureJoinPhaseControlPlanePrepare,
@@ -135,11 +136,16 @@ func NewProvider() (*Provider, error) {
 			p.bCluster.EnsureKeepalivedWithLBOption,
 			p.bCluster.EnsureThirdPartyHA,
 			p.bCluster.EnsureModifyAPIServerHost,
+
 			// deploy apps
 			p.bCluster.EnsureNvidiaDevicePlugin,
 			p.bCluster.EnsureGPUManager,
 			p.bCluster.EnsureCSIOperator,
 			p.bCluster.EnsureMetricsServer,
+
+			// provider SuperEdge edge cluster
+			p.EnsurePrepareEgdeCluster, // Prepare EgdeCluster
+			p.EnsureApplyEdgeApps,      // Add on SuperEdge EdgeApps
 
 			p.bCluster.EnsureCleanup,
 			p.bCluster.EnsureCreateClusterMark,

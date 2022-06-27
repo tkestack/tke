@@ -1,0 +1,29 @@
+apiVersion: platform.tkestack.io/v1
+  kind: Cluster
+  metadata:
+    name: attlee-superedge
+  spec:
+    displayName: attlee-superedge-demo
+    etcd:
+      local:
+        dataDir: ""
+        serverCertSANs:
+          - etcd
+          - etcd.kube-system
+    features:
+      containerRuntime: docker
+    machines:
+      - ip: 10.0.200.98
+        password: PasswordBase64
+        port: 22
+        username: root
+    networkDevice: eth0
+    clusterCIDR: 192.168.0.0/16
+    properties:
+      maxClusterServiceNum: 256
+      maxNodePodNum: 256
+    publicAlternativeNames:
+      - 106.52.199.103
+    tenantID: default
+    type: Edge
+    version: 1.21.4-tke.1
