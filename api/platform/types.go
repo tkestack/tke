@@ -77,7 +77,28 @@ type ClusterMachine struct {
 	PassPhrase []byte
 	Labels     map[string]string
 	Taints     []corev1.Taint
+	Proxy      ClusterMachineProxy
 }
+
+// ClusterMachine is the proxy definition of ClusterMachine.
+type ClusterMachineProxy struct {
+	Type       ProxyType
+	IP         string
+	Port       int32
+	Username   string
+	Password   []byte
+	PrivateKey []byte
+	PassPhrase []byte
+}
+
+// ProxyType describes diffirent type of proxy
+type ProxyType string
+
+const (
+	// SSH jumper server proxy
+	SSHJumpServer ProxyType = "SSHJumpServer"
+	// SOCKS5 ProxyType = "SOCKS5"
+)
 
 // KubeVendorType describe the kubernetes provider of the cluster
 // ref https://github.com/open-cluster-management/multicloud-operators-foundation/blob/e94b719de6d5f3541e948dd70ad8f1ff748aa452/pkg/apis/internal.open-cluster-management.io/v1beta1/clusterinfo_types.go#L137

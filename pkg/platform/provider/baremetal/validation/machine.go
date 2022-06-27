@@ -57,7 +57,7 @@ func ValidateMachineSpec(spec *platform.MachineSpec, cluster *platformv1.Cluster
 		allErrs = append(allErrs, ValidateMachineWithCluster(context.TODO(), spec.IP, fldPath.Child("ip"), cluster, platformClient)...)
 	}
 
-	sshErrors := ValidateSSH(fldPath, spec.IP, int(spec.Port), spec.Username, spec.Password, spec.PrivateKey, spec.PassPhrase)
+	sshErrors := ValidateSSH(fldPath, spec.IP, int(spec.Port), spec.Username, spec.Password, spec.PrivateKey, spec.PassPhrase, nil)
 	if sshErrors != nil {
 		allErrs = append(allErrs, sshErrors...)
 	} else {
@@ -150,7 +150,7 @@ func ValidateWorkerTimeOffset(fldPath *field.Path, worker *ssh.SSH, masters []*s
 }
 
 // ValidateSSH validates a given ssh config.
-func ValidateSSH(fldPath *field.Path, ip string, port int, user string, password []byte, privateKey []byte, passPhrase []byte) field.ErrorList {
+func ValidateSSH(fldPath *field.Path, ip string, port int, user string, password []byte, privateKey []byte, passPhrase []byte, proxy ssh.Proxy) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	for _, msg := range validation.IsValidIP(ip) {
@@ -177,6 +177,7 @@ func ValidateSSH(fldPath *field.Path, ip string, port int, user string, password
 		PassPhrase:  passPhrase,
 		DialTimeOut: time.Second,
 		Retry:       0,
+		Proxy:       proxy,
 	}
 	s, err := ssh.New(sshConfig)
 	if err != nil {
