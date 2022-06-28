@@ -21,6 +21,7 @@ package cluster
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"io/ioutil"
@@ -1533,4 +1534,24 @@ func (p *Provider) EnsureInitAPIServerHost(ctx context.Context, c *v1.Cluster) e
 
 func (p *Provider) EnsureModifyAPIServerHost(ctx context.Context, c *v1.Cluster) error {
 	return p.setAPIServerHost(ctx, c, "127.0.0.1")
+}
+
+func (p *Provider) EnsureClusternetRegistration(ctx context.Context, c *v1.Cluster) error {
+	if c.Annotations[platformv1.RegistrationCommandAnno] == "" {
+		log.FromContext(ctx).Info("registration command is empty, skip EnsureClusternetRegistration")
+		return nil
+	}
+	cmd, err := base64.StdEncoding.DecodeString(c.Annotations[platformv1.RegistrationCommandAnno])
+	if err != nil {
+		return fmt.Errorf("decode registration command failed: %v", err)
+	}
+	machineSSH, err := c.Spec.Machines[0].SSH()
+	if err != nil {
+		return err
+	}
+	_, stderr, exit, err := machineSSH.Exec(string(cmd))
+	if err != nil {
+		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+	}
+	return nil
 }
