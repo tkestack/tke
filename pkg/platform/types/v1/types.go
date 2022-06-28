@@ -106,12 +106,7 @@ func (c *Cluster) RESTConfigForBootstrap() (*rest.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	host, err := c.HostForBootstrap()
-	if err != nil {
-		return nil, err
-	}
 	configCopy := *c.restConfig
-	configCopy.Host = host
 
 	return &configCopy, nil
 }

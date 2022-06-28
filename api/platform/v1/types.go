@@ -111,6 +111,11 @@ const (
 	// SOCKS5 ProxyType = "SOCKS5"
 )
 
+const (
+	// RegistrationCommandAnno contains base64 registration command of cluster net
+	RegistrationCommandAnno = "tkestack.io/registration-command"
+)
+
 // KubeVendorType describe the kubernetes provider of the cluster
 // ref https://github.com/open-cluster-management/multicloud-operators-foundation/blob/e94b719de6d5f3541e948dd70ad8f1ff748aa452/pkg/apis/internal.open-cluster-management.io/v1beta1/clusterinfo_types.go#L137
 type KubeVendorType string

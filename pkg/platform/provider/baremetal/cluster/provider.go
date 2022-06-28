@@ -115,6 +115,8 @@ func NewProvider() (*Provider, error) {
 			p.EnsureJoinPhaseControlPlaneJoinETCD,
 			p.EnsureJoinPhaseControlPlaneJoinUpdateStatus,
 
+			p.EnsureClusternetRegistration,
+
 			p.EnsureGalaxy,
 			p.EnsureCilium,
 
