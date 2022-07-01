@@ -204,6 +204,7 @@ func scrapeConfigForPrometheus() string {
 
     - job_name: 'kubernetes-service-endpoints'
       scrape_timeout: 60s
+      honor_labels: true
       kubernetes_sd_configs:
       - role: endpoints
       relabel_configs:
@@ -467,6 +468,18 @@ groups:
   - record: kube_node_status_allocatable_gpu_memory
     expr: sum by(node) (kube_node_status_allocatable{resource="tencent_com_vcuda_memory"})
 
+  - record: kube_node_status_capacity_gpu
+    expr: sum by(node) (kube_node_status_capacity{resource="tke_cloud_tencent_com_qgpu_core"})
+
+  - record: kube_node_status_capacity_gpu_memory
+    expr: sum by(node) (kube_node_status_capacity{resource="tke_cloud_tencent_com_qgpu_memory"}) * 1024
+
+  - record: kube_node_status_allocatable_gpu
+    expr: sum by(node) (kube_node_status_allocatable{resource="tke_cloud_tencent_com_qgpu_core"})
+
+  - record: kube_node_status_allocatable_gpu_memory
+    expr: sum by(node) (kube_node_status_allocatable{resource="tke_cloud_tencent_com_qgpu_memory"}) * 1024
+
   - record: __pod_info1
     expr: kube_pod_info* on(node) group_left(node_role) kube_node_labels
 
@@ -531,10 +544,10 @@ groups:
     expr: k8s_container_gpu_used * 100 / on(node) group_left kube_node_status_capacity_gpu
 
   - record: k8s_container_gpu_memory_used
-    expr: container_gpu_memory_total{gpu_memory="total"} / 256 * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role) __pod_info2
+    expr: container_gpu_memory_total{gpu_memory="total"} * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role) __pod_info2
 
   - record: k8s_container_rate_gpu_memory_used_request
-    expr: k8s_container_gpu_memory_used * 100 / on (pod_name,namespace,container_name) group_left() (container_request_gpu_memory / 256)
+    expr: k8s_container_gpu_memory_used * 100 / on (pod_name,namespace,container_name) group_left() (container_request_gpu_memory)
 
   - record: k8s_container_rate_gpu_memory_used_node
     expr: k8s_container_gpu_memory_used * 100 / on(node) group_left() kube_node_status_capacity_gpu_memory
@@ -627,7 +640,7 @@ groups:
     expr: sum(k8s_container_gpu_memory_used) without (container_name,container_id)
 
   - record: k8s_pod_gpu_memory_request
-    expr: sum(container_request_gpu_memory / 256)  without(container_name)
+    expr: sum(container_request_gpu_memory)  without(container_name)
 
   - record: k8s_pod_rate_gpu_memory_used_request
     expr: sum(k8s_container_gpu_memory_used + on (container_name, pod_name, namespace) group_left container_request_gpu_memory * 0) without(container_name) * 100  / on (pod_name,namespace) group_left k8s_pod_gpu_memory_request
