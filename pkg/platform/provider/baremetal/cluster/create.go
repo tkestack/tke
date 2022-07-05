@@ -23,6 +23,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -32,16 +33,20 @@ import (
 	"strings"
 	"time"
 
+	appsv1alpha1 "github.com/clusternet/apis/apps/v1alpha1"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/thoas/go-funk"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/rest"
 	bootstraputil "k8s.io/cluster-bootstrap/token/util"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	utilsnet "k8s.io/utils/net"
+	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
@@ -65,6 +70,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/clusternet"
 	"tkestack.io/tke/pkg/util/cmdstring"
 	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/hosts"
@@ -1199,7 +1205,7 @@ func (p *Provider) EnsureKubeadmInitPhaseWaitControlPlane(ctx context.Context, c
 		return err
 	}
 	return wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-		cmd := "kubectl get node"
+		cmd := "kubectl cluster-info"
 		_, stderr, exit, err := machineSSH.Exec(cmd)
 		if err != nil {
 			log.FromContext(ctx).Error(fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err), "check apiserver error")
@@ -1554,4 +1560,92 @@ func (p *Provider) EnsureClusternetRegistration(ctx context.Context, c *v1.Clust
 		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 	}
 	return nil
+}
+
+func (p *Provider) EnsureAnywhereEdtion(ctx context.Context, c *v1.Cluster) error {
+	if c.Labels[platformv1.AnywhereEdtionLabel] == "" {
+		log.FromContext(ctx).Info("anywhere edtion is empty, skip EnsureAnywhereEdtion")
+		return nil
+	}
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return err
+	}
+	hubClient, err := clusternet.GetHubClient(config)
+	if err != nil {
+		return err
+	}
+	current, err := clusternet.GetManagedCluster(hubClient, c.Name)
+	if err != nil {
+		return err
+	}
+
+	if c.Annotations[platformv1.AnywhereLocalizationsAnno] != "" {
+		localizationsJSON, err := base64.StdEncoding.DecodeString(c.Annotations[platformv1.AnywhereLocalizationsAnno])
+		if err != nil {
+			return fmt.Errorf("decode localizations failed: %v", err)
+
+		}
+		localizations := new(appsv1alpha1.LocalizationList)
+		err = json.Unmarshal(localizationsJSON, localizations)
+		if err != nil {
+			return fmt.Errorf("unmarshal localization failed %v", err)
+		}
+
+		for _, l := range localizations.Items {
+			l.Namespace = current.Namespace
+			err := hubClient.Create(ctx, &l)
+			if err != nil && !apierrors.IsAlreadyExists(err) {
+				return fmt.Errorf("create localization %+v failed: %v", l, err)
+			}
+		}
+	}
+
+	desired := current.DeepCopy()
+	desired.Labels[platformv1.AnywhereEdtionLabel] = c.Labels[platformv1.AnywhereEdtionLabel]
+	err = hubClient.Patch(ctx, desired, runtimeclient.MergeFrom(current))
+	if err != nil {
+		return fmt.Errorf("patch managed cls failed %v", err)
+	}
+	return nil
+}
+
+func (p *Provider) EnsureCheckAnywhereSubscription(ctx context.Context, c *v1.Cluster) error {
+	if c.Annotations[platformv1.AnywhereSubscriptionNameAnno] == "" {
+		log.FromContext(ctx).Info("anywhere subscription name is empty, skip subscription")
+		return nil
+	}
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return err
+	}
+	hubClient, err := clusternet.GetHubClient(config)
+	if err != nil {
+		return err
+	}
+	mcls, err := clusternet.GetManagedCluster(hubClient, c.Name)
+	if err != nil {
+		return err
+	}
+	sub, err := clusternet.GetSubscription(hubClient, c.Annotations[platformv1.AnywhereSubscriptionNameAnno], c.Annotations[platformv1.AnywhereSubscriptionNamespaceAnno])
+	if err != nil {
+		return err
+	}
+	for _, feed := range sub.Spec.Feeds {
+		err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+			hr, err := clusternet.GetHelmRelease(hubClient, clusternet.GenerateHelmReleaseName(sub.Name, feed), mcls.Namespace)
+			if err != nil {
+				return false, fmt.Errorf("get helmrelease %s failed: %v", feed.Name, err)
+			}
+			if hr.Status.Phase != "deployed" {
+				return false, fmt.Errorf("helm release phase: %s", hr.Status.Phase)
+			}
+			return true, nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+
 }

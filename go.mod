@@ -22,6 +22,8 @@ require (
 	github.com/casbin/casbin/v2 v2.2.1
 	github.com/chartmuseum/helm-push v0.9.0
 	github.com/chartmuseum/storage v0.11.0
+	github.com/clusternet/apis v0.6.0
+	github.com/clusternet/clusternet v0.6.0 // indirect
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/coreos/prometheus-operator v0.38.1-0.20200506070354-4231c1d4b313
 	github.com/cyphar/filepath-securejoin v0.2.2

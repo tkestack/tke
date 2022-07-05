@@ -114,6 +114,16 @@ const (
 const (
 	// RegistrationCommandAnno contains base64 registration command of cluster net
 	RegistrationCommandAnno = "tkestack.io/registration-command"
+	// AnywhereEdtionLabel describe which anywhere edition will be deployed
+	AnywhereEdtionLabel = "tkestack.io/anywhere-edtion"
+	// AnywhereSubscriptionNameAnno describe sub name
+	AnywhereSubscriptionNameAnno = "tkestack.io/anywhere-subscription-name"
+	// AnywhereSubscriptionNameAnno describe sub namespace
+	AnywhereSubscriptionNamespaceAnno = "tkestack.io/anywhere-subscription-namespace"
+	// AnywhereLocalizationsAnno contains base64 localizations json data
+	AnywhereLocalizationsAnno = "tkestack.io/anywhere-localizations"
+	// AnywhereMachinesAnno contains base64 machines json data
+	AnywhereMachinesAnno = "tkestack.io/anywhere-machines"
 )
 
 // KubeVendorType describe the kubernetes provider of the cluster
