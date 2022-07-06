@@ -119,7 +119,9 @@ func Upgrade(ctx context.Context,
 			newStatus.Message = ""
 			newStatus.Reason = ""
 			newStatus.LastTransitionTime = metav1.Now()
+			metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
+			metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 		}
 		newApp, updateStatusErr = updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
 		if updateStatusErr != nil {
