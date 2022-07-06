@@ -73,11 +73,8 @@ func GetSubscription(clientSet client.Client, name, namespace string) (*appsv1al
 	sub := new(appsv1alpha1.Subscription)
 	sub.Name = name
 	sub.Namespace = namespace
-	key, err := client.ObjectKeyFromObject(sub)
-	if err != nil {
-		return nil, fmt.Errorf("get subscription key failed: %v", err)
-	}
-	err = clientSet.Get(context.TODO(), key, sub)
+	key := client.ObjectKeyFromObject(sub)
+	err := clientSet.Get(context.TODO(), key, sub)
 	if err != nil {
 		return nil, fmt.Errorf("get subscription failed: %v", err)
 	}
@@ -92,11 +89,8 @@ func GetHelmRelease(clientSet client.Client, name, namespace string) (*appsv1alp
 	hr := new(appsv1alpha1.HelmRelease)
 	hr.Name = name
 	hr.Namespace = namespace
-	key, err := client.ObjectKeyFromObject(hr)
-	if err != nil {
-		return nil, fmt.Errorf("get hemrelease key failed: %v", err)
-	}
-	err = clientSet.Get(context.TODO(), key, hr)
+	key := client.ObjectKeyFromObject(hr)
+	err := clientSet.Get(context.TODO(), key, hr)
 	if err != nil {
 		return nil, fmt.Errorf("get helmrelease %s in %s failed: %v", name, namespace, err)
 	}
