@@ -161,17 +161,17 @@ func (p *Provider) EnsurePreflight(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureRegistryHosts(ctx context.Context, c *v1.Cluster) error {
-	if !p.config.Registry.NeedSetHosts() {
+	if !p.Config.Registry.NeedSetHosts() {
 		return nil
 	}
 	machines := map[bool][]platformv1.ClusterMachine{
 		true:  c.Spec.ScalingMachines,
 		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
 	domains := []string{
-		p.config.Registry.Domain,
+		p.Config.Registry.Domain,
 	}
 	if c.Spec.TenantID != "" {
-		domains = append(domains, c.Spec.TenantID+"."+p.config.Registry.Domain)
+		domains = append(domains, c.Spec.TenantID+"."+p.Config.Registry.Domain)
 	}
 	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
@@ -181,7 +181,7 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, c *v1.Cluster) error
 
 		for _, one := range domains {
 			remoteHosts := hosts.RemoteHosts{Host: one, SSH: machineSSH}
-			err := remoteHosts.Set(p.config.Registry.IP)
+			err := remoteHosts.Set(p.Config.Registry.IP)
 			if err != nil {
 				return errors.Wrap(err, machine.IP)
 			}
@@ -499,9 +499,9 @@ func (p *Provider) EnsureContainerRuntime(ctx context.Context, c *v1.Cluster) er
 }
 
 func (p *Provider) EnsureContainerd(ctx context.Context, c *v1.Cluster) error {
-	insecureRegistries := []string{p.config.Registry.Domain}
-	if p.config.Registry.NeedSetHosts() && c.Spec.TenantID != "" {
-		insecureRegistries = append(insecureRegistries, c.Spec.TenantID+"."+p.config.Registry.Domain)
+	insecureRegistries := []string{p.Config.Registry.Domain}
+	if p.Config.Registry.NeedSetHosts() && c.Spec.TenantID != "" {
+		insecureRegistries = append(insecureRegistries, c.Spec.TenantID+"."+p.Config.Registry.Domain)
 	}
 	option := &containerd.Option{
 		InsecureRegistries: insecureRegistries,
@@ -527,15 +527,15 @@ func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 	machines := map[bool][]platformv1.ClusterMachine{
 		true:  c.Spec.ScalingMachines,
 		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
-	insecureRegistries := fmt.Sprintf(`"%s"`, p.config.Registry.Domain)
-	if p.config.Registry.NeedSetHosts() && c.Spec.TenantID != "" {
-		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, c.Spec.TenantID+"."+p.config.Registry.Domain)
+	insecureRegistries := fmt.Sprintf(`"%s"`, p.Config.Registry.Domain)
+	if p.Config.Registry.NeedSetHosts() && c.Spec.TenantID != "" {
+		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, c.Spec.TenantID+"."+p.Config.Registry.Domain)
 	}
 	extraArgs := c.Spec.DockerExtraArgs
-	utilruntime.Must(mergo.Merge(&extraArgs, p.config.Docker.ExtraArgs))
+	utilruntime.Must(mergo.Merge(&extraArgs, p.Config.Docker.ExtraArgs))
 	option := &docker.Option{
 		InsecureRegistries: insecureRegistries,
-		RegistryDomain:     p.config.Registry.Domain,
+		RegistryDomain:     p.Config.Registry.Domain,
 		ExtraArgs:          extraArgs,
 	}
 	for _, machine := range machines {
@@ -558,7 +558,7 @@ func (p *Provider) EnsureKubernetesImages(ctx context.Context, c *v1.Cluster) er
 	machines := map[bool][]platformv1.ClusterMachine{
 		true:  c.Spec.ScalingMachines,
 		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
-	option := &image.Option{Version: c.Spec.Version, RegistryDomain: p.config.Registry.Domain, KubeImages: images.KubecomponetNames}
+	option := &image.Option{Version: c.Spec.Version, RegistryDomain: p.Config.Registry.Domain, KubeImages: images.KubecomponetNames}
 	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
@@ -724,7 +724,7 @@ func (p *Provider) EnsureAuthzWebhook(ctx context.Context, c *v1.Cluster) error 
 			if isGlobalCluster {
 				authzEndpoint, _ = c.AuthzWebhookBuiltinEndpoint()
 			} else {
-				authzEndpoint = p.config.AuthzWebhook.Endpoint
+				authzEndpoint = p.Config.AuthzWebhook.Endpoint
 			}
 		}
 		option := authzwebhook.Option{
@@ -758,7 +758,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 		return errors.Wrap(err, "parse schedulerPolicyConfig error")
 	}
 	auditWebhookConfig, err := template.ParseString(auditWebhookConfig, map[string]interface{}{
-		"AuditBackendAddress": p.config.Audit.Address,
+		"AuditBackendAddress": p.Config.Audit.Address,
 		"ClusterName":         c.Name,
 	})
 	if err != nil {
@@ -788,7 +788,7 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 			}
 		}
 
-		if p.config.AuditEnabled() {
+		if p.Config.AuditEnabled() {
 			if len(auditPolicyData) != 0 {
 				err = machineSSH.WriteFile(bytes.NewReader(auditPolicyData), constants.KubernetesAuditPolicyConfigFile)
 				if err != nil {
