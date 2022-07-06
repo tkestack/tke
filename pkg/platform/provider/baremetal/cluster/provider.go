@@ -56,7 +56,7 @@ func RegisterProvider() {
 type Provider struct {
 	*clusterprovider.DelegateProvider
 
-	config *config.Config
+	Config *config.Config
 }
 
 var _ clusterprovider.Provider = &Provider{}
@@ -164,7 +164,7 @@ func NewProvider() (*Provider, error) {
 	if err != nil {
 		return nil, err
 	}
-	p.config = cfg
+	p.Config = cfg
 
 	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
 
@@ -215,14 +215,14 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 		}
 	}
 
-	if p.config.AuditEnabled() {
+	if p.Config.AuditEnabled() {
 		if !cluster.AuthzWebhookEnabled() {
 			cluster.Spec.Features.AuthzWebhookAddr = &platform.AuthzWebhookAddr{Builtin: &platform.
 				BuiltinAuthzWebhookAddr{}}
 		}
 	}
 
-	if p.config.BusinessEnabled() {
+	if p.Config.BusinessEnabled() {
 		if !cluster.AuthzWebhookEnabled() {
 			cluster.Spec.Features.AuthzWebhookAddr = &platform.AuthzWebhookAddr{Builtin: &platform.
 				BuiltinAuthzWebhookAddr{}}
@@ -244,8 +244,8 @@ func (p *Provider) PreCreate(cluster *types.Cluster) error {
 	if !cluster.Spec.Features.EnableMetricsServer {
 		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, "EnsureMetricsServer")
 	}
-	if p.config.Feature.SkipConditions != nil {
-		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, p.config.Feature.SkipConditions...)
+	if p.Config.Feature.SkipConditions != nil {
+		cluster.Spec.Features.SkipConditions = append(cluster.Spec.Features.SkipConditions, p.Config.Feature.SkipConditions...)
 	}
 
 	if cluster.Spec.Etcd == nil {
