@@ -30,7 +30,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	meshconfig "tkestack.io/tke/pkg/mesh/apis/config"
 	clusterclient "tkestack.io/tke/pkg/mesh/external/kubernetes"
@@ -176,7 +175,7 @@ func (c *istioService) ListAllResources(
 
 // ListResources results in obj pointer
 func (c *istioService) ListResources(
-	ctx context.Context, clusterName string, obj runtime.Object, opt ...ctrlclient.ListOption,
+	ctx context.Context, clusterName string, obj ctrlclient.ObjectList, opt ...ctrlclient.ListOption,
 ) error {
 
 	client, err := c.clients.Istio(clusterName)
@@ -191,7 +190,7 @@ func (c *istioService) ListResources(
 }
 
 func (c *istioService) GetResource(
-	ctx context.Context, clusterName string, obj runtime.Object,
+	ctx context.Context, clusterName string, obj ctrlclient.Object,
 ) error {
 
 	client, err := c.clients.Istio(clusterName)
@@ -199,10 +198,7 @@ func (c *istioService) GetResource(
 		return err
 	}
 
-	key, err := ctrlclient.ObjectKeyFromObject(obj)
-	if err != nil {
-		return err
-	}
+	key := ctrlclient.ObjectKeyFromObject(obj)
 
 	err = client.Get(ctx, key, obj)
 	if err != nil {
@@ -212,7 +208,7 @@ func (c *istioService) GetResource(
 }
 
 func (c *istioService) CreateResource(
-	ctx context.Context, clusterName string, obj runtime.Object,
+	ctx context.Context, clusterName string, obj ctrlclient.Object,
 ) (bool, error) {
 
 	client, err := c.clients.Istio(clusterName)
@@ -227,7 +223,7 @@ func (c *istioService) CreateResource(
 }
 
 func (c *istioService) UpdateResource(
-	ctx context.Context, clusterName string, obj runtime.Object,
+	ctx context.Context, clusterName string, obj ctrlclient.Object,
 ) (bool, error) {
 
 	client, err := c.clients.Istio(clusterName)
@@ -242,7 +238,7 @@ func (c *istioService) UpdateResource(
 }
 
 func (c *istioService) DeleteResource(
-	ctx context.Context, clusterName string, obj runtime.Object,
+	ctx context.Context, clusterName string, obj ctrlclient.Object,
 ) (bool, error) {
 
 	client, err := c.clients.Istio(clusterName)

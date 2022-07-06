@@ -27,7 +27,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"tkestack.io/tke/pkg/mesh/models"
 
@@ -62,11 +61,11 @@ type IstioService interface {
 	ListDestinationRules(ctx context.Context, clusterName, namespace string) ([]istionetworking.DestinationRule, error)
 	ListServiceEntries(ctx context.Context, clusterName, namespace string) ([]istionetworking.ServiceEntry, error)
 
-	ListResources(ctx context.Context, clusterName string, obj runtime.Object, opt ...ctrlclient.ListOption) error
-	GetResource(ctx context.Context, clusterName string, obj runtime.Object) error
-	CreateResource(ctx context.Context, clusterName string, obj runtime.Object) (bool, error)
-	UpdateResource(ctx context.Context, clusterName string, obj runtime.Object) (bool, error)
-	DeleteResource(ctx context.Context, clusterName string, obj runtime.Object) (bool, error)
+	ListResources(ctx context.Context, clusterName string, obj ctrlclient.ObjectList, opt ...ctrlclient.ListOption) error
+	GetResource(ctx context.Context, clusterName string, obj ctrlclient.Object) error
+	CreateResource(ctx context.Context, clusterName string, obj ctrlclient.Object) (bool, error)
+	UpdateResource(ctx context.Context, clusterName string, obj ctrlclient.Object) (bool, error)
+	DeleteResource(ctx context.Context, clusterName string, obj ctrlclient.Object) (bool, error)
 
 	CreateNorthTrafficGateway(ctx context.Context, clusterName string, obj *models.IstioNetworkingConfig) (bool, error)
 	UpdateNorthTrafficGateway(ctx context.Context, clusterName string, obj *models.IstioNetworkingConfig) (bool, error)
