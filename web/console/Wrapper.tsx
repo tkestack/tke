@@ -188,6 +188,17 @@ const commonRouterConfig: RouterConfig[] = [
         watchModule: ConsoleModuleEnum.Audit
       }
     ]
+  },
+  {
+    title: '数据服务',
+    watchModule: [ConsoleModuleEnum.Middleware],
+    subRouterConfig: [
+      {
+        url: '/tkestack/middleware',
+        title: '中间件列表',
+        watchModule: ConsoleModuleEnum.Middleware
+      }
+    ]
   }
 ];
 
@@ -364,6 +375,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     };
     try {
       const response = await reduceNetworkRequest(params);
+      console.log(response?.data);
       this.setState({
         userInfo: response.data
       });
@@ -430,7 +442,20 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
           }
         }
       });
-
+      //追加数据服务菜单
+      if (!currentRouterConfig?.every(item => item?.watchModule?.includes(ConsoleModuleEnum.Middleware))) {
+        currentRouterConfig.push({
+          title: '数据服务',
+          watchModule: [ConsoleModuleEnum.Middleware],
+          subRouterConfig: [
+            {
+              url: '/tkestack/middleware',
+              title: '中间件列表',
+              watchModule: ConsoleModuleEnum.Middleware
+            }
+          ]
+        });
+      }
       this.setState({
         routerConfig: currentRouterConfig,
         asideRouterSelect: {
