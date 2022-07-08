@@ -23,5 +23,7 @@ import { createFFObjectReducer } from '@tencent/ff-redux';
 
 export const RootReducer = combineReducers({
   route: router.getReducer(),
-  clusterOverview: createFFObjectReducer<ClusterOverview, ClusterOverviewFilter>(ActionType.ClusterOverview)
+  clusterOverview: createFFObjectReducer<ClusterOverview, ClusterOverviewFilter>({
+    actionName: ActionType.ClusterOverview
+  })
 });
