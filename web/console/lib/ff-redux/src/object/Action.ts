@@ -35,13 +35,17 @@ interface PollingOptions<T, TFilter> {
 
   /** timer的延迟时间，默认为3000 */
   delayTime?: number;
+
+  /** 是否需要开启可视范围内 不进行数据的拉取 */
+  visibleCheck?: boolean;
 }
 
 export interface FFObjectAction<T = any, TFilter = any> extends BaseAction<T, TFilter> {
   /** 清楚选择项：包含 单项数组 和 列表数组 */
   clear?: () => void;
 
-  polling?: ({ filter, onError, retryTimes, delayTime }: PollingOptions<T, TFilter>, visibleCheck?: boolean) => void;
+  polling?: ({ filter, onError, retryTimes, delayTime, visibleCheck }: PollingOptions<T, TFilter>) => void;
+  startPolling?: ({ onError, retryTimes, delayTime, visibleCheck }?: PollingOptions<T, TFilter>) => {};
   clearPolling?: () => void;
 }
 

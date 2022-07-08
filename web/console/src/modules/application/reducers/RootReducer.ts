@@ -65,7 +65,7 @@ export const RootReducer = combineReducers({
       }
     }
   }),
-  chartInfo: createFFObjectReducer(ActionTypes.ChartInfo),
+  chartInfo: createFFObjectReducer({ actionName: ActionTypes.ChartInfo }),
   chartGroupList: createFFListReducer(ActionTypes.ChartGroupList),
 
   /** 业务 */
@@ -91,9 +91,9 @@ export const RootReducer = combineReducers({
   appRemoveWorkflow: generateWorkflowReducer({
     actionType: ActionTypes.RemoveApp
   }),
-  appResource: createFFObjectReducer(ActionTypes.AppResource),
+  appResource: createFFObjectReducer({ actionName: ActionTypes.AppResource }),
   resourceList: reduceToPayload(ActionTypes.ResourceList, initResourceList),
-  appHistory: createFFObjectReducer(ActionTypes.AppHistory),
+  appHistory: createFFObjectReducer({ actionName: ActionTypes.AppHistory }),
   historyList: reduceToPayload(ActionTypes.HistoryList, initHistoryList),
   appRollbackWorkflow: generateWorkflowReducer({
     actionType: ActionTypes.RollbackApp
