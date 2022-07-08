@@ -108,6 +108,18 @@ module.exports = ({ version, mode }) => ({
       {
         test: /\.less$/,
         use: ['style-loader', 'css-loader', 'less-loader']
+      },
+
+      {
+        test: /\.svg$/,
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+              esModule: false
+            }
+          }
+        ]
       }
     ]
   },

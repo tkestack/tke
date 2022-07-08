@@ -28,7 +28,7 @@ import { ResourceInfo, RequestParams } from './src/modules/common/models';
 import { resourceConfig, PlatformTypeEnum } from './config';
 import { isEmpty } from './src/modules/common/utils';
 import * as classnames from 'classnames';
-import { Icon, Text, Bubble, NavMenu, List, ExternalLink, StatusTip, H2 } from 'tea-component';
+import { Icon, Text, Bubble, NavMenu, List, ExternalLink, StatusTip, H2, Menu } from 'tea-component';
 import { TkeVersion } from '@/src/modules/common/components/tke-version';
 import { ConsoleModuleEnum } from '@config/platform';
 import 'tea-component/dist/tea.css';
@@ -67,19 +67,25 @@ interface RouterConfig {
 
   /** 二级下拉列表的配置 */
   subRouterConfig?: RouterConfig[];
+
+  icon?: [string, string];
 }
+
+console.log('svg----->', require('./public/static/icon/overview.svg'));
 
 /** 基础的侧边栏导航栏配置 */
 const commonRouterConfig: RouterConfig[] = [
   {
     url: '/tkestack/overview',
     title: '概览',
-    watchModule: ConsoleModuleEnum.Monitor
+    watchModule: ConsoleModuleEnum.Monitor,
+    icon: [require('./public/static/icon/overview.svg'), require('./public/static/icon/overview-hover.svg')]
   },
   {
     url: '/tkestack/cluster',
     title: '集群管理',
-    watchModule: ConsoleModuleEnum.PLATFORM
+    watchModule: ConsoleModuleEnum.PLATFORM,
+    icon: [require('./public/static/icon/cluster.svg'), require('./public/static/icon/cluster-hover.svg')]
   },
   // {
   //   url: '/tkestack/project',
@@ -93,6 +99,7 @@ const commonRouterConfig: RouterConfig[] = [
   // },
   {
     title: '组织资源',
+    icon: [require('./public/static/icon/registry.svg'), require('./public/static/icon/registry-hover.svg')],
     watchModule: [ConsoleModuleEnum.Registry, ConsoleModuleEnum.Auth],
     subRouterConfig: [
       {
@@ -120,6 +127,7 @@ const commonRouterConfig: RouterConfig[] = [
   {
     title: '访问管理',
     watchModule: [ConsoleModuleEnum.Auth],
+    icon: [require('./public/static/icon/uam.svg'), require('./public/static/icon/uam-hover.svg')],
     subRouterConfig: [
       {
         url: '/tkestack/uam/user',
@@ -136,6 +144,7 @@ const commonRouterConfig: RouterConfig[] = [
   {
     title: '监控&告警',
     watchModule: [ConsoleModuleEnum.Monitor, ConsoleModuleEnum.Notify],
+    icon: [require('./public/static/icon/alarm.svg'), require('./public/static/icon/alarm-hover.svg')],
     subRouterConfig: [
       {
         url: '/tkestack/alarm',
@@ -156,6 +165,7 @@ const commonRouterConfig: RouterConfig[] = [
   },
   {
     title: '运维中心',
+    icon: [require('./public/static/icon/app.svg'), require('./public/static/icon/app-hover.svg')],
     watchModule: [
       ConsoleModuleEnum.Application,
       ConsoleModuleEnum.PLATFORM,
@@ -578,7 +588,11 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
         left={
           <React.Fragment>
             <NavMenu.Item>
-              <img src="/static/icon/tkeAnywhere-logo-white-text.svg" style={{ height: 35 }} alt="logo" />
+              <img
+                src={require('./public/static/icon/tkeAnywhere-logo-white-text.svg')}
+                style={{ height: 35 }}
+                alt="logo"
+              />
             </NavMenu.Item>
           </React.Fragment>
         }
@@ -611,141 +625,66 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     );
   }
 
-  /**
-   * 展示侧边导航栏
-   */
   private _renderSideBar(query: string) {
-    const { platformType } = this.props;
-    const { userType, projects } = this.state;
-    const routerConfig: RouterConfig[] = this.state.routerConfig;
+    const title = this.props.platformType === PlatformTypeEnum.Manager ? 'TKE 平台管理' : '业务管理';
+    const routerList = this.state.routerConfig;
+    const selected = this.state.selected;
+    const openedIndex = this.state.asideRouterSelect.index;
+
     return (
-      <div className="aside qc-aside-new">
-        <div className="qc-aside-area">
-          <div className="qc-aside-area-main">
-            <h2 className="qc-aside-headline">
-              <Text verticalAlign="middle">{platformType === PlatformTypeEnum.Manager ? '平台管理' : '业务管理'}</Text>
-              {userType === UserType.admin && projects.length ? (
-                <Bubble
-                  content={platformType === PlatformTypeEnum.Manager ? '切换至业务管理控制台' : '切换至平台管理控制台'}
-                  placement="right"
-                >
-                  <Icon
-                    type="convertip"
-                    className="tea-ml-2n"
-                    style={{ verticalAlign: '-9px' }}
+      <Menu theme="dark" title={title}>
+        {routerList.map(({ url, title, subRouterConfig, icon }, index) => {
+          if (subRouterConfig) {
+            return (
+              <Menu.SubMenu
+                title={title}
+                icon={icon}
+                opened={openedIndex === index}
+                onOpenedChange={opened => {
+                  this.setState({
+                    asideRouterSelect: {
+                      index: opened ? index : -1,
+                      isShow: this.state.asideRouterSelect.isShow
+                    }
+                  });
+                }}
+              >
+                {subRouterConfig?.map(({ title, url, icon }) => (
+                  <Menu.Item
+                    title={title}
+                    icon={icon}
+                    selected={url === selected}
                     onClick={() => {
-                      location.href =
-                        location.origin +
-                        (platformType === PlatformTypeEnum.Manager ? '/tkestack-project' : '/tkestack');
+                      if (url === selected) return;
+
+                      this.onNav(url);
                     }}
                   />
-                </Bubble>
-              ) : (
-                <noscript />
-              )}
-            </h2>
-            <ul className="qc-aside-list def-scroll keyboard-focus-obj">
-              {routerConfig.map((routerIns, index) => {
-                let routerContent: React.ReactNode;
-                if (routerIns.isTitle) {
-                  routerContent = (
-                    <li className="qc-aside-title">
-                      <span>{routerIns.title}</span>
-                    </li>
-                  );
-                } else {
-                  let isSelected =
-                    this.state.selected.includes(routerIns.url) ||
-                    (this.state.selected.split('/').length <= 2 && index === 0);
+                ))}
+              </Menu.SubMenu>
+            );
+          } else {
+            const isSelected = selected.includes(url) || (selected.split('/').length <= 2 && index === 0);
 
-                  /** 需要判断当前路由设置是否为二级路由设置 */
-                  if (routerIns.subRouterConfig) {
-                    const subRouterUrl = routerIns.subRouterConfig.map(item => item.url);
-                    isSelected = subRouterUrl.includes(this.state.selected);
-                    const selectedIndex = subRouterUrl.findIndex(item => item === this.state.selected);
-                    const { index: asideIndex, isShow } = this.state.asideRouterSelect;
+            return (
+              <Menu.Item
+                title={title}
+                icon={icon}
+                selected={isSelected}
+                onClick={() => {
+                  if (isSelected) return;
 
-                    routerContent = (
-                      <li
-                        key={index}
-                        className={asideIndex === index && isShow ? 'qc-aside-select qc-aside-child-select' : ''}
-                      >
-                        <a
-                          style={{ paddingLeft: '24px' }}
-                          className="qc-aside-level-1"
-                          href="javascript:;"
-                          onClick={() => {
-                            this.setState({
-                              asideRouterSelect: {
-                                index,
-                                isShow: asideIndex !== index ? true : !isShow
-                              }
-                            });
-                          }}
-                        >
-                          <Text style={{ marginLeft: 0 }}>{routerIns.title}</Text>
-                          <i className="qc-aside-up-icon" />
-                        </a>
-                        <ul className="qc-aside-subitem">
-                          {routerIns.subRouterConfig.map((subRouter, subIndex) => {
-                            return (
-                              <li key={subIndex}>
-                                <a
-                                  className={classnames('qc-aside-level-2', {
-                                    'qc-aside-select': selectedIndex === subIndex
-                                  })}
-                                  href="javascript:;"
-                                  onClick={() => {
-                                    if (selectedIndex !== subIndex) {
-                                      this.onNav(subRouter.url);
-                                    }
-                                  }}
-                                  target="_self"
-                                >
-                                  <span>{subRouter.title}</span>
-                                </a>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </li>
-                    );
+                  if (this.props.platformType === PlatformTypeEnum.Manager) {
+                    this.onNav(url);
                   } else {
-                    routerContent = (
-                      <li key={index}>
-                        <a
-                          style={{ paddingLeft: '24px' }}
-                          className={classnames('qc-aside-level-1', {
-                            'qc-aside-select': isSelected
-                          })}
-                          href="javascript:;"
-                          onClick={e => {
-                            if (!isSelected) {
-                              // 这里需要区分是否为别的业务，如果是别的业务，是进行业务的跳转
-                              if (this.props.platformType === PlatformTypeEnum.Manager) {
-                                this.onNav(routerIns.url);
-                              } else {
-                                this.onNav(routerIns.url + query);
-                              }
-                            }
-                          }}
-                          target="_self"
-                        >
-                          <span style={isSelected ? { marginLeft: 0, color: '#4093ff' } : { marginLeft: 0 }}>
-                            {routerIns.title}
-                          </span>
-                        </a>
-                      </li>
-                    );
+                    this.onNav(url + query);
                   }
-                }
-                return routerContent;
-              })}
-            </ul>
-          </div>
-        </div>
-        <TkeVersion />
-      </div>
+                }}
+              />
+            );
+          }
+        })}
+      </Menu>
     );
   }
 }

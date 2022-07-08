@@ -1,11 +1,2 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="16px" height="16px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 50.2 (55047) - http://www.bohemiancoding.com/sketch -->
-    <title>告警配置</title>
-    <desc>Created with Sketch.</desc>
-    <defs></defs>
-    <g id="告警配置" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <rect id="Rectangle-Copy-4" fill="#444444" opacity="0" x="0" y="0" width="16" height="16"></rect>
-        <path d="M8,13 L8,14.58 L8.735,15 L1,15 L1,13 L8,13 Z M15,8.27714286 L13,7.13428571 L13,7 C13,4.23857625 10.7614237,2 8,2 C5.23857625,2 3,4.23857625 3,7 L3,10 L8,10 L8,12 L1,12 L1,7 C1,3.13400675 4.13400675,7.10171439e-16 8,0 C11.8659932,-7.10171439e-16 15,3.13400675 15,7 L15,8.27714286 Z M4,7 C4,4.790861 5.790861,3 8,3 L8,5 C6.8954305,5 6,5.8954305 6,7 L6,8 L4,8 L4,7 Z M12.5,8 L16,10 L16,14 L12.5,16 L9,14 L9,10 L12.5,8 Z M12.5,13.5 C13.328,13.5 14,12.829 14,12 C14,11.171 13.328,10.5 12.5,10.5 C11.672,10.5 11,11.171 11,12 C11,12.829 11.672,13.5 12.5,13.5 Z" id="Combined-Shape" fill="#888888"></path>
-    </g>
-</svg>
+
+<svg width="16px" height="16px"  xmlns="http://www.w3.org/2000/svg"><path d="M13,7 L13,3 L3,3 L3,13 L13,13 L13,9 L11.3894,9 L9.4064,12.436 L6.5934,7.564 L5.7644,9 L3.0004,9 L3.0004,7 L4.6104,7 L6.5934,3.564 L9.4064,8.436 L10.2354,7 L13,7 Z M1,15 L1,1 L15,1 L15,15 L1,15 Z" fill="#7C878E" fill-rule="evenodd"/></svg>
