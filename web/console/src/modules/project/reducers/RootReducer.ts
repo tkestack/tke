@@ -34,7 +34,7 @@ export const RootReducer = combineReducers({
 
   platformType: reduceToPayload(ActionType.PlatformType, 'init'),
 
-  userInfo: createFFObjectReducer(FFReduxActionName.UserInfo),
+  userInfo: createFFObjectReducer({ actionName: FFReduxActionName.UserInfo }),
 
   userManagedProjects: createFFListReducer(FFReduxActionName.UserManagedProjects),
 
@@ -101,7 +101,7 @@ export const RootReducer = combineReducers({
   /** 关联策略相关 */
   policyPlainList: createFFListReducer(ActionType.PolicyPlainList),
 
-  projectUserInfo: createFFObjectReducer(FFReduxActionName.ProjectUserInfo),
+  projectUserInfo: createFFObjectReducer({ actionName: FFReduxActionName.ProjectUserInfo }),
 
   detailProject: createFFListReducer('detailProject'),
 
@@ -114,7 +114,7 @@ export const RootReducer = combineReducers({
 
   projectDetail: reduceToPayload(ActionType.ProjectDetail, null),
 
-  namespaceKubectlConfig: createFFObjectReducer(FFReduxActionName.NamespaceKubectlConfig),
+  namespaceKubectlConfig: createFFObjectReducer({ actionName: FFReduxActionName.NamespaceKubectlConfig }),
 
   migrateNamesapce: generateWorkflowReducer({
     actionType: ActionType.MigrateNamesapce
