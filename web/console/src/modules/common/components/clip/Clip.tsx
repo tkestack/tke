@@ -16,8 +16,9 @@
  * specific language governing permissions and limitations under the License.
  */
 
-import React, { useLayoutEffect, useState } from 'react';
-import { Copy, Icon } from 'tea-component';
+import React, { useRef, useLayoutEffect } from 'react';
+import { Icon } from 'tea-component';
+import ClipboardJS from 'clipboard';
 
 export interface ClipProps {
   target: string;
@@ -28,24 +29,20 @@ export interface ClipProps {
 }
 
 export const Clip = ({ target, className, isShow = true, isShowTip }: ClipProps) => {
-  const [text, setText] = useState('');
+  const copyBtn = useRef(null);
+  const copyInstance = useRef(null);
 
   useLayoutEffect(() => {
-    let targetText = '';
-    try {
-      targetText = document?.querySelector(target)?.textContent ?? '';
-    } catch (error) {
-      console.log(error);
+    copyInstance.current && copyInstance.current.destroy();
+
+    if (copyBtn.current) {
+      copyInstance.current = new ClipboardJS(copyBtn.current, {
+        text() {
+          return document?.querySelector(target)?.textContent ?? '';
+        }
+      });
     }
+  }, [copyBtn, target]);
 
-    setText(targetText);
-  }, [target]);
-
-  return (
-    isShow && (
-      <Copy text={text}>
-        <Icon type="copy" className={className} />
-      </Copy>
-    )
-  );
+  return isShow && <Icon type="copy" className={className} ref={copyBtn} />;
 };
