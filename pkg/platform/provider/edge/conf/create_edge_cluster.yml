@@ -1,0 +1,35 @@
+apiVersion: platform.tkestack.io/v1
+kind: Cluster
+metadata:
+  annotations:
+    superedge.io/edgeImageResository: superedge.tencentcloudcr.com/superedge
+    superedge.io/edge-version: v0.8.0
+    superedge.io/edge-virtual-addr: 169.254.20.11
+  name: attlee-superedge
+spec:
+  displayName: attlee-superedge-demo
+  etcd:
+    local:
+      dataDir: ""
+      serverCertSANs:
+        - etcd
+        - etcd.kube-system
+  features:
+    containerRuntime: docker
+    skipConditions:
+      - EnsureCilium
+  machines:
+    - ip: 10.0.200.98
+      password: PasswordBase64
+      port: 22
+      username: root
+  networkDevice: eth0
+  clusterCIDR: 192.168.0.0/16
+  properties:
+    maxClusterServiceNum: 256
+    maxNodePodNum: 256
+  publicAlternativeNames:
+    - 106.52.199.103
+  tenantID: default
+  type: Edge
+  version: 1.20.6-tke.2
