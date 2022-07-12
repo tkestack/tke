@@ -1,11 +1,2 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="16px" height="16px" viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 50.2 (55047) - http://www.bohemiancoding.com/sketch -->
-    <title>画板3</title>
-    <desc>Created with Sketch.</desc>
-    <defs></defs>
-    <g id="画板3" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <rect id="Rectangle-Copy-2" fill="#444444" opacity="0" x="0" y="0" width="16" height="16"></rect>
-        <path d="M8,0 L1,4.001 L1,6 L8,10 L15,6 L15,4.001 L8,0 Z M3.281,5 L8,2.304 L12.719,5 L8,7.697 L3.281,5 Z M12.999,9.446 L12.999,10.84 L8,13.696 L3,10.84 L3,9.446 L1,8.304 L1,12.001 L8,16 L15,12.001 L15,8.304 L12.999,9.446 Z" id="Fill-1" fill="#888888"></path>
-    </g>
-</svg>
+
+<svg width="16px" height="16px"  xmlns="http://www.w3.org/2000/svg"><g fill="#7C878E"><path d="M13,2V0h-2v2H5V0H3v2H1v13h14V2H13z M13,13H3V6h10V13z"/><path d="M8 8H11V11H8z"/></g></svg>

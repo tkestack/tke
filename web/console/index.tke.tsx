@@ -35,32 +35,41 @@ import { Overview } from '@src/modules/overview';
 import { PlatformTypeEnum } from './config';
 import { VNCPage } from '@src/modules/vnc';
 
-const ClusterPromise = import(/* webpackPrefetch: true */ './src/modules/cluster');
-const Cluster = React.lazy(() => ClusterPromise);
+// const ClusterPromise = import(/* webpackPrefetch: true */ './src/modules/cluster');
+// const Cluster = React.lazy(() => ClusterPromise);
+import Cluster from './src/modules/cluster';
 
-const UamPromise = import(/* webpackPrefetch: true */ './src/modules/uam');
-const Uam = React.lazy(() => UamPromise);
+// const UamPromise = import(/* webpackPrefetch: true */ './src/modules/uam');
+// const Uam = React.lazy(() => UamPromise);
+import Uam from './src/modules/uam';
 
-const RegistryPromise = import(/* webpackPrefetch: true */ './src/modules/registry');
-const Registry = React.lazy(() => RegistryPromise);
+// const RegistryPromise = import(/* webpackPrefetch: true */ './src/modules/registry');
+// const Registry = React.lazy(() => RegistryPromise);
+import Registry from './src/modules/registry';
 
-const LogStashPromise = import(/* webpackPrefetch: true */ './src/modules/logStash');
-const LogStash = React.lazy(() => LogStashPromise);
+// const LogStashPromise = import(/* webpackPrefetch: true */ './src/modules/logStash');
+// const LogStash = React.lazy(() => LogStashPromise);
+import LogStash from './src/modules/logStash';
 
-const ProjectPromise = import(/* webpackPrefetch: true */ './src/modules/project');
-const Project = React.lazy(() => ProjectPromise);
+// const ProjectPromise = import(/* webpackPrefetch: true */ './src/modules/project');
+// const Project = React.lazy(() => ProjectPromise);
+import Project from './src/modules/project';
 
-const HelmPromise = import(/* webpackPrefetch: true */ './src/modules/helm');
-const Helm = React.lazy(() => HelmPromise);
+// const HelmPromise = import(/* webpackPrefetch: true */ './src/modules/helm');
+// const Helm = React.lazy(() => HelmPromise);
+import Helm from './src/modules/helm';
 
-const ApplicationPromise = import(/* webpackPrefetch: true */ './src/modules/application');
-const Application = React.lazy(() => ApplicationPromise);
+// const ApplicationPromise = import(/* webpackPrefetch: true */ './src/modules/application');
+// const Application = React.lazy(() => ApplicationPromise);
+import Application from './src/modules/application';
 
-const AlarmPolicyPromise = import(/* webpackPrefetch: true */ './src/modules/alarmPolicy');
-const AlarmPolicy = React.lazy(() => AlarmPolicyPromise);
+// const AlarmPolicyPromise = import(/* webpackPrefetch: true */ './src/modules/alarmPolicy');
+// const AlarmPolicy = React.lazy(() => AlarmPolicyPromise);
+import AlarmPolicy from './src/modules/alarmPolicy';
 
-const NotifyPromise = import(/* webpackPrefetch: true */ './src/modules/notify');
-const Notify = React.lazy(() => NotifyPromise);
+// const NotifyPromise = import(/* webpackPrefetch: true */ './src/modules/notify');
+// const Notify = React.lazy(() => NotifyPromise);
+import Notify from './src/modules/notify';
 
 insertCSS(
   'hidden-checkbox',
