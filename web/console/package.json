@@ -33,6 +33,7 @@
     "axios": "^0.21.1",
     "buffer": "^6.0.3",
     "classnames": "2.2.6",
+    "clipboard": "^2.0.11",
     "compare-versions": "^3.6.0",
     "d3": "^5.9.2",
     "dayjs": "^1.7.7",
