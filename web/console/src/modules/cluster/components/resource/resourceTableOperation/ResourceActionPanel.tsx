@@ -209,9 +209,15 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
 
   /** action for create button */
   private _handleClickForCreate() {
-    const { route } = this.props,
+    const {
+        route,
+        subRoot: { resourceName }
+      } = this.props,
       urlParams = router.resolve(route);
-    router.navigate(Object.assign({}, urlParams, { mode: 'create' }), route.queries);
+
+    // 使用yaml创建的资源导航到apply
+    const mode = ['ingress'].includes(resourceName) ? 'apply' : 'create';
+    router.navigate(Object.assign({}, urlParams, { mode }), route.queries);
   }
 
   /** 生成命名空间选择列表 */
