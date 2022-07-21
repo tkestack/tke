@@ -41,6 +41,8 @@ import (
 	applicationutil "tkestack.io/tke/pkg/application/util"
 	platformfilter "tkestack.io/tke/pkg/platform/apiserver/filter"
 	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/printers"
+	printerstorage "tkestack.io/tke/pkg/util/printers/storage"
 )
 
 // Storage includes storage for application and all sub resources.
@@ -65,7 +67,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 	}
-	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
+	store.TableConvertor = printerstorage.TableConvertor{TableGenerator: printers.NewTableGenerator().With(AddHandlers)}
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    applicationtrategy.GetAttrs,

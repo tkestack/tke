@@ -41599,16 +41599,18 @@ func schema_tke_api_application_v1_Chart(ref common.ReferenceCallback) common.Op
 					},
 					"chartName": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "ChartName is the name of the chart.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"chartVersion": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "ChartVersion is the version of the chart.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"repoURL": {

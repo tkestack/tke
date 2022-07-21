@@ -191,8 +191,10 @@ message Chart {
 
   optional string chartGroupName = 2;
 
+  // ChartName is the name of the chart.
   optional string chartName = 3;
 
+  // ChartVersion is the version of the chart.
   optional string chartVersion = 4;
 
   optional string repoURL = 5;
