@@ -39,4 +39,6 @@ type ClusterControllerConfiguration struct {
 	BucketRateLimiterLimit int
 	// BucketRateLimiterBurst bursts of at most b tokens.
 	BucketRateLimiterBurst int
+	// IsCRDMode Whether the controller is using CRD mode
+	IsCRDMode bool
 }

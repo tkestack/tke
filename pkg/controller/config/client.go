@@ -20,6 +20,8 @@ package config
 
 import (
 	"fmt"
+
+	"k8s.io/client-go/rest"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"tkestack.io/tke/pkg/controller/options"
@@ -29,9 +31,15 @@ import (
 func BuildClientConfig(opts *options.APIServerClientOptions) (cfg *restclient.Config, ok bool, err error) {
 	if opts.Required {
 		if opts.Server == "" && opts.ServerClientConfig == "" {
-			err = fmt.Errorf("either %s or %s should be specified",
-				options.FlagAPIClientServer(opts.Name),
-				options.FlagAPIClientServerClientConfig(opts.Name))
+			cfg, err = rest.InClusterConfig()
+			if err != nil {
+				err = fmt.Errorf("%s or %s is not specified, try to use in cluster config failed %v",
+					options.FlagAPIClientServer(opts.Name),
+					options.FlagAPIClientServerClientConfig(opts.Name),
+					err)
+			} else {
+				ok = true
+			}
 			return
 		}
 	}

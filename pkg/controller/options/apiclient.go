@@ -20,6 +20,7 @@ package options
 
 import (
 	"fmt"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -112,12 +113,6 @@ func (o *APIServerClientOptions) ApplyFlags() []error {
 	o.Burst = viper.GetInt32(o.configAPIClientBurst)
 	o.QPS = float32(viper.GetFloat64(o.configAPIClientQPS))
 	o.ContentType = viper.GetString(o.configAPIClientContentType)
-
-	if o.Required {
-		if o.ServerClientConfig == "" && o.Server == "" {
-			errs = append(errs, fmt.Errorf("must specify either `%s` or `%s`", FlagAPIClientServer(o.Name), FlagAPIClientServerClientConfig(o.Name)))
-		}
-	}
 
 	return errs
 }
