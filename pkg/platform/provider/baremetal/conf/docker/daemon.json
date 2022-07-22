@@ -1,6 +1,7 @@
 {
   "experimental": true,
   "debug": false,
+  "exec-opts": ["native.cgroupdriver=systemd"],
 {{- if .IsGPU }}
   "default-runtime": "nvidia",
   "runtimes": {
