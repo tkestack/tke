@@ -33,6 +33,7 @@ const (
 	flagUpperLimitofRandomHealthCheckPeriod = "upper-limit-random-healthcheck-period"
 	flagClusterRateLimiterLimit             = "cluster-rate-limiter-limit"
 	flagClusterRateLimiterBurst             = "cluster-rate-limiter-burst"
+	flagClusterIsCRDMode                    = "cluster-is-crd-mode"
 )
 
 const (
@@ -43,6 +44,7 @@ const (
 	configUpperLimitofRandomHealthCheckPeriod = "controller.upper-limit-random-healthcheck-period"
 	configClusterRateLimiterLimit             = "controller.cluster_rate_limiter_limit"
 	configClusterRateLimiterBurst             = "controller.cluster_rate_limiter_burst"
+	configClusterIsCRDMode                    = "controller.cluster_is_crd_mode"
 )
 
 // ClusterControllerOptions holds the ClusterController options.
@@ -61,6 +63,7 @@ func NewClusterControllerOptions() *ClusterControllerOptions {
 			RandomeRangeUpperLimitForHealthCheckPeriod: defaultRandomeRangeUpperLimitForHealthCheckPeriod,
 			BucketRateLimiterLimit:                     defaultBucketRateLimiterLimit,
 			BucketRateLimiterBurst:                     defaultBucketRateLimiterBurst,
+			IsCRDMode:                                  false,
 		},
 	}
 }
@@ -91,6 +94,9 @@ func (o *ClusterControllerOptions) AddFlags(fs *pflag.FlagSet) {
 
 	fs.IntVar(&o.BucketRateLimiterBurst, flagClusterRateLimiterBurst, o.BucketRateLimiterBurst, "The number of bursts of at most b tokens.")
 	_ = viper.BindPFlag(configClusterRateLimiterBurst, fs.Lookup(flagClusterRateLimiterBurst))
+
+	fs.BoolVar(&o.IsCRDMode, flagClusterIsCRDMode, o.IsCRDMode, "Whether the controller is using CRD mode")
+	_ = viper.BindPFlag(configClusterIsCRDMode, fs.Lookup(flagClusterIsCRDMode))
 }
 
 // ApplyTo fills up ClusterController config with options.
@@ -106,6 +112,7 @@ func (o *ClusterControllerOptions) ApplyTo(cfg *clusterconfig.ClusterControllerC
 	cfg.RandomeRangeUpperLimitForHealthCheckPeriod = o.RandomeRangeUpperLimitForHealthCheckPeriod
 	cfg.BucketRateLimiterLimit = o.BucketRateLimiterLimit
 	cfg.BucketRateLimiterBurst = o.BucketRateLimiterBurst
+	cfg.IsCRDMode = o.IsCRDMode
 
 	return nil
 }
@@ -130,5 +137,6 @@ func (o *ClusterControllerOptions) ApplyFlags() []error {
 	o.RandomeRangeUpperLimitForHealthCheckPeriod = viper.GetDuration(configUpperLimitofRandomHealthCheckPeriod)
 	o.BucketRateLimiterLimit = viper.GetInt(configClusterRateLimiterLimit)
 	o.BucketRateLimiterBurst = viper.GetInt(configClusterRateLimiterBurst)
+	o.IsCRDMode = viper.GetBool(configClusterIsCRDMode)
 	return nil
 }

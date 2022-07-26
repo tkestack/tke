@@ -113,6 +113,8 @@ const (
 	AnywhereLocalizationsAnno = "tkestack.io/anywhere-localizations"
 	// AnywhereMachinesAnno contains base64 machines json data
 	AnywhereMachinesAnno = "tkestack.io/anywhere-machines"
+	// ClusterNameLable contains related cluster's name for no-cluster resources
+	ClusterNameLable = "tkestack.io/cluster-name"
 )
 
 // KubeVendorType describe the kubernetes provider of the cluster

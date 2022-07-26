@@ -71,6 +71,7 @@ type Controller struct {
 	healthCheckPeriod                          time.Duration
 	randomeRangeLowerLimitForHealthCheckPeriod time.Duration
 	randomeRangeUpperLimitForHealthCheckPeriod time.Duration
+	isCRDMode                                  bool
 }
 
 // NewController creates a new Controller object.
@@ -88,6 +89,7 @@ func NewController(
 			platformClient,
 			finalizerToken,
 			true),
+		isCRDMode: configuration.IsCRDMode,
 	}
 	rateLimit := workqueue.NewMaxOfRateLimiter(
 		workqueue.NewItemExponentialFailureRateLimiter(5*time.Millisecond, 1000*time.Second),
@@ -345,6 +347,10 @@ func (c *Controller) reconcile(ctx context.Context, key string, cluster *platfor
 	var err error
 
 	switch cluster.Status.Phase {
+	// empty string is for crd without mutating webhook
+	case "":
+		cluster.Status.Phase = platformv1.ClusterInitializing
+		err = c.onCreate(ctx, cluster)
 	case platformv1.ClusterInitializing:
 		err = c.onCreate(ctx, cluster)
 	case platformv1.ClusterRunning, platformv1.ClusterFailed:
@@ -389,7 +395,18 @@ func (c *Controller) onCreate(ctx context.Context, cluster *platformv1.Cluster) 
 		if err != nil {
 			// Update status, ignore failure
 			_, _ = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
-			_, _ = c.platformClient.Clusters().Update(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+			updatedCls, _ := c.platformClient.Clusters().Update(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+			// if using crd, cluster status cannot be updated through update cluster
+			if c.isCRDMode {
+				var clsStatus *platformv1.Cluster
+				if updatedCls == nil {
+					clsStatus = clusterWrapper.Cluster
+				} else {
+					clsStatus = updatedCls
+					clsStatus.Status = clusterWrapper.Cluster.Status
+				}
+				_, _ = c.platformClient.Clusters().UpdateStatus(ctx, clsStatus, metav1.UpdateOptions{})
+			}
 			return err
 		}
 		clusterWrapper.ClusterCredential, err = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
@@ -397,9 +414,17 @@ func (c *Controller) onCreate(ctx context.Context, cluster *platformv1.Cluster) 
 			return err
 		}
 		clusterWrapper.RegisterRestConfig(clusterWrapper.ClusterCredential.RESTConfig(cluster))
-		clusterWrapper.Cluster, err = c.platformClient.Clusters().Update(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+		cls, err := c.platformClient.Clusters().Update(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 		if err != nil {
 			return err
+		}
+		// if using crd, cluster status cannot be updated through update cluster
+		if c.isCRDMode {
+			cls.Status = clusterWrapper.Cluster.Status
+			clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, cls, metav1.UpdateOptions{})
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -487,10 +512,20 @@ func (c *Controller) ensureCreateClusterCredential(ctx context.Context, cluster 
 	}
 
 	// TODO use informer search by labels.
-	fieldSelector := fields.OneTermEqualSelector("clusterName", cluster.Name).String()
-	clustercredentials, err := c.platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
-	if err != nil {
-		return nil, err
+	var clustercredentials *platformv1.ClusterCredentialList
+	var err error
+	if c.isCRDMode {
+		labelSelector := fields.OneTermEqualSelector(platformv1.ClusterNameLable, cluster.Name).String()
+		clustercredentials, err = c.platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		fieldSelector := fields.OneTermEqualSelector("clusterName", cluster.Name).String()
+		clustercredentials, err = c.platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{FieldSelector: fieldSelector})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// [Idempotent] if not found cluster credentials, create one for next logic
@@ -500,6 +535,8 @@ func (c *Controller) ensureCreateClusterCredential(ctx context.Context, cluster 
 			TenantID:    cluster.Spec.TenantID,
 			ClusterName: cluster.Name,
 			ObjectMeta: metav1.ObjectMeta{
+				Labels:       map[string]string{platformv1.ClusterNameLable: cluster.Name},
+				GenerateName: "cc-",
 				OwnerReferences: []metav1.OwnerReference{
 					*metav1.NewControllerRef(cluster, platformv1.SchemeGroupVersion.WithKind("Cluster"))},
 			},
