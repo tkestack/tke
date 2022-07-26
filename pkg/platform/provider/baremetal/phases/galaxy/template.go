@@ -120,6 +120,98 @@ spec:
         hostPath:
           path: /run/
 `
+	//BridgeAgentDaemonsetTemplate decoded as tke-bridge-agent daemonset
+	BridgeAgentDaemonsetTemplate = `
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    k8s-app: tke-bridge-agent
+  name: tke-bridge-agent
+  namespace: kube-system
+spec:
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      k8s-app: tke-bridge-agent
+  template:
+    metadata:
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ""
+      labels:
+        k8s-app: tke-bridge-agent
+    spec:
+      containers:
+      - args:
+        - --cni-conf-dir
+        - /host/etc/cni/net.d/multus
+        - --allocateInfoPath
+        - /var/lib/cni/networks/galaxy-flannel
+        env:
+        - name: MY_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        image: tke-bridge-agent:v0.1.5
+        imagePullPolicy: Always
+        name: tke-bridge-agent
+        resources: {}
+        securityContext:
+          privileged: true
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /host/opt/cni/bin
+          name: cni-bin-dir
+        - mountPath: /host/etc/cni/net.d
+          name: cni-net-dir
+        - mountPath: /lib/modules
+          name: modules-dir
+        - mountPath: /host/var/run
+          mountPropagation: HostToContainer
+          name: cri-sock-dir
+          readOnly: true
+        - mountPath: /var/lib/cni/networks/galaxy-flannel
+          name: cni-path
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: tke-bridge-agent
+      serviceAccountName: tke-bridge-agent
+      terminationGracePeriodSeconds: 0
+      tolerations:
+      - operator: Exists
+      volumes:
+      - hostPath:
+          path: /opt/cni/bin
+          type: ""
+        name: cni-bin-dir
+      - hostPath:
+          path: /etc/cni/net.d
+          type: ""
+        name: cni-net-dir
+      - hostPath:
+          path: /lib/modules
+          type: ""
+        name: modules-dir
+      - hostPath:
+          path: /var/run
+          type: ""
+        name: cri-sock-dir
+      - hostPath:
+          path: /var/lib/cni/networks/galaxy-flannel
+          type: ""
+        name: cni-path
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+    type: RollingUpdate
+`
 
 	//GalaxyCM decoded as galaxy & cni configMap
 	GalaxyCM = `
