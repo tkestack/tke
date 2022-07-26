@@ -115,6 +115,10 @@ const (
 	AnywhereMachinesAnno = "tkestack.io/anywhere-machines"
 	// ClusterNameLable contains related cluster's name for no-cluster resources
 	ClusterNameLable = "tkestack.io/cluster-name"
+	// HubAPIServerAnno describe hub cluster api server url
+	HubAPIServerAnno = "tkestack.io/hub-api-server"
+	// cluster credential token
+	CredentialTokenAnno = "tkestack.io/credential-token"
 )
 
 // KubeVendorType describe the kubernetes provider of the cluster
