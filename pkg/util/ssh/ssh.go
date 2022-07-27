@@ -364,7 +364,8 @@ func (s *SSH) newClient() (*ssh.Client, func(), error) {
 
 	if s.Proxy != nil {
 		client, closer, err = s.proxyClientConn(config)
-		if err != nil {
+		// if retry is 0, loop will not stop
+		if err != nil && s.Retry != 0 {
 			wait.Poll(5*time.Second, time.Duration(s.Retry)*5*time.Second, func() (bool, error) {
 				if client, closer, err = s.proxyClientConn(config); err != nil {
 					return false, nil
@@ -375,7 +376,8 @@ func (s *SSH) newClient() (*ssh.Client, func(), error) {
 		}
 	} else {
 		client, err = s.dialer.Dial("tcp", s.addr(), config)
-		if err != nil {
+		// if retry is 0, loop will not stop
+		if err != nil && s.Retry != 0 {
 			wait.Poll(5*time.Second, time.Duration(s.Retry)*5*time.Second, func() (bool, error) {
 				if client, err = s.dialer.Dial("tcp", s.addr(), config); err != nil {
 					return false, nil
