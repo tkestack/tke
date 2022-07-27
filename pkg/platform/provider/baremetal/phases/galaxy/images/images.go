@@ -34,6 +34,7 @@ const (
 type Components struct {
 	GalaxyDaemon containerregistry.Image
 	Flannel      containerregistry.Image
+	BridgeAgent  containerregistry.Image
 }
 
 func (c Components) Get(name string) *containerregistry.Image {
@@ -51,6 +52,7 @@ var versionMap = map[string]Components{
 	LatestVersion: {
 		GalaxyDaemon: containerregistry.Image{Name: "galaxy", Tag: "v1.0.6"},
 		Flannel:      containerregistry.Image{Name: "flannel", Tag: "v0.10.0"},
+		BridgeAgent:  containerregistry.Image{Name: "tke-bridge-agent", Tag: "v0.1.5"},
 	},
 }
 

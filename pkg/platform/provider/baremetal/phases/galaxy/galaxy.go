@@ -45,6 +45,10 @@ const (
 	cmGalaxy             = "galaxy-etc"
 	svcAccountName       = "galaxy"
 	crbName              = "galaxy"
+	saBridgeAgentName    = "tke-bridge-agent"
+	crBridgeAgentName    = "tke-bridge-agent"
+	crdBridgeAgentName   = "tke-bridge-agent"
+	dsBridgeAgentName    = "tke-bridge-agent"
 )
 
 // Option for coredns
@@ -128,6 +132,27 @@ func Install(ctx context.Context, clientset kubernetes.Interface, option *Option
 		return err
 	}
 
+	// Daemonset serviceAccount clusterRole and clusterRoleBinding tke-bridge-agent for garbage collect unused galaxy networks
+	if _, err := clientset.CoreV1().ServiceAccounts(metav1.NamespaceSystem).Create(ctx, serviceAccountBridgeAgent(), metav1.CreateOptions{}); err != nil {
+		if !errors.IsAlreadyExists(err) {
+			return err
+		}
+	}
+	if _, err := clientset.RbacV1().ClusterRoles().Create(ctx, crBridgeAgent(), metav1.CreateOptions{}); err != nil {
+		return err
+	}
+	if _, err := clientset.RbacV1().ClusterRoleBindings().Create(ctx, crbBridgeAgent(), metav1.CreateOptions{}); err != nil {
+		return err
+	}
+	bridgeObj, err := daemonsetBridgeAgent(option.Version)
+	if err != nil {
+		return err
+	}
+	if _, err := clientset.AppsV1().DaemonSets(metav1.NamespaceSystem).Create(ctx, bridgeObj, metav1.CreateOptions{}); err != nil {
+		log.Errorf("create bridge agent daemonset with err: %v", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -190,6 +215,18 @@ func daemonsetGalaxy(version string) (*appsv1.DaemonSet, error) {
 	return payload, nil
 }
 
+func daemonsetBridgeAgent(version string) (*appsv1.DaemonSet, error) {
+	reader := strings.NewReader(BridgeAgentDaemonsetTemplate)
+	payload := &appsv1.DaemonSet{}
+	err := yaml.NewYAMLOrJSONDecoder(reader, 4096).Decode(payload)
+	if err != nil {
+		return nil, err
+	}
+	payload.Name = dsBridgeAgentName
+	payload.Spec.Template.Spec.Containers[0].Image = images.Get(version).BridgeAgent.FullName()
+	return payload, nil
+}
+
 func serviceAccountFlannel() *corev1.ServiceAccount {
 	return &corev1.ServiceAccount{
 		TypeMeta: metav1.TypeMeta{
@@ -198,6 +235,19 @@ func serviceAccountFlannel() *corev1.ServiceAccount {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      svcAccounFlannelName,
+			Namespace: metav1.NamespaceSystem,
+		},
+	}
+}
+
+func serviceAccountBridgeAgent() *corev1.ServiceAccount {
+	return &corev1.ServiceAccount{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ServiceAccount",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      saBridgeAgentName,
 			Namespace: metav1.NamespaceSystem,
 		},
 	}
@@ -245,6 +295,25 @@ func crFlannel() *rbacv1.ClusterRole {
 	}
 }
 
+func crBridgeAgent() *rbacv1.ClusterRole {
+	return &rbacv1.ClusterRole{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ClusterRole",
+			APIVersion: "rbac.authorization.k8s.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: crBridgeAgentName,
+		},
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{""},
+				Resources: []string{"nodes"},
+				Verbs:     []string{"list", "watch", "get"},
+			},
+		},
+	}
+}
+
 func crbFlannel() *rbacv1.ClusterRoleBinding {
 	return &rbacv1.ClusterRoleBinding{
 		TypeMeta: metav1.TypeMeta{
@@ -263,6 +332,30 @@ func crbFlannel() *rbacv1.ClusterRoleBinding {
 			{
 				Kind:      "ServiceAccount",
 				Name:      svcAccounFlannelName,
+				Namespace: metav1.NamespaceSystem,
+			},
+		},
+	}
+}
+
+func crbBridgeAgent() *rbacv1.ClusterRoleBinding {
+	return &rbacv1.ClusterRoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ClusterRoleBinding",
+			APIVersion: "rbac.authorization.k8s.io/v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: crdBridgeAgentName,
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "ClusterRole",
+			Name:     crBridgeAgentName,
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      saBridgeAgentName,
 				Namespace: metav1.NamespaceSystem,
 			},
 		},
