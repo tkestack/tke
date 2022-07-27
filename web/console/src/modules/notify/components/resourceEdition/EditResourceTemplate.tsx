@@ -20,7 +20,7 @@ import { t } from '@tencent/tea-app/lib/i18n';
 import { Form } from '@tea/component/form';
 import { Input } from '@tea/component/input';
 import { onChange } from '../../schema/schemaUtil';
-import { Select } from '@tencent/tea-component';
+import { Select, Text } from '@tencent/tea-component';
 import { EditResource } from './EditResource';
 import { templateSchema } from '../../schema/templateSchema';
 import { router } from '../../router';
@@ -79,14 +79,17 @@ export class EditResourceTemplate extends EditResource {
         </Form.Item>
 
         <Form.Item label={t('渠道')} required>
-          <Select
-            disabled={mode === 'update'}
-            size="l"
-            placeholder={t('请选择渠道')}
-            options={namespaceOptions}
-            value={resource.properties.metadata.properties.namespace.value}
-            onChange={onChange(resource.properties.metadata.properties.namespace)}
-          />
+          {mode === 'create' ? (
+            <Select
+              size="l"
+              placeholder={t('请选择渠道')}
+              options={namespaceOptions}
+              value={resource.properties.metadata.properties.namespace.value}
+              onChange={onChange(resource.properties.metadata.properties.namespace)}
+            />
+          ) : (
+            <Text reset>{resource?.properties?.metadata?.properties?.namespace?.value ?? '-'}</Text>
+          )}
         </Form.Item>
         {this.renderFields(resource.properties.spec.properties[resource.properties.spec['pick']])}
       </Form>
