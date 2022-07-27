@@ -186,13 +186,13 @@ const gpuMemFields = table => [
   {
     expr: `mean(k8s_${table}_gpu_memory_used)`,
     alias: t('GPU内存使用量'),
-    unit: t('块')
+    unit: 'MiB'
     // thousands: 1024, valueLabels:valueLabels1024
   },
   {
     expr: `mean(k8s_${table}_rate_gpu_memory_used_node)`,
-    alias: t('GPU内存使用量(占节点)'),
-    unit: t('块')
+    alias: t('GPU内存使用率(占节点)'),
+    unit: '%'
   },
   {
     expr: `mean(k8s_${table}_rate_gpu_memory_used_request)`,
@@ -288,7 +288,7 @@ export const resourceMonitorFields = [
   {
     expr: 'mean(k8s_workload_gpu_memory_used)',
     alias: t('GPU内存使用量'),
-    unit: t('块')
+    unit: 'MiB'
     // thousands: 1024, valueLabels:valueLabels1024
   },
 
