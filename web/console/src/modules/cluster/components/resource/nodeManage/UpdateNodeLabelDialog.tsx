@@ -33,11 +33,11 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class UpdateNodeLabelDialog extends React.Component<RootProps, {}> {
   render() {
-    let { actions, route, subRoot, cluster } = this.props,
+    const { actions, route, subRoot, cluster } = this.props,
       { computerState } = subRoot,
       { updateNodeLabel, labelEdition } = computerState,
       { labels } = labelEdition;
-    let canAdd = isEmpty(labels.filter(x => !x.key));
+    const canAdd = isEmpty(labels.filter(x => !x.key));
 
     return (
       <WorkflowDialog
@@ -63,9 +63,7 @@ export class UpdateNodeLabelDialog extends React.Component<RootProps, {}> {
               {t('新增Label')}
             </LinkButton>
             <p className="form-input-help text-weak">
-              {t(
-                '长度不超过63个字符，只能包含字母、数字及"-./"，必须以字母或者数字开头结尾，且不能包含"kubernetes"保留字'
-              )}
+              {t('只能包含字母、数字及"-./"，必须以字母或者数字开头结尾，且不能包含"kubernetes"保留字')}
             </p>
           </div>
         </FormItem>
@@ -74,7 +72,7 @@ export class UpdateNodeLabelDialog extends React.Component<RootProps, {}> {
   }
   /** 展示Label的选项 */
   private _renderLabelList() {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { labels } = subRoot.computerState.labelEdition;
     return labels.map((label, index) => {
       return (
