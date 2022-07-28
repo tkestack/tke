@@ -23,15 +23,15 @@ import { parseQueryString } from './urlUtil';
 import { getProjectName } from './appUtil';
 
 /** 是否展示没有权限的弹窗 */
-export let Init_Forbiddent_Config = {
+export const Init_Forbiddent_Config = {
   isShow: false,
   message: ''
 };
 /** 获取当前的uuid */
 
 export const uuid = () => {
-  let s = [];
-  let hexDigits = '0123456789abcdef';
+  const s = [];
+  const hexDigits = '0123456789abcdef';
   for (let i = 0; i < 36; i++) {
     s[i] = hexDigits.substr(Math.floor(Math.random() * 0x10), 1);
   }
@@ -39,7 +39,7 @@ export const uuid = () => {
   s[19] = hexDigits.substr((s[19] & 0x3) | 0x8, 1); // bits 6-7 of the clock_seq_hi_and_reserved to 01
   s[8] = s[13] = s[18] = s[23] = '-';
 
-  let uuid = s.join('');
+  const uuid = s.join('');
   return uuid;
 };
 
@@ -81,7 +81,7 @@ export const requestMethodForAction = (type: string) => {
     update: Method.patch
   };
 
-  let method = mapMethod[type] ? mapMethod[type] : 'get';
+  const method = mapMethod[type] ? mapMethod[type] : 'get';
 
   return method;
 };
@@ -157,7 +157,8 @@ export const reduceNetworkRequest = async (
         'Content-Type': 'application/json'
       },
       userDefinedHeader
-    )
+    ),
+    timeout: 3 * 60 * 1000
   };
 
   if (data) {
@@ -178,7 +179,7 @@ export const reduceNetworkRequest = async (
       });
       throw error;
     } else if (error.response === undefined) {
-      let uuid =
+      const uuid =
         error.config && error.config.headers && error.config.headers['X-Remote-Extra-RequestID']
           ? error.config.headers['X-Remote-Extra-RequestID']
           : '';
@@ -194,7 +195,7 @@ export const reduceNetworkRequest = async (
   }
 
   // 处理回报请求
-  let response = reduceNetworkResponse(rsp);
+  const response = reduceNetworkResponse(rsp);
   return response;
 };
 

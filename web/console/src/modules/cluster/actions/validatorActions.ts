@@ -53,9 +53,6 @@ export const validatorActions = {
       if (!value) {
         status = 2;
         message = content + t('不能为空');
-      } else if (value.length > 63) {
-        status = 2;
-        message = content + t('长度不能超过63个字符');
       } else if (!reg.test(value)) {
         status = 2;
         message = content + t('格式不正确');
@@ -72,10 +69,14 @@ export const validatorActions = {
   },
   validateComputerLabelValue(Id) {
     return (dispatch, getState) => {
-      let { labelEdition } = getState().subRoot.computerState,
+      const { labelEdition } = getState().subRoot.computerState,
         { labels } = labelEdition,
         eIndex = labels.findIndex(e => e.id === Id);
-      let result = validatorActions._validateComputerLabelValue(labels[eIndex].value, 'value', labels[eIndex].disabled);
+      const result = validatorActions._validateComputerLabelValue(
+        labels[eIndex].value,
+        'value',
+        labels[eIndex].disabled
+      );
       labels[eIndex].v_value = result;
       dispatch({
         type: ActionType.UpdateLabelEdition,
@@ -85,10 +86,10 @@ export const validatorActions = {
   },
   validateComputerLabelKey(Id) {
     return (dispatch, getState) => {
-      let { labelEdition } = getState().subRoot.computerState,
+      const { labelEdition } = getState().subRoot.computerState,
         { labels } = labelEdition,
         eIndex = labels.findIndex(e => e.id === Id);
-      let result = validatorActions._validateComputerLabelValue(labels[eIndex].key, 'key', labels[eIndex].disabled);
+      const result = validatorActions._validateComputerLabelValue(labels[eIndex].key, 'key', labels[eIndex].disabled);
       labels[eIndex].v_key = result;
       dispatch({
         type: ActionType.UpdateLabelEdition,
@@ -108,7 +109,7 @@ export const validatorActions = {
   },
   validateAllComputerLabel() {
     return (dispatch, getState) => {
-      let { labelEdition } = getState().subRoot.computerState,
+      const { labelEdition } = getState().subRoot.computerState,
         { labels } = labelEdition;
       labels.forEach(label => {
         dispatch(validatorActions.validateComputerLabelKey(label.id));
@@ -132,9 +133,6 @@ export const validatorActions = {
       if (!value) {
         status = 2;
         message = content + t('不能为空');
-      } else if (value.length > 63) {
-        status = 2;
-        message = content + t('长度不能超过63个字符');
       } else if (!reg.test(value)) {
         status = 2;
         message = content + t('格式不正确');
@@ -151,10 +149,14 @@ export const validatorActions = {
   },
   validateComputerTaintValue(Id) {
     return (dispatch, getState: GetState) => {
-      let { taintEdition } = getState().subRoot.computerState,
+      const { taintEdition } = getState().subRoot.computerState,
         { taints } = taintEdition,
         eIndex = taints.findIndex(e => e.id === Id);
-      let result = validatorActions._validateComputerTaintValue(taints[eIndex].value, 'value', taints[eIndex].disabled);
+      const result = validatorActions._validateComputerTaintValue(
+        taints[eIndex].value,
+        'value',
+        taints[eIndex].disabled
+      );
       taints[eIndex].v_value = result;
       dispatch({
         type: ActionType.UpdateTaintEdition,
@@ -164,10 +166,10 @@ export const validatorActions = {
   },
   validateComputerTaintKey(Id) {
     return (dispatch, getState) => {
-      let { taintEdition } = getState().subRoot.computerState,
+      const { taintEdition } = getState().subRoot.computerState,
         { taints } = taintEdition,
         eIndex = taints.findIndex(e => e.id === Id);
-      let result = validatorActions._validateComputerTaintValue(taints[eIndex].key, 'key', taints[eIndex].disabled);
+      const result = validatorActions._validateComputerTaintValue(taints[eIndex].key, 'key', taints[eIndex].disabled);
       taints[eIndex].v_key = result;
       dispatch({
         type: ActionType.UpdateTaintEdition,
@@ -187,7 +189,7 @@ export const validatorActions = {
   },
   validateAllComputerTaint() {
     return (dispatch, getState) => {
-      let { taintEdition } = getState().subRoot.computerState,
+      const { taintEdition } = getState().subRoot.computerState,
         { taints } = taintEdition;
       taints.forEach(taint => {
         dispatch(validatorActions.validateComputerTaintKey(taint.id));
@@ -219,8 +221,8 @@ export const validatorActions = {
   },
   validateClusterAllocationRatio(type?: string, value?: string) {
     return (dispatch, getState: GetState) => {
-      let { clusterAllocationRatioEdition } = getState().subRoot;
-      let result = validatorActions._validateClusterAllocationRatio(+value);
+      const { clusterAllocationRatioEdition } = getState().subRoot;
+      const result = validatorActions._validateClusterAllocationRatio(+value);
       let obj;
       if (type === 'cpu') {
         obj = {
@@ -239,7 +241,7 @@ export const validatorActions = {
   },
   validateAllClusterAllocationRatio() {
     return (dispatch, getState: GetState) => {
-      let {
+      const {
         clusterAllocationRatioEdition: { isUseCpu, isUseMemory, cpuRatio, memoryRatio }
       } = getState().subRoot;
       isUseCpu && dispatch(validatorActions.validateClusterAllocationRatio('cpu', cpuRatio));
@@ -248,7 +250,7 @@ export const validatorActions = {
   },
   _validateAllClusterAllocationRatio(clusterAllocationRatioEdition: AllocationRatioEdition) {
     let result = true;
-    let { isUseCpu, isUseMemory, memoryRatio, cpuRatio } = clusterAllocationRatioEdition;
+    const { isUseCpu, isUseMemory, memoryRatio, cpuRatio } = clusterAllocationRatioEdition;
     if (isUseCpu) {
       result = result && validatorActions._validateClusterAllocationRatio(+cpuRatio).status === 1;
     }

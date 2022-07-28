@@ -28,6 +28,7 @@ import { Base64 } from 'js-base64';
 
 import { allActions } from '../actions';
 import { configTest, updateStoreConfig, getStoreConfig } from '../WebAPI';
+import { t } from '@/tencent/tea-app/lib/i18n';
 
 const { useState, useEffect, useReducer } = React;
 
@@ -280,7 +281,10 @@ export const AuditSetting = props => {
             </Form.Item>
           )}
         />
-        <Form.Item message={getConnectionStatusMessage(auditSetting.connectionState)}>
+        <Form.Item
+          message={getConnectionStatusMessage(auditSetting.connectionState)}
+          extra={t('请先进行检测连接再点击完成！')}
+        >
           <Button type="primary" onClick={handleSubmit(onConnect)}>
             检测连接
           </Button>
