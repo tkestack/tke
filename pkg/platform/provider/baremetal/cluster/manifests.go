@@ -52,6 +52,23 @@ const (
             }
          ],
          "nodeCacheCapable" : false
+      },
+      {
+         "urlPrefix": "http://{{.QGPUQuotaAdmissionHost}}:12345/scheduler",
+         "filterVerb" : "filter",
+         "prebindVerb": "prebind",
+         "unreserveVerb": "unreserve",
+         "prioritizeVerb": "priorities",
+         "nodeCacheCapable": true,
+         "weight": 10,
+         "managedResources" : [
+            {
+               "name": "tke.cloud.tencent.com/qgpu-core"
+            },
+            {
+               "name" : "tke.cloud.tencent.com/qgpu-memory"
+            }
+         ]
       }
    ],
    "kind" : "Policy"
