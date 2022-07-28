@@ -1561,7 +1561,7 @@ func (p *Provider) EnsureClusternetRegistration(ctx context.Context, c *v1.Clust
 		log.FromContext(ctx).Info("registration command is empty, skip EnsureClusternetRegistration")
 		return nil
 	}
-	cmd, err := base64.StdEncoding.DecodeString(c.Annotations[platformv1.RegistrationCommandAnno])
+	data, err := base64.StdEncoding.DecodeString(c.Annotations[platformv1.RegistrationCommandAnno])
 	if err != nil {
 		return fmt.Errorf("decode registration command failed: %v", err)
 	}
@@ -1569,9 +1569,10 @@ func (p *Provider) EnsureClusternetRegistration(ctx context.Context, c *v1.Clust
 	if err != nil {
 		return err
 	}
-	_, stderr, exit, err := machineSSH.Exec(string(cmd))
+	cmd := fmt.Sprintf("echo \"%s\" | kubectl apply -f -", string(data))
+	_, err = machineSSH.CombinedOutput(cmd)
 	if err != nil {
-		return fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
+		return err
 	}
 	return nil
 }
