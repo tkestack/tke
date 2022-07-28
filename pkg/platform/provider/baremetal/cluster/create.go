@@ -1647,13 +1647,16 @@ func (p *Provider) EnsureCheckAnywhereSubscription(ctx context.Context, c *v1.Cl
 		return err
 	}
 	for _, feed := range sub.Spec.Feeds {
-		err = wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
-			hr, err := clusternet.GetHelmRelease(hubClient, clusternet.GenerateHelmReleaseName(sub.Name, feed), mcls.Namespace)
+		wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+			var helmrelease *appsv1alpha1.HelmRelease
+			helmrelease, err = clusternet.GetHelmRelease(hubClient, clusternet.GenerateHelmReleaseName(sub.Name, feed), mcls.Namespace)
 			if err != nil {
-				return false, fmt.Errorf("get helmrelease %s failed: %v", feed.Name, err)
+				err = fmt.Errorf("get helmrelease %s failed: %v", feed.Name, err)
+				return false, nil
 			}
-			if hr.Status.Phase != "deployed" {
-				return false, fmt.Errorf("helm release phase: %s", hr.Status.Phase)
+			if helmrelease != nil && helmrelease.Status.Phase != "deployed" {
+				err = fmt.Errorf("helm release phase: %s", helmrelease.Status.Phase)
+				return false, nil
 			}
 			return true, nil
 		})
