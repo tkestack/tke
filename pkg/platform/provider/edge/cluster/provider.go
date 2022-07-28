@@ -20,13 +20,14 @@ package cluster
 
 import (
 	"fmt"
+	"net/http"
+	"path"
+	"strings"
+
 	"github.com/AlekSi/pointer"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/server/mux"
 	"k8s.io/client-go/tools/clientcmd"
-	"net/http"
-	"path"
-	"strings"
 
 	platformv1client "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/platform"
@@ -114,16 +115,14 @@ func NewProvider() (*Provider, error) {
 			p.bCluster.EnsureKubeadmInitPhaseKubeConfig,
 			p.bCluster.EnsureKubeadmInitPhaseControlPlane,
 			p.bCluster.EnsureKubeadmInitPhaseETCD,
-			p.EnsureEgressSelector,
 			p.bCluster.EnsureKubeadmInitPhaseWaitControlPlane,
 			p.bCluster.EnsureKubeadmInitPhaseUploadConfig,
 			p.bCluster.EnsureKubeadmInitPhaseUploadCerts,
 			p.bCluster.EnsureKubeadmInitPhaseBootstrapToken,
 			p.bCluster.EnsureKubeadmInitPhaseAddon,
 
-			//p.bCluster.EnsureGalaxy,
+			p.bCluster.EnsureGalaxy,
 			p.bCluster.EnsureCilium,
-			p.EnsureEdgeFlannel,
 
 			p.bCluster.EnsureJoinPhasePreflight,
 			p.bCluster.EnsureJoinPhaseControlPlanePrepare,
@@ -136,17 +135,11 @@ func NewProvider() (*Provider, error) {
 			p.bCluster.EnsureKeepalivedWithLBOption,
 			p.bCluster.EnsureThirdPartyHA,
 			p.bCluster.EnsureModifyAPIServerHost,
-
 			// deploy apps
 			p.bCluster.EnsureNvidiaDevicePlugin,
 			p.bCluster.EnsureGPUManager,
 			p.bCluster.EnsureCSIOperator,
 			p.bCluster.EnsureMetricsServer,
-
-			// provider SuperEdge edge cluster
-			p.EnsurePrepareEgdeCluster, // Prepare EgdeCluster
-			p.EnsureApplyEdgeApps,      // Add on SuperEdge EdgeApps
-			p.EnsureKubeadmConfig,
 
 			p.bCluster.EnsureCleanup,
 			p.bCluster.EnsureCreateClusterMark,
