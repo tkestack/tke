@@ -43,7 +43,6 @@ const (
          "apiVersion" : "v1beta1",
          "enableHttps" : false,
          "filterVerb" : "filter",
-         "BindVerb": "bind",
          "weight": 1,
          "managedResources" : [
             {
@@ -56,11 +55,10 @@ const (
       {
          "urlPrefix": "http://{{.QGPUQuotaAdmissionHost}}:12345/scheduler",
          "filterVerb" : "filter",
-         "prebindVerb": "prebind",
-         "unreserveVerb": "unreserve",
          "prioritizeVerb": "priorities",
-         "nodeCacheCapable": true,
          "weight": 10,
+         "bindVerb": "bind",
+         "nodeCacheCapable": true,
          "managedResources" : [
             {
                "name": "tke.cloud.tencent.com/qgpu-core"
