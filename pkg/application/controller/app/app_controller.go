@@ -360,9 +360,6 @@ func (c *Controller) handlePhase(ctx context.Context, key string, cachedApp *cac
 }
 
 func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedApp, app *applicationv1.App) (*applicationv1.App, error) {
-	if app.Status.Phase == applicationv1.AppPhaseSucceeded && hasSynced(app) {
-		return app, nil
-	}
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error("syncAppFromRelease panic")
@@ -371,12 +368,6 @@ func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedAp
 	newStatus := app.Status.DeepCopy()
 	rels, err := action.List(ctx, c.client.ApplicationV1(), c.platformClient, app)
 	if err != nil {
-		if app.Status.Phase == applicationv1.AppPhaseSyncFailed {
-			log.Error(fmt.Sprintf("sync app failed, helm list failed, err: %s", err.Error()))
-			metrics.GaugeApplicationSyncFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-			// delayed retry, queue.AddRateLimited does not meet the demand
-			return app, nil
-		}
 		newStatus.Phase = applicationv1.AppPhaseSyncFailed
 		newStatus.Message = "sync app failed"
 		newStatus.Reason = err.Error()
@@ -386,13 +377,8 @@ func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedAp
 	}
 	rel, found := helmutil.Filter(rels, app.Spec.TargetNamespace, app.Spec.Name)
 	if !found {
-		if app.Status.Phase == applicationv1.AppPhaseSyncFailed {
-			log.Error(fmt.Sprintf("sync app failed, release not found: %s/%s", app.Spec.TargetNamespace, app.Spec.Name))
-			metrics.GaugeApplicationSyncFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-			// delayed retry, queue.AddRateLimited does not meet the demand
-			return app, nil
-		}
-		newStatus.Phase = applicationv1.AppPhaseSyncFailed
+		// release not found, reinstall for reconcile
+		newStatus.Phase = applicationv1.AppPhaseInstalling
 		newStatus.Message = "sync app failed"
 		newStatus.Reason = fmt.Sprintf("release not found: %s/%s", app.Spec.TargetNamespace, app.Spec.Name)
 		newStatus.LastTransitionTime = metav1.Now()

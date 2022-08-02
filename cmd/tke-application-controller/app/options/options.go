@@ -28,7 +28,8 @@ import (
 )
 
 const (
-	defaultSyncPeriod      = 30 * time.Second
+	// increase the sync time, because sync release from kube-apiserver
+	defaultSyncPeriod      = 5 * time.Minute
 	defaultconcurrentSyncs = 10
 )
 
