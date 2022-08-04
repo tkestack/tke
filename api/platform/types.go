@@ -119,6 +119,8 @@ const (
 	HubAPIServerAnno = "tkestack.io/hub-api-server"
 	// cluster credential token
 	CredentialTokenAnno = "tkestack.io/credential-token"
+	// AnywhereApplicationAnno contains base64 application json data
+	AnywhereQGPUApplicationAnno = "tkestack.io/anywhere-qgpu-application"
 )
 
 // KubeVendorType describe the kubernetes provider of the cluster

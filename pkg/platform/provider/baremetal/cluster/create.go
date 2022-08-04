@@ -51,6 +51,7 @@ import (
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	utilsnet "k8s.io/utils/net"
 	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
+	application "tkestack.io/tke/api/application/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
@@ -74,6 +75,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/appaddon"
 	"tkestack.io/tke/pkg/util/clusternet"
 	"tkestack.io/tke/pkg/util/cmdstring"
 	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
@@ -1586,7 +1588,7 @@ func (p *Provider) EnsureAnywhereEdtion(ctx context.Context, c *v1.Cluster) erro
 	if err != nil {
 		return err
 	}
-	hubClient, err := clusternet.GetHubClient(config)
+	hubClient, err := appaddon.GetExtenderClient(config)
 	if err != nil {
 		return err
 	}
@@ -1634,7 +1636,7 @@ func (p *Provider) EnsureCheckAnywhereSubscription(ctx context.Context, c *v1.Cl
 	if err != nil {
 		return err
 	}
-	hubClient, err := clusternet.GetHubClient(config)
+	hubClient, err := appaddon.GetExtenderClient(config)
 	if err != nil {
 		return err
 	}
@@ -1668,6 +1670,38 @@ func (p *Provider) EnsureCheckAnywhereSubscription(ctx context.Context, c *v1.Cl
 
 }
 
+// Ensure anywhere addon applications
+func (p *Provider) EnsureAnywhereAddons(ctx context.Context, c *v1.Cluster) error {
+	config, err := c.RESTConfig()
+	if err != nil {
+		return err
+	}
+	extenderClient, err := appaddon.GetExtenderClient(config)
+	if err != nil {
+		return err
+	}
+	if c.Annotations[platformv1.AnywhereQGPUApplicationAnno] != "" {
+		applicationJSON, err := base64.StdEncoding.DecodeString(c.Annotations[platformv1.AnywhereQGPUApplicationAnno])
+		if err != nil {
+			return fmt.Errorf("decode application JSON failed: %v", err)
+
+		}
+		applications := &application.AppList{}
+		err = json.Unmarshal(applicationJSON, applications)
+		if err != nil {
+			return fmt.Errorf("unmarshal application failed %v", err)
+		}
+
+		for _, app := range applications.Items {
+			err := extenderClient.Create(ctx, &app)
+			if err != nil && !apierrors.IsAlreadyExists(err) {
+				return fmt.Errorf("create application %+v failed: %v", app, err)
+			}
+		}
+	}
+	return nil
+}
+
 // update cluster to connect remote cluster apiserver
 func (p *Provider) EnsureModifyCluster(ctx context.Context, c *v1.Cluster) error {
 	var hubAPIServerURL *url.URL
@@ -1685,7 +1719,7 @@ func (p *Provider) EnsureModifyCluster(ctx context.Context, c *v1.Cluster) error
 	if err != nil {
 		return err
 	}
-	hubClient, err := clusternet.GetHubClient(config)
+	hubClient, err := appaddon.GetExtenderClient(config)
 	if err != nil {
 		return err
 	}
@@ -1714,7 +1748,7 @@ func (p *Provider) EnsureModifyClusterCredential(ctx context.Context, c *v1.Clus
 	if err != nil {
 		return err
 	}
-	hubClient, err := clusternet.GetHubClient(config)
+	hubClient, err := appaddon.GetExtenderClient(config)
 	if err != nil {
 		return err
 	}
