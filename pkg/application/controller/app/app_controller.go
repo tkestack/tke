@@ -260,6 +260,10 @@ func (c *Controller) syncItem(key string) error {
 				log.String("name", name))
 			_ = c.processDeletion(key)
 			err = c.appResourcesDeleter.Delete(context.Background(), namespace, name)
+			metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
+			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
+			metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
+			metrics.GaugeApplicationSyncFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 			// If err is not nil, do not update object status when phase is Terminating.
 			// DeletionTimestamp is not empty and object will be deleted when you request updateStatus
 		} else {
@@ -405,6 +409,9 @@ func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedAp
 	newStatus.Reason = ""
 	newStatus.LastTransitionTime = metav1.Now()
 	metrics.GaugeApplicationSyncFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
+	metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
+	metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
+	metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 
 	newStatus.ReleaseStatus = string(rel.Info.Status)
 	newStatus.Revision = int64(rel.Version)
