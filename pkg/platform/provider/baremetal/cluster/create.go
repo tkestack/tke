@@ -51,6 +51,7 @@ import (
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	utilsnet "k8s.io/utils/net"
 	runtimeclient "sigs.k8s.io/controller-runtime/pkg/client"
+	application "tkestack.io/tke/api/application/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
@@ -74,9 +75,9 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/util/mark"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
-	"tkestack.io/tke/pkg/util/clusternet"
 	"tkestack.io/tke/pkg/util/cmdstring"
 	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
+	"tkestack.io/tke/pkg/util/extenderapi"
 	"tkestack.io/tke/pkg/util/hosts"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/template"
@@ -1586,11 +1587,11 @@ func (p *Provider) EnsureAnywhereEdtion(ctx context.Context, c *v1.Cluster) erro
 	if err != nil {
 		return err
 	}
-	hubClient, err := clusternet.GetHubClient(config)
+	hubClient, err := extenderapi.GetExtenderClient(config)
 	if err != nil {
 		return err
 	}
-	current, err := clusternet.GetManagedCluster(hubClient, c.Name)
+	current, err := extenderapi.GetManagedCluster(hubClient, c.Name)
 	if err != nil {
 		return err
 	}
@@ -1634,22 +1635,22 @@ func (p *Provider) EnsureCheckAnywhereSubscription(ctx context.Context, c *v1.Cl
 	if err != nil {
 		return err
 	}
-	hubClient, err := clusternet.GetHubClient(config)
+	hubClient, err := extenderapi.GetExtenderClient(config)
 	if err != nil {
 		return err
 	}
-	mcls, err := clusternet.GetManagedCluster(hubClient, c.Name)
+	mcls, err := extenderapi.GetManagedCluster(hubClient, c.Name)
 	if err != nil {
 		return err
 	}
-	sub, err := clusternet.GetSubscription(hubClient, c.Annotations[platformv1.AnywhereSubscriptionNameAnno], c.Annotations[platformv1.AnywhereSubscriptionNamespaceAnno])
+	sub, err := extenderapi.GetSubscription(hubClient, c.Annotations[platformv1.AnywhereSubscriptionNameAnno], c.Annotations[platformv1.AnywhereSubscriptionNamespaceAnno])
 	if err != nil {
 		return err
 	}
 	for _, feed := range sub.Spec.Feeds {
 		wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
 			var helmrelease *appsv1alpha1.HelmRelease
-			helmrelease, err = clusternet.GetHelmRelease(hubClient, clusternet.GenerateHelmReleaseName(sub.Name, feed), mcls.Namespace)
+			helmrelease, err = extenderapi.GetHelmRelease(hubClient, extenderapi.GenerateHelmReleaseName(sub.Name, feed), mcls.Namespace)
 			if err != nil {
 				err = fmt.Errorf("get helmrelease %s failed: %v", feed.Name, err)
 				return false, nil
@@ -1666,6 +1667,38 @@ func (p *Provider) EnsureCheckAnywhereSubscription(ctx context.Context, c *v1.Cl
 	}
 	return nil
 
+}
+
+// Ensure anywhere addon applications
+func (p *Provider) EnsureAnywhereAddons(ctx context.Context, c *v1.Cluster) error {
+	config, err := c.RESTConfig()
+	if err != nil {
+		return err
+	}
+	extenderClient, err := extenderapi.GetExtenderClient(config)
+	if err != nil {
+		return err
+	}
+	if c.Annotations[platformv1.AnywhereApplicationAnno] != "" {
+		applicationJSON, err := base64.StdEncoding.DecodeString(c.Annotations[platformv1.AnywhereApplicationAnno])
+		if err != nil {
+			return fmt.Errorf("decode application JSON failed: %v", err)
+
+		}
+		applications := &application.AppList{}
+		err = json.Unmarshal(applicationJSON, applications)
+		if err != nil {
+			return fmt.Errorf("unmarshal application failed %v", err)
+		}
+
+		for _, app := range applications.Items {
+			err := extenderClient.Create(ctx, &app)
+			if err != nil && !apierrors.IsAlreadyExists(err) {
+				return fmt.Errorf("create application %+v failed: %v", app, err)
+			}
+		}
+	}
+	return nil
 }
 
 // update cluster to connect remote cluster apiserver
@@ -1685,11 +1718,11 @@ func (p *Provider) EnsureModifyCluster(ctx context.Context, c *v1.Cluster) error
 	if err != nil {
 		return err
 	}
-	hubClient, err := clusternet.GetHubClient(config)
+	hubClient, err := extenderapi.GetExtenderClient(config)
 	if err != nil {
 		return err
 	}
-	currentManagerCluster, err := clusternet.GetManagedCluster(hubClient, c.Name)
+	currentManagerCluster, err := extenderapi.GetManagedCluster(hubClient, c.Name)
 	if err != nil {
 		return err
 	}
@@ -1714,11 +1747,11 @@ func (p *Provider) EnsureModifyClusterCredential(ctx context.Context, c *v1.Clus
 	if err != nil {
 		return err
 	}
-	hubClient, err := clusternet.GetHubClient(config)
+	hubClient, err := extenderapi.GetExtenderClient(config)
 	if err != nil {
 		return err
 	}
-	currentManagerCluster, err := clusternet.GetManagedCluster(hubClient, c.Name)
+	currentManagerCluster, err := extenderapi.GetManagedCluster(hubClient, c.Name)
 	if err != nil {
 		return err
 	}
