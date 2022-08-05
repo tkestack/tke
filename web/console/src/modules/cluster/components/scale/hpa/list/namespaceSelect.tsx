@@ -48,9 +48,11 @@ const NamespaceSelect = React.memo((props: { namespaces: any }) => {
    */
   useEffect(() => {
     if (!isEmpty(namespaces) && namespaces.recordCount) {
+      const np = route?.queries?.np;
+
       hpaDispatch({
         type: CHANGE_NAMESPACE,
-        payload: { namespaceValue: namespaces.records[0].value }
+        payload: { namespaceValue: np }
       });
 
       // 如果是业务侧，

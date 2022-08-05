@@ -144,7 +144,7 @@ const Hpa = React.memo((props: { selectedHpa?: any }) => {
       namespace: '',
       resourceType: '',
       resource: '',
-      strategy: [{ key: '', value: 0 }],
+      strategy: [{ key: '', value: 1 }],
       minReplicas: 0,
       maxReplicas: 0
     }
@@ -329,7 +329,7 @@ const Hpa = React.memo((props: { selectedHpa?: any }) => {
       });
       if (addHpaResult) {
         // 跳转到列表页面
-        router.navigate({ ...urlParams, mode: 'list' }, route.queries);
+        router.navigate({ ...urlParams, mode: 'list' }, { ...route.queries, np: data.namespace });
       }
     }
     async function updateHpa() {
@@ -341,7 +341,7 @@ const Hpa = React.memo((props: { selectedHpa?: any }) => {
       });
       if (addHpaResult) {
         // 跳转到列表页面
-        router.navigate({ ...urlParams, mode: 'list' }, route.queries);
+        router.navigate({ ...urlParams, mode: 'list' }, { ...route.queries, np: selectedHpa?.metadata?.namespace });
       }
     }
 
@@ -558,7 +558,7 @@ const Hpa = React.memo((props: { selectedHpa?: any }) => {
                                     <InputNumber
                                       {...field}
                                       step={1}
-                                      min={0}
+                                      min={1}
                                       max={100}
                                       className={
                                         errors.strategy && errors.strategy[index] && errors.strategy[index].value
@@ -580,8 +580,8 @@ const Hpa = React.memo((props: { selectedHpa?: any }) => {
                                   render={({ field }) => (
                                     <InputNumber
                                       {...field}
-                                      step={1}
-                                      min={0}
+                                      step={0.1}
+                                      min={0.1}
                                       className={
                                         errors.strategy && errors.strategy[index] && errors.strategy[index].value
                                           ? 'is-error'
