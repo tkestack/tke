@@ -29,12 +29,12 @@ const _ = require('lodash');
 const { get, isEmpty } = require('lodash');
 
 function alertError(error, url) {
-  let message = `错误码：${error.response.status}，错误描述：${error.response.statusText}`;
+  const message = `错误码：${error.response.status}，错误描述：${error.response.statusText}`;
   let description = `请求路径: ${url} `;
   // if (error.response.status === 500) {
   if (error.response.data) {
     // 内部异常的response可能是文本也可能是错误对象
-    description += `错误消息：${_(error.response.data).value()}`;
+    description += `错误消息：${error?.response?.data?.message}`;
   }
   Modal.error({
     message,
@@ -47,14 +47,14 @@ function alertError(error, url) {
  * @param projectId
  */
 export async function fetchProjectNamespaceList({ projectId }: { projectId?: string }) {
-  let NamespaceResourceInfo: ResourceInfo = resourceConfig().namespaces;
-  let url = reduceK8sRestfulPath({
+  const NamespaceResourceInfo: ResourceInfo = resourceConfig().namespaces;
+  const url = reduceK8sRestfulPath({
     resourceInfo: NamespaceResourceInfo,
     specificName: projectId,
     extraResource: 'namespaces'
   });
 
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.get,
     url
   };
@@ -62,9 +62,9 @@ export async function fetchProjectNamespaceList({ projectId }: { projectId?: str
   let namespaceList = [],
     total = 0;
   try {
-    let response = await reduceNetworkRequest(params);
+    const response = await reduceNetworkRequest(params);
     if (response.code === 0) {
-      let list = response.data;
+      const list = response.data;
       total = list.items.length;
       namespaceList = list.items.map(item => {
         return {
@@ -86,8 +86,8 @@ export async function fetchProjectNamespaceList({ projectId }: { projectId?: str
 }
 
 export async function fetchNamespaceList({ clusterId }: { clusterId?: string }) {
-  let url = 'api/v1/namespaces';
-  let params: RequestParams = {
+  const url = 'api/v1/namespaces';
+  const params: RequestParams = {
     method: Method.get,
     url
   };
@@ -95,9 +95,9 @@ export async function fetchNamespaceList({ clusterId }: { clusterId?: string }) 
   let namespaceList = [],
     total = 0;
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
     if (response.code === 0) {
-      let list = response.data;
+      const list = response.data;
       total = list.items.length;
       namespaceList = list.items.map(item => {
         return {
@@ -123,18 +123,18 @@ export async function fetchNamespaceList({ clusterId }: { clusterId?: string }) 
  * 获取全部HPA列表数据
  */
 export async function getHPAList({ namespace, clusterId }: { namespace: string; clusterId: string }) {
-  let url = `/apis/autoscaling/v2beta1/namespaces/${namespace}/horizontalpodautoscalers`;
-  let params: RequestParams = {
+  const url = `/apis/autoscaling/v2beta1/namespaces/${namespace}/horizontalpodautoscalers`;
+  const params: RequestParams = {
     method: Method.get,
     url
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
     let HPAList = [],
       total = 0;
     if (response.code === 0) {
-      let list = response.data;
+      const list = response.data;
       total = list.items.length;
       HPAList = list.items.map(item => {
         return {
@@ -167,14 +167,14 @@ export async function removeHPA({
   name: string;
 }) {
   const newNamespace = cutNsStartClusterId({ namespace, clusterId });
-  let url = `/apis/autoscaling/v1/namespaces/${newNamespace}/horizontalpodautoscalers/${name}`;
-  let params: RequestParams = {
+  const url = `/apis/autoscaling/v1/namespaces/${newNamespace}/horizontalpodautoscalers/${name}`;
+  const params: RequestParams = {
     method: Method.delete,
     url
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
     if (response.code === 0) {
       return true;
     } else {
@@ -199,19 +199,20 @@ export async function createHPA({
   hpaData: any;
 }) {
   const newNamespace = namespace.replace(new RegExp(`^${clusterId}-`), '');
-  let url = `/apis/autoscaling/v2beta1/namespaces/${newNamespace}/horizontalpodautoscalers`;
-  let params: RequestParams = {
+  const url = `/apis/autoscaling/v2beta1/namespaces/${newNamespace}/horizontalpodautoscalers`;
+  const params: RequestParams = {
     method: Method.post,
     url,
     data: hpaData
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
     if (response.code === 0) {
       return true;
     }
   } catch (error) {
+    console.log('create hpa error -<<<', [error]);
     alertError(error, url);
   }
 }
@@ -231,15 +232,15 @@ export async function modifyHPA({
   hpaData: any;
 }) {
   const newNamespace = namespace.replace(new RegExp(`^${clusterId}-`), '');
-  let url = `/apis/autoscaling/v2beta1/namespaces/${newNamespace}/horizontalpodautoscalers/${name}`;
-  let params: RequestParams = {
+  const url = `/apis/autoscaling/v2beta1/namespaces/${newNamespace}/horizontalpodautoscalers/${name}`;
+  const params: RequestParams = {
     method: Method.put,
     url,
     data: hpaData
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
     if (response.code === 0) {
       return true;
     }
@@ -260,19 +261,19 @@ export async function fetchHPAYaml({
   clusterId: string;
   name: string;
 }) {
-  let url = `/apis/autoscaling/v1/namespaces/${namespace}/horizontalpodautoscalers/${name}`;
+  const url = `/apis/autoscaling/v1/namespaces/${namespace}/horizontalpodautoscalers/${name}`;
   const userDefinedHeader = {
     Accept: 'application/yaml'
   };
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.get,
     url,
     userDefinedHeader
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
-    let yamlList = response.code === 0 ? [response.data] : [];
+    const response = await reduceNetworkRequest(params, clusterId);
+    const yamlList = response.code === 0 ? [response.data] : [];
 
     const result: RecordSet<string> = {
       recordCount: yamlList.length,
@@ -299,14 +300,14 @@ export async function modifyHPAYaml({
   name: string;
   yamlData: any;
 }) {
-  let HPAList = [];
+  const HPAList = [];
   // let url = '/apis/platform.tkestack.io/v1/clusters';
-  let url = `/apis/autoscaling/v1/namespaces/${namespace}/horizontalpodautoscalers/${name}`;
+  const url = `/apis/autoscaling/v1/namespaces/${namespace}/horizontalpodautoscalers/${name}`;
   const userDefinedHeader = {
     Accept: 'application/json',
     'Content-Type': 'application/yaml'
   };
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.put,
     url,
     userDefinedHeader,
@@ -314,8 +315,8 @@ export async function modifyHPAYaml({
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
-    let yamlList = response.code === 0 ? [response.data] : [];
+    const response = await reduceNetworkRequest(params, clusterId);
+    const yamlList = response.code === 0 ? [response.data] : [];
     if (response.code === 0) {
       return response;
     }
@@ -342,17 +343,17 @@ export async function fetchResourceList({
   if (resourceType === 'tapps') {
     url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/tapps?namespace=${newNamespace}`;
   }
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.get,
     url
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
     let resourceList = [],
       total = 0;
     if (response.code === 0) {
-      let list = response.data;
+      const list = response.data;
       total = list.items.length;
       resourceList = list.items.map(item => {
         return {
@@ -395,17 +396,17 @@ export async function fetchEventList({
   if (type === 'cronhpa') {
     url = `/api/v1/namespaces/${newNamespace}/events?fieldSelector=involvedObject.namespace=${newNamespace},involvedObject.kind=CronHPA,involvedObject.uid=${uid},involvedObject.name=${name}`;
   }
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.get,
     url
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
     let eventList = [],
       total = 0;
     if (response.code === 0) {
-      let list = response.data;
+      const list = response.data;
       total = list.items.length;
       eventList = list.items.map(item => {
         return {
@@ -431,19 +432,19 @@ export async function fetchEventList({
 export async function fetchCronHpaRecords({ namespace, clusterId }: { namespace: string; clusterId: string }) {
   // let url = '/apis/platform.tkestack.io/v1/clusters';
   const newNamespace = cutNsStartClusterId({ namespace, clusterId });
-  let url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/cronhpas?namespace=${newNamespace}`;
+  const url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/cronhpas?namespace=${newNamespace}`;
   // let url = `/apis/autoscaling/v2beta1/namespaces/${namespace}/horizontalpodautoscalers`;
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.get,
     url
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
     let cronHpaList = [],
       total = 0;
     if (response.code === 0) {
-      let list = response.data;
+      const list = response.data;
       total = list.items.length;
       cronHpaList = list.items.map(item => {
         return {
@@ -476,14 +477,14 @@ export async function deleteCronHpa({
   name: string;
 }) {
   const newNamespace = cutNsStartClusterId({ namespace, clusterId });
-  let url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/cronhpas?name=${name}&namespace=${newNamespace}`;
-  let params: RequestParams = {
+  const url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/cronhpas?name=${name}&namespace=${newNamespace}`;
+  const params: RequestParams = {
     method: Method.delete,
     url
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
     if (response.code === 0) {
       return true;
     } else {
@@ -508,15 +509,15 @@ export async function createCronHpa({
   cronHpaData: any;
 }) {
   const newNamespace = cutNsStartClusterId({ namespace, clusterId });
-  let url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/cronhpas?namespace=${newNamespace}`;
-  let params: RequestParams = {
+  const url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/cronhpas?namespace=${newNamespace}`;
+  const params: RequestParams = {
     method: Method.post,
     url,
     data: cronHpaData
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
     if (response.code === 0) {
       return true;
     }
@@ -540,16 +541,16 @@ export async function modifyCronHpa({
   cronHpaData: any;
 }) {
   const newNamespace = cutNsStartClusterId({ namespace, clusterId });
-  let url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/cronhpas?name=${name}&namespace=${newNamespace}`;
+  const url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/cronhpas?name=${name}&namespace=${newNamespace}`;
   // let url = `/apis/autoscaling/v2beta1/namespaces/${newNamespace}/horizontalpodautoscalers/${name}`;
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.put,
     url,
     data: cronHpaData
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
     if (response.code === 0) {
       return true;
     }
@@ -571,20 +572,20 @@ export async function fetchCronHpaYaml({
   name: string;
 }) {
   const newNamespace = cutNsStartClusterId({ namespace, clusterId });
-  let url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/cronhpas?name=${name}&namespace=${newNamespace}`;
+  const url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/cronhpas?name=${name}&namespace=${newNamespace}`;
   // let url = `/apis/autoscaling/v1/namespaces/${namespace}/horizontalpodautoscalers/${name}`;
   const userDefinedHeader = {
     Accept: 'application/yaml'
   };
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.get,
     url,
     userDefinedHeader
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
-    let yamlList = response.code === 0 ? [response.data] : [];
+    const response = await reduceNetworkRequest(params, clusterId);
+    const yamlList = response.code === 0 ? [response.data] : [];
 
     const result: RecordSet<string> = {
       recordCount: yamlList.length,
@@ -612,13 +613,13 @@ export async function modifyCronHpaYaml({
   yamlData: any;
 }) {
   const newNamespace = cutNsStartClusterId({ namespace, clusterId });
-  let url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/cronhpas?name=${name}&namespace=${newNamespace}`;
+  const url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/cronhpas?name=${name}&namespace=${newNamespace}`;
   // let url = `/apis/autoscaling/v1/namespaces/${namespace}/horizontalpodautoscalers/${name}`;
   const userDefinedHeader = {
     Accept: 'application/json',
     'Content-Type': 'application/yaml'
   };
-  let params: RequestParams = {
+  const params: RequestParams = {
     method: Method.put,
     url,
     userDefinedHeader,
@@ -626,7 +627,7 @@ export async function modifyCronHpaYaml({
   };
 
   try {
-    let response = await reduceNetworkRequest(params, clusterId);
+    const response = await reduceNetworkRequest(params, clusterId);
     if (response.code === 0) {
       return response;
     }
@@ -636,14 +637,14 @@ export async function modifyCronHpaYaml({
 }
 
 export async function fetchAddons({ clusterId }: { clusterId: string }) {
-  let url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/addons`;
-  let params: RequestParams = {
+  const url = `/apis/platform.tkestack.io/v1/clusters/${clusterId}/addons`;
+  const params: RequestParams = {
     method: Method.get,
     url
   };
 
   try {
-    let response = await reduceNetworkRequest(params);
+    const response = await reduceNetworkRequest(params);
     const addons = {};
     if (response.code === 0) {
       response.data.items.forEach(item => {
