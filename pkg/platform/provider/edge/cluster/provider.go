@@ -39,7 +39,6 @@ import (
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/platform/types"
 	"tkestack.io/tke/pkg/spec"
-	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/log"
 )
 
@@ -175,8 +174,6 @@ func NewProvider() (*Provider, error) {
 		return nil, err
 	}
 	p.bconfig = cfg
-
-	containerregistry.Init(cfg.Registry.Domain, cfg.Registry.Namespace)
 
 	// Run for compatibility with installer.
 	// TODO: Installer reuse platform components

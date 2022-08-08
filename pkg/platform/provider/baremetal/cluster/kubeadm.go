@@ -34,6 +34,7 @@ import (
 	"tkestack.io/tke/pkg/platform/provider/baremetal/phases/kubeadm"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/json"
 	"tkestack.io/tke/pkg/util/version"
 )
@@ -183,7 +184,7 @@ func (p *Provider) getClusterConfiguration(c *v1.Cluster) *kubeadmv1beta2.Cluste
 		DNS: kubeadmv1beta2.DNS{
 			Type: kubeadmv1beta2.CoreDNS,
 		},
-		ImageRepository: p.Config.Registry.Prefix,
+		ImageRepository: containerregistry.GetPrefix(),
 		ClusterName:     c.Name,
 		FeatureGates: map[string]bool{
 			"IPv6DualStack": c.Cluster.Spec.Features.IPv6DualStack},
