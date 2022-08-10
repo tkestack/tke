@@ -20,7 +20,7 @@ K8S_APIMACHINERY_DIR = $(shell go list -f '{{ .Dir }}' -m k8s.io/apimachinery)
 K8S_API_DIR = $(shell go list -f '{{ .Dir }}' -m k8s.io/api)
 # set the gogo protobuf package dir
 GOGO_PROTOBUF_DIR = $(shell go list -f '{{ .Dir }}' -m github.com/gogo/protobuf)
-EXT_PB_APIS = "k8s.io/api/core/v1 k8s.io/api/apps/v1"
+EXT_PB_APIS = "k8s.io/api/core/v1 k8s.io/api/apps/v1 k8s.io/api/rbac/v1"
 # set the code generator image version
 CODE_GENERATOR_VERSION := v1.22.3
 FIND := find . ! -path './pkg/platform/provider/baremetal/apis/*'
@@ -42,7 +42,7 @@ gen.api:
 	 	$(ROOT_PACKAGE)/api/client \
 	 	$(ROOT_PACKAGE)/api \
 	 	$(ROOT_PACKAGE)/api \
-		"platform:v1 business:v1 notify:v1 registry:v1 monitor:v1 auth:v1 logagent:v1 application:v1 mesh:v1"
+		"platform:v1 business:v1 notify:v1 registry:v1 monitor:v1 auth:v1 logagent:v1 application:v1 mesh:v1 authz:v1"
 
 .PHONY: gen.gateway
 gen.gateway:

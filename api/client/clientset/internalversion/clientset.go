@@ -28,6 +28,7 @@ import (
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
 	applicationinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/application/internalversion"
 	authinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
+	authzinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/authz/internalversion"
 	businessinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/business/internalversion"
 	logagentinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/logagent/internalversion"
 	meshinternalversion "tkestack.io/tke/api/client/clientset/internalversion/typed/mesh/internalversion"
@@ -41,6 +42,7 @@ type Interface interface {
 	Discovery() discovery.DiscoveryInterface
 	Application() applicationinternalversion.ApplicationInterface
 	Auth() authinternalversion.AuthInterface
+	Authz() authzinternalversion.AuthzInterface
 	Business() businessinternalversion.BusinessInterface
 	Logagent() logagentinternalversion.LogagentInterface
 	Mesh() meshinternalversion.MeshInterface
@@ -56,6 +58,7 @@ type Clientset struct {
 	*discovery.DiscoveryClient
 	application *applicationinternalversion.ApplicationClient
 	auth        *authinternalversion.AuthClient
+	authz       *authzinternalversion.AuthzClient
 	business    *businessinternalversion.BusinessClient
 	logagent    *logagentinternalversion.LogagentClient
 	mesh        *meshinternalversion.MeshClient
@@ -73,6 +76,11 @@ func (c *Clientset) Application() applicationinternalversion.ApplicationInterfac
 // Auth retrieves the AuthClient
 func (c *Clientset) Auth() authinternalversion.AuthInterface {
 	return c.auth
+}
+
+// Authz retrieves the AuthzClient
+func (c *Clientset) Authz() authzinternalversion.AuthzInterface {
+	return c.authz
 }
 
 // Business retrieves the BusinessClient
@@ -139,6 +147,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	if err != nil {
 		return nil, err
 	}
+	cs.authz, err = authzinternalversion.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.business, err = businessinternalversion.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -181,6 +193,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
 	cs.application = applicationinternalversion.NewForConfigOrDie(c)
 	cs.auth = authinternalversion.NewForConfigOrDie(c)
+	cs.authz = authzinternalversion.NewForConfigOrDie(c)
 	cs.business = businessinternalversion.NewForConfigOrDie(c)
 	cs.logagent = logagentinternalversion.NewForConfigOrDie(c)
 	cs.mesh = meshinternalversion.NewForConfigOrDie(c)
@@ -198,6 +211,7 @@ func New(c rest.Interface) *Clientset {
 	var cs Clientset
 	cs.application = applicationinternalversion.New(c)
 	cs.auth = authinternalversion.New(c)
+	cs.authz = authzinternalversion.New(c)
 	cs.business = businessinternalversion.New(c)
 	cs.logagent = logagentinternalversion.New(c)
 	cs.mesh = meshinternalversion.New(c)

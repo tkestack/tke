@@ -1,0 +1,1041 @@
+[
+  {
+    "metadata": {
+      "name": "pol-admin",
+      "namespace": "default",
+      "annotations": {
+        "authz.tkestack.io/region": "ap-guangzhou",
+        "authz.tkestack.io/provider-name": "clusternet"
+      }
+    },
+    "displayName": "admin",
+    "description": "集群管理员身份，对集群内所有资源具有读写权限",
+    "scope": "MultiCluster",
+    "tenantID": "default",
+    "username": "admin",
+    "rules": [
+      {
+        "apiGroups": [
+          "*"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "*"
+        ]
+      },
+      {
+        "nonResourceURLs": [
+          "*"
+        ],
+        "verbs": [
+          "*"
+        ]
+      }
+    ]
+  },
+  {
+    "metadata": {
+      "name": "pol-view",
+      "namespace": "default",
+      "annotations": {
+        "authz.tkestack.io/region": "ap-guangzhou",
+        "authz.tkestack.io/provider-name": "clusternet"
+      }
+    },
+    "displayName": "view",
+    "description": "对所有命名空间或所选命名空间下控制台可见资源的只读权限",
+    "scope": "MultiCluster",
+    "tenantID": "default",
+    "username": "default",
+    "rules": [
+      {
+        "apiGroups": [
+          ""
+        ],
+        "resources": [
+          "pods",
+          "pods/attach",
+          "pods/exec",
+          "pods/portforward",
+          "pods/proxy"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          ""
+        ],
+        "resources": [
+          "configmaps",
+          "endpoints",
+          "persistentvolumeclaims",
+          "replicationcontrollers",
+          "replicationcontrollers/scale",
+          "secrets",
+          "serviceaccounts",
+          "services",
+          "services/proxy"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          ""
+        ],
+        "resources": [
+          "nodes",
+          "persistentvolumes"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          ""
+        ],
+        "resources": [
+          "events",
+          "replicationcontrollers/status",
+          "pods/log",
+          "pods/status",
+          "componentstatuses"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "apps"
+        ],
+        "resources": [
+          "daemonsets",
+          "deployments",
+          "deployments/rollback",
+          "deployments/scale",
+          "replicasets",
+          "replicasets/scale",
+          "statefulsets"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "autoscaling"
+        ],
+        "resources": [
+          "horizontalpodautoscalers"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "storage.k8s.io"
+        ],
+        "resources": [
+          "storageclasses"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "batch"
+        ],
+        "resources": [
+          "cronjobs",
+          "jobs"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "extensions",
+          "networking.k8s.io"
+        ],
+        "resources": [
+          "daemonsets",
+          "deployments",
+          "deployments/rollback",
+          "deployments/scale",
+          "ingresses",
+          "replicasets",
+          "replicasets/scale",
+          "replicationcontrollers/scale"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "servicecatalog.k8s.io"
+        ],
+        "resources": [
+          "clusterserviceclasses",
+          "clusterserviceplans",
+          "clusterservicebrokers",
+          "serviceinstances",
+          "servicebindings"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "policy"
+        ],
+        "resources": [
+          "poddisruptionbudgets"
+        ],
+        "verbs": [
+          "get",
+          "list"
+        ]
+      },
+      {
+        "apiGroups": [
+          "networking.istio.io",
+          "config.istio.io",
+          "rbac.istio.io",
+          "authentication.istio.io",
+          "security.istio.io",
+          "install.istio.io"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "apiextensions.k8s.io"
+        ],
+        "resources": [
+          "customresourcedefinitions"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "networking.tke.cloud.tencent.com"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "cloud.tencent.com"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "ccs.cloud.tencent.com"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "cls.cloud.tencent.com"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      }
+    ]
+  },
+  {
+    "metadata": {
+      "name": "pol-ops",
+      "namespace": "default",
+      "annotations": {
+        "authz.tkestack.io/region": "ap-guangzhou",
+        "authz.tkestack.io/provider-name": "clusternet"
+      }
+    },
+    "displayName": "ops",
+    "description": "对所有命名空间下资源的读写权限，拥有集群节点、存储卷、命名空间、配额的读写权限",
+    "scope": "MultiCluster",
+    "tenantID": "default",
+    "username": "admin",
+    "rules": [
+      {
+        "apiGroups": [
+          ""
+        ],
+        "resources": [
+          "pods",
+          "pods/attach",
+          "pods/exec",
+          "pods/portforward",
+          "pods/proxy"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          ""
+        ],
+        "resources": [
+          "configmaps",
+          "endpoints",
+          "persistentvolumeclaims",
+          "replicationcontrollers",
+          "replicationcontrollers/scale",
+          "secrets",
+          "serviceaccounts",
+          "services",
+          "services/proxy"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          ""
+        ],
+        "resources": [
+          "bindings",
+          "events",
+          "limitranges",
+          "namespaces/status",
+          "replicationcontrollers/status",
+          "pods/log",
+          "pods/status",
+          "resourcequotas",
+          "resourcequotas/status",
+          "componentstatuses"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          ""
+        ],
+        "resources": [
+          "namespaces",
+          "nodes",
+          "persistentvolumes"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "apps"
+        ],
+        "resources": [
+          "daemonsets",
+          "deployments",
+          "deployments/rollback",
+          "deployments/scale",
+          "replicasets",
+          "replicasets/scale",
+          "statefulsets"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "autoscaling"
+        ],
+        "resources": [
+          "horizontalpodautoscalers"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "batch"
+        ],
+        "resources": [
+          "cronjobs",
+          "jobs"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "extensions",
+          "networking.k8s.io"
+        ],
+        "resources": [
+          "daemonsets",
+          "deployments",
+          "deployments/rollback",
+          "deployments/scale",
+          "ingresses",
+          "replicasets",
+          "replicasets/scale",
+          "replicationcontrollers/scale"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "servicecatalog.k8s.io"
+        ],
+        "resources": [
+          "clusterserviceclasses",
+          "clusterserviceplans",
+          "clusterservicebrokers",
+          "serviceinstances",
+          "servicebindings"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "servicecatalog.k8s.io"
+        ],
+        "resources": [
+          "clusterservicebrokers/status",
+          "clusterserviceclasses/status",
+          "clusterserviceplans/status",
+          "serviceinstances/status",
+          "serviceinstances/reference",
+          "servicebindings/status"
+        ],
+        "verbs": [
+          "update"
+        ]
+      },
+      {
+        "apiGroups": [
+          "storage.k8s.io"
+        ],
+        "resources": [
+          "storageclasses"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "policy"
+        ],
+        "resources": [
+          "poddisruptionbudgets"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "networking.istio.io",
+          "config.istio.io",
+          "rbac.istio.io",
+          "authentication.istio.io",
+          "install.istio.io",
+          "security.istio.io"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "apiextensions.k8s.io"
+        ],
+        "resources": [
+          "customresourcedefinitions"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "create",
+          "watch",
+          "patch",
+          "update",
+          "delete",
+          "deletecollection"
+        ]
+      },
+      {
+        "apiGroups": [
+          "networking.tke.cloud.tencent.com"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "create",
+          "watch",
+          "patch",
+          "update",
+          "delete",
+          "deletecollection"
+        ]
+      },
+      {
+        "apiGroups": [
+          "cloud.tencent.com"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "create",
+          "watch",
+          "patch",
+          "update",
+          "delete",
+          "deletecollection"
+        ]
+      },
+      {
+        "apiGroups": [
+          "ccs.cloud.tencent.com"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "create",
+          "watch",
+          "patch",
+          "update",
+          "delete",
+          "deletecollection"
+        ]
+      },
+      {
+        "apiGroups": [
+          "cls.cloud.tencent.com"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "create",
+          "watch",
+          "patch",
+          "update",
+          "delete",
+          "deletecollection"
+        ]
+      }
+    ]
+  },
+  {
+    "metadata": {
+      "name": "pol-dev",
+      "namespace": "default",
+      "annotations": {
+        "authz.tkestack.io/region": "ap-guangzhou",
+        "authz.tkestack.io/provider-name": "clusternet"
+      }
+    },
+    "displayName": "dev",
+    "description": "对所有命名空间或所选命名空间下控制台可见资源的读写权限",
+    "scope": "MultiCluster",
+    "tenantID": "default",
+    "username": "admin",
+    "rules": [
+      {
+        "apiGroups": [
+          ""
+        ],
+        "resources": [
+          "pods",
+          "pods/attach",
+          "pods/exec",
+          "pods/portforward",
+          "pods/proxy"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          ""
+        ],
+        "resources": [
+          "configmaps",
+          "endpoints",
+          "persistentvolumeclaims",
+          "replicationcontrollers",
+          "replicationcontrollers/scale",
+          "secrets",
+          "serviceaccounts",
+          "services",
+          "services/proxy"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          ""
+        ],
+        "resources": [
+          "events",
+          "replicationcontrollers/status",
+          "pods/log",
+          "pods/status",
+          "componentstatuses"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          ""
+        ],
+        "resources": [
+          "namespaces",
+          "nodes",
+          "persistentvolumes"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "apps"
+        ],
+        "resources": [
+          "daemonsets",
+          "deployments",
+          "deployments/rollback",
+          "deployments/scale",
+          "replicasets",
+          "replicasets/scale",
+          "statefulsets"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "autoscaling"
+        ],
+        "resources": [
+          "horizontalpodautoscalers"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "batch"
+        ],
+        "resources": [
+          "cronjobs",
+          "jobs"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "extensions",
+          "networking.k8s.io"
+        ],
+        "resources": [
+          "daemonsets",
+          "deployments",
+          "deployments/rollback",
+          "deployments/scale",
+          "ingresses",
+          "replicasets",
+          "replicasets/scale",
+          "replicationcontrollers/scale"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "servicecatalog.k8s.io"
+        ],
+        "resources": [
+          "clusterserviceclasses",
+          "clusterserviceplans",
+          "clusterservicebrokers",
+          "serviceinstances",
+          "servicebindings"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "servicecatalog.k8s.io"
+        ],
+        "resources": [
+          "clusterservicebrokers/status",
+          "clusterserviceclasses/status",
+          "clusterserviceplans/status",
+          "serviceinstances/status",
+          "serviceinstances/reference",
+          "servicebindings/status"
+        ],
+        "verbs": [
+          "update"
+        ]
+      },
+      {
+        "apiGroups": [
+          "storage.k8s.io"
+        ],
+        "resources": [
+          "storageclasses"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "policy"
+        ],
+        "resources": [
+          "poddisruptionbudgets"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "networking.istio.io",
+          "config.istio.io",
+          "rbac.istio.io",
+          "authentication.istio.io",
+          "security.istio.io",
+          "install.istio.io"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "apiextensions.k8s.io"
+        ],
+        "resources": [
+          "customresourcedefinitions"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "create",
+          "watch",
+          "patch",
+          "update",
+          "delete",
+          "deletecollection"
+        ]
+      },
+      {
+        "apiGroups": [
+          "networking.tke.cloud.tencent.com"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "cloud.tencent.com"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "ccs.cloud.tencent.com"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      },
+      {
+        "apiGroups": [
+          "cls.cloud.tencent.com"
+        ],
+        "resources": [
+          "*"
+        ],
+        "verbs": [
+          "get",
+          "list",
+          "watch"
+        ]
+      }
+    ]
+  }
+]

@@ -31,6 +31,8 @@ import (
 	fakeapplicationv1 "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1/fake"
 	authv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1"
 	fakeauthv1 "tkestack.io/tke/api/client/clientset/versioned/typed/auth/v1/fake"
+	authzv1 "tkestack.io/tke/api/client/clientset/versioned/typed/authz/v1"
+	fakeauthzv1 "tkestack.io/tke/api/client/clientset/versioned/typed/authz/v1/fake"
 	businessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	fakebusinessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1/fake"
 	logagentv1 "tkestack.io/tke/api/client/clientset/versioned/typed/logagent/v1"
@@ -105,6 +107,11 @@ func (c *Clientset) ApplicationV1() applicationv1.ApplicationV1Interface {
 // AuthV1 retrieves the AuthV1Client
 func (c *Clientset) AuthV1() authv1.AuthV1Interface {
 	return &fakeauthv1.FakeAuthV1{Fake: &c.Fake}
+}
+
+// AuthzV1 retrieves the AuthzV1Client
+func (c *Clientset) AuthzV1() authzv1.AuthzV1Interface {
+	return &fakeauthzv1.FakeAuthzV1{Fake: &c.Fake}
 }
 
 // BusinessV1 retrieves the BusinessV1Client

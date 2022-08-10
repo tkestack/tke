@@ -27,6 +27,7 @@ import (
 	serializer "k8s.io/apimachinery/pkg/runtime/serializer"
 	application "tkestack.io/tke/api/application/install"
 	auth "tkestack.io/tke/api/auth/install"
+	authz "tkestack.io/tke/api/authz/install"
 	business "tkestack.io/tke/api/business/install"
 	logagent "tkestack.io/tke/api/logagent/install"
 	mesh "tkestack.io/tke/api/mesh/install"
@@ -49,6 +50,7 @@ func init() {
 func Install(scheme *runtime.Scheme) {
 	application.Install(scheme)
 	auth.Install(scheme)
+	authz.Install(scheme)
 	business.Install(scheme)
 	logagent.Install(scheme)
 	mesh.Install(scheme)
