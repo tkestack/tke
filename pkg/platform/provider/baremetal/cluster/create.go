@@ -178,6 +178,7 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, c *v1.Cluster) error
 	if c.Spec.TenantID != "" {
 		domains = append(domains, c.Spec.TenantID+"."+p.Config.Registry.Domain)
 	}
+	domains = append(domains, constants.MirrorsRegistryHostName)
 	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
 		if err != nil {
@@ -186,7 +187,11 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, c *v1.Cluster) error
 
 		for _, one := range domains {
 			remoteHosts := hosts.RemoteHosts{Host: one, SSH: machineSSH}
-			err := remoteHosts.Set(p.Config.Registry.IP)
+			ip := p.Config.Registry.IP
+			if len(p.Config.Registry.IP) == 0 {
+				ip = c.GetMainIP()
+			}
+			err := remoteHosts.Set(ip)
 			if err != nil {
 				return errors.Wrap(err, machine.IP)
 			}

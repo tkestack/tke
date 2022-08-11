@@ -73,6 +73,19 @@ func (c *Cluster) RESTConfig() (*rest.Config, error) {
 	return c.restConfig, nil
 }
 
+func (c *Cluster) GetMainIP() string {
+	mainIP := c.Spec.Machines[0].IP
+	if c.Spec.Features.HA != nil {
+		if c.Spec.Features.HA.TKEHA != nil {
+			mainIP = c.Spec.Features.HA.TKEHA.VIP
+		}
+		if c.Spec.Features.HA.ThirdPartyHA != nil {
+			mainIP = c.Spec.Features.HA.ThirdPartyHA.VIP
+		}
+	}
+	return mainIP
+}
+
 func (c *Cluster) Clientset() (kubernetes.Interface, error) {
 	config, err := c.RESTConfig()
 	if err != nil {

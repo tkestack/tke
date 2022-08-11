@@ -155,9 +155,14 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, machine *platformv1.
 	if machine.Spec.TenantID != "" {
 		domains = append(domains, machine.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
+	domains = append(domains, constants.MirrorsRegistryHostName)
 	for _, one := range domains {
 		remoteHosts := hosts.RemoteHosts{Host: one, SSH: machineSSH}
-		err := remoteHosts.Set(p.config.Registry.IP)
+		ip := p.config.Registry.IP
+		if len(p.config.Registry.IP) == 0 {
+			ip = cluster.GetMainIP()
+		}
+		err := remoteHosts.Set(ip)
 		if err != nil {
 			return err
 		}

@@ -41,3 +41,6 @@ state = "/run/containerd"
         [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.}}".tls]
           insecure_skip_verify=true
         {{end}}
+      [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors."ccr.ccs.tencentyun.com"]
+          endpoint = ["http://mirrors.tke.com"]
