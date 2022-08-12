@@ -85,10 +85,6 @@ type Registry struct {
 	Namespace string `yaml:"-"`
 }
 
-func (r *Registry) NeedSetHosts() bool {
-	return r.IP != ""
-}
-
 type Audit struct {
 	Address string `yaml:"address"`
 }

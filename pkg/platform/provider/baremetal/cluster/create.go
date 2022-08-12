@@ -166,9 +166,6 @@ func (p *Provider) EnsurePreflight(ctx context.Context, c *v1.Cluster) error {
 }
 
 func (p *Provider) EnsureRegistryHosts(ctx context.Context, c *v1.Cluster) error {
-	if !p.Config.Registry.NeedSetHosts() {
-		return nil
-	}
 	machines := map[bool][]platformv1.ClusterMachine{
 		true:  c.Spec.ScalingMachines,
 		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
@@ -515,7 +512,7 @@ func (p *Provider) EnsureContainerRuntime(ctx context.Context, c *v1.Cluster) er
 
 func (p *Provider) EnsureContainerd(ctx context.Context, c *v1.Cluster) error {
 	insecureRegistries := []string{p.Config.Registry.Domain}
-	if p.Config.Registry.NeedSetHosts() && c.Spec.TenantID != "" {
+	if c.Spec.TenantID != "" {
 		insecureRegistries = append(insecureRegistries, c.Spec.TenantID+"."+p.Config.Registry.Domain)
 	}
 	option := &containerd.Option{
@@ -543,7 +540,7 @@ func (p *Provider) EnsureDocker(ctx context.Context, c *v1.Cluster) error {
 		true:  c.Spec.ScalingMachines,
 		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
 	insecureRegistries := fmt.Sprintf(`"%s"`, p.Config.Registry.Domain)
-	if p.Config.Registry.NeedSetHosts() && c.Spec.TenantID != "" {
+	if c.Spec.TenantID != "" {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, c.Spec.TenantID+"."+p.Config.Registry.Domain)
 	}
 	extraArgs := c.Spec.DockerExtraArgs

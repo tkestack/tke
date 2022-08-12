@@ -140,10 +140,6 @@ func (p *Provider) EnsurePreflight(ctx context.Context, machine *platformv1.Mach
 }
 
 func (p *Provider) EnsureRegistryHosts(ctx context.Context, machine *platformv1.Machine, cluster *typesv1.Cluster) error {
-	if !p.config.Registry.NeedSetHosts() {
-		return nil
-	}
-
 	machineSSH, err := machine.Spec.SSH()
 	if err != nil {
 		return err
@@ -334,7 +330,7 @@ func (p *Provider) EnsureContainerd(ctx context.Context, machine *platformv1.Mac
 	}
 
 	insecureRegistries := []string{p.config.Registry.Domain}
-	if p.config.Registry.NeedSetHosts() && machine.Spec.TenantID != "" {
+	if machine.Spec.TenantID != "" {
 		insecureRegistries = append(insecureRegistries, machine.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
 
@@ -358,7 +354,7 @@ func (p *Provider) EnsureDocker(ctx context.Context, machine *platformv1.Machine
 	}
 
 	insecureRegistries := fmt.Sprintf(`"%s"`, p.config.Registry.Domain)
-	if p.config.Registry.NeedSetHosts() && machine.Spec.TenantID != "" {
+	if machine.Spec.TenantID != "" {
 		insecureRegistries = fmt.Sprintf(`%s,"%s"`, insecureRegistries, machine.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
 
