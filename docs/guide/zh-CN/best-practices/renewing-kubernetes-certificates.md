@@ -110,4 +110,17 @@ kubectl edit -n tke cm certs -o yaml
 
 ## 其他注意事项
 
+### Pod 证书问题
+
 如果发现任何 pod 执行了将近 1 年时间，报错证书相关问题，有可能是 https://github.com/kubernetes/kubernetes/issues/86552 导致的，通过重启 pod 可解决问题。
+
+### kubelet 无法启动
+
+更新操作完成后，如果通过 `tali -f /var/log/messages` 发现类似下面找不到 `bootstrap-kubelet.conf` 的报错:
+
+```sh
+Jul 22 12:13:33 VM-252-117-centos kubelet: F0722 12:13:33.864099   10350 server.go:265] failed to run Kubelet: unable to load bootstrap kubeconfig: stat /etc/kubernetes/bootstrap-kubelet.conf: no such file or directory
+Jul 22 12:13:33 VM-252-117-centos kubelet: goroutine 1 [running]:
+```
+
+可以在各个节点上通过执行 `cp /etc/kubernetes/kubelet.conf /etc/kubernetes/bootstrap-kubelet.conf` 解决。
