@@ -36,6 +36,7 @@ import (
 	"time"
 
 	appsv1alpha1 "github.com/clusternet/apis/apps/v1alpha1"
+	clustersv1beta1 "github.com/clusternet/apis/clusters/v1beta1"
 	"github.com/imdario/mergo"
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
@@ -1221,16 +1222,19 @@ func (p *Provider) EnsureKubeadmInitPhaseWaitControlPlane(ctx context.Context, c
 	if err != nil {
 		return err
 	}
-	return wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+	var exit int
+	var stderr string
+	_ = wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
 		cmd := "kubectl cluster-info"
-		_, stderr, exit, err := machineSSH.Exec(cmd)
+		_, stderr, exit, err = machineSSH.Exec(cmd)
 		if err != nil {
-			log.FromContext(ctx).Error(fmt.Errorf("exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err), "check apiserver error")
+			err = fmt.Errorf("check apiserver failed: exec %q failed:exit %d:stderr %s:error %s", cmd, exit, stderr, err)
 			return false, nil
 		}
 
 		return true, nil
 	})
+	return err
 }
 
 func (p *Provider) EnsureMarkControlPlane(ctx context.Context, c *v1.Cluster) error {
@@ -1649,8 +1653,8 @@ func (p *Provider) EnsureCheckAnywhereSubscription(ctx context.Context, c *v1.Cl
 	if err != nil {
 		return err
 	}
-	for _, feed := range sub.Spec.Feeds {
-		wait.PollImmediate(5*time.Second, 5*time.Minute, func() (bool, error) {
+	for i, feed := range sub.Spec.Feeds {
+		_ = wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
 			var helmrelease *appsv1alpha1.HelmRelease
 			helmrelease, err = extenderapi.GetHelmRelease(hubClient, extenderapi.GenerateHelmReleaseName(sub.Name, feed), mcls.Namespace)
 			if err != nil {
@@ -1658,7 +1662,14 @@ func (p *Provider) EnsureCheckAnywhereSubscription(ctx context.Context, c *v1.Cl
 				return false, nil
 			}
 			if helmrelease != nil && helmrelease.Status.Phase != "deployed" {
-				err = fmt.Errorf("helm release phase: %s", helmrelease.Status.Phase)
+				err = fmt.Errorf("%d/%d charts are deployed, %s is not deployed, phase: %s, description: %s, notes: %s",
+					i,
+					len(sub.Spec.Feeds),
+					feed.Name,
+					helmrelease.Status.Phase,
+					helmrelease.Status.Description,
+					helmrelease.Status.Notes,
+				)
 				return false, nil
 			}
 			return true, nil
@@ -1724,10 +1735,19 @@ func (p *Provider) EnsureModifyCluster(ctx context.Context, c *v1.Cluster) error
 	if err != nil {
 		return err
 	}
-	currentManagerCluster, err := extenderapi.GetManagedCluster(hubClient, c.Name)
+	var currentManagerCluster *clustersv1beta1.ManagedCluster
+	_ = wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
+		currentManagerCluster, err = extenderapi.GetManagedCluster(hubClient, c.Name)
+		if err != nil {
+			return false, nil
+		}
+		return true, nil
+	})
+
 	if err != nil {
-		return err
+		return fmt.Errorf("get mcls failed: %v", err)
 	}
+
 	hubAPIServerPort, err := strconv.ParseInt(hubAPIServerURL.Port(), 10, 32)
 	if err != nil {
 		return err
@@ -1753,9 +1773,17 @@ func (p *Provider) EnsureModifyClusterCredential(ctx context.Context, c *v1.Clus
 	if err != nil {
 		return err
 	}
-	currentManagerCluster, err := extenderapi.GetManagedCluster(hubClient, c.Name)
+	var currentManagerCluster *clustersv1beta1.ManagedCluster
+	_ = wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
+		currentManagerCluster, err = extenderapi.GetManagedCluster(hubClient, c.Name)
+		if err != nil {
+			return false, nil
+		}
+		return true, nil
+	})
+
 	if err != nil {
-		return err
+		return fmt.Errorf("get mcls failed: %v", err)
 	}
 
 	inClusterClient, err := kubernetes.NewForConfig(config)
@@ -1814,13 +1842,21 @@ func (p *Provider) EnsureKubeAPIServerRestart(ctx context.Context, c *v1.Cluster
 		return err
 	}
 
-	return wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
-		ok, err := apiclient.CheckPodReadyWithLabel(ctx, clientSet, "kube-system", "component=kube-apiserver")
+	ok := false
+	_ = wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
+		ok, err = apiclient.CheckPodReadyWithLabel(ctx, clientSet, "kube-system", "component=kube-apiserver")
 		if err != nil {
 			return false, nil
 		}
 		return ok, nil
 	})
+	if err != nil {
+		return fmt.Errorf("check kube-apiserver pod failed: %v", err)
+	}
+	if !ok {
+		return fmt.Errorf("kube-apiserver is not ready yet")
+	}
+	return nil
 }
 
 func (p *Provider) EnsureRegisterGlobalCluster(ctx context.Context, c *v1.Cluster) error {
@@ -1831,13 +1867,15 @@ func (p *Provider) EnsureRegisterGlobalCluster(ctx context.Context, c *v1.Cluste
 	}
 
 	// ensure api ready
-	err = wait.PollImmediate(5*time.Second, 10*time.Minute, func() (bool, error) {
+	_ = wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
 		_, err = platformClient.Clusters().List(ctx, metav1.ListOptions{})
 		if err != nil {
+			err = fmt.Errorf("check cluster resources failed %v", err)
 			return false, nil
 		}
 		_, err = platformClient.ClusterCredentials().List(ctx, metav1.ListOptions{})
 		if err != nil {
+			err = fmt.Errorf("check cluster credential resources failed %v", err)
 			return false, nil
 		}
 		return true, nil
@@ -1859,6 +1897,7 @@ func (p *Provider) EnsureRegisterGlobalCluster(ctx context.Context, c *v1.Cluste
 		return fmt.Errorf("cluster %s dont have credential reference", globalCluster.Name)
 	}
 	globalCluster.Spec.ClusterCredentialRef.Name = globalClusterCredentialName
+	globalCluster.Spec.Type = "Baremetal"
 	globalCluster.Status.Addresses = make([]platformv1.ClusterAddress, 0)
 	if err = completePlatformClusterAddresses(globalCluster); err != nil {
 		return err

@@ -173,6 +173,10 @@ func (in *Cluster) Host() (string, error) {
 }
 
 func (in *Cluster) AuthzWebhookEnabled() bool {
+	// for anyhwere case authz is always enable
+	if in.Spec.Type == "Anywhere" {
+		return true
+	}
 	return in.Spec.Features.AuthzWebhookAddr != nil &&
 		(in.Spec.Features.AuthzWebhookAddr.Builtin != nil || in.Spec.Features.AuthzWebhookAddr.External != nil)
 }
