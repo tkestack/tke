@@ -1705,6 +1705,11 @@ func (p *Provider) EnsureAnywhereAddons(ctx context.Context, c *v1.Cluster) erro
 		}
 
 		for _, app := range applications.Items {
+			if app.Spec.Chart.ChartName == "elastic-gpu-operator" {
+				QGPUQuotaAdmissionHost := c.Annotations[constants.QGPUQuotaAdmissionIPAnnotaion]
+				schedulerValue := "qgpu.scheduler.svcClusterIp=" + QGPUQuotaAdmissionHost
+				app.Spec.Values.Values = append(app.Spec.Values.Values, schedulerValue)
+			}
 			err := extenderClient.Create(ctx, &app)
 			if err != nil && !apierrors.IsAlreadyExists(err) {
 				return fmt.Errorf("create application %+v failed: %v", app, err)
