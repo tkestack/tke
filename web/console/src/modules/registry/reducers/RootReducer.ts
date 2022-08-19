@@ -157,9 +157,9 @@ export const RootReducer = combineReducers({
     actionType: ActionType.RemoveChartVersion
   }),
   removedChartVersions: reduceToPayload(ActionType.RemovedChartVersions, initRemovedChartVersionsState),
-  chartDetail: createFFObjectReducer(ActionType.Chart),
-  chartInfo: createFFObjectReducer(ActionType.ChartInfo),
-  chartVersionFile: createFFObjectReducer(ActionType.ChartVersionFile),
+  chartDetail: createFFObjectReducer({ actionName: ActionType.Chart }),
+  chartInfo: createFFObjectReducer({ actionName: ActionType.ChartInfo }),
+  chartVersionFile: createFFObjectReducer({ actionName: ActionType.ChartVersionFile }),
   appCreation: reduceToPayload(ActionType.UpdateAppCreationState, initAppCreationState),
   appValidator: createValidatorReducer(AppValidateSchema),
   appAddWorkflow: generateWorkflowReducer({

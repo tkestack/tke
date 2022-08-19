@@ -42,7 +42,10 @@ export enum ConsoleModuleEnum {
   Audit = 'audit',
 
   /** Helm应用模块 */
-  Application = 'application'
+  Application = 'application',
+
+  /** 中间件列表模块 */
+  Middleware = 'middleware'
 }
 
 export enum PlatformTypeEnum {
