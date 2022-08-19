@@ -1,4 +1,5 @@
 /*
+
  * Tencent is pleased to support the open source community by making TKEStack
  * available.
  *
@@ -34,7 +35,7 @@ import { BlankPage } from './blankPage';
 import { Overview } from '@src/modules/overview';
 import { PlatformTypeEnum } from './config';
 import { VNCPage } from '@src/modules/vnc';
-import { MiddlewareAppContainer } from '@tencent/paas-middleware';
+import { MiddlewareAppContainer } from './tencent/paas-midleware';
 
 const ClusterPromise = import(/* webpackPrefetch: true */ './src/modules/cluster');
 const Cluster = React.lazy(() => ClusterPromise);
