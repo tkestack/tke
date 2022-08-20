@@ -1865,7 +1865,6 @@ func (p *Provider) EnsureRegisterGlobalCluster(ctx context.Context, c *v1.Cluste
 	if err != nil {
 		return err
 	}
-
 	// ensure api ready
 	_ = wait.PollImmediate(5*time.Second, 3*time.Minute, func() (bool, error) {
 		_, err = platformClient.Clusters().List(ctx, metav1.ListOptions{})
@@ -1898,6 +1897,7 @@ func (p *Provider) EnsureRegisterGlobalCluster(ctx context.Context, c *v1.Cluste
 	}
 	globalCluster.Spec.ClusterCredentialRef.Name = globalClusterCredentialName
 	globalCluster.Spec.Type = "Baremetal"
+	globalCluster.Spec.DisplayName = "TKE"
 	globalCluster.Status.Addresses = make([]platformv1.ClusterAddress, 0)
 	if err = completePlatformClusterAddresses(globalCluster); err != nil {
 		return err
@@ -1911,6 +1911,7 @@ func (p *Provider) EnsureRegisterGlobalCluster(ctx context.Context, c *v1.Cluste
 	globalClusterCredential.Username = ""
 	globalClusterCredential.Impersonate = ""
 	globalClusterCredential.ImpersonateUserExtra = nil
+	delete(globalClusterCredential.Labels, platformv1.ClusterNameLable)
 	if token, ok := globalClusterCredential.Annotations[platformv1.CredentialTokenAnno]; ok {
 		tokenBytes, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
@@ -1930,29 +1931,45 @@ func (p *Provider) EnsureRegisterGlobalCluster(ctx context.Context, c *v1.Cluste
 		Reason:  "",
 	}, false)
 
-	_, err = platformClient.ClusterCredentials().Get(ctx, globalClusterCredential.Name, metav1.GetOptions{})
-	if err == nil {
-		err := platformClient.ClusterCredentials().Delete(ctx, globalClusterCredential.Name, metav1.DeleteOptions{})
-		if err != nil {
-			return err
-		}
-	}
-	_, err = platformClient.ClusterCredentials().Create(ctx, globalClusterCredential, metav1.CreateOptions{})
+	ccJson, _ := json.Marshal(globalClusterCredential)
+	clsJson, _ := json.Marshal(globalCluster)
+	machineSSH, err := c.Spec.Machines[0].SSH()
 	if err != nil {
 		return err
 	}
+	cmd := fmt.Sprintf("echo \"%s\" | kubectl apply -f -", string(ccJson))
+	_, err = machineSSH.CombinedOutput(cmd)
+	if err != nil {
+		return fmt.Errorf("create cluster credential failed: %v", err)
+	}
+	cmd = fmt.Sprintf("echo \"%s\" | kubectl apply -f -", string(clsJson))
+	_, err = machineSSH.CombinedOutput(cmd)
+	if err != nil {
+		return fmt.Errorf("create cluster failed: %v", err)
+	}
+	// _, err = platformClient.ClusterCredentials().Get(ctx, globalClusterCredential.Name, metav1.GetOptions{})
+	// if err == nil {
+	// 	err := platformClient.ClusterCredentials().Delete(ctx, globalClusterCredential.Name, metav1.DeleteOptions{})
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+	// _, err = platformClient.ClusterCredentials().Create(ctx, globalClusterCredential, metav1.CreateOptions{})
+	// if err != nil {
+	// 	return err
+	// }
 
-	_, err = platformClient.Clusters().Get(ctx, globalCluster.Name, metav1.GetOptions{})
-	if err == nil {
-		err := platformClient.Clusters().Delete(ctx, globalCluster.Name, metav1.DeleteOptions{})
-		if err != nil {
-			return err
-		}
-	}
-	_, err = platformClient.Clusters().Create(ctx, globalCluster, metav1.CreateOptions{})
-	if err != nil {
-		return err
-	}
+	// _, err = platformClient.Clusters().Get(ctx, globalCluster.Name, metav1.GetOptions{})
+	// if err == nil {
+	// 	err := platformClient.Clusters().Delete(ctx, globalCluster.Name, metav1.DeleteOptions{})
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+	// _, err = platformClient.Clusters().Create(ctx, globalCluster, metav1.CreateOptions{})
+	// if err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
