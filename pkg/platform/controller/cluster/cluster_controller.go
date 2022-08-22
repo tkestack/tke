@@ -425,6 +425,8 @@ func (c *Controller) onCreate(ctx context.Context, cluster *platformv1.Cluster) 
 			if err != nil {
 				return err
 			}
+		} else {
+			clusterWrapper.Cluster = cls
 		}
 	}
 
