@@ -20,19 +20,22 @@ import { combineReducers } from 'redux';
 import { createFFObjectActionType } from './ActionType';
 import { createBaseReducer, QueryState } from '../base';
 
-export function createFFObjectReducer<T, TFilter>(
-  actionName: string,
-  id?: string,
+export interface CreateFFObjectReducerProps<T, TFilter> {
+  actionName: string;
+  id?: string;
+
   initialData?: {
     object?: T;
     query?: QueryState<TFilter>;
-  }
-) {
+  };
+}
+export function createFFObjectReducer<T, TFilter>(props?: CreateFFObjectReducerProps<T, TFilter>) {
+  const { actionName, id, initialData } = props;
   const ActionType = createFFObjectActionType(actionName, id);
   const { fetchReducer, queryReducer } = createBaseReducer<T, TFilter>({
     actionType: ActionType.Base,
-    initData: initialData && initialData.object ? initialData.object : null,
-    initQuery: initialData && initialData.query ? initialData.query : null
+    initData: initialData?.object ?? null,
+    initQuery: initialData?.query ?? null
   });
 
   const TempReducer = combineReducers({
