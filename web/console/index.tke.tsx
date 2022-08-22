@@ -34,6 +34,7 @@ import { BlankPage } from './blankPage';
 import { Overview } from '@src/modules/overview';
 import { PlatformTypeEnum } from './config';
 import { VNCPage } from '@src/modules/vnc';
+import { MiddlewareAppContainer } from './tencent/paas-midleware';
 
 // const ClusterPromise = import(/* webpackPrefetch: true */ './src/modules/cluster');
 // const Cluster = React.lazy(() => ClusterPromise);
@@ -355,7 +356,18 @@ Entry.register({
         </Wrapper>
       )
     },
-
+    /**
+     * @url https://{{domain}}/tkestack/middleware
+     */
+    middleware: {
+      title: t('中间件列表 - TKEStack'),
+      container: (
+        <Wrapper platformType={PlatformTypeEnum.Manager}>
+          <ForbiddentDialog />
+          <MiddlewareAppContainer platform="tkeStack" />
+        </Wrapper>
+      )
+    },
     /**
      * @url https://{{domain}}/tkestack/audit
      */

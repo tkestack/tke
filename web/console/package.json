@@ -79,6 +79,7 @@
     "@babel/plugin-transform-runtime": "^7.12.1",
     "@babel/preset-env": "^7.0.0",
     "@babel/preset-react": "^7.0.0",
+    "@types/classnames": "^2.2.6",
     "@types/jquery": "^3.5.5",
     "@types/lodash": "^4.14.172",
     "@types/marked": "^0.6.3",

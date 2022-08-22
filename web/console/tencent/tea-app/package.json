@@ -1,0 +1,49 @@
+{
+  "name": "@tencent/tea-app",
+  "version": "2.1.6",
+  "description": "Tea app register and expose api",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "npm run build-cjs && rm -rf lib dts && npx tsc -m es2015 && mkdir -p lib/types && cp -r src/types/* lib/types",
+    "build-cjs": "rm -rf cjs && npx tsc -b tsconfig.cjs.json",
+    "watch": "rm -rf lib dts && npx tsc -w",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.code.oa.com/CFETeam/tea2"
+  },
+  "keywords": [
+    "tea"
+  ],
+  "author": "techirdliu@tencent.com",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@tencent/tea-component": "^2.4.0",
+    "@types/history": "^4.7.2",
+    "@types/i18next": "=12.1.0",
+    "@types/react": "^16.9.13",
+    "@types/react-dom": "^16.9.4",
+    "@types/react-i18next": "=8.1.0",
+    "@types/warning": "^3.0.0",
+    "react": "^16.9.0",
+    "react-dom": "^16.9.0",
+    "typescript": "^4.1.3"
+  },
+  "peerDependencies": {
+    "@tencent/tea-component": "^2.4.0",
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0",
+    "tencentcloud-sdk-nodejs": "^4.0.0"
+  },
+  "dependencies": {
+    "eventemitter3": "^4.0.0",
+    "hash-string": "=1.0.0",
+    "history": "=4.7.2",
+    "i18next": "=13.1.5",
+    "react-i18next": "=9.0.2",
+    "tencentcloud-sdk-nodejs": "^4.0.0",
+    "warning": "^4.0.3"
+  }
+}
