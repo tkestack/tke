@@ -1863,7 +1863,7 @@ func (p *Provider) EnsureRegisterGlobalCluster(ctx context.Context, c *v1.Cluste
 	var err error
 	platformClient, err := c.PlatformClientsetForBootstrap()
 	if err != nil {
-		return err
+		return fmt.Errorf("get platfomr client failed: %v", err)
 	}
 
 	// ensure api ready
@@ -1898,9 +1898,14 @@ func (p *Provider) EnsureRegisterGlobalCluster(ctx context.Context, c *v1.Cluste
 	}
 	globalCluster.Spec.ClusterCredentialRef.Name = globalClusterCredentialName
 	globalCluster.Spec.Type = "Baremetal"
+	globalCluster.Spec.DisplayName = "TKE"
 	globalCluster.Status.Addresses = make([]platformv1.ClusterAddress, 0)
 	if err = completePlatformClusterAddresses(globalCluster); err != nil {
-		return err
+		return fmt.Errorf("complete platfor cluster addr failed: %v", err)
+	}
+
+	for i := range globalCluster.Spec.Machines {
+		globalCluster.Spec.Machines[i].Proxy = platformv1.ClusterMachineProxy{}
 	}
 
 	globalClusterCredential.Name = globalClusterCredentialName
@@ -1911,10 +1916,11 @@ func (p *Provider) EnsureRegisterGlobalCluster(ctx context.Context, c *v1.Cluste
 	globalClusterCredential.Username = ""
 	globalClusterCredential.Impersonate = ""
 	globalClusterCredential.ImpersonateUserExtra = nil
+	delete(globalClusterCredential.Labels, platformv1.ClusterNameLable)
 	if token, ok := globalClusterCredential.Annotations[platformv1.CredentialTokenAnno]; ok {
 		tokenBytes, err := base64.StdEncoding.DecodeString(token)
 		if err != nil {
-			return err
+			return fmt.Errorf("decode annotaions platformv1.CredentialTokenAnno %s failed: %v", token, err)
 		}
 		tokenStr := string(tokenBytes)
 		globalClusterCredential.Token = &tokenStr
@@ -1934,11 +1940,14 @@ func (p *Provider) EnsureRegisterGlobalCluster(ctx context.Context, c *v1.Cluste
 	if err == nil {
 		err := platformClient.ClusterCredentials().Delete(ctx, globalClusterCredential.Name, metav1.DeleteOptions{})
 		if err != nil {
-			return err
+			return fmt.Errorf("clean cluster credential failed: %v", err)
 		}
 	}
 	_, err = platformClient.ClusterCredentials().Create(ctx, globalClusterCredential, metav1.CreateOptions{})
 	if err != nil {
+		if err != nil {
+			return fmt.Errorf("create cluster credential failed: %v", err)
+		}
 		return err
 	}
 
@@ -1946,12 +1955,12 @@ func (p *Provider) EnsureRegisterGlobalCluster(ctx context.Context, c *v1.Cluste
 	if err == nil {
 		err := platformClient.Clusters().Delete(ctx, globalCluster.Name, metav1.DeleteOptions{})
 		if err != nil {
-			return err
+			return fmt.Errorf("clean cluster failed: %v", err)
 		}
 	}
 	_, err = platformClient.Clusters().Create(ctx, globalCluster, metav1.CreateOptions{})
 	if err != nil {
-		return err
+		return fmt.Errorf("create cluster failed: %v", err)
 	}
 
 	return nil
