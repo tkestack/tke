@@ -59,7 +59,7 @@ func (i *clusterInspector) Inspect(handler http.Handler, c *genericapiserver.Con
 		}
 		ctx := req.Context()
 		username, tenantID := authentication.UsernameAndTenantID(ctx)
-		if (username == i.privilegedUsername || username == "system:apiserver") && tenantID == "" {
+		if (username == i.privilegedUsername || username == "system:apiserver" || username == "system:serviceaccount:clusternet-system:clusternet-app-deployer") && tenantID == "" {
 			handler.ServeHTTP(w, req)
 			return
 		}
