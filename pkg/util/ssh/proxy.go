@@ -27,7 +27,8 @@ import (
 )
 
 type Proxy interface {
-	ProxyConn(targetAddr string) (net.Conn, func(), error)
+	ProxyConn(targetAddr string) (conn net.Conn, closer func(), err error)
+	CheckTunnel() (err error)
 }
 
 var _ Proxy = JumpServer{}
@@ -76,4 +77,20 @@ func (sj JumpServer) ProxyConn(targetAddr string) (net.Conn, func(), error) {
 	case <-time.After(sshstruct.DialTimeOut):
 		return nil, nil, fmt.Errorf("proxy %s dial %s time out in %s", sshstruct.Host, targetAddr, sshstruct.DialTimeOut.String())
 	}
+}
+
+func (sj JumpServer) CheckTunnel() error {
+	sshstruct, err := New(&sj.Config)
+	if err != nil {
+		return err
+	}
+	if sshstruct.DialTimeOut == 0 {
+		sshstruct.DialTimeOut = time.Second
+	}
+	_, closer, err := sshstruct.newClient()
+	if err != nil {
+		return err
+	}
+	closer()
+	return nil
 }

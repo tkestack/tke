@@ -121,6 +121,8 @@ const (
 	CredentialTokenAnno = "tkestack.io/credential-token"
 	// AnywhereApplicationAnno contains base64 application json data
 	AnywhereApplicationAnno = "tkestack.io/anywhere-application"
+	// AnywhereValidateAnno is exist, the cluster will always return validate result
+	AnywhereValidateAnno = "tkestack.io/anywhere-validate"
 )
 
 // KubeVendorType describe the kubernetes provider of the cluster

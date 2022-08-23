@@ -54,14 +54,14 @@ var (
 
 // ValidateCluster validates a given Cluster.
 func ValidateCluster(platformClient platformv1client.PlatformV1Interface, obj *types.Cluster) field.ErrorList {
-	allErrs := ValidatClusterSpec(platformClient, obj.Name, &obj.Spec, field.NewPath("spec"), obj.Status.Phase, true)
+	allErrs := ValidatClusterSpec(platformClient, obj.Name, obj.Cluster, field.NewPath("spec"), obj.Status.Phase, true)
 	return allErrs
 }
 
 // ValidateCluster validates a given Cluster.
 func ValidateClusterUpdate(platformClient platformv1client.PlatformV1Interface, cluster *types.Cluster, oldCluster *types.Cluster) field.ErrorList {
 	fldPath := field.NewPath("spec")
-	allErrs := ValidatClusterSpec(platformClient, cluster.Name, &cluster.Spec, fldPath, cluster.Status.Phase, false)
+	allErrs := ValidatClusterSpec(platformClient, cluster.Name, cluster.Cluster, fldPath, cluster.Status.Phase, false)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.NetworkDevice, oldCluster.Spec.NetworkDevice, fldPath.Child("networkDevice"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.ClusterCIDR, oldCluster.Spec.ClusterCIDR, fldPath.Child("clusterCIDR"))...)
 	allErrs = append(allErrs, apimachineryvalidation.ValidateImmutableField(cluster.Spec.DNSDomain, oldCluster.Spec.DNSDomain, fldPath.Child("dnsDomain"))...)
@@ -99,17 +99,17 @@ func ValidateClusterScale(cluster *platform.Cluster, oldCluster *platform.Cluste
 }
 
 // ValidatClusterSpec validates a given ClusterSpec.
-func ValidatClusterSpec(platformClient platformv1client.PlatformV1Interface, clusterName string, spec *platform.ClusterSpec, fldPath *field.Path, phase platform.ClusterPhase, validateMachine bool) field.ErrorList {
+func ValidatClusterSpec(platformClient platformv1client.PlatformV1Interface, clusterName string, cls *platform.Cluster, fldPath *field.Path, phase platform.ClusterPhase, validateMachine bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	allErrs = append(allErrs, ValidateClusterSpecVersion(platformClient, clusterName, spec.Version, fldPath.Child("version"), phase)...)
-	allErrs = append(allErrs, ValidateCIDRs(spec, fldPath)...)
-	allErrs = append(allErrs, ValidateClusterProperty(spec, fldPath.Child("properties"))...)
+	allErrs = append(allErrs, ValidateClusterSpecVersion(platformClient, clusterName, cls.Spec.Version, fldPath.Child("version"), phase)...)
+	allErrs = append(allErrs, ValidateCIDRs(&cls.Spec, fldPath)...)
+	allErrs = append(allErrs, ValidateClusterProperty(&cls.Spec, fldPath.Child("properties"))...)
 	if validateMachine {
-		allErrs = append(allErrs, ValidateClusterMachines(spec.Machines, fldPath.Child("machines"))...)
+		allErrs = append(allErrs, ValidateClusterMachines(cls, fldPath.Child("machines"))...)
 	}
-	allErrs = append(allErrs, ValidateClusterGPUMachines(spec.Machines, fldPath.Child("machines"))...)
-	allErrs = append(allErrs, ValidateClusterFeature(spec, fldPath.Child("features"))...)
+	allErrs = append(allErrs, ValidateClusterGPUMachines(cls.Spec.Machines, fldPath.Child("machines"))...)
+	allErrs = append(allErrs, ValidateClusterFeature(&cls.Spec, fldPath.Child("features"))...)
 
 	return allErrs
 }
@@ -145,15 +145,19 @@ func ValidateClusterSpecVersion(platformClient platformv1client.PlatformV1Interf
 }
 
 // ValidateClusterMachines validates a given CluterMachines.
-func ValidateClusterMachines(machines []platform.ClusterMachine, fldPath *field.Path) field.ErrorList {
+func ValidateClusterMachines(cls *platform.Cluster, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if machines == nil {
-		return allErrs
-	}
+	proxyErrs := field.ErrorList{}
+	sshErrs := field.ErrorList{}
+	timeErrs := field.ErrorList{}
+
+	proxyResult := TKEValidateResult{}
+	sshResult := TKEValidateResult{}
+	timeResult := TKEValidateResult{}
 
 	var masters []*ssh.SSH
-	for i, one := range machines {
+	for i, one := range cls.Spec.Machines {
 		var proxy ssh.Proxy
 		switch one.Proxy.Type {
 		case platform.SSHJumpServer:
@@ -168,20 +172,71 @@ func ValidateClusterMachines(machines []platform.ClusterMachine, fldPath *field.
 			sshproxy.Retry = 0
 			proxy = sshproxy
 		}
-		sshErrors := ValidateSSH(fldPath.Index(i), one.IP, int(one.Port), one.Username, one.Password, one.PrivateKey, one.PassPhrase, proxy)
-		if sshErrors != nil {
-			allErrs = append(allErrs, sshErrors...)
-		} else {
+		proxyErrs = append(proxyErrs, ValidateProxy(fldPath.Index(i), one.IP, int(one.Port), one.Username, one.Password, one.PrivateKey, one.PassPhrase, proxy)...)
+		proxyResult.Checked = true
+		// if proxy has err, no need to check ssh
+		if len(proxyErrs) == 0 {
+			sshErrs = append(sshErrs, ValidateSSH(fldPath.Index(i), one.IP, int(one.Port), one.Username, one.Password, one.PrivateKey, one.PassPhrase, proxy)...)
+			// when get ssh err or last machine ssh is checked, ssh can be considered checked
+			if len(sshErrs) != 0 || i == len(cls.Spec.Machines)-1 {
+				sshResult.Checked = true
+			}
+		}
+		if len(sshErrs) == 0 && len(proxyErrs) == 0 {
 			master, _ := one.SSH()
 			masters = append(masters, master)
 		}
 	}
 
-	if len(masters) == len(machines) {
-		allErrs = append(allErrs, ValidateMasterTimeOffset(fldPath, masters)...)
+	if len(masters) == len(cls.Spec.Machines) {
+		timeErrs = ValidateMasterTimeOffset(fldPath, masters)
+		timeResult.Checked = true
+	}
+	if _, ok := cls.Annotations[platform.AnywhereValidateAnno]; ok {
+		proxyResult.Name = "TunnelConnectivity"
+		proxyResult.Description = "Verify Proxy Tunnel Connectivity"
+		proxyResult.ErrorList = proxyErrs
 
+		sshResult.Name = "SSH"
+		sshResult.Description = "Verify SSH is Available"
+		sshResult.ErrorList = sshErrs
+
+		timeResult.Name = "TimeDiff"
+		timeResult.Description = fmt.Sprintf("Verify Clock Gap between Master nodes is not More than %d Second(s)", MaxTimeOffset)
+		timeResult.ErrorList = timeErrs
+
+		allErrs = append(allErrs, proxyResult.ToFieldError(), sshResult.ToFieldError(), timeResult.ToFieldError())
+	} else {
+		allErrs = append(allErrs, proxyErrs...)
+		allErrs = append(allErrs, sshErrs...)
+		allErrs = append(allErrs, timeErrs...)
 	}
 
+	return allErrs
+}
+
+func ValidateProxy(fldPath *field.Path, ip string, port int, user string, password []byte, privateKey []byte, passPhrase []byte, proxy ssh.Proxy) field.ErrorList {
+	allErrs := field.ErrorList{}
+	sshConfig := &ssh.Config{
+		User:        user,
+		Host:        ip,
+		Port:        port,
+		Password:    string(password),
+		PrivateKey:  privateKey,
+		PassPhrase:  passPhrase,
+		DialTimeOut: time.Second,
+		Retry:       0,
+		Proxy:       proxy,
+	}
+	s, err := ssh.New(sshConfig)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("proxy"), "", err.Error()))
+		return allErrs
+	}
+	err = s.CheckProxyTunnel()
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("proxy"), "", err.Error()))
+	}
 	return allErrs
 }
 
