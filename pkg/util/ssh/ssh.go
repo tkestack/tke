@@ -114,6 +114,13 @@ func New(c *Config) (*SSH, error) {
 	}, nil
 }
 
+func (s *SSH) CheckProxyTunnel() error {
+	if s.Proxy != nil {
+		return s.Proxy.CheckTunnel()
+	}
+	return fmt.Errorf("no proxy is set")
+}
+
 func (s *SSH) Ping() error {
 	_, _, _, err := s.Exec("pwd")
 

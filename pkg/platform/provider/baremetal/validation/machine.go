@@ -38,7 +38,7 @@ import (
 	"tkestack.io/tke/pkg/util/ssh"
 )
 
-const MaxTimeOffset = 5 * 300
+const MaxTimeOffset = 5
 
 // ValidateMachine validates a given machine.
 func ValidateMachine(machine *platform.Machine, cluster *platformv1.Cluster, platformClient platformv1client.PlatformV1Interface) field.ErrorList {
