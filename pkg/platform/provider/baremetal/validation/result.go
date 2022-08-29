@@ -25,12 +25,12 @@ import (
 )
 
 type TKEValidateResult struct {
-	Name        string          `json:"name"`
-	Description string          `json:"description"`
-	Checked     bool            `json:"checked"`
-	Passed      bool            `json:"passed"`
+	Name        string          `json:"Name"`
+	Description string          `json:"Description"`
+	Checked     bool            `json:"Checked"`
+	Passed      bool            `json:"Passed"`
 	ErrorList   field.ErrorList `json:"-"`
-	Detail      string          `json:"detail"`
+	Detail      string          `json:"Detail"`
 }
 
 func (r TKEValidateResult) ToFieldError() *field.Error {
