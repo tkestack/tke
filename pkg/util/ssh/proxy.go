@@ -62,7 +62,7 @@ func (sj JumpServer) ProxyConn(targetAddr string) (net.Conn, func(), error) {
 			closer()
 			log.Errorf("proxy %s dial %s failed: %v", sj.Host, targetAddr)
 		} else {
-			log.Infof("proxy %s dial %s sucess", sj.Host, targetAddr)
+			log.Debugf("proxy %s dial %s sucess", sj.Host, targetAddr)
 		}
 		r := result{conn: conn, err: err}
 		ch <- r

@@ -20,6 +20,7 @@ package validation
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"strings"
@@ -172,7 +173,7 @@ func ValidateClusterMachines(cls *platform.Cluster, fldPath *field.Path) field.E
 			sshproxy.Retry = 0
 			proxy = sshproxy
 		}
-		proxyErrs = append(proxyErrs, ValidateProxy(fldPath.Index(i), one.IP, int(one.Port), one.Username, one.Password, one.PrivateKey, one.PassPhrase, proxy)...)
+		proxyErrs = append(proxyErrs, ValidateProxy(fldPath.Index(i), proxy)...)
 		proxyResult.Checked = true
 		// if proxy has err, no need to check ssh
 		if len(proxyErrs) == 0 {
@@ -193,15 +194,15 @@ func ValidateClusterMachines(cls *platform.Cluster, fldPath *field.Path) field.E
 		timeResult.Checked = true
 	}
 	if _, ok := cls.Annotations[platform.AnywhereValidateAnno]; ok {
-		proxyResult.Name = "TunnelConnectivity"
+		proxyResult.Name = AnywhereValidateItemTunnelConnectivity
 		proxyResult.Description = "Verify Proxy Tunnel Connectivity"
 		proxyResult.ErrorList = proxyErrs
 
-		sshResult.Name = "SSH"
+		sshResult.Name = AnywhereValidateItemSSH
 		sshResult.Description = "Verify SSH is Available"
 		sshResult.ErrorList = sshErrs
 
-		timeResult.Name = "TimeDiff"
+		timeResult.Name = AnywhereValidateItemTimeDiff
 		timeResult.Description = fmt.Sprintf("Verify Clock Gap between Master nodes is not More than %d Second(s)", MaxTimeOffset)
 		timeResult.ErrorList = timeErrs
 
@@ -215,15 +216,13 @@ func ValidateClusterMachines(cls *platform.Cluster, fldPath *field.Path) field.E
 	return allErrs
 }
 
-func ValidateProxy(fldPath *field.Path, ip string, port int, user string, password []byte, privateKey []byte, passPhrase []byte, proxy ssh.Proxy) field.ErrorList {
+func ValidateProxy(fldPath *field.Path, proxy ssh.Proxy) field.ErrorList {
 	allErrs := field.ErrorList{}
 	sshConfig := &ssh.Config{
-		User:        user,
-		Host:        ip,
-		Port:        port,
-		Password:    string(password),
-		PrivateKey:  privateKey,
-		PassPhrase:  passPhrase,
+		User:        "validate",
+		Host:        "127.0.0.1",
+		Port:        22,
+		Password:    base64.StdEncoding.EncodeToString([]byte("validate")),
 		DialTimeOut: time.Second,
 		Retry:       0,
 		Proxy:       proxy,
