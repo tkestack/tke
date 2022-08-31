@@ -43,6 +43,7 @@ const (
          "apiVersion" : "v1beta1",
          "enableHttps" : false,
          "filterVerb" : "filter",
+         "urlPrefix" : "",
          "weight": 1,
          "managedResources" : [
             {
