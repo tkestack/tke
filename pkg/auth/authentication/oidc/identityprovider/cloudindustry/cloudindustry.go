@@ -214,7 +214,6 @@ func (i *identityProvider) ListUsers(ctx context.Context, options *metainternal.
 	if options != nil {
 		keyword, limit := util.ParseQueryKeywordAndLimit(options)
 		accountsRequest.SearchKey = keyword
-		accountsRequest.SearchKey = keyword
 		accountsRequest.Limit = strconv.Itoa(limit)
 	}
 	bytes, _ := json.Marshal(accountsRequest)
