@@ -23,6 +23,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"helm.sh/helm/v3/pkg/registry"
+
 	"helm.sh/helm/v3/pkg/action"
 	// "helm.sh/helm/v3/pkg/downloader"
 	// "helm.sh/helm/v3/pkg/getter"
@@ -38,8 +40,13 @@ type PullOptions struct {
 
 // Pull is the action for pulling a chart.
 func (c *Client) Pull(options *PullOptions) (string, error) {
-	client := action.NewPull()
-
+	actionConfig := new(action.Configuration)
+	var err error
+	actionConfig.RegistryClient, err = registry.NewClient()
+	if err != nil {
+		return "", err
+	}
+	client := action.NewPullWithOpts(action.WithConfig(actionConfig))
 	settings, err := NewSettings(options.ChartRepo)
 	if err != nil {
 		return "", err

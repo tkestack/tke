@@ -33,6 +33,7 @@ import (
 	"k8s.io/apiserver/pkg/authentication/token/tokenfile"
 	tokenunion "k8s.io/apiserver/pkg/authentication/token/union"
 	"k8s.io/apiserver/plugin/pkg/authenticator/token/webhook"
+	"k8s.io/client-go/tools/clientcmd"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/localtrust"
@@ -193,7 +194,11 @@ func newAuthenticatorFromOIDCIssuerURL(opts *oidc.Options) (authenticator.Token,
 }
 
 func newWebhookTokenAuthenticator(webhookConfigFile string, version string, ttl time.Duration, implicitAuds authenticator.Audiences) (authenticator.Token, error) {
-	webhookTokenAuthenticator, err := webhook.New(webhookConfigFile, version, implicitAuds, *webhook.DefaultRetryBackoff(), nil)
+	restconfig, err := clientcmd.BuildConfigFromFlags("", webhookConfigFile)
+	if err != nil {
+		return nil, err
+	}
+	webhookTokenAuthenticator, err := webhook.New(restconfig, version, implicitAuds, *webhook.DefaultRetryBackoff())
 	if err != nil {
 		return nil, err
 	}

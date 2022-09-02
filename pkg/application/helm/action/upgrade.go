@@ -58,6 +58,9 @@ type UpgradeOptions struct {
 	// MaxHistory limits the maximum number of revisions saved per release
 	MaxHistory int
 
+	Wait        bool
+	WaitForJobs bool
+
 	DependencyUpdate bool
 	ReleaseName      string
 	Values           map[string]interface{}
@@ -73,8 +76,9 @@ func (c *Client) Upgrade(options *UpgradeOptions) (*release.Release, error) {
 		// If a release does not exist, install it.
 		histClient := action.NewHistory(actionConfig)
 		histClient.Max = 1
-		if _, err := histClient.Run(options.ReleaseName); err == driver.ErrReleaseNotFound {
-			log.Infof("Release %q does not exist. Installing it now.\n", options.ReleaseName)
+		_, err = histClient.Run(options.ReleaseName)
+		if err == driver.ErrReleaseNotFound {
+			log.Infof("Release %d does not exist. Installing it now.", options.ReleaseName)
 			return c.Install(&InstallOptions{
 				DryRun:           options.DryRun,
 				DependencyUpdate: options.DependencyUpdate,
@@ -84,6 +88,8 @@ func (c *Client) Upgrade(options *UpgradeOptions) (*release.Release, error) {
 				Description:      options.Description,
 				ChartPathOptions: options.ChartPathOptions,
 				Values:           options.Values,
+				Wait:             options.Wait,
+				WaitForJobs:      options.WaitForJobs,
 			})
 		} else if err != nil {
 			return nil, err
@@ -98,6 +104,8 @@ func (c *Client) Upgrade(options *UpgradeOptions) (*release.Release, error) {
 	client.ResetValues = options.ResetValues
 	client.ReuseValues = options.ReuseValues
 	client.MaxHistory = options.MaxHistory
+	client.Wait = options.Wait
+	client.WaitForJobs = options.WaitForJobs
 
 	options.ChartPathOptions.ApplyTo(&client.ChartPathOptions)
 

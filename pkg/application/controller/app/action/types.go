@@ -22,4 +22,5 @@ import (
 	"time"
 )
 
-const clientTimeOut = 300 * time.Second
+// use helm --wait, so set long timeout
+const clientTimeOut = 600 * time.Second
