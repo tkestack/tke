@@ -213,12 +213,12 @@ func (i *identityProvider) ListUsers(ctx context.Context, options *metainternal.
 	accountsRequest.AccountIds = ids.Response.SubIds
 	if options != nil {
 		keyword, limit := util.ParseQueryKeywordAndLimit(options)
-		params := accountsRequest.GetParams()
-		params["SearchKey"] = keyword
-		params["Limit"] = strconv.Itoa(limit)
+		accountsRequest.SearchKey = keyword
+		accountsRequest.SearchKey = keyword
+		accountsRequest.Limit = strconv.Itoa(limit)
 	}
-	bytes, _ := json.Marshal(accountsRequest.GetParams())
-	log.Infof("request params '%s'", string(bytes))
+	bytes, _ := json.Marshal(accountsRequest)
+	log.Debugf("request '%s'", string(bytes))
 
 	accounts, err := i.client.DescribeAccounts(accountsRequest)
 	if err != nil {
@@ -226,7 +226,7 @@ func (i *identityProvider) ListUsers(ctx context.Context, options *metainternal.
 		return nil, apierrors.NewInternalError(err)
 	}
 	bytes, _ = json.Marshal(accounts)
-	log.Infof("accounts '%s'", string(bytes))
+	log.Debugf("accounts '%s'", string(bytes))
 	if accounts.Response == nil || len(accounts.Response.Accounts) == 0 {
 		return &auth.UserList{}, nil
 	}
