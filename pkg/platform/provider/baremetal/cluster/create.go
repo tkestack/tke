@@ -1815,6 +1815,7 @@ func (p *Provider) EnsureModifyClusterCredential(ctx context.Context, c *v1.Clus
 		"clusternet-token": string(token),
 	}
 	c.RegisterRestConfig(c.ClusterCredential.RESTConfig(c.Cluster))
+	c.IsCredentialChanged = true
 	return nil
 }
 
