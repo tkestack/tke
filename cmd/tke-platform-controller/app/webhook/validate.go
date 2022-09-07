@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"k8s.io/api/admission/v1"
+	v1 "k8s.io/api/admission/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -111,7 +111,7 @@ func ValidateCluster(cluster *platform.Cluster) *v1.AdmissionResponse {
 			Allowed: true,
 		}
 	}
-	return transferErrorList(&errorList, fmt.Sprintf("cluster %s create validate failed", cluster.Name))
+	return transferErrorList(&errorList, fmt.Sprintf("cluster %s create validate failed: %v", cluster.Name, errorList.ToAggregate().Errors()))
 }
 
 func ValidateClusterUpdate(cluster *platform.Cluster, oldCluster *platform.Cluster) *v1.AdmissionResponse {
@@ -127,7 +127,7 @@ func ValidateClusterUpdate(cluster *platform.Cluster, oldCluster *platform.Clust
 			Allowed: true,
 		}
 	}
-	return transferErrorList(&errorList, fmt.Sprintf("cluster %s update validate failed", oldCluster.Name))
+	return transferErrorList(&errorList, fmt.Sprintf("cluster %s update validate failed: %v", oldCluster.Name, errorList.ToAggregate().Errors()))
 }
 
 func transferErrorList(errorList *field.ErrorList, failedMessage string) *v1.AdmissionResponse {
