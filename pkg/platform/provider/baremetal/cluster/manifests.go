@@ -50,23 +50,8 @@ const (
                "name" : "tke.cloud.tencent.com/eni-ip"
             }
          ],
-         "nodeCacheCapable" : false
-      },
-      {
-         "urlPrefix": "http://{{.QGPUQuotaAdmissionHost}}:12345/scheduler",
-         "filterVerb" : "filter",
-         "prioritizeVerb": "priorities",
-         "weight": 10,
-         "bindVerb": "bind",
-         "nodeCacheCapable": true,
-         "managedResources" : [
-            {
-               "name": "tke.cloud.tencent.com/qgpu-core"
-            },
-            {
-               "name" : "tke.cloud.tencent.com/qgpu-memory"
-            }
-         ]
+         "nodeCacheCapable" : false,
+         "urlPrefix" : ""
       }
    ],
    "kind" : "Policy"
