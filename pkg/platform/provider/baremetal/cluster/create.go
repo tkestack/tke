@@ -511,14 +511,23 @@ func (p *Provider) EnsureContainerRuntime(ctx context.Context, c *v1.Cluster) er
 	return p.EnsureContainerd(ctx, c)
 }
 
+func (p *Provider) getImagePrefix(c *v1.Cluster) string {
+	if anno, ok := c.Annotations[platformv1.LocationBasedImagePrefixAnno]; ok {
+		return anno
+	}
+	return containerregistryutil.GetPrefix()
+}
+
 func (p *Provider) EnsureContainerd(ctx context.Context, c *v1.Cluster) error {
 	insecureRegistries := []string{p.Config.Registry.Domain}
 	if c.Spec.TenantID != "" {
 		insecureRegistries = append(insecureRegistries, c.Spec.TenantID+"."+p.Config.Registry.Domain)
 	}
+	prefix := p.getImagePrefix(c)
 	option := &containerd.Option{
 		InsecureRegistries: insecureRegistries,
-		SandboxImage:       images.Get().Pause.FullName(),
+		SandboxImage:       path.Join(prefix, images.Get().Pause.BaseName()),
+		RegistryMirror:     prefix,
 	}
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
@@ -838,7 +847,11 @@ func (p *Provider) EnsureKubeadmInitPhaseKubeletStart(ctx context.Context, c *v1
 			phase += fmt.Sprintf(" --node-name=%s", c.Spec.Machines[0].IP)
 		}
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), phase)
+	err = kubeadm.WriteInitConfig(machineSSH, p.getKubeadmInitConfig(c))
+	if err != nil {
+		return err
+	}
+	return kubeadm.Init(machineSSH, phase)
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseCerts(ctx context.Context, c *v1.Cluster) error {
@@ -849,7 +862,7 @@ func (p *Provider) EnsureKubeadmInitPhaseCerts(ctx context.Context, c *v1.Cluste
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "certs all")
+	return kubeadm.Init(machineSSH, "certs all")
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseKubeConfig(ctx context.Context, c *v1.Cluster) error {
@@ -860,7 +873,7 @@ func (p *Provider) EnsureKubeadmInitPhaseKubeConfig(ctx context.Context, c *v1.C
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "kubeconfig all")
+	return kubeadm.Init(machineSSH, "kubeconfig all")
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseControlPlane(ctx context.Context, c *v1.Cluster) error {
@@ -871,7 +884,7 @@ func (p *Provider) EnsureKubeadmInitPhaseControlPlane(ctx context.Context, c *v1
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "control-plane all")
+	return kubeadm.Init(machineSSH, "control-plane all")
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseETCD(ctx context.Context, c *v1.Cluster) error {
@@ -882,7 +895,7 @@ func (p *Provider) EnsureKubeadmInitPhaseETCD(ctx context.Context, c *v1.Cluster
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "etcd local")
+	return kubeadm.Init(machineSSH, "etcd local")
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseUploadConfig(ctx context.Context, c *v1.Cluster) error {
@@ -893,7 +906,7 @@ func (p *Provider) EnsureKubeadmInitPhaseUploadConfig(ctx context.Context, c *v1
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "upload-config all ")
+	return kubeadm.Init(machineSSH, "upload-config all ")
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseUploadCerts(ctx context.Context, c *v1.Cluster) error {
@@ -901,7 +914,7 @@ func (p *Provider) EnsureKubeadmInitPhaseUploadCerts(ctx context.Context, c *v1.
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "upload-certs --upload-certs")
+	return kubeadm.Init(machineSSH, "upload-certs --upload-certs")
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseBootstrapToken(ctx context.Context, c *v1.Cluster) error {
@@ -912,7 +925,7 @@ func (p *Provider) EnsureKubeadmInitPhaseBootstrapToken(ctx context.Context, c *
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "bootstrap-token")
+	return kubeadm.Init(machineSSH, "bootstrap-token")
 }
 
 func (p *Provider) EnsureKubeadmInitPhaseAddon(ctx context.Context, c *v1.Cluster) error {
@@ -923,7 +936,7 @@ func (p *Provider) EnsureKubeadmInitPhaseAddon(ctx context.Context, c *v1.Cluste
 	if err != nil {
 		return err
 	}
-	return kubeadm.Init(machineSSH, p.getKubeadmInitConfig(c), "addon all")
+	return kubeadm.Init(machineSSH, "addon all")
 }
 
 func (p *Provider) EnsureGalaxy(ctx context.Context, c *v1.Cluster) error {

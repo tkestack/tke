@@ -102,16 +102,15 @@ func Install(s ssh.Interface, option *Option) error {
 	return nil
 }
 
-func Init(s ssh.Interface, kubeadmConfig *InitConfig, phase string, preActions ...string) error {
+func WriteInitConfig(s ssh.Interface, kubeadmConfig *InitConfig) error {
 	configData, err := kubeadmConfig.Marshal()
 	if err != nil {
 		return err
 	}
-	err = s.WriteFile(bytes.NewReader(configData), constants.KubeadmConfigFileName)
-	if err != nil {
-		return err
-	}
+	return s.WriteFile(bytes.NewReader(configData), constants.KubeadmConfigFileName)
+}
 
+func Init(s ssh.Interface, phase string, preActions ...string) error {
 	cmd, err := template.ParseString(initCmd, map[string]interface{}{
 		"Phase":  phase,
 		"Config": constants.KubeadmConfigFileName,
