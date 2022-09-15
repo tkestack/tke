@@ -30,7 +30,14 @@ import (
 func GetNetworkInterface(s Interface, ip string) string {
 	stdout, _, _, _ := s.Execf("ip a | grep '%s' |awk '{print $NF}'", ip)
 
-	return stdout
+	return strings.Replace(stdout, "\n", "", -1)
+}
+
+// GetDefaultRouteInterface returns default router network interface
+func GetDefaultRouteInterface(s Interface) string {
+	stdout, _, _, _ := s.Exec("route | grep 'default' |awk '{print $NF}'")
+
+	return strings.Replace(stdout, "\n", "", -1)
 }
 
 // Timestamp returns target node timestamp.
@@ -113,4 +120,60 @@ func DiskAvail(s Interface, path string) (int, error) {
 	}
 
 	return disk, nil
+}
+
+// OSVersion returns os version.
+func OSVersion(s Interface) (os string, err error) {
+	var id, version string
+	releasePath := "/etc/os-release"
+	stdout, err := s.CombinedOutput("cat " + releasePath)
+	if err != nil {
+		return "", err
+	}
+	for _, line := range strings.Split(string(stdout), "\n") {
+		if strings.Contains(line, "=") {
+			item := strings.Split(line, "=")
+			item[0] = strings.TrimPrefix(item[0], "\"")
+			item[0] = strings.TrimSuffix(item[0], "\"")
+			item[1] = strings.TrimPrefix(item[1], "\"")
+			item[1] = strings.TrimSuffix(item[1], "\"")
+			switch item[0] {
+			case "ID":
+				id = item[1]
+			case "VERSION_ID":
+				version = item[1]
+			}
+		}
+	}
+	if len(id) == 0 {
+		return "", fmt.Errorf("can not get os ID from %s", releasePath)
+	}
+
+	if len(version) == 0 {
+		return "", fmt.Errorf("can not get os version ID from %s", releasePath)
+	}
+
+	return id + version, nil
+}
+
+func ReservePorts(s Interface, ports []int) error {
+	var cmd, errMessage string
+	for _, port := range ports {
+		cmd += fmt.Sprintf(`bash -c "</dev/tcp/127.0.0.1/%d" &>/dev/null; echo $?; `, port)
+	}
+	out, _, _, _ := s.Exec(cmd)
+	out = strings.TrimSuffix(out, "\n")
+	results := strings.Split(out, "\n")
+	if len(results) != len(ports) {
+		return fmt.Errorf("check results length does not match need check ports length, get results output is: %s", out)
+	}
+	for i, result := range results {
+		if result != "1" {
+			errMessage += fmt.Sprintf("%d ", ports[i])
+		}
+	}
+	if len(errMessage) != 0 {
+		return fmt.Errorf("ports %sis in used", errMessage)
+	}
+	return nil
 }

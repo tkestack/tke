@@ -22,4 +22,18 @@ const (
 	AnywhereValidateItemTunnelConnectivity = "TunnelConnectivity"
 	AnywhereValidateItemSSH                = "SSH"
 	AnywhereValidateItemTimeDiff           = "TimeDiff"
+	AnywhereValidateItemOSVersion          = "OS"
+	AnywhereValidateItemMachineResource    = "MachineResource"
+	AnywhereValidateItemDefaultRoute       = "DefaultRoute"
+	AnywhereValidateItemReservePorts       = "ReservePorts"
+	AnywhereValidateItemHostNetOverlapping = "HostNetOverlapping"
+)
+
+const (
+	MachineResourceRequstDiskPath     = "/var/lib"
+	MachineResourceRequstLogDiskPath  = "/var/log"
+	MachineResourceRequstDiskSpace    = 50 // GiB
+	MachineResourceRequstLogDiskSpace = 10 // GiB
+	MachineResourceRequstCPU          = 4
+	MachineResourceRequstMemory       = 8 // GiB
 )
