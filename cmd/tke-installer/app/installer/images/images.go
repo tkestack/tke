@@ -117,7 +117,7 @@ var baseComponents = BaseComponents{
 	TKEPlatformController: containerregistry.Image{Name: "tke-platform-controller", Tag: Version},
 	TKERegistryAPI:        containerregistry.Image{Name: "tke-registry-api", Tag: Version},
 	TKERegistryController: containerregistry.Image{Name: "tke-registry-controller", Tag: Version},
-	ProviderRes:           containerregistry.Image{Name: "provider-res", Tag: "v1.21.4-4"},
+	ProviderRes:           containerregistry.Image{Name: "provider-res", Tag: "v1.21.4-5"},
 	TKEGateway:            containerregistry.Image{Name: "tke-gateway", Tag: Version},
 
 	NginxIngress:       containerregistry.Image{Name: "ingress-nginx-controller", Tag: "v1.1.3"},

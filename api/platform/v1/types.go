@@ -134,6 +134,8 @@ const (
 	AnywhereApplicationAnno = "tkestack.io/anywhere-application"
 	// AnywhereValidateAnno is exist, the cluster will always return validate result
 	AnywhereValidateAnno = "tkestack.io/anywhere-validate"
+	// LocationBasedImagePrefixAnno is exist, the cluster will use it as k8s images prefix
+	LocationBasedImagePrefixAnno = "tkestack.io/location-based-image-prefix"
 )
 
 // KubeVendorType describe the kubernetes provider of the cluster

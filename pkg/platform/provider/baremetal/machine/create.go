@@ -49,6 +49,7 @@ import (
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/cmdstring"
+	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/hosts"
 )
 
@@ -338,6 +339,7 @@ func (p *Provider) EnsureContainerd(ctx context.Context, machine *platformv1.Mac
 		InsecureRegistries: insecureRegistries,
 		IsGPU:              gpu.IsEnable(machine.Spec.Labels),
 		SandboxImage:       images.Get().Pause.FullName(),
+		RegistryMirror:     containerregistryutil.GetPrefix(),
 	}
 	err = containerd.Install(machineSSH, option)
 	if err != nil {
