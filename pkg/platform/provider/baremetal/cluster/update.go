@@ -119,7 +119,12 @@ func (p *Provider) EnsureAPIServerCert(ctx context.Context, c *v1.Cluster) error
 			preActions = append(preActions, fmt.Sprintf("rm -f %s", file))
 		}
 
-		err = kubeadm.Init(s, kubeadmConfig, "certs apiserver", preActions...)
+		err = kubeadm.WriteInitConfig(s, kubeadmConfig)
+		if err != nil {
+			return errors.Wrap(err, machine.IP)
+		}
+
+		err = kubeadm.Init(s, "certs apiserver", preActions...)
 		if err != nil {
 			return errors.Wrap(err, machine.IP)
 		}

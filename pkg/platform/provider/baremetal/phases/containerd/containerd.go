@@ -37,6 +37,7 @@ type Option struct {
 	IsGPU              bool
 	Root               string
 	SandboxImage       string
+	RegistryMirror     string
 }
 
 const (

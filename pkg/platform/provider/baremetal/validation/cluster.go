@@ -542,6 +542,7 @@ func ValidateCIDRs(cls *platform.Cluster, specPath *field.Path) field.ErrorList 
 		result.Name = AnywhereValidateItemHostNetOverlapping
 		result.Description = "Verify Node IP(s) and CIDR Config"
 		result.ErrorList = allErrs
+		result.Checked = true
 
 		return field.ErrorList{result.ToFieldError()}
 
