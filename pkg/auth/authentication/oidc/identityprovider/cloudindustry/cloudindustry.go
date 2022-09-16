@@ -54,11 +54,11 @@ type idpStore struct {
 }
 
 type SDKConfig struct {
-	SecretId  string `json:"secret_id"`
+	SecretID  string `json:"secret_id"`
 	SecretKey string `json:"secret_key"`
 	Endpoint  string `json:"endpoint"`
 	Region    string `json:"region"`
-	MasterId  string `json:"master_id"`
+	MasterID  string `json:"master_id"`
 }
 
 var (
@@ -79,7 +79,7 @@ func NewCloudIndustryIdentityProvider(tenantID string, administrators []string, 
 	log.Infof("NewCloudIndustryIdentityProvider, tenantID '%s', administrators '%v', config '%s'", tenantID, administrators, string(bytes))
 	cpf := profile.NewClientProfile()
 	cpf.HttpProfile.Endpoint = fmt.Sprintf("iam-api.%s", config.Endpoint)
-	client, err := iam.NewClient(common.NewCredential(config.SecretId, config.SecretKey), config.Region, cpf)
+	client, err := iam.NewClient(common.NewCredential(config.SecretID, config.SecretKey), config.Region, cpf)
 	if err != nil {
 		log.Warnf("init client failed, err: '%v'", err)
 		return nil, err
@@ -140,7 +140,7 @@ func (c *cloudIndustryConnector) Login(ctx context.Context, scopes connector.Sco
 	}
 	store.Mutex.Unlock()
 
-	credential := common.NewCredential(provider.config.SecretId, provider.config.SecretKey)
+	credential := common.NewCredential(provider.config.SecretID, provider.config.SecretKey)
 	credential.Token = accessToken
 	cpf := profile.NewClientProfile()
 	cpf.HttpProfile.Endpoint = fmt.Sprintf("iam-app-api.%s", provider.config.Endpoint)
@@ -177,7 +177,7 @@ func (c *cloudIndustryConnector) Login(ctx context.Context, scopes connector.Sco
 	return ident, true, nil
 }
 
-func (p *cloudIndustryConnector) Refresh(ctx context.Context, s connector.Scopes, identity connector.Identity) (connector.Identity, error) {
+func (c *cloudIndustryConnector) Refresh(ctx context.Context, s connector.Scopes, identity connector.Identity) (connector.Identity, error) {
 	return identity, nil
 }
 
@@ -196,7 +196,7 @@ func (i *identityProvider) GetUser(ctx context.Context, name string, options *me
 
 func (i *identityProvider) ListUsers(ctx context.Context, options *metainternal.ListOptions) (*auth.UserList, error) {
 	subIdsRequest := iam.NewDescribeSubIdsRequest()
-	subIdsRequest.MasterId = i.config.MasterId
+	subIdsRequest.MasterId = i.config.MasterID
 
 	ids, err := i.client.DescribeSubIds(subIdsRequest)
 	if err != nil {
@@ -245,7 +245,7 @@ func (i *identityProvider) usersFromAccounts(accounts []iammodel.Account) *auth.
 	for _, account := range accounts {
 		uid := fmt.Sprintf("%d", account.AccountId)
 		extra := map[string]string{}
-		if uid == i.config.MasterId {
+		if uid == i.config.MasterID {
 			extra["administrator"] = "true"
 		}
 		result.Items = append(result.Items, auth.User{
