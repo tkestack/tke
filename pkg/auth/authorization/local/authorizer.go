@@ -168,10 +168,10 @@ func (a *Authorizer) Authorize(ctx context.Context, attr authorizer.Attributes) 
 		log.Debugf("Attribute '%s' converted to TKEAttributes '%s'", string(attrStr), string(tkeAttributesStr))
 		attr = tkeAttributes
 	}
-	return a.casbinDecision(attr, tenantID, subject, projectID, attr.GetResource(), attr.GetVerb(), debug)
+	return a.casbinDecision(attr, tenantID, subject, projectID, attr.GetResource(), attr.GetVerb(), reason, debug)
 }
 
-func (a *Authorizer) casbinDecision(attr authorizer.Attributes, tenantID, subject, projectID, resource, action string, debug bool) (authorized authorizer.Decision, reason string, err error) {
+func (a *Authorizer) casbinDecision(attr authorizer.Attributes, tenantID, subject, projectID, resource, action, reason string, debug bool) (authorizer.Decision, string, error) {
 	allow, err := a.enforcer.Enforce(authutil.UserKey(tenantID, subject), projectID, resource, action)
 	if err != nil {
 		log.Error("Casbin enforcer failed", log.Any("att", attr), log.String("projectID", projectID), log.String("subj", subject), log.String("act", action), log.String("res", resource), log.Err(err))
