@@ -34,6 +34,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"tkestack.io/tke/api/application"
 	applicationapi "tkestack.io/tke/api/application"
+	v1 "tkestack.io/tke/api/application/v1"
 	applicationinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/application/internalversion"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
@@ -337,8 +338,11 @@ func (rs *REST) dryRun(ctx context.Context, app *application.App) (*release.Rele
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
-
-	client, err := util.NewHelmClient(ctx, rs.platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
+	appv1 := &v1.App{}
+	if err := v1.Convert_application_App_To_v1_App(app, appv1, nil); err != nil {
+		return nil, err
+	}
+	client, err := util.NewHelmClientWithProvider(ctx, rs.platformClient, appv1)
 	if err != nil {
 		return nil, errors.NewBadRequest(err.Error())
 	}

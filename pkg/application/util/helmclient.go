@@ -24,11 +24,30 @@ import (
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	helmconfig "tkestack.io/tke/pkg/application/helm/config"
+	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
 )
+
+// NewHelmClientWithProvider return a new helm client used to run helm cmd
+func NewHelmClientWithProvider(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, app *applicationv1.App) (*helmaction.Client, error) {
+	provider, err := applicationprovider.GetProvider(app)
+	if err != nil {
+		return nil, err
+	}
+	restConfig, err := provider.GetRestConfig(ctx, platformClient, app)
+	if err != nil {
+		return nil, err
+	}
+	restClientGetter := &helmconfig.RESTClientGetter{RestConfig: restConfig}
+	// we should set namespace here. If not, release will be installed in target namespace, but resources will not be installed in target namespace
+	restClientGetter.Namespace = &app.Spec.TargetNamespace
+	client := helmaction.NewClient("", restClientGetter)
+	return client, nil
+}
 
 // NewHelmClient return a new client used to run helm cmd
 func NewHelmClient(ctx context.Context,
