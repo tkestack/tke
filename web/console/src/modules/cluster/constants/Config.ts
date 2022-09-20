@@ -743,7 +743,14 @@ rm -rfv /var/lib/nerdctl/*
 ## ip link
 ip link delete cilium_net 2>/dev/null
 ip link delete cilium_vxlan 2>/dev/null
-ip link delete flannel.1 2>/dev/null`;
+ip link delete flannel.1 2>/dev/null
+
+## iptables
+iptables --flush
+iptables --flush --table nat
+iptables --flush --table filter
+iptables --table nat --delete-chain
+iptables --table filter --delete-chain`;
 
 export enum GPUTYPE {
   PGPU = 'Physical',
