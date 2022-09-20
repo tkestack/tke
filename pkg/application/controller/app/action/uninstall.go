@@ -20,6 +20,7 @@ package action
 
 import (
 	"context"
+
 	appconfig "tkestack.io/tke/pkg/application/config"
 
 	"helm.sh/helm/v3/pkg/release"
@@ -41,7 +42,7 @@ func Uninstall(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
+	client, err := util.NewHelmClientWithProvider(ctx, platformClient, app)
 	if err != nil {
 		return nil, err
 	}

@@ -20,10 +20,15 @@ package application
 
 import (
 	"context"
+	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/rest"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
+	platformv1 "tkestack.io/tke/api/platform/v1"
 	appconfig "tkestack.io/tke/pkg/application/config"
 )
 
@@ -82,6 +87,10 @@ type HooksProvider interface {
 		repo appconfig.RepoConfiguration) error
 }
 
+type RestConfigProvider interface {
+	GetRestConfig(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, app *applicationv1.App) (*rest.Config, error)
+}
+
 // Provider defines a set of response interfaces for specific cluster
 // types in cluster management.
 type Provider interface {
@@ -89,6 +98,7 @@ type Provider interface {
 
 	ControllerProvider
 	HooksProvider
+	RestConfigProvider
 }
 
 var _ Provider = &DelegateProvider{}
@@ -106,6 +116,26 @@ func (p *DelegateProvider) Name() string {
 
 func (p *DelegateProvider) OnFilter(ctx context.Context, app *applicationv1.App) (pass bool) {
 	return true
+}
+
+func (p *DelegateProvider) GetRestConfig(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, app *applicationv1.App) (*rest.Config, error) {
+	var credential *platformv1.ClusterCredential
+	cluster, err := platformClient.Clusters().Get(ctx, app.Spec.TargetCluster, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	if cluster == nil {
+		return nil, errors.NewBadRequest(fmt.Sprintf("can not found cluster by name %s", cluster))
+	}
+	if cluster.Spec.ClusterCredentialRef != nil {
+		credential, err = platformClient.ClusterCredentials().Get(ctx, cluster.Spec.ClusterCredentialRef.Name, metav1.GetOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("get cluster's credential error: %w", err)
+		}
+	} else {
+		return nil, fmt.Errorf("get cluster's credential error, no cluster credential")
+	}
+	return credential.RESTConfig(cluster), nil
 }
 
 func (DelegateProvider) PreInstall(ctx context.Context,
