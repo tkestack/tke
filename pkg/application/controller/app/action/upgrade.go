@@ -89,7 +89,7 @@ func Upgrade(ctx context.Context,
 	}
 
 	if newApp.Status.Message == "" || newApp.Status.Message == "hook pre upgrade app failed" || newApp.Status.Message == "upgrade app failed" {
-		client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
+		client, err := util.NewHelmClientWithProvider(ctx, platformClient, app)
 		if err != nil {
 			return nil, err
 		}
