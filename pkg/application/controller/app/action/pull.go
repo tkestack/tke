@@ -38,7 +38,7 @@ func Pull(ctx context.Context,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
 	updateStatusFunc applicationprovider.UpdateStatusFunc) (string, error) {
-	client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
+	client, err := util.NewHelmClientWithProvider(ctx, platformClient, app)
 	if err != nil {
 		return "", err
 	}
