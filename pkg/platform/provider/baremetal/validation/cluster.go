@@ -175,6 +175,8 @@ func ValidateClusterMachines(cls *platform.Cluster, fldPath *field.Path) field.E
 	mcReErrs := field.ErrorList{}
 	routeErrs := field.ErrorList{}
 	portsErrs := field.ErrorList{}
+	firewallErrs := field.ErrorList{}
+	selinuxErrs := field.ErrorList{}
 
 	proxyResult := TKEValidateResult{}
 	sshResult := TKEValidateResult{}
@@ -183,6 +185,8 @@ func ValidateClusterMachines(cls *platform.Cluster, fldPath *field.Path) field.E
 	mcReResult := TKEValidateResult{}
 	routeResult := TKEValidateResult{}
 	portsResult := TKEValidateResult{}
+	firewallResult := TKEValidateResult{}
+	selinuxResult := TKEValidateResult{}
 
 	var masters []*ssh.SSH
 	for i, one := range cls.Spec.Machines {
@@ -235,6 +239,12 @@ func ValidateClusterMachines(cls *platform.Cluster, fldPath *field.Path) field.E
 
 		portsErrs = ValidateReservePorts(fldPath, masters)
 		portsResult.Checked = true
+
+		firewallErrs = ValidateFirewall(fldPath, masters)
+		firewallResult.Checked = true
+
+		selinuxErrs = ValidateSelinux(fldPath, masters)
+		selinuxResult.Checked = true
 	}
 	if _, ok := cls.Annotations[platform.AnywhereValidateAnno]; ok {
 		proxyResult.Name = AnywhereValidateItemTunnelConnectivity
@@ -265,6 +275,14 @@ func ValidateClusterMachines(cls *platform.Cluster, fldPath *field.Path) field.E
 		portsResult.Description = "Verify ReservePorts Status"
 		portsResult.ErrorList = portsErrs
 
+		firewallResult.Name = AnywhereValidateItemFirewall
+		firewallResult.Description = "Verify Firewall Status"
+		firewallResult.ErrorList = firewallErrs
+
+		selinuxResult.Name = AnywhereValidateItemSelinux
+		selinuxResult.Description = "Verify Selinux"
+		selinuxResult.ErrorList = firewallErrs
+
 		allErrs = append(allErrs,
 			proxyResult.ToFieldError(),
 			sshResult.ToFieldError(),
@@ -272,7 +290,9 @@ func ValidateClusterMachines(cls *platform.Cluster, fldPath *field.Path) field.E
 			osResult.ToFieldError(),
 			mcReResult.ToFieldError(),
 			routeResult.ToFieldError(),
-			portsResult.ToFieldError())
+			portsResult.ToFieldError(),
+			firewallResult.ToFieldError(),
+			selinuxResult.ToFieldError())
 	} else {
 		allErrs = append(allErrs, proxyErrs...)
 		allErrs = append(allErrs, sshErrs...)
@@ -281,6 +301,8 @@ func ValidateClusterMachines(cls *platform.Cluster, fldPath *field.Path) field.E
 		allErrs = append(allErrs, mcReErrs...)
 		allErrs = append(allErrs, routeErrs...)
 		allErrs = append(allErrs, portsErrs...)
+		allErrs = append(allErrs, firewallErrs...)
+		allErrs = append(allErrs, selinuxErrs...)
 	}
 
 	return allErrs
@@ -331,6 +353,38 @@ func ValidateReservePorts(fldPath *field.Path, sshs []*ssh.SSH) field.ErrorList 
 		err := ssh.ReservePorts(one, reservePorts)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host, err.Error()))
+		}
+	}
+	return allErrs
+}
+
+func ValidateFirewall(fldPath *field.Path, sshs []*ssh.SSH) field.ErrorList {
+	allErrs := field.ErrorList{}
+	for i, one := range sshs {
+		running, err := ssh.FirewallEnabled(one)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host, err.Error()))
+			continue
+		}
+		if running {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host,
+				fmt.Sprintf("target host %s firewall is running, please disable the firewall", one.Host)))
+		}
+	}
+	return allErrs
+}
+
+func ValidateSelinux(fldPath *field.Path, sshs []*ssh.SSH) field.ErrorList {
+	allErrs := field.ErrorList{}
+	for i, one := range sshs {
+		enabled, err := ssh.SelinuxEnabled(one)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host, err.Error()))
+			continue
+		}
+		if enabled {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host,
+				fmt.Sprintf("target host %s selinux is enabled, please disable the selinux", one.Host)))
 		}
 	}
 	return allErrs

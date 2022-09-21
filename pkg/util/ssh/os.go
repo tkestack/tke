@@ -177,3 +177,43 @@ func ReservePorts(s Interface, ports []int) error {
 	}
 	return nil
 }
+
+func FirewallEnabled(s Interface) (enabled bool, err error) {
+	ostype, err := OSVersion(s)
+	if err != nil {
+		return false, err
+	}
+	switch {
+	case strings.HasPrefix(ostype, "tencentos"):
+		stdout, err := s.CombinedOutput("ps -ef | grep firewalld | grep -v grep | wc -l")
+		if err != nil {
+			return false, err
+		}
+		res := strings.TrimSpace(string(stdout))
+		return res == "1", nil
+	case strings.Contains(ostype, "ubuntu"):
+		stdout, _, exit, err := s.Exec("ufw status | awk '{print $2}'")
+		if err != nil || exit != 0 {
+			return false, err
+		}
+		res := strings.TrimSpace(stdout)
+		return res == "active", nil
+	default:
+		stdout, err := s.CombinedOutput("ps -ef | grep firewalld | grep -v grep | wc -l")
+		if err != nil {
+			return false, err
+		}
+		res := strings.TrimSpace(string(stdout))
+		return res == "1", nil
+	}
+
+}
+
+func SelinuxEnabled(s Interface) (enabled bool, err error) {
+	stdout, _, exit, err := s.Exec("selinuxenabled")
+	if err != nil || exit != 0 {
+		return false, err
+	}
+	res := strings.TrimSpace(stdout)
+	return res == "0", nil
+}
