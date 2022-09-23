@@ -384,8 +384,7 @@ func completeServiceIP(cluster *v1.Cluster) error {
 		cluster.Annotations = make(map[string]string)
 	}
 	for index, name := range map[int]string{
-		constants.GPUQuotaAdmissionIPIndex:  constants.GPUQuotaAdmissionIPAnnotaion,
-		constants.QGPUQuotaAdmissionIPIndex: constants.QGPUQuotaAdmissionIPAnnotaion,
+		constants.GPUQuotaAdmissionIPIndex: constants.GPUQuotaAdmissionIPAnnotaion,
 	} {
 		ip, err := GetIndexedIP(cluster.Status.ServiceCIDR, index)
 		if err != nil {
@@ -770,16 +769,11 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 	oidcCa, _ := ioutil.ReadFile(constants.OIDCConfigFile)
 	auditPolicyData, _ := ioutil.ReadFile(constants.AuditPolicyConfigFile)
 	GPUQuotaAdmissionHost := c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion]
-	QGPUQuotaAdmissionHost := c.Annotations[constants.QGPUQuotaAdmissionIPAnnotaion]
 	if GPUQuotaAdmissionHost == "" {
 		GPUQuotaAdmissionHost = "gpu-quota-admission"
 	}
-	if QGPUQuotaAdmissionHost == "" {
-		GPUQuotaAdmissionHost = "qgpu-quota-admission"
-	}
 	schedulerPolicyConfig, err := template.ParseString(schedulerPolicyConfig, map[string]interface{}{
-		"GPUQuotaAdmissionHost":  GPUQuotaAdmissionHost,
-		"QGPUQuotaAdmissionHost": QGPUQuotaAdmissionHost,
+		"GPUQuotaAdmissionHost": GPUQuotaAdmissionHost,
 	})
 	if err != nil {
 		return errors.Wrap(err, "parse schedulerPolicyConfig error")
