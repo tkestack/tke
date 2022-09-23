@@ -520,10 +520,17 @@ type HA struct {
 }
 
 type TKEHA struct {
-	VIP  string
-	VRID *int32
+	VIP        string
+	VRID       *int32
+	DirectorIP string //an inner vip used by tcs-lb components
+	VIPPool    *VIPPool
 }
 
+//vippool: vippool is a pool of vips, supported by tcs lb
+type VIPPool struct {
+	Inner []string //private ip pool, svc using a vip in inner pool will not be exposed on Internet
+	Outer []string //public ip pool, svc using a vip in outer pool will be exposed on Internet
+}
 type ThirdPartyHA struct {
 	VIP   string
 	VPort int32

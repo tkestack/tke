@@ -1159,6 +1159,11 @@ message TKEHA {
   optional string vip = 1;
 
   optional int32 vrid = 2;
+
+  // DirectorIP: an inner vip used by tcs-lb components
+  optional string directorip = 3;
+
+  optional VIPPool vippool = 4;
 }
 
 // TappController is a new kubernetes workload.
@@ -1254,5 +1259,14 @@ message UpgradeStrategy {
   // If your pod can not accept be expelled from current node, this value should be false.
   // +optional
   optional bool drainNodeBeforeUpgrade = 2;
+}
+
+// vippool: vippool is a pool of vips, supported by tcs lb
+message VIPPool {
+  // Inner: private ip pool, svc using a vip in inner pool will not be exposed on Internet
+  repeated string inner = 1;
+
+  // Outer: public ip pool, svc using a vip in outer pool will be exposed on Internet
+  repeated string outer = 2;
 }
 
