@@ -86,6 +86,32 @@ func (c *Cluster) GetMainIP() string {
 	return mainIP
 }
 
+func (c *Cluster) GetDirectorIP() string {
+	if c.Spec.Features.HA != nil {
+		if c.Spec.Features.HA.TKEHA != nil {
+			return c.Spec.Features.HA.TKEHA.DirectorIP
+		}
+	}
+	return ""
+}
+
+func (c *Cluster) GetInnerVIPs() []string {
+	if c.Spec.Features.HA != nil {
+		if c.Spec.Features.HA.TKEHA != nil && c.Spec.Features.HA.TKEHA.VIPPool != nil {
+			return c.Spec.Features.HA.TKEHA.VIPPool.Inner
+		}
+	}
+	return nil
+}
+
+func (c *Cluster) GetMasterIPs() []string {
+	var IPs []string
+	for _, machine := range c.Spec.Machines {
+		IPs = append(IPs, machine.IP)
+	}
+	return IPs
+}
+
 func (c *Cluster) Clientset() (kubernetes.Interface, error) {
 	config, err := c.RESTConfig()
 	if err != nil {

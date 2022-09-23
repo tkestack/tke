@@ -585,6 +585,18 @@ type HA struct {
 type TKEHA struct {
 	VIP  string `json:"vip" protobuf:"bytes,1,name=vip"`
 	VRID *int32 `json:"vrid,omitempty" protobuf:"bytes,2,name=vrid"`
+	//DirectorIP: an inner vip used by tcs-lb components
+	DirectorIP string   `json:"directorip,omitempty" protobuf:"bytes,3,name=directorip"`
+	VIPPool    *VIPPool `json:"vippool,omitempty" protobuf:"bytes,4,name=vippool"`
+}
+
+//vippool: vippool is a pool of vips, supported by tcs lb
+type VIPPool struct {
+	//Inner: private ip pool, svc using a vip in inner pool will not be exposed on Internet
+	Inner []string `json:"inner,omitempty" protobuf:"bytes,1,name=inner"`
+
+	//Outer: public ip pool, svc using a vip in outer pool will be exposed on Internet
+	Outer []string `json:"outer,omitempty" protobuf:"bytes,2,name=outer"`
 }
 
 type ThirdPartyHA struct {
