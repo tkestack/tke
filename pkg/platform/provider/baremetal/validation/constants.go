@@ -29,6 +29,7 @@ const (
 	AnywhereValidateItemHostNetOverlapping = "HostNetOverlapping"
 	AnywhereValidateItemFirewall           = "Firewall"
 	AnywhereValidateItemSelinux            = "Selinux"
+	AnywhereValidateItemStorage            = "Storage"
 )
 
 const (

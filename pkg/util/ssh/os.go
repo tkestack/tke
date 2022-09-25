@@ -156,10 +156,10 @@ func OSVersion(s Interface) (os string, err error) {
 	return id + version, nil
 }
 
-func ReservePorts(s Interface, ports []int) error {
+func ReservePorts(s Interface, ip string, ports []int) error {
 	var cmd, errMessage string
 	for _, port := range ports {
-		cmd += fmt.Sprintf(`bash -c "</dev/tcp/127.0.0.1/%d" &>/dev/null; echo $?; `, port)
+		cmd += fmt.Sprintf(`bash -c "</dev/tcp/%s/%d" &>/dev/null; echo $?; `, ip, port)
 	}
 	out, _, _, _ := s.Exec(cmd)
 	out = strings.TrimSuffix(out, "\n")
@@ -216,4 +216,12 @@ func SelinuxEnabled(s Interface) (enabled bool, err error) {
 	}
 	res := strings.TrimSpace(stdout)
 	return res == "0", nil
+}
+
+func CheckNFS(s Interface, server string, path string) (err error) {
+	_, stderr, exit, err := s.Execf("mkdir -p /tmp/nfs/&& mount -t nfs %s:%s /tmp/nfs/&& umount /tmp/nfs/&& rm -rf /tmp/nfs/", server, path)
+	if exit != 0 || err != nil {
+		return fmt.Errorf("check nfs failed:exit %d:stderr %s:error %s", exit, stderr, err)
+	}
+	return nil
 }
