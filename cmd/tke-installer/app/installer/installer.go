@@ -272,10 +272,6 @@ func (t *TKE) initSteps() {
 			Name: "Install etcd",
 			Func: t.installETCD,
 		},
-		{
-			Name: "Patch platform versions in cluster info",
-			Func: t.patchPlatformVersion,
-		},
 	}...)
 
 	t.steps = append(t.steps, []types.Handler{

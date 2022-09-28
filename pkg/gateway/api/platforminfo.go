@@ -62,7 +62,7 @@ func handlePlatformInfoFunc(oidcAuthenticator *oidc.Authenticator, client kubern
 			return
 		}
 
-		cm, err := client.CoreV1().ConfigMaps("kube-public").Get(request.Request.Context(), "cluster-info", metav1.GetOptions{})
+		cm, err := client.CoreV1().ConfigMaps("tke").Get(request.Request.Context(), "cluster-info", metav1.GetOptions{})
 		if err != nil {
 			log.Errorf("get cluster-info failed: %v", err)
 			cm = &v1.ConfigMap{}

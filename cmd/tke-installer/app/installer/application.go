@@ -20,6 +20,7 @@ package installer
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -32,6 +33,7 @@ import (
 	"tkestack.io/tke/cmd/tke-installer/app/installer/types"
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	helmutil "tkestack.io/tke/pkg/application/helm/util"
+	"tkestack.io/tke/pkg/spec"
 	"tkestack.io/tke/pkg/util/apiclient"
 )
 
@@ -205,17 +207,24 @@ func (t *TKE) initPlatformApps(ctx context.Context) error {
 		}
 		defaultPlatformApps = append(defaultPlatformApps, tkeAuth)
 	}
+
 	platformAPIOptions, err := t.getTKEPlatformAPIOptions(ctx)
 	if err != nil {
 		return fmt.Errorf("get tke-platform-api options failed: %v", err)
+	}
+	versionsByte, err := json.Marshal(spec.K8sVersions)
+	if err != nil {
+		return fmt.Errorf("get tke-platform k8sValidVersions options failed: %v", err)
 	}
 	tkePlatform := &types.PlatformApp{
 		HelmInstallOptions: &helmaction.InstallOptions{
 			Namespace:   t.namespace,
 			ReleaseName: "tke-platform",
 			Values: map[string]interface{}{
-				"api":        platformAPIOptions,
-				"controller": t.getTKEPlatformControllerOptions(ctx),
+				"api":              platformAPIOptions,
+				"controller":       t.getTKEPlatformControllerOptions(ctx),
+				"k8sValidVersions": string(versionsByte),
+				"tkeVersion":       spec.TKEVersion,
 			},
 			DependencyUpdate: false,
 			ChartPathOptions: helmaction.ChartPathOptions{},
