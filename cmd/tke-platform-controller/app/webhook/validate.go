@@ -15,6 +15,7 @@ import (
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/api/platform/validation"
 	"tkestack.io/tke/pkg/platform/types"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 var (
@@ -30,28 +31,34 @@ func init() {
 func Validate(reponseWriter http.ResponseWriter, request *http.Request) {
 	var body []byte
 	var err error
+	log.Infof("receive validate request, request: %v", request)
 	if request.Body != nil {
 		if body, err = ioutil.ReadAll(request.Body); err != nil {
+			log.Errorf("request body read failed, err: %v", err)
 			http.Error(reponseWriter, fmt.Sprintf("request body read failed, err: %v", err), http.StatusBadRequest)
 			return
 		}
 		if len(body) == 0 {
+			log.Errorf("request body length 0")
 			http.Error(reponseWriter, "request body length 0", http.StatusBadRequest)
 			return
 		}
 	} else {
+		log.Errorf("request body nil")
 		http.Error(reponseWriter, "request body nil", http.StatusBadRequest)
 		return
 	}
 
 	contentType := request.Header.Get("Content-Type")
 	if contentType != "application/json" {
+		log.Errorf("Content-Type=%s, expect `application/json`", contentType)
 		http.Error(reponseWriter, fmt.Sprintf("Content-Type=%s, expect `application/json`", contentType), http.StatusUnsupportedMediaType)
 		return
 	}
 
 	admissionReview := v1.AdmissionReview{}
 	if _, _, err := deserializer.Decode(body, nil, &admissionReview); err != nil {
+		log.Errorf("decode request body to admission review failed, err: %v", err)
 		http.Error(reponseWriter, fmt.Sprintf("decode request body to admission review failed, err: %v", err), http.StatusBadRequest)
 		return
 	}
@@ -61,12 +68,14 @@ func Validate(reponseWriter http.ResponseWriter, request *http.Request) {
 	case "Cluster":
 		v1Cluster := platformv1.Cluster{}
 		if err := json.Unmarshal(admissionReview.Request.Object.Raw, &v1Cluster); err != nil {
+			log.Errorf("Can't unmarshal cluster, err: %v", err)
 			http.Error(reponseWriter, fmt.Sprintf("Can't unmarshal cluster, err: %v", err), http.StatusInternalServerError)
 			return
 		}
 
 		cluster := platform.Cluster{}
 		if err = platformv1.Convert_v1_Cluster_To_platform_Cluster(&v1Cluster, &cluster, nil); err != nil {
+			log.Errorf("Can't convert v1cluster to cluster, err: %v", err)
 			http.Error(reponseWriter, fmt.Sprintf("Can't convert v1cluster to cluster, err: %v", err), http.StatusInternalServerError)
 			return
 		}
@@ -77,12 +86,14 @@ func Validate(reponseWriter http.ResponseWriter, request *http.Request) {
 		if admissionReview.Request.Operation == v1.Update {
 			oldCluster := platform.Cluster{}
 			if err := json.Unmarshal(admissionReview.Request.Object.Raw, &oldCluster); err != nil {
+				log.Errorf("Can't unmarshal cluster, err: %v", err)
 				http.Error(reponseWriter, fmt.Sprintf("Can't unmarshal cluster, err: %v", err), http.StatusInternalServerError)
 				return
 			}
 			admissionResponse = ValidateClusterUpdate(&cluster, &oldCluster)
 		}
 	default:
+		log.Errorf("Can't recognized request kind %v", admissionReview.Request.Kind)
 		http.Error(reponseWriter, fmt.Sprintf("Can't recognized request kind %v", admissionReview.Request.Kind), http.StatusBadRequest)
 		return
 	}
@@ -92,10 +103,12 @@ func Validate(reponseWriter http.ResponseWriter, request *http.Request) {
 
 	admissionReviewBytes, err := json.Marshal(admissionReview)
 	if err != nil {
+		log.Errorf("Can't encode response: %v", err)
 		http.Error(reponseWriter, fmt.Sprintf("Can't encode response: %v", err), http.StatusInternalServerError)
 		return
 	}
 	if _, err := reponseWriter.Write(admissionReviewBytes); err != nil {
+		log.Errorf("Can't write response: %v", err)
 		http.Error(reponseWriter, fmt.Sprintf("Can't write response: %v", err), http.StatusInternalServerError)
 		return
 	}
