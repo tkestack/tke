@@ -1722,7 +1722,7 @@ func (p *Provider) EnsureAnywhereAddons(ctx context.Context, c *v1.Cluster) erro
 }
 
 // update cluster to connect remote cluster apiserver
-func (p *Provider) EnsureModifyCluster(ctx context.Context, c *v1.Cluster) error {
+func (p *Provider) EnsureClusterAddressReal(ctx context.Context, c *v1.Cluster) error {
 	var hubAPIServerURL *url.URL
 	var err error
 	if urlValue, ok := c.Annotations[platformv1.HubAPIServerAnno]; ok {
