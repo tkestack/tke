@@ -32,6 +32,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/kubernetes"
@@ -84,22 +85,16 @@ func listEventsByExtensions(ctx context.Context, client *kubernetes.Clientset, n
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("daemonsets/events"), name)
 	}
 
-	selector := fields.AndSelectors(
-		fields.OneTermEqualSelector("involvedObject.uid", string(daemonSet.UID)),
-		fields.OneTermEqualSelector("involvedObject.name", daemonSet.Name),
-		fields.OneTermEqualSelector("involvedObject.namespace", daemonSet.Namespace),
-		fields.OneTermEqualSelector("involvedObject.kind", "DaemonSet"))
-	listOptions := metav1.ListOptions{
-		FieldSelector: selector.String(),
-	}
-	daemonSetEvents, err := client.CoreV1().Events(namespaceName).List(ctx, listOptions)
-	if err != nil {
-		return nil, err
+	var resultEvents util.EventSlice
+
+	events, errs := getAboutDaemonSetEvents(ctx, client, name, namespaceName, string(daemonSet.UID))
+	if len(errs) > 0 {
+		return nil, utilerrors.NewAggregate(errs)
 	}
 
-	var events util.EventSlice
-	for _, daemonSetEvent := range daemonSetEvents.Items {
-		events = append(events, daemonSetEvent)
+	involvedObjectUIDMap := util.GetInvolvedObjectUIDMap(events)
+	if v, ok := involvedObjectUIDMap[string(daemonSet.UID)]; ok {
+		resultEvents = append(resultEvents, v...)
 	}
 
 	podSelector, err := metav1.LabelSelectorAsSelector(daemonSet.Spec.Selector)
@@ -117,30 +112,17 @@ func listEventsByExtensions(ctx context.Context, client *kubernetes.Clientset, n
 	for _, pod := range podAllList.Items {
 		for _, podReferences := range pod.ObjectMeta.OwnerReferences {
 			if (podReferences.Kind == "DaemonSet") && (podReferences.Name == daemonSet.Name) {
-				podEventsSelector := fields.AndSelectors(
-					fields.OneTermEqualSelector("involvedObject.uid", string(pod.UID)),
-					fields.OneTermEqualSelector("involvedObject.name", pod.Name),
-					fields.OneTermEqualSelector("involvedObject.namespace", pod.Namespace),
-					fields.OneTermEqualSelector("involvedObject.kind", "Pod"))
-				podEventsListOptions := metav1.ListOptions{
-					FieldSelector: podEventsSelector.String(),
-				}
-				podEvents, err := client.CoreV1().Events(namespaceName).List(ctx, podEventsListOptions)
-				if err != nil {
-					return nil, err
-				}
-
-				for _, podEvent := range podEvents.Items {
-					events = append(events, podEvent)
+				if v, ok := involvedObjectUIDMap[string(pod.UID)]; ok {
+					resultEvents = append(resultEvents, v...)
 				}
 			}
 		}
 	}
 
-	sort.Sort(events)
+	sort.Sort(resultEvents)
 
 	return &corev1.EventList{
-		Items: events,
+		Items: resultEvents,
 	}, nil
 }
 
@@ -150,22 +132,16 @@ func listEventsByApps(ctx context.Context, client *kubernetes.Clientset, namespa
 		return nil, errors.NewNotFound(appsv1.Resource("daemonsets/events"), name)
 	}
 
-	selector := fields.AndSelectors(
-		fields.OneTermEqualSelector("involvedObject.uid", string(daemonSet.UID)),
-		fields.OneTermEqualSelector("involvedObject.name", daemonSet.Name),
-		fields.OneTermEqualSelector("involvedObject.namespace", daemonSet.Namespace),
-		fields.OneTermEqualSelector("involvedObject.kind", "DaemonSet"))
-	listOptions := metav1.ListOptions{
-		FieldSelector: selector.String(),
-	}
-	daemonSetEvents, err := client.CoreV1().Events(namespaceName).List(ctx, listOptions)
-	if err != nil {
-		return nil, err
+	var resultEvents util.EventSlice
+
+	events, errs := getAboutDaemonSetEvents(ctx, client, name, namespaceName, string(daemonSet.UID))
+	if len(errs) > 0 {
+		return nil, utilerrors.NewAggregate(errs)
 	}
 
-	var events util.EventSlice
-	for _, daemonSetEvent := range daemonSetEvents.Items {
-		events = append(events, daemonSetEvent)
+	involvedObjectUIDMap := util.GetInvolvedObjectUIDMap(events)
+	if v, ok := involvedObjectUIDMap[string(daemonSet.UID)]; ok {
+		resultEvents = append(resultEvents, v...)
 	}
 
 	podSelector, err := metav1.LabelSelectorAsSelector(daemonSet.Spec.Selector)
@@ -183,29 +159,36 @@ func listEventsByApps(ctx context.Context, client *kubernetes.Clientset, namespa
 	for _, pod := range podAllList.Items {
 		for _, podReferences := range pod.ObjectMeta.OwnerReferences {
 			if (podReferences.Kind == "DaemonSet") && (podReferences.Name == daemonSet.Name) {
-				podEventsSelector := fields.AndSelectors(
-					fields.OneTermEqualSelector("involvedObject.uid", string(pod.UID)),
-					fields.OneTermEqualSelector("involvedObject.name", pod.Name),
-					fields.OneTermEqualSelector("involvedObject.namespace", pod.Namespace),
-					fields.OneTermEqualSelector("involvedObject.kind", "Pod"))
-				podEventsListOptions := metav1.ListOptions{
-					FieldSelector: podEventsSelector.String(),
-				}
-				podEvents, err := client.CoreV1().Events(namespaceName).List(ctx, podEventsListOptions)
-				if err != nil {
-					return nil, err
-				}
-
-				for _, podEvent := range podEvents.Items {
-					events = append(events, podEvent)
+				if v, ok := involvedObjectUIDMap[string(pod.UID)]; ok {
+					resultEvents = append(resultEvents, v...)
 				}
 			}
 		}
 	}
 
-	sort.Sort(events)
+	sort.Sort(resultEvents)
 
 	return &corev1.EventList{
-		Items: events,
+		Items: resultEvents,
 	}, nil
+}
+
+// getAboutDaemonSetEvents Query all events in the namespace  or Query the DaemonSet Pod asynchronously
+func getAboutDaemonSetEvents(ctx context.Context, client *kubernetes.Clientset, name, namespace, uid string) (util.EventSlice, []error) {
+	return util.GetResourcesEvents(ctx, client, namespace, []metav1.ListOptions{
+		{
+			FieldSelector: fields.AndSelectors(
+				fields.OneTermEqualSelector("involvedObject.uid", uid),
+				fields.OneTermEqualSelector("involvedObject.name", name),
+				fields.OneTermEqualSelector("involvedObject.namespace", namespace),
+				fields.OneTermEqualSelector("involvedObject.kind", "DaemonSet")).String(),
+			ResourceVersion: "0",
+		},
+		{
+			FieldSelector: fields.AndSelectors(
+				fields.OneTermEqualSelector("involvedObject.namespace", namespace),
+				fields.OneTermEqualSelector("involvedObject.kind", "Pod")).String(),
+			ResourceVersion: "0",
+		},
+	})
 }

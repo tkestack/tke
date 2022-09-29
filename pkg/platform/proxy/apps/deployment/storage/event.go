@@ -21,7 +21,6 @@ package storage
 import (
 	"context"
 	"sort"
-	"sync"
 
 	"tkestack.io/tke/pkg/util/apiclient"
 
@@ -62,28 +61,6 @@ func (r *EventREST) New() runtime.Object {
 	return &corev1.EventList{}
 }
 
-type eventsFinder struct {
-	wg             sync.WaitGroup
-	mutex          sync.Mutex
-	namespaceName  string
-	platformClient platforminternalclient.PlatformInterface
-	client         kubernetes.Clientset
-	ctx            context.Context
-	events         util.EventSlice
-	errors         []error
-}
-
-func newEventsFinder(ctx context.Context, namespaceName string, client kubernetes.Clientset, platformClient platforminternalclient.PlatformInterface) *eventsFinder {
-	return &eventsFinder{
-		platformClient: platformClient,
-		ctx:            ctx,
-		client:         client,
-		namespaceName:  namespaceName,
-		events:         nil,
-		errors:         make([]error, 0),
-	}
-}
-
 // Get retrieves the object from the storage. It is required to support Patch.
 func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	client, err := proxy.ClientSet(ctx, r.platformClient)
@@ -96,52 +73,29 @@ func (r *EventREST) Get(ctx context.Context, name string, options *metav1.GetOpt
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
-	ef := newEventsFinder(ctx, namespaceName, *client, r.platformClient)
-
 	if apiclient.ClusterVersionIsBefore19(client) {
-		return ef.listEventsByExtensions(ctx, client, namespaceName, name, options)
+		return listEventsByExtensions(ctx, client, namespaceName, name, options)
 	}
-	return ef.listEventsByApps(ctx, client, namespaceName, name, options)
+	return listEventsByApps(ctx, client, namespaceName, name, options)
 }
 
-func (ef *eventsFinder) getEvents(ctx context.Context, listOptions metav1.ListOptions) {
-	defer ef.wg.Done()
-
-	events, err := ef.client.CoreV1().Events(ef.namespaceName).List(ctx, listOptions)
-	if err != nil {
-		ef.mutex.Lock()
-		ef.errors = append(ef.errors, err)
-		ef.mutex.Unlock()
-		return
-	}
-	if len(events.Items) == 0 {
-		return
-	}
-
-	ef.mutex.Lock()
-	for _, event := range events.Items {
-		ef.events = append(ef.events, event)
-	}
-	ef.mutex.Unlock()
-}
-
-func (ef *eventsFinder) listEventsByExtensions(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func listEventsByExtensions(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	deployment, err := client.ExtensionsV1beta1().Deployments(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("deployments/events"), name)
 	}
 
-	deploymentSelector := fields.AndSelectors(
-		fields.OneTermEqualSelector("involvedObject.uid", string(deployment.UID)),
-		fields.OneTermEqualSelector("involvedObject.name", deployment.Name),
-		fields.OneTermEqualSelector("involvedObject.namespace", deployment.Namespace),
-		fields.OneTermEqualSelector("involvedObject.kind", "Deployment"))
-	deploymentListOptions := metav1.ListOptions{
-		FieldSelector: deploymentSelector.String(),
+	var resultEvents util.EventSlice
+
+	events, errs := getAboutDeployEvents(ctx, client, deployment.Name, deployment.Namespace, string(deployment.UID))
+	if len(errs) > 0 {
+		return nil, utilerrors.NewAggregate(errs)
 	}
 
-	ef.wg.Add(1)
-	go ef.getEvents(ctx, deploymentListOptions)
+	involvedObjectUIDMap := util.GetInvolvedObjectUIDMap(events)
+	if v, ok := involvedObjectUIDMap[string(deployment.UID)]; ok {
+		resultEvents = append(resultEvents, v...)
+	}
 
 	rsSelector, err := metav1.LabelSelectorAsSelector(deployment.Spec.Selector)
 	if err != nil {
@@ -170,16 +124,9 @@ func (ef *eventsFinder) listEventsByExtensions(ctx context.Context, client *kube
 			continue
 		}
 
-		rsEventsSelector := fields.AndSelectors(
-			fields.OneTermEqualSelector("involvedObject.uid", string(rs.UID)),
-			fields.OneTermEqualSelector("involvedObject.name", rs.Name),
-			fields.OneTermEqualSelector("involvedObject.namespace", rs.Namespace),
-			fields.OneTermEqualSelector("involvedObject.kind", "ReplicaSet"))
-		rsEventsListOptions := metav1.ListOptions{
-			FieldSelector: rsEventsSelector.String(),
+		if v, ok := involvedObjectUIDMap[string(rs.UID)]; ok {
+			resultEvents = append(resultEvents, v...)
 		}
-		ef.wg.Add(1)
-		go ef.getEvents(ctx, rsEventsListOptions)
 
 		for _, references := range rs.ObjectMeta.OwnerReferences {
 			if (references.Kind == "Deployment") && (references.Name == name) {
@@ -192,19 +139,13 @@ func (ef *eventsFinder) listEventsByExtensions(ctx context.Context, client *kube
 				if err != nil {
 					return nil, err
 				}
+				// Events cannot be queried for the deleted pods
 				for _, pod := range podListByRS.Items {
 					for _, podReferences := range pod.ObjectMeta.OwnerReferences {
 						if (podReferences.Kind == "ReplicaSet") && (podReferences.Name == rs.Name) {
-							podEventsSelector := fields.AndSelectors(
-								fields.OneTermEqualSelector("involvedObject.uid", string(pod.UID)),
-								fields.OneTermEqualSelector("involvedObject.name", pod.Name),
-								fields.OneTermEqualSelector("involvedObject.namespace", pod.Namespace),
-								fields.OneTermEqualSelector("involvedObject.kind", "Pod"))
-							podEventsListOptions := metav1.ListOptions{
-								FieldSelector: podEventsSelector.String(),
+							if v, ok := involvedObjectUIDMap[string(pod.UID)]; ok {
+								resultEvents = append(resultEvents, v...)
 							}
-							ef.wg.Add(1)
-							go ef.getEvents(ctx, podEventsListOptions)
 						}
 					}
 				}
@@ -212,35 +153,30 @@ func (ef *eventsFinder) listEventsByExtensions(ctx context.Context, client *kube
 		}
 	}
 
-	ef.wg.Wait()
-	if len(ef.errors) > 0 {
-		return nil, utilerrors.NewAggregate(ef.errors)
-	}
-
-	sort.Sort(ef.events)
+	sort.Sort(resultEvents)
 
 	return &corev1.EventList{
-		Items: ef.events,
+		Items: resultEvents,
 	}, nil
 }
 
-func (ef *eventsFinder) listEventsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func listEventsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	deployment, err := client.AppsV1().Deployments(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(appsv1.Resource("deployments/events"), name)
 	}
 
-	deploymentSelector := fields.AndSelectors(
-		fields.OneTermEqualSelector("involvedObject.uid", string(deployment.UID)),
-		fields.OneTermEqualSelector("involvedObject.name", deployment.Name),
-		fields.OneTermEqualSelector("involvedObject.namespace", deployment.Namespace),
-		fields.OneTermEqualSelector("involvedObject.kind", "Deployment"))
-	deploymentListOptions := metav1.ListOptions{
-		FieldSelector: deploymentSelector.String(),
+	var resultEvents util.EventSlice
+
+	events, errs := getAboutDeployEvents(ctx, client, deployment.Name, deployment.Namespace, string(deployment.UID))
+	if len(errs) > 0 {
+		return nil, utilerrors.NewAggregate(errs)
 	}
 
-	ef.wg.Add(1)
-	go ef.getEvents(ctx, deploymentListOptions)
+	involvedObjectUIDMap := util.GetInvolvedObjectUIDMap(events)
+	if v, ok := involvedObjectUIDMap[string(deployment.UID)]; ok {
+		resultEvents = append(resultEvents, v...)
+	}
 
 	rsSelector, err := metav1.LabelSelectorAsSelector(deployment.Spec.Selector)
 	if err != nil {
@@ -269,16 +205,9 @@ func (ef *eventsFinder) listEventsByApps(ctx context.Context, client *kubernetes
 			continue
 		}
 
-		rsEventsSelector := fields.AndSelectors(
-			fields.OneTermEqualSelector("involvedObject.uid", string(rs.UID)),
-			fields.OneTermEqualSelector("involvedObject.name", rs.Name),
-			fields.OneTermEqualSelector("involvedObject.namespace", rs.Namespace),
-			fields.OneTermEqualSelector("involvedObject.kind", "ReplicaSet"))
-		rsEventsListOptions := metav1.ListOptions{
-			FieldSelector: rsEventsSelector.String(),
+		if v, ok := involvedObjectUIDMap[string(rs.UID)]; ok {
+			resultEvents = append(resultEvents, v...)
 		}
-		ef.wg.Add(1)
-		go ef.getEvents(ctx, rsEventsListOptions)
 
 		for _, references := range rs.ObjectMeta.OwnerReferences {
 			if (references.Kind == "Deployment") && (references.Name == name) {
@@ -294,16 +223,9 @@ func (ef *eventsFinder) listEventsByApps(ctx context.Context, client *kubernetes
 				for _, pod := range podListByRS.Items {
 					for _, podReferences := range pod.ObjectMeta.OwnerReferences {
 						if (podReferences.Kind == "ReplicaSet") && (podReferences.Name == rs.Name) {
-							podEventsSelector := fields.AndSelectors(
-								fields.OneTermEqualSelector("involvedObject.uid", string(pod.UID)),
-								fields.OneTermEqualSelector("involvedObject.name", pod.Name),
-								fields.OneTermEqualSelector("involvedObject.namespace", pod.Namespace),
-								fields.OneTermEqualSelector("involvedObject.kind", "Pod"))
-							podEventsListOptions := metav1.ListOptions{
-								FieldSelector: podEventsSelector.String(),
+							if v, ok := involvedObjectUIDMap[string(pod.UID)]; ok {
+								resultEvents = append(resultEvents, v...)
 							}
-							ef.wg.Add(1)
-							go ef.getEvents(ctx, podEventsListOptions)
 						}
 					}
 				}
@@ -311,14 +233,35 @@ func (ef *eventsFinder) listEventsByApps(ctx context.Context, client *kubernetes
 		}
 	}
 
-	ef.wg.Wait()
-	if len(ef.errors) > 0 {
-		return nil, utilerrors.NewAggregate(ef.errors)
-	}
-
-	sort.Sort(ef.events)
+	sort.Sort(resultEvents)
 
 	return &corev1.EventList{
-		Items: ef.events,
+		Items: resultEvents,
 	}, nil
+}
+
+// getAboutDeployEvents Query all events in the namespace  or Query the Deployment ReplicaSet Pod asynchronously
+func getAboutDeployEvents(ctx context.Context, client *kubernetes.Clientset, name, namespace, uid string) (util.EventSlice, []error) {
+	return util.GetResourcesEvents(ctx, client, namespace, []metav1.ListOptions{
+		{
+			FieldSelector: fields.AndSelectors(
+				fields.OneTermEqualSelector("involvedObject.uid", uid),
+				fields.OneTermEqualSelector("involvedObject.name", name),
+				fields.OneTermEqualSelector("involvedObject.namespace", namespace),
+				fields.OneTermEqualSelector("involvedObject.kind", "Deployment")).String(),
+			ResourceVersion: "0",
+		},
+		{
+			FieldSelector: fields.AndSelectors(
+				fields.OneTermEqualSelector("involvedObject.namespace", namespace),
+				fields.OneTermEqualSelector("involvedObject.kind", "ReplicaSet")).String(),
+			ResourceVersion: "0",
+		},
+		{
+			FieldSelector: fields.AndSelectors(
+				fields.OneTermEqualSelector("involvedObject.namespace", namespace),
+				fields.OneTermEqualSelector("involvedObject.kind", "Pod")).String(),
+			ResourceVersion: "0",
+		},
+	})
 }
