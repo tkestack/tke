@@ -21,3 +21,5 @@ controller:
   monitorStorageType:
   # 监控存储地址，为tke集群master ip地址加8086端口
   monitorStorageAddresses:
+k8sValidVersions:
+tkeVersion:

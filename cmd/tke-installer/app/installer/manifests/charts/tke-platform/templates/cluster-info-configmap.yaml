@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-info
+  namespace: tke
+data:
+  k8sValidVersions: {{ .Values.k8sValidVersions }}
+  tkeVersion: {{ .Values.tkeVersion }}
+  
