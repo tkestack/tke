@@ -364,16 +364,18 @@ func ValidateReservePorts(fldPath *field.Path, sshs []*ssh.SSH) field.ErrorList 
 
 func ValidateStorage(cls *platform.Cluster, fld *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	storageResult := TKEValidateResult{}
 	allErrs = append(allErrs, ValidateNFS(cls, fld)...)
 	allErrs = append(allErrs, ValidateCephFS(cls, fld)...)
 
-	storageResult.Checked = true
 	if _, ok := cls.Annotations[platform.AnywhereValidateAnno]; ok {
+		storageResult := TKEValidateResult{}
+		storageResult.Checked = true
 		storageResult.Name = AnywhereValidateItemStorage
 		storageResult.Description = "Validate Storage Info"
 		storageResult.ErrorList = allErrs
+		return field.ErrorList{storageResult.ToFieldError()}
 	}
+
 	return allErrs
 }
 
