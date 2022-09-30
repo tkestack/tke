@@ -13,6 +13,7 @@ RUN mkdir -p /tmp/kubectl/ && cd /tmp/kubectl && \
     tar -zxf kubectl-$APP_VERSION-1-$OS_NAME-$OS_ARCH-debian-11.tar.gz -C /bin/ --strip-components=4 && \
     rm -rf /tmp/kubectl && \
     apk add --update curl && \
+    apk add --no-cache bash && \
     rm -rf /var/cache/apk/*
 
 ENTRYPOINT [ "kubectl" ]
