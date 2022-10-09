@@ -156,8 +156,8 @@ func OSVersion(s Interface) (os string, err error) {
 	return id + version, nil
 }
 
-func ReservePorts(s Interface, ip string, ports []int) error {
-	var cmd, errMessage string
+func ReservePorts(s Interface, ip string, ports []int) (isInused bool, message string, err error) {
+	var cmd string
 	for _, port := range ports {
 		cmd += fmt.Sprintf(`bash -c "</dev/tcp/%s/%d" &>/dev/null; echo $?; `, ip, port)
 	}
@@ -165,17 +165,17 @@ func ReservePorts(s Interface, ip string, ports []int) error {
 	out = strings.TrimSuffix(out, "\n")
 	results := strings.Split(out, "\n")
 	if len(results) != len(ports) {
-		return fmt.Errorf("check results length does not match need check ports length, get results output is: %s", out)
+		return false, "", fmt.Errorf("check results length does not match need check ports length, get results output is: %s", out)
 	}
 	for i, result := range results {
 		if result != "1" {
-			errMessage += fmt.Sprintf("%d ", ports[i])
+			message += fmt.Sprintf("%d ", ports[i])
 		}
 	}
-	if len(errMessage) != 0 {
-		return fmt.Errorf("ports %sis in used", errMessage)
+	if len(message) != 0 {
+		return true, fmt.Sprintf("ports %sis in used", message), nil
 	}
-	return nil
+	return false, "", nil
 }
 
 func FirewallEnabled(s Interface) (enabled bool, err error) {
