@@ -35,7 +35,14 @@ func GetNetworkInterface(s Interface, ip string) string {
 
 // GetDefaultRouteInterface returns default router network interface
 func GetDefaultRouteInterface(s Interface) string {
-	stdout, _, _, _ := s.Exec("route | grep 'default' |awk '{print $NF}'")
+	stdout, _, _, _ := s.Exec(`ip route get 1.1.1.1 | grep -oP 'dev \K\S+'`)
+
+	return strings.Replace(stdout, "\n", "", -1)
+}
+
+// GetDefaultRouteIP returns default router network interface
+func GetDefaultRouteIP(s Interface) string {
+	stdout, _, _, _ := s.Exec(`ip route get 1.1.1.1 | grep -oP 'src \K\S+'`)
 
 	return strings.Replace(stdout, "\n", "", -1)
 }

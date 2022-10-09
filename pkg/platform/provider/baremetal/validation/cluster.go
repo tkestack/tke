@@ -22,12 +22,13 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	appsv1alpha1 "github.com/clusternet/apis/apps/v1alpha1"
 	"math"
 	"net"
 	"strconv"
 	"strings"
 	"time"
+
+	appsv1alpha1 "github.com/clusternet/apis/apps/v1alpha1"
 	"tkestack.io/tke/pkg/mesh/util/json"
 
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
@@ -534,15 +535,15 @@ func ValidateSelinux(fldPath *field.Path, sshs []*ssh.SSH) field.ErrorList {
 func ValidateDefaultRoute(fldPath *field.Path, sshs []*ssh.SSH, expectedNetInterface string) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for i, one := range sshs {
-		realNetInterface := ssh.GetNetworkInterface(one, one.Host)
-		if realNetInterface != expectedNetInterface {
+		defaultRouteIP := ssh.GetDefaultRouteIP(one)
+		if defaultRouteIP != one.Host {
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host,
-				fmt.Sprintf("network interface of IP %s is %s not %s", one.Host, realNetInterface, expectedNetInterface)))
+				fmt.Sprintf("host IP %s is not default route IP %s", one.Host, defaultRouteIP)))
 		}
-		realNetInterface = ssh.GetDefaultRouteInterface(one)
-		if realNetInterface != expectedNetInterface {
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host,
-				fmt.Sprintf("network interface of default route is %s not %s", realNetInterface, expectedNetInterface)))
+		defaultRouteInterface := ssh.GetDefaultRouteInterface(one)
+		if defaultRouteInterface != expectedNetInterface {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), expectedNetInterface,
+				fmt.Sprintf("%s is not default route interface %s", defaultRouteInterface, expectedNetInterface)))
 		}
 	}
 	return allErrs
