@@ -22,12 +22,13 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	appsv1alpha1 "github.com/clusternet/apis/apps/v1alpha1"
 	"math"
 	"net"
 	"strconv"
 	"strings"
 	"time"
+
+	appsv1alpha1 "github.com/clusternet/apis/apps/v1alpha1"
 	"tkestack.io/tke/pkg/mesh/util/json"
 
 	k8serror "k8s.io/apimachinery/pkg/api/errors"
@@ -354,9 +355,11 @@ func ValidateOSVersion(fldPath *field.Path, sshs []*ssh.SSH) field.ErrorList {
 func ValidateReservePorts(fldPath *field.Path, sshs []*ssh.SSH) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for i, one := range sshs {
-		err := ssh.ReservePorts(one, "127.0.0.1", reservePorts)
+		isInused, message, err := ssh.ReservePorts(one, "127.0.0.1", reservePorts)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host, err.Error()))
+		} else if isInused {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host, message))
 		}
 	}
 	return allErrs
@@ -457,9 +460,11 @@ func ValidateCephFS(cls *platform.Cluster, fld *field.Path) field.ErrorList {
 			allErrs = append(allErrs, field.Invalid(fld, err, "ssh machine failed"))
 		}
 
-		err = ssh.ReservePorts(machine, ip, []int{p})
+		isInused, _, err := ssh.ReservePorts(machine, ip, []int{p})
 		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fld, err, "invalid port"))
+			allErrs = append(allErrs, field.Invalid(fld, fmt.Sprintf("ceph IP: %s, port: %v", ip, p), fmt.Sprintf("check ceph connection failed: %v", err)))
+		} else if !isInused {
+			allErrs = append(allErrs, field.Invalid(fld, fmt.Sprintf("ceph IP: %s, port: %v", ip, p), "cannot connect given ceph addr"))
 		}
 	}
 	return allErrs
