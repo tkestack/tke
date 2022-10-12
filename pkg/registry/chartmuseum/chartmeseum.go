@@ -52,9 +52,8 @@ func IgnoredAuthPathPrefixes() []string {
 type Options struct {
 	RegistryConfig       *registryconfig.RegistryConfiguration
 	LoopbackClientConfig *restclient.Config
-	OIDCIssuerURL        string
-	OIDCTokenReviewPath  string
-	OIDCCAFile           string
+	TokenReviewURL       string
+	TokenReviewCAFile    string
 	ExternalScheme       string
 	Authorizer           authorizer.Authorizer
 }
@@ -86,11 +85,10 @@ func RegisterRoute(m *mux.PathRecorderMux, opts *Options) error {
 			return chainErr
 		}
 		handler, chainErr = authentication.WithAuthentication(handler, &authentication.Options{
-			SecurityConfig:  &opts.RegistryConfig.Security,
-			ExternalScheme:  opts.ExternalScheme,
-			OIDCIssuerURL:   opts.OIDCIssuerURL,
-			OIDCCAFile:      opts.OIDCCAFile,
-			TokenReviewPath: opts.OIDCTokenReviewPath,
+			SecurityConfig:    &opts.RegistryConfig.Security,
+			ExternalScheme:    opts.ExternalScheme,
+			TokenReviewCAFile: opts.TokenReviewCAFile,
+			TokenReviewURL:    opts.TokenReviewURL,
 		})
 		if chainErr != nil {
 			return chainErr
