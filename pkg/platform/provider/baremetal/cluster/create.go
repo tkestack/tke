@@ -41,6 +41,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/segmentio/ksuid"
 	"github.com/thoas/go-funk"
+	"helm.sh/helm/v3/pkg/release"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1673,15 +1674,18 @@ func (p *Provider) EnsureCheckAnywhereSubscription(ctx context.Context, c *v1.Cl
 	if err != nil {
 		return err
 	}
-	for i, feed := range sub.Spec.Feeds {
-		_ = wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+	_ = wait.PollImmediate(15*time.Second, 10*time.Minute, func() (bool, error) {
+		for i, feed := range sub.Spec.Feeds {
 			var helmrelease *appsv1alpha1.HelmRelease
 			helmrelease, err = extenderapi.GetHelmRelease(hubClient, extenderapi.GenerateHelmReleaseName(sub.Name, feed), mcls.Namespace)
 			if err != nil {
+				if apierrors.IsNotFound(err) {
+					return false, nil
+				}
 				err = fmt.Errorf("get helmrelease %s failed: %v", feed.Name, err)
-				return false, nil
+				return false, err
 			}
-			if helmrelease != nil && helmrelease.Status.Phase != "deployed" {
+			if helmrelease != nil && helmrelease.Status.Phase != release.StatusDeployed {
 				err = fmt.Errorf("%d/%d charts are deployed, %s is not deployed, phase: %s, description: %s, notes: %s",
 					i,
 					len(sub.Spec.Feeds),
@@ -1690,16 +1694,19 @@ func (p *Provider) EnsureCheckAnywhereSubscription(ctx context.Context, c *v1.Cl
 					helmrelease.Status.Description,
 					helmrelease.Status.Notes,
 				)
+				if helmrelease.Status.Phase == release.StatusFailed {
+					log.FromContext(ctx).Errorf("cluster %s install chart %s failed, phase: %s, description: %s, notes: %s", c.Name, feed.Name, helmrelease.Status.Phase, helmrelease.Status.Description, helmrelease.Status.Notes)
+				}
 				return false, nil
 			}
-			return true, nil
-		})
-		if err != nil {
-			return err
 		}
+		return true, nil
+	})
+	if err != nil {
+		return err
 	}
-	return nil
 
+	return nil
 }
 
 // Ensure anywhere addon applications
