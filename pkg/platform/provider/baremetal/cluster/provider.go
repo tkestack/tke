@@ -93,6 +93,7 @@ func NewProvider() (*Provider, error) {
 			p.EnsureKeepalivedInit,
 			p.EnsureThirdPartyHAInit,
 			p.EnsureAuthzWebhook,
+			p.EnsureAuditConfig,
 			p.EnsurePrepareForControlplane,
 
 			p.EnsureKubeadmInitPhaseKubeletStart,

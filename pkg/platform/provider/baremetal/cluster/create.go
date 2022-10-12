@@ -762,12 +762,45 @@ func (p *Provider) EnsureAuthzWebhook(ctx context.Context, c *v1.Cluster) error 
 	return nil
 }
 
+func (p *Provider) EnsureAuditConfig(ctx context.Context, c *v1.Cluster) error {
+	machines := map[bool][]platformv1.ClusterMachine{
+		true:  c.Spec.ScalingMachines,
+		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
+	auditPolicyData, _ := ioutil.ReadFile(constants.AuditPolicyConfigFile)
+	auditWebhookConfig, err := template.ParseString(auditWebhookConfig, map[string]interface{}{
+		"AuditBackendAddress": p.Config.Audit.Address,
+		"ClusterName":         c.Name,
+	})
+	if err != nil {
+		return errors.Wrap(err, "parse auditWebhookConfig error")
+	}
+	for _, machine := range machines {
+		machineSSH, err := machine.SSH()
+		if err != nil {
+			return err
+		}
+		if p.Config.AuditEnabled() {
+			if len(auditPolicyData) != 0 {
+				err = machineSSH.WriteFile(bytes.NewReader(auditPolicyData), constants.KubernetesAuditPolicyConfigFile)
+				if err != nil {
+					return errors.Wrap(err, machine.IP)
+				}
+				err = machineSSH.WriteFile(bytes.NewReader(auditWebhookConfig), constants.KubernetesAuditWebhookConfigFile)
+				if err != nil {
+					return errors.Wrap(err, machine.IP)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Cluster) error {
 	machines := map[bool][]platformv1.ClusterMachine{
 		true:  c.Spec.ScalingMachines,
 		false: c.Spec.Machines}[len(c.Spec.ScalingMachines) > 0]
 	oidcCa, _ := ioutil.ReadFile(constants.OIDCConfigFile)
-	auditPolicyData, _ := ioutil.ReadFile(constants.AuditPolicyConfigFile)
 	GPUQuotaAdmissionHost := c.Annotations[constants.GPUQuotaAdmissionIPAnnotaion]
 	if GPUQuotaAdmissionHost == "" {
 		GPUQuotaAdmissionHost = "gpu-quota-admission"
@@ -777,13 +810,6 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 	})
 	if err != nil {
 		return errors.Wrap(err, "parse schedulerPolicyConfig error")
-	}
-	auditWebhookConfig, err := template.ParseString(auditWebhookConfig, map[string]interface{}{
-		"AuditBackendAddress": p.Config.Audit.Address,
-		"ClusterName":         c.Name,
-	})
-	if err != nil {
-		return errors.Wrap(err, "parse auditWebhookConfig error")
 	}
 	for _, machine := range machines {
 		machineSSH, err := machine.SSH()
@@ -806,19 +832,6 @@ func (p *Provider) EnsurePrepareForControlplane(ctx context.Context, c *v1.Clust
 			err = machineSSH.WriteFile(bytes.NewReader(oidcCa), constants.OIDCCACertFile)
 			if err != nil {
 				return errors.Wrap(err, machine.IP)
-			}
-		}
-
-		if p.Config.AuditEnabled() {
-			if len(auditPolicyData) != 0 {
-				err = machineSSH.WriteFile(bytes.NewReader(auditPolicyData), constants.KubernetesAuditPolicyConfigFile)
-				if err != nil {
-					return errors.Wrap(err, machine.IP)
-				}
-				err = machineSSH.WriteFile(bytes.NewReader(auditWebhookConfig), constants.KubernetesAuditWebhookConfigFile)
-				if err != nil {
-					return errors.Wrap(err, machine.IP)
-				}
 			}
 		}
 	}

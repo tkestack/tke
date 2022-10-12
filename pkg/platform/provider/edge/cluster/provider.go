@@ -105,6 +105,7 @@ func NewProvider() (*Provider, error) {
 			p.bCluster.EnsureKeepalivedInit,
 			p.bCluster.EnsureThirdPartyHAInit,
 			p.bCluster.EnsureAuthzWebhook,
+			p.bCluster.EnsureAuditConfig,
 			p.bCluster.EnsurePrepareForControlplane,
 
 			p.bCluster.EnsureKubeadmInitPhaseKubeletStart,
