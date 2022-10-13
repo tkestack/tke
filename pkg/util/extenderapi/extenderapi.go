@@ -93,7 +93,7 @@ func GetHelmRelease(clientSet client.Client, name, namespace string) (*appsv1alp
 	key := client.ObjectKeyFromObject(hr)
 	err := clientSet.Get(context.TODO(), key, hr)
 	if err != nil {
-		return nil, fmt.Errorf("get helmrelease %s in %s failed: %v", name, namespace, err)
+		return nil, err
 	}
 	return hr, nil
 }
