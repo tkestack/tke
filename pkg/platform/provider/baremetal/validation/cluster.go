@@ -73,6 +73,8 @@ var (
 		31180, 31443,
 		// tke-auth
 		31138,
+		// influxdb & thanos-reciever
+		30086,
 	}
 )
 
