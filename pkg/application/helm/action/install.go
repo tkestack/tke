@@ -101,6 +101,7 @@ func (c *Client) InstallWithLocal(options *InstallOptions, chartLocalFile string
 	client.ReleaseName = options.ReleaseName
 	client.Description = options.Description
 	client.IsUpgrade = options.IsUpgrade
+	client.Atomic = true
 
 	options.ChartPathOptions.ApplyTo(&client.ChartPathOptions)
 

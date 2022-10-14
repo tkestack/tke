@@ -20,8 +20,6 @@ package action
 
 import (
 	"context"
-	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
@@ -32,7 +30,6 @@ import (
 	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
 	"tkestack.io/tke/pkg/application/util"
 	chartpath "tkestack.io/tke/pkg/application/util/chartpath/v1"
-	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
 
@@ -43,8 +40,13 @@ func Install(ctx context.Context,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
 	updateStatusFunc applicationprovider.UpdateStatusFunc) (*applicationv1.App, error) {
+	newApp, err := applicationClient.Apps(app.Namespace).Get(ctx, app.Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
 	hooks := getHooks(app)
-	err := hooks.PreInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	err = hooks.PreInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -54,29 +56,18 @@ func Install(ctx context.Context,
 	}
 	destfile, err := Pull(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 	if err != nil {
-		newStatus := app.Status.DeepCopy()
+		newStatus := newApp.Status.DeepCopy()
 		if updateStatusFunc != nil {
-			if app.Status.Phase == applicationv1.AppPhaseInstallFailed {
-				log.Error(fmt.Sprintf("install app failed, helm pull err: %s", err.Error()))
-				metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-				// delayed retry, queue.AddRateLimited does not meet the demand
-				return app, nil
-			}
 			newStatus.Phase = applicationv1.AppPhaseInstallFailed
 			newStatus.Message = "fetch chart failed"
 			newStatus.Reason = err.Error()
 			newStatus.LastTransitionTime = metav1.Now()
-			_, updateStatusErr := updateStatusFunc(ctx, app, &app.Status, newStatus)
-			metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+			_, updateStatusErr := updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
+			metrics.GaugeApplicationInstallFailed.WithLabelValues(newApp.Spec.TargetCluster, newApp.Name).Set(1)
 			if updateStatusErr != nil {
 				return nil, updateStatusErr
 			}
 		}
-	}
-
-	newApp, err := applicationClient.Apps(app.Namespace).Get(ctx, app.Name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
 	}
 
 	values, err := helmutil.MergeValues(app.Spec.Values.Values, app.Spec.Values.RawValues, string(app.Spec.Values.RawValuesType))
@@ -102,12 +93,6 @@ func Install(ctx context.Context,
 		newStatus := newApp.Status.DeepCopy()
 		var updateStatusErr error
 		if err != nil {
-			if app.Status.Phase == applicationv1.AppPhaseInstallFailed {
-				log.Error(fmt.Sprintf("install app failed, helm install err: %s", err.Error()))
-				metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-				// delayed retry, queue.AddRateLimited does not meet the demand
-				return app, nil
-			}
 			newStatus.Phase = applicationv1.AppPhaseInstallFailed
 			newStatus.Message = "install app failed"
 			newStatus.Reason = err.Error()
