@@ -58,45 +58,6 @@ func (c *Cluster) Clientset() (kubernetes.Interface, error) {
 	return kubernetes.NewForConfig(config)
 }
 
-func (c *Cluster) GetMainIP() string {
-	mainIP := c.Spec.Machines[0].IP
-	if c.Spec.Features.HA != nil {
-		if c.Spec.Features.HA.TKEHA != nil {
-			mainIP = c.Spec.Features.HA.TKEHA.VIP
-		}
-		if c.Spec.Features.HA.ThirdPartyHA != nil {
-			mainIP = c.Spec.Features.HA.ThirdPartyHA.VIP
-		}
-	}
-	return mainIP
-}
-
-func (c *Cluster) GetDirectorIP() string {
-	if c.Spec.Features.HA != nil {
-		if c.Spec.Features.HA.TKEHA != nil {
-			return c.Spec.Features.HA.TKEHA.DirectorIP
-		}
-	}
-	return ""
-}
-
-func (c *Cluster) GetInnerVIPs() []string {
-	if c.Spec.Features.HA != nil {
-		if c.Spec.Features.HA.TKEHA != nil && c.Spec.Features.HA.TKEHA.VIPPool != nil {
-			return c.Spec.Features.HA.TKEHA.VIPPool.Inner
-		}
-	}
-	return nil
-}
-
-func (c *Cluster) GetMasterIPs() []string {
-	var IPs []string
-	for _, machine := range c.Spec.Machines {
-		IPs = append(IPs, machine.IP)
-	}
-	return IPs
-}
-
 func (c *Cluster) ClientsetForBootstrap() (kubernetes.Interface, error) {
 	config, err := c.RESTConfigForBootstrap()
 	if err != nil {
