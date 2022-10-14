@@ -638,14 +638,6 @@ func (StorageBackEndES) SwaggerDoc() map[string]string {
 	return map_StorageBackEndES
 }
 
-var map_TKEHA = map[string]string{
-	"directorip": "DirectorIP: an inner vip used by tcs-lb components",
-}
-
-func (TKEHA) SwaggerDoc() map[string]string {
-	return map_TKEHA
-}
-
 var map_TappController = map[string]string{
 	"":     "TappController is a new kubernetes workload.",
 	"spec": "Spec defines the desired identities of tapp controller.",
@@ -709,16 +701,6 @@ var map_UpgradeStrategy = map[string]string{
 
 func (UpgradeStrategy) SwaggerDoc() map[string]string {
 	return map_UpgradeStrategy
-}
-
-var map_VIPPool = map[string]string{
-	"":      "vippool: vippool is a pool of vips, supported by tcs lb",
-	"inner": "Inner: private ip pool, svc using a vip in inner pool will not be exposed on Internet",
-	"outer": "Outer: public ip pool, svc using a vip in outer pool will be exposed on Internet",
-}
-
-func (VIPPool) SwaggerDoc() map[string]string {
-	return map_VIPPool
 }
 
 // AUTO-GENERATED FUNCTIONS END HERE

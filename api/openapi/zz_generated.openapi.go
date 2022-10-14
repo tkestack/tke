@@ -1089,7 +1089,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/platform/v1.ThirdPartyHA":                                schema_tke_api_platform_v1_ThirdPartyHA(ref),
 		"tkestack.io/tke/api/platform/v1.Upgrade":                                     schema_tke_api_platform_v1_Upgrade(ref),
 		"tkestack.io/tke/api/platform/v1.UpgradeStrategy":                             schema_tke_api_platform_v1_UpgradeStrategy(ref),
-		"tkestack.io/tke/api/platform/v1.VIPPool":                                     schema_tke_api_platform_v1_VIPPool(ref),
 		"tkestack.io/tke/api/registry/v1.Chart":                                       schema_tke_api_registry_v1_Chart(ref),
 		"tkestack.io/tke/api/registry/v1.ChartGroup":                                  schema_tke_api_registry_v1_ChartGroup(ref),
 		"tkestack.io/tke/api/registry/v1.ChartGroupImport":                            schema_tke_api_registry_v1_ChartGroupImport(ref),
@@ -55062,24 +55061,10 @@ func schema_tke_api_platform_v1_TKEHA(ref common.ReferenceCallback) common.OpenA
 							Format: "int32",
 						},
 					},
-					"directorip": {
-						SchemaProps: spec.SchemaProps{
-							Description: "DirectorIP: an inner vip used by tcs-lb components",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"vippool": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("tkestack.io/tke/api/platform/v1.VIPPool"),
-						},
-					},
 				},
 				Required: []string{"vip"},
 			},
 		},
-		Dependencies: []string{
-			"tkestack.io/tke/api/platform/v1.VIPPool"},
 	}
 }
 
@@ -55390,49 +55375,6 @@ func schema_tke_api_platform_v1_UpgradeStrategy(ref common.ReferenceCallback) co
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/util/intstr.IntOrString"},
-	}
-}
-
-func schema_tke_api_platform_v1_VIPPool(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "vippool: vippool is a pool of vips, supported by tcs lb",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"inner": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Inner: private ip pool, svc using a vip in inner pool will not be exposed on Internet",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"outer": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Outer: public ip pool, svc using a vip in outer pool will be exposed on Internet",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
 	}
 }
 
