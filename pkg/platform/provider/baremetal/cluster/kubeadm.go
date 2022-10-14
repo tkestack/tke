@@ -197,6 +197,9 @@ func (p *Provider) getClusterConfiguration(c *v1.Cluster) *kubeadmv1beta2.Cluste
 	utilruntime.Must(json.Merge(&config.Etcd, &c.Spec.Etcd))
 	if config.Etcd.Local != nil {
 		config.Etcd.Local.ImageTag = images.Get().ETCD.Tag
+		config.Etcd.Local.ExtraArgs = map[string]string{
+			"quota-backend-bytes": "6442450944",
+		}
 	}
 
 	return config
