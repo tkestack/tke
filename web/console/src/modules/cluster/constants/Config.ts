@@ -722,7 +722,7 @@ rm -rfv /opt/tke-installer
 rm -rfv /var/lib/postgresql /etc/core/token /var/lib/redis /storage /chart_storage
 ip link del cni0 2>/etc/null
 
-for port in 80 2379 6443 8086 {10249..10259} ; do
+for port in 80 2379 6443 8086 9100 {10249..10259} ; do
     fuser -k -9 \${port}/tcp
 done
 
@@ -743,7 +743,14 @@ rm -rfv /var/lib/nerdctl/*
 ## ip link
 ip link delete cilium_net 2>/dev/null
 ip link delete cilium_vxlan 2>/dev/null
-ip link delete flannel.1 2>/dev/null`;
+ip link delete flannel.1 2>/dev/null
+
+## iptables
+iptables --flush
+iptables --flush --table nat
+iptables --flush --table filter
+iptables --table nat --delete-chain
+iptables --table filter --delete-chain`;
 
 export enum GPUTYPE {
   PGPU = 'Physical',

@@ -27,6 +27,9 @@ const (
 	AnywhereValidateItemDefaultRoute       = "DefaultRoute"
 	AnywhereValidateItemReservePorts       = "ReservePorts"
 	AnywhereValidateItemHostNetOverlapping = "HostNetOverlapping"
+	AnywhereValidateItemFirewall           = "Firewall"
+	AnywhereValidateItemSelinux            = "Selinux"
+	AnywhereValidateItemStorage            = "Storage"
 )
 
 const (

@@ -20,6 +20,7 @@ package util
 
 import (
 	"context"
+	"sync"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,4 +54,52 @@ func GetEvents(ctx context.Context, client *kubernetes.Clientset, uid, namespace
 		FieldSelector: selector.String(),
 	}
 	return client.CoreV1().Events(namespace).List(ctx, listOptions)
+}
+
+// GetInvolvedObjectUIDMap Get uid events map
+func GetInvolvedObjectUIDMap(events EventSlice) map[string][]corev1.Event {
+	involvedObjectUIDMap := make(map[string][]corev1.Event)
+	for _, event := range events {
+		if v, ok := involvedObjectUIDMap[string(event.InvolvedObject.UID)]; ok {
+			involvedObjectUIDMap[string(event.InvolvedObject.UID)] = append(v, event)
+			continue
+		}
+		involvedObjectUIDMap[string(event.InvolvedObject.UID)] = EventSlice{
+			event,
+		}
+	}
+	return involvedObjectUIDMap
+}
+
+// GetResourcesEvents list the resources events by resource namespace.
+func GetResourcesEvents(ctx context.Context, client *kubernetes.Clientset, namespace string, listOptions []metav1.ListOptions) (EventSlice, []error) {
+	var wg sync.WaitGroup
+	var mutex sync.Mutex
+
+	var resultEvents EventSlice
+	errors := make([]error, 0)
+
+	for _, listOption := range listOptions {
+		wg.Add(1)
+		go func(listOption metav1.ListOptions) {
+			defer wg.Done()
+			events, err := client.CoreV1().Events(namespace).List(ctx, listOption)
+			if err != nil {
+				mutex.Lock()
+				errors = append(errors, err)
+				mutex.Unlock()
+				return
+			}
+			if len(events.Items) == 0 {
+				return
+			}
+			mutex.Lock()
+			for _, event := range events.Items {
+				resultEvents = append(resultEvents, event)
+			}
+			mutex.Unlock()
+		}(listOption)
+	}
+	wg.Wait()
+	return resultEvents, errors
 }

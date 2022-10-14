@@ -21,6 +21,7 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/cloudindustry"
 
 	dexldap "github.com/dexidp/dex/connector/ldap"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -103,8 +104,16 @@ func (r *REST) Create(ctx context.Context, obj runtime.Object, createValidation 
 		if err = json.Unmarshal([]byte(idpObj.Spec.Config), &ldapConfig); err != nil {
 			return nil, errors.NewBadRequest(err.Error())
 		}
-
 		idp, err = ldap.NewLDAPIdentityProvider(ldapConfig, idpObj.Spec.Administrators, idpObj.Name)
+		if err != nil {
+			return nil, errors.NewInternalError(err)
+		}
+	case cloudindustry.ConnectorType:
+		var sdkConfig cloudindustry.SDKConfig
+		if err = json.Unmarshal([]byte(idpObj.Spec.Config), &sdkConfig); err != nil {
+			return nil, errors.NewBadRequest(err.Error())
+		}
+		idp, err = cloudindustry.NewCloudIndustryIdentityProvider(idpObj.Name, idpObj.Spec.Administrators, &sdkConfig)
 		if err != nil {
 			return nil, errors.NewInternalError(err)
 		}

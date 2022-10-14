@@ -54,6 +54,7 @@ func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 	// serverMux is the handler for these controller *after* authn/authz filters have been applied
 	serverMux := controller.NewBaseHandler(&cfg.Component.Debugging, checks...)
 	if cfg.ClusterController.IsCRDMode {
+		log.Info("tke platform controller start validate listening...")
 		serverMux.HandleFunc("/validate", webhook.Validate)
 	}
 	handler := controller.BuildHandlerChain(serverMux, &cfg.Authorization, &cfg.Authentication, platform.Codecs)

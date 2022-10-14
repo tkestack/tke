@@ -19,6 +19,7 @@ require (
 	github.com/aws/aws-sdk-go v1.40.37
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/caddyserver/caddy v1.0.5
+	github.com/caryxychen/cloudindustry-sdk-go v1.0.1
 	github.com/casbin/casbin/v2 v2.2.1
 	github.com/chartmuseum/helm-push v0.9.0
 	github.com/chartmuseum/storage v0.11.0

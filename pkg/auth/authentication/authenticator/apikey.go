@@ -84,15 +84,14 @@ func (h *APIKeyAuthenticator) AuthenticateToken(ctx context.Context, token strin
 
 	user, err := util.GetUserByName(ctx, h.authClient, tokenInfo.TenantID, info.Name)
 	if err != nil {
-		log.Error("Get localIdentity failed", log.String("localIdentity", info.Name), log.Err(err))
-		return nil, false, err
-	}
-
-	info.UID = user.ObjectMeta.Name
-	groups, err := util.GetGroupsForUser(ctx, h.authClient, user.ObjectMeta.Name)
-	if err == nil {
-		for _, g := range groups.Items {
-			info.Groups = append(info.Groups, g.ObjectMeta.Name)
+		log.Warnf("Get localIdentity failed", log.String("localIdentity", info.Name), log.Err(err))
+	} else {
+		info.UID = user.ObjectMeta.Name
+		groups, err := util.GetGroupsForUser(ctx, h.authClient, user.ObjectMeta.Name)
+		if err == nil {
+			for _, g := range groups.Items {
+				info.Groups = append(info.Groups, g.ObjectMeta.Name)
+			}
 		}
 	}
 

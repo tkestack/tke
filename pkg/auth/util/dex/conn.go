@@ -60,6 +60,7 @@ func (c *conn) UpdateConnector(id string, updater func(s dexstorage.Connector) (
 		return err
 	}
 
+	administrators := current.Spec.Administrators
 	currConn := toDexConnector(current)
 	updatedConn, err := updater(currConn)
 	if err != nil {
@@ -69,6 +70,7 @@ func (c *conn) UpdateConnector(id string, updater func(s dexstorage.Connector) (
 	updated := fromDexConnector(updatedConn)
 
 	current.Spec = updated.Spec
+	current.Spec.Administrators = administrators
 
 	_, err = c.authClient.IdentityProviders().Update(context.Background(), current, metav1.UpdateOptions{})
 	return err

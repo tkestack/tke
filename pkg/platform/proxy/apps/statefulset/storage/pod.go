@@ -23,6 +23,7 @@ import (
 
 	"tkestack.io/tke/pkg/platform/proxy"
 	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/page"
 
 	appsv1beta1 "k8s.io/api/apps/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -42,7 +43,7 @@ type PodREST struct {
 	platformClient platforminternalclient.PlatformInterface
 }
 
-var _ rest.Getter = &PodREST{}
+var _ rest.GetterWithOptions = &PodREST{}
 var _ rest.GroupVersionKindProvider = &PodREST{}
 
 // GroupVersionKind is used to specify a particular GroupVersionKind to discovery.
@@ -56,25 +57,34 @@ func (r *PodREST) New() runtime.Object {
 	return &corev1.PodList{}
 }
 
+// NewConnectOptions returns versioned resource that represents proxy parameters
+func (r *PodREST) NewGetOptions() (runtime.Object, bool, string) {
+	return &metav1.ListOptions{}, false, ""
+}
+
 // Get retrieves the object from the storage. It is required to support Patch.
-func (r *PodREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (r *PodREST) Get(ctx context.Context, name string, options runtime.Object) (runtime.Object, error) {
 	client, err := proxy.ClientSet(ctx, r.platformClient)
 	if err != nil {
 		return nil, err
 	}
-
+	listOpts := options.(*metav1.ListOptions)
+	metaOptions := &metav1.GetOptions{}
+	if listOpts.ResourceVersion != "" {
+		metaOptions.ResourceVersion = listOpts.ResourceVersion
+	}
 	namespaceName, ok := request.NamespaceFrom(ctx)
 	if !ok {
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
 	if apiclient.ClusterVersionIsBefore19(client) {
-		return listPodsByAppsBeta(ctx, client, namespaceName, name, options)
+		return listPodsByAppsBeta(ctx, client, namespaceName, name, metaOptions, listOpts)
 	}
-	return listPodsByApps(ctx, client, namespaceName, name, options)
+	return listPodsByApps(ctx, client, namespaceName, name, metaOptions, listOpts)
 }
 
-func listPodsByAppsBeta(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func listPodsByAppsBeta(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions, listOpts *metav1.ListOptions) (runtime.Object, error) {
 	statefulSet, err := client.AppsV1beta1().StatefulSets(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(appsv1beta1.Resource("statefulSet/pods"), name)
@@ -102,10 +112,39 @@ func listPodsByAppsBeta(ctx context.Context, client *kubernetes.Clientset, names
 			}
 		}
 	}
+
+	if listOpts.Continue != "" {
+		start, limit, err := page.DecodeContinue(ctx, "StatefulSet", name, listOpts.Continue)
+		if err != nil {
+			return nil, err
+		}
+		newStart := start + limit
+		if int(newStart+limit) < len(podList.Items) {
+			podList.Continue, err = page.EncodeContinue(ctx, "StatefulSet", name, newStart, limit)
+			if err != nil {
+				return nil, err
+			}
+			items := podList.Items[newStart : newStart+limit]
+			podList.Items = items
+		} else {
+			items := podList.Items[newStart:len(podList.Items)]
+			podList.Items = items
+		}
+	} else if listOpts.Limit != 0 {
+		if int(listOpts.Limit) < len(podList.Items) {
+			podList.Continue, err = page.EncodeContinue(ctx, "StatefulSet", name, 0, listOpts.Limit)
+			if err != nil {
+				return nil, err
+			}
+			items := podList.Items[:listOpts.Limit]
+			podList.Items = items
+		}
+	}
+
 	return podList, nil
 }
 
-func listPodsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func listPodsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions, listOpts *metav1.ListOptions) (runtime.Object, error) {
 	statefulSet, err := client.AppsV1().StatefulSets(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(appsv1beta1.Resource("statefulSet/pods"), name)
@@ -133,5 +172,34 @@ func listPodsByApps(ctx context.Context, client *kubernetes.Clientset, namespace
 			}
 		}
 	}
+
+	if listOpts.Continue != "" {
+		start, limit, err := page.DecodeContinue(ctx, "StatefulSet", name, listOpts.Continue)
+		if err != nil {
+			return nil, err
+		}
+		newStart := start + limit
+		if int(newStart+limit) < len(podList.Items) {
+			podList.Continue, err = page.EncodeContinue(ctx, "StatefulSet", name, newStart, limit)
+			if err != nil {
+				return nil, err
+			}
+			items := podList.Items[newStart : newStart+limit]
+			podList.Items = items
+		} else {
+			items := podList.Items[newStart:len(podList.Items)]
+			podList.Items = items
+		}
+	} else if listOpts.Limit != 0 {
+		if int(listOpts.Limit) < len(podList.Items) {
+			podList.Continue, err = page.EncodeContinue(ctx, "StatefulSet", name, 0, listOpts.Limit)
+			if err != nil {
+				return nil, err
+			}
+			items := podList.Items[:listOpts.Limit]
+			podList.Items = items
+		}
+	}
+
 	return podList, nil
 }

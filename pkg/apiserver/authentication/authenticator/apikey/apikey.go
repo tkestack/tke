@@ -21,15 +21,13 @@ package apikey
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-
 	jsoniter "github.com/json-iterator/go"
+	"io/ioutil"
 	v1 "k8s.io/api/authentication/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/user"
+	"net/http"
 	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/transport"
 )
@@ -37,22 +35,15 @@ import (
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 type Options struct {
-	OIDCIssuerURL   string
-	OIDCCAFile      string
-	TokenReviewPath string
-	AdminUsername   string
-	AdminPassword   string
+	TokenReviewCAFile string
+	TokenReviewURL    string
+	AdminUsername     string
+	AdminPassword     string
 }
 
 // NewAPIKeyAuthenticator creates a request auth authenticator and returns it.
 func NewAPIKeyAuthenticator(opts *Options) (authenticator.Request, error) {
-	issuerURL, err := url.Parse(opts.OIDCIssuerURL)
-	if err != nil {
-		return nil, err
-	}
-	issuerURL.Path = opts.TokenReviewPath
-
-	tr, err := transport.NewOneWayTLSTransport(opts.OIDCCAFile, true)
+	tr, err := transport.NewOneWayTLSTransport(opts.TokenReviewCAFile, true)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +51,7 @@ func NewAPIKeyAuthenticator(opts *Options) (authenticator.Request, error) {
 	return &Authenticator{
 		adminUsername:        opts.AdminUsername,
 		adminPassword:        opts.AdminPassword,
-		tokenReviewURL:       issuerURL.String(),
+		tokenReviewURL:       opts.TokenReviewURL,
 		tokenReviewTransport: tr,
 	}, nil
 }

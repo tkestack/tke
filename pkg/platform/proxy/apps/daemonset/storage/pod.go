@@ -21,9 +21,6 @@ package storage
 import (
 	"context"
 
-	"tkestack.io/tke/pkg/platform/proxy"
-	"tkestack.io/tke/pkg/util/apiclient"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -35,6 +32,9 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	"tkestack.io/tke/pkg/platform/proxy"
+	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/page"
 )
 
 // PodREST implements the REST endpoint for find pods by a deployment.
@@ -43,7 +43,7 @@ type PodREST struct {
 	platformClient platforminternalclient.PlatformInterface
 }
 
-var _ rest.Getter = &PodREST{}
+var _ rest.GetterWithOptions = &PodREST{}
 var _ rest.GroupVersionKindProvider = &PodREST{}
 
 // GroupVersionKind is used to specify a particular GroupVersionKind to discovery.
@@ -57,25 +57,34 @@ func (r *PodREST) New() runtime.Object {
 	return &corev1.PodList{}
 }
 
+// NewConnectOptions returns versioned resource that represents proxy parameters
+func (r *PodREST) NewGetOptions() (runtime.Object, bool, string) {
+	return &metav1.ListOptions{}, false, ""
+}
+
 // Get retrieves the object from the storage. It is required to support Patch.
-func (r *PodREST) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (r *PodREST) Get(ctx context.Context, name string, options runtime.Object) (runtime.Object, error) {
 	client, err := proxy.ClientSet(ctx, r.platformClient)
 	if err != nil {
 		return nil, err
 	}
-
+	listOpts := options.(*metav1.ListOptions)
+	metaOptions := &metav1.GetOptions{}
+	if listOpts.ResourceVersion != "" {
+		metaOptions.ResourceVersion = listOpts.ResourceVersion
+	}
 	namespaceName, ok := request.NamespaceFrom(ctx)
 	if !ok {
 		return nil, errors.NewBadRequest("a namespace must be specified")
 	}
 
 	if apiclient.ClusterVersionIsBefore19(client) {
-		return listPodsByExtensions(ctx, client, namespaceName, name, options)
+		return listPodsByExtensions(ctx, client, namespaceName, name, metaOptions, listOpts)
 	}
-	return listPodsByApps(ctx, client, namespaceName, name, options)
+	return listPodsByApps(ctx, client, namespaceName, name, metaOptions, listOpts)
 }
 
-func listPodsByExtensions(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func listPodsByExtensions(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions, listOpts *metav1.ListOptions) (runtime.Object, error) {
 	daemonSet, err := client.ExtensionsV1beta1().DaemonSets(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(extensionsv1beta1.Resource("daemonSets/pods"), name)
@@ -103,10 +112,39 @@ func listPodsByExtensions(ctx context.Context, client *kubernetes.Clientset, nam
 			}
 		}
 	}
+
+	if listOpts.Continue != "" {
+		start, limit, err := page.DecodeContinue(ctx, "DaemonSet", name, listOpts.Continue)
+		if err != nil {
+			return nil, err
+		}
+		newStart := start + limit
+		if int(newStart+limit) < len(podList.Items) {
+			podList.Continue, err = page.EncodeContinue(ctx, "DaemonSet", name, newStart, limit)
+			if err != nil {
+				return nil, err
+			}
+			items := podList.Items[newStart : newStart+limit]
+			podList.Items = items
+		} else {
+			items := podList.Items[newStart:len(podList.Items)]
+			podList.Items = items
+		}
+	} else if listOpts.Limit != 0 {
+		if int(listOpts.Limit) < len(podList.Items) {
+			podList.Continue, err = page.EncodeContinue(ctx, "DaemonSet", name, 0, listOpts.Limit)
+			if err != nil {
+				return nil, err
+			}
+			items := podList.Items[:listOpts.Limit]
+			podList.Items = items
+		}
+	}
+
 	return podList, nil
 }
 
-func listPodsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func listPodsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions, listOpts *metav1.ListOptions) (runtime.Object, error) {
 	daemonSet, err := client.AppsV1().DaemonSets(namespaceName).Get(ctx, name, *options)
 	if err != nil {
 		return nil, errors.NewNotFound(appsv1.Resource("daemonSets/pods"), name)
@@ -134,5 +172,34 @@ func listPodsByApps(ctx context.Context, client *kubernetes.Clientset, namespace
 			}
 		}
 	}
+
+	if listOpts.Continue != "" {
+		start, limit, err := page.DecodeContinue(ctx, "DaemonSet", name, listOpts.Continue)
+		if err != nil {
+			return nil, err
+		}
+		newStart := start + limit
+		if int(newStart+limit) < len(podList.Items) {
+			podList.Continue, err = page.EncodeContinue(ctx, "DaemonSet", name, newStart, limit)
+			if err != nil {
+				return nil, err
+			}
+			items := podList.Items[newStart : newStart+limit]
+			podList.Items = items
+		} else {
+			items := podList.Items[newStart:len(podList.Items)]
+			podList.Items = items
+		}
+	} else if listOpts.Limit != 0 {
+		if int(listOpts.Limit) < len(podList.Items) {
+			podList.Continue, err = page.EncodeContinue(ctx, "DaemonSet", name, 0, listOpts.Limit)
+			if err != nil {
+				return nil, err
+			}
+			items := podList.Items[:listOpts.Limit]
+			podList.Items = items
+		}
+	}
+
 	return podList, nil
 }

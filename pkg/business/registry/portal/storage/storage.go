@@ -93,7 +93,7 @@ func (r *REST) ConvertToTable(ctx context.Context, object runtime.Object, tableO
 func (r *REST) List(ctx context.Context, _ *metainternal.ListOptions) (runtime.Object, error) {
 	log.Debugf("business portal list, ctx %v", ctx)
 	_, tenantID := authentication.UsernameAndTenantID(ctx)
-	if tenantID == "" {
+	if tenantID == "" || tenantID == "default" {
 		return &business.Portal{
 			Administrator: true,
 			Projects:      make(map[string]string),
@@ -107,7 +107,7 @@ func (r *REST) List(ctx context.Context, _ *metainternal.ListOptions) (runtime.O
 
 	log.Debugf("business portal list, before FilterWithUser: %v", projectList)
 	isAdmin, projectList, err := registryUtil.FilterWithUser(ctx, projectList, r.authClient, r.businessClient)
-	log.Debugf("business portal list, after FilterWithUser: %v", projectList)
+	log.Debugf("business portal list, after FilterWithUser: %v, isAdmin '%b'", projectList, isAdmin)
 	if err != nil {
 		return nil, err
 	}

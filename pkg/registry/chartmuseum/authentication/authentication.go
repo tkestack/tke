@@ -29,11 +29,10 @@ import (
 )
 
 type Options struct {
-	SecurityConfig  *registryconfig.Security
-	ExternalScheme  string
-	OIDCIssuerURL   string
-	OIDCCAFile      string
-	TokenReviewPath string
+	SecurityConfig    *registryconfig.Security
+	ExternalScheme    string
+	TokenReviewURL    string
+	TokenReviewCAFile string
 }
 
 // WithAuthentication creates an http handler that tries to authenticate the
@@ -41,11 +40,10 @@ type Options struct {
 // the provided context for the request.
 func WithAuthentication(handler http.Handler, opts *Options) (http.Handler, error) {
 	at, err := apikey.NewAPIKeyAuthenticator(&apikey.Options{
-		OIDCIssuerURL:   opts.OIDCIssuerURL,
-		OIDCCAFile:      opts.OIDCCAFile,
-		TokenReviewPath: opts.TokenReviewPath,
-		AdminUsername:   opts.SecurityConfig.AdminUsername,
-		AdminPassword:   opts.SecurityConfig.AdminPassword,
+		TokenReviewCAFile: opts.TokenReviewCAFile,
+		TokenReviewURL:    opts.TokenReviewURL,
+		AdminUsername:     opts.SecurityConfig.AdminUsername,
+		AdminPassword:     opts.SecurityConfig.AdminPassword,
 	})
 	if err != nil {
 		return nil, err

@@ -45,13 +45,12 @@ var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // Options defines the configuration of distribution auth handler.
 type Options struct {
-	SecurityConfig  *registryconfig.Security
-	OIDCIssuerURL   string
-	OIDCCAFile      string
-	TokenReviewPath string
-	DomainSuffix    string
-	DefaultTenant   string
-	LoopbackConfig  *restclient.Config
+	SecurityConfig    *registryconfig.Security
+	TokenReviewCAFile string
+	TokenReviewPath   string
+	DomainSuffix      string
+	DefaultTenant     string
+	LoopbackConfig    *restclient.Config
 }
 
 type handler struct {
@@ -84,11 +83,10 @@ func NewHandler(opts *Options) (http.Handler, error) {
 	}
 
 	at, err := apikey.NewAPIKeyAuthenticator(&apikey.Options{
-		OIDCIssuerURL:   opts.OIDCIssuerURL,
-		OIDCCAFile:      opts.OIDCCAFile,
-		TokenReviewPath: opts.TokenReviewPath,
-		AdminUsername:   opts.SecurityConfig.AdminUsername,
-		AdminPassword:   opts.SecurityConfig.AdminPassword,
+		TokenReviewCAFile: opts.TokenReviewCAFile,
+		TokenReviewURL:    opts.TokenReviewPath,
+		AdminUsername:     opts.SecurityConfig.AdminUsername,
+		AdminPassword:     opts.SecurityConfig.AdminPassword,
 	})
 	if err != nil {
 		return nil, err

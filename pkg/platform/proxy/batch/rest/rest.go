@@ -21,7 +21,6 @@ package rest
 import (
 	v1 "k8s.io/api/batch/v1"
 	"k8s.io/api/batch/v1beta1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericserver "k8s.io/apiserver/pkg/server"
@@ -46,7 +45,7 @@ var _ storage.RESTStorageProvider = &StorageProvider{}
 // NewRESTStorage is a factory constructor to creates and returns the
 // APIGroupInfo
 func (s *StorageProvider) NewRESTStorage(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter generic.RESTOptionsGetter) (genericserver.APIGroupInfo, bool) {
-	apiGroupInfo := genericserver.NewDefaultAPIGroupInfo(v1.GroupName, platform.Scheme, metav1.ParameterCodec, platform.Codecs)
+	apiGroupInfo := genericserver.NewDefaultAPIGroupInfo(v1.GroupName, platform.Scheme, platform.ParameterCodec, platform.Codecs)
 
 	if apiResourceConfigSource.VersionEnabled(v1.SchemeGroupVersion) {
 		apiGroupInfo.VersionedResourcesStorageMap[v1.SchemeGroupVersion.Version] = s.v1Storage(restOptionsGetter, s.LoopbackClientConfig)
