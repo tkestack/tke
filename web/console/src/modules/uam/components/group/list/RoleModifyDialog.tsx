@@ -28,14 +28,14 @@ const { useState, useEffect } = React;
 const { scrollable, selectable, removeable } = Table.addons;
 
 export function RoleModifyDialog(props) {
-  const state = useSelector((state) => state);
+  const state = useSelector(state => state);
   const dispatch = useDispatch();
   const { actions } = bindActionCreators({ actions: allActions }, dispatch);
 
   console.log('PrivateEditorDialog state:', state);
   const { policyPlainList } = state;
   let strategyList = policyPlainList.list.data.records || [];
-  strategyList = strategyList.filter((item) => ['平台管理员', '平台用户', '租户'].includes(item.displayName) === false);
+  strategyList = strategyList.filter(item => ['平台管理员', '平台用户', '租户'].includes(item.displayName) === false);
 
   const { isShowing, toggle, user } = props;
 
@@ -54,8 +54,8 @@ export function RoleModifyDialog(props) {
       {
         id: uuid(),
         ...user,
-        spec: { ...user.spec, extra: extraObj },
-      },
+        spec: { ...user.spec, extra: extraObj }
+      }
     ]);
     actions.group.detail.updateGroupWorkflow.perform();
     setTimeout(form.reset);
@@ -71,8 +71,8 @@ export function RoleModifyDialog(props) {
     initialValuesEqual: () => true,
     initialValues: { role: '' },
     validate: ({ role }) => ({
-      role: !role ? t('请选择平台角色') : undefined,
-    }),
+      role: !role ? t('请选择平台角色') : undefined
+    })
   });
   const role = useField('role', form);
 
@@ -80,7 +80,7 @@ export function RoleModifyDialog(props) {
     if (user) {
       const {
         tenantID,
-        extra: { policies },
+        extra: { policies }
       } = user.spec;
       setTenantID(tenantID);
       const policiesParse = JSON.parse(policies);
@@ -148,20 +148,22 @@ export function RoleModifyDialog(props) {
                         scrollable={false}
                         title="为这个用户自定义独立的权限"
                         tip="支持按住 shift 键进行多选"
-                        header={<SearchBox value={inputValue} onChange={(value) => setInputValue(value)} />}
+                        header={<SearchBox value={inputValue} onChange={value => setInputValue(value)} />}
                       >
                         <SourceTable
-                          dataSource={strategyList}
+                          dataSource={strategyList?.filter(({ displayName, description }) =>
+                            inputValue ? displayName?.includes(inputValue) || description?.includes(inputValue) : true
+                          )}
                           targetKeys={targetKeys}
-                          onChange={(keys) => setTargetKeys(keys)}
+                          onChange={keys => setTargetKeys(keys)}
                         />
                       </Transfer.Cell>
                     }
                     rightCell={
                       <Transfer.Cell title={`已选择 (${targetKeys.length})`}>
                         <TargetTable
-                          dataSource={strategyList.filter((i) => targetKeys.includes(i.id))}
-                          onRemove={(key) => setTargetKeys(targetKeys.filter((i) => i !== key))}
+                          dataSource={strategyList.filter(i => targetKeys.includes(i.id))}
+                          onRemove={key => setTargetKeys(targetKeys.filter(i => i !== key))}
                         />
                       </Transfer.Cell>
                     }
@@ -195,14 +197,14 @@ const columns = [
   {
     key: 'displayName',
     header: '策略名称',
-    render: (strategy) => <p>{strategy.displayName}</p>,
+    render: strategy => <p>{strategy.displayName}</p>
   },
   {
     key: 'description',
     header: '描述',
     width: 150,
-    render: (strategy) => <p>{strategy.description || '-'}</p>,
-  },
+    render: strategy => <p>{strategy.description || '-'}</p>
+  }
 ];
 
 function SourceTable({ dataSource, targetKeys, onChange }) {
@@ -214,13 +216,13 @@ function SourceTable({ dataSource, targetKeys, onChange }) {
       addons={[
         scrollable({
           maxHeight: 310,
-          onScrollBottom: () => console.log('到达底部'),
+          onScrollBottom: () => console.log('到达底部')
         }),
         selectable({
           value: targetKeys,
           onChange,
-          rowSelect: true,
-        }),
+          rowSelect: true
+        })
       ]}
     />
   );
