@@ -163,7 +163,7 @@ const Hpa = React.memo((props: { selectedHpa?: any }) => {
       const { minReplicas, maxReplicas, scaleTargetRef, metrics } = selectedHpa.spec;
       setSelectedHpaNamespace(namespace);
       const selectedHPAStrategy = metrics.map((item, index) => {
-        const { name, targetAverageValue, targetAverageUtilization } = item.resource;
+        let { name, targetAverageValue, targetAverageUtilization } = item.resource;
         let theKey = '';
         if (name === 'cpu' || name === 'memory') {
           const target = targetAverageValue ? 'targetAverageValue' : 'targetAverageUtilization';
@@ -173,7 +173,13 @@ const Hpa = React.memo((props: { selectedHpa?: any }) => {
           const { key } = MetricsResourceMap[name];
           theKey = key;
         }
-        return { key: theKey, value: parseInt(targetAverageValue || targetAverageUtilization) };
+
+        // cpu存在为毫核的情况：600m
+        if (name === 'cpu' && targetAverageValue.includes('m')) {
+          targetAverageValue = parseFloat(targetAverageValue) / 1000;
+        }
+
+        return { key: theKey, value: parseFloat(targetAverageValue || targetAverageUtilization) };
       });
       reset({
         resourceType: ResourceTypeMap[scaleTargetRef.kind],

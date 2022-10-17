@@ -67,7 +67,9 @@ export function InputLabelsPanel({
     }
   });
 
-  function setValue(v: LabelKeyValue[]) {
+  function setValue(_v: LabelKeyValue[]) {
+    const v = JSON.parse(JSON.stringify(_v));
+
     setKVList(v);
     let isValid = true;
     v.forEach(item => {

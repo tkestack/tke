@@ -60,7 +60,7 @@ var KubecomponetNames = append(KubeNodeImages, "kube-apiserver", "kube-controlle
 var KubeNodeImages = []string{"kube-proxy"}
 
 var components = Components{
-	ETCD:               containerregistry.Image{Name: "etcd", Tag: "v3.4.7"},
+	ETCD:               containerregistry.Image{Name: "etcd", Tag: "v3.4.13"},
 	CoreDNS:            containerregistry.Image{Name: "coredns", Tag: "1.7.0"},
 	Pause:              containerregistry.Image{Name: "pause", Tag: "3.2"},
 	Pause4KubeadmJob:   containerregistry.Image{Name: "pause", Tag: "3.4.1"},
