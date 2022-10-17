@@ -227,8 +227,9 @@ export class CreateComputerPanel extends React.Component<RootProps, CreateComput
               <React.Fragment>
                 <Button
                   className="m"
+                  style={{ marginRight: 10 }}
                   type="primary"
-                  disabled={workflow.operationState === OperationState.Performing}
+                  disabled={workflow.operationState === OperationState.Performing || !canSave}
                   onClick={perform}
                 >
                   {failed ? t('重试') : t('提交')}
