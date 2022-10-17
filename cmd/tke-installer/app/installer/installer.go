@@ -1970,9 +1970,6 @@ func (t *TKE) getInfluxDBOptions(ctx context.Context) (map[string]interface{}, e
 		}
 		options["nodeName"] = node.Name
 	}
-	if t.Para.Config.HA != nil && len(t.Para.Config.HA.VIP()) > 0 {
-		options["HA"] = true //for HA mode, enable NodePort
-	}
 	return options, nil
 }
 
@@ -2964,7 +2961,7 @@ func (t *TKE) patchClusterInfo(ctx context.Context, patchData interface{}) error
 }
 
 func (t *TKE) getLocalInfluxdbAddress() string {
-	var influxdbAddress string = "http://influxdb.tke.svc.cluster.local:8086"
+	var influxdbAddress string = fmt.Sprintf("http://%s:30086", t.servers[0])
 	if t.Para.Config.HA != nil && len(t.Para.Config.HA.VIP()) > 0 {
 		vip := t.Para.Config.HA.VIP()
 		influxdbAddress = fmt.Sprintf("http://%s:30086", vip) // influxdb svc must be set as NodePort type, and the nodePort is 30086
