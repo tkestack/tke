@@ -1871,6 +1871,7 @@ func autoConvert_v1_ClusterSpec_To_platform_ClusterSpec(in *ClusterSpec, out *pl
 	out.NetworkArgs = *(*map[string]string)(unsafe.Pointer(&in.NetworkArgs))
 	out.ScalingMachines = *(*[]platform.ClusterMachine)(unsafe.Pointer(&in.ScalingMachines))
 	out.BootstrapApps = *(*platform.BootstrapApps)(unsafe.Pointer(&in.BootstrapApps))
+	out.AppVersion = in.AppVersion
 	return nil
 }
 
@@ -1909,6 +1910,7 @@ func autoConvert_platform_ClusterSpec_To_v1_ClusterSpec(in *platform.ClusterSpec
 	out.HostnameAsNodename = in.HostnameAsNodename
 	out.NetworkArgs = *(*map[string]string)(unsafe.Pointer(&in.NetworkArgs))
 	out.BootstrapApps = *(*BootstrapApps)(unsafe.Pointer(&in.BootstrapApps))
+	out.AppVersion = in.AppVersion
 	return nil
 }
 
@@ -1939,6 +1941,7 @@ func autoConvert_v1_ClusterStatus_To_platform_ClusterStatus(in *ClusterStatus, o
 	out.NodeCIDRMaskSizeIPv4 = in.NodeCIDRMaskSizeIPv4
 	out.NodeCIDRMaskSizeIPv6 = in.NodeCIDRMaskSizeIPv6
 	out.KubeVendor = platform.KubeVendorType(in.KubeVendor)
+	out.AppVersion = in.AppVersion
 	return nil
 }
 
@@ -1969,6 +1972,7 @@ func autoConvert_platform_ClusterStatus_To_v1_ClusterStatus(in *platform.Cluster
 	out.NodeCIDRMaskSizeIPv4 = in.NodeCIDRMaskSizeIPv4
 	out.NodeCIDRMaskSizeIPv6 = in.NodeCIDRMaskSizeIPv6
 	out.KubeVendor = KubeVendorType(in.KubeVendor)
+	out.AppVersion = in.AppVersion
 	return nil
 }
 
