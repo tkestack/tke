@@ -53300,6 +53300,13 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							},
 						},
 					},
+					"appVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AppVersion is the overall version of system components",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"tenantID", "type", "version"},
 			},
@@ -53480,6 +53487,13 @@ func schema_tke_api_platform_v1_ClusterStatus(ref common.ReferenceCallback) comm
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
+						},
+					},
+					"appVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AppVersion is the overall version of system components",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},

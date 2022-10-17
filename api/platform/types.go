@@ -212,6 +212,9 @@ type ClusterSpec struct {
 	// BootstrapApps will install apps during creating cluster
 	// +optional
 	BootstrapApps BootstrapApps
+	// AppVersion is the overall version of system components
+	// +optional
+	AppVersion string
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -263,6 +266,9 @@ type ClusterStatus struct {
 	NodeCIDRMaskSizeIPv6 int32
 	// +optional
 	KubeVendor KubeVendorType
+	// AppVersion is the overall version of system components
+	// +optional
+	AppVersion string
 }
 
 // FinalizerName is the name identifying a finalizer during cluster lifecycle.

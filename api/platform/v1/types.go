@@ -223,6 +223,9 @@ type ClusterSpec struct {
 	// BootstrapApps will install apps during creating cluster
 	// +optional
 	BootstrapApps BootstrapApps `json:"bootstrapApps,omitempty" protobuf:"bytes,26,opt,name=bootstrapApps"`
+	// AppVersion is the overall version of system components
+	// +optional
+	AppVersion string `json:"appVersion,omitempty" protobuf:"bytes,27,opt,name=appVersion"`
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -274,6 +277,9 @@ type ClusterStatus struct {
 	NodeCIDRMaskSizeIPv6 int32 `json:"nodeCIDRMaskSizeIPv6,omitempty" protobuf:"varint,19,opt,name=nodeCIDRMaskSizeIPv6"`
 	// +optional
 	KubeVendor KubeVendorType `json:"kubeVendor" protobuf:"bytes,20,opt,name=kubeVendor"`
+	// AppVersion is the overall version of system components
+	// +optional
+	AppVersion string `json:"appVersion,omitempty" protobuf:"bytes,21,opt,name=appVersion"`
 }
 
 // FinalizerName is the name identifying a finalizer during cluster lifecycle.
