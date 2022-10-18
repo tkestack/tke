@@ -646,6 +646,10 @@ message ClusterSpec {
   // BootstrapApps will install apps during creating cluster
   // +optional
   repeated BootstrapApp bootstrapApps = 26;
+
+  // AppVersion is the overall version of system components
+  // +optional
+  optional string appVersion = 27;
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -715,6 +719,10 @@ message ClusterStatus {
 
   // +optional
   optional string kubeVendor = 20;
+
+  // AppVersion is the overall version of system components
+  // +optional
+  optional string appVersion = 21;
 }
 
 // ConfigMap holds configuration data for tke to consume.

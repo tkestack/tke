@@ -1705,7 +1705,8 @@ func (p *Provider) EnsureCheckAnywhereSubscription(ctx context.Context, c *v1.Cl
 	if err != nil {
 		return err
 	}
-
+	// Update appVersion after all system components deployed
+	c.Status.AppVersion = c.Spec.AppVersion
 	return nil
 }
 
