@@ -37,6 +37,7 @@ import (
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	rbac "k8s.io/api/rbac/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	aaclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -48,7 +49,6 @@ import (
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
 	utilsnet "k8s.io/utils/net"
 	controllerutils "tkestack.io/tke/pkg/controller"
-	aaclientset "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 )
 
 // PlatformLabel represents the type of platform.tkestack.io related label.
@@ -63,6 +63,8 @@ const (
 	UpdateNodeTimeout = 2 * time.Minute
 	// LabelHostname specifies the label in node.
 	LabelHostname = "kubernetes.io/hostname"
+	// LabelTopologyZone represents a logical failure domain. It is common for Kubernetes clusters to span multiple zones for increased availability.
+	LabelTopologyZone = "topology.kubernetes.io/zone"
 	// LabelMachineIPV4 specifies the label in node.
 	LabelMachineIPV4 PlatformLabel = "platform.tkestack.io/machine-ip"
 	// LabelMachineIPV6Head specifies the label in node.
@@ -431,7 +433,6 @@ func CreateOrUpdateAPIService(ctx context.Context, client kubeaggregatorclientse
 	}
 	return nil
 }
-
 
 // CreateOrUpdateCustomResourceDefinition creates a CustomResourceDefinition if the target resource doesn't exist. If the resource exists already, this function will update the resource instead.
 func CreateOrUpdateCustomResourceDefinition(ctx context.Context, client aaclientset.Interface, crd *apiextensionsv1.CustomResourceDefinition) error {
