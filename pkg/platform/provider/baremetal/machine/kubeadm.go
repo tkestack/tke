@@ -52,6 +52,7 @@ func (p *Provider) getKubeadmJoinConfig(c *v1.Cluster, machineIP string) *kubead
 			kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s,%s=%s", kubeletExtraArgs["node-labels"], apiclient.LabelSwitchIPCilium, switchIP)
 		}
 	}
+	kubeletExtraArgs["node-labels"] = fmt.Sprintf("%s,%s=%s", kubeletExtraArgs["node-lables"], apiclient.LabelTopologyZone, "default")
 
 	// add node ip for single stack ipv6 clusters.
 	if _, ok := kubeletExtraArgs["node-ip"]; !ok {
