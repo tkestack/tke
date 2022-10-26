@@ -34,6 +34,7 @@ import (
 	"github.com/pkg/sftp"
 	"github.com/segmentio/ksuid"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/net/proxy"
 	"gopkg.in/go-playground/validator.v9"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"tkestack.io/tke/pkg/util/log"
@@ -433,7 +434,8 @@ type realSSHDialer struct{}
 var _ sshDialer = &realSSHDialer{}
 
 func (d *realSSHDialer) Dial(network, addr string, config *ssh.ClientConfig) (*ssh.Client, error) {
-	conn, err := net.DialTimeout(network, addr, config.Timeout)
+	dialer := proxy.FromEnvironmentUsing(&net.Dialer{Timeout: config.Timeout})
+	conn, err := dialer.Dial(network, addr)
 	if err != nil {
 		return nil, err
 	}
