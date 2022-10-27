@@ -25,6 +25,7 @@ import { DialogBodyLayout } from '../../../common/layouts';
 import { Repo } from '../../models';
 import { router } from '../../router';
 import { RootProps } from '../RegistryApp';
+import { NamespaceDisplayNameEditor } from './NamespaceDisplayNameEditor';
 
 export class RepoTablePanel extends React.Component<RootProps, any> {
   componentDidMount() {
@@ -96,6 +97,11 @@ export class RepoTablePanel extends React.Component<RootProps, any> {
         render: (x: Repo) => (
           <Text parent="div" overflow>
             <span className="text">{x.spec.displayName}</span>
+            <NamespaceDisplayNameEditor
+              value={x?.spec?.displayName ?? ''}
+              name={x?.metadata?.name}
+              onSuccess={() => this.props.actions.repo.fetch()}
+            />
           </Text>
         )
       },
