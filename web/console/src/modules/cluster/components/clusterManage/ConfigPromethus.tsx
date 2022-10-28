@@ -40,7 +40,7 @@ export function ConfigPromethus({ route, actions }: RootProps) {
     },
     runOnMaster: false,
     notifyWebhook: '',
-    alertRepeatInterval: 20
+    alertRepeatInterval: 240
   });
 
   const {
@@ -168,7 +168,7 @@ export function ConfigPromethus({ route, actions }: RootProps) {
           name="alertRepeatInterval"
           render={({ field }) => (
             <Form.Item label="重复告警的间隔">
-              <InputNumber {...field} min={0} precision={0} unit="m" size="l" />
+              <InputNumber {...field} min={0} precision={0} unit="minute" size="l" />
             </Form.Item>
           )}
         />
