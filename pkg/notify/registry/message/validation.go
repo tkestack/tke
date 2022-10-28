@@ -37,16 +37,9 @@ func ValidateMessage(message *notify.Message) field.ErrorList {
 		allErrs = append(allErrs, field.Required(field.NewPath("spec", "receiverName"), "must specify receiver name"))
 	}
 
-	if message.Spec.ReceiverChannel == "" {
-		allErrs = append(allErrs, field.Required(field.NewPath("spec", "receiverChannel"), "must specify receiver channel"))
-	} else if !receiver.IsStandardReceiverChannel(string(message.Spec.ReceiverChannel)) {
+	if message.Spec.ReceiverChannel != "" && !receiver.IsStandardReceiverChannel(string(message.Spec.ReceiverChannel)) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "receiverChannel"), message.Spec.ReceiverChannel, "must be a standard channel receiver"))
 	}
-
-	if message.Spec.Identity == "" {
-		allErrs = append(allErrs, field.Required(field.NewPath("spec", "identity"), "must specify receiver identity"))
-	}
-
 	return allErrs
 }
 

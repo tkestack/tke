@@ -405,10 +405,12 @@ type MessageList struct {
 
 // MessageSpec is a description of a message.
 type MessageSpec struct {
-	TenantID        string
-	ReceiverName    string
+	TenantID     string
+	ReceiverName string
+	// +optional
 	ReceiverChannel ReceiverChannel
-	Identity        string
+	// +optional
+	Identity string
 	// +optional
 	Username string
 	// +optional
@@ -434,6 +436,10 @@ type MessageStatus struct {
 	// The last time the condition transitioned from one status to another.
 	// +optional
 	LastTransitionTime metav1.Time
+
+	// A human readable message indicating details about the transition.
+	// +optional
+	FailedReason string
 }
 
 // MessagePhase indicates the status of message.

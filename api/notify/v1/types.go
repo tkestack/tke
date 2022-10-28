@@ -405,10 +405,12 @@ type MessageList struct {
 
 // MessageSpec is a description of a message.
 type MessageSpec struct {
-	TenantID        string          `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
-	ReceiverName    string          `json:"receiverName" protobuf:"bytes,2,opt,name=receiverName"`
-	ReceiverChannel ReceiverChannel `json:"receiverChannel" protobuf:"bytes,3,opt,name=receiverChannel,casttype=ReceiverChannel"`
-	Identity        string          `json:"identity" protobuf:"bytes,4,opt,name=identity"`
+	TenantID     string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
+	ReceiverName string `json:"receiverName" protobuf:"bytes,2,opt,name=receiverName"`
+	// +optional
+	ReceiverChannel ReceiverChannel `json:"receiverChannel,omitempty" protobuf:"bytes,3,opt,name=receiverChannel,casttype=ReceiverChannel"`
+	// +optional
+	Identity string `json:"identity,omitempty" protobuf:"bytes,4,opt,name=identity"`
 	// +optional
 	Username string `json:"username,omitempty" protobuf:"bytes,5,opt,name=username"`
 	// +optional
@@ -434,6 +436,10 @@ type MessageStatus struct {
 	// The last time the condition transitioned from one status to another.
 	// +optional
 	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty" protobuf:"bytes,2,opt,name=lastTransitionTime"`
+
+	// A human readable message indicating details about the transition.
+	// +optional
+	FailedReason string `json:"failedReason,omitempty" protobuf:"bytes,3,opts,name=failedReason"`
 }
 
 // MessagePhase indicates the status of message.
