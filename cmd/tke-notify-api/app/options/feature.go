@@ -19,9 +19,10 @@
 package options
 
 import (
+	"time"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"time"
 )
 
 const (
@@ -47,6 +48,7 @@ func (o *FeatureOptions) AddFlags(fs *pflag.FlagSet) {
 func (o *FeatureOptions) ApplyFlags() []error {
 	var errs []error
 
+	// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 	o.MessageTTL = viper.GetDuration(configMessageTTL)
 
 	return errs
