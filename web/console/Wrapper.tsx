@@ -32,7 +32,17 @@ import { Icon, Text, Bubble, NavMenu, List, ExternalLink, StatusTip, H2, Menu } 
 import { TkeVersion } from '@/src/modules/common/components/tke-version';
 import { ConsoleModuleEnum } from '@config/platform';
 import 'tea-component/dist/tea.css';
+import { insertCSS } from '@tencent/ff-redux';
 require('promise.prototype.finally').shim();
+
+insertCSS(
+  'custom_theme_menu',
+  `
+  ._custom_theme_menu .tea-menu__list li.is-selected>.tea-menu__item {
+    background: #006eff;
+  }
+`
+);
 
 const { LoadingTip } = StatusTip;
 
@@ -661,7 +671,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     const openedIndex = this.state.asideRouterSelect.index;
 
     return (
-      <Menu theme="dark" title={title}>
+      <Menu theme="dark" className="_custom_theme_menu" title={title}>
         {routerList.map(({ url, title, subRouterConfig, icon }, index) => {
           if (subRouterConfig) {
             return (
