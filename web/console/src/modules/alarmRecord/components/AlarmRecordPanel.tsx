@@ -112,6 +112,16 @@ export const AlarmRecordPanel = () => {
           </Bubble>
         );
       }
+    },
+
+    {
+      key: 'status.failedReason',
+      header: t('发送状态'),
+      render: item => {
+        const failedReason = item?.status?.failedReason;
+
+        return <Text theme={failedReason ? 'danger' : 'success'}>{failedReason ? t('未发送') : t('已发送')}</Text>;
+      }
     }
   ];
 
