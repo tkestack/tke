@@ -120,7 +120,7 @@ export const AlarmRecordPanel = () => {
       render: item => {
         const failedReason = item?.status?.failedReason;
 
-        return <Text theme={failedReason ? 'danger' : 'success'}>{failedReason ? t('未发送') : t('已发送')}</Text>;
+        return <Text theme={failedReason ? 'danger' : 'success'}>{failedReason ? t('发送失败') : t('已发送')}</Text>;
       }
     }
   ];
