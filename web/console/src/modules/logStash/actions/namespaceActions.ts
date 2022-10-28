@@ -61,6 +61,9 @@ const fetchNamespaceListActions = generateFetcherActionCreator({
     return response;
   },
   finish: (dispatch: Redux.Dispatch, getState: GetState) => {
+    const { namespaceList } = getState();
+
+    dispatch(namespaceActions.selectNamespace(namespaceList?.data?.records?.[0]?.namespace ?? ''));
     dispatch(namespaceActions.autoSelectNamespaceForCreate());
   }
 });
