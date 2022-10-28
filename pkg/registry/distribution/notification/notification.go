@@ -38,7 +38,7 @@ import (
 
 const Path = "/registry/notification"
 
-const manifestPattern = `^application/vnd.docker.distribution.manifest.v\d\+(json|prettyjws)`
+const manifestPattern = `^application/(vnd.docker.distribution.manifest.v\d\+(json|prettyjws)|vnd.oci.image.(manifest|index).v1\+json`
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
