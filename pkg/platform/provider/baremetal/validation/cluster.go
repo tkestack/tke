@@ -50,7 +50,6 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 	utilmath "tkestack.io/tke/pkg/util/math"
 	"tkestack.io/tke/pkg/util/ssh"
-	"tkestack.io/tke/pkg/util/validation"
 	utilvalidation "tkestack.io/tke/pkg/util/validation"
 )
 
@@ -729,7 +728,7 @@ func ValidateCIDRs(cls *platform.Cluster, specPath *field.Path) field.ErrorList 
 		} else {
 			checkFunc(fldPath, cidr)
 			if clusterCIDR != nil && serviceCIDR != nil {
-				if err := validation.IsSubNetOverlapped(clusterCIDR, serviceCIDR); err != nil {
+				if err := utilvalidation.IsSubNetOverlapped(clusterCIDR, serviceCIDR); err != nil {
 					allErrs = append(allErrs, field.Invalid(fldPath, cidr, err.Error()))
 				}
 				if _, err := ipallocator.GetIndexedIP(serviceCIDR, 10); err != nil {

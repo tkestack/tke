@@ -166,7 +166,7 @@ func OSVersion(s Interface) (os string, err error) {
 func ReservePorts(s Interface, ip string, ports []int) (isInused bool, message string, err error) {
 	var cmd string
 	for _, port := range ports {
-		cmd += fmt.Sprintf(`bash -c "</dev/tcp/%s/%d" &>/dev/null; echo $?; `, ip, port)
+		cmd += fmt.Sprintf(`timeout 3 bash -c "</dev/tcp/%s/%d" &>/dev/null; echo $?; `, ip, port)
 	}
 	out, _, _, _ := s.Exec(cmd)
 	out = strings.TrimSuffix(out, "\n")
@@ -175,6 +175,10 @@ func ReservePorts(s Interface, ip string, ports []int) (isInused bool, message s
 		return false, "", fmt.Errorf("check results length does not match need check ports length, get results output is: %s", out)
 	}
 	for i, result := range results {
+		// if return code is 124, it means that the connection is timeout
+		if result == "124" {
+			return false, "", fmt.Errorf("connect %s:%d timeout", ip, ports[i])
+		}
 		if result != "1" {
 			message += fmt.Sprintf("%d ", ports[i])
 		}
@@ -226,7 +230,7 @@ func SelinuxEnabled(s Interface) (enabled bool, err error) {
 }
 
 func CheckNFS(s Interface, server string, path string) (err error) {
-	_, stderr, exit, err := s.Execf("mkdir -p /tmp/nfs/&& mount -t nfs %s:%s /tmp/nfs/&& umount /tmp/nfs/&& rm -rf /tmp/nfs/", server, path)
+	_, stderr, exit, err := s.Execf("mkdir -p /tmp/nfs/ && mount -t nfs -o soft,timeo=15,retry=0 %s:%s /tmp/nfs/ && umount /tmp/nfs/ && rm -rf /tmp/nfs/", server, path)
 	if exit != 0 || err != nil {
 		return fmt.Errorf("check nfs failed:exit %d:stderr %s:error %s", exit, stderr, err)
 	}
