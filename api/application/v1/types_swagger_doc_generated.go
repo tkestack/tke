@@ -117,7 +117,9 @@ func (AppValues) SwaggerDoc() map[string]string {
 }
 
 var map_Chart = map[string]string{
-	"": "Chart is a description of a chart.",
+	"":             "Chart is a description of a chart.",
+	"chartName":    "ChartName is the name of the chart.",
+	"chartVersion": "ChartVersion is the version of the chart.",
 }
 
 func (Chart) SwaggerDoc() map[string]string {

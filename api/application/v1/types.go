@@ -74,12 +74,14 @@ type AppSpec struct {
 type Chart struct {
 	TenantID       string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
 	ChartGroupName string `json:"chartGroupName" protobuf:"bytes,2,opt,name=chartGroupName"`
-	ChartName      string `json:"chartName" protobuf:"bytes,3,opt,name=chartName"`
-	ChartVersion   string `json:"chartVersion" protobuf:"bytes,4,opt,name=chartVersion"`
-	RepoURL        string `json:"repoURL" protobuf:"bytes,5,opt,name=repoURL"`
-	RepoUsername   string `json:"repoUsername" protobuf:"bytes,6,opt,name=repoUsername"`
-	RepoPassword   string `json:"repoPassword" protobuf:"bytes,7,opt,name=repoPassword"`
-	ImportedRepo   bool   `json:"importedRepo" protobuf:"bytes,8,opt,name=importedRepo"`
+	// ChartName is the name of the chart.
+	ChartName string `json:"chartName" protobuf:"bytes,3,opt,name=chartName"`
+	// ChartVersion is the version of the chart.
+	ChartVersion string `json:"chartVersion" protobuf:"bytes,4,opt,name=chartVersion"`
+	RepoURL      string `json:"repoURL" protobuf:"bytes,5,opt,name=repoURL"`
+	RepoUsername string `json:"repoUsername" protobuf:"bytes,6,opt,name=repoUsername"`
+	RepoPassword string `json:"repoPassword" protobuf:"bytes,7,opt,name=repoPassword"`
+	ImportedRepo bool   `json:"importedRepo" protobuf:"bytes,8,opt,name=importedRepo"`
 }
 
 // AppStatus represents information about the status of a bootstrap.
