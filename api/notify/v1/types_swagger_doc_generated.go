@@ -181,7 +181,6 @@ func (MessageSpec) SwaggerDoc() map[string]string {
 var map_MessageStatus = map[string]string{
 	"":                   "MessageStatus represents information about the status of a message.",
 	"lastTransitionTime": "The last time the condition transitioned from one status to another.",
-	"failedReason":       "A human readable message indicating details about the transition.",
 }
 
 func (MessageStatus) SwaggerDoc() map[string]string {
