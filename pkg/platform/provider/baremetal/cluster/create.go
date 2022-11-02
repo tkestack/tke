@@ -527,7 +527,8 @@ func (p *Provider) EnsureContainerd(ctx context.Context, c *v1.Cluster) error {
 	option := &containerd.Option{
 		InsecureRegistries: insecureRegistries,
 		SandboxImage:       path.Join(prefix, images.Get().Pause.BaseName()),
-		RegistryMirror:     prefix,
+		// for mirror, we just need domain in prefix
+		RegistryMirror: strings.Split(prefix, "/")[0],
 	}
 	for _, machine := range c.Spec.Machines {
 		machineSSH, err := machine.SSH()
