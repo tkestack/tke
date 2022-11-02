@@ -23,3 +23,15 @@ export async function modifyNamespaceDisplayName({
     }
   );
 }
+
+export async function fetchRepositoryList() {
+  return Request.get<any, any>('/apis/registry.tkestack.io/v1/repositories');
+}
+
+export async function fetchNamespaceList() {
+  return Request.get<any, any>('/apis/registry.tkestack.io/v1/namespaces');
+}
+
+export async function fetchRepoInfo(name: string) {
+  return Request.get<any, any>(`/apis/registry.tkestack.io/v1/repositories/${name}`);
+}
