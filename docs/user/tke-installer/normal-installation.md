@@ -19,7 +19,7 @@ The hardware requirements for nodes mostly depend on your workloads, the minimum
 * Hardware
   * 8 vCPU
   * 16 GB of Memory
-  * 50 GB of Disk Space
+  * 100 GB of Disk Space
 
 > Note: Installer node need extra 25GB /var/lib/ disk to store images and temporary files, 50GB /opt disk to uncompress installer package
 
