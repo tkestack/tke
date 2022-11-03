@@ -26,8 +26,7 @@ import {
 import { ResourceInfo, RequestParams } from './src/modules/common/models';
 import { resourceConfig, PlatformTypeEnum } from './config';
 import { isEmpty } from './src/modules/common/utils';
-import * as classnames from 'classnames';
-import { Icon, Text, Bubble, NavMenu, List, ExternalLink, StatusTip, H2, Menu } from 'tea-component';
+import { NavMenu, List, StatusTip, Menu, Layout } from 'tea-component';
 import { TkeVersion } from '@/src/modules/common/components/tke-version';
 import { ConsoleModuleEnum } from '@config/platform';
 import 'tea-component/dist/tea.css';
@@ -658,59 +657,63 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
     const openedIndex = this.state.asideRouterSelect.index;
 
     return (
-      <Menu theme="dark" className="_custom_theme_menu" title={title}>
-        {routerList.map(({ url, title, subRouterConfig, icon }, index) => {
-          if (subRouterConfig) {
-            return (
-              <Menu.SubMenu
-                title={title}
-                icon={icon}
-                opened={openedIndex === index}
-                onOpenedChange={opened => {
-                  this.setState({
-                    asideRouterSelect: {
-                      index: opened ? index : -1,
-                      isShow: this.state.asideRouterSelect.isShow
-                    }
-                  });
-                }}
-              >
-                {subRouterConfig?.map(({ title, url, icon }) => (
-                  <Menu.Item
-                    title={title}
-                    icon={icon}
-                    selected={url === selected}
-                    onClick={() => {
-                      if (url === selected) return;
+      <Layout.Sider>
+        <Menu theme="dark" className="_custom_theme_menu" title={title}>
+          {routerList.map(({ url, title, subRouterConfig, icon }, index) => {
+            if (subRouterConfig) {
+              return (
+                <Menu.SubMenu
+                  title={title}
+                  icon={icon}
+                  opened={openedIndex === index}
+                  onOpenedChange={opened => {
+                    this.setState({
+                      asideRouterSelect: {
+                        index: opened ? index : -1,
+                        isShow: this.state.asideRouterSelect.isShow
+                      }
+                    });
+                  }}
+                >
+                  {subRouterConfig?.map(({ title, url, icon }) => (
+                    <Menu.Item
+                      title={title}
+                      icon={icon}
+                      selected={url === selected}
+                      onClick={() => {
+                        if (url === selected) return;
 
+                        this.onNav(url);
+                      }}
+                    />
+                  ))}
+                </Menu.SubMenu>
+              );
+            } else {
+              const isSelected = selected.includes(url) || (selected.split('/').length <= 2 && index === 0);
+
+              return (
+                <Menu.Item
+                  title={title}
+                  icon={icon}
+                  selected={isSelected}
+                  onClick={() => {
+                    if (isSelected) return;
+
+                    if (this.props.platformType === PlatformTypeEnum.Manager) {
                       this.onNav(url);
-                    }}
-                  />
-                ))}
-              </Menu.SubMenu>
-            );
-          } else {
-            const isSelected = selected.includes(url) || (selected.split('/').length <= 2 && index === 0);
+                    } else {
+                      this.onNav(url + query);
+                    }
+                  }}
+                />
+              );
+            }
+          })}
+        </Menu>
 
-            return (
-              <Menu.Item
-                title={title}
-                icon={icon}
-                selected={isSelected}
-                onClick={() => {
-                  if (isSelected) return;
-
-                  if (this.props.platformType === PlatformTypeEnum.Manager) {
-                    this.onNav(url);
-                  } else {
-                    this.onNav(url + query);
-                  }
-                }}
-              />
-            );
-          }
-        })}
-      </Menu>
+        <TkeVersion />
+      </Layout.Sider>
     );
   }
 }
