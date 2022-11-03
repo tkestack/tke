@@ -35,8 +35,8 @@ const (
 const (
 	MachineResourceRequstDiskPath     = "/var/lib"
 	MachineResourceRequstLogDiskPath  = "/var/log"
-	MachineResourceRequstDiskSpace    = 50 // GiB
-	MachineResourceRequstLogDiskSpace = 10 // GiB
+	MachineResourceRequstDiskSpace    = 100 // GiB
+	MachineResourceRequstLogDiskSpace = 10  // GiB
 	MachineResourceRequstCPU          = 4
 	MachineResourceRequstMemory       = 8 // GiB
 )
