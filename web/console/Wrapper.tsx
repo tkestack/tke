@@ -26,7 +26,7 @@ import {
 import { ResourceInfo, RequestParams } from './src/modules/common/models';
 import { resourceConfig, PlatformTypeEnum } from './config';
 import { isEmpty } from './src/modules/common/utils';
-import { NavMenu, List, StatusTip, Menu, Layout } from 'tea-component';
+import { NavMenu, List, StatusTip, Menu, Layout, ExternalLink } from 'tea-component';
 import { TkeVersion } from '@/src/modules/common/components/tke-version';
 import { ConsoleModuleEnum } from '@config/platform';
 import 'tea-component/dist/tea.css';
