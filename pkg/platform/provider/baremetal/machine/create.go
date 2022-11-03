@@ -49,6 +49,7 @@ import (
 	typesv1 "tkestack.io/tke/pkg/platform/types/v1"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/cmdstring"
+	containerregistryutil "tkestack.io/tke/pkg/util/containerregistry"
 	"tkestack.io/tke/pkg/util/hosts"
 )
 
@@ -155,6 +156,7 @@ func (p *Provider) EnsureRegistryHosts(ctx context.Context, machine *platformv1.
 	if machine.Spec.TenantID != "" {
 		domains = append(domains, machine.Spec.TenantID+"."+p.config.Registry.Domain)
 	}
+	domains = append(domains, constants.MirrorsRegistryHostName)
 	for _, one := range domains {
 		remoteHosts := hosts.RemoteHosts{Host: one, SSH: machineSSH}
 		err := remoteHosts.Set(p.config.Registry.IP)
@@ -337,6 +339,8 @@ func (p *Provider) EnsureContainerd(ctx context.Context, machine *platformv1.Mac
 		InsecureRegistries: insecureRegistries,
 		IsGPU:              gpu.IsEnable(machine.Spec.Labels),
 		SandboxImage:       images.Get().Pause.FullName(),
+		// for mirror, we just need domain in prefix
+		RegistryMirror: strings.Split(containerregistryutil.GetPrefix(), "/")[0],
 	}
 	err = containerd.Install(machineSSH, option)
 	if err != nil {

@@ -131,7 +131,8 @@ const (
 	// MinNumCPU mininum cpu number.
 	MinNumCPU = 2
 
-	APIServerHostName = "api.tke.com"
+	APIServerHostName       = "api.tke.com"
+	MirrorsRegistryHostName = "mirrors.tke.com"
 
 	// include itself
 	NeedUpgradeCoreDNSLowerK8sVersion = "1.19.0"
