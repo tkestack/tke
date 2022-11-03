@@ -141,6 +141,11 @@ data:
       api_server = "https://tke-platform-api"
       api_server_client_config = "/app/conf/tke-platform-config.yaml"
 
+    [features]
+       # Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"
+       messagerequest_ttl = "1h"
+       message_ttl = "360h"
+
   tke-auth-webhook.yaml: |
     apiVersion: v1
     kind: Config

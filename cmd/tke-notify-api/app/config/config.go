@@ -57,6 +57,7 @@ type Config struct {
 	PrivilegedUsername             string
 	ExternalHost                   string
 	ExternalPort                   int
+	MessageRequestTTL              time.Duration
 	MessageTTL                     time.Duration
 }
 
@@ -139,6 +140,7 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
 		ExternalHost:                   opts.Generic.ExternalHost,
 		ExternalPort:                   opts.Generic.ExternalPort,
+		MessageRequestTTL:              opts.FeatureOptions.MessageRequestTTL,
 		MessageTTL:                     opts.FeatureOptions.MessageTTL,
 	}, nil
 }

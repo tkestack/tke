@@ -19,34 +19,48 @@
 package options
 
 import (
+	"time"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"time"
 )
 
 const (
-	flagMessageTTL    = "message-ttl"
-	configMessageTTL  = "features.message_ttl"
-	defaultMessageTTL = time.Hour * 24 * 30
+	flagMessageTTL           = "message-ttl"
+	flagMessageRequestTTL    = "messagerequest-ttl"
+	configMessageRequestTTL  = "features.messagerequest_ttl"
+	configMessageTTL         = "features.message_ttl"
+	defaultMessageRequestTTL = time.Hour
+	defaultMessageTTL        = time.Hour * 24 * 30
 )
 
 type FeatureOptions struct {
-	MessageTTL time.Duration
+	MessageRequestTTL time.Duration
+	MessageTTL        time.Duration
 }
 
 func NewFeatureOptions() *FeatureOptions {
-	return &FeatureOptions{MessageTTL: defaultMessageTTL}
+	return &FeatureOptions{
+		MessageRequestTTL: defaultMessageRequestTTL,
+		MessageTTL:        defaultMessageTTL,
+	}
 }
 
 func (o *FeatureOptions) AddFlags(fs *pflag.FlagSet) {
+	fs.DurationVar(&o.MessageRequestTTL, flagMessageRequestTTL, o.MessageRequestTTL,
+		"How long to retain messagerequests")
 	fs.DurationVar(&o.MessageTTL, flagMessageTTL, o.MessageTTL,
-		"How long to retain messages and messagerequests")
+		"How long to retain messages")
+	_ = viper.BindPFlag(configMessageRequestTTL, fs.Lookup(flagMessageRequestTTL))
 	_ = viper.BindPFlag(configMessageTTL, fs.Lookup(flagMessageTTL))
+
 }
 
 func (o *FeatureOptions) ApplyFlags() []error {
 	var errs []error
 
+	// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+	o.MessageRequestTTL = viper.GetDuration(configMessageRequestTTL)
 	o.MessageTTL = viper.GetDuration(configMessageTTL)
 
 	return errs
