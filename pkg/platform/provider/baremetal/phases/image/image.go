@@ -21,6 +21,7 @@ package image
 import (
 	"fmt"
 	"strings"
+
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/provider/baremetal/images"
 	v1 "tkestack.io/tke/pkg/platform/types/v1"
@@ -56,7 +57,7 @@ func PullKubernetesImages(c *v1.Cluster, s ssh.Interface, option *Option) error 
 				return err
 			}
 		} else {
-			cmd = fmt.Sprintf("nerdctl --insecure-registry --namespace k8s.io pull %s", image)
+			cmd = fmt.Sprintf("crictl pull %s", image)
 			_, err := s.CombinedOutput(cmd)
 			if err != nil {
 				if strings.Contains(err.Error(), "502 Bad Gateway") {
