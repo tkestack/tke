@@ -70,8 +70,8 @@ spec:
             periodSeconds: 20
           resources:
             limits:
-              cpu: 500m
-              memory: 2Gi
+              cpu: 100m
+              memory: 256Mi
             requests:
               cpu: 50m
               memory: 128Mi
@@ -140,10 +140,6 @@ data:
       [client.platform]
       api_server = "https://tke-platform-api"
       api_server_client_config = "/app/conf/tke-platform-config.yaml"
-
-    [features]
-       # Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"
-       message_ttl: "360h"
 
   tke-auth-webhook.yaml: |
     apiVersion: v1

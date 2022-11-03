@@ -39,7 +39,6 @@ import (
 	controllerutil "tkestack.io/tke/pkg/controller"
 	"tkestack.io/tke/pkg/notify/controller/messagerequest/smtp"
 	"tkestack.io/tke/pkg/notify/controller/messagerequest/tencentcloudsms"
-	"tkestack.io/tke/pkg/notify/controller/messagerequest/util"
 	"tkestack.io/tke/pkg/notify/controller/messagerequest/webhook"
 	"tkestack.io/tke/pkg/notify/controller/messagerequest/wechat"
 	"tkestack.io/tke/pkg/util/log"
@@ -49,7 +48,6 @@ import (
 const (
 	clientRetryCount    = 5
 	clientRetryInterval = 5 * time.Second
-	defaultTemplate     = "{{.summary}}"
 )
 
 const (
@@ -244,15 +242,23 @@ func (c *Controller) createMessageRequestIfNeeded(ctx context.Context, key strin
 		return c.persistUpdate(ctx, messageRequest)
 	case v1.MessageRequestSending:
 		if cachedMessageRequest.state != nil && cachedMessageRequest.state.Status.Phase == v1.MessageRequestPending {
-			sentMessages := c.sendMessage(ctx, messageRequest)
+			sentMessages, failedReceiverErrors := c.sendMessage(ctx, messageRequest)
 			if len(sentMessages) > 0 {
 				c.archiveMessage(ctx, messageRequest, sentMessages)
 			}
-		}
-
-		err := c.client.NotifyV1().MessageRequests(messageRequest.ObjectMeta.Namespace).Delete(ctx, messageRequest.Name, metav1.DeleteOptions{})
-		if err != nil && !errors.IsNotFound(err) {
-			log.Error("Failed to delete messagerequests object", log.String("messageRequestName", messageRequest.ObjectMeta.Name), log.Err(err))
+			messageRequest = messageRequest.DeepCopy()
+			messageRequest.Status.LastTransitionTime = metav1.Now()
+			if len(failedReceiverErrors) == 0 {
+				messageRequest.Status.Phase = v1.MessageRequestSent
+			} else {
+				if len(sentMessages) == 0 {
+					messageRequest.Status.Phase = v1.MessageRequestFailed
+				} else {
+					messageRequest.Status.Phase = v1.MessageRequestPartialFailure
+				}
+				messageRequest.Status.Errors = failedReceiverErrors
+			}
+			return c.persistUpdate(ctx, messageRequest)
 		}
 	}
 	return nil
@@ -294,15 +300,11 @@ type sentMessage struct {
 	alarmPolicyType     string
 	receiverChannelName string
 	clusterID           string
-	failedReason        string
 }
 
-func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.MessageRequest) (sentMessages []sentMessage) {
-
-	receiversSet := sets.NewString() //save name of all receivers configured in alert rule
-
-	defaultContent, _ := util.ParseTemplate("defaultBody", defaultTemplate, messageRequest.Spec.Variables)
-
+func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.MessageRequest) (sentMessages []sentMessage, failedReceiverErrors map[string]string) {
+	failedReceiverErrors = make(map[string]string)
+	receiversSet := sets.NewString()
 	for _, receiverGroupName := range messageRequest.Spec.ReceiverGroups {
 		if receiverGroupName == "" {
 			continue
@@ -322,44 +324,39 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 	}
 
 	if receiversSet.Len() == 0 {
-		log.Error("Dont' find receivers in messagerequest")
 		return
 	}
 
 	channel, err := c.client.NotifyV1().Channels().Get(ctx, messageRequest.ObjectMeta.Namespace, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Failed to get channel object", log.String("channelName", messageRequest.ObjectMeta.Namespace), log.Err(err))
+		for _, receiverName := range receiversSet.List() {
+			failedReceiverErrors[receiverName] = "Failed to get notification channel information"
+		}
 		return
 	}
-
 	template, err := c.client.NotifyV1().Templates(channel.ObjectMeta.Name).Get(ctx, messageRequest.Spec.TemplateName, metav1.GetOptions{})
 	if err != nil {
 		log.Error("Failed to get template object", log.String("channelName", channel.ObjectMeta.Name), log.String("templateName", messageRequest.Spec.TemplateName), log.Err(err))
+		for _, receiverName := range receiversSet.List() {
+			failedReceiverErrors[receiverName] = "Failed to get notification template information"
+		}
 		return
 	}
 
 	var receivers []*v1.Receiver
-
 	for _, receiverName := range receiversSet.List() {
-
 		receiver, err := c.client.NotifyV1().Receivers().Get(ctx, receiverName, metav1.GetOptions{})
 		if err != nil {
-			receiversSet.Delete(receiverName)
 			if errors.IsNotFound(err) {
-				log.Errorf("the receiver %s doesn't exist ", receiverName)
+				failedReceiverErrors[receiverName] = "The specified notification recipient does not exist"
 			} else {
-				log.Errorf("failed to get receiver %s in cluster, error: %v", receiverName, err)
+				failedReceiverErrors[receiverName] = "Failed to get notification recipient information"
 			}
 			continue
 		}
 		receivers = append(receivers, receiver)
 	}
-
-	if receiversSet.Len() == 0 {
-		log.Errorf("don't find any valid receivers in receiver: %v or receiver-group: %v", messageRequest.Spec.Receivers, messageRequest.Spec.ReceiverGroups)
-		return
-	}
-
 	var (
 		alarmPolicyName string
 		alarmPolicyType string
@@ -374,163 +371,122 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 	if v, ok := messageRequest.Spec.Variables["clusterID"]; ok {
 		clusterID = v
 	}
-
-	//webhook
 	if channel.Spec.Webhook != nil && template.Spec.Text != nil {
-		sentMessage := sentMessage{
+		content, err := webhook.Send(channel.Spec.Webhook, template.Spec.Text, receivers, messageRequest.Spec.Variables)
+		if err != nil {
+			failedReceiverErrors[strings.Join(receiversSet.List(), ",")] = err.Error()
+			return
+		}
+		sentMessages = append(sentMessages, sentMessage{
 			receiverName:        strings.Join(receiversSet.List(), ","),
 			receiverChannel:     v1.ReceiverChannelWebhook,
 			identity:            channel.Spec.Webhook.URL,
-			body:                defaultContent,
+			body:                content,
 			alarmPolicyName:     alarmPolicyName,
 			alarmPolicyType:     alarmPolicyType,
 			receiverChannelName: channel.Name,
 			clusterID:           clusterID,
-		}
-		content, err := webhook.Send(channel.Spec.Webhook, template.Spec.Text, receivers, messageRequest.Spec.Variables)
-		if err != nil {
-			sentMessage.failedReason = err.Error()
-		} else {
-			sentMessage.body = content
-		}
-		sentMessages = append(sentMessages, sentMessage)
+		})
 		return
 	}
-
 	for _, receiver := range receivers {
 		receiverName := receiver.ObjectMeta.Name
 		templateCount := 0
 		if template.Spec.TencentCloudSMS != nil {
 			templateCount++
-			sentMessage := sentMessage{
-				receiverName:        receiverName,
-				receiverChannel:     v1.ReceiverChannelMobile,
-				username:            receiver.Spec.Username,
-				body:                defaultContent,
-				alarmPolicyName:     alarmPolicyName,
-				alarmPolicyType:     alarmPolicyType,
-				receiverChannelName: channel.Name,
-				clusterID:           clusterID,
-			}
-
 			if channel.Spec.TencentCloudSMS == nil {
-				sentMessage.failedReason = "The notification sending template is not configured with the corresponding tencent cloud account"
-				sentMessages = append(sentMessages, sentMessage)
+				failedReceiverErrors[receiverName] = "The notification sending template is not configured with the corresponding tencent cloud account"
 				continue
 			}
 			mobile, ok := receiver.Spec.Identities[v1.ReceiverChannelMobile]
 			if !ok {
-				sentMessage.failedReason = "The notification recipient did not configure the mobile"
-				sentMessages = append(sentMessages, sentMessage)
+				failedReceiverErrors[receiverName] = "The notification recipient did not configure the mobile"
 				continue
 			}
 			messageID, body, err := tencentcloudsms.Send(channel.Spec.TencentCloudSMS, template.Spec.TencentCloudSMS, mobile, messageRequest.Spec.Variables)
 			if err != nil {
-				sentMessage.failedReason = err.Error()
-				sentMessages = append(sentMessages, sentMessage)
+				failedReceiverErrors[receiverName] = err.Error()
 				continue
 			}
-
-			sentMessage.identity = mobile
-			sentMessage.body = body
-			sentMessage.messageID = messageID
-			sentMessages = append(sentMessages, sentMessage)
-		}
-
-		if template.Spec.Wechat != nil {
-			templateCount++
-			sentMessage := sentMessage{
+			sentMessages = append(sentMessages, sentMessage{
 				receiverName:        receiverName,
+				receiverChannel:     v1.ReceiverChannelMobile,
+				identity:            mobile,
 				username:            receiver.Spec.Username,
-				receiverChannel:     v1.ReceiverChannelWechatOpenID,
-				body:                defaultContent,
+				body:                body,
+				messageID:           messageID,
 				alarmPolicyName:     alarmPolicyName,
 				alarmPolicyType:     alarmPolicyType,
 				receiverChannelName: channel.Name,
 				clusterID:           clusterID,
-			}
-
+			})
+		}
+		if template.Spec.Wechat != nil {
+			templateCount++
 			if channel.Spec.Wechat == nil {
-				sentMessage.failedReason = "The notification sending template is not configured with the corresponding Wechat account"
-				sentMessages = append(sentMessages, sentMessage)
+				failedReceiverErrors[receiverName] = "The notification sending template is not configured with the corresponding Wechat account"
 				continue
 			}
-
 			openID, ok := receiver.Spec.Identities[v1.ReceiverChannelWechatOpenID]
 			if !ok {
-				sentMessage.failedReason = "The notification recipient did not configure the Wechat openid"
-				sentMessages = append(sentMessages, sentMessage)
+				failedReceiverErrors[receiverName] = "The notification recipient did not configure the Wechat openid"
 				continue
 			}
 			messageID, body, err := wechat.Send(channel.Spec.Wechat, template.Spec.Wechat, openID, messageRequest.Spec.Variables)
 			if err != nil {
-				sentMessage.failedReason = err.Error()
-				sentMessages = append(sentMessages, sentMessage)
+				failedReceiverErrors[receiverName] = err.Error()
 				continue
 			}
-
-			sentMessage.identity = openID
-			sentMessage.body = body
-			sentMessage.messageID = messageID
-			sentMessages = append(sentMessages, sentMessage)
-		}
-
-		if template.Spec.Text != nil {
-			templateCount++
-
-			sentMessage := sentMessage{
+			sentMessages = append(sentMessages, sentMessage{
 				receiverName:        receiverName,
 				username:            receiver.Spec.Username,
-				receiverChannel:     v1.ReceiverChannelEmail,
-				body:                defaultContent,
+				receiverChannel:     v1.ReceiverChannelWechatOpenID,
+				identity:            openID,
+				body:                body,
+				messageID:           messageID,
 				alarmPolicyName:     alarmPolicyName,
 				alarmPolicyType:     alarmPolicyType,
 				receiverChannelName: channel.Name,
 				clusterID:           clusterID,
-			}
-
+			})
+		}
+		if template.Spec.Text != nil {
+			templateCount++
 			if channel.Spec.SMTP == nil {
-				sentMessage.failedReason = "The notification sending template is not configured with the corresponding smtp server"
-				sentMessages = append(sentMessages, sentMessage)
+				failedReceiverErrors[receiverName] = "The notification sending template is not configured with the corresponding smtp server"
 				continue
 			}
 			email, ok := receiver.Spec.Identities[v1.ReceiverChannelEmail]
 			if !ok {
-				sentMessage.failedReason = "The notification recipient did not configure the email"
-				sentMessages = append(sentMessages, sentMessage)
+				failedReceiverErrors[receiverName] = "The notification recipient did not configure the email"
 				continue
 			}
 			header, body, err := smtp.Send(channel.Spec.SMTP, template.Spec.Text, email, messageRequest.Spec.Variables)
 			if err != nil {
-				sentMessage.failedReason = err.Error()
-				sentMessages = append(sentMessages, sentMessage)
+				failedReceiverErrors[receiverName] = err.Error()
 				continue
 			}
-
-			sentMessage.identity = email
-			sentMessage.header = header
-			sentMessage.body = body
-			sentMessages = append(sentMessages, sentMessage)
-		}
-
-		if templateCount == 0 {
 			sentMessages = append(sentMessages, sentMessage{
 				receiverName:        receiverName,
 				username:            receiver.Spec.Username,
-				body:                defaultContent,
+				receiverChannel:     v1.ReceiverChannelEmail,
+				identity:            email,
+				header:              header,
+				body:                body,
 				alarmPolicyName:     alarmPolicyName,
 				alarmPolicyType:     alarmPolicyType,
 				receiverChannelName: channel.Name,
 				clusterID:           clusterID,
-				failedReason:        fmt.Sprintf("Notification sending template content is not configured in template %s", template.Name),
 			})
+		}
+		if templateCount == 0 {
+			failedReceiverErrors[receiverName] = "Notification sending template is not configured"
 		}
 	}
 	return
 }
 
 func (c *Controller) archiveMessage(ctx context.Context, messageRequest *v1.MessageRequest, sentMessages []sentMessage) {
-
 	for _, sentMessage := range sentMessages {
 		message := &v1.Message{
 			ObjectMeta: metav1.ObjectMeta{
@@ -551,9 +507,7 @@ func (c *Controller) archiveMessage(ctx context.Context, messageRequest *v1.Mess
 				ClusterID:           sentMessage.clusterID,
 			},
 			Status: v1.MessageStatus{
-				Phase:              v1.MessageUnread,
-				LastTransitionTime: metav1.Now(),
-				FailedReason:       sentMessage.failedReason,
+				Phase: v1.MessageUnread,
 			},
 		}
 		if _, err := c.client.NotifyV1().Messages().Create(ctx, message, metav1.CreateOptions{}); err != nil {
