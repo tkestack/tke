@@ -50034,14 +50034,16 @@ func schema_tke_api_notify_v1_MessageSpec(ref common.ReferenceCallback) common.O
 					},
 					"receiverChannel": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"identity": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
 						},
 					},
 					"username": {
@@ -50093,7 +50095,7 @@ func schema_tke_api_notify_v1_MessageSpec(ref common.ReferenceCallback) common.O
 						},
 					},
 				},
-				Required: []string{"tenantID", "receiverName"},
+				Required: []string{"tenantID", "receiverName", "receiverChannel", "identity"},
 			},
 		},
 	}
@@ -50118,13 +50120,6 @@ func schema_tke_api_notify_v1_MessageStatus(ref common.ReferenceCallback) common
 							Description: "The last time the condition transitioned from one status to another.",
 							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
-						},
-					},
-					"failedReason": {
-						SchemaProps: spec.SchemaProps{
-							Description: "A human readable message indicating details about the transition.",
-							Type:        []string{"string"},
-							Format:      "",
 						},
 					},
 				},

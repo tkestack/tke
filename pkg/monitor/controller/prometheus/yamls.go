@@ -668,7 +668,7 @@ groups:
     expr: sum(k8s_container_fs_write_times) without (container_name,container_id)
 
   - record: k8s_pod_status_ready
-    expr: sum(kube_pod_status_phase{phase=~"Running|Succeeded"}) by (namespace,pod_name) *  on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+    expr: sum(kube_pod_status_ready{condition="true"}) by (namespace,pod_name) *  on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_pod_restart_total
     expr: sum(idelta(kube_pod_container_status_restarts_total [2m])) by (namespace,pod_name) *  on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
@@ -1278,8 +1278,8 @@ func configForAlertManager(webhookAddr string, repeatInterval string) string {
 
     route:
       group_by: ['alertname','alarmPolicyName','version']
-      group_wait: 30s
-      group_interval: 5m
+      group_wait: 1s
+      group_interval: 1s
       repeat_interval: %s
       receiver: 'web.hook'
       routes:
