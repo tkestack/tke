@@ -32,6 +32,7 @@ import { EditResourceContainerAdvancedPanel } from './EditResourceContainerAdvan
 import { EditResourceContainerEnvItem } from './EditResourceContainerEnvItem';
 import { EditResourceContainerLimitItem } from './EditResourceContainerLimitItem';
 import { EditResourceContainerMountItem } from './EditResourceContainerMountItem';
+import { RegistrySelectDialog, RegistryTagSelectDialog } from './registrySelect';
 
 interface ContainerItemProps extends RootProps {
   /** 容器的id */
@@ -43,6 +44,7 @@ const mapDispatchToProps = dispatch =>
 
 @connect(state => state, mapDispatchToProps)
 export class EditResourceContainerItem extends React.Component<ContainerItemProps, {}> {
+  state: Readonly<{ tags: any[] }> = { tags: null };
   render() {
     let { actions, subRoot, cKey, clusterVersion, cluster } = this.props,
       { workloadEdit, addons } = subRoot,
@@ -132,22 +134,39 @@ export class EditResourceContainerItem extends React.Component<ContainerItemProp
                           value={container.registry}
                           onChange={e => {
                             actions.editWorkload.updateContainer({ registry: e.target.value }, cKey);
+
+                            this.setState({ tags: null });
                           }}
                           onBlur={e => actions.validate.workload.validateRegistrySelection(e.target.value, cKey)}
                         />
                       </Bubble>
+
+                      <RegistrySelectDialog
+                        onConfirm={({ registry, tags }) => {
+                          actions.editWorkload.updateContainer({ registry }, cKey);
+
+                          this.setState({ tags });
+                        }}
+                      />
                     </div>
                   </FormItem>
                   <FormItem label={t('镜像版本（Tag）')} className="tag-mod">
                     <div className="tc-15-autocomplete xl">
                       <input
                         type="text"
-                        className="tc-15-input-text m"
+                        className="tc-15-input-text m mr10"
                         value={container.tag}
                         onChange={e => {
                           actions.editWorkload.updateContainer({ tag: e.target.value }, cKey);
                         }}
                       />
+
+                      {this.state.tags && (
+                        <RegistryTagSelectDialog
+                          tags={this.state.tags}
+                          onConfirm={tag => actions.editWorkload.updateContainer({ tag }, cKey)}
+                        />
+                      )}
                     </div>
                   </FormItem>
 
