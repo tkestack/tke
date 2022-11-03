@@ -418,6 +418,9 @@ func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedAp
 		}
 		return app, err
 	}
+	if app.Status.Phase == applicationv1.AppPhaseSucceeded && hasSynced(app) {
+		return app, nil
+	}
 	return c.updateStatus(ctx, app, &app.Status, newStatus)
 }
 
