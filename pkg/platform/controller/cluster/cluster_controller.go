@@ -351,7 +351,7 @@ func (c *Controller) reconcile(ctx context.Context, key string, cluster *platfor
 	case "":
 		cluster.Status.Phase = platformv1.ClusterInitializing
 		err = c.onCreate(ctx, cluster)
-	case platformv1.ClusterInitializing:
+	case platformv1.ClusterInitializing, platformv1.ClusterWaiting:
 		err = c.onCreate(ctx, cluster)
 	case platformv1.ClusterRunning, platformv1.ClusterFailed:
 		err = c.onUpdate(ctx, cluster)
