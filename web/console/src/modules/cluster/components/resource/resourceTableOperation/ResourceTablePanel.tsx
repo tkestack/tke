@@ -36,6 +36,7 @@ import { ResourceLoadingIcon, ResourceStatus } from '../../../constants/Config';
 import { Resource } from '../../../models';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
+import { NamespaceQuotaManage } from './namespace-quota-manage';
 
 /** 判断resource是否需要展示loading状态
  * @param resourceName: string  资源的名称，如deployment
@@ -407,6 +408,11 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
         btns.push(renderUpdateResourcePart(operatorItem));
       }
     });
+
+    if (resourceName === 'np') {
+      btns.push(<NamespaceQuotaManage name={resource?.metadata?.name} clusterId={clusterId} />);
+    }
+
     return btns;
   }
 
