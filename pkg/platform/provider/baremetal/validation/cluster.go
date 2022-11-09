@@ -697,7 +697,7 @@ func ValidateCIDRs(cls *platform.Cluster, specPath *field.Path) field.ErrorList 
 			if err != nil {
 				allErrs = append(allErrs, field.Invalid(path, cidr, "must be a valid CIDR block (e.g. 10.100.0.0/16 or fde4:8dba:82e1::/48)"))
 			}
-			if path == specPath.Child("clusterCIDR") {
+			if path.String() == specPath.Child("clusterCIDR").String() {
 				clusterCIDR = cidrX
 				for i, mc := range cls.Spec.Machines {
 					if clusterCIDR.Contains(net.ParseIP(mc.IP)) {
