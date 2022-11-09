@@ -308,6 +308,8 @@ type ClusterPhase string
 const (
 	// ClusterInitializing is the initialize phase.
 	ClusterInitializing ClusterPhase = "Initializing"
+	// ClusterWaiting indicates that the cluster is waiting for registration.
+	ClusterWaiting ClusterPhase = "Waiting"
 	// ClusterRunning is the normal running phase.
 	ClusterRunning ClusterPhase = "Running"
 	// ClusterFailed is the failed phase.
