@@ -728,6 +728,7 @@ func autoConvert_v1_MessageRequestStatus_To_notify_MessageRequestStatus(in *Mess
 	out.Phase = notify.MessageRequestPhase(in.Phase)
 	out.LastTransitionTime = in.LastTransitionTime
 	out.Errors = *(*map[string]string)(unsafe.Pointer(&in.Errors))
+	out.AlertStatus = in.AlertStatus
 	return nil
 }
 
@@ -740,6 +741,7 @@ func autoConvert_notify_MessageRequestStatus_To_v1_MessageRequestStatus(in *noti
 	out.Phase = MessageRequestPhase(in.Phase)
 	out.LastTransitionTime = in.LastTransitionTime
 	out.Errors = *(*map[string]string)(unsafe.Pointer(&in.Errors))
+	out.AlertStatus = in.AlertStatus
 	return nil
 }
 
@@ -793,6 +795,7 @@ func Convert_notify_MessageSpec_To_v1_MessageSpec(in *notify.MessageSpec, out *M
 func autoConvert_v1_MessageStatus_To_notify_MessageStatus(in *MessageStatus, out *notify.MessageStatus, s conversion.Scope) error {
 	out.Phase = notify.MessagePhase(in.Phase)
 	out.LastTransitionTime = in.LastTransitionTime
+	out.AlertStatus = in.AlertStatus
 	return nil
 }
 
@@ -804,6 +807,7 @@ func Convert_v1_MessageStatus_To_notify_MessageStatus(in *MessageStatus, out *no
 func autoConvert_notify_MessageStatus_To_v1_MessageStatus(in *notify.MessageStatus, out *MessageStatus, s conversion.Scope) error {
 	out.Phase = MessagePhase(in.Phase)
 	out.LastTransitionTime = in.LastTransitionTime
+	out.AlertStatus = in.AlertStatus
 	return nil
 }
 

@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"strconv"
 	"sync"
+
 	v1 "tkestack.io/tke/api/notify/v1"
 	"tkestack.io/tke/pkg/notify/controller/messagerequest/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -75,7 +76,7 @@ type item struct {
 var tokenCache sync.Map
 
 // Send notification by wechat
-func Send(channel *v1.ChannelWechat, template *v1.TemplateWechat, openID string, variables map[string]string) (messageID string, body string, err error) {
+func Send(channel *v1.ChannelWechat, template *v1.TemplateWechat, openID string, variables map[string]string, status string) (messageID string, body string, err error) {
 	body, err = util.ParseTemplate("wechatBody", template.Body, variables)
 	if err != nil {
 		return "", "", err
@@ -94,6 +95,8 @@ func Send(channel *v1.ChannelWechat, template *v1.TemplateWechat, openID string,
 		MiniProgramAppID:    template.MiniProgramAppID,
 		MiniProgramPagePath: template.MiniProgramPagePath,
 	}
+
+	variables["alertStatus"] = status
 
 	reqBody := bodyInfo{
 		Touser:      openID,

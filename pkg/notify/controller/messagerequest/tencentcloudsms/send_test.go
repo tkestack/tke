@@ -21,6 +21,7 @@ package tencentcloudsms
 import (
 	"testing"
 	"time"
+
 	v1 "tkestack.io/tke/api/notify/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -55,7 +56,8 @@ func TestSmsSend(t *testing.T) {
 		"startsAt":  "2019-09-15",
 	}
 	testMobile := "15600564755"
-	msgID, body, err := Send(channel, template, testMobile, variables)
+	status := "firing"
+	msgID, body, err := Send(channel, template, testMobile, variables, status)
 
 	log.Debugf("msgID: %s", msgID)
 	log.Debugf("body: %s", body)

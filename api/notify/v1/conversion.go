@@ -20,6 +20,7 @@ package v1
 
 import (
 	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -140,7 +141,8 @@ func AddFieldLabelConversionsForMessage(scheme *runtime.Scheme) error {
 				"spec.alarmPolicyName",
 				"spec.alarmPolicyType",
 				"spec.receiverChannelName",
-				"spec.clusterID":
+				"spec.clusterID",
+				"status.alertStatus":
 				return label, value, nil
 			default:
 				return "", "", fmt.Errorf("field label not supported: %s", label)
