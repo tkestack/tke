@@ -89,8 +89,8 @@ export class ResourceNamespaceDetailPanel extends React.Component<RootProps, {}>
                 <ListItem label={t('创建时间')}>
                   {dateFormatter(new Date(resourceIns.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')}
                 </ListItem>
-                <ListItem label={t('资源限制')}>{this._reduceResourceLimit(resourceIns.spec.hard)}</ListItem>
-                <ListItem label={t('已使用资源')}>{this._reduceResourceLimit(resourceIns.status.used)}</ListItem>
+                {/* <ListItem label={t('资源限制')}>{this._reduceResourceLimit(resourceIns.spec.hard)}</ListItem>
+                <ListItem label={t('已使用资源')}>{this._reduceResourceLimit(resourceIns.status.used)}</ListItem> */}
               </ul>
             </div>
           </div>
