@@ -50563,6 +50563,13 @@ func schema_tke_api_notify_v1_MessageRequestStatus(ref common.ReferenceCallback)
 							},
 						},
 					},
+					"alertStatus": {
+						SchemaProps: spec.SchemaProps{
+							Description: "alert's status in notification sending from alertmanager",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -50680,6 +50687,13 @@ func schema_tke_api_notify_v1_MessageStatus(ref common.ReferenceCallback) common
 							Description: "The last time the condition transitioned from one status to another.",
 							Default:     map[string]interface{}{},
 							Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.Time"),
+						},
+					},
+					"alertStatus": {
+						SchemaProps: spec.SchemaProps{
+							Description: "alert's status in notification sending from alertmanager",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},

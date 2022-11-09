@@ -67,6 +67,7 @@ type Alert struct {
 	Annotations map[string]string `json:"annotations"`
 	StartsAt    time.Time         `json:"startsAt"`
 	EndsAt      time.Time         `json:"endsAt"`
+	Status      string            `json:"status"`
 }
 
 // Notification indicates the notification for alertmanager of prometheus
@@ -145,7 +146,7 @@ func registerAlarmWebhook(m *mux.PathRecorderMux, loopbackClientConfig *restclie
 					setErrResponse("receivers and receiverGroups are nil", http.StatusBadRequest, w)
 					return
 				}
-				messageRequest := newMessageRequest(channel, template, receivers, receiverGroups, variables)
+				messageRequest := newMessageRequest(channel, template, receivers, receiverGroups, variables, alert.Status)
 
 				notifyClient := notifyinternalclient.NewForConfigOrDie(loopbackClientConfig)
 				_, err = notifyClient.MessageRequests(messageRequest.ObjectMeta.Namespace).Create(req.Context(), messageRequest, metav1.CreateOptions{})
@@ -177,7 +178,7 @@ func setErrResponse(msg string, statusCode int, w http.ResponseWriter) {
 	http.Error(w, string(jsonMsg), statusCode)
 }
 
-func newMessageRequest(channel string, template string, receivers []string, receiverGroups []string, variables map[string]string) *notify.MessageRequest {
+func newMessageRequest(channel string, template string, receivers []string, receiverGroups []string, variables map[string]string, status string) *notify.MessageRequest {
 	return &notify.MessageRequest{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: channel,
@@ -188,16 +189,19 @@ func newMessageRequest(channel string, template string, receivers []string, rece
 			ReceiverGroups: receiverGroups,
 			Variables:      variables,
 		},
+
+		Status: notify.MessageRequestStatus{
+			AlertStatus: status,
+		},
 	}
 }
 
 func getVariables(alert Alert) map[string]string {
-	summary := "[TKEStack alarm]"
 	variables := make(map[string]string)
 	labels := alert.Labels
 	annotations := alert.Annotations
 
-	summary = fmt.Sprintf("%s\n发生时间：%s", summary, processStartTime(alert.StartsAt))
+	summary := fmt.Sprintf("发生时间：%s", processStartTime(alert.StartsAt))
 
 	alarmPolicyTypeValue, ok := annotations["alarmPolicyType"]
 	if ok {

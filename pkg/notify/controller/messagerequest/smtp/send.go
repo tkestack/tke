@@ -30,7 +30,7 @@ import (
 )
 
 // Send notification by smtp
-func Send(channel *v1.ChannelSMTP, template *v1.TemplateText, email string, variables map[string]string) (header, body string, err error) {
+func Send(channel *v1.ChannelSMTP, template *v1.TemplateText, email string, variables map[string]string, status string) (header, body string, err error) {
 	// 这里的header和body分别表示模版渲染后的邮件标题和邮件内容
 	header, err = util.ParseTemplate("smtpHeader", template.Header, variables)
 	if err != nil {
@@ -56,6 +56,10 @@ func Send(channel *v1.ChannelSMTP, template *v1.TemplateText, email string, vari
 	for k, v := range headers {
 		msg += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
+
+	alertStatus := util.GetAlertStatus(status)
+
+	msg += "\r\n" + alertStatus // apend alert status first
 	msg += "\r\n" + body
 
 	log.Debug("msg", log.String("msg", msg[:]))

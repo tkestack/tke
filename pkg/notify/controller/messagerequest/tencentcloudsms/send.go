@@ -28,6 +28,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+
 	v1 "tkestack.io/tke/api/notify/v1"
 	"tkestack.io/tke/pkg/notify/controller/messagerequest/util"
 	"tkestack.io/tke/pkg/util/log"
@@ -63,7 +64,7 @@ type resBody struct {
 }
 
 // Send notification by tencent cloud sms gateway.
-func Send(channel *v1.ChannelTencentCloudSMS, template *v1.TemplateTencentCloudSMS, mobile string, variables map[string]string) (messageID string, body string, err error) {
+func Send(channel *v1.ChannelTencentCloudSMS, template *v1.TemplateTencentCloudSMS, mobile string, variables map[string]string, status string) (messageID string, body string, err error) {
 	body, err = util.ParseTemplate("smsBody", template.Body, variables)
 	if err != nil {
 		return "", "", err
@@ -86,14 +87,18 @@ func Send(channel *v1.ChannelTencentCloudSMS, template *v1.TemplateTencentCloudS
 		return "", body, err
 	}
 
+	alertStatus := util.GetAlertStatus(status)
+
 	reqBody := bodyInfo{
 		Tel:    tel,
 		Sign:   template.Sign,
 		TplID:  tplID,
-		Params: mapToSlice(variables, template.Body),
+		Params: []string{alertStatus},
 		Sig:    calculateSignature(channel.AppKey, random, now, mobile),
 		Time:   now,
 	}
+
+	reqBody.Params = append(reqBody.Params, mapToSlice(variables, template.Body)...)
 
 	option := util.Option{
 		Protocol: reqURL.Scheme,

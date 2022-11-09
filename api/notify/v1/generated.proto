@@ -229,6 +229,9 @@ message MessageRequestStatus {
   // A human readable message indicating details about the transition.
   // +optional
   map<string, string> errors = 3;
+
+  // alert's status in notification sending from alertmanager
+  optional string alertStatus = 4;
 }
 
 // MessageSpec is a description of a message.
@@ -274,6 +277,9 @@ message MessageStatus {
   // The last time the condition transitioned from one status to another.
   // +optional
   optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastTransitionTime = 2;
+
+  // alert's status in notification sending from alertmanager
+  optional string alertStatus = 3;
 }
 
 // Receiver indicates a message notification recipient, usually representing a

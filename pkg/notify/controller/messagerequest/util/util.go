@@ -100,3 +100,15 @@ func ParseTemplate(name string, template string, variables map[string]string) (s
 func GetCurrentTime() int64 {
 	return time.Now().Unix()
 }
+
+//render the alert status before sending alert message
+func GetAlertStatus(status string) string {
+	var alertStatus string
+	if status == string("firing") {
+		alertStatus = "未恢复"
+	} else {
+		alertStatus = "已恢复"
+	}
+	alertStatus = fmt.Sprintf("告警状态： %s", alertStatus)
+	return alertStatus
+}

@@ -353,6 +353,9 @@ type MessageRequestStatus struct {
 	// A human readable message indicating details about the transition.
 	// +optional
 	Errors map[string]string `json:"errors,omitempty" protobuf:"bytes,3,rep,name=errors"`
+
+	//alert's status in notification sending from alertmanager
+	AlertStatus string `json:"alertStatus,omitempty" protobuf:"bytes,4,opts,name=alertStatus"`
 }
 
 // MessageRequestPhase indicates the status of message request.
@@ -434,6 +437,9 @@ type MessageStatus struct {
 	// The last time the condition transitioned from one status to another.
 	// +optional
 	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty" protobuf:"bytes,2,opt,name=lastTransitionTime"`
+
+	// alert's status in notification sending from alertmanager
+	AlertStatus string `json:"alertStatus,omitempty" protobuf:"bytes,3,opts,name=alertStatus"`
 }
 
 // MessagePhase indicates the status of message.

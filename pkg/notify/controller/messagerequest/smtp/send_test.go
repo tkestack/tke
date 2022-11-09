@@ -21,6 +21,7 @@ package smtp
 import (
 	"testing"
 	"time"
+
 	v1 "tkestack.io/tke/api/notify/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -59,7 +60,9 @@ func TestSmtpSend(t *testing.T) {
 		"body":   "this is test",
 	}
 
-	header, body, err := Send(smtp, template, email, variables)
+	status := "firing"
+
+	header, body, err := Send(smtp, template, email, variables, status)
 	log.Debugf("header: %s", header)
 	log.Debugf("body: %s", body)
 	log.Debugf("err: %v", err)
