@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations under the License.
  */
 
-import React, { useRef, useLayoutEffect } from 'react';
-import { Icon } from 'tea-component';
+import React, { useRef, useLayoutEffect, useState } from 'react';
+import { Button, Icon } from 'tea-component';
 import ClipboardJS from 'clipboard';
 
 export interface ClipProps {
@@ -32,8 +32,14 @@ export const Clip = ({ target, className, isShow = true, isShowTip }: ClipProps)
   const copyBtn = useRef(null);
   const copyInstance = useRef(null);
 
+  const [tips, setTips] = useState('复制');
+
   useLayoutEffect(() => {
-    copyInstance.current && copyInstance.current.destroy();
+    function clean() {
+      copyInstance.current && copyInstance.current.destroy();
+    }
+
+    clean();
 
     if (copyBtn.current) {
       copyInstance.current = new ClipboardJS(copyBtn.current, {
@@ -41,8 +47,23 @@ export const Clip = ({ target, className, isShow = true, isShowTip }: ClipProps)
           return document?.querySelector(target)?.textContent ?? '';
         }
       });
+
+      copyInstance?.current?.on('success', () => setTips('复制成功'));
     }
+
+    return clean;
   }, [copyBtn, target]);
 
-  return isShow && <Icon type="copy" className={className} ref={copyBtn} />;
+  return (
+    isShow && (
+      <Button
+        type="icon"
+        tooltip={tips}
+        icon="copy"
+        className={className}
+        ref={copyBtn}
+        onMouseLeave={() => setTimeout(() => setTips('复制'), 100)}
+      />
+    )
+  );
 };
