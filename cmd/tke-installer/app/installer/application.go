@@ -418,7 +418,7 @@ func (t *TKE) installPlatformApps(ctx context.Context) error {
 		}
 		err := t.installPlatformApp(ctx, platformApp)
 		if err != nil {
-			t.log.Errorf("Install %s failed", platformApp.HelmInstallOptions.ReleaseName)
+			t.log.Errorf("Install %s failed %v", platformApp.HelmInstallOptions.ReleaseName, err)
 			return err
 		}
 		t.Para.Config.PlatformApps[i].Installed = true
@@ -436,6 +436,7 @@ func (t *TKE) installPlatformApp(ctx context.Context, platformApp *types.Platfor
 	if len(platformApp.LocalChartPath) != 0 {
 		t.log.Infof("Start install platform app %s in %s namespace", platformApp.HelmInstallOptions.ReleaseName, platformApp.HelmInstallOptions.Namespace)
 		if _, err := t.helmClient.InstallWithLocal(platformApp.HelmInstallOptions, platformApp.LocalChartPath); err != nil {
+			t.log.Errorf("install failed: %v", err)
 			uninstallOptions := helmaction.UninstallOptions{
 				Timeout:     10 * time.Minute,
 				ReleaseName: platformApp.HelmInstallOptions.ReleaseName,

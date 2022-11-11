@@ -4,6 +4,5 @@ metadata:
   name: cluster-info
   namespace: tke
 data:
-  k8sValidVersions: {{ .Values.k8sValidVersions }}
-  tkeVersion: {{ .Values.tkeVersion }}
-  
+  k8sValidVersions: '["1.21.4-tke.3"]'
+  tkeVersion: v1.9.0-industry.1
