@@ -25,8 +25,8 @@ import { allActions } from '../actions';
 import { RootState } from '../models';
 import { router } from '../router';
 import { configStore } from '../stores/RootStore';
-import { AlarmRecordPanel } from './AlarmRecordPanel';
 import { AlarmRecordHeadPanel } from './AlarmHeaderPanel';
+import { AlarmTablePanel } from './AlarmTablePanel';
 
 const { useState, useEffect } = React;
 const { Body, Content } = Layout;
@@ -40,6 +40,7 @@ export class AlarmRecordContainer extends React.Component<any, any> {
   render() {
     return (
       <Provider store={store}>
+        FetchAlarmRecord
         <AlarmRecordApp />
       </Provider>
     );
@@ -64,7 +65,7 @@ class AlarmRecordApp extends React.Component<RootProps, {}> {
               <AlarmRecordHeadPanel />
             </Content.Header>
             <Content.Body>
-              <AlarmRecordPanel />
+              <AlarmTablePanel clusterId={this?.props?.cluster?.selection?.metadata?.name} />
             </Content.Body>
           </Content>
         </Body>
