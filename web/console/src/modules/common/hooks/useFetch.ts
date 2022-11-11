@@ -137,9 +137,16 @@ export function useFetch<T>(
         }
 
         case 'continue': {
-          const pageIndex = paging.pageIndex;
+          const { pageIndex, pageSize } = paging;
           const currentContinue = continueState[pageIndex - 1];
-          const { data, continueToken, totalCount } = await query({ paging, continueToken: currentContinue });
+          let { data, continueToken, totalCount } = await query({ paging, continueToken: currentContinue });
+
+          // 针对不返回totalcount的情况
+
+          if (totalCount === null) {
+            totalCount = (pageIndex + (continueToken ? 1 : 0)) * pageSize;
+          }
+
           setContinueState(pre => {
             const newState = [...pre];
 
