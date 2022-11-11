@@ -300,6 +300,7 @@ type sentMessage struct {
 	alarmPolicyType     string
 	receiverChannelName string
 	clusterID           string
+	alertStatus         string
 }
 
 func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.MessageRequest) (sentMessages []sentMessage, failedReceiverErrors map[string]string) {
@@ -372,7 +373,7 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 		clusterID = v
 	}
 	if channel.Spec.Webhook != nil && template.Spec.Text != nil {
-		content, err := webhook.Send(channel.Spec.Webhook, template.Spec.Text, receivers, messageRequest.Spec.Variables)
+		content, err := webhook.Send(channel.Spec.Webhook, template.Spec.Text, receivers, messageRequest.Spec.Variables, messageRequest.Status.AlertStatus)
 		if err != nil {
 			failedReceiverErrors[strings.Join(receiversSet.List(), ",")] = err.Error()
 			return
@@ -386,6 +387,7 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 			alarmPolicyType:     alarmPolicyType,
 			receiverChannelName: channel.Name,
 			clusterID:           clusterID,
+			alertStatus:         messageRequest.Status.AlertStatus,
 		})
 		return
 	}
@@ -403,7 +405,7 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 				failedReceiverErrors[receiverName] = "The notification recipient did not configure the mobile"
 				continue
 			}
-			messageID, body, err := tencentcloudsms.Send(channel.Spec.TencentCloudSMS, template.Spec.TencentCloudSMS, mobile, messageRequest.Spec.Variables)
+			messageID, body, err := tencentcloudsms.Send(channel.Spec.TencentCloudSMS, template.Spec.TencentCloudSMS, mobile, messageRequest.Spec.Variables, messageRequest.Status.AlertStatus)
 			if err != nil {
 				failedReceiverErrors[receiverName] = err.Error()
 				continue
@@ -419,6 +421,7 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 				alarmPolicyType:     alarmPolicyType,
 				receiverChannelName: channel.Name,
 				clusterID:           clusterID,
+				alertStatus:         messageRequest.Status.AlertStatus,
 			})
 		}
 		if template.Spec.Wechat != nil {
@@ -432,7 +435,7 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 				failedReceiverErrors[receiverName] = "The notification recipient did not configure the Wechat openid"
 				continue
 			}
-			messageID, body, err := wechat.Send(channel.Spec.Wechat, template.Spec.Wechat, openID, messageRequest.Spec.Variables)
+			messageID, body, err := wechat.Send(channel.Spec.Wechat, template.Spec.Wechat, openID, messageRequest.Spec.Variables, messageRequest.Status.AlertStatus)
 			if err != nil {
 				failedReceiverErrors[receiverName] = err.Error()
 				continue
@@ -448,6 +451,7 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 				alarmPolicyType:     alarmPolicyType,
 				receiverChannelName: channel.Name,
 				clusterID:           clusterID,
+				alertStatus:         messageRequest.Status.AlertStatus,
 			})
 		}
 		if template.Spec.Text != nil {
@@ -461,7 +465,7 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 				failedReceiverErrors[receiverName] = "The notification recipient did not configure the email"
 				continue
 			}
-			header, body, err := smtp.Send(channel.Spec.SMTP, template.Spec.Text, email, messageRequest.Spec.Variables)
+			header, body, err := smtp.Send(channel.Spec.SMTP, template.Spec.Text, email, messageRequest.Spec.Variables, messageRequest.Status.AlertStatus)
 			if err != nil {
 				failedReceiverErrors[receiverName] = err.Error()
 				continue
@@ -477,6 +481,7 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 				alarmPolicyType:     alarmPolicyType,
 				receiverChannelName: channel.Name,
 				clusterID:           clusterID,
+				alertStatus:         messageRequest.Status.AlertStatus,
 			})
 		}
 		if templateCount == 0 {
@@ -489,9 +494,6 @@ func (c *Controller) sendMessage(ctx context.Context, messageRequest *v1.Message
 func (c *Controller) archiveMessage(ctx context.Context, messageRequest *v1.MessageRequest, sentMessages []sentMessage) {
 	for _, sentMessage := range sentMessages {
 		message := &v1.Message{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("%s-%s", messageRequest.ObjectMeta.Name, strings.Split(sentMessage.receiverName, ",")[0]),
-			},
 			Spec: v1.MessageSpec{
 				TenantID:            messageRequest.Spec.TenantID,
 				ReceiverName:        sentMessage.receiverName,
@@ -507,7 +509,8 @@ func (c *Controller) archiveMessage(ctx context.Context, messageRequest *v1.Mess
 				ClusterID:           sentMessage.clusterID,
 			},
 			Status: v1.MessageStatus{
-				Phase: v1.MessageUnread,
+				Phase:       v1.MessageUnread,
+				AlertStatus: sentMessage.alertStatus,
 			},
 		}
 		if _, err := c.client.NotifyV1().Messages().Create(ctx, message, metav1.CreateOptions{}); err != nil {

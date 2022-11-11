@@ -164,6 +164,7 @@ var map_MessageRequestStatus = map[string]string{
 	"":                   "MessageRequestStatus represents information about the status of a message request.",
 	"lastTransitionTime": "The last time the condition transitioned from one status to another.",
 	"errors":             "A human readable message indicating details about the transition.",
+	"alertStatus":        "alert's status in notification sending from alertmanager",
 }
 
 func (MessageRequestStatus) SwaggerDoc() map[string]string {
@@ -181,6 +182,7 @@ func (MessageSpec) SwaggerDoc() map[string]string {
 var map_MessageStatus = map[string]string{
 	"":                   "MessageStatus represents information about the status of a message.",
 	"lastTransitionTime": "The last time the condition transitioned from one status to another.",
+	"alertStatus":        "alert's status in notification sending from alertmanager",
 }
 
 func (MessageStatus) SwaggerDoc() map[string]string {

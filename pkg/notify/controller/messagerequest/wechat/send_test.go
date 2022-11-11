@@ -21,6 +21,7 @@ package wechat
 import (
 	"testing"
 	"time"
+
 	v1 "tkestack.io/tke/api/notify/v1"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -54,7 +55,8 @@ func TestWechatSend(t *testing.T) {
 	variables := map[string]string{
 		"body": "success",
 	}
-	msgID, body, err := Send(channel, tempalte, openID, variables)
+	status := "firing"
+	msgID, body, err := Send(channel, tempalte, openID, variables, status)
 	log.Debugf("msgID: %s", msgID)
 	log.Debugf("body: %s", body)
 	log.Debugf("err: %v", err)

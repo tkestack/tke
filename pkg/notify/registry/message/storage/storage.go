@@ -33,6 +33,8 @@ import (
 	messagestrategy "tkestack.io/tke/pkg/notify/registry/message"
 	"tkestack.io/tke/pkg/notify/util"
 	"tkestack.io/tke/pkg/util/log"
+	"tkestack.io/tke/pkg/util/printers"
+	printerstorage "tkestack.io/tke/pkg/util/printers/storage"
 )
 
 // Storage includes storage for messages and all sub resources.
@@ -58,7 +60,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, privilegedUsername
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 	}
-	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
+	store.TableConvertor = printerstorage.TableConvertor{TableGenerator: printers.NewTableGenerator().With(AddHandlers)}
 	options := &genericregistry.StoreOptions{
 		RESTOptions: optsGetter,
 		AttrFunc:    messagestrategy.GetAttrs,

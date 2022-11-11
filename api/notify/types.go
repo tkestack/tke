@@ -353,6 +353,9 @@ type MessageRequestStatus struct {
 	// A human readable message indicating details about the transition.
 	// +optional
 	Errors map[string]string
+
+	//alert's status in notification sending from alertmanager
+	AlertStatus string
 }
 
 // MessageRequestPhase indicates the status of message request.
@@ -434,6 +437,9 @@ type MessageStatus struct {
 	// The last time the condition transitioned from one status to another.
 	// +optional
 	LastTransitionTime metav1.Time
+
+	// alert's status in notification sending from alertmanager
+	AlertStatus string
 }
 
 // MessagePhase indicates the status of message.
