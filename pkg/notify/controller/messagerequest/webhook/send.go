@@ -34,15 +34,17 @@ type webhookBody struct {
 }
 
 // Send notification to webhook server
-func Send(channel *v1.ChannelWebhook, template *v1.TemplateText, receivers []*v1.Receiver, variables map[string]string) (content string, err error) {
+func Send(channel *v1.ChannelWebhook, template *v1.TemplateText, receivers []*v1.Receiver, variables map[string]string, status string) (content string, err error) {
 	content, err = util.ParseTemplate("webhookContent", template.Body, variables)
 	if err != nil {
 		return "", err
 	}
 
+	alertStatus := util.GetAlertStatus(status)
+	contentWithAlertStatus := alertStatus + "\r\n" + content //add  alertStatus first
 	body := webhookBody{
 		Receivers: receivers,
-		Content:   content,
+		Content:   contentWithAlertStatus,
 	}
 	log.Debugf("webhook body: %v", body)
 	err = requestToWebhook(channel, body)

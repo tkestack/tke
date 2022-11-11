@@ -21,6 +21,8 @@ package message
 import (
 	"context"
 	"fmt"
+	"math"
+	"time"
 
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -86,8 +88,10 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 		message.Spec.TenantID = tenantID
 	}
 
+	// use (math.MaxUint32 - time.Now().Unix()) as prefix of name will support
+	// to list message in descending order of creationtimestamp
 	if message.Name == "" && message.GenerateName == "" {
-		message.GenerateName = "msg-"
+		message.GenerateName = fmt.Sprintf("msg-%d-", (math.MaxUint32 - time.Now().Unix()))
 	}
 }
 
@@ -153,6 +157,7 @@ func MatchMessage(label labels.Selector, field fields.Selector) storage.Selectio
 			"spec.alarmPolicyType",
 			"spec.receiverChannelName",
 			"spec.clusterID",
+			"status.alertStatus",
 		},
 	}
 }
@@ -170,6 +175,7 @@ func ToSelectableFields(message *notify.Message) fields.Set {
 		"spec.alarmPolicyType":     message.Spec.AlarmPolicyType,
 		"spec.receiverChannelName": message.Spec.ReceiverChannelName,
 		"spec.clusterID":           message.Spec.ClusterID,
+		"status.alertStatus":       message.Status.AlertStatus,
 	}
 	return genericregistry.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
 }
