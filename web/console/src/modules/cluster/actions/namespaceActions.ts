@@ -79,7 +79,11 @@ const restActions = {
       }
 
       // 初始化或者变更Resource的信息，在创建页面当中，变更ns，不需要拉取resource
-      mode !== 'create' && dispatch(resourceActions.poll());
+
+      if (mode !== 'create') {
+        dispatch(resourceActions.resetPaging());
+        dispatch(resourceActions.poll());
+      }
     };
   }
 };

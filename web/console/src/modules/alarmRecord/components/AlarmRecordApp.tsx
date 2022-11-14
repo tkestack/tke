@@ -25,8 +25,8 @@ import { allActions } from '../actions';
 import { RootState } from '../models';
 import { router } from '../router';
 import { configStore } from '../stores/RootStore';
-import { AlarmRecordPanel } from './AlarmRecordPanel';
 import { AlarmRecordHeadPanel } from './AlarmHeaderPanel';
+import { AlarmTablePanel } from './AlarmTablePanel';
 
 const { useState, useEffect } = React;
 const { Body, Content } = Layout;
@@ -63,8 +63,8 @@ class AlarmRecordApp extends React.Component<RootProps, {}> {
             <Content.Header title={t('历史告警记录')}>
               <AlarmRecordHeadPanel />
             </Content.Header>
-            <Content.Body>
-              <AlarmRecordPanel />
+            <Content.Body full>
+              <AlarmTablePanel clusterId={this?.props?.cluster?.selection?.metadata?.name} />
             </Content.Body>
           </Content>
         </Body>

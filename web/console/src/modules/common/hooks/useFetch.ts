@@ -28,6 +28,7 @@ interface IUseFetchOptions<T> {
   polling?: boolean;
   pollingDelay?: number;
   needClearData?: boolean;
+  onlyPollingPage1?: boolean;
 }
 
 type IUseFetchQuery<T> = (params?: IQueryParams) => Promise<IQueryResponse<T>>;
@@ -48,7 +49,8 @@ export function useFetch<T>(
     fetchAble = true,
     polling = false,
     pollingDelay = 5000,
-    needClearData = true
+    needClearData = true,
+    onlyPollingPage1 = false
   } = options ?? {};
 
   const [data, _setData] = useState<T>(null);
@@ -64,24 +66,6 @@ export function useFetch<T>(
   function reFetch() {
     _setFlag(pre => pre + 1);
   }
-
-  // 定时相关
-  const timer = useRef(null);
-  useEffect(() => {
-    clearInterval(timer.current);
-
-    const _timer = setInterval(() => {
-      if (!polling) return;
-
-      if (status === 'loading' || status === 'loading-polling') return;
-
-      fetchData(true);
-    }, pollingDelay);
-
-    timer.current = _timer;
-
-    return () => clearInterval(timer.current);
-  }, [polling, status, pollingDelay]);
 
   // 普通翻页相关的
   const [totalCount, setTotalCount] = useState<number>(null);
@@ -99,6 +83,26 @@ export function useFetch<T>(
 
     reFetch();
   }
+
+  // 定时相关
+  const timer = useRef(null);
+  useEffect(() => {
+    clearInterval(timer.current);
+
+    const _timer = setInterval(() => {
+      if (!polling) return;
+
+      if (status === 'loading' || status === 'loading-polling') return;
+
+      if (onlyPollingPage1 && pageIndex !== 1) return;
+
+      fetchData(true);
+    }, pollingDelay);
+
+    timer.current = _timer;
+
+    return () => clearInterval(timer.current);
+  }, [polling, status, pollingDelay, onlyPollingPage1, pageIndex]);
 
   // continue分页相关的
   const [continueState, setContinueState] = useState([null]);
@@ -137,9 +141,16 @@ export function useFetch<T>(
         }
 
         case 'continue': {
-          const pageIndex = paging.pageIndex;
+          const { pageIndex, pageSize } = paging;
           const currentContinue = continueState[pageIndex - 1];
-          const { data, continueToken, totalCount } = await query({ paging, continueToken: currentContinue });
+          let { data, continueToken, totalCount } = await query({ paging, continueToken: currentContinue });
+
+          // 针对不返回totalcount的情况
+
+          if (totalCount === null) {
+            totalCount = (pageIndex + (continueToken ? 1 : 0)) * pageSize;
+          }
+
           setContinueState(pre => {
             const newState = [...pre];
 
