@@ -40,7 +40,6 @@ export class AlarmRecordContainer extends React.Component<any, any> {
   render() {
     return (
       <Provider store={store}>
-        FetchAlarmRecord
         <AlarmRecordApp />
       </Provider>
     );
@@ -64,7 +63,7 @@ class AlarmRecordApp extends React.Component<RootProps, {}> {
             <Content.Header title={t('历史告警记录')}>
               <AlarmRecordHeadPanel />
             </Content.Header>
-            <Content.Body>
+            <Content.Body full>
               <AlarmTablePanel clusterId={this?.props?.cluster?.selection?.metadata?.name} />
             </Content.Body>
           </Content>
