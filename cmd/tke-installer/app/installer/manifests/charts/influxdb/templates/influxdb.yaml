@@ -36,7 +36,6 @@ spec:
 {{- if .Values.baremetalStorage }}
       nodeName: {{ .Values.nodeName }}
 {{- end }}
-      hostNetwork: true
       volumes:
       - name: data
 {{- if .Values.baremetalStorage }}
@@ -84,3 +83,20 @@ spec:
       storage: 40Gi
   storageClassName: {{ .Values.nfsStorageClassName }}
 {{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: influxdb
+  namespace: tke
+spec:
+  ports:
+    - name: remote-write
+      port: 8086
+      targetPort: 8086
+      protocol: TCP
+      nodePort: 30086
+  type: NodePort
+  selector:
+    app: influxdb

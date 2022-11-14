@@ -19,10 +19,11 @@
 package app
 
 import (
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"net/http"
 	"time"
-	"tkestack.io/tke/api/monitor/v1"
+
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	v1 "tkestack.io/tke/api/monitor/v1"
 	"tkestack.io/tke/pkg/monitor/controller/metric"
 	"tkestack.io/tke/pkg/monitor/controller/prometheus"
 	"tkestack.io/tke/pkg/monitor/storage"
@@ -65,14 +66,19 @@ func startPrometheusController(ctx ControllerContext) (http.Handler, bool, error
 		return nil, false, nil
 	}
 
+	var retentionDays int = -1 //retentionDays is used in controller only when storage is influx db
+	if ctx.MonitorConfig.Storage.InfluxDB != nil {
+		retentionDays = *ctx.MonitorConfig.Storage.InfluxDB.RetentionDays
+	}
+
 	ctrl := prometheus.NewController(
 		ctx.ClientBuilder.ClientOrDie("prometheus-controller"),
 		ctx.PlatformClient,
 		ctx.InformerFactory.Monitor().V1().Prometheuses(),
 		promEventSyncPeriod,
-
 		ctx.RemoteAddresses,
 		ctx.RemoteType,
+		retentionDays,
 	)
 
 	go func() {

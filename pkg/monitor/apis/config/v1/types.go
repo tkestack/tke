@@ -49,7 +49,9 @@ type ThanosStorageServer struct {
 }
 
 type InfluxDBStorage struct {
-	Servers []InfluxDBStorageServer `json:"servers"`
+	// +optional
+	RetentionDays *int                    `json:"retentionDays,omitempty"`
+	Servers       []InfluxDBStorageServer `json:"servers"`
 }
 
 type InfluxDBStorageServer struct {

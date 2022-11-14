@@ -20,8 +20,9 @@ package configfiles
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"path/filepath"
+
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	monitorconfig "tkestack.io/tke/pkg/monitor/apis/config"
 	monitorscheme "tkestack.io/tke/pkg/monitor/apis/config/scheme"
 	"tkestack.io/tke/pkg/monitor/config/codec"

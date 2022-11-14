@@ -159,7 +159,7 @@ func (t *TKE) TKEPlatformController() (option Options) {
 		if t.Para.Config.Monitor.InfluxDBMonitor != nil {
 			option["MonitorStorageType"] = "influxdb"
 			if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
-				option["MonitorStorageAddresses"] = fmt.Sprintf("http://%s:8086", t.Servers[0])
+				option["MonitorStorageAddresses"] = t.getLocalInfluxdbAddress()
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor != nil {
 				address := t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.URL
 				if t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username != "" {
@@ -247,7 +247,7 @@ func (t *TKE) TKEMonitorAPI() (option Options) {
 				option["StoragePassword"] = string(t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password)
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
 				// todo
-				option["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.Servers[0])
+				option["StorageAddress"] = t.getLocalInfluxdbAddress()
 			}
 		}
 	}
@@ -275,7 +275,7 @@ func (t *TKE) TKEMonitorController() (option Options) {
 				option["StorageUsername"] = t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Username
 				option["StoragePassword"] = string(t.Para.Config.Monitor.InfluxDBMonitor.ExternalInfluxDBMonitor.Password)
 			} else if t.Para.Config.Monitor.InfluxDBMonitor.LocalInfluxDBMonitor != nil {
-				option["StorageAddress"] = fmt.Sprintf("http://%s:8086", t.Servers[0])
+				option["StorageAddress"] = t.getLocalInfluxdbAddress()
 			}
 		}
 	}
@@ -320,4 +320,13 @@ func (t *TKE) TKERegistryAPI() (option Options) {
 		option["UseOIDCCA"] = t.Para.Config.Auth.OIDCAuth.CACert != nil
 	}
 	return
+}
+
+func (t *TKE) getLocalInfluxdbAddress() string {
+	var influxdbAddress string = fmt.Sprintf("http://%s:30086", t.Servers[0])
+	if t.Para.Config.HA != nil && len(t.Para.Config.HA.VIP()) > 0 {
+		vip := t.Para.Config.HA.VIP()
+		influxdbAddress = fmt.Sprintf("http://%s:30086", vip) // influxdb svc must be set as NodePort type, and the nodePort is 30086
+	}
+	return influxdbAddress
 }

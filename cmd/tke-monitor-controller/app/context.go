@@ -20,13 +20,14 @@ package app
 
 import (
 	"fmt"
+	"net/http"
+	"time"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	cacheddiscovery "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
-	"net/http"
-	"time"
 	versionedclientset "tkestack.io/tke/api/client/clientset/versioned"
 	businessv1 "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	platformv1 "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
@@ -77,6 +78,7 @@ type ControllerContext struct {
 	// Remote write/read address for prometheus
 	RemoteAddresses []string
 	RemoteType      string
+	RententionDays  int
 }
 
 // IsControllerEnabled returns whether the controller has been enabled
