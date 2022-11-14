@@ -69,9 +69,9 @@ export default instance;
 
 export const Request = instance;
 
-export const generateQueryString = (query: Record<string, any>) => {
+export const generateQueryString = (query: Record<string, any>, joinKey = '&') => {
   return Object.entries(query)
     .filter(([_, value]) => value !== undefined && value !== null && value !== '')
     .map(([key, value]) => `${key}=${value}`)
-    .join('&');
+    .join(joinKey);
 };
