@@ -467,6 +467,8 @@ func autoConvert_v1_Chart_To_application_Chart(in *Chart, out *application.Chart
 	out.RepoUsername = in.RepoUsername
 	out.RepoPassword = in.RepoPassword
 	out.ImportedRepo = in.ImportedRepo
+	out.CreateNamespace = in.CreateNamespace
+	out.Atomic = in.Atomic
 	return nil
 }
 
@@ -484,6 +486,8 @@ func autoConvert_application_Chart_To_v1_Chart(in *application.Chart, out *Chart
 	out.RepoUsername = in.RepoUsername
 	out.RepoPassword = in.RepoPassword
 	out.ImportedRepo = in.ImportedRepo
+	out.CreateNamespace = in.CreateNamespace
+	out.Atomic = in.Atomic
 	return nil
 }
 

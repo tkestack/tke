@@ -80,6 +80,10 @@ type Chart struct {
 	RepoUsername   string
 	RepoPassword   string
 	ImportedRepo   bool
+	// CreateNamespace create namespace when install helm release
+	CreateNamespace bool
+	// Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.
+	Atomic bool
 }
 
 // AppStatus represents information about the status of a bootstrap.

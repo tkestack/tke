@@ -41651,8 +41651,24 @@ func schema_tke_api_application_v1_Chart(ref common.ReferenceCallback) common.Op
 							Format:  "",
 						},
 					},
+					"createNamespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CreateNamespace create namespace when install helm release",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"atomic": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
-				Required: []string{"tenantID", "chartGroupName", "chartName", "chartVersion", "repoURL", "repoUsername", "repoPassword", "importedRepo"},
+				Required: []string{"tenantID", "chartGroupName", "chartName", "chartVersion", "repoURL", "repoUsername", "repoPassword", "importedRepo", "createNamespace", "atomic"},
 			},
 		},
 	}

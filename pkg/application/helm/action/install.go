@@ -40,6 +40,8 @@ type InstallOptions struct {
 
 	DryRun           bool
 	DependencyUpdate bool
+	Atomic           bool
+	CreateNamespace  bool
 	Timeout          time.Duration
 	Namespace        string
 	ReleaseName      string
@@ -101,8 +103,8 @@ func (c *Client) InstallWithLocal(options *InstallOptions, chartLocalFile string
 	client.ReleaseName = options.ReleaseName
 	client.Description = options.Description
 	client.IsUpgrade = options.IsUpgrade
-	client.Atomic = true
-	client.CreateNamespace = true
+	client.Atomic = options.Atomic
+	client.CreateNamespace = options.CreateNamespace
 
 	options.ChartPathOptions.ApplyTo(&client.ChartPathOptions)
 

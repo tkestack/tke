@@ -204,6 +204,12 @@ message Chart {
   optional string repoPassword = 7;
 
   optional bool importedRepo = 8;
+
+  // CreateNamespace create namespace when install helm release
+  optional bool createNamespace = 9;
+
+  // Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.
+  optional bool atomic = 10;
 }
 
 // ConfigMap holds configuration data for tke to consume.
