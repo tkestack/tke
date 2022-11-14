@@ -22,4 +22,4 @@ import (
 	"time"
 )
 
-const clientTimeOut = 30 * time.Second
+const clientTimeOut = 300 * time.Second

@@ -82,6 +82,10 @@ type Chart struct {
 	RepoUsername string `json:"repoUsername" protobuf:"bytes,6,opt,name=repoUsername"`
 	RepoPassword string `json:"repoPassword" protobuf:"bytes,7,opt,name=repoPassword"`
 	ImportedRepo bool   `json:"importedRepo" protobuf:"bytes,8,opt,name=importedRepo"`
+	// CreateNamespace create namespace when install helm release
+	CreateNamespace bool `json:"createNamespace" protobuf:"bytes,9,opt,name=createNamespace"`
+	// Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.
+	Atomic bool `json:"atomic" protobuf:"bytes,10,opt,name=atomic"`
 }
 
 // AppStatus represents information about the status of a bootstrap.

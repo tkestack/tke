@@ -20,6 +20,7 @@ package action
 
 import (
 	"context"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
@@ -84,6 +85,8 @@ func Install(ctx context.Context,
 	_, err = client.Install(&helmaction.InstallOptions{
 		Namespace:        newApp.Spec.TargetNamespace,
 		ReleaseName:      newApp.Spec.Name,
+		Atomic:           newApp.Spec.Chart.Atomic,
+		CreateNamespace:  newApp.Spec.Chart.CreateNamespace,
 		DependencyUpdate: true,
 		Values:           values,
 		Timeout:          clientTimeOut,

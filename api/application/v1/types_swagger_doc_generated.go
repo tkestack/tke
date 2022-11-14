@@ -117,9 +117,11 @@ func (AppValues) SwaggerDoc() map[string]string {
 }
 
 var map_Chart = map[string]string{
-	"":             "Chart is a description of a chart.",
-	"chartName":    "ChartName is the name of the chart.",
-	"chartVersion": "ChartVersion is the version of the chart.",
+	"":                "Chart is a description of a chart.",
+	"chartName":       "ChartName is the name of the chart.",
+	"chartVersion":    "ChartVersion is the version of the chart.",
+	"createNamespace": "CreateNamespace create namespace when install helm release",
+	"atomic":          "Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.",
 }
 
 func (Chart) SwaggerDoc() map[string]string {
