@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Justify, Table, SearchBox, TableColumn, Text, Bubble, Pagination } from 'tea-component';
+import { Justify, Table, TableColumn, Text, Bubble, Pagination, TagSearchBox } from 'tea-component';
 import { useFetch } from '@src/modules/common/hooks/useFetch';
 import { fetchAlarmList } from '@src/webApi/alarm';
 import { t } from '@/tencent/tea-app/lib/i18n';
@@ -9,38 +9,25 @@ const { filterable, autotip } = Table?.addons;
 const ALL_VALUE = '';
 
 const defaultPageSize = 10;
-const formatManager = managers => {
-  if (managers) {
-    return managers.map((m, index) => {
-      return (
-        <p key={index} className="text-overflow">
-          {m}
-        </p>
-      );
-    });
-  }
-};
 
 export const AlarmTablePanel = ({ clusterId }) => {
   const columns: TableColumn[] = [
     {
       key: 'metadata.creationTimestamp',
       header: t('发生时间'),
-      render: item => (
-        <Text parent="div">{dateFormatter(new Date(item.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')}</Text>
-      )
+      render: item => <Text>{dateFormatter(new Date(item.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')}</Text>
     },
 
     {
       key: 'spec.alarmPolicyName',
       header: t('告警策略'),
-      render: item => <Text parent="div">{item.spec.alarmPolicyName || '-'}</Text>
+      render: item => <Text copyable>{item.spec.alarmPolicyName || '-'}</Text>
     },
 
     {
       key: 'spec.alarmPolicyType',
       header: t('策略类型'),
-      render: item => <Text parent="div">{item.spec.alarmPolicyType || '-'}</Text>
+      render: item => <Text>{item.spec.alarmPolicyType || '-'}</Text>
     },
 
     {
@@ -52,7 +39,7 @@ export const AlarmTablePanel = ({ clusterId }) => {
         const showContent = content.length >= 250 ? content.substr(0, 250) + '...' : content;
         return (
           <Bubble placement="left" content={content || null}>
-            <Text parent="div">{showContent || '-'}</Text>
+            <Text>{showContent || '-'}</Text>
           </Bubble>
         );
       }
@@ -71,29 +58,23 @@ export const AlarmTablePanel = ({ clusterId }) => {
     {
       key: 'spec.receiverChannelName',
       header: t('通知渠道'),
-      render: item => <Text parent="div">{item.spec.receiverChannelName || '-'}</Text>
+      render: item => <Text copyable>{item.spec.receiverChannelName || '-'}</Text>
     },
 
     {
       key: 'spec.receiverName',
-      header: t('接受组'),
+      header: t('接收人'),
       render: item => {
-        const members = item.spec.receiverName ? item.spec.receiverName.split(',') : [];
         return (
-          <Bubble placement="left" content={formatManager(members) || null}>
-            <span className="text">
-              {formatManager(members ? members.slice(0, 1) : [])}
-              <Text parent="div" overflow>
-                {members && members.length > 1 ? '...' : ''}
-              </Text>
-            </span>
-          </Bubble>
+          <Text overflow copyable>
+            {item?.spec?.receiverName ?? '-'}
+          </Text>
         );
       }
     }
   ];
 
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState({});
 
   const [alertStatus, setAlertStatus] = useState(ALL_VALUE);
 
@@ -118,14 +99,54 @@ export const AlarmTablePanel = ({ clusterId }) => {
       polling: true,
       pollingDelay: 5 * 1000,
       needClearData: false,
-      defaultPageSize
+      defaultPageSize,
+      onlyPollingPage1: true
     }
   );
 
   return (
     <>
       <Table.ActionPanel>
-        <Justify right={<SearchBox onSearch={value => setQuery(value)} onClear={() => setQuery('')} />} />
+        <Justify
+          right={
+            <TagSearchBox
+              hideHelp
+              minWidth={360}
+              style={{ maxWidth: 640 }}
+              attributes={[
+                {
+                  type: 'input',
+                  key: 'spec.alarmPolicyName',
+                  name: t('策略名称')
+                },
+
+                {
+                  type: 'input',
+                  key: 'spec.receiverChannelName',
+                  name: t('通知渠道')
+                },
+
+                {
+                  type: 'input',
+                  key: 'spec.receiverName',
+                  name: t('接收人')
+                }
+              ]}
+              onSearchButtonClick={(_, tags) => {
+                const query = tags.reduce(
+                  (all, tag) => ({
+                    ...all,
+                    [tag?.attr?.key]: tag?.values?.[0]?.name
+                  }),
+                  {}
+                );
+
+                setQuery(query);
+              }}
+              onClearButtonClick={() => setQuery({})}
+            />
+          }
+        />
       </Table.ActionPanel>
 
       <Table
