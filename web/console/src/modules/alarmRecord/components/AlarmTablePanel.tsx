@@ -121,6 +121,18 @@ export const AlarmTablePanel = ({ clusterId }) => {
                 },
 
                 {
+                  type: 'single',
+                  key: 'spec.alarmPolicyType',
+                  name: t('策略类型'),
+                  values: [
+                    { key: 'cluster', name: '集群' },
+                    { key: 'node', name: '节点' },
+                    { key: 'pod', name: 'Pod' },
+                    { key: 'virtualMachine', name: '虚拟机' }
+                  ]
+                },
+
+                {
                   type: 'input',
                   key: 'spec.receiverChannelName',
                   name: t('通知渠道')
@@ -133,13 +145,14 @@ export const AlarmTablePanel = ({ clusterId }) => {
                 }
               ]}
               onSearchButtonClick={(_, tags) => {
-                const query = tags.reduce(
-                  (all, tag) => ({
+                const query = tags.reduce((all, tag) => {
+                  const value = tag?.values?.[0];
+
+                  return {
                     ...all,
-                    [tag?.attr?.key]: tag?.values?.[0]?.name
-                  }),
-                  {}
-                );
+                    [tag?.attr?.key]: value?.key ?? value?.name
+                  };
+                }, {});
 
                 setQuery(query);
               }}
