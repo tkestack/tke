@@ -30,7 +30,7 @@ import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { dateFormatter } from '../../../../../../helpers';
 import { Clip, HeadBubble, LinkButton } from '../../../../common/components';
 import { DisplayFiledProps, OperatorProps } from '../../../../common/models';
-import { includes, isEmpty } from '../../../../common/utils';
+import { includes } from '../../../../common/utils';
 import { allActions } from '../../../actions';
 import { ResourceLoadingIcon, ResourceStatus } from '../../../constants/Config';
 import { Resource } from '../../../models';
@@ -43,65 +43,76 @@ import { NamespaceQuotaManage } from './namespace-quota-manage';
  * @param item: Resource 当前实例
  */
 export const IsResourceShowLoadingIcon = (resourceName: string, item: Resource) => {
-  if (resourceName === 'np' && includes(ResourceLoadingIcon['npDelete'], (item.status && item.status.phase) || '')) {
-    return true;
-  } else if (resourceName === 'deployment') {
-    // 判断readyReplicas的前提是 replicas是有的，而不是空，空即代表当前没有pod，不需要继续轮训
-    return item.status.readyReplicas === undefined && item.status.replicas
-      ? true
-      : +item.status.readyReplicas < +item.status.replicas
-      ? true
-      : false;
-  } else if (resourceName === 'svc') {
-    let type = item.spec && item.spec.type,
-      isClusterIP = type === 'ClusterIP',
-      isNodePort = type === 'NodePort';
-    return (isClusterIP && item.status && item.status.loadBalancer && item.status.loadBalancer.ingress === undefined) ||
-      (isNodePort && item.status && item.status.loadBalancer && item.status.loadBalancer.ingress === undefined) ||
-      (!isClusterIP && !isNodePort && item.status && item.status.loadBalancer && item.status.loadBalancer.ingress)
-      ? false
-      : true;
-  } else if (resourceName === 'ingress') {
-    // 此处需要判断是否为nginx-ingress，如果为nginx-ingress的话，则不需要进行轮询了
-    let isNginxIngress =
-      item['metadata']['annotations'] &&
-      item['metadata']['annotations']['kubernetes.io/ingress.class'] === 'nginx-ingress'
-        ? true
-        : false;
+  switch (resourceName) {
+    case 'np':
+      return includes(ResourceLoadingIcon?.npDelete, item?.status?.phase ?? '');
 
-    // 判断是否为qcloud-loadbalance
-    let isQcloud =
-      item.metadata.annotations && item.metadata.annotations['kubernetes.io/ingress.qcloud-loadbalance-id'];
+    case 'deployment': {
+      const readyReplicas = item?.status?.readyReplicas;
+      const replicas = item?.status?.replicas;
 
-    return isNginxIngress
-      ? false
-      : isQcloud
-      ? item.metadata.annotations &&
-        item.metadata.annotations['kubernetes.io/ingress.qcloud-loadbalance-id'] &&
-        item.status.loadBalancer &&
-        item.status.loadBalancer.ingress
-        ? false
-        : true
-      : false;
-  } else if (resourceName === 'pvc') {
-    return item.status === undefined ? true : item.status.phase === 'Pending' ? true : false;
-  } else if (resourceName === 'statefulset') {
-    return item.status.replicas === undefined ? true : +item.status.replicas < +item.spec.replicas ? true : false;
-  } else if (resourceName === 'daemonset') {
-    return item.status.currentNumberScheduled === undefined
-      ? true
-      : +item.status.currentNumberScheduled < +item.status.desiredNumberScheduled
-      ? true
-      : false;
-  } else if (resourceName === 'tapp') {
-    /**待定 todo ing */
-    return item.status.replicas === undefined
-      ? true
-      : +item.status.readyReplicas < +item.status.replicas
-      ? true
-      : false;
+      if (!readyReplicas && replicas) return true;
+
+      return +readyReplicas < +replicas;
+    }
+
+    case 'svc':
+      const type = item?.spec?.type;
+      const isClusterIP = type === 'ClusterIP';
+      const isNodePort = type === 'NodePort';
+
+      const notLoading =
+        (isClusterIP && !item?.status?.loadBalancer?.ingress) ||
+        (isNodePort && !item?.status?.loadBalancer?.ingress) ||
+        (!isClusterIP && !isNodePort && item?.status?.loadBalancer?.ingress);
+
+      return !notLoading;
+
+    case 'ingress':
+      if (item?.metadata?.annotations?.['kubernetes.io/ingress.class'] === 'nginx-ingress') return false;
+
+      if (!item?.metadata?.annotations?.['kubernetes.io/ingress.qcloud-loadbalance-id']) return false;
+
+      if (
+        item?.metadata?.annotations?.['kubernetes.io/ingress.qcloud-loadbalance-id'] &&
+        item?.status?.loadBalancer?.ingress
+      ) {
+        return false;
+      }
+
+      return true;
+
+    case 'pvc':
+      const phase = item?.status?.phase;
+      return phase === 'Pending' || phase === undefined;
+
+    case 'statefulset':
+      const statusReplicas = item?.status?.replicas;
+      const specReplicas = item?.spec?.replicas;
+
+      if (!statusReplicas) return true;
+
+      return +statusReplicas < +specReplicas;
+
+    case 'daemonset':
+      const currentNumberScheduled = item?.status?.currentNumberScheduled;
+      const desiredNumberScheduled = item?.status?.desiredNumberScheduled;
+
+      if (!currentNumberScheduled) return true;
+
+      return +currentNumberScheduled < +desiredNumberScheduled;
+
+    case 'tapp':
+      const replicas = item?.status?.replicas;
+      const readyReplicas = item?.status?.readyReplicas;
+
+      if (!replicas) return true;
+
+      return +readyReplicas < +replicas;
+
+    default:
+      return false;
   }
-  return false;
 };
 
 /** loading的样式 */
@@ -118,11 +129,11 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class ResourceTablePanel extends React.Component<RootProps, {}> {
   componentWillUnmount() {
-    let { actions } = this.props;
+    let { actions } = this?.props;
     // 离开页面的话，清空当前的轮询操作
-    actions.resource.clearPolling();
+    actions?.resource?.clearPolling();
     // 离开页面的话，清空当前的多选
-    actions.resource.selectMultipleResource([]);
+    actions?.resource?.selectMultipleResource([]);
   }
 
   render() {
@@ -132,8 +143,8 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
   /** 展示普通的text */
   private _reduceText(showData: any, fieldInfo: DisplayFiledProps, resource: Resource, clipId: string) {
     let showContent;
-    if (fieldInfo.isLink) {
-      if (fieldInfo.isClip) {
+    if (fieldInfo?.isLink) {
+      if (fieldInfo?.isClip) {
         showContent = (
           <Bubble
             content={
@@ -179,7 +190,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
         );
       }
     } else {
-      if (fieldInfo.isClip) {
+      if (fieldInfo?.isClip) {
         showContent = (
           <Bubble
             content={
@@ -222,9 +233,9 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
       showData = labels;
       isNoLabels = true;
     } else {
-      keys = Object.keys(labels);
+      keys = Object.keys(labels ?? {});
       keys.forEach((item, index) => {
-        showData += item + ':' + labels[item];
+        showData += item + ':' + labels?.[item];
         if (index !== keys.length - 1) {
           showData += '、';
         }
@@ -253,11 +264,11 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
       { ffResourceList } = resourceOption;
 
     // 操作列表的list
-    let operatorList = fieldInfo.operatorList;
+    let operatorList = fieldInfo?.operatorList;
     // 更多按钮的 pop方向
-    let resourceIndex = ffResourceList.list.data.records.findIndex(c => c.id === resource.id);
+    let resourceIndex = ffResourceList?.list?.data?.records?.findIndex(c => c.id === resource.id);
     let direction: 'down' | 'up' =
-      resourceIndex < ffResourceList.list.data.recordCount - 2 || ffResourceList.list.data.recordCount < 4
+      resourceIndex < ffResourceList?.list?.data?.recordCount - 2 || ffResourceList?.list?.data?.recordCount < 4
         ? 'down'
         : 'up';
 
@@ -271,7 +282,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
         errorTip = t('当前Namespace下的资源不可编辑YAML，如需查看YAML，请前往详情页');
       } else if (resourceName === 'svc' && namespaceSelection !== 'kube-system') {
         //当资源为 servcie的时候，编辑YAML按钮的一些操作是不允许的
-        disabled = resource['metadata']['name'] === 'kubernetes';
+        disabled = resource?.['metadata']?.['name'] === 'kubernetes';
         errorTip = t('系统默认的Service不可进行此操作');
       }
 
@@ -282,17 +293,17 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
           disabled={disabled}
           onClick={() => {
             if (!disabled) {
-              actions.resource.select(resource);
+              actions?.resource?.select(resource);
               router.navigate(
                 Object.assign({}, urlParams, { mode: 'modify' }),
                 Object.assign({}, route.queries, {
-                  resourceIns: resource.metadata.name
+                  resourceIns: resource?.metadata?.name
                 })
               );
             }
           }}
         >
-          {operator.name}
+          {operator?.name}
         </LinkButton>
       );
     };
@@ -307,14 +318,14 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
         disabled = true;
         errorTip = t('global集群资源不可删除');
       } else if (resourceName === 'np') {
-        disabled =
-          resource['metadata']['name'].indexOf('kube-') >= 0 ||
-          resource['metadata']['name'] === 'default' ||
-          resource['metadata']['name'] === 'tke';
+        const metadataName: string = resource?.metadata?.name ?? '';
+
+        disabled = metadataName.includes('kube-') || metadataName === 'default' || metadataName === 'tke';
+
         errorTip = t('命名空间不可删除');
       } else if (resourceName === 'svc' && namespaceSelection !== 'kube-system') {
         //当资源为 servcie的时候，删除按钮的一些操作是不允许的
-        disabled = resource['metadata']['name'] === 'kubernetes';
+        disabled = resource?.['metadata']?.['name'] === 'kubernetes';
         errorTip = t('系统默认的Service不可删除');
       } else {
         disabled = namespaceSelection === 'kube-system';
@@ -333,7 +344,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
             }
           }}
         >
-          {operator.name}
+          {operator?.name}
         </LinkButton>
       );
     };
@@ -349,7 +360,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
         errorTip = '';
 
       // 这里是一些操作的信息的判断条件，disable的属性
-      if (operator.actionType !== 'modifyPod' && namespaceSelection === 'kube-system') {
+      if (operator?.actionType !== 'modifyPod' && namespaceSelection === 'kube-system') {
         disabled = true;
         errorTip = t('当前Namespace下的不可进行此操作');
       } else if (resourceName === 'svc' && namespaceSelection !== 'kube-system') {
@@ -358,8 +369,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
         errorTip = t('系统默认的Service不可进行此操作');
       } else if (
         resourceName === 'ingress' &&
-        resource['metadata']['annotations'] &&
-        resource['metadata']['annotations']['kubernetes.io/ingress.class'] === 'nginx-ingress'
+        resource?.['metadata']?.['annotations']?.['kubernetes.io/ingress.class'] === 'nginx-ingress'
       ) {
         // 当ingress 问 nginx-ingress的时候，不支持可视化更新转发配置
         disabled = true;
@@ -377,10 +387,10 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
               router.navigate(
                 Object.assign({}, urlParams, {
                   mode: 'update',
-                  tab: operator.actionType
+                  tab: operator?.actionType
                 }),
                 Object.assign({}, route.queries, {
-                  resourceIns: resource.metadata.name
+                  resourceIns: resource?.metadata?.name
                 })
               );
             }
@@ -392,18 +402,18 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
     };
 
     let btns = [];
-    operatorList.forEach(operatorItem => {
-      if (operatorItem.actionType === 'modify') {
+    operatorList?.forEach(operatorItem => {
+      if (operatorItem?.actionType === 'modify') {
         btns.push(renderModifyButton(operatorItem));
       } else if (operatorItem.actionType === 'delete') {
         btns.push(renderDeleteButton(operatorItem));
       } else if (
-        operatorItem.actionType === 'modifyPod' ||
-        operatorItem.actionType === 'modifyRule' ||
-        operatorItem.actionType === 'modifyType' ||
-        operatorItem.actionType === 'modifyRegistry' ||
-        operatorItem.actionType === 'createBG' ||
-        operatorItem.actionType === 'updateBG'
+        operatorItem?.actionType === 'modifyPod' ||
+        operatorItem?.actionType === 'modifyRule' ||
+        operatorItem?.actionType === 'modifyType' ||
+        operatorItem?.actionType === 'modifyRegistry' ||
+        operatorItem?.actionType === 'createBG' ||
+        operatorItem?.actionType === 'updateBG'
       ) {
         btns.push(renderUpdateResourcePart(operatorItem));
       }
@@ -418,7 +428,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
   /** 展示ip的内容 */
   private _reduceIPCell(ipInfo: any, clipId: string, resource: Resource) {
-    let { resourceName } = this.props.subRoot;
+    let { resourceName } = this?.props?.subRoot;
     let ipArray = ipInfo;
     // 如果ipArray 不是一个数组
     if (typeof ipArray !== 'object') {
@@ -428,11 +438,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
     let isNginxIngress = false;
     // 此处需要判断是否为nginx-ingress
     if (resourceName === 'ingress') {
-      isNginxIngress =
-        resource['metadata']['annotations'] &&
-        resource['metadata']['annotations']['kubernetes.io/ingress.class'] === 'nginx-ingress'
-          ? true
-          : false;
+      isNginxIngress = resource?.['metadata']?.['annotations']?.['kubernetes.io/ingress.class'] === 'nginx-ingress';
     }
 
     let content: JSX.Element;
@@ -449,7 +455,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
               <span className="text-overflow m-width" title={t('负载均衡IP：') + ingressIP} id={`${clipId}ingress`}>
                 {ingressIP}
               </span>
-              {resource.spec && resource.spec.type !== 'LoadBalancer' && isShowLoading && (
+              {resource?.spec?.type !== 'LoadBalancer' && isShowLoading && (
                 <Bubble placement="bottom" content={t('删除中')}>
                   <i className="icon-what" />
                 </Bubble>
@@ -475,13 +481,13 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
   private _reduceStatus(showData: any, resource: Resource) {
     let { resourceName } = this.props.subRoot;
 
-    let statusMap = ResourceStatus[resourceName];
+    let statusMap = ResourceStatus?.[resourceName];
 
     return (
       <div>
         {statusMap ? (
-          <p className={classnames('text-overflow', statusMap[showData] && statusMap[showData].classname)}>
-            <span style={{ verticalAlign: 'middle' }}>{(statusMap[showData] && statusMap[showData].text) || '-'}</span>
+          <p className={classnames('text-overflow', statusMap?.[showData]?.classname)}>
+            <span style={{ verticalAlign: 'middle' }}>{statusMap?.[showData]?.text ?? '-'}</span>
             {IsResourceShowLoadingIcon(resourceName, resource) && loadingElement}
           </p>
         ) : (
@@ -499,7 +505,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
     return (
       <Text parent="div" overflow>
-        {mapTextConfig[showData] || fieldInfo.noExsitedValue}
+        {mapTextConfig?.[showData] || fieldInfo?.noExsitedValue}
       </Text>
     );
   }
@@ -510,7 +516,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
     return (
       <Text parent="div" overflow>
-        <span style={{ verticalAlign: 'middle' }}>{`${showData[0]}/${showData[1]}`}</span>
+        <span style={{ verticalAlign: 'middle' }}>{`${showData?.[0]}/${showData?.[1]}`}</span>
         {resource.status !== undefined && IsResourceShowLoadingIcon(resourceName, resource) && loadingElement}
       </Text>
     );
@@ -573,20 +579,21 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
   /** 展示ingress的后端服务 */
   private _reduceIngressRule_standalone(showData: any) {
     let httpRules = showData !== '-' ? showData : [];
-    let finalRules = httpRules.map(item => {
-      return {
-        protocol: 'http',
-        host: item.host,
-        path: item.http.paths[0].path || '',
-        backend: item.http.paths[0].backend
-      };
-    });
+    let finalRules =
+      httpRules?.map(item => {
+        return {
+          protocol: 'http',
+          host: item?.host,
+          path: item?.http?.paths?.[0]?.path ?? '',
+          backend: item?.http?.paths?.[0]?.backend
+        };
+      }) ?? [];
 
     const getDomain = rule => {
-      return `${rule.protocol}://${rule.host}${rule.path}`;
+      return `${rule?.protocol}://${rule?.host}${rule?.path}`;
     };
 
-    let finalRulesLength = finalRules.length;
+    let finalRulesLength = finalRules?.length;
     return finalRules.length ? (
       <Bubble
         placement="top"
@@ -595,19 +602,19 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
             <span style={{ verticalAlign: 'middle' }}>{getDomain(finalRules[0])}</span>
             <span style={{ verticalAlign: 'middle' }}>{`-->`}</span>
             <span style={{ verticalAlign: 'middle' }}>
-              {finalRules[0].backend.serviceName + ':' + finalRules[0].backend.servicePort}
+              {finalRules?.[0]?.backend?.serviceName + ':' + finalRules?.[0]?.backend?.servicePort}
             </span>
           </p>
         ))}
       >
         <p className="text-overflow" style={{ fontSize: '12px' }}>
-          <span style={{ verticalAlign: 'middle' }}>{getDomain(finalRules[0])}</span>
+          <span style={{ verticalAlign: 'middle' }}>{getDomain(finalRules?.[0])}</span>
           <span style={{ verticalAlign: 'middle' }}>{`-->`}</span>
           <span style={{ verticalAlign: 'middle' }}>
-            {finalRules[0].backend.serviceName + ':' + finalRules[0].backend.servicePort}
+            {finalRules?.[0]?.backend?.serviceName + ':' + finalRules?.[0]?.backend?.servicePort}
           </span>
         </p>
-        {finalRules.length > 1 && (
+        {finalRules?.length > 1 && (
           <p className="text">
             <a href="javascript:;">
               <Trans count={finalRulesLength}>等{{ finalRulesLength }}条转发规则</Trans>
@@ -680,12 +687,12 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
   private _getFinalData(dataFieldIns, resource: Resource) {
     let result = resource;
 
-    for (let index = 0; index < dataFieldIns.length; index++) {
+    for (let index = 0; index < dataFieldIns?.length; index++) {
       // 如果result不为一个 Object，则遍历结束
       if (typeof result !== 'object') {
         break;
       }
-      result = result[dataFieldIns[index]]; // 这里做一下处理，防止因为配错找不到
+      result = result?.[dataFieldIns?.[index]]; // 这里做一下处理，防止因为配错找不到
     }
 
     // 返回空值，是因为如果不存在值，则使用配置文件的默认值
@@ -702,19 +709,19 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
     // fieldInfo当中的 dataField是一个数组，可以同时输入多个值
     let showData: any = [];
-    fieldInfo.dataField.forEach(item => {
+    fieldInfo?.dataField?.forEach(item => {
       let dataFieldIns = item.split('.');
       let data: any = this._getFinalData(dataFieldIns, resource);
       // 如果返回的为 '' ，即找不到这个对象，则使用配置文件所设定的默认值
-      showData.push(data === '' ? fieldInfo.noExsitedValue : data);
+      showData.push(data === '' ? fieldInfo?.noExsitedValue : data);
     });
 
     showData = showData.length === 1 ? showData[0] : showData;
 
     // 这里是当列表有 bubble等情况的时候，判断当前行属于第几行
-    let resourceIndex = ffResourceList.list.data.records.findIndex(item => item.id === resource.id);
+    let resourceIndex = ffResourceList?.list?.data?.records?.findIndex(item => item.id === resource.id);
     let direction: 'top' | 'bottom' =
-      ffResourceList.list.data.recordCount < 4 || resourceIndex < ffResourceList.list.data.recordCount - 2
+      ffResourceList?.list?.data?.recordCount < 4 || resourceIndex < ffResourceList?.list?.data?.recordCount - 2
         ? 'top'
         : 'bottom';
 
@@ -753,22 +760,22 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
     let addons = [];
 
-    let displayField = !isEmpty(resourceInfo) && resourceInfo.displayField ? resourceInfo.displayField : {};
+    let displayField = resourceInfo?.displayField ?? {};
     // 根据 displayField当中的key来决定展示什么内容
     let showField = [];
     Object.keys(displayField).forEach(item => {
-      let fieldInfo = displayField[item];
+      let fieldInfo = displayField?.[item];
 
       // 操作的按钮现在都换成在tablePanel当中去展示
-      if (fieldInfo.dataFormat === 'operator') return;
+      if (fieldInfo?.dataFormat === 'operator') return;
 
-      if (fieldInfo.dataFormat === 'checker') {
+      if (fieldInfo?.dataFormat === 'checker') {
         addons.push(
           selectable({
             value: resourceMultipleSelection.map(item => item.id as string),
             onChange: keys => {
               actions.resource.selectMultipleResource(
-                ffResourceList.list.data.records.filter(item => keys.indexOf(item.id as string) !== -1)
+                ffResourceList?.list?.data?.records?.filter(item => keys.indexOf(item.id as string) !== -1)
               );
             }
           })
@@ -777,8 +784,8 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
       }
       let columnInfo: TableColumn<Resource> = {
         key: item + uuid(),
-        header: fieldInfo.headTitle,
-        width: fieldInfo.width,
+        header: fieldInfo?.headTitle,
+        width: fieldInfo?.width,
         render: x => this._renderBodyCell(x, fieldInfo, item + uuid())
       };
 
@@ -787,7 +794,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
         let headBubbleText = (
           <span style={style}>
-            {fieldInfo.headCell.map((item, index) => (
+            {fieldInfo?.headCell?.map((item, index) => (
               <span key={index} className="text" style={style}>
                 {item}
               </span>
@@ -795,7 +802,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
           </span>
         );
         // columnInfo['headCell'] = <HeadBubble title={fieldInfo.headTitle} text={headBubbleText} />;
-        columnInfo.header = column => <HeadBubble title={fieldInfo.headTitle} text={headBubbleText} />;
+        columnInfo.header = column => <HeadBubble title={fieldInfo?.headTitle} text={headBubbleText} />;
       }
 
       // return columnInfo;
@@ -811,10 +818,10 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
         getOperations={x =>
           this._renderOperationCell(
             x,
-            Object.values(displayField).find(fieldInfo => fieldInfo.dataFormat === 'operator')
+            Object.values(displayField).find(fieldInfo => fieldInfo?.dataFormat === 'operator')
           )
         }
-        action={actions.resource}
+        action={actions?.resource}
         model={ffResourceList}
         emptyTips={t('您选择的该资源的列表为空，您可以切换到其他命名空间')}
         addons={addons}
@@ -843,7 +850,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
     // 进行路由的跳转
     router.navigate(
       Object.assign({}, urlParams, { mode: 'detail' }),
-      Object.assign({}, route.queries, { resourceIns: resource.metadata.name })
+      Object.assign({}, route.queries, { resourceIns: resource?.metadata?.name })
     );
   }
 }
