@@ -29,6 +29,17 @@ spec:
             - matchExpressions:
               - key: node-role.kubernetes.io/master
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - tke-mesh-controller
+              topologyKey: kubernetes.io/hostname
+            weight: 1
       containers:
         - name: tke-mesh-controller
           image: {{ .Image }}
