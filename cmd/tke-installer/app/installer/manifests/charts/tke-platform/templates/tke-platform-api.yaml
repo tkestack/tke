@@ -57,6 +57,17 @@ spec:
             - matchExpressions:
               - key: node-role.kubernetes.io/master
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - tke-platform-api
+              topologyKey: kubernetes.io/hostname
+            weight: 1
       containers:
         - name: tke-platform-api
           image: {{ .Values.api.image }}
