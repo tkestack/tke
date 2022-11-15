@@ -22,6 +22,7 @@ import (
 	"context"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
@@ -104,6 +105,9 @@ func Install(ctx context.Context,
 		chartPathBasicOptions.ExistedFile = destfile
 		wait := true
 		if app.Annotations != nil && app.Annotations["ignore-install-wait"] == "true" {
+			wait = false
+		}
+		if app.Labels != nil && app.Labels["application.tkestack.io/type"] == "internal-addon" && time.Now().After(app.CreationTimestamp.Add(5*time.Minute)) {
 			wait = false
 		}
 		_, err = client.Install(&helmaction.InstallOptions{
