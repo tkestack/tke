@@ -130,9 +130,11 @@ func ValidatClusterSpec(platformClient platformv1client.PlatformV1Interface, clu
 	allErrs = append(allErrs, ValidateClusterSpecVersion(platformClient, clusterName, cls.Spec.Version, fldPath.Child("version"), phase)...)
 	allErrs = append(allErrs, ValidateCIDRs(cls, fldPath)...)
 	allErrs = append(allErrs, ValidateClusterProperty(&cls.Spec, fldPath.Child("properties"))...)
-	allErrs = append(allErrs, ValidateStorage(cls, fldPath)...)
 	if validateMachine {
 		allErrs = append(allErrs, ValidateClusterMachines(cls, fldPath.Child("machines"))...)
+		if isNeedValidateForDynamicItem(AnywhereValidateItemStorage, cls) {
+			allErrs = append(allErrs, ValidateStorage(cls, fldPath)...)
+		}
 	}
 	allErrs = append(allErrs, ValidateClusterGPUMachines(cls.Spec.Machines, fldPath.Child("machines"))...)
 	allErrs = append(allErrs, ValidateClusterFeature(&cls.Spec, fldPath.Child("features"))...)
@@ -210,11 +212,14 @@ func ValidateClusterMachines(cls *platform.Cluster, fldPath *field.Path) field.E
 			sshproxy.Retry = 0
 			proxy = sshproxy
 		}
-		proxyErrs = append(proxyErrs, ValidateProxy(fldPath.Index(i), proxy)...)
-		proxyResult.Checked = true
-		// if proxy has err, no need to check ssh
-		if len(proxyErrs) == 0 {
+		if isNeedValidateForDynamicItem(AnywhereValidateItemTunnelConnectivity, cls) {
+			proxyErrs = append(proxyErrs, ValidateProxy(fldPath.Index(i), proxy)...)
+			proxyResult.Checked = true
+			log.Infof("cls %s's %s %s is validated", cls.Spec.DisplayName, one.IP, AnywhereValidateItemSSH)
+		}
+		if isNeedValidateForDynamicItem(AnywhereValidateItemSSH, cls) {
 			sshErrs = append(sshErrs, ValidateSSH(fldPath.Index(i), one.IP, int(one.Port), one.Username, one.Password, one.PrivateKey, one.PassPhrase, proxy)...)
+			log.Infof("cls %s's %s %s is validated", cls.Spec.DisplayName, one.IP, AnywhereValidateItemSSH)
 			// when get ssh err or last machine ssh is checked, ssh can be considered checked
 			if len(sshErrs) != 0 || i == len(cls.Spec.Machines)-1 {
 				sshResult.Checked = true
@@ -227,30 +232,51 @@ func ValidateClusterMachines(cls *platform.Cluster, fldPath *field.Path) field.E
 	}
 
 	if len(masters) == len(cls.Spec.Machines) {
-		timeErrs = ValidateMasterTimeOffset(fldPath, masters)
-		timeResult.Checked = true
+		if isNeedValidateForDynamicItem(AnywhereValidateItemTimeDiff, cls) {
+			timeErrs = ValidateMasterTimeOffset(fldPath, masters)
+			timeResult.Checked = true
+			log.Infof("cls %s's %s is validated", cls.Spec.DisplayName, AnywhereValidateItemTimeDiff)
+		}
 
 		if len(supportedOSList) != 0 {
-			osErrs = ValidateOSVersion(fldPath, masters)
-			osResult.Checked = true
+			if isNeedValidateForDynamicItem(AnywhereValidateItemOSVersion, cls) {
+				osErrs = ValidateOSVersion(fldPath, masters)
+				osResult.Checked = true
+				log.Infof("cls %s's %s is validated", cls.Spec.DisplayName, AnywhereValidateItemOSVersion)
+			}
 		} else {
 			log.Warn("skip validate OS since supported OS list is empty")
 		}
 
-		mcReErrs = ValidateMachineResource(fldPath, masters)
-		mcReResult.Checked = true
+		if isNeedValidateForDynamicItem(AnywhereValidateItemMachineResource, cls) {
+			mcReErrs = ValidateMachineResource(fldPath, masters)
+			mcReResult.Checked = true
+			log.Infof("cls %s's %s is validated", cls.Spec.DisplayName, AnywhereValidateItemMachineResource)
+		}
 
-		routeErrs = ValidateDefaultRoute(fldPath, masters, cls.Spec.NetworkDevice)
-		routeResult.Checked = true
+		if isNeedValidateForDynamicItem(AnywhereValidateItemDefaultRoute, cls) {
+			routeErrs = ValidateDefaultRoute(fldPath, masters, cls.Spec.NetworkDevice)
+			routeResult.Checked = true
+			log.Infof("cls %s's %s is validated", cls.Spec.DisplayName, AnywhereValidateItemDefaultRoute)
+		}
 
-		portsErrs = ValidateReservePorts(fldPath, masters)
-		portsResult.Checked = true
+		if isNeedValidateForDynamicItem(AnywhereValidateItemReservePorts, cls) {
+			portsErrs = ValidateReservePorts(fldPath, masters)
+			portsResult.Checked = true
+			log.Infof("cls %s's %s is validated", cls.Spec.DisplayName, AnywhereValidateItemReservePorts)
+		}
 
-		firewallErrs = ValidateFirewall(fldPath, masters)
-		firewallResult.Checked = true
+		if isNeedValidateForDynamicItem(AnywhereValidateItemFirewall, cls) {
+			firewallErrs = ValidateFirewall(fldPath, masters)
+			firewallResult.Checked = true
+			log.Infof("cls %s's %s is validated", cls.Spec.DisplayName, AnywhereValidateItemFirewall)
+		}
 
-		selinuxErrs = ValidateSelinux(fldPath, masters)
-		selinuxResult.Checked = true
+		if isNeedValidateForDynamicItem(AnywhereValidateItemSelinux, cls) {
+			selinuxErrs = ValidateSelinux(fldPath, masters)
+			selinuxResult.Checked = true
+			log.Infof("cls %s's %s is validated", cls.Spec.DisplayName, AnywhereValidateItemSelinux)
+		}
 	}
 	if _, ok := cls.Annotations[platform.AnywhereValidateAnno]; ok {
 		proxyResult.Name = AnywhereValidateItemTunnelConnectivity
@@ -830,4 +856,16 @@ func ValidateIPVS(spec *platform.ClusterSpec, ipvs *bool, fldPath *field.Path) f
 		}
 	}
 	return allErrs
+}
+
+func isNeedValidateForDynamicItem(item string, cls *platform.Cluster) bool {
+	if _, ok := cls.Annotations[platform.AnywhereValidateAnno]; !ok {
+		// if AnywhereValidateAnno is not set, will skip dynamic validate
+		return false
+	}
+	if cls.Annotations[platform.AnywhereValidateAnno] == AnywhereValidateItemAll {
+		// if AnywhereValidateAnno is set, and validate item is all, will validate all dynamic item
+		return true
+	}
+	return item == cls.Annotations[platform.AnywhereValidateAnno]
 }

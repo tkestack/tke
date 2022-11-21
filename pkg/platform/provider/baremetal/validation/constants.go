@@ -30,6 +30,8 @@ const (
 	AnywhereValidateItemFirewall           = "Firewall"
 	AnywhereValidateItemSelinux            = "Selinux"
 	AnywhereValidateItemStorage            = "Storage"
+	// validate all items
+	AnywhereValidateItemAll = "All"
 )
 
 const (
