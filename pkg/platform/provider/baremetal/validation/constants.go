@@ -19,17 +19,20 @@
 package validation
 
 const (
-	AnywhereValidateItemTunnelConnectivity = "TunnelConnectivity"
-	AnywhereValidateItemSSH                = "SSH"
-	AnywhereValidateItemTimeDiff           = "TimeDiff"
-	AnywhereValidateItemOSVersion          = "OS"
-	AnywhereValidateItemMachineResource    = "MachineResource"
-	AnywhereValidateItemDefaultRoute       = "DefaultRoute"
-	AnywhereValidateItemReservePorts       = "ReservePorts"
-	AnywhereValidateItemHostNetOverlapping = "HostNetOverlapping"
-	AnywhereValidateItemFirewall           = "Firewall"
-	AnywhereValidateItemSelinux            = "Selinux"
-	AnywhereValidateItemStorage            = "Storage"
+	AnywhereValidateItemTunnelConnectivity     = "TunnelConnectivity"
+	AnywhereValidateItemSSH                    = "SSH"
+	AnywhereValidateItemTimeDiff               = "TimeDiff"
+	AnywhereValidateItemOSVersion              = "OS"
+	AnywhereValidateItemMachineResourceDiskLib = "MachineResourceDiskLib"
+	AnywhereValidateItemMachineResourceDiskLog = "MachineResourceDiskLog"
+	AnywhereValidateItemMachineResourceCPU     = "MachineResourceCPU"
+	AnywhereValidateItemMachineResourceMemory  = "MachineResourceMemory"
+	AnywhereValidateItemDefaultRoute           = "DefaultRoute"
+	AnywhereValidateItemReservePorts           = "ReservePorts"
+	AnywhereValidateItemHostNetOverlapping     = "HostNetOverlapping"
+	AnywhereValidateItemFirewall               = "Firewall"
+	AnywhereValidateItemSelinux                = "Selinux"
+	AnywhereValidateItemStorage                = "Storage"
 	// validate all items
 	AnywhereValidateItemAll = "All"
 )
