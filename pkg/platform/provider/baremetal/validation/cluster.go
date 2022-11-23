@@ -255,22 +255,22 @@ func ValidateClusterMachines(cls *platform.Cluster, fldPath *field.Path) field.E
 		}
 
 		if isNeedValidateForDynamicItem(AnywhereValidateItemMachineResourceDiskLib, cls) {
-			diskLibErrs = ValidateMachineResource(fldPath, masters)
+			diskLibErrs = ValidateMachineResourceDiskLib(fldPath, masters)
 			diskLibResult.Checked = true
 			log.Infof("cls %s's %s is validated", cls.Spec.DisplayName, AnywhereValidateItemMachineResourceDiskLib)
 		}
 		if isNeedValidateForDynamicItem(AnywhereValidateItemMachineResourceDiskLog, cls) {
-			diskLogErrs = ValidateMachineResource(fldPath, masters)
+			diskLogErrs = ValidateMachineResourceDiskLog(fldPath, masters)
 			diskLogResult.Checked = true
 			log.Infof("cls %s's %s is validated", cls.Spec.DisplayName, AnywhereValidateItemMachineResourceDiskLog)
 		}
 		if isNeedValidateForDynamicItem(AnywhereValidateItemMachineResourceCPU, cls) {
-			cpuErrs = ValidateMachineResource(fldPath, masters)
+			cpuErrs = ValidateMachineResourceCPU(fldPath, masters)
 			cpuResult.Checked = true
 			log.Infof("cls %s's %s is validated", cls.Spec.DisplayName, AnywhereValidateItemMachineResourceCPU)
 		}
 		if isNeedValidateForDynamicItem(AnywhereValidateItemMachineResourceMemory, cls) {
-			memoryErrs = ValidateMachineResource(fldPath, masters)
+			memoryErrs = ValidateMachineResourceMemory(fldPath, masters)
 			memoryResult.Checked = true
 			log.Infof("cls %s's %s is validated", cls.Spec.DisplayName, AnywhereValidateItemMachineResourceMemory)
 		}
@@ -616,51 +616,6 @@ func ValidateDefaultRoute(fldPath *field.Path, sshs []*ssh.SSH, expectedNetInter
 				fmt.Sprintf("%s is not default route interface %s", defaultRouteInterface, expectedNetInterface)))
 		}
 	}
-	return allErrs
-}
-
-func ValidateMachineResource(fldPath *field.Path, sshs []*ssh.SSH) field.ErrorList {
-	allErrs := field.ErrorList{}
-	for i, one := range sshs {
-		size, err := ssh.DiskAvail(one, MachineResourceRequstDiskPath)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host, err.Error()))
-			continue
-		}
-		if size < MachineResourceRequstDiskSpace {
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host,
-				fmt.Sprintf("%s disk space %d GiB is smaller than request size %d GiB", MachineResourceRequstDiskPath, size, MachineResourceRequstDiskSpace)))
-		}
-		size, err = ssh.DiskAvail(one, MachineResourceRequstLogDiskPath)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host, err.Error()))
-			continue
-		}
-		if size < MachineResourceRequstLogDiskSpace {
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host,
-				fmt.Sprintf("%s disk space %d GiB is smaller than request size %d GiB", MachineResourceRequstLogDiskPath, size, MachineResourceRequstLogDiskSpace)))
-		}
-		cpuNum, err := ssh.NumCPU(one)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host, err.Error()))
-			continue
-		}
-		if cpuNum < MachineResourceRequstCPU {
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host,
-				fmt.Sprintf("cpu number %d is smaller than request %d", cpuNum, MachineResourceRequstCPU)))
-		}
-		memInBytes, err := ssh.MemoryCapacity(one)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host, err.Error()))
-			continue
-		}
-		memInGiB := math.Ceil(float64(memInBytes) / 1024 / 1024 / 1024)
-		if memInGiB < MachineResourceRequstMemory {
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(i), one.Host,
-				fmt.Sprintf("memory %d GiB is smaller than request %d GiB", int(memInGiB), MachineResourceRequstMemory)))
-		}
-	}
-
 	return allErrs
 }
 
