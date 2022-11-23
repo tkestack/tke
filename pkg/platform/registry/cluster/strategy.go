@@ -50,7 +50,8 @@ const (
 )
 
 var (
-	NamePattern = regexp.MustCompile(`(cls-[a-z0-9]+|global)`)
+	ClusterPattern = regexp.MustCompile(`(/clusters/cls-[a-z0-9]+|/clusters/global)`)
+	NamePattern    = regexp.MustCompile(`(cls-[a-z0-9]+|global)`)
 )
 
 // Strategy implements verification logic for cluster.
