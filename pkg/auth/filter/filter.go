@@ -24,8 +24,9 @@ import (
 	"net/http/httputil"
 	"strconv"
 	"strings"
-	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"unicode"
+
+	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 
 	"github.com/go-openapi/inflect"
 	"golang.org/x/net/context"
@@ -156,6 +157,11 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 
 		// firstly check if resource is unprotected
 		authorized = UnprotectedAuthorized(attributes)
+		if authorized != authorizer.DecisionAllow {
+			authorized, reason, err = a.Authorize(ctx, attributes)
+		}
+
+		// secondly check k8s resource authz result
 		if authorized != authorizer.DecisionAllow {
 			if tenantID != "" {
 				log.Debugf("TKEStack user '%v'", attributes.GetUser())
