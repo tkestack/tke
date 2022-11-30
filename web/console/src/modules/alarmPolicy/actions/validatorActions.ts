@@ -161,7 +161,7 @@ export const validatorActions = {
     }
     return { status, message };
   },
-  _validateEvaluatorValue(value: string) {
+  _validateEvaluatorValue(value: string, canOver100 = false) {
     let status = 0,
       message = '';
     if (!value) {
@@ -170,7 +170,7 @@ export const validatorActions = {
     } else if (isNaN(+value)) {
       status = 2;
       message = t('阈值的格式错误');
-    } else if (+value > 100 || +value <= 0) {
+    } else if ((+value > 100 && !canOver100) || +value <= 0) {
       status = 2;
       message = t('阈值的范围错误');
     } else {
@@ -210,7 +210,8 @@ export const validatorActions = {
         );
       } else {
         newAlarmMetrics[index].v_evaluatorValue = validatorActions._validateEvaluatorValue(
-          newAlarmMetrics[index].evaluatorValue
+          newAlarmMetrics[index].evaluatorValue,
+          newAlarmMetrics?.[index]?.metricName === 'vm_cpu_usage_rate'
         );
       }
 
@@ -234,7 +235,10 @@ export const validatorActions = {
         if (item.type === 'sumCpu' || item.type === 'sumMem') {
           isOk = isOk && validatorActions._validateEvaluatorSumValue(item.evaluatorValue + '').status === 1;
         } else if (item.type === 'times' || item.type === 'percent') {
-          isOk = isOk && validatorActions._validateEvaluatorValue(item.evaluatorValue + '').status === 1;
+          isOk =
+            isOk &&
+            validatorActions._validateEvaluatorValue(item.evaluatorValue + '', item?.metricName === 'vm_cpu_usage_rate')
+              .status === 1;
         }
       }
     });
