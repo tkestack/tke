@@ -34,10 +34,11 @@ import (
 
 // Storage includes storage for resources.
 type Storage struct {
-	DaemonSet *REST
-	Status    *StatusREST
-	Events    *EventREST
-	Pods      *PodREST
+	DaemonSet   *REST
+	Status      *StatusREST
+	Events      *EventREST
+	Pods        *PodREST
+	ReplicaSets *ReplicaSetsREST
 }
 
 // REST implements pkg/api/rest.StandardStorage
@@ -67,6 +68,9 @@ func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platformin
 		Events: &EventREST{
 			platformClient: platformClient,
 		},
+		ReplicaSets: &ReplicaSetsREST{
+			platformClient: platformClient,
+		},
 	}
 }
 
@@ -92,6 +96,9 @@ func NewStorageV1Beta2(_ genericregistry.RESTOptionsGetter, platformClient platf
 		Events: &EventREST{
 			platformClient: platformClient,
 		},
+		ReplicaSets: &ReplicaSetsREST{
+			platformClient: platformClient,
+		},
 	}
 }
 
@@ -115,6 +122,9 @@ func NewStorageExtensionsV1Beta1(_ genericregistry.RESTOptionsGetter, platformCl
 			platformClient: platformClient,
 		},
 		Events: &EventREST{
+			platformClient: platformClient,
+		},
+		ReplicaSets: &ReplicaSetsREST{
 			platformClient: platformClient,
 		},
 	}

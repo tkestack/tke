@@ -105,7 +105,15 @@ func listPodByExtensions(ctx context.Context, client *kubernetes.Clientset, name
 	}
 
 	// list all of the pod, by deployment labels
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, listOptions)
+	listPodsOptions := listOpts.DeepCopy()
+	listPodsOptions.Continue = ""
+	listPodsOptions.Limit = 0
+	if listPodsOptions.LabelSelector == "" {
+		listPodsOptions.LabelSelector = selector.String()
+	} else {
+		listPodsOptions.LabelSelector = listPodsOptions.LabelSelector + "," + selector.String()
+	}
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, *listPodsOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
@@ -175,7 +183,15 @@ func listPodByApps(ctx context.Context, client *kubernetes.Clientset, namespaceN
 	}
 
 	// list all of the pod, by deployment labels
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, listOptions)
+	listPodsOptions := listOpts.DeepCopy()
+	listPodsOptions.Continue = ""
+	listPodsOptions.Limit = 0
+	if listPodsOptions.LabelSelector == "" {
+		listPodsOptions.LabelSelector = selector.String()
+	} else {
+		listPodsOptions.LabelSelector = listPodsOptions.LabelSelector + "," + selector.String()
+	}
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, *listPodsOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}

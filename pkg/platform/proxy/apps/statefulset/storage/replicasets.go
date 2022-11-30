@@ -21,12 +21,8 @@ package storage
 import (
 	"context"
 
-	"tkestack.io/tke/pkg/platform/proxy"
-	"tkestack.io/tke/pkg/util/apiclient"
-	"tkestack.io/tke/pkg/util/page"
-
-	appsv1beta1 "k8s.io/api/apps/v1beta1"
-	corev1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,35 +31,38 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	"tkestack.io/tke/pkg/platform/proxy"
+	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/page"
 )
 
-// PodREST implements the REST endpoint for find pods by a deployment.
-type PodREST struct {
+// ReplicaSetsREST implements the REST endpoint for find replicasets by a deployment.
+type ReplicaSetsREST struct {
 	rest.Storage
 	platformClient platforminternalclient.PlatformInterface
 }
 
-var _ rest.GetterWithOptions = &PodREST{}
-var _ rest.GroupVersionKindProvider = &PodREST{}
+var _ rest.GetterWithOptions = &ReplicaSetsREST{}
+var _ rest.GroupVersionKindProvider = &ReplicaSetsREST{}
 
 // GroupVersionKind is used to specify a particular GroupVersionKind to discovery.
-func (r *PodREST) GroupVersionKind(containingGV schema.GroupVersion) schema.GroupVersionKind {
-	return corev1.SchemeGroupVersion.WithKind("PodList")
+func (r *ReplicaSetsREST) GroupVersionKind(containingGV schema.GroupVersion) schema.GroupVersionKind {
+	return appsv1.SchemeGroupVersion.WithKind("ReplicaSetList")
 }
 
 // New returns an empty object that can be used with Create and Update after
 // request data has been put into it.
-func (r *PodREST) New() runtime.Object {
-	return &corev1.PodList{}
+func (r *ReplicaSetsREST) New() runtime.Object {
+	return &appsv1.ReplicaSetList{}
 }
 
 // NewConnectOptions returns versioned resource that represents proxy parameters
-func (r *PodREST) NewGetOptions() (runtime.Object, bool, string) {
+func (r *ReplicaSetsREST) NewGetOptions() (runtime.Object, bool, string) {
 	return &metav1.ListOptions{}, false, ""
 }
 
 // Get retrieves the object from the storage. It is required to support Patch.
-func (r *PodREST) Get(ctx context.Context, name string, options runtime.Object) (runtime.Object, error) {
+func (r *ReplicaSetsREST) Get(ctx context.Context, name string, options runtime.Object) (runtime.Object, error) {
 	client, err := proxy.ClientSet(ctx, r.platformClient)
 	if err != nil {
 		return nil, err
@@ -79,15 +78,15 @@ func (r *PodREST) Get(ctx context.Context, name string, options runtime.Object) 
 	}
 
 	if apiclient.ClusterVersionIsBefore19(client) {
-		return listPodsByAppsBeta(ctx, client, namespaceName, name, metaOptions, listOpts)
+		return listReplicaSetsByAppsBeta(ctx, client, namespaceName, name, metaOptions, listOpts)
 	}
-	return listPodsByApps(ctx, client, namespaceName, name, metaOptions, listOpts)
+	return listReplicaSetsByApps(ctx, client, namespaceName, name, metaOptions, listOpts)
 }
 
-func listPodsByAppsBeta(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions, listOpts *metav1.ListOptions) (runtime.Object, error) {
+func listReplicaSetsByAppsBeta(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions, listOpts *metav1.ListOptions) (runtime.Object, error) {
 	statefulSet, err := client.AppsV1beta1().StatefulSets(namespaceName).Get(ctx, name, *options)
 	if err != nil {
-		return nil, errors.NewNotFound(appsv1beta1.Resource("statefulSet/pods"), name)
+		return nil, errors.NewNotFound(extensionsv1beta1.Resource("statefulSets/replicasets"), name)
 	}
 
 	selector, err := metav1.LabelSelectorAsSelector(statefulSet.Spec.Selector)
@@ -95,7 +94,6 @@ func listPodsByAppsBeta(ctx context.Context, client *kubernetes.Clientset, names
 		return nil, errors.NewInternalError(err)
 	}
 
-	// list all of the pod, by stateful set labels
 	listPodsOptions := listOpts.DeepCopy()
 	listPodsOptions.Continue = ""
 	listPodsOptions.Limit = 0
@@ -104,57 +102,56 @@ func listPodsByAppsBeta(ctx context.Context, client *kubernetes.Clientset, names
 	} else {
 		listPodsOptions.LabelSelector = listPodsOptions.LabelSelector + "," + selector.String()
 	}
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, *listPodsOptions)
+	rsAllList, err := client.ExtensionsV1beta1().ReplicaSets(namespaceName).List(ctx, *listPodsOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
-
-	podList := &corev1.PodList{
-		Items: make([]corev1.Pod, 0),
+	rsList := &extensionsv1beta1.ReplicaSetList{
+		Items: make([]extensionsv1beta1.ReplicaSet, 0),
 	}
-	for _, pod := range podAllList.Items {
-		for _, podReferences := range pod.ObjectMeta.OwnerReferences {
-			if (podReferences.Kind == "StatefulSet") && (podReferences.Name == statefulSet.Name) {
-				podList.Items = append(podList.Items, pod)
+	for _, rs := range rsAllList.Items {
+		for _, references := range rs.ObjectMeta.OwnerReferences {
+			if references.UID == statefulSet.GetUID() {
+				rsList.Items = append(rsList.Items, rs)
 			}
 		}
 	}
 
 	if listOpts.Continue != "" {
-		start, limit, err := page.DecodeContinue(ctx, "StatefulSet", name, listOpts.Continue)
+		start, limit, err := page.DecodeContinue(ctx, "StatefulSet/ReplicaSets", name, listOpts.Continue)
 		if err != nil {
 			return nil, err
 		}
 		newStart := start + limit
-		if int(newStart+limit) < len(podList.Items) {
-			podList.Continue, err = page.EncodeContinue(ctx, "StatefulSet", name, newStart, limit)
+		if int(newStart+limit) < len(rsList.Items) {
+			rsList.Continue, err = page.EncodeContinue(ctx, "StatefulSet/ReplicaSets", name, newStart, limit)
 			if err != nil {
 				return nil, err
 			}
-			items := podList.Items[newStart : newStart+limit]
-			podList.Items = items
+			items := rsList.Items[newStart : newStart+limit]
+			rsList.Items = items
 		} else {
-			items := podList.Items[newStart:len(podList.Items)]
-			podList.Items = items
+			items := rsList.Items[newStart:len(rsList.Items)]
+			rsList.Items = items
 		}
 	} else if listOpts.Limit != 0 {
-		if int(listOpts.Limit) < len(podList.Items) {
-			podList.Continue, err = page.EncodeContinue(ctx, "StatefulSet", name, 0, listOpts.Limit)
+		if int(listOpts.Limit) < len(rsList.Items) {
+			rsList.Continue, err = page.EncodeContinue(ctx, "StatefulSet/ReplicaSets", name, 0, listOpts.Limit)
 			if err != nil {
 				return nil, err
 			}
-			items := podList.Items[:listOpts.Limit]
-			podList.Items = items
+			items := rsList.Items[:listOpts.Limit]
+			rsList.Items = items
 		}
 	}
 
-	return podList, nil
+	return rsList, nil
 }
 
-func listPodsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions, listOpts *metav1.ListOptions) (runtime.Object, error) {
+func listReplicaSetsByApps(ctx context.Context, client *kubernetes.Clientset, namespaceName, name string, options *metav1.GetOptions, listOpts *metav1.ListOptions) (runtime.Object, error) {
 	statefulSet, err := client.AppsV1().StatefulSets(namespaceName).Get(ctx, name, *options)
 	if err != nil {
-		return nil, errors.NewNotFound(appsv1beta1.Resource("statefulSet/pods"), name)
+		return nil, errors.NewNotFound(appsv1.Resource("statefulSets/replicasets"), name)
 	}
 
 	selector, err := metav1.LabelSelectorAsSelector(statefulSet.Spec.Selector)
@@ -162,7 +159,6 @@ func listPodsByApps(ctx context.Context, client *kubernetes.Clientset, namespace
 		return nil, errors.NewInternalError(err)
 	}
 
-	// list all of the pod, by stateful set labels
 	listPodsOptions := listOpts.DeepCopy()
 	listPodsOptions.Continue = ""
 	listPodsOptions.Limit = 0
@@ -171,49 +167,49 @@ func listPodsByApps(ctx context.Context, client *kubernetes.Clientset, namespace
 	} else {
 		listPodsOptions.LabelSelector = listPodsOptions.LabelSelector + "," + selector.String()
 	}
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, *listPodsOptions)
+	rsAllList, err := client.AppsV1().ReplicaSets(namespaceName).List(ctx, *listPodsOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
 
-	podList := &corev1.PodList{
-		Items: make([]corev1.Pod, 0),
+	rsList := &appsv1.ReplicaSetList{
+		Items: make([]appsv1.ReplicaSet, 0),
 	}
-	for _, pod := range podAllList.Items {
-		for _, podReferences := range pod.ObjectMeta.OwnerReferences {
-			if (podReferences.Kind == "StatefulSet") && (podReferences.Name == statefulSet.Name) {
-				podList.Items = append(podList.Items, pod)
+	for _, rs := range rsAllList.Items {
+		for _, references := range rs.ObjectMeta.OwnerReferences {
+			if references.UID == statefulSet.GetUID() {
+				rsList.Items = append(rsList.Items, rs)
 			}
 		}
 	}
 
 	if listOpts.Continue != "" {
-		start, limit, err := page.DecodeContinue(ctx, "StatefulSet", name, listOpts.Continue)
+		start, limit, err := page.DecodeContinue(ctx, "StatefulSet/ReplicaSets", name, listOpts.Continue)
 		if err != nil {
 			return nil, err
 		}
 		newStart := start + limit
-		if int(newStart+limit) < len(podList.Items) {
-			podList.Continue, err = page.EncodeContinue(ctx, "StatefulSet", name, newStart, limit)
+		if int(newStart+limit) < len(rsList.Items) {
+			rsList.Continue, err = page.EncodeContinue(ctx, "StatefulSet/ReplicaSets", name, newStart, limit)
 			if err != nil {
 				return nil, err
 			}
-			items := podList.Items[newStart : newStart+limit]
-			podList.Items = items
+			items := rsList.Items[newStart : newStart+limit]
+			rsList.Items = items
 		} else {
-			items := podList.Items[newStart:len(podList.Items)]
-			podList.Items = items
+			items := rsList.Items[newStart:len(rsList.Items)]
+			rsList.Items = items
 		}
 	} else if listOpts.Limit != 0 {
-		if int(listOpts.Limit) < len(podList.Items) {
-			podList.Continue, err = page.EncodeContinue(ctx, "StatefulSet", name, 0, listOpts.Limit)
+		if int(listOpts.Limit) < len(rsList.Items) {
+			rsList.Continue, err = page.EncodeContinue(ctx, "StatefulSet/ReplicaSets", name, 0, listOpts.Limit)
 			if err != nil {
 				return nil, err
 			}
-			items := podList.Items[:listOpts.Limit]
-			podList.Items = items
+			items := rsList.Items[:listOpts.Limit]
+			rsList.Items = items
 		}
 	}
 
-	return podList, nil
+	return rsList, nil
 }
