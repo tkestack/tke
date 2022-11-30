@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"sync"
+
 	"github.com/caryxychen/cloudindustry-sdk-go/client/iam"
 	iammodel "github.com/caryxychen/cloudindustry-sdk-go/model/iam"
 	"github.com/dexidp/dex/connector"
@@ -15,8 +18,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strconv"
-	"sync"
 	"tkestack.io/tke/api/auth"
 	"tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider"
@@ -54,11 +55,13 @@ type idpStore struct {
 }
 
 type SDKConfig struct {
-	SecretID  string `json:"secret_id"`
-	SecretKey string `json:"secret_key"`
-	Endpoint  string `json:"endpoint"`
-	Region    string `json:"region"`
-	MasterID  string `json:"master_id"`
+	SecretID       string `json:"secret_id"`
+	SecretKey      string `json:"secret_key"`
+	Endpoint       string `json:"endpoint"`
+	IAMAPIEndpoint string `json:"iam_api_endpoint"`
+	IAMAppEndpoint string `json:"iam_api_app_endpoint"`
+	Region         string `json:"region"`
+	MasterID       string `json:"master_id"`
 }
 
 var (
@@ -78,7 +81,11 @@ func NewCloudIndustryIdentityProvider(tenantID string, administrators []string, 
 
 	log.Infof("NewCloudIndustryIdentityProvider, tenantID '%s', administrators '%v', config '%s'", tenantID, administrators, string(bytes))
 	cpf := profile.NewClientProfile()
-	cpf.HttpProfile.Endpoint = fmt.Sprintf("iam-api.%s", config.Endpoint)
+	if len(config.IAMAPIEndpoint) != 0 {
+		cpf.HttpProfile.Endpoint = config.IAMAPIEndpoint
+	} else {
+		cpf.HttpProfile.Endpoint = fmt.Sprintf("iam-api.%s", config.Endpoint)
+	}
 	client, err := iam.NewClient(common.NewCredential(config.SecretID, config.SecretKey), config.Region, cpf)
 	if err != nil {
 		log.Warnf("init client failed, err: '%v'", err)
@@ -143,7 +150,11 @@ func (c *cloudIndustryConnector) Login(ctx context.Context, scopes connector.Sco
 	credential := common.NewCredential(provider.config.SecretID, provider.config.SecretKey)
 	credential.Token = accessToken
 	cpf := profile.NewClientProfile()
-	cpf.HttpProfile.Endpoint = fmt.Sprintf("iam-app-api.%s", provider.config.Endpoint)
+	if len(provider.config.IAMAppEndpoint) != 0 {
+		cpf.HttpProfile.Endpoint = provider.config.IAMAppEndpoint
+	} else {
+		cpf.HttpProfile.Endpoint = fmt.Sprintf("iam-app-api.%s", provider.config.Endpoint)
+	}
 	cpf.HttpProfile.ReqTimeout = 30
 
 	log.Infof("%v, %v", credential, cpf)
