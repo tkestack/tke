@@ -110,7 +110,7 @@ func Install(ctx context.Context,
 		if app.Labels != nil && app.Labels["application.tkestack.io/type"] == "internal-addon" && time.Now().After(app.CreationTimestamp.Add(5*time.Minute)) {
 			wait = false
 		}
-		_, err = client.Install(&helmaction.InstallOptions{
+		_, err = client.Install(ctx, &helmaction.InstallOptions{
 			Namespace:        newApp.Spec.TargetNamespace,
 			ReleaseName:      newApp.Spec.Name,
 			DependencyUpdate: true,

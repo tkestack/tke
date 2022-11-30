@@ -19,6 +19,7 @@
 package action
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -88,13 +89,13 @@ func (cp ChartPathOptions) ApplyTo(opt *action.ChartPathOptions) {
 	opt.Version = cp.Version
 }
 
-func (c *Client) Install(options *InstallOptions) (*release.Release, error) {
-	return c.InstallWithLocal(options, "")
+func (c *Client) Install(ctx context.Context, options *InstallOptions) (*release.Release, error) {
+	return c.InstallWithLocal(ctx, options, "")
 }
 
 // Install installs a chart archive
 // if chartLocalFile is not empty, chart files exists in the project
-func (c *Client) InstallWithLocal(options *InstallOptions, chartLocalFile string) (*release.Release, error) {
+func (c *Client) InstallWithLocal(ctx context.Context, options *InstallOptions, chartLocalFile string) (*release.Release, error) {
 	actionConfig, err := c.buildActionConfig(options.Namespace)
 	if err != nil {
 		return nil, err
@@ -210,7 +211,7 @@ func (c *Client) InstallWithLocal(options *InstallOptions, chartLocalFile string
 		}
 	}
 
-	return client.Run(chartRequested, options.Values)
+	return client.RunWithContext(ctx, chartRequested, options.Values)
 }
 
 // isChartInstallable validates if a chart can be installed

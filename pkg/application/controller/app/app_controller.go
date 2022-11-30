@@ -241,6 +241,17 @@ func (c *Controller) syncItem(key string) error {
 	}
 	// app holds the latest App info from apiserver
 	app, err := c.lister.Apps(namespace).Get(name)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() {
+		select {
+		case <-c.stopCh:
+			cancel()
+			return
+		case <-ctx.Done():
+			return
+		}
+	}()
 	switch {
 	case errors.IsNotFound(err):
 		log.Info("App has been deleted. Attempting to cleanup resources",
@@ -259,7 +270,7 @@ func (c *Controller) syncItem(key string) error {
 				log.String("namespace", namespace),
 				log.String("name", name))
 			_ = c.processDeletion(key)
-			err = c.appResourcesDeleter.Delete(context.Background(), namespace, name)
+			err = c.appResourcesDeleter.Delete(ctx, namespace, name)
 			metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 			metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
@@ -273,7 +284,7 @@ func (c *Controller) syncItem(key string) error {
 			metrics.GaugeApplicationSyncFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 		} else {
 			cachedApp := c.cache.getOrCreate(key)
-			err = c.processUpdate(context.Background(), cachedApp, app, key)
+			err = c.processUpdate(ctx, cachedApp, app, key)
 		}
 	}
 	return err

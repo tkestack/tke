@@ -19,6 +19,7 @@
 package action
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -67,7 +68,7 @@ type UpgradeOptions struct {
 }
 
 // Upgrade upgrade a helm release
-func (c *Client) Upgrade(options *UpgradeOptions) (*release.Release, error) {
+func (c *Client) Upgrade(ctx context.Context, options *UpgradeOptions) (*release.Release, error) {
 	actionConfig, err := c.buildActionConfig(options.Namespace)
 	if err != nil {
 		return nil, err
@@ -79,7 +80,7 @@ func (c *Client) Upgrade(options *UpgradeOptions) (*release.Release, error) {
 		_, err = histClient.Run(options.ReleaseName)
 		if err == driver.ErrReleaseNotFound {
 			log.Infof("Release %d does not exist. Installing it now.", options.ReleaseName)
-			return c.Install(&InstallOptions{
+			return c.Install(ctx, &InstallOptions{
 				DryRun:           options.DryRun,
 				DependencyUpdate: options.DependencyUpdate,
 				Timeout:          options.Timeout,
@@ -162,5 +163,5 @@ func (c *Client) Upgrade(options *UpgradeOptions) (*release.Release, error) {
 	if chartRequested.Metadata.Deprecated {
 		log.Warnf("This chart %s/%s is deprecated", options.ChartRepo, options.Chart)
 	}
-	return client.Run(options.ReleaseName, chartRequested, options.Values)
+	return client.RunWithContext(ctx, options.ReleaseName, chartRequested, options.Values)
 }

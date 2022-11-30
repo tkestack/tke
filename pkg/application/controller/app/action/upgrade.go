@@ -105,7 +105,7 @@ func Upgrade(ctx context.Context,
 		if app.Annotations != nil && app.Annotations["ignore-upgrade-wait"] == "true" {
 			wait = false
 		}
-		_, err = client.Upgrade(&helmaction.UpgradeOptions{
+		_, err = client.Upgrade(ctx, &helmaction.UpgradeOptions{
 			Namespace:        app.Spec.TargetNamespace,
 			ReleaseName:      app.Spec.Name,
 			DependencyUpdate: true,
@@ -115,7 +115,7 @@ func Upgrade(ctx context.Context,
 			ChartPathOptions: chartPathBasicOptions,
 			Wait:             wait,
 			WaitForJobs:      wait,
-			MaxHistory:       10,
+			MaxHistory:       clientMaxHistory,
 		})
 		if err != nil {
 			if updateStatusFunc != nil {
