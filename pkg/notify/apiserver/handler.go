@@ -231,7 +231,7 @@ func getVariables(alert Alert) map[string]string {
 
 	evaluateValue, ok := annotations[evaluateValueKey]
 	if ok {
-		summary = fmt.Sprintf("%s %s", summary, evaluateValue)
+		summary = fmt.Sprintf("%s %s%s", summary, evaluateValue, unitValue)
 	}
 
 	alarmPolicyNameValue, ok := labels["alarmPolicyName"]
@@ -313,5 +313,6 @@ func getVariables(alert Alert) map[string]string {
 }
 
 func processStartTime(t time.Time) string {
-	return t.Format("2006-01-02T15:04:05Z")
+	localTime := t.Local()
+	return localTime.Format(time.RFC3339)
 }

@@ -63,6 +63,8 @@ spec:
               mountPath: /app/certs
             - name: tke-notify-api-volume
               mountPath: /app/conf
+            - name: timezone
+              mountPath: /etc/localtime
           ports:
             - containerPort: 9457
           readinessProbe:
@@ -86,7 +88,6 @@ spec:
             requests:
               cpu: 50m
               memory: 128Mi
-
       volumes:
         - name: certs-volume
           configMap:
@@ -94,6 +95,10 @@ spec:
         - name: tke-notify-api-volume
           configMap:
             name: tke-notify-api
+        - name: timezone
+          hostPath:
+            path: /etc/localtime
+
 ---
 kind: ConfigMap
 apiVersion: v1
