@@ -23,7 +23,9 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"html"
 	htmlTemplate "html/template"
+
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -93,7 +95,7 @@ func ParseTemplate(name string, template string, variables map[string]string) (s
 	if err != nil {
 		return "", err
 	}
-	return buffer.String(), nil
+	return html.UnescapeString(buffer.String()), nil
 }
 
 // GetCurrentTime returns current timestamp
