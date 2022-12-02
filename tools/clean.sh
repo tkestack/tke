@@ -31,7 +31,7 @@ rm -rfv /opt/tke-installer
 rm -rfv /var/lib/postgresql /etc/core/token /var/lib/redis /storage /chart_storage
 ip link del cni0 2>/etc/null
 
-for port in 80 2379 6443 8086 9100 {10249..10259} ; do
+for port in 80 443 2379 2380 6443 8086 8181 9100 30086 31138 31180 31443  {10249..10259} ; do
     fuser -k -9 ${port}/tcp
 done
 
@@ -60,3 +60,6 @@ iptables --flush --table nat
 iptables --flush --table filter
 iptables --table nat --delete-chain
 iptables --table filter --delete-chain
+
+# reboot
+reboot now
