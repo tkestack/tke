@@ -21,15 +21,20 @@ package token
 import (
 	"encoding/base64"
 	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
 	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/oauth2"
-	"net/http"
-	"time"
+	"tkestack.io/tke/pkg/util/djb"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
 	cookieName = "tke"
+	headerName = "csrf-code"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -47,6 +52,18 @@ func RetrieveToken(request *http.Request) (*Token, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// if is api request, check csrf
+	path := request.URL.Path
+	if strings.HasPrefix(path, "/api") {
+		csrfHeader := request.Header.Get(headerName)
+		cookieHash := djb.CreateHash(cookie.Value)
+
+		if csrfHeader != strconv.FormatInt(cookieHash, 10) {
+			return nil, fmt.Errorf("invalid csrf code")
+		}
+	}
+	
 	tokenJSON, err := base64.StdEncoding.DecodeString(cookie.Value)
 	if err != nil {
 		log.Error("Failed to base64 decode cookie value", log.Err(err))
@@ -87,7 +104,7 @@ func ResponseToken(t *oauth2.Token, writer http.ResponseWriter) error {
 	cookie := &http.Cookie{
 		Name:     cookieName,
 		Value:    tokenStr,
-		HttpOnly: true,
+		HttpOnly: false,
 		Secure:   false,
 		Path:     "/",
 		MaxAge:   int(time.Until(t.Expiry).Seconds()),
