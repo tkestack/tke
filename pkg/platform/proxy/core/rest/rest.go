@@ -108,6 +108,7 @@ func (c LegacyRESTStorageProvider) NewLegacyRESTStorage(restOptionsGetter generi
 		"namespaces/status":             namespaceStore.Status,
 		"namespaces/finalize":           namespaceStore.Finalize,
 		"nodes":                         nodeStore.Node,
+		"nodes/pods":                    nodeStore.Pods,
 		"nodes/status":                  nodeStore.Status,
 		"events":                        eventStore.Event,
 		"secrets":                       secretStore.Secret,

@@ -34,6 +34,7 @@ import (
 // Storage includes storage for resources.
 type Storage struct {
 	Node   *REST
+	Pods   *PodREST
 	Status *StatusREST
 }
 
@@ -55,6 +56,9 @@ func NewStorage(_ genericregistry.RESTOptionsGetter, platformClient platforminte
 
 	return &Storage{
 		Node: &REST{nodeStore},
+		Pods: &PodREST{
+			platformClient: platformClient,
+		},
 		Status: &StatusREST{
 			store: &statusStore,
 		},
