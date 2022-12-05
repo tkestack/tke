@@ -105,6 +105,7 @@ func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: run,
 			OnStoppedLeading: func() {
+				time.Sleep(20 * time.Second)
 				log.Fatalf("leaderelection lost")
 			},
 		},
