@@ -89,7 +89,7 @@ func Upgrade(ctx context.Context,
 	}
 
 	chartPathBasicOptions.ExistedFile = destfile
-	_, err = client.Upgrade(&helmaction.UpgradeOptions{
+	_, err = client.Upgrade(ctx, &helmaction.UpgradeOptions{
 		Namespace:        app.Spec.TargetNamespace,
 		ReleaseName:      app.Spec.Name,
 		DependencyUpdate: true,
@@ -97,6 +97,7 @@ func Upgrade(ctx context.Context,
 		Values:           values,
 		Timeout:          clientTimeOut,
 		ChartPathOptions: chartPathBasicOptions,
+		MaxHistory:       clientMaxHistory,
 	})
 
 	if updateStatusFunc != nil {
