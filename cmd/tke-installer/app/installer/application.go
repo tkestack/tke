@@ -378,7 +378,7 @@ func (t *TKE) installPlatformApp(ctx context.Context, platformApp *types.Platfor
 	// TODO currently only support local chart install
 	if len(platformApp.LocalChartPath) != 0 {
 		t.log.Infof("Start install platform app %s in %s namespace", platformApp.HelmInstallOptions.ReleaseName, platformApp.HelmInstallOptions.Namespace)
-		if _, err := t.helmClient.InstallWithLocal(platformApp.HelmInstallOptions, platformApp.LocalChartPath); err != nil {
+		if _, err := t.helmClient.InstallWithLocal(ctx, platformApp.HelmInstallOptions, platformApp.LocalChartPath); err != nil {
 			uninstallOptions := helmaction.UninstallOptions{
 				Timeout:     10 * time.Minute,
 				ReleaseName: platformApp.HelmInstallOptions.ReleaseName,

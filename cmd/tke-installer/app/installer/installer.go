@@ -1583,7 +1583,7 @@ func (t *TKE) installTKEGatewayChart(ctx context.Context) error {
 	}
 
 	chartFilePath := constants.ChartDirName + "tke-gateway/"
-	if _, err := t.helmClient.InstallWithLocal(installOptions, chartFilePath); err != nil {
+	if _, err := t.helmClient.InstallWithLocal(ctx, installOptions, chartFilePath); err != nil {
 		uninstallOptions := helmaction.UninstallOptions{
 			Timeout:     10 * time.Minute,
 			ReleaseName: "tke-gateway",
@@ -2093,7 +2093,7 @@ func (t *TKE) installTKEMonitorController(ctx context.Context) error {
 			// thanos-query address
 			params["MonitorStorageAddresses"] = "http://thanos-query.tke.svc.cluster.local:9090"
 		}
-		params["RetentionDays"] = t.Para.Config.Monitor.RetentionDays //can accept a nil value
+		params["RetentionDays"] = t.Para.Config.Monitor.RetentionDays // can accept a nil value
 	}
 
 	if err := apiclient.CreateResourceWithDir(ctx, t.globalClient, "manifests/tke-monitor-controller/*.yaml", params); err != nil {
@@ -2206,14 +2206,14 @@ func (t *TKE) getTKERegistryAPIOptions(ctx context.Context) (map[string]interfac
 		"harborEnabled":  t.Para.Config.Registry.TKERegistry.HarborEnabled,
 		"harborCAFile":   t.Para.Config.Registry.TKERegistry.HarborCAFile,
 	}
-	//check if s3 enabled
+	// check if s3 enabled
 	storageConfig := t.Para.Config.Registry.TKERegistry.Storage
 	s3Enabled := (storageConfig != nil && storageConfig.S3 != nil)
 	options["s3Enabled"] = s3Enabled
 	if s3Enabled {
 		options["s3Storage"] = storageConfig.S3
 	}
-	//or enable filesystem by default
+	// or enable filesystem by default
 	options["filesystemEnabled"] = !s3Enabled
 	if options["filesystemEnabled"] == true {
 		useCephRbd, useNFS := false, false
@@ -2273,14 +2273,14 @@ func (t *TKE) getTKERegistryControllerOptions(ctx context.Context) (map[string]i
 		"domainSuffix":       t.Para.Config.Registry.TKERegistry.Domain,
 		"defaultChartGroups": defaultChartGroupsStringConfig,
 	}
-	//check if s3 enabled
+	// check if s3 enabled
 	storageConfig := t.Para.Config.Registry.TKERegistry.Storage
 	s3Enabled := (storageConfig != nil && storageConfig.S3 != nil)
 	options["s3Enabled"] = s3Enabled
 	if s3Enabled {
 		options["s3Storage"] = storageConfig.S3
 	}
-	//or enable filesystem by default
+	// or enable filesystem by default
 	options["filesystemEnabled"] = !s3Enabled
 	if options["filesystemEnabled"] == true {
 		useCephRbd, useNFS := false, false

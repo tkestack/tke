@@ -261,7 +261,7 @@ func (rs *REST) prepareForCheck(ctx context.Context, app *application.App) error
 }
 
 func (rs *REST) canVisitChart(ctx context.Context, app *application.App) error {
-	//TODO: allowAlways if registryClient is empty?
+	// TODO: allowAlways if registryClient is empty?
 	if rs.registryClient == nil {
 		return nil
 	}
@@ -360,7 +360,7 @@ func (rs *REST) dryRun(ctx context.Context, app *application.App) (*release.Rele
 	}
 
 	chartPathBasicOptions.ExistedFile = destfile
-	rel, err := client.Install(&helmaction.InstallOptions{
+	rel, err := client.Install(ctx, &helmaction.InstallOptions{
 		Namespace:        app.Spec.TargetNamespace,
 		ReleaseName:      app.Spec.Name,
 		DependencyUpdate: true,

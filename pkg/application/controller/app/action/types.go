@@ -23,3 +23,4 @@ import (
 )
 
 const clientTimeOut = 300 * time.Second
+const clientMaxHistory = 10
