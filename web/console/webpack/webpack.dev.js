@@ -20,6 +20,7 @@ const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
 const smp = new SpeedMeasurePlugin();
 const path = require('path');
 const { Host, Cookie } = require('../server.config');
+const { createCsrfCode } = require('./csrf');
 
 module.exports = ({ version }) =>
   smp.wrap({
@@ -37,7 +38,7 @@ module.exports = ({ version }) =>
           target: Host,
           secure: false,
           changeOrigin: true,
-          headers: { Cookie }
+          headers: { Cookie, 'csrf-code': createCsrfCode(Cookie) }
         },
 
         '/websocket': {
