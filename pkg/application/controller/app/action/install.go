@@ -90,7 +90,7 @@ func Install(ctx context.Context,
 	}
 
 	chartPathBasicOptions.ExistedFile = destfile
-	_, err = client.Install(&helmaction.InstallOptions{
+	_, err = client.Install(ctx, &helmaction.InstallOptions{
 		Namespace:        newApp.Spec.TargetNamespace,
 		ReleaseName:      newApp.Spec.Name,
 		DependencyUpdate: true,
