@@ -27,6 +27,7 @@ export class RequestArgs {
   clusterId?: string;
   projectId?: string;
   keyword?: string;
+  headers?: Record<string, string>;
 }
 
 export class RequestResult {
@@ -39,7 +40,8 @@ export const SEND = async (args: RequestArgs) => {
   const params: RequestParams = {
     method: args.method,
     url: args.url,
-    data: args.bodyData
+    data: args.bodyData,
+    userDefinedHeader: args?.headers ?? {}
   };
   const resp = new RequestResult();
   try {
