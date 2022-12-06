@@ -160,7 +160,24 @@ export async function updateApp([appInfo]) {
     specificName: appInfo.metadata.name,
     isSpecialNamespace: true
   });
-  const rr: RequestResult = await PUT({ url, bodyData: appInfo });
+  // const rr: RequestResult = await PUT({ url, bodyData: appInfo });
+  const rr: RequestResult = await PATCH({
+    url,
+    bodyData: {
+      spec: {
+        chart: {
+          ...appInfo?.spec?.chart
+        },
+
+        values: {
+          rawValues: appInfo?.spec?.values?.rawValues
+        }
+      }
+    },
+    headers: {
+      'Content-Type': 'application/strategic-merge-patch+json'
+    }
+  });
   return operationResult(rr.data, rr.error);
 }
 
