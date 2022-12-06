@@ -49,6 +49,7 @@ type Storage struct {
 	Pods        *PodREST
 	HPAs        *HPARest
 	Events      *EventREST
+	ReplicaSets *ReplicaSetsREST
 }
 
 // REST implements pkg/api/rest.StandardStorage
@@ -85,6 +86,9 @@ func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platformin
 			platformClient: platformClient,
 		},
 		HPAs: &HPARest{
+			platformClient: platformClient,
+		},
+		ReplicaSets: &ReplicaSetsREST{
 			platformClient: platformClient,
 		},
 	}
@@ -126,6 +130,9 @@ func NewStorageV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platf
 		HPAs: &HPARest{
 			platformClient: platformClient,
 		},
+		ReplicaSets: &ReplicaSetsREST{
+			platformClient: platformClient,
+		},
 	}
 }
 
@@ -161,6 +168,9 @@ func NewStorageExtensionsV1Beta1(_ genericregistry.RESTOptionsGetter, platformCl
 		HPAs: &HPARest{
 			platformClient: platformClient,
 		},
+		ReplicaSets: &ReplicaSetsREST{
+			platformClient: platformClient,
+		},
 	}
 }
 
@@ -190,6 +200,9 @@ func NewStorageV1Beta2(_ genericregistry.RESTOptionsGetter, platformClient platf
 			platformClient: platformClient,
 		},
 		HPAs: &HPARest{
+			platformClient: platformClient,
+		},
+		ReplicaSets: &ReplicaSetsREST{
 			platformClient: platformClient,
 		},
 	}

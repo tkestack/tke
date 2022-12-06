@@ -42,6 +42,7 @@ import (
 type Storage struct {
 	StatefulSet *REST
 	Pods        *PodREST
+	ReplicaSets *ReplicaSetsREST
 	Status      *StatusREST
 	Scale       *ScaleREST
 	Events      *EventREST
@@ -81,6 +82,9 @@ func NewStorageV1(_ genericregistry.RESTOptionsGetter, platformClient platformin
 		HPAs: &HPARest{
 			platformClient: platformClient,
 		},
+		ReplicaSets: &ReplicaSetsREST{
+			platformClient: platformClient,
+		},
 	}
 }
 
@@ -112,6 +116,9 @@ func NewStorageV1Beta1(_ genericregistry.RESTOptionsGetter, platformClient platf
 		HPAs: &HPARest{
 			platformClient: platformClient,
 		},
+		ReplicaSets: &ReplicaSetsREST{
+			platformClient: platformClient,
+		},
 	}
 }
 
@@ -141,6 +148,9 @@ func NewStorageV1Beta2(_ genericregistry.RESTOptionsGetter, platformClient platf
 			platformClient: platformClient,
 		},
 		HPAs: &HPARest{
+			platformClient: platformClient,
+		},
+		ReplicaSets: &ReplicaSetsREST{
 			platformClient: platformClient,
 		},
 	}

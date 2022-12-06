@@ -86,8 +86,15 @@ func (r *PodREST) Get(ctx context.Context, name string, options runtime.Object) 
 	}
 
 	// list all of the pod, by deployment labels
-	listOptions := metav1.ListOptions{LabelSelector: selector.String()}
-	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, listOptions)
+	listPodsOptions := listOpts.DeepCopy()
+	listPodsOptions.Continue = ""
+	listPodsOptions.Limit = 0
+	if listPodsOptions.LabelSelector == "" {
+		listPodsOptions.LabelSelector = selector.String()
+	} else {
+		listPodsOptions.LabelSelector = listPodsOptions.LabelSelector + "," + selector.String()
+	}
+	podAllList, err := client.CoreV1().Pods(namespaceName).List(ctx, *listPodsOptions)
 	if err != nil {
 		return nil, errors.NewInternalError(err)
 	}
