@@ -19,7 +19,7 @@ import { changeForbiddentConfig } from '@/index.tke';
 import Axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import Cookies from 'js-cookie';
-import { createCsrfCode } from '@helper';
+import { createCSRFHeader } from '@helper';
 
 const instance = Axios.create({
   timeout: 10000
@@ -31,7 +31,7 @@ instance.interceptors.request.use(
   config => {
     Object.assign(config.headers, {
       'X-Remote-Extra-RequestID': uuidv4(),
-      'csrf-code': createCsrfCode()
+      ...createCSRFHeader()
     });
     return config;
   },

@@ -19,22 +19,21 @@
 package token
 
 import (
+	"crypto/md5"
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/oauth2"
-	"tkestack.io/tke/pkg/util/djb"
 	"tkestack.io/tke/pkg/util/log"
 )
 
 const (
 	cookieName = "tke"
-	headerName = "csrf-code"
+	headerName = "X-CSRF-TOKEN"
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -57,13 +56,13 @@ func RetrieveToken(request *http.Request) (*Token, error) {
 	path := request.URL.Path
 	if strings.HasPrefix(path, "/api") {
 		csrfHeader := request.Header.Get(headerName)
-		cookieHash := djb.CreateHash(cookie.Value)
+		cookieHash := md5.Sum([]byte(cookie.Value))
 
-		if csrfHeader != strconv.FormatInt(cookieHash, 10) {
-			return nil, fmt.Errorf("invalid csrf code")
+		if csrfHeader != string(cookieHash[:]) {
+			return nil, fmt.Errorf("invalid CSRF token")
 		}
 	}
-	
+
 	tokenJSON, err := base64.StdEncoding.DecodeString(cookie.Value)
 	if err != nil {
 		log.Error("Failed to base64 decode cookie value", log.Err(err))
