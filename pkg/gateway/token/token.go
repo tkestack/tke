@@ -21,6 +21,7 @@ package token
 import (
 	"crypto/md5"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strings"
@@ -58,7 +59,7 @@ func RetrieveToken(request *http.Request) (*Token, error) {
 		csrfHeader := request.Header.Get(headerName)
 		cookieHash := md5.Sum([]byte(cookie.Value))
 
-		if csrfHeader != string(cookieHash[:]) {
+		if csrfHeader != hex.EncodeToString(cookieHash[:]) {
 			return nil, fmt.Errorf("invalid CSRF token")
 		}
 	}
