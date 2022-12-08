@@ -1,0 +1,11 @@
+{{ if semverCompare ">=1.18.0-beta.1" .Capabilities.KubeVersion.Version }}
+apiVersion: storage.k8s.io/v1
+{{ else }}
+apiVersion: storage.k8s.io/v1beta1
+{{ end }}
+kind: CSIDriver
+metadata:
+  name: {{ .Values.driverName }}
+spec:
+  attachRequired: true
+  podInfoOnMount: false
