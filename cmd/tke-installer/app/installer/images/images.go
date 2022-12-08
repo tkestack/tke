@@ -132,7 +132,7 @@ var baseComponents = BaseComponents{
 	CsiAttacher:            containerregistry.Image{Name: "csi-attacher", Tag: "v3.4.0"},
 	CsiResizer:             containerregistry.Image{Name: "csi-resizer", Tag: "v1.4.0"},
 	CsiSnapshotter:         containerregistry.Image{Name: "csi-snapshotter", Tag: "v4.2.0"},
-	CephCsi:                containerregistry.Image{Name: "cephcsi", Tag: "v3.6.0-csp2.8.2.1084"},
+	CephCsi:                containerregistry.Image{Name: "cephcsi", Tag: "v3.6.1-csp2.8.3.1216"},
 }
 
 var components = Components{baseComponents, exComponents}

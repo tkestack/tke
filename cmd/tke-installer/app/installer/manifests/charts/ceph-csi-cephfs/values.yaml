@@ -290,6 +290,7 @@ cephconf: |
     auth_cluster_required = cephx
     auth_service_required = cephx
     auth_client_required = cephx
+    client_reconnect_stale = false
 
     # Workaround for http://tracker.ceph.com/issues/23446
     fuse_set_user_groups = false
