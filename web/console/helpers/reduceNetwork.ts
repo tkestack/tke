@@ -21,6 +21,8 @@ import { RequestParams, ResourceInfo } from '../src/modules/common/models';
 import { changeForbiddentConfig } from '../index.tke';
 import { parseQueryString } from './urlUtil';
 import { getProjectName } from './appUtil';
+import Cookies from 'js-cookie';
+import { createCSRFHeader } from '@helper';
 
 /** 是否展示没有权限的弹窗 */
 export const Init_Forbiddent_Config = {
@@ -154,7 +156,8 @@ export const reduceNetworkRequest = async (
       {},
       {
         'X-Remote-Extra-RequestID': uuid(),
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...createCSRFHeader()
       },
       userDefinedHeader
     ),
