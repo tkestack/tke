@@ -39,7 +39,7 @@ func (sk SOCKS5) ProxyConn(targetAddr string) (net.Conn, func(), error) {
 	addr := net.JoinHostPort(sk.Host, fmt.Sprintf("%d", sk.Port))
 	dialer, err := proxy.SOCKS5("tcp", addr, nil, proxy.Direct)
 	if err != nil {
-		log.Errorf("to get socks5 dialer to %s failed: %v", addr, err)
+		log.Errorf("get socks5 dialer to %s failed: %v", addr, err)
 		return nil, nil, err
 	}
 
