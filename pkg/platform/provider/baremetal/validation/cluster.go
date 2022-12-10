@@ -217,6 +217,12 @@ func ValidateClusterMachines(cls *platform.Cluster, fldPath *field.Path) field.E
 			sshproxy.DialTimeOut = time.Second
 			sshproxy.Retry = 0
 			proxy = sshproxy
+		case platform.SOCKS5:
+			socks5proxy := ssh.SOCKS5{}
+			socks5proxy.Host = one.Proxy.IP
+			socks5proxy.Port = int(one.Proxy.Port)
+			socks5proxy.DialTimeOut = time.Second
+			proxy = socks5proxy
 		}
 		if isNeedValidateForDynamicItem(AnywhereValidateItemTunnelConnectivity, cls) {
 			proxyErrs = append(proxyErrs, ValidateProxy(fldPath.Index(i), proxy)...)

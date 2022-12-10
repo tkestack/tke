@@ -97,7 +97,8 @@ type ProxyType string
 const (
 	// SSH jumper server proxy
 	SSHJumpServer ProxyType = "SSHJumpServer"
-	// SOCKS5 ProxyType = "SOCKS5"
+	// SOCKS5 proxy
+	SOCKS5 ProxyType = "SOCKS5"
 )
 
 const (

@@ -52,6 +52,12 @@ func (in *ClusterMachine) SSH() (*ssh.SSH, error) {
 		proxy.DialTimeOut = time.Second
 		proxy.Retry = 0
 		sshConfig.Proxy = proxy
+	case SOCKS5:
+		proxy := ssh.SOCKS5{}
+		proxy.Host = in.Proxy.IP
+		proxy.Port = int(in.Proxy.Port)
+		proxy.DialTimeOut = time.Second
+		sshConfig.Proxy = proxy
 	}
 	return ssh.New(sshConfig)
 }
