@@ -171,17 +171,27 @@ const gpuMemFields = table => [
   {
     expr: `mean(k8s_${table}_gpu_used)`,
     alias: t('GPU使用量'),
-    unit: t('卡')
+    unit: t('卡'),
+    valueTransform: value => {
+      if (value) return value / 100;
+
+      return value;
+    }
   },
   {
     expr: `mean(k8s_${table}_rate_gpu_used_node)`,
-    alias: t('GPU使用量(占节点)'),
-    unit: t('卡')
+    alias: t('GPU使用率(占节点)'),
+    unit: '%'
   },
   {
     expr: `mean(k8s_${table}_rate_gpu_used_request)`,
-    alias: t('GPU使用量(占Request)'),
-    unit: t('卡')
+    alias: t('GPU使用率(占Request)'),
+    unit: '%',
+    valueTransform: value => {
+      if (value) return value * 100;
+
+      return value;
+    }
   },
   {
     expr: `mean(k8s_${table}_gpu_memory_used)`,
