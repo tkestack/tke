@@ -1,3 +1,5 @@
+import { createCSRFHeader } from '@helper'
+
 export async function apiRequest({ data }) {
   let res;
   // 融合版的tke 监控，使用influxdb
@@ -34,6 +36,7 @@ export async function apiRequest({ data }) {
       credentials: "same-origin",
       headers: {
         "Content-Type": "application/json",
+        ...createCSRFHeader(),
         ...projectHeader,
       },
       redirect: "follow",
