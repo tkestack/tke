@@ -27,12 +27,15 @@ import (
 	"tkestack.io/tke/pkg/util/log"
 )
 
+const defaultCheckTargetAddr = "ccr.ccs.tencentyun.com:443"
+
 type SOCKS5 struct {
-	Host        string
-	Port        int
-	User        string
-	Password    string
-	DialTimeOut time.Duration
+	Host            string
+	Port            int
+	User            string
+	Password        string
+	DialTimeOut     time.Duration
+	CheckTargetAddr string
 }
 
 func (sk SOCKS5) ProxyConn(targetAddr string) (net.Conn, func(), error) {
@@ -71,6 +74,14 @@ func (sk SOCKS5) ProxyConn(targetAddr string) (net.Conn, func(), error) {
 }
 
 func (sk SOCKS5) CheckTunnel() error {
-	_, err := proxy.SOCKS5("tcp", net.JoinHostPort(sk.Host, fmt.Sprintf("%d", sk.Port)), nil, proxy.Direct)
-	return err
+	targetAddr := sk.CheckTargetAddr
+	if len(targetAddr) == 0 {
+		targetAddr = defaultCheckTargetAddr
+	}
+	_, closer, err := sk.ProxyConn(targetAddr)
+	if err != nil {
+		return fmt.Errorf("tunnel is unavailable: %v", err)
+	}
+	defer closer()
+	return nil
 }
