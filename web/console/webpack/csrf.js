@@ -1,7 +1,7 @@
 const SparkMD5 = require('spark-md5');
 
 function parseCookie(cookieStr) {
-  cookieStr.split('; ').reduce((all, item) => {
+  return cookieStr.split('; ').reduce((all, item) => {
     const [key, value] = item.split('=');
 
     return {
