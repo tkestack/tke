@@ -33,7 +33,7 @@ interface IUseFetchOptions<T> {
 
 type IUseFetchQuery<T> = (params?: IQueryParams) => Promise<IQueryResponse<T>>;
 
-type IStatus = 'idle' | 'loading' | 'success' | 'error' | 'loading-polling';
+type IStatus = 'idle' | 'loading' | 'success' | 'error' | 'loading-polling' | 'expired';
 
 export function useFetch<T>(
   query: IUseFetchQuery<T>,
@@ -81,7 +81,7 @@ export function useFetch<T>(
   function setPageSize(_) {
     _setPageSize(_);
 
-    reFetch();
+    setPageIndex(1);
   }
 
   // 定时相关
@@ -167,7 +167,13 @@ export function useFetch<T>(
 
       setStatus('success');
     } catch (error) {
-      setStatus('error');
+      setData(null);
+
+      if (error?.response?.status === 410) {
+        setStatus('expired');
+      } else {
+        setStatus('error');
+      }
     }
   }
 

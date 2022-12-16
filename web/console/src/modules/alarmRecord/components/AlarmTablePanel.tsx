@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Justify, Table, TableColumn, Text, Bubble, Pagination, TagSearchBox } from 'tea-component';
+import { Justify, Table, TableColumn, Text, Bubble, Pagination, TagSearchBox, Button } from 'tea-component';
 import { useFetch } from '@src/modules/common/hooks/useFetch';
 import { fetchAlarmList } from '@src/webApi/alarm';
 import { t } from '@/tencent/tea-app/lib/i18n';
@@ -7,8 +7,6 @@ import { dateFormatter } from '@helper/dateFormatter';
 
 const { filterable, autotip } = Table?.addons;
 const ALL_VALUE = '';
-
-const defaultPageSize = 10;
 
 export const AlarmTablePanel = ({ clusterId }) => {
   const columns: TableColumn[] = [
@@ -99,7 +97,7 @@ export const AlarmTablePanel = ({ clusterId }) => {
       polling: true,
       pollingDelay: 5 * 1000,
       needClearData: false,
-      defaultPageSize,
+      defaultPageSize: 10,
       onlyPollingPage1: true
     }
   );
@@ -185,7 +183,16 @@ export const AlarmTablePanel = ({ clusterId }) => {
 
           autotip({
             isLoading: status === 'loading',
-            isError: status === 'error',
+            isError: status === 'error' || status === 'expired',
+            errorText:
+              status === 'expired' ? (
+                <Button type="link" onClick={() => paging.setPageIndex(1)}>
+                  ContinueToken 过期，点击跳转到第一页
+                </Button>
+              ) : (
+                '加载失败'
+              ),
+
             emptyText: '暂无数据'
           })
         ]}
@@ -196,9 +203,15 @@ export const AlarmTablePanel = ({ clusterId }) => {
         stateText={<Text>{`第${paging.pageIndex}页`}</Text>}
         pageIndexVisible={false}
         endJumpVisible={false}
-        pageSize={defaultPageSize}
-        pageSizeVisible={false}
-        onPagingChange={({ pageIndex }) => {
+        pageSize={paging.pageSize}
+        pageIndex={paging.pageIndex}
+        pageSizeVisible={true}
+        onPagingChange={({ pageIndex, pageSize }) => {
+          if (pageSize !== paging.pageSize) {
+            paging.setPageSize(pageSize);
+            return;
+          }
+
           if (pageIndex > paging.pageIndex) paging.nextPageIndex();
 
           if (pageIndex < paging.pageIndex) paging.prePageIndex();
