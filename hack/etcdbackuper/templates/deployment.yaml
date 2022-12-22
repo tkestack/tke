@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  generation: 8
+  labels:
+    app: {{ .Release.Name }}
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.conf.namespace }}
+spec:
+  minReadySeconds: 10
+  progressDeadlineSeconds: 600
+  replicas: {{ .Values.replicas }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ .Values.conf.serviceAccount }}
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
+      containers:
+      - name: etcdoperator
+        image: {{ .Values.conf.image }}
+        imagePullPolicy: {{ .Values.conf.imagePullPolicy }}
+        securityContext:
+          privileged: true
+        command:
+        - etcd-backup-operator
+        args:
+        - --etcd-client-cert-file=client.crt
+        - --etcd-client-key-file=client.key
+        - --etcd-client-ca-file=client-ca.crt
+        env:
+        - name: MY_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: HOST_PATH_NAME
+          value: "/data/"
+        volumeMounts:
+        - mountPath: /data
+          name: etcdbackup-volume
+      volumes:
+      - name: etcdbackup-volume
+{{- if .Values.conf.storageClsName }}
+        persistentVolumeClaim:
+          claimName: etcdbackup-pvc
+{{- else }}
+        hostPath:
+          path: {{ .Values.conf.hostPath }}
+          type: Directory
+{{- end }}

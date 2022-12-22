@@ -1,0 +1,16 @@
+replicas: 1
+conf:
+  namespace: etcd-ops
+  serviceAccount: etcd-operator
+  clusterRole: etcd-operator-clusterrole
+  clusterRoleBinding: etcd-operator-bind
+  secretName: etcd-v3-secret
+  storageClsName:
+  storageRequest: 24Gi
+  hostPath:
+  image:  ccr.ccs.tencentyun.com/tdccimages/etcd-operator:v0.0.1
+  imagePullPolicy: IfNotPresent
+  certs:
+    cacrt:
+    clientcrt:
+    clientkey:
