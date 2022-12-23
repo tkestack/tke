@@ -57,6 +57,7 @@ import (
 	certutil "k8s.io/client-go/util/cert"
 	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	kubeaggregatorclientset "k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationclientset "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	tkeclientset "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryclientset "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
@@ -292,6 +293,10 @@ func (t *TKE) initSteps() {
 	if t.Para.Config.Registry.TKERegistry != nil {
 		t.steps = append(t.steps, []types.Handler{
 			{
+				Name: "Prepare pull images",
+				Func: t.prepareImages,
+			},
+			{
 				Name: "Install tke-registry chart",
 				Func: t.installTKERegistryChart,
 			},
@@ -302,11 +307,7 @@ func (t *TKE) initSteps() {
 		if t.IncludeSelf {
 			t.steps = append(t.steps, []types.Handler{
 				{
-					Name: "Prepare images before stop local registry",
-					Func: t.prepareImages,
-				},
-				{
-					Name: "Stop local registry to give up 80/443 for tke-gateway",
+					Name: "Stop local registry to give up 80/443 for ingress",
 					Func: t.stopLocalRegistry,
 				},
 			}...)
@@ -315,6 +316,10 @@ func (t *TKE) initSteps() {
 			{
 				Name: "Install tke-gateway chart",
 				Func: t.installTKEGatewayChart,
+			},
+			{
+				Name: "Install ingress-nginx chart",
+				Func: t.installIngressChart,
 			},
 		}...)
 	}
@@ -1549,10 +1554,21 @@ func (t *TKE) prepareImages(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		cmdString := fmt.Sprintf("nerdctl --insecure-registry --namespace k8s.io pull %s", images.Get().TKEGateway.FullName())
-		_, err = machineSSH.CombinedOutput(cmdString)
-		if err != nil {
-			return errors.Wrap(err, machine.IP)
+		needPushImages := []string{images.Get().TKEGateway.FullName(),
+			images.Get().TKERegistryAPI.FullName(),
+			images.Get().TKERegistryController.FullName(),
+			images.Get().TKEAuthAPI.FullName(),
+			images.Get().TKEAuthController.FullName(),
+			images.Get().TKEPlatformAPI.FullName(),
+			images.Get().TKEPlatformController.FullName(),
+			images.Get().NginxIngress.FullName(),
+			images.Get().KebeWebhookCertgen.FullName()}
+		for _, name := range needPushImages {
+			cmdString := fmt.Sprintf("nerdctl --insecure-registry --namespace k8s.io pull %s", name)
+			_, err = machineSSH.CombinedOutput(cmdString)
+			if err != nil {
+				return errors.Wrap(err, machine.IP)
+			}
 		}
 	}
 	return nil
@@ -1584,15 +1600,15 @@ func (t *TKE) installTKEGatewayChart(ctx context.Context) error {
 
 	chartFilePath := constants.ChartDirName + "tke-gateway/"
 	if _, err := t.helmClient.InstallWithLocal(ctx, installOptions, chartFilePath); err != nil {
-		uninstallOptions := helmaction.UninstallOptions{
-			Timeout:     10 * time.Minute,
-			ReleaseName: "tke-gateway",
-			Namespace:   t.namespace,
-		}
-		reponse, err := t.helmClient.Uninstall(&uninstallOptions)
-		if err != nil {
-			return fmt.Errorf("%s uninstall fail, err = %s", reponse.Release.Name, err.Error())
-		}
+		// uninstallOptions := helmaction.UninstallOptions{
+		// 	Timeout:     10 * time.Minute,
+		// 	ReleaseName: "tke-gateway",
+		// 	Namespace:   t.namespace,
+		// }
+		// reponse, err := t.helmClient.Uninstall(&uninstallOptions)
+		// if err != nil {
+		// 	return fmt.Errorf("%s uninstall fail, err = %s", reponse.Release.Name, err.Error())
+		// }
 		return err
 	}
 
@@ -1696,6 +1712,8 @@ func (t *TKE) getTKEAuthAPIOptions(ctx context.Context) (map[string]interface{},
 	}
 	if t.Para.Config.HA != nil {
 		redirectHosts = append(redirectHosts, t.Para.Config.HA.VIP())
+		redirectHosts = append(redirectHosts, t.Para.Config.HA.VIP()+":31443")
+		redirectHosts = append(redirectHosts, t.Para.Config.HA.VIP()+":31180")
 	}
 	if t.Para.Cluster.Spec.PublicAlternativeNames != nil {
 		redirectHosts = append(redirectHosts, t.Para.Cluster.Spec.PublicAlternativeNames...)
@@ -1900,7 +1918,7 @@ func (t *TKE) installInfluxDBChart(ctx context.Context) error {
 		LocalChartPath: constants.ChartDirName + "influxdb/",
 		Enable:         true,
 		ConditionFunc: func() (bool, error) {
-			ok, err := apiclient.CheckStatefulSet(ctx, t.globalClient, t.namespace, "influxdb")
+			ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "influxdb")
 			if err != nil || !ok {
 				return false, nil
 			}
@@ -1916,7 +1934,7 @@ func (t *TKE) getInfluxDBOptions(ctx context.Context) (map[string]interface{}, e
 		"image": images.Get().InfluxDB.FullName(),
 	}
 
-	useCephRbd, useNFS := false, false
+	useCephRbd, useCephFS, useNFS := false, false, false
 	for _, platformApp := range t.Para.Config.PlatformApps {
 		if !platformApp.Enable || !platformApp.Installed {
 			continue
@@ -1928,6 +1946,13 @@ func (t *TKE) getInfluxDBOptions(ctx context.Context) (map[string]interface{}, e
 			options["cephRbdStorageClassName"] = constants.CephRBDStorageClassName
 			break
 		}
+		if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.CephFSChartReleaseName) {
+			useCephFS = true
+			options["cephFS"] = true
+			options["cephFSPVCName"] = "ceph-fs-influxdb-pvc"
+			options["cephFSStorageClassName"] = constants.CephFSStorageClassName
+			break
+		}
 		if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.NFSChartReleaseName) {
 			useNFS = true
 			options["nfs"] = true
@@ -1937,7 +1962,7 @@ func (t *TKE) getInfluxDBOptions(ctx context.Context) (map[string]interface{}, e
 		}
 	}
 
-	if !(useCephRbd || useNFS) {
+	if !(useCephRbd || useNFS || useCephFS) {
 		options["baremetalStorage"] = true
 		node, err := apiclient.GetNodeByMachineIP(ctx, t.globalClient, t.servers[0])
 		if err != nil {
@@ -2191,6 +2216,61 @@ func (t *TKE) installTKERegistryChart(ctx context.Context) error {
 	return t.installPlatformApp(ctx, tkeRegistry)
 }
 
+func (t *TKE) installIngressChart(ctx context.Context) error {
+	rawValues := `
+ controller:
+   name: controller
+   image:
+	 registry: registry.tke.com
+	 image: library/ingress-nginx-controller
+	 tag: "v1.1.3"
+	 digest: ""
+	 pullPolicy: IfNotPresent
+	 runAsUser: 101
+	 allowPrivilegeEscalation: true
+   containerName: controller
+   containerPort:
+	 http: 80
+	 https: 443
+   dnsPolicy: ClusterFirstWithHostNet
+   hostNetwork: true
+   ingressClass: nginx
+   kind: DaemonSet
+   nodeSelector:
+	 node-role.kubernetes.io/master: ""
+   service:
+	 enabled: false
+   admissionWebhooks:
+	 patch:
+	   enabled: true
+	   image:
+		 registry: registry.tke.com
+		 image: library/kube-webhook-certgen
+		 tag: "v1.1.1"
+		 digest: ""
+ `
+	tkeRegistry := &types.PlatformApp{
+		HelmInstallOptions: &helmaction.InstallOptions{
+			Namespace:        t.namespace,
+			ReleaseName:      "ingress-nginx",
+			DependencyUpdate: false,
+			ChartPathOptions: helmaction.ChartPathOptions{},
+		},
+		LocalChartPath: constants.ChartDirName + "ingress-nginx/",
+		Enable:         true,
+		RawValues:      rawValues,
+		RawValuesType:  applicationv1.RawValuesTypeYaml,
+		ConditionFunc: func() (bool, error) {
+			ok, err := apiclient.CheckDaemonset(ctx, t.globalClient, t.namespace, "ingress-nginx-controller")
+			if err != nil {
+				return false, nil
+			}
+			return ok, nil
+		},
+	}
+	return t.installPlatformApp(ctx, tkeRegistry)
+}
+
 func (t *TKE) getTKERegistryAPIOptions(ctx context.Context) (map[string]interface{}, error) {
 
 	options := map[string]interface{}{
@@ -2216,7 +2296,7 @@ func (t *TKE) getTKERegistryAPIOptions(ctx context.Context) (map[string]interfac
 	// or enable filesystem by default
 	options["filesystemEnabled"] = !s3Enabled
 	if options["filesystemEnabled"] == true {
-		useCephRbd, useNFS := false, false
+		useCephRbd, useCephFS, useNFS := false, false, false
 		for _, platformApp := range t.Para.Config.PlatformApps {
 			if !platformApp.Enable || !platformApp.Installed {
 				continue
@@ -2228,6 +2308,13 @@ func (t *TKE) getTKERegistryAPIOptions(ctx context.Context) (map[string]interfac
 				options["cephRbdStorageClassName"] = constants.CephRBDStorageClassName
 				break
 			}
+			if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.CephFSChartReleaseName) {
+				useCephFS = true
+				options["cephFS"] = true
+				options["cephFSPVCName"] = "ceph-fs-registry-pvc"
+				options["cephFSStorageClassName"] = constants.CephFSStorageClassName
+				break
+			}
 			if strings.EqualFold(platformApp.HelmInstallOptions.ReleaseName, constants.NFSChartReleaseName) {
 				useNFS = true
 				options["nfs"] = true
@@ -2236,7 +2323,7 @@ func (t *TKE) getTKERegistryAPIOptions(ctx context.Context) (map[string]interfac
 				break
 			}
 		}
-		if !(useCephRbd || useNFS) {
+		if !(useCephRbd || useCephFS || useNFS) {
 			options["baremetalStorage"] = true
 			node, err := apiclient.GetNodeByMachineIP(ctx, t.globalClient, t.servers[0])
 			if err != nil {

@@ -1,83 +1,4 @@
 ---
-kind: Service
-apiVersion: v1
-metadata:
-  name: tke-gateway
-  namespace: tke
-  annotations:
-    tke.prometheus.io/scrape: "true"
-    prometheus.io/scheme: https
-    prometheus.io/port: "9441"
-spec:
-  selector:
-    app: tke-gateway
-  ports:
-    - name: http
-      protocol: TCP
-      port: 80
-      targetPort: 80
-    - name: https
-      protocol: TCP
-      port: 443
-      targetPort: 443
----
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: tke-gateway
-  namespace: tke
-spec:
-  selector:
-    matchLabels:
-      app: tke-gateway
-  template:
-    metadata:
-      labels:
-        app: tke-gateway
-    spec:
-      dnsPolicy: ClusterFirstWithHostNet
-      hostNetwork: true
-      nodeSelector:
-        node-role.kubernetes.io/master: ""
-      containers:
-        - name: tke-gateway
-          image: {{ .Values.image }}
-          args:
-            - -C=/app/conf/tke-gateway.toml
-          volumeMounts:
-            - name: certs-volume
-              mountPath: /app/certs
-            - name: tke-gateway-volume
-              mountPath: /app/conf
-          readinessProbe:
-            httpGet:
-              port: 80
-              path: /healthz
-              scheme: HTTP
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              port: 80
-              path: /healthz
-              scheme: HTTP
-            initialDelaySeconds: 15
-            periodSeconds: 20
-          resources:
-            limits:
-              cpu: 100m
-              memory: 256Mi
-            requests:
-              cpu: 50m
-              memory: 128Mi
-      volumes:
-        - name: certs-volume
-          configMap:
-            name: certs
-        - name: tke-gateway-volume
-          configMap:
-            name: tke-gateway
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -188,3 +109,85 @@ data:
   server.key: |
 {{ .Values.serverKey | indent 4 }}
 {{- end }}
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: tke-gateway
+  namespace: tke
+  annotations:
+    tke.prometheus.io/scrape: "true"
+    prometheus.io/scheme: https
+    prometheus.io/port: "9441"
+spec:
+  selector:
+    app: tke-gateway
+  type: NodePort
+  ports:
+    - name: http
+      nodePort: 31180
+      port: 80
+      protocol: TCP
+      targetPort: 80
+    - name: https
+      nodePort: 31443
+      port: 443
+      protocol: TCP
+      targetPort: 443
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: tke-gateway
+  namespace: tke
+spec:
+  selector:
+    matchLabels:
+      app: tke-gateway
+  template:
+    metadata:
+      labels:
+        app: tke-gateway
+    spec:
+      dnsPolicy: ClusterFirstWithHostNet
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      containers:
+        - name: tke-gateway
+          image: {{ .Values.image }}
+          args:
+            - -C=/app/conf/tke-gateway.toml
+          volumeMounts:
+            - name: certs-volume
+              mountPath: /app/certs
+            - name: tke-gateway-volume
+              mountPath: /app/conf
+          readinessProbe:
+            httpGet:
+              port: 80
+              path: /healthz
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: 80
+              path: /healthz
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            limits:
+              cpu: 100m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 128Mi
+      volumes:
+        - name: certs-volume
+          configMap:
+            name: certs
+        - name: tke-gateway-volume
+          configMap:
+            name: tke-gateway
