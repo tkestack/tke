@@ -1,0 +1,14 @@
+{{- if .Values.conf.storageClsName -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: etcdbackup-pvc
+  namespace: {{ .Values.conf.namespace }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: {{ .Values.conf.storageClsName }}
+  resources:
+    requests:
+      storage: {{ .Values.conf.storageRequest }}
+{{- end -}}

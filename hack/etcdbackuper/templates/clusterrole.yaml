@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Values.conf.clusterRole }}
+rules:
+- apiGroups: [""]
+  resources: ["endpoints","events","secrets"]
+  verbs: ["*"]
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["*"]
+- apiGroups: ["etcd.database.coreos.com"]
+  resources: ["etcdbackups"]
+  verbs: ["*"]
