@@ -152,20 +152,29 @@ export const VMListPanel = ({ route }) => {
       );
       return {
         data:
-          items.map(({ metadata, status, spec, vmi }) => ({
-            name: metadata?.name,
-            status: status?.printableStatus,
-            failureCondition:
-              status?.printableStatus === 'Stopped' ? status?.conditions?.find(({ type }) => type === 'Failure') : null,
-            mirror: metadata?.annotations?.['tkestack.io/image-display-name'] ?? '-',
-            ip: vmi?.status?.interfaces?.[0]?.ipAddress ?? '-',
-            hardware: `${spec?.template?.spec?.domain?.cpu?.cores ?? '-'}核 / ${
-              spec?.template?.spec?.domain?.resources?.requests?.memory ?? '-'
-            }`,
-            createTime: metadata?.creationTimestamp,
+          items.map(({ metadata, status, spec, vmi }) => {
+            let realStatus = status?.printableStatus;
+            if (realStatus === 'Running' && !status?.ready) {
+              realStatus = 'Abnormal';
+            }
 
-            id: metadata?.uid
-          })) ?? [],
+            const failureCondition =
+              realStatus === 'Stopped' ? status?.conditions?.find(({ type }) => type === 'Failure') : null;
+
+            return {
+              name: metadata?.name,
+              status: realStatus,
+              failureCondition,
+              mirror: metadata?.annotations?.['tkestack.io/image-display-name'] ?? '-',
+              ip: vmi?.status?.interfaces?.[0]?.ipAddress ?? '-',
+              hardware: `${spec?.template?.spec?.domain?.cpu?.cores ?? '-'}核 / ${
+                spec?.template?.spec?.domain?.resources?.requests?.memory ?? '-'
+              }`,
+              createTime: metadata?.creationTimestamp,
+
+              id: metadata?.uid
+            };
+          }) ?? [],
 
         continueToken: newContinueToken,
 
