@@ -10,10 +10,15 @@ export const VMInfoPanel = ({ clusterId, namespace, name }) => {
     async () => {
       const { vm, vmi } = await virtualMachineAPI.fetchVMDetail({ clusterId, namespace, name });
 
+      let realStatus = vm?.status?.printableStatus;
+      if (realStatus === 'Running' && !vm?.status?.ready) {
+        realStatus = 'Abnormal';
+      }
+
       return {
         data: {
           description: vm?.metadata?.annotations?.description ?? '-',
-          status: vm?.status?.printableStatus,
+          status: realStatus,
           createTime: vm?.metadata?.creationTimestamp,
           tags: Object.entries(vmi?.metadata?.labels ?? [])
             .map(([key, value]) => `${key}：${value}`)
