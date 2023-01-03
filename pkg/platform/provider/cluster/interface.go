@@ -54,6 +54,8 @@ type APIProvider interface {
 	RegisterHandler(mux *mux.PathRecorderMux)
 	Validate(cluster *types.Cluster) field.ErrorList
 	ValidateUpdate(cluster *types.Cluster, oldCluster *types.Cluster) field.ErrorList
+	// for crd mode controller mutation
+	MutateUpdate(cluster *types.Cluster, oldCluster *types.Cluster) ([]byte, field.ErrorList)
 	PreCreate(cluster *types.Cluster) error
 	AfterCreate(cluster *types.Cluster) error
 }
@@ -112,6 +114,7 @@ type DelegateProvider struct {
 
 	ValidateFunc       func(cluster *types.Cluster) field.ErrorList
 	ValidateUpdateFunc func(cluster *types.Cluster, oldCluster *types.Cluster) field.ErrorList
+	MutateUpdateFunc   func(cluster *types.Cluster, oldCluster *types.Cluster) ([]byte, field.ErrorList)
 	PreCreateFunc      func(cluster *types.Cluster) error
 	AfterCreateFunc    func(cluster *types.Cluster) error
 
@@ -156,6 +159,14 @@ func (p *DelegateProvider) ValidateUpdate(cluster *types.Cluster, oldCluster *ty
 	}
 
 	return nil
+}
+
+func (p *DelegateProvider) MutateUpdate(cluster *types.Cluster, oldCluster *types.Cluster) ([]byte, field.ErrorList) {
+	if p.MutateUpdateFunc != nil {
+		return p.MutateUpdateFunc(cluster, oldCluster)
+	}
+
+	return nil, nil
 }
 
 func (p *DelegateProvider) PreCreate(cluster *types.Cluster) error {

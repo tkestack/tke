@@ -345,11 +345,12 @@ func (ClusterSpec) SwaggerDoc() map[string]string {
 }
 
 var map_ClusterStatus = map[string]string{
-	"":           "ClusterStatus represents information about the status of a cluster.",
-	"message":    "A human readable message indicating details about why the cluster is in this condition.",
-	"reason":     "A brief CamelCase message indicating details about why the cluster is in this state.",
-	"addresses":  "List of addresses reachable to the cluster.",
-	"appVersion": "AppVersion is the overall version of system components",
+	"":               "ClusterStatus represents information about the status of a cluster.",
+	"message":        "A human readable message indicating details about why the cluster is in this condition.",
+	"reason":         "A brief CamelCase message indicating details about why the cluster is in this state.",
+	"addresses":      "List of addresses reachable to the cluster.",
+	"appVersion":     "AppVersion is the overall version of system components",
+	"componentPhase": "ComponentPhase is the status of components, contains \"deployed\", \"pending-upgrade\", \"failed\" status",
 }
 
 func (ClusterStatus) SwaggerDoc() map[string]string {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	appsv1alpha1 "github.com/clusternet/apis/apps/v1alpha1"
 	clustersv1beta1 "github.com/clusternet/apis/clusters/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	application "tkestack.io/tke/api/application/v1"
 
@@ -82,8 +83,8 @@ func GetSubscription(clientSet client.Client, name, namespace string) (*appsv1al
 	return sub, nil
 }
 
-func GenerateHelmReleaseName(subName string, feed appsv1alpha1.Feed) string {
-	return fmt.Sprintf("%s-helm-%s-%s", subName, feed.Namespace, feed.Name)
+func GenerateHelmReleaseName(subName, componentNamespace, componentName string) string {
+	return fmt.Sprintf("%s-helm-%s-%s", subName, componentNamespace, componentName)
 }
 
 func GetHelmRelease(clientSet client.Client, name, namespace string) (*appsv1alpha1.HelmRelease, error) {
@@ -96,4 +97,25 @@ func GetHelmRelease(clientSet client.Client, name, namespace string) (*appsv1alp
 		return nil, err
 	}
 	return hr, nil
+}
+
+func ListHelmReleaseBySubscriptionName(clientSet client.Client, namespace string, subscriptionName string) (*appsv1alpha1.HelmReleaseList, error) {
+	helmReleaseList := appsv1alpha1.HelmReleaseList{}
+	err := clientSet.List(context.TODO(), &helmReleaseList, client.MatchingFields{"metadata.namespace": namespace}, client.MatchingLabels{"apps.clusternet.io/subs.name": subscriptionName}, &client.ListOptions{Raw: &metav1.ListOptions{ResourceVersion: "0"}})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get helm release list by namespace: %s, err: %v", namespace, err)
+	}
+	return &helmReleaseList, nil
+}
+
+func GetLocalization(clientSet client.Client, name, namespace string) (*appsv1alpha1.Localization, error) {
+	localization := new(appsv1alpha1.Localization)
+	localization.Name = name
+	localization.Namespace = namespace
+	currentKey := client.ObjectKeyFromObject(localization)
+	err := clientSet.Get(context.TODO(), currentKey, localization)
+	if err != nil {
+		return nil, fmt.Errorf("get localization failed: %v", err)
+	}
+	return localization, nil
 }
