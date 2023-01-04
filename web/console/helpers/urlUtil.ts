@@ -68,6 +68,7 @@ export const reduceK8sQueryString = ({
   restfulPath?: string;
 }) => {
   const queryString = Object.entries(k8sQueryObj)
+    .filter(([_, value]) => value !== undefined)
     .map(([key, value]) => {
       // 也许value是object，即labelSelector 或者 fieldSelector
       value = isObject(value)
@@ -77,13 +78,15 @@ export const reduceK8sQueryString = ({
             .join(',')
         : value;
 
-      return `${key}=${encodeURIComponent(`${value}`)}`;
+      return `${key}=${value}`;
     })
     .join('&');
 
+  const encodeQueryString = encodeURIComponent(queryString);
+
   const preFix = restfulPath.includes('?') ? '&' : '?';
 
-  return queryString ? `${preFix}${queryString}` : '';
+  return encodeQueryString ? `${preFix}${encodeQueryString}` : '';
 };
 
 interface K8sRestfulPathOptions {
