@@ -78,15 +78,13 @@ export const reduceK8sQueryString = ({
             .join(',')
         : value;
 
-      return `${key}=${value}`;
+      return `${key}=${encodeURIComponent(`${value}`)}`;
     })
     .join('&');
 
-  const encodeQueryString = encodeURIComponent(queryString);
-
   const preFix = restfulPath.includes('?') ? '&' : '?';
 
-  return encodeQueryString ? `${preFix}${encodeQueryString}` : '';
+  return queryString ? `${preFix}${queryString}` : '';
 };
 
 interface K8sRestfulPathOptions {
