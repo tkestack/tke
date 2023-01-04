@@ -68,6 +68,7 @@ export const reduceK8sQueryString = ({
   restfulPath?: string;
 }) => {
   const queryString = Object.entries(k8sQueryObj)
+    .filter(([_, value]) => value !== undefined)
     .map(([key, value]) => {
       // 也许value是object，即labelSelector 或者 fieldSelector
       value = isObject(value)
