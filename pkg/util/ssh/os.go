@@ -221,12 +221,12 @@ func FirewallEnabled(s Interface) (enabled bool, err error) {
 }
 
 func SelinuxEnabled(s Interface) (enabled bool, err error) {
-	stdout, _, exit, err := s.Exec("selinuxenabled")
-	if err != nil || exit != 0 {
+	// https://www.thegeekdiary.com/how-to-check-whether-selinux-is-enabled-or-disabled/
+	_, _, exist, err := s.Exec("selinuxenabled")
+	if err != nil {
 		return false, err
 	}
-	res := strings.TrimSpace(stdout)
-	return res == "0", nil
+	return exist == 0, nil
 }
 
 func CheckNFS(s Interface, server string, path string) (err error) {
