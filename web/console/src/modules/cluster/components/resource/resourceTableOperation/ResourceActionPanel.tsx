@@ -360,8 +360,6 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
       searchBoxLength: finalTags.length
     });
 
-    if (finalTags.length <= 0) return;
-
     const { actions } = this.props;
 
     // 这里是控制tagSearch的展示
