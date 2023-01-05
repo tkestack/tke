@@ -222,11 +222,11 @@ func FirewallEnabled(s Interface) (enabled bool, err error) {
 
 func SelinuxEnabled(s Interface) (enabled bool, err error) {
 	// https://www.thegeekdiary.com/how-to-check-whether-selinux-is-enabled-or-disabled/
-	_, _, exist, err := s.Exec("selinuxenabled")
+	_, _, exit, err := s.Exec("selinuxenabled")
 	if err != nil {
 		return false, err
 	}
-	return exist == 0, nil
+	return exit == 0, nil
 }
 
 func CheckNFS(s Interface, server string, path string) (err error) {
