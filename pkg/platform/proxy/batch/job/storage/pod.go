@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+	"sort"
 
 	batchV1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -31,6 +32,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/pkg/platform/proxy"
+	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/page"
 )
 
@@ -109,7 +111,9 @@ func (r *PodREST) Get(ctx context.Context, name string, options runtime.Object) 
 			}
 		}
 	}
-
+	pods := util.NewPods(podList.Items)
+	sort.Sort(pods)
+	podList.Items = pods.GetPods()
 	if listOpts.Continue != "" {
 		start, limit, err := page.DecodeContinue(ctx, "Job", name, listOpts.Continue)
 		if err != nil {

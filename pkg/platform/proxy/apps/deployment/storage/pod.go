@@ -20,10 +20,7 @@ package storage
 
 import (
 	"context"
-
-	"tkestack.io/tke/pkg/platform/proxy"
-	"tkestack.io/tke/pkg/util/apiclient"
-	"tkestack.io/tke/pkg/util/page"
+	"sort"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -36,6 +33,10 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
+	"tkestack.io/tke/pkg/platform/proxy"
+	"tkestack.io/tke/pkg/platform/util"
+	"tkestack.io/tke/pkg/util/apiclient"
+	"tkestack.io/tke/pkg/util/page"
 )
 
 // PodREST implements the REST endpoint for find pods by a deployment.
@@ -134,6 +135,9 @@ func listPodByExtensions(ctx context.Context, client *kubernetes.Clientset, name
 			}
 		}
 	}
+	pods := util.NewPods(podList.Items)
+	sort.Sort(pods)
+	podList.Items = pods.GetPods()
 	if listOpts.Continue != "" {
 		start, limit, err := page.DecodeContinue(ctx, "Deployment", name, listOpts.Continue)
 		if err != nil {
@@ -212,6 +216,9 @@ func listPodByApps(ctx context.Context, client *kubernetes.Clientset, namespaceN
 			}
 		}
 	}
+	pods := util.NewPods(podList.Items)
+	sort.Sort(pods)
+	podList.Items = pods.GetPods()
 	if listOpts.Continue != "" {
 		start, limit, err := page.DecodeContinue(ctx, "Deployment", name, listOpts.Continue)
 		if err != nil {
