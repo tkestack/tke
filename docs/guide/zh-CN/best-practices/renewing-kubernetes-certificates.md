@@ -124,3 +124,10 @@ Jul 22 12:13:33 VM-252-117-centos kubelet: goroutine 1 [running]:
 ```
 
 可以在各个节点上通过执行 `cp /etc/kubernetes/kubelet.conf /etc/kubernetes/bootstrap-kubelet.conf` 解决。
+
+### tkestack web 端报证书过期错误
+
+报错如下：
+![img](../../../images/cert-expire-on-web.png)
+
+原因是组件 platform 的 pod 内证书未更新，可通过重启 tke-platform-api 的 pod 解决。以此类推，如果报的是其他组件（如 business、registry 等）的证书过期，可通过重启对应组件的 api pod 解决。
