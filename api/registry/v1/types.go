@@ -30,6 +30,8 @@ const (
 	ChartGroupFinalize FinalizerName = "chartgroup"
 	// ChartFinalize is an internal finalizer values to Chart.
 	ChartFinalize FinalizerName = "chart"
+	// RegistryClientUserAgent is the user agent for tke registry client
+	RegistryClientUserAgent = "tke-registry-client"
 )
 
 // +genclient

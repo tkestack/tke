@@ -148,7 +148,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	jwtToken, err := makeToken(username, access, h.expiredHours, h.privateKey)
+	jwtToken, err := MakeToken(username, access, h.expiredHours, h.privateKey)
 	if err != nil {
 		log.Error("Failed create token for docker registry authentication",
 			log.String("username", username),

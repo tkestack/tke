@@ -201,7 +201,7 @@ func checkEvent(event *Event) bool {
 	}
 	// if it is pull action, check the user-agent
 	userAgent := strings.ToLower(strings.TrimSpace(event.Request.UserAgent))
-	return userAgent != "tke-registry-client"
+	return userAgent != registry.RegistryClientUserAgent
 }
 
 // ParseRepository splits a repository into three parts: tenantID, namespace and rest
