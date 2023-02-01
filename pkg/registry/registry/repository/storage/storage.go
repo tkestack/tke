@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/docker/libtrust"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,7 +31,10 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	registryinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/registry/internalversion"
 	registryapi "tkestack.io/tke/api/registry"
+	"tkestack.io/tke/pkg/apiserver/authentication"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
+	"tkestack.io/tke/pkg/registry/distribution/client"
+	distributionHandler "tkestack.io/tke/pkg/registry/distribution/handler"
 	harbor "tkestack.io/tke/pkg/registry/harbor/client"
 	harborHandler "tkestack.io/tke/pkg/registry/harbor/handler"
 	repositorystrategy "tkestack.io/tke/pkg/registry/registry/repository"
@@ -45,7 +49,7 @@ type Storage struct {
 }
 
 // NewStorage returns a Storage object that will work against repositories.
-func NewStorage(optsGetter genericregistry.RESTOptionsGetter, registryClient *registryinternalclient.RegistryClient, privilegedUsername string, harborClient *harbor.APIClient) *Storage {
+func NewStorage(optsGetter genericregistry.RESTOptionsGetter, registryClient *registryinternalclient.RegistryClient, privilegedUsername, repoEndpoint string, harborClient *harbor.APIClient, tokenPrivateKey libtrust.PrivateKey) *Storage {
 	strategy := repositorystrategy.NewStrategy(registryClient)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &registryapi.Repository{} },
@@ -67,12 +71,16 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, registryClient *re
 	if err := store.CompleteWithOptions(options); err != nil {
 		log.Panic("Failed to create repository etcd rest storage", log.Err(err))
 	}
+	distributionClient, err := client.NewRepository(repoEndpoint, tokenPrivateKey)
+	if err != nil {
+		log.Panic("Failed to create distribution client", log.Err(err))
+	}
 
 	statusStore := *store
 	statusStore.UpdateStrategy = repositorystrategy.NewStatusStrategy(strategy)
 
 	return &Storage{
-		Repository: &REST{store, privilegedUsername, harborClient, registryClient},
+		Repository: &REST{store, privilegedUsername, harborClient, registryClient, distributionClient},
 		Status:     &StatusREST{&statusStore},
 	}
 }
@@ -119,6 +127,7 @@ type REST struct {
 	privilegedUsername string
 	harborClient       *harbor.APIClient
 	registryClient     *registryinternalclient.RegistryClient
+	distributionClient *client.Repository
 }
 
 var _ rest.ShortNamesProvider = &REST{}
@@ -158,6 +167,7 @@ func (r *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObje
 
 // Delete enforces life-cycle rules for cluster termination
 func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	userName, _ := authentication.UsernameAndTenantID(ctx)
 	obj, err := ValidateGetObjectAndTenantID(ctx, r.Store, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
@@ -174,7 +184,16 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 			return nil, false, err
 		}
 	}
+	if r.distributionClient != nil {
+		repoName := fmt.Sprintf("%s/%s", o.Spec.NamespaceName, o.Spec.Name)
+		err := distributionHandler.DeleteRepo(ctx, r.distributionClient, userName, o.Spec.TenantID, repoName)
+		if err != nil {
+			return nil, false, err
+		}
+	}
+
 	UpdateNamespaceRepoCount(ctx, r.registryClient, o.Spec.NamespaceName, o.Spec.TenantID)
+
 	return r.Store.Delete(ctx, name, deleteValidation, options)
 }
 

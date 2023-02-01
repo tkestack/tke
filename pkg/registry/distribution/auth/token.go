@@ -22,11 +22,12 @@ import (
 	"crypto"
 	"encoding/base64"
 	"fmt"
-	"github.com/docker/distribution/registry/auth/token"
-	"github.com/docker/libtrust"
 	"math/rand"
 	"strings"
 	"time"
+
+	"github.com/docker/distribution/registry/auth/token"
+	"github.com/docker/libtrust"
 )
 
 const (
@@ -43,7 +44,7 @@ type Token struct {
 }
 
 // makeToken makes a valid jwt token based on params.
-func makeToken(username string, access []*token.ResourceActions, expiredHours int64, privateKey libtrust.PrivateKey) (*Token, error) {
+func MakeToken(username string, access []*token.ResourceActions, expiredHours int64, privateKey libtrust.PrivateKey) (*Token, error) {
 	tk, expiresIn, issuedAt, err := makeTokenCore(Issuer, username, Service, expiredHours, access, privateKey)
 	if err != nil {
 		return nil, err
@@ -122,4 +123,13 @@ func randString(length int) (string, error) {
 
 func base64UrlEncode(b []byte) string {
 	return strings.TrimRight(base64.URLEncoding.EncodeToString(b), "=")
+}
+
+// GetToken returns the content of the token
+func (t *Token) GetToken() string {
+	token := t.Token
+	if len(token) == 0 {
+		token = t.AccessToken
+	}
+	return token
 }
