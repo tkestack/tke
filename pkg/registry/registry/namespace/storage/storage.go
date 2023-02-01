@@ -170,8 +170,11 @@ func (r *REST) Delete(ctx context.Context, name string, deleteValidation rest.Va
 	if err != nil {
 		return nil, false, err
 	}
+	o := obj.(*registryapi.Namespace)
+	if o.Status.RepoCount > 0 {
+		return nil, false, fmt.Errorf("%s(%s) cannot be delete, since repositories under this namespace is not empty", o.Spec.Name, o.Name)
+	}
 	if r.harborClient != nil {
-		o := obj.(*registryapi.Namespace)
 		// delete harbor project
 		err = harborHandler.DeleteProject(ctx, r.harborClient, nil, fmt.Sprintf("%s-image-%s", o.Spec.TenantID, o.Spec.Name))
 		if err != nil {

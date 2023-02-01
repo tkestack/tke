@@ -19,6 +19,7 @@
 package apiserver
 
 import (
+	"github.com/docker/libtrust"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
@@ -133,6 +134,11 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		}
 	}
 
+	pk, err := libtrust.LoadKeyFile(c.ExtraConfig.RegistryConfig.Security.TokenPrivateKeyFile)
+	if err != nil {
+		return nil, err
+	}
+
 	// The order here is preserved in discovery.
 	restStorageProviders := []storage.RESTStorageProvider{
 		&registryrest.StorageProvider{
@@ -146,6 +152,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 			PlatformClient:       c.ExtraConfig.PlatformClient,
 			RegistryConfig:       c.ExtraConfig.RegistryConfig,
 			Authorizer:           c.GenericConfig.Authorization.Authorizer,
+			TokenPrivateKey:      pk,
 		},
 	}
 	m.InstallAPIs(c.ExtraConfig.APIResourceConfigSource, c.GenericConfig.RESTOptionsGetter, restStorageProviders...)
