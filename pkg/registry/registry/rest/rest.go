@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/docker/libtrust"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -61,6 +62,7 @@ type StorageProvider struct {
 	PlatformClient       platformversionedclient.PlatformV1Interface
 	RegistryConfig       *registryconfig.RegistryConfiguration
 	Authorizer           authorizer.Authorizer
+	TokenPrivateKey      libtrust.PrivateKey
 }
 
 // Implement RESTStorageProvider
@@ -124,7 +126,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["namespaces"] = namespaceREST.Namespace
 		storageMap["namespaces/status"] = namespaceREST.Status
 
-		repositoryREST := repositorystorage.NewStorage(restOptionsGetter, registryClient, s.PrivilegedUsername, harborClient)
+		repositoryREST := repositorystorage.NewStorage(restOptionsGetter, registryClient, s.PrivilegedUsername, s.LoopbackClientConfig.Host, harborClient, s.TokenPrivateKey)
 		storageMap["repositories"] = repositoryREST.Repository
 		storageMap["repositories/status"] = repositoryREST.Status
 
