@@ -20,6 +20,7 @@ package application
 
 import (
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -80,10 +81,36 @@ type Chart struct {
 	RepoUsername   string
 	RepoPassword   string
 	ImportedRepo   bool
+
+	InstallPara InstallPara //parameters used to install a chart
+	UpgradePara UpgradePara //parameters used to upgrade a chart
+
+}
+
+//parameters used to install a chart
+type InstallPara struct {
+	HelmPublicPara
+}
+
+//parameters used to upgrade a chart
+type UpgradePara struct {
+	HelmPublicPara
+}
+
+//public parameters used in helm install and helm upgrade command
+type HelmPublicPara struct {
+	//Client timeout when installiing or upgrading helm release, override default clientTimeOut
+	Timeout time.Duration
 	// CreateNamespace create namespace when install helm release
 	CreateNamespace bool
 	// Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.
 	Atomic bool
+	// Wait, if true, will wait until all Pods, PVCs, Services, and minimum number of Pods of a Deployment,StatefulSet,
+	//or ReplicaSet are in a ready state before marking the release as successful, or wait until client timeout
+	Wait bool
+	// WaitForJobs, if true, wait until all Jobs have been completed before marking the release as successful
+	// or wait until client timeout
+	WaitForJobs bool
 }
 
 // AppStatus represents information about the status of a bootstrap.

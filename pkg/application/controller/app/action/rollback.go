@@ -53,7 +53,7 @@ func Rollback(ctx context.Context,
 		Namespace:   app.Spec.TargetNamespace,
 		ReleaseName: app.Spec.Name,
 		Revision:    app.Status.RollbackRevision,
-		Timeout:     clientTimeOut,
+		Timeout:     defaultTimeout,
 	})
 	if updateStatusFunc != nil {
 		newStatus := app.Status.DeepCopy()

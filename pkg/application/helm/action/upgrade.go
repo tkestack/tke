@@ -62,6 +62,9 @@ type UpgradeOptions struct {
 	DependencyUpdate bool
 	ReleaseName      string
 	Values           map[string]interface{}
+	Atomic           bool
+	Wait             bool
+	WaitForJobs      bool
 }
 
 // Upgrade upgrade a helm release
@@ -85,6 +88,9 @@ func (c *Client) Upgrade(ctx context.Context, options *UpgradeOptions) (*release
 				Description:      options.Description,
 				ChartPathOptions: options.ChartPathOptions,
 				Values:           options.Values,
+				Atomic:           options.Atomic,
+				Wait:             options.Wait,
+				WaitForJobs:      options.WaitForJobs,
 			})
 		} else if err != nil {
 			return nil, err
@@ -99,6 +105,9 @@ func (c *Client) Upgrade(ctx context.Context, options *UpgradeOptions) (*release
 	client.ResetValues = options.ResetValues
 	client.ReuseValues = options.ReuseValues
 	client.MaxHistory = options.MaxHistory
+	client.Atomic = options.Atomic
+	client.Wait = options.Wait
+	client.WaitForJobs = options.WaitForJobs
 
 	options.ChartPathOptions.ApplyTo(&client.ChartPathOptions)
 

@@ -81,16 +81,23 @@ func Install(ctx context.Context,
 		return nil, err
 	}
 
+	var clientTimeout = defaultTimeout
+	if app.Spec.Chart.InstallPara.Timeout > 0 {
+		clientTimeout = app.Spec.Chart.InstallPara.Timeout
+	}
+
 	chartPathBasicOptions.ExistedFile = destfile
 	_, err = client.Install(ctx, &helmaction.InstallOptions{
 		Namespace:        newApp.Spec.TargetNamespace,
 		ReleaseName:      newApp.Spec.Name,
-		Atomic:           newApp.Spec.Chart.Atomic,
-		CreateNamespace:  newApp.Spec.Chart.CreateNamespace,
+		CreateNamespace:  newApp.Spec.Chart.InstallPara.CreateNamespace,
 		DependencyUpdate: true,
 		Values:           values,
-		Timeout:          clientTimeOut,
+		Timeout:          clientTimeout,
 		ChartPathOptions: chartPathBasicOptions,
+		Atomic:           newApp.Spec.Chart.InstallPara.Atomic,
+		Wait:             newApp.Spec.Chart.InstallPara.Wait,
+		WaitForJobs:      newApp.Spec.Chart.InstallPara.WaitForJobs,
 	})
 	if updateStatusFunc != nil {
 		newStatus := newApp.Status.DeepCopy()

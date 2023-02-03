@@ -49,7 +49,7 @@ func Uninstall(ctx context.Context,
 	resp, err := client.Uninstall(&helmaction.UninstallOptions{
 		Namespace:   app.Spec.TargetNamespace,
 		ReleaseName: app.Spec.Name,
-		Timeout:     clientTimeOut,
+		Timeout:     defaultTimeout,
 	})
 	if err != nil {
 		return resp, err
