@@ -53,7 +53,7 @@ var _ storage.RESTStorageProvider = &StorageProvider{}
 func (s *StorageProvider) NewRESTStorage(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter generic.RESTOptionsGetter) (genericserver.APIGroupInfo, bool) {
 	apiGroupInfo := genericserver.NewDefaultAPIGroupInfo(application.GroupName, application.Scheme, application.ParameterCodec, application.Codecs)
 
-	if apiResourceConfigSource.VersionEnabled(applicationv1.SchemeGroupVersion) {
+	if apiResourceConfigSource.ResourceEnabled(applicationv1.SchemeGroupVersion.WithResource("app")) {
 		apiGroupInfo.VersionedResourcesStorageMap[applicationv1.SchemeGroupVersion.Version] =
 			s.v1Storage(apiResourceConfigSource, restOptionsGetter, s.LoopbackClientConfig)
 	}

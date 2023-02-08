@@ -24,19 +24,18 @@ import (
 	"net/http/httputil"
 	"strconv"
 	"strings"
-	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 	"unicode"
+
+	genericoidc "tkestack.io/tke/pkg/apiserver/authentication/authenticator/oidc"
 
 	"github.com/go-openapi/inflect"
 	"golang.org/x/net/context"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
-	auditapi "k8s.io/apiserver/pkg/apis/audit"
 	"k8s.io/apiserver/pkg/audit"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	genericfilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericfilter "tkestack.io/tke/pkg/apiserver/filter"
 
@@ -89,10 +88,10 @@ func ExtractClusterNames(ctx context.Context, req *http.Request, resource string
 }
 
 func ForbiddenResponse(ctx context.Context, tkeAttributes authorizer.Attributes,
-	w http.ResponseWriter, req *http.Request, ae *auditapi.Event, s runtime.NegotiatedSerializer, reason string) {
+	w http.ResponseWriter, req *http.Request, s runtime.NegotiatedSerializer, reason string) {
 	log.Infof("Forbidden: %#v %#v, Reason: %q", req.Method, req.RequestURI, reason)
-	audit.LogAnnotation(ae, decisionAnnotationKey, decisionForbid)
-	audit.LogAnnotation(ae, reasonAnnotationKey, reason)
+	audit.AddAuditAnnotation(ctx, decisionAnnotationKey, decisionForbid)
+	audit.AddAuditAnnotation(ctx, reasonAnnotationKey, reason)
 	responsewriters.Forbidden(ctx, tkeAttributes, w, req, reason, s)
 }
 
@@ -123,7 +122,6 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 		}
 
 		ctx := req.Context()
-		ae := request.AuditEventFrom(ctx)
 		attributes, err := genericfilters.GetAuthorizerAttributes(ctx)
 		if err != nil {
 			responsewriters.InternalError(w, req, err)
@@ -169,18 +167,18 @@ func WithTKEAuthorization(handler http.Handler, a authorizer.Authorizer, s runti
 		// finaly check tke casbin resource authz resoult
 		// an authorizer like RBAC could encounter evaluation errors and still allow the request, so authorizer decision is checked before error here.
 		if authorized == authorizer.DecisionAllow {
-			audit.LogAnnotation(ae, decisionAnnotationKey, decisionAllow)
-			audit.LogAnnotation(ae, reasonAnnotationKey, reason)
+			audit.AddAuditAnnotation(ctx, decisionAnnotationKey, decisionAllow)
+			audit.AddAuditAnnotation(ctx, reasonAnnotationKey, reason)
 			handler.ServeHTTP(w, req)
 			return
 		}
 		if err != nil {
-			audit.LogAnnotation(ae, reasonAnnotationKey, reasonError)
+			audit.AddAuditAnnotation(ctx, reasonAnnotationKey, reasonError)
 			responsewriters.InternalError(w, req, err)
 			return
 		}
 
-		ForbiddenResponse(ctx, attributes, w, req, ae, s, reason)
+		ForbiddenResponse(ctx, attributes, w, req, s, reason)
 	})
 }
 
