@@ -117,11 +117,9 @@ func (AppValues) SwaggerDoc() map[string]string {
 }
 
 var map_Chart = map[string]string{
-	"":                "Chart is a description of a chart.",
-	"chartName":       "ChartName is the name of the chart.",
-	"chartVersion":    "ChartVersion is the version of the chart.",
-	"createNamespace": "CreateNamespace create namespace when install helm release",
-	"atomic":          "Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.",
+	"":             "Chart is a description of a chart.",
+	"chartName":    "ChartName is the name of the chart.",
+	"chartVersion": "ChartVersion is the version of the chart.",
 }
 
 func (Chart) SwaggerDoc() map[string]string {
@@ -147,6 +145,19 @@ func (ConfigMapList) SwaggerDoc() map[string]string {
 	return map_ConfigMapList
 }
 
+var map_HelmPublicPara = map[string]string{
+	"":                "public parameters used in helm install and helm upgrade command",
+	"clientTimeout":   "Client timeout when installiing or upgrading helm release, override default clientTimeOut",
+	"createNamespace": "CreateNamespace create namespace when install helm release",
+	"atomic":          "Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.",
+	"wait":            "Wait, if true, will wait until all Pods, PVCs, Services, and minimum number of Pods of a Deployment,StatefulSet, or ReplicaSet are in a ready state before marking the release as successful, or wait until client timeout",
+	"waitForJobs":     "WaitForJobs, if true, wait until all Jobs have been completed before marking the release as successful or wait until client timeout",
+}
+
+func (HelmPublicPara) SwaggerDoc() map[string]string {
+	return map_HelmPublicPara
+}
+
 var map_History = map[string]string{
 	"": "History is a history of a app.",
 }
@@ -155,12 +166,28 @@ func (History) SwaggerDoc() map[string]string {
 	return map_History
 }
 
+var map_InstallPara = map[string]string{
+	"": "parameters used to install a chart",
+}
+
+func (InstallPara) SwaggerDoc() map[string]string {
+	return map_InstallPara
+}
+
 var map_RollbackProxyOptions = map[string]string{
 	"": "RollbackProxyOptions is the query options to an app rollback proxy call.",
 }
 
 func (RollbackProxyOptions) SwaggerDoc() map[string]string {
 	return map_RollbackProxyOptions
+}
+
+var map_UpgradePara = map[string]string{
+	"": "parameters used to upgrade a chart",
+}
+
+func (UpgradePara) SwaggerDoc() map[string]string {
+	return map_UpgradePara
 }
 
 // AUTO-GENERATED FUNCTIONS END HERE

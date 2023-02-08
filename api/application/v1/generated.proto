@@ -205,11 +205,9 @@ message Chart {
 
   optional bool importedRepo = 8;
 
-  // CreateNamespace create namespace when install helm release
-  optional bool createNamespace = 9;
+  optional InstallPara installPara = 9;
 
-  // Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.
-  optional bool atomic = 10;
+  optional UpgradePara upgradePara = 10;
 }
 
 // ConfigMap holds configuration data for tke to consume.
@@ -243,6 +241,26 @@ message ConfigMapList {
   repeated ConfigMap items = 2;
 }
 
+// public parameters used in helm install and helm upgrade command
+message HelmPublicPara {
+  // Client timeout when installiing or upgrading helm release, override default clientTimeOut
+  optional int64 clientTimeout = 1;
+
+  // CreateNamespace create namespace when install helm release
+  optional bool createNamespace = 2;
+
+  // Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.
+  optional bool atomic = 3;
+
+  // Wait, if true, will wait until all Pods, PVCs, Services, and minimum number of Pods of a Deployment,StatefulSet,
+  // or ReplicaSet are in a ready state before marking the release as successful, or wait until client timeout
+  optional bool wait = 4;
+
+  // WaitForJobs, if true, wait until all Jobs have been completed before marking the release as successful
+  // or wait until client timeout
+  optional bool waitForJobs = 5;
+}
+
 // History is a history of a app.
 message History {
   optional int64 revision = 1;
@@ -258,6 +276,11 @@ message History {
   optional string description = 6;
 
   optional string manifest = 7;
+}
+
+// parameters used to install a chart
+message InstallPara {
+  optional HelmPublicPara helmPublicPara = 1;
 }
 
 // ResourceValues masks the value so protobuf can generate
@@ -277,5 +300,10 @@ message RollbackProxyOptions {
 
   // +optional
   optional string cluster = 2;
+}
+
+// parameters used to upgrade a chart
+message UpgradePara {
+  optional HelmPublicPara helmPublicPara = 1;
 }
 

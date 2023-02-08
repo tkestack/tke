@@ -20,6 +20,7 @@ package action
 
 import (
 	"context"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
@@ -101,21 +102,24 @@ func Upgrade(ctx context.Context,
 			return nil, err
 		}
 		chartPathBasicOptions.ExistedFile = destfile
-		wait := true
-		if app.Annotations != nil && app.Annotations["ignore-upgrade-wait"] == "true" {
-			wait = false
+
+		var clientTimeout = defaultTimeout
+		if app.Spec.Chart.UpgradePara.Timeout > 0 {
+			clientTimeout = app.Spec.Chart.UpgradePara.Timeout
 		}
+
 		_, err = client.Upgrade(ctx, &helmaction.UpgradeOptions{
 			Namespace:        app.Spec.TargetNamespace,
 			ReleaseName:      app.Spec.Name,
 			DependencyUpdate: true,
 			Install:          true,
 			Values:           values,
-			Timeout:          clientTimeOut,
+			Timeout:          clientTimeout,
 			ChartPathOptions: chartPathBasicOptions,
-			Wait:             wait,
-			WaitForJobs:      wait,
 			MaxHistory:       clientMaxHistory,
+			Atomic:           app.Spec.Chart.UpgradePara.Atomic,
+			Wait:             app.Spec.Chart.UpgradePara.Wait,
+			WaitForJobs:      app.Spec.Chart.UpgradePara.WaitForJobs,
 		})
 		if err != nil {
 			if updateStatusFunc != nil {
