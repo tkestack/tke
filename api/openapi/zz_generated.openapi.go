@@ -833,8 +833,11 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"tkestack.io/tke/api/application/v1.Chart":                                    schema_tke_api_application_v1_Chart(ref),
 		"tkestack.io/tke/api/application/v1.ConfigMap":                                schema_tke_api_application_v1_ConfigMap(ref),
 		"tkestack.io/tke/api/application/v1.ConfigMapList":                            schema_tke_api_application_v1_ConfigMapList(ref),
+		"tkestack.io/tke/api/application/v1.HelmPublicPara":                           schema_tke_api_application_v1_HelmPublicPara(ref),
 		"tkestack.io/tke/api/application/v1.History":                                  schema_tke_api_application_v1_History(ref),
+		"tkestack.io/tke/api/application/v1.InstallPara":                              schema_tke_api_application_v1_InstallPara(ref),
 		"tkestack.io/tke/api/application/v1.RollbackProxyOptions":                     schema_tke_api_application_v1_RollbackProxyOptions(ref),
+		"tkestack.io/tke/api/application/v1.UpgradePara":                              schema_tke_api_application_v1_UpgradePara(ref),
 		"tkestack.io/tke/api/auth/v1.APIKey":                                          schema_tke_api_auth_v1_APIKey(ref),
 		"tkestack.io/tke/api/auth/v1.APIKeyList":                                      schema_tke_api_auth_v1_APIKeyList(ref),
 		"tkestack.io/tke/api/auth/v1.APIKeyReq":                                       schema_tke_api_auth_v1_APIKeyReq(ref),
@@ -41651,26 +41654,24 @@ func schema_tke_api_application_v1_Chart(ref common.ReferenceCallback) common.Op
 							Format:  "",
 						},
 					},
-					"createNamespace": {
+					"installPara": {
 						SchemaProps: spec.SchemaProps{
-							Description: "CreateNamespace create namespace when install helm release",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
+							Default: map[string]interface{}{},
+							Ref:     ref("tkestack.io/tke/api/application/v1.InstallPara"),
 						},
 					},
-					"atomic": {
+					"upgradePara": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.",
-							Default:     false,
-							Type:        []string{"boolean"},
-							Format:      "",
+							Default: map[string]interface{}{},
+							Ref:     ref("tkestack.io/tke/api/application/v1.UpgradePara"),
 						},
 					},
 				},
-				Required: []string{"tenantID", "chartGroupName", "chartName", "chartVersion", "repoURL", "repoUsername", "repoPassword", "importedRepo", "createNamespace", "atomic"},
+				Required: []string{"tenantID", "chartGroupName", "chartName", "chartVersion", "repoURL", "repoUsername", "repoPassword", "importedRepo", "installPara", "upgradePara"},
 			},
 		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/application/v1.InstallPara", "tkestack.io/tke/api/application/v1.UpgradePara"},
 	}
 }
 
@@ -41790,6 +41791,60 @@ func schema_tke_api_application_v1_ConfigMapList(ref common.ReferenceCallback) c
 	}
 }
 
+func schema_tke_api_application_v1_HelmPublicPara(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "public parameters used in helm install and helm upgrade command",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"clientTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Client timeout when installiing or upgrading helm release, override default clientTimeOut",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"createNamespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CreateNamespace create namespace when install helm release",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"atomic": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"wait": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Wait, if true, will wait until all Pods, PVCs, Services, and minimum number of Pods of a Deployment,StatefulSet, or ReplicaSet are in a ready state before marking the release as successful, or wait until client timeout",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"waitForJobs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WaitForJobs, if true, wait until all Jobs have been completed before marking the release as successful or wait until client timeout",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"clientTimeout", "createNamespace", "atomic", "wait", "waitForJobs"},
+			},
+		},
+	}
+}
+
 func schema_tke_api_application_v1_History(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -41847,6 +41902,60 @@ func schema_tke_api_application_v1_History(ref common.ReferenceCallback) common.
 	}
 }
 
+func schema_tke_api_application_v1_InstallPara(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "parameters used to install a chart",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"clientTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Client timeout when installiing or upgrading helm release, override default clientTimeOut",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"createNamespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CreateNamespace create namespace when install helm release",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"atomic": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"wait": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Wait, if true, will wait until all Pods, PVCs, Services, and minimum number of Pods of a Deployment,StatefulSet, or ReplicaSet are in a ready state before marking the release as successful, or wait until client timeout",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"waitForJobs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WaitForJobs, if true, wait until all Jobs have been completed before marking the release as successful or wait until client timeout",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"clientTimeout", "createNamespace", "atomic", "wait", "waitForJobs"},
+			},
+		},
+	}
+}
+
 func schema_tke_api_application_v1_RollbackProxyOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -41881,6 +41990,60 @@ func schema_tke_api_application_v1_RollbackProxyOptions(ref common.ReferenceCall
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func schema_tke_api_application_v1_UpgradePara(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "parameters used to upgrade a chart",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"clientTimeout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Client timeout when installiing or upgrading helm release, override default clientTimeOut",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"createNamespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CreateNamespace create namespace when install helm release",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"atomic": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"wait": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Wait, if true, will wait until all Pods, PVCs, Services, and minimum number of Pods of a Deployment,StatefulSet, or ReplicaSet are in a ready state before marking the release as successful, or wait until client timeout",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"waitForJobs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WaitForJobs, if true, wait until all Jobs have been completed before marking the release as successful or wait until client timeout",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"clientTimeout", "createNamespace", "atomic", "wait", "waitForJobs"},
 			},
 		},
 	}
