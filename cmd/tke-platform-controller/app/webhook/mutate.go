@@ -7,29 +7,15 @@ import (
 	"net/http"
 
 	v1 "k8s.io/api/admission/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	platform "tkestack.io/tke/api/platform"
 	platformv1 "tkestack.io/tke/api/platform/v1"
-	"tkestack.io/tke/api/platform/validation"
 	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	"tkestack.io/tke/pkg/platform/types"
 	"tkestack.io/tke/pkg/util/log"
 )
 
-var (
-	runtimeScheme = runtime.NewScheme()
-	codecs        = serializer.NewCodecFactory(runtimeScheme)
-	deserializer  = codecs.UniversalDeserializer()
-)
-
-func init() {
-	_ = v1.AddToScheme(runtimeScheme)
-}
-
-func Validate(reponseWriter http.ResponseWriter, request *http.Request) {
+func Mutate(reponseWriter http.ResponseWriter, request *http.Request) {
 	var body []byte
 	var err error
 	if request.Body != nil {
@@ -80,9 +66,6 @@ func Validate(reponseWriter http.ResponseWriter, request *http.Request) {
 			return
 		}
 
-		if admissionReview.Request.Operation == v1.Create {
-			admissionResponse = ValidateCluster(&cluster)
-		}
 		if admissionReview.Request.Operation == v1.Update {
 			v1OldCluster := platformv1.Cluster{}
 			if err := json.Unmarshal(admissionReview.Request.OldObject.Raw, &v1OldCluster); err != nil {
@@ -96,7 +79,7 @@ func Validate(reponseWriter http.ResponseWriter, request *http.Request) {
 				http.Error(reponseWriter, fmt.Sprintf("Can't convert v1oldcluster to oldcluster, err: %v", err), http.StatusInternalServerError)
 				return
 			}
-			admissionResponse = ValidateClusterUpdate(&cluster, &oldCluster)
+			admissionResponse = MutateClusterUpdate(&cluster, &oldCluster)
 		}
 	default:
 		log.Errorf("Can't recognized request kind %v", admissionReview.Request.Kind)
@@ -120,20 +103,7 @@ func Validate(reponseWriter http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func ValidateCluster(cluster *platform.Cluster) *v1.AdmissionResponse {
-	typeCluster := types.Cluster{
-		Cluster: cluster,
-	}
-	errorList := validation.ValidateCluster(&typeCluster)
-	if len(errorList) == 0 {
-		return &v1.AdmissionResponse{
-			Allowed: true,
-		}
-	}
-	return transferErrorList(&errorList, fmt.Sprintf("cluster %s create validate failed: %v", cluster.Name, errorList.ToAggregate().Errors()))
-}
-
-func ValidateClusterUpdate(cluster *platform.Cluster, oldCluster *platform.Cluster) *v1.AdmissionResponse {
+func MutateClusterUpdate(cluster *platform.Cluster, oldCluster *platform.Cluster) *v1.AdmissionResponse {
 	typeCluster := types.Cluster{
 		Cluster: cluster,
 	}
@@ -145,35 +115,22 @@ func ValidateClusterUpdate(cluster *platform.Cluster, oldCluster *platform.Clust
 	p, err := clusterprovider.GetProvider(cluster.Spec.Type)
 	if err != nil {
 		errorList = append(errorList, field.NotFound(field.NewPath("spec").Child("type"), cluster.Spec.Type))
-		return transferErrorList(&errorList, fmt.Sprintf("cluster %s update validate failed: %v", oldCluster.Name, errorList.ToAggregate().Errors()))
+		return transferErrorList(&errorList, fmt.Sprintf("cluster %s update mutate failed: %v", oldCluster.Name, errorList.ToAggregate().Errors()))
 	}
-	errorList = append(errorList, p.ValidateUpdate(&typeCluster, &oldTypeCluster)...)
-	if len(errorList) == 0 {
+	jsonPatchByte, errorList := p.MutateUpdate(&typeCluster, &oldTypeCluster)
+	if len(errorList) != 0 {
+		return transferErrorList(&errorList, fmt.Sprintf("cluster %s update mutate failed: %v", oldCluster.Name, errorList.ToAggregate().Errors()))
+	}
+	if jsonPatchByte == nil {
 		return &v1.AdmissionResponse{
-			Allowed: true,
+			Allowed:   true,
 		}
 	}
-	return transferErrorList(&errorList, fmt.Sprintf("cluster %s update validate failed: %v", oldCluster.Name, errorList.ToAggregate().Errors()))
-}
 
-func transferErrorList(errorList *field.ErrorList, failedMessage string) *v1.AdmissionResponse {
-	causes := make([]metav1.StatusCause, 0)
-	for _, validateError := range *errorList {
-		cause := metav1.StatusCause{
-			Type:    metav1.CauseType(validateError.Type),
-			Message: validateError.Detail,
-			Field:   validateError.Field,
-		}
-		causes = append(causes, cause)
-	}
+	patchType := v1.PatchTypeJSONPatch
 	return &v1.AdmissionResponse{
-		Allowed: false,
-		Result: &metav1.Status{
-			Code:    400,
-			Message: failedMessage,
-			Details: &metav1.StatusDetails{
-				Causes: causes,
-			},
-		},
+		Allowed:   true,
+		Patch:     jsonPatchByte,
+		PatchType: &patchType,
 	}
 }

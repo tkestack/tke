@@ -723,6 +723,10 @@ message ClusterStatus {
   // AppVersion is the overall version of system components
   // +optional
   optional string appVersion = 21;
+
+  // ComponentPhase is the status of components, contains "deployed", "pending-upgrade", "failed" status
+  // +optional
+  optional string componentPhase = 22;
 }
 
 // ConfigMap holds configuration data for tke to consume.

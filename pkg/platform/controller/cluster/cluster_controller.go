@@ -227,7 +227,6 @@ func (c *Controller) needsUpdate(old *platformv1.Cluster, new *platformv1.Cluste
 	}
 	if old.Status.Phase != new.Status.Phase {
 		return true
-
 	}
 	if new.Status.Phase == platformv1.ClusterInitializing {
 		// if ResourceVersion is equal, it's an resync envent, should return true.
@@ -454,7 +453,13 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 				_, _ = c.platformClient.ClusterCredentials().Update(ctx, clusterWrapper.ClusterCredential, metav1.UpdateOptions{})
 			}
 
-			_, _ = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+			updatedCluster, _ := c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+			if c.isCRDMode {
+				if !reflect.DeepEqual(updatedCluster.ObjectMeta.Annotations, clusterWrapper.Cluster.ObjectMeta.Annotations) {
+					updatedCluster.Annotations = clusterWrapper.Cluster.Annotations
+					_, _ = c.platformClient.Clusters().Update(ctx, updatedCluster, metav1.UpdateOptions{})
+				}
+			}
 			return err
 		}
 		if clusterWrapper.IsCredentialChanged {
@@ -464,9 +469,21 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 			}
 			clusterWrapper.RegisterRestConfig(clusterWrapper.ClusterCredential.RESTConfig(cluster))
 		}
-		clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+		cls, err := c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 		if err != nil {
+			clusterWrapper.Cluster = cls
 			return err
+		}
+		if c.isCRDMode {
+			if !reflect.DeepEqual(cls.ObjectMeta.Annotations, clusterWrapper.Cluster.ObjectMeta.Annotations) {
+				cls.Annotations = clusterWrapper.Cluster.Annotations
+				clusterWrapper.Cluster, err = c.platformClient.Clusters().Update(ctx, cls, metav1.UpdateOptions{})
+				if err != nil {
+					return err
+				}
+			}
+		} else {
+			clusterWrapper.Cluster = cls
 		}
 	} else {
 		for clusterWrapper.Status.Phase != platformv1.ClusterRunning {
@@ -487,9 +504,21 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 				}
 				clusterWrapper.RegisterRestConfig(clusterWrapper.ClusterCredential.RESTConfig(cluster))
 			}
-			clusterWrapper.Cluster, err = c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
+			cls, err := c.platformClient.Clusters().UpdateStatus(ctx, clusterWrapper.Cluster, metav1.UpdateOptions{})
 			if err != nil {
+				clusterWrapper.Cluster = cls
 				return err
+			}
+			if c.isCRDMode {
+				if !reflect.DeepEqual(cls.ObjectMeta.Annotations, clusterWrapper.Cluster.ObjectMeta.Annotations) {
+					cls.Annotations = clusterWrapper.Cluster.Annotations
+					clusterWrapper.Cluster, err = c.platformClient.Clusters().Update(ctx, cls, metav1.UpdateOptions{})
+					if err != nil {
+						return err
+					}
+				}
+			} else {
+				clusterWrapper.Cluster = cls
 			}
 		}
 	}

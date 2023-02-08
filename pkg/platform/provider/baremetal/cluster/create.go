@@ -1678,7 +1678,7 @@ func (p *Provider) EnsureCheckAnywhereSubscription(ctx context.Context, c *v1.Cl
 	_ = wait.PollImmediate(15*time.Second, 10*time.Minute, func() (bool, error) {
 		for i, feed := range sub.Spec.Feeds {
 			var helmrelease *appsv1alpha1.HelmRelease
-			helmrelease, err = extenderapi.GetHelmRelease(hubClient, extenderapi.GenerateHelmReleaseName(sub.Name, feed), mcls.Namespace)
+			helmrelease, err = extenderapi.GetHelmRelease(hubClient, extenderapi.GenerateHelmReleaseName(sub.Name, feed.Namespace, feed.Name), mcls.Namespace)
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					return false, nil
@@ -1708,6 +1708,7 @@ func (p *Provider) EnsureCheckAnywhereSubscription(ctx context.Context, c *v1.Cl
 	}
 	// Update appVersion after all system components deployed
 	c.Status.AppVersion = c.Spec.AppVersion
+	c.Status.ComponentPhase = platformv1.ComponentDeployed
 	return nil
 }
 

@@ -1942,6 +1942,7 @@ func autoConvert_v1_ClusterStatus_To_platform_ClusterStatus(in *ClusterStatus, o
 	out.NodeCIDRMaskSizeIPv6 = in.NodeCIDRMaskSizeIPv6
 	out.KubeVendor = platform.KubeVendorType(in.KubeVendor)
 	out.AppVersion = in.AppVersion
+	out.ComponentPhase = platform.ComponentPhase(in.ComponentPhase)
 	return nil
 }
 
@@ -1973,6 +1974,7 @@ func autoConvert_platform_ClusterStatus_To_v1_ClusterStatus(in *platform.Cluster
 	out.NodeCIDRMaskSizeIPv6 = in.NodeCIDRMaskSizeIPv6
 	out.KubeVendor = KubeVendorType(in.KubeVendor)
 	out.AppVersion = in.AppVersion
+	out.ComponentPhase = ComponentPhase(in.ComponentPhase)
 	return nil
 }
 

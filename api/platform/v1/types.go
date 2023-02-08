@@ -125,6 +125,10 @@ const (
 	AnywhereLocalizationsAnno = "tkestack.io/anywhere-localizations"
 	// AnywhereMachinesAnno contains base64 machines json data
 	AnywhereMachinesAnno = "tkestack.io/anywhere-machines"
+	// AnywhereUpgradeRetryComponentAnno describe curent retry component when upgrade failed
+	AnywhereUpgradeRetryComponentAnno = "tkestack.io/anywhere-upgrade-retry-component"
+	// AnywhereUpgradeRetryComponentAnno describe anywhere upgrade stats
+	AnywhereUpgradeStatsAnno = "tkestack.io/anywhere-upgrade-stats"
 	// ClusterNameLable contains related cluster's name for no-cluster resources
 	ClusterNameLable = "tkestack.io/cluster-name"
 	// HubAPIServerAnno describe hub cluster api server url
@@ -281,6 +285,9 @@ type ClusterStatus struct {
 	// AppVersion is the overall version of system components
 	// +optional
 	AppVersion string `json:"appVersion,omitempty" protobuf:"bytes,21,opt,name=appVersion"`
+	// ComponentPhase is the status of components, contains "deployed", "pending-upgrade", "failed" status
+	// +optional
+	ComponentPhase ComponentPhase `json:"componentPhase,omitempty" protobuf:"bytes,22,opt,name=componentPhase"`
 }
 
 // FinalizerName is the name identifying a finalizer during cluster lifecycle.
@@ -338,6 +345,18 @@ const (
 	ClusterUpscaling ClusterPhase = "Upscaling"
 	// ClusterDownscaling means the cluster is undergoing graceful down scaling.
 	ClusterDownscaling ClusterPhase = "Downscaling"
+)
+
+// ComponentPhase defines the phase of anywhere cluster component
+type ComponentPhase string
+
+const (
+	// ComponentDeployed is the normal phase of anywhere cluster component
+	ComponentDeployed ComponentPhase = "deployed"
+	// ComponentPendingUpgrade means the anywhere cluster component is upgrading
+	ComponentPendingUpgrade ComponentPhase = "pending-upgrade"
+	// ComponentFailed means the anywhere cluster component upgrade failed
+	ComponentFailed ComponentPhase = "failed"
 )
 
 // ClusterCondition contains details for the current condition of this cluster.
