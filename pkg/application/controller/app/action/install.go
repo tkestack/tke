@@ -20,9 +20,9 @@ package action
 
 import (
 	"context"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"time"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
@@ -103,24 +103,43 @@ func Install(ctx context.Context,
 			return nil, err
 		}
 		chartPathBasicOptions.ExistedFile = destfile
-		wait := true
-		if app.Annotations != nil && app.Annotations["ignore-install-wait"] == "true" {
-			wait = false
+
+		/* provide compatibility with online tke addon apps */
+		if app.Annotations != nil && app.Annotations[applicationprovider.AnnotationProviderNameKey] == "managecontrolplane" {
+			newApp.Spec.Chart.InstallPara.Atomic = true
+			newApp.Spec.Chart.InstallPara.Wait = true
+			newApp.Spec.Chart.InstallPara.WaitForJobs = true
+			if app.Annotations["ignore-install-wait"] == "true" {
+				newApp.Spec.Chart.InstallPara.Atomic = false
+				newApp.Spec.Chart.InstallPara.Wait = false
+				newApp.Spec.Chart.InstallPara.WaitForJobs = false
+			}
+			if app.Labels != nil && app.Labels["application.tkestack.io/type"] == "internal-addon" && time.Now().After(app.CreationTimestamp.Add(5*time.Minute)) {
+				newApp.Spec.Chart.InstallPara.Atomic = false
+				newApp.Spec.Chart.InstallPara.Wait = false
+				newApp.Spec.Chart.InstallPara.WaitForJobs = false
+			}
 		}
-		if app.Labels != nil && app.Labels["application.tkestack.io/type"] == "internal-addon" && time.Now().After(app.CreationTimestamp.Add(5*time.Minute)) {
-			wait = false
+		/* compatibility over, above code need to be deleted atfer the online addon apps are migrated */
+
+		var clientTimeout = defaultTimeout
+		if app.Spec.Chart.InstallPara.Timeout > 0 {
+			clientTimeout = app.Spec.Chart.InstallPara.Timeout
 		}
+
 		_, err = client.Install(ctx, &helmaction.InstallOptions{
 			Namespace:        newApp.Spec.TargetNamespace,
 			ReleaseName:      newApp.Spec.Name,
 			DependencyUpdate: true,
 			Values:           values,
-			Timeout:          clientTimeOut,
+			Timeout:          clientTimeout,
 			ChartPathOptions: chartPathBasicOptions,
-			Wait:             wait,
-			WaitForJobs:      wait,
-			Atomic:           wait,
+			CreateNamespace:  newApp.Spec.Chart.InstallPara.CreateNamespace,
+			Atomic:           newApp.Spec.Chart.InstallPara.Atomic,
+			Wait:             newApp.Spec.Chart.InstallPara.Wait,
+			WaitForJobs:      newApp.Spec.Chart.InstallPara.WaitForJobs,
 		})
+
 		if err != nil {
 			if updateStatusFunc != nil {
 				newStatus := newApp.Status.DeepCopy()

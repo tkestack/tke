@@ -20,6 +20,7 @@ package v1
 
 import (
 	fmt "fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -77,15 +78,39 @@ type Chart struct {
 	// ChartName is the name of the chart.
 	ChartName string `json:"chartName" protobuf:"bytes,3,opt,name=chartName"`
 	// ChartVersion is the version of the chart.
-	ChartVersion string `json:"chartVersion" protobuf:"bytes,4,opt,name=chartVersion"`
-	RepoURL      string `json:"repoURL" protobuf:"bytes,5,opt,name=repoURL"`
-	RepoUsername string `json:"repoUsername" protobuf:"bytes,6,opt,name=repoUsername"`
-	RepoPassword string `json:"repoPassword" protobuf:"bytes,7,opt,name=repoPassword"`
-	ImportedRepo bool   `json:"importedRepo" protobuf:"bytes,8,opt,name=importedRepo"`
+	ChartVersion string      `json:"chartVersion" protobuf:"bytes,4,opt,name=chartVersion"`
+	RepoURL      string      `json:"repoURL" protobuf:"bytes,5,opt,name=repoURL"`
+	RepoUsername string      `json:"repoUsername" protobuf:"bytes,6,opt,name=repoUsername"`
+	RepoPassword string      `json:"repoPassword" protobuf:"bytes,7,opt,name=repoPassword"`
+	ImportedRepo bool        `json:"importedRepo" protobuf:"bytes,8,opt,name=importedRepo"`
+	InstallPara  InstallPara `json:"installPara" protobuf:"bytes,9,opt,name=installPara"`
+	UpgradePara  UpgradePara `json:"upgradePara" protobuf:"bytes,10,opt,name=upgradePara"`
+}
+
+//parameters used to install a chart
+type InstallPara struct {
+	HelmPublicPara `json:",inline" protobuf:"bytes,1,opt,name=helmPublicPara"`
+}
+
+//parameters used to upgrade a chart
+type UpgradePara struct {
+	HelmPublicPara `json:",inline" protobuf:"bytes,1,opt,name=helmPublicPara"`
+}
+
+//public parameters used in helm install and helm upgrade command
+type HelmPublicPara struct {
+	//Client timeout when installiing or upgrading helm release, override default clientTimeOut
+	Timeout time.Duration `json:"clientTimeout" protobuf:"bytes,1,opt,name=clientTimeout"`
 	// CreateNamespace create namespace when install helm release
-	CreateNamespace bool `json:"createNamespace" protobuf:"bytes,9,opt,name=createNamespace"`
+	CreateNamespace bool `json:"createNamespace" protobuf:"bytes,2,opt,name=createNamespace"`
 	// Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.
-	Atomic bool `json:"atomic" protobuf:"bytes,10,opt,name=atomic"`
+	Atomic bool `json:"atomic" protobuf:"bytes,3,opt,name=atomic"`
+	// Wait, if true, will wait until all Pods, PVCs, Services, and minimum number of Pods of a Deployment,StatefulSet,
+	//or ReplicaSet are in a ready state before marking the release as successful, or wait until client timeout
+	Wait bool `json:"wait" protobuf:"bytes,4,opt,name=wait"`
+	// WaitForJobs, if true, wait until all Jobs have been completed before marking the release as successful
+	// or wait until client timeout
+	WaitForJobs bool `json:"waitForJobs" protobuf:"bytes,5,opt,name=waitForJobs"`
 }
 
 // AppStatus represents information about the status of a bootstrap.

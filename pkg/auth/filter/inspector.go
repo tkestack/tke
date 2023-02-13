@@ -31,7 +31,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	genericfilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 )
 
@@ -63,7 +62,6 @@ func (i *clusterInspector) Inspect(handler http.Handler, c *genericapiserver.Con
 			handler.ServeHTTP(w, req)
 			return
 		}
-		ae := request.AuditEventFrom(ctx)
 		attributes, err := genericfilters.GetAuthorizerAttributes(ctx)
 		if err != nil {
 			responsewriters.InternalError(w, req, err)
@@ -78,7 +76,7 @@ func (i *clusterInspector) Inspect(handler http.Handler, c *genericapiserver.Con
 		}
 		if len(clusterNames) > maxCheckClusterNameCount &&
 			verb != createProjectAction && verb != updateProjectAction {
-			ForbiddenResponse(ctx, tkeAttributes, w, req, ae, c.Serializer,
+			ForbiddenResponse(ctx, tkeAttributes, w, req, c.Serializer,
 				"invalid request: too many clusterName in request")
 			return
 		}
@@ -88,7 +86,7 @@ func (i *clusterInspector) Inspect(handler http.Handler, c *genericapiserver.Con
 			tkeAttributes.GetResource(), tkeAttributes.GetName())
 		reason, valid := CheckClustersTenant(ctx, tenantID, clusterNames, i.platformClient, verb)
 		if !valid {
-			ForbiddenResponse(ctx, tkeAttributes, w, req, ae, c.Serializer, reason)
+			ForbiddenResponse(ctx, tkeAttributes, w, req, c.Serializer, reason)
 			return
 		}
 		handler.ServeHTTP(w, req)

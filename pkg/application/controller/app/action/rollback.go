@@ -20,6 +20,7 @@ package action
 
 import (
 	"context"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"tkestack.io/tke/pkg/util/metrics"
 
@@ -79,7 +80,7 @@ func Rollback(ctx context.Context,
 				Namespace:   app.Spec.TargetNamespace,
 				ReleaseName: app.Spec.Name,
 				Revision:    app.Status.RollbackRevision,
-				Timeout:     clientTimeOut,
+				Timeout:     defaultTimeout,
 			})
 		}
 

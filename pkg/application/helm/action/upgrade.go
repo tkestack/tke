@@ -30,6 +30,7 @@ import (
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+
 	"tkestack.io/tke/pkg/util/file"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -59,12 +60,12 @@ type UpgradeOptions struct {
 	// MaxHistory limits the maximum number of revisions saved per release
 	MaxHistory int
 
-	Wait        bool
-	WaitForJobs bool
-
 	DependencyUpdate bool
 	ReleaseName      string
 	Values           map[string]interface{}
+	Atomic           bool
+	Wait             bool
+	WaitForJobs      bool
 }
 
 // Upgrade upgrade a helm release
@@ -89,6 +90,7 @@ func (c *Client) Upgrade(ctx context.Context, options *UpgradeOptions) (*release
 				Description:      options.Description,
 				ChartPathOptions: options.ChartPathOptions,
 				Values:           options.Values,
+				Atomic:           options.Atomic,
 				Wait:             options.Wait,
 				WaitForJobs:      options.WaitForJobs,
 			})
@@ -105,6 +107,7 @@ func (c *Client) Upgrade(ctx context.Context, options *UpgradeOptions) (*release
 	client.ResetValues = options.ResetValues
 	client.ReuseValues = options.ReuseValues
 	client.MaxHistory = options.MaxHistory
+	client.Atomic = options.Atomic
 	client.Wait = options.Wait
 	client.WaitForJobs = options.WaitForJobs
 
