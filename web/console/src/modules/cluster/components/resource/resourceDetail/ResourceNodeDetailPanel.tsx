@@ -107,7 +107,9 @@ export class ResourceNodeDetailPanel extends React.Component<RootProps, {}> {
                 {this._renderAllocatableResource(resourceIns.status.allocatable)}
 
                 <ListItem label={t('podCIDR')}>
-                  <span className="text">{resourceIns.spec['podCIDR'] || '-'}</span>
+                  <span className="text">
+                    {resourceIns.metadata?.annotations?.['tke.cloud.tencent.com/pod-cidrs'] || '-'}
+                  </span>
                 </ListItem>
 
                 <ListItem label={t('容器运行时版本')}>
