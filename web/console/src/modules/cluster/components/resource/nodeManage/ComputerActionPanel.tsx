@@ -75,7 +75,7 @@ export class ComputerActionPanel extends React.Component<RootProps, State> {
         item.metadata.role,
         `cpu: ${item?.status?.capacity?.cpu ?? '-'} 核; 内存: ${item?.status?.capacity?.memory ?? '-'}`,
         this._reduceIp(item),
-        item.spec.podCIDR,
+        item?.metadata?.annotations?.['tke.cloud.tencent.com/pod-cidrs'],
         dateFormatter(new Date(item.metadata.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')
       ];
       rows.push(row);

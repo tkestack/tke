@@ -333,7 +333,11 @@ export class ComputerTablePanel extends React.Component<RootProps, State> {
         key: 'podCIDR',
         header: t('PodCIDR'),
         width: '12%',
-        render: x => <Text>{x.spec.podCIDR}</Text>
+        render: x => (
+          <>
+            <Text>{x.metadata?.annotations?.['tke.cloud.tencent.com/pod-cidrs'] || '-'}</Text>
+          </>
+        )
       },
       {
         key: 'createTime',
