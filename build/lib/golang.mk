@@ -85,6 +85,7 @@ endif
 .PHONY: go.lint
 go.lint: go.lint.verify
 	@echo "===========> Run golangci to lint source codes"
+	@ go version
 	@golangci-lint run $(ROOT_DIR)/...
 
 .PHONY: go.test.verify

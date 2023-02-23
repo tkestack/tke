@@ -196,7 +196,9 @@ func (rs *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 	}
 	app := obj.(*application.App)
 
-	if !rest.ValidNamespace(ctx, &app.ObjectMeta) {
+	requestNamespace, _ := genericapirequest.NamespaceFrom(ctx)
+	err = rest.EnsureObjectNamespaceMatchesRequestNamespace(requestNamespace, &app.ObjectMeta)
+	if err != nil {
 		return nil, false, errors.NewConflict(applicationapi.Resource("apps"), app.Namespace, fmt.Errorf("App.Namespace does not match the provided context"))
 	}
 

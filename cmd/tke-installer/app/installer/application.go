@@ -147,8 +147,8 @@ func (t *TKE) installApplication(ctx context.Context, expansionApp *types.Expans
 
 	app := &applicationv1.App{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace:   chart.TargetNamespace,
-			ClusterName: chart.TargetCluster,
+			Namespace:                 chart.TargetNamespace,
+			ZZZ_DeprecatedClusterName: chart.TargetCluster,
 		},
 		Spec: applicationv1.AppSpec{
 			Type:          constants.DefaultApplicationInstallDriverType,

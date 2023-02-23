@@ -19,17 +19,16 @@
 package apiserver
 
 import (
+	"k8s.io/apiserver/pkg/registry/generic"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	versionedinformers "tkestack.io/tke/api/client/informers/externalversions"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	"tkestack.io/tke/pkg/apiserver/storage"
-	"k8s.io/apiserver/pkg/registry/generic"
-	"tkestack.io/tke/pkg/util/log"
 	logagentv1 "tkestack.io/tke/api/logagent/v1"
+	"tkestack.io/tke/pkg/apiserver/storage"
 	logagentrest "tkestack.io/tke/pkg/logagent/registry/rest"
+	"tkestack.io/tke/pkg/util/log"
 )
-
 
 // ExtraConfig contains the additional configuration of apiserver.
 type ExtraConfig struct {
@@ -40,7 +39,6 @@ type ExtraConfig struct {
 	PlatformClient          platformversionedclient.PlatformV1Interface
 	PrivilegedUsername      string
 }
-
 
 // Config contains the core configuration instance of apiserver and
 // additional configuration.
@@ -89,9 +87,9 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 	//add provider here
 	restStorageProviders := []storage.RESTStorageProvider{
 		&logagentrest.StorageProvider{
-		LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
-		PrivilegedUsername:   c.ExtraConfig.PrivilegedUsername,
-		PlatformClient: c.ExtraConfig.PlatformClient,
+			LoopbackClientConfig: c.GenericConfig.LoopbackClientConfig,
+			PrivilegedUsername:   c.ExtraConfig.PrivilegedUsername,
+			PlatformClient:       c.ExtraConfig.PlatformClient,
 		},
 	}
 	m.InstallAPIs(c.ExtraConfig.APIResourceConfigSource, c.GenericConfig.RESTOptionsGetter, restStorageProviders...)
@@ -105,7 +103,7 @@ func (m *APIServer) InstallAPIs(apiResourceConfigSource serverstorage.APIResourc
 
 	for _, restStorageBuilder := range restStorageProviders {
 		groupName := restStorageBuilder.GroupName()
-		if !apiResourceConfigSource.AnyVersionForGroupEnabled(groupName) {
+		if !apiResourceConfigSource.AnyResourceForGroupEnabled(groupName) {
 			log.Infof("Skipping disabled API group %q.", groupName)
 			continue
 		}

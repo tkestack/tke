@@ -23,6 +23,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/authorization/union"
 	"k8s.io/apiserver/plugin/pkg/authorizer/webhook"
+	"k8s.io/client-go/tools/clientcmd"
 	authinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/auth/internalversion"
 	"tkestack.io/tke/cmd/tke-auth-api/app/options"
 	"tkestack.io/tke/pkg/apiserver/authorization/abac"
@@ -36,11 +37,15 @@ func NewAuthorizer(authClient authinternalclient.AuthInterface, authorizationOpt
 	)
 
 	if len(authorizationOpts.WebhookConfigFile) != 0 {
-		webhookAuthorizer, err := webhook.New(authorizationOpts.WebhookConfigFile,
+		restconfig, err := clientcmd.BuildConfigFromFlags("", authorizationOpts.WebhookConfigFile)
+		if err != nil {
+			return nil, err
+		}
+		webhookAuthorizer, err := webhook.New(restconfig,
 			authorizationOpts.WebhookVersion,
 			authorizationOpts.WebhookCacheAuthorizedTTL,
 			authorizationOpts.WebhookCacheUnauthorizedTTL,
-			*webhook.DefaultRetryBackoff(), nil)
+			*webhook.DefaultRetryBackoff())
 		if err != nil {
 			return nil, err
 		}

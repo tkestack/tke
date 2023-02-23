@@ -49,10 +49,8 @@ var _ storage.RESTStorageProvider = &StorageProvider{}
 // NewRESTStorage is a factory constructor to creates and returns the APIGroupInfo
 func (s *StorageProvider) NewRESTStorage(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter generic.RESTOptionsGetter) (genericserver.APIGroupInfo, bool) {
 	apiGroupInfo := genericserver.NewDefaultAPIGroupInfo(authz.GroupName, authz.Scheme, authz.ParameterCodec, authz.Codecs)
-	if apiResourceConfigSource.VersionEnabled(authzv1.SchemeGroupVersion) {
-		apiGroupInfo.VersionedResourcesStorageMap[authzv1.SchemeGroupVersion.Version] =
-			s.v1Storage(apiResourceConfigSource, restOptionsGetter, s.PlatformClient)
-	}
+	apiGroupInfo.VersionedResourcesStorageMap[authzv1.SchemeGroupVersion.Version] =
+		s.v1Storage(apiResourceConfigSource, restOptionsGetter, s.PlatformClient)
 	return apiGroupInfo, true
 }
 

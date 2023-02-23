@@ -20,6 +20,7 @@ package action
 
 import (
 	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/registry"
 	"tkestack.io/tke/pkg/application/helm/config"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -40,7 +41,12 @@ func NewClient(helmDriver string, restClientGetter *config.RESTClientGetter) *Cl
 
 func (c *Client) buildActionConfig(namespace string) (*action.Configuration, error) {
 	actionConfig := new(action.Configuration)
-	if err := actionConfig.Init(c.restClientGetter, namespace, c.helmDriver, log.Debugf); err != nil {
+	err := actionConfig.Init(c.restClientGetter, namespace, c.helmDriver, log.Debugf)
+	if err != nil {
+		return nil, err
+	}
+	actionConfig.RegistryClient, err = registry.NewClient()
+	if err != nil {
 		return nil, err
 	}
 	return actionConfig, nil

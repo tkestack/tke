@@ -130,8 +130,6 @@ func (h *execHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func newThrottledUpgradeAwareProxyHandler(location *url.URL, transport http.RoundTripper, wrapTransport, upgradeRequired bool, responder rest.Responder) *proxy.UpgradeAwareHandler {
 	handler := proxy.NewUpgradeAwareHandler(location, transport, wrapTransport, upgradeRequired, proxy.NewErrorResponder(responder))
-	handler.InterceptRedirects = true
-	handler.RequireSameHostRedirects = true
 	handler.MaxBytesPerSec = 0
 	return handler
 }

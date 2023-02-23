@@ -100,10 +100,10 @@ var (
 
 	_childNamespace = business.Namespace{
 		ObjectMeta: apimachinerymetav1.ObjectMeta{
-			ClusterName:     ClusterName,
-			Name:            NamespaceName,
-			Namespace:       ParentProjectName,
-			ResourceVersion: "v2",
+			ZZZ_DeprecatedClusterName: ClusterName,
+			Name:                      NamespaceName,
+			Namespace:                 ParentProjectName,
+			ResourceVersion:           "v2",
 		},
 		Spec: business.NamespaceSpec{
 			ClusterName: ClusterName,

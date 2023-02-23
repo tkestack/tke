@@ -51,9 +51,7 @@ var _ storage.RESTStorageProvider = &StorageProvider{}
 func (s *StorageProvider) NewRESTStorage(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter generic.RESTOptionsGetter) (genericserver.APIGroupInfo, bool) {
 	apiGroupInfo := genericserver.NewDefaultAPIGroupInfo(v1beta1.GroupName, platform.Scheme, metav1.ParameterCodec, platform.Codecs)
 
-	if apiResourceConfigSource.VersionEnabled(v1beta1.SchemeGroupVersion) {
-		apiGroupInfo.VersionedResourcesStorageMap[v1beta1.SchemeGroupVersion.Version] = s.v1Beta1Storage(restOptionsGetter, s.LoopbackClientConfig)
-	}
+	apiGroupInfo.VersionedResourcesStorageMap[v1beta1.SchemeGroupVersion.Version] = s.v1Beta1Storage(restOptionsGetter, s.LoopbackClientConfig)
 
 	return apiGroupInfo, true
 }
@@ -94,7 +92,7 @@ func (s *StorageProvider) v1Beta1Storage(restOptionsGetter generic.RESTOptionsGe
 		"replicasets/scale":                    replicaSetStore.Scale,
 		"replicasets/events":                   replicaSetStore.Events,
 		"networkpolicies":                      networkPolicyStore.NetworkPolicy,
-		"podSecurityPolicies":                  podSecurityPolicyStore.PodSecurityPolicy,
+		"podsecuritypolicies":                  podSecurityPolicyStore.PodSecurityPolicy,
 	}
 
 	return storageMap

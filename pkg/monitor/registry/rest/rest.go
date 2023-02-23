@@ -27,7 +27,7 @@ import (
 	businessversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/business/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/api/monitor"
-	"tkestack.io/tke/api/monitor/v1"
+	v1 "tkestack.io/tke/api/monitor/v1"
 	"tkestack.io/tke/pkg/apiserver/storage"
 	configmapstorage "tkestack.io/tke/pkg/monitor/registry/configmap/storage"
 	metricstorage "tkestack.io/tke/pkg/monitor/registry/metric/storage"
@@ -55,9 +55,7 @@ var _ storage.RESTStorageProvider = &StorageProvider{}
 func (s *StorageProvider) NewRESTStorage(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter generic.RESTOptionsGetter) (genericserver.APIGroupInfo, bool) {
 	apiGroupInfo := genericserver.NewDefaultAPIGroupInfo(monitor.GroupName, monitor.Scheme, monitor.ParameterCodec, monitor.Codecs)
 
-	if apiResourceConfigSource.VersionEnabled(v1.SchemeGroupVersion) {
-		apiGroupInfo.VersionedResourcesStorageMap[v1.SchemeGroupVersion.Version] = s.v1Storage(apiResourceConfigSource, restOptionsGetter, s.LoopbackClientConfig)
-	}
+	apiGroupInfo.VersionedResourcesStorageMap[v1.SchemeGroupVersion.Version] = s.v1Storage(apiResourceConfigSource, restOptionsGetter, s.LoopbackClientConfig)
 
 	return apiGroupInfo, true
 }

@@ -19,7 +19,7 @@
 package rest
 
 import (
-	"k8s.io/api/scheduling/v1"
+	v1 "k8s.io/api/scheduling/v1"
 	"k8s.io/api/scheduling/v1alpha1"
 	"k8s.io/api/scheduling/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,17 +48,11 @@ var _ storage.RESTStorageProvider = &StorageProvider{}
 func (s *StorageProvider) NewRESTStorage(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter generic.RESTOptionsGetter) (genericserver.APIGroupInfo, bool) {
 	apiGroupInfo := genericserver.NewDefaultAPIGroupInfo(v1beta1.GroupName, platform.Scheme, metav1.ParameterCodec, platform.Codecs)
 
-	if apiResourceConfigSource.VersionEnabled(v1beta1.SchemeGroupVersion) {
-		apiGroupInfo.VersionedResourcesStorageMap[v1beta1.SchemeGroupVersion.Version] = s.v1Beta1Storage(restOptionsGetter, s.LoopbackClientConfig)
-	}
+	apiGroupInfo.VersionedResourcesStorageMap[v1beta1.SchemeGroupVersion.Version] = s.v1Beta1Storage(restOptionsGetter, s.LoopbackClientConfig)
 
-	if apiResourceConfigSource.VersionEnabled(v1alpha1.SchemeGroupVersion) {
-		apiGroupInfo.VersionedResourcesStorageMap[v1alpha1.SchemeGroupVersion.Version] = s.v1Alpha1Storage(restOptionsGetter, s.LoopbackClientConfig)
-	}
+	apiGroupInfo.VersionedResourcesStorageMap[v1alpha1.SchemeGroupVersion.Version] = s.v1Alpha1Storage(restOptionsGetter, s.LoopbackClientConfig)
 
-	if apiResourceConfigSource.VersionEnabled(v1.SchemeGroupVersion) {
-		apiGroupInfo.VersionedResourcesStorageMap[v1.SchemeGroupVersion.Version] = s.v1Storage(restOptionsGetter, s.LoopbackClientConfig)
-	}
+	apiGroupInfo.VersionedResourcesStorageMap[v1.SchemeGroupVersion.Version] = s.v1Storage(restOptionsGetter, s.LoopbackClientConfig)
 
 	return apiGroupInfo, true
 }

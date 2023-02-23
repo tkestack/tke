@@ -20,10 +20,11 @@ package app
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/util/uuid"
-	"k8s.io/apiserver/pkg/server/healthz"
 	"os"
 	"time"
+
+	"k8s.io/apimachinery/pkg/util/uuid"
+	"k8s.io/apiserver/pkg/server/healthz"
 	"tkestack.io/tke/api/monitor"
 	"tkestack.io/tke/cmd/tke-monitor-controller/app/config"
 	"tkestack.io/tke/pkg/controller"
@@ -48,7 +49,7 @@ func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 	// serverMux is the handler for these controller *after* authn/authz filters have been applied
 	serverMux := controller.NewBaseHandler(&cfg.Component.Debugging, checks...)
 	handler := controller.BuildHandlerChain(serverMux, &cfg.Authorization, &cfg.Authentication, monitor.Codecs)
-	if _, err := cfg.SecureServing.Serve(handler, 0, stopCh); err != nil {
+	if _, _, err := cfg.SecureServing.Serve(handler, 0, stopCh); err != nil {
 		return err
 	}
 

@@ -22,6 +22,7 @@ import (
 	"context"
 	"os"
 	"time"
+
 	"tkestack.io/tke/api/authz"
 
 	"k8s.io/apimachinery/pkg/util/uuid"
@@ -49,7 +50,7 @@ func Run(cfg *config.Config, stopCh <-chan struct{}) error {
 	// serverMux is the handler for these controller *after* authn/authz filters have been applied
 	serverMux := controller.NewBaseHandler(&cfg.Component.Debugging, checks...)
 	handler := controller.BuildHandlerChain(serverMux, &cfg.Authorization, &cfg.Authentication, authz.Codecs)
-	if _, err := cfg.SecureServing.Serve(handler, 0, stopCh); err != nil {
+	if _, _, err := cfg.SecureServing.Serve(handler, 0, stopCh); err != nil {
 		return err
 	}
 
