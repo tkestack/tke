@@ -214,7 +214,9 @@ export function createVM({
 
         spec: {
           pvc: {
-            accessModes: item?.scProvisioner === 'rbd.csi.ceph.com' ? ['ReadWriteOnce'] : ['ReadWriteMany'],
+            accessModes: ['loopdevice.csi.infra.tce.io', 'rbd.csi.ceph.com'].includes(item?.scProvisioner)
+              ? ['ReadWriteOnce']
+              : ['ReadWriteMany'],
             resources: {
               requests: {
                 storage: `${item.size}Gi`
