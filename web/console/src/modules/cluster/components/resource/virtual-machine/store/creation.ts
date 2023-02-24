@@ -33,6 +33,7 @@ export const diskListState = atom<DiskInterface[]>({
       type: DiskTypeEnum.System,
       volumeMode: VolumeModeEnum.Filesystem,
       storageClass: null,
+      scProvisioner: null,
       size: 50
     },
 
@@ -42,6 +43,7 @@ export const diskListState = atom<DiskInterface[]>({
       type: DiskTypeEnum.Data,
       volumeMode: VolumeModeEnum.Filesystem,
       storageClass: null,
+      scProvisioner: null,
       size: 50
     }
   ]
@@ -56,7 +58,7 @@ export const storageClassListState = selector({
 
     const { items } = await storageClassAPI.fetchStorageClassList(clusterId);
 
-    return items?.map(({ metadata }) => ({ value: metadata?.name })) ?? [];
+    return items?.map(({ metadata, provisioner }) => ({ value: metadata?.name, provisioner })) ?? [];
   }
 });
 
