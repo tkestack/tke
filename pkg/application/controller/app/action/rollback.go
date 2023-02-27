@@ -70,7 +70,7 @@ func Rollback(ctx context.Context,
 	}
 
 	if newApp.Status.Message == "" || newApp.Status.Message == "hook pre rollback app failed" || newApp.Status.Message == "rollback app failed" {
-		client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
+		client, err := util.NewHelmClientWithProvider(ctx, platformClient, app)
 		if err != nil {
 			return nil, err
 		}

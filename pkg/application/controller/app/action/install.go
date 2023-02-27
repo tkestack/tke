@@ -90,7 +90,7 @@ func Install(ctx context.Context,
 	}
 
 	if newApp.Status.Message == "" || newApp.Status.Message == "hook pre install app failed" || newApp.Status.Message == "install app failed" {
-		client, err := util.NewHelmClient(ctx, platformClient, app.Spec.TargetCluster, app.Spec.TargetNamespace)
+		client, err := util.NewHelmClientWithProvider(ctx, platformClient, app)
 		if err != nil {
 			return nil, err
 		}
