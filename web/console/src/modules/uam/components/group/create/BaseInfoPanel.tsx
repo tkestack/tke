@@ -219,10 +219,10 @@ export const BaseInfoPanel = props => {
                   <Text>平台用户</Text>
                   <Text parent="div">平台预设角色，允许访问和管理大部分平台功能，可以新建集群及业务</Text>
                 </Radio>
-                <Radio name={tenantID ? `pol-${tenantID}-viewer` : 'pol-default-viewer'}>
+                {/* <Radio name={tenantID ? `pol-${tenantID}-viewer` : 'pol-default-viewer'}>
                   <Text>租户</Text>
                   <Text parent="div">平台预设角色，不绑定任何平台权限，仅能登录</Text>
-                </Radio>
+                </Radio> */}
                 <Radio name="custom">
                   <Text>自定义</Text>
                   {roleValue === 'custom' && (
