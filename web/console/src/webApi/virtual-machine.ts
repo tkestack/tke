@@ -1,3 +1,4 @@
+import { VolumeModeEnum } from '@src/modules/cluster/components/resource/virtual-machine/constants';
 import { Request, generateQueryString } from './request';
 
 const IMAGE_NAMESPACE = 'kube-public';
@@ -214,16 +215,16 @@ export function createVM({
 
         spec: {
           pvc: {
-            accessModes: ['loopdevice.csi.infra.tce.io', 'rbd.csi.ceph.com'].includes(item?.scProvisioner)
-              ? ['ReadWriteOnce']
-              : ['ReadWriteMany'],
+            accessModes: ['ReadWriteMany'],
             resources: {
               requests: {
                 storage: `${item.size}Gi`
               }
             },
 
-            volumeMode: item.volumeMode,
+            volumeMode: ['loopdevice.csi.infra.tce.io', 'rbd.csi.ceph.com'].includes(item?.scProvisioner)
+              ? VolumeModeEnum.Block
+              : VolumeModeEnum.Filesystem,
             storageClassName: item.storageClass
           },
 
