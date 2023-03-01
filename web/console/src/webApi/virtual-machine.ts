@@ -1,3 +1,4 @@
+import { VolumeModeEnum } from '@src/modules/cluster/components/resource/virtual-machine/constants';
 import { Request, generateQueryString } from './request';
 
 const IMAGE_NAMESPACE = 'kube-public';
@@ -221,7 +222,9 @@ export function createVM({
               }
             },
 
-            volumeMode: item.volumeMode,
+            volumeMode: ['loopdevice.csi.infra.tce.io', 'rbd.csi.ceph.com'].includes(item?.scProvisioner)
+              ? VolumeModeEnum.Block
+              : VolumeModeEnum.Filesystem,
             storageClassName: item.storageClass
           },
 

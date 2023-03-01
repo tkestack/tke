@@ -28,6 +28,7 @@ export interface DiskInterface {
   type: DiskTypeEnum;
   volumeMode: VolumeModeEnum;
   storageClass: string;
+  scProvisioner: string;
   size: number;
 }
 
