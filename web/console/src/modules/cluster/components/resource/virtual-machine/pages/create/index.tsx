@@ -64,7 +64,9 @@ export const VMCreatePanel = () => {
       });
 
       history.back();
-    } catch (error) {}
+    } catch (error) {
+      console.log('createVm error --->', error);
+    }
   }
 
   return (

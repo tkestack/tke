@@ -24,6 +24,7 @@ export const DiskPanel = () => {
         type: DiskTypeEnum.Data,
         volumeMode: VolumeModeEnum.Filesystem,
         storageClass: null,
+        scProvisioner: null,
         size: 50
       }
     ];
@@ -97,6 +98,9 @@ export const DiskPanel = () => {
               onChange={storageClass =>
                 modifyDiskItem({
                   storageClass,
+                  scProvisioner:
+                    storageClassListLoadable?.contents?.find(({ value }) => value === storageClass)?.provisioner ??
+                    null,
                   id
                 })
               }
