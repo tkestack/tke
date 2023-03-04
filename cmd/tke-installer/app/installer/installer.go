@@ -2221,33 +2221,33 @@ func (t *TKE) installIngressChart(ctx context.Context) error {
  controller:
    name: controller
    image:
-	 registry: registry.tke.com
-	 image: library/ingress-nginx-controller
-	 tag: "v1.1.3"
-	 digest: ""
-	 pullPolicy: IfNotPresent
-	 runAsUser: 101
-	 allowPrivilegeEscalation: true
+     registry: registry.tke.com
+     image: library/ingress-nginx-controller
+     tag: "v1.1.3"
+     digest: ""
+     pullPolicy: IfNotPresent
+     runAsUser: 101
+     allowPrivilegeEscalation: true
    containerName: controller
    containerPort:
-	 http: 80
-	 https: 443
+     http: 80
+     https: 443
    dnsPolicy: ClusterFirstWithHostNet
    hostNetwork: true
    ingressClass: nginx
    kind: DaemonSet
    nodeSelector:
-	 node-role.kubernetes.io/master: ""
+     node-role.kubernetes.io/master: ""
    service:
-	 enabled: false
+     enabled: false
    admissionWebhooks:
-	 patch:
-	   enabled: true
-	   image:
-		 registry: registry.tke.com
-		 image: library/kube-webhook-certgen
-		 tag: "v1.1.1"
-		 digest: ""
+     patch:
+       enabled: true
+       image:
+         registry: registry.tke.com
+         image: library/kube-webhook-certgen
+         tag: "v1.1.1"
+         digest: ""
  `
 	tkeRegistry := &types.PlatformApp{
 		HelmInstallOptions: &helmaction.InstallOptions{
