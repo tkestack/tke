@@ -117,9 +117,10 @@ func (c *Client) InstallWithLocal(ctx context.Context, options *InstallOptions, 
 			// release 记录已存在，状态为其他，删除重试
 			log.Infof("Release %s is already exist, status is %s. delete it now.", options.ReleaseName, rel.Info.Status)
 			c.Uninstall(&UninstallOptions{
-				Namespace:   options.Namespace,
-				ReleaseName: options.ReleaseName,
-				Timeout:     options.Timeout,
+				Namespace:    options.Namespace,
+				ReleaseName:  options.ReleaseName,
+				Timeout:      options.Timeout,
+				DisableHooks: true,
 			})
 		}
 	}

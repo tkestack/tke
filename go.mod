@@ -19,6 +19,7 @@ replace (
 	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v0.20.0
 	go.opentelemetry.io/proto/otlp => go.opentelemetry.io/proto/otlp v0.7.0
 	google.golang.org/grpc => google.golang.org/grpc v1.38.0
+	helm.sh/helm/v3 => github.com/GaoXiaodong/helm/v3 v3.0.0-20230307081209-b0c7a18b87bd
 	k8s.io/api => k8s.io/api v0.24.0
 	k8s.io/apimachinery => k8s.io/apimachinery v0.24.0
 	k8s.io/client-go => k8s.io/client-go v0.24.0
@@ -285,7 +286,6 @@ require (
 	go.opentelemetry.io/proto/otlp v0.11.0 // indirect
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
-	go.uber.org/goleak v1.1.12 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
