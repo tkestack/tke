@@ -1281,9 +1281,9 @@ func createPrometheusCRD(components images.Components, prometheus *v1.Prometheus
 				}
 				rw.QueueConfig = &monitoringv1.QueueConfig{
 					Capacity:          10000,
-					MinShards:         1000,
-					MaxShards:         1000,
-					MaxSamplesPerSend: 1000,
+					MinShards:         1,
+					MaxShards:         24,
+					MaxSamplesPerSend: 500,
 					BatchSendDeadline: "30s",
 				}
 			}
