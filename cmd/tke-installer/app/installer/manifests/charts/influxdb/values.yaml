@@ -7,3 +7,12 @@ cephRbdStorageClassName:
 nfs: 
 nfsPVCName: 
 nfsStorageClassName: 
+
+
+resources:
+  limits:
+    cpu: 4
+    memory: 4Gi
+  requests:
+    cpu: 50m
+    memory: 128Mi
