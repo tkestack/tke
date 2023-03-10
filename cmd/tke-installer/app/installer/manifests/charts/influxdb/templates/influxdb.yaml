@@ -18,7 +18,14 @@ spec:
         app: influxdb
     spec:
       containers:
-      - name: influxdb
+      - env:
+        - name: GODEGUB
+          value: madvdontneed=1
+        {{- if .Values.resources }}
+        - name: GOMAXPROCS
+          value: {{ .Values.resources.limits.cpu| quote }}
+        {{- end }}
+        name: influxdb
         image: {{ .Values.image }}
         livenessProbe:
           tcpSocket:
@@ -30,6 +37,9 @@ spec:
             port: 8086
           initialDelaySeconds: 1
           periodSeconds: 10
+      {{- if .Values.resources }}
+        resources: {{ toYaml .Values.resources | nindent 10 }}
+      {{- end }}
         volumeMounts:
         - name: data
           mountPath: /var/lib/influxdb
