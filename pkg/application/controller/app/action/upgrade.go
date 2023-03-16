@@ -102,17 +102,6 @@ func Upgrade(ctx context.Context,
 			return nil, err
 		}
 		chartPathBasicOptions.ExistedFile = destfile
-		//* provide compatibility with online tke addon apps */
-		if app.Annotations != nil && app.Annotations[applicationprovider.AnnotationProviderNameKey] == "managecontrolplane" {
-			app.Spec.Chart.UpgradePara.Atomic = false
-			app.Spec.Chart.UpgradePara.Wait = true
-			app.Spec.Chart.UpgradePara.WaitForJobs = true
-			if app.Annotations["ignore-upgrade-wait"] == "true" {
-				app.Spec.Chart.UpgradePara.Wait = false
-				app.Spec.Chart.UpgradePara.WaitForJobs = false
-			}
-		}
-		//* compatibility over, above code need to be deleted atfer the online addon apps are migrated */
 
 		var clientTimeout = defaultTimeout
 		if app.Spec.Chart.UpgradePara.Timeout > 0 {

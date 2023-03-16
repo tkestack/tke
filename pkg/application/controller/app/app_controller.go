@@ -382,9 +382,6 @@ func (c *Controller) handlePhase(ctx context.Context, key string, cachedApp *cac
 }
 
 func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedApp, app *applicationv1.App) (*applicationv1.App, error) {
-	if app.Status.Phase == applicationv1.AppPhaseSucceeded && hasSynced(app) {
-		return app, nil
-	}
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error("syncAppFromRelease panic")
@@ -403,7 +400,7 @@ func (c *Controller) syncAppFromRelease(ctx context.Context, cachedApp *cachedAp
 	rel, found := helmutil.Filter(rels, app.Spec.TargetNamespace, app.Spec.Name)
 	if !found {
 		// release not found, reinstall for reconcile
-		newStatus.Phase = applicationv1.AppPhaseSyncFailed
+		newStatus.Phase = applicationv1.AppPhaseInstalling
 		newStatus.Message = "sync app failed"
 		newStatus.Reason = fmt.Sprintf("release not found: %s/%s", app.Spec.TargetNamespace, app.Spec.Name)
 		newStatus.LastTransitionTime = metav1.Now()

@@ -22,7 +22,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	securejoin "github.com/cyphar/filepath-securejoin"
@@ -98,30 +97,6 @@ func (c *Client) InstallWithLocal(ctx context.Context, options *InstallOptions, 
 	actionConfig, err := c.buildActionConfig(options.Namespace)
 	if err != nil {
 		return nil, err
-	}
-
-	histClient := action.NewHistory(actionConfig)
-	histClient.Max = 1
-	rels, err := histClient.Run(options.ReleaseName)
-	if err != nil {
-		if !strings.Contains(err.Error(), "release: not found") {
-			return nil, err
-		}
-	} else {
-		for _, rel := range rels {
-			if rel.Info.Status == release.StatusDeployed {
-				// release 记录已存在，状态为deployed，不再进行重复安装
-				log.Infof("Release %s is already exist. igonre it now.", options.ReleaseName)
-				return nil, nil
-			}
-			// release 记录已存在，状态为其他，删除重试
-			log.Infof("Release %s is already exist, status is %s. delete it now.", options.ReleaseName, rel.Info.Status)
-			c.Uninstall(&UninstallOptions{
-				Namespace:   options.Namespace,
-				ReleaseName: options.ReleaseName,
-				Timeout:     options.Timeout,
-			})
-		}
 	}
 
 	client := action.NewInstall(actionConfig)

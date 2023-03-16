@@ -20,7 +20,6 @@ package action
 
 import (
 	"context"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applicationv1 "tkestack.io/tke/api/application/v1"
@@ -103,24 +102,6 @@ func Install(ctx context.Context,
 			return nil, err
 		}
 		chartPathBasicOptions.ExistedFile = destfile
-
-		/* provide compatibility with online tke addon apps */
-		if app.Annotations != nil && app.Annotations[applicationprovider.AnnotationProviderNameKey] == "managecontrolplane" {
-			newApp.Spec.Chart.InstallPara.Atomic = true
-			newApp.Spec.Chart.InstallPara.Wait = true
-			newApp.Spec.Chart.InstallPara.WaitForJobs = true
-			if app.Annotations["ignore-install-wait"] == "true" {
-				newApp.Spec.Chart.InstallPara.Atomic = false
-				newApp.Spec.Chart.InstallPara.Wait = false
-				newApp.Spec.Chart.InstallPara.WaitForJobs = false
-			}
-			if app.Labels != nil && app.Labels["application.tkestack.io/type"] == "internal-addon" && time.Now().After(app.CreationTimestamp.Add(5*time.Minute)) {
-				newApp.Spec.Chart.InstallPara.Atomic = false
-				newApp.Spec.Chart.InstallPara.Wait = false
-				newApp.Spec.Chart.InstallPara.WaitForJobs = false
-			}
-		}
-		/* compatibility over, above code need to be deleted atfer the online addon apps are migrated */
 
 		var clientTimeout = defaultTimeout
 		if app.Spec.Chart.InstallPara.Timeout > 0 {
