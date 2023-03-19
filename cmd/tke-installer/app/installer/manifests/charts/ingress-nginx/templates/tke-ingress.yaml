@@ -45,4 +45,13 @@ spec:
                 name: tke-gateway
                 port:
                   number: 80
+    - http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: tke-gateway
+                port:
+                  number: 80
   ingressClassName: nginx
