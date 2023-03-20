@@ -69,10 +69,10 @@ var (
 
 	_testNamespace = business.Namespace{
 		ObjectMeta: apimachinerymetav1.ObjectMeta{
-			ClusterName:     ClusterName,
-			Name:            NamespaceName,
-			Namespace:       ProjectName,
-			ResourceVersion: "v2",
+			ZZZ_DeprecatedClusterName: ClusterName,
+			Name:                      NamespaceName,
+			Namespace:                 ProjectName,
+			ResourceVersion:           "v2",
 		},
 		Spec: business.NamespaceSpec{
 			ClusterName: ClusterName,
@@ -86,10 +86,10 @@ var (
 	}
 	_oldNamespace = business.Namespace{
 		ObjectMeta: apimachinerymetav1.ObjectMeta{
-			ClusterName:     ClusterName,
-			Name:            NamespaceName,
-			Namespace:       ProjectName,
-			ResourceVersion: "v1",
+			ZZZ_DeprecatedClusterName: ClusterName,
+			Name:                      NamespaceName,
+			Namespace:                 ProjectName,
+			ResourceVersion:           "v1",
 		},
 		Spec: business.NamespaceSpec{
 			ClusterName: ClusterName,

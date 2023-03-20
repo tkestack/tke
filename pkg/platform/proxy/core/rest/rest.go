@@ -19,9 +19,11 @@
 package rest
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericserver "k8s.io/apiserver/pkg/server"
+	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	restclient "k8s.io/client-go/rest"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/api/platform"
@@ -55,7 +57,7 @@ type LegacyRESTStorage struct {
 
 // NewLegacyRESTStorage creates the APIGroupInfo by given rest options and
 // returns it.
-func (c LegacyRESTStorageProvider) NewLegacyRESTStorage(restOptionsGetter generic.RESTOptionsGetter, loopbackClientConfig *restclient.Config) (*genericserver.APIGroupInfo, error) {
+func (c LegacyRESTStorageProvider) NewLegacyRESTStorage(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter generic.RESTOptionsGetter, loopbackClientConfig *restclient.Config) (*genericserver.APIGroupInfo, error) {
 	apiGroupInfo := &genericserver.APIGroupInfo{
 		PrioritizedVersions:          platform.Scheme.PrioritizedVersionsForGroup(""),
 		VersionedResourcesStorageMap: map[string]map[string]rest.Storage{},
@@ -66,63 +68,113 @@ func (c LegacyRESTStorageProvider) NewLegacyRESTStorage(restOptionsGetter generi
 
 	platformClient := platforminternalclient.NewForConfigOrDie(loopbackClientConfig)
 
-	podStore := podstorage.NewStorage(restOptionsGetter, platformClient)
-	podTemplateStore := podtemplatestorage.NewStorage(restOptionsGetter, platformClient)
-	endpointsStore := endpointsstorage.NewStorage(restOptionsGetter, platformClient)
-	replicationControllerStore := replicationcontrollerstorage.NewStorage(restOptionsGetter, platformClient)
-	namespaceStore := namespacestorage.NewStorage(restOptionsGetter, platformClient)
-	nodeStore := nodestorage.NewStorage(restOptionsGetter, platformClient)
-	serviceStore := servicestorage.NewStorage(restOptionsGetter, platformClient)
-	resourceQuotaStore := resourcequotastorage.NewStorage(restOptionsGetter, platformClient)
-	componentStatusStore := componentstatusstorage.NewStorage(restOptionsGetter, platformClient)
-	limitRangeStore := limitrangestorage.NewStorage(restOptionsGetter, platformClient)
-	configMapStore := configmapstorage.NewStorage(restOptionsGetter, platformClient)
-	persistentVolumeStore := persistentvolumestorage.NewStorage(restOptionsGetter, platformClient)
-	persistentVolumeClaimStore := persistentvolumeclaimstorage.NewStorage(restOptionsGetter, platformClient)
-	serviceAccountStore := serviceaccountstorage.NewStorage(restOptionsGetter, platformClient)
-	secretStore := secretstorage.NewStorage(restOptionsGetter, platformClient)
-	eventStore := eventstorage.NewStorage(restOptionsGetter, platformClient)
+	podStorage := podstorage.NewStorage(restOptionsGetter, platformClient)
+	podTemplateStorage := podtemplatestorage.NewStorage(restOptionsGetter, platformClient)
+	endpointsStorage := endpointsstorage.NewStorage(restOptionsGetter, platformClient)
+	replicationControllerStorage := replicationcontrollerstorage.NewStorage(restOptionsGetter, platformClient)
+	namespaceStorage := namespacestorage.NewStorage(restOptionsGetter, platformClient)
+	nodeStorage := nodestorage.NewStorage(restOptionsGetter, platformClient)
+	serviceStorage := servicestorage.NewStorage(restOptionsGetter, platformClient)
+	resourceQuotaStorage := resourcequotastorage.NewStorage(restOptionsGetter, platformClient)
+	componentStatusStorage := componentstatusstorage.NewStorage(restOptionsGetter, platformClient)
+	limitRangeStorage := limitrangestorage.NewStorage(restOptionsGetter, platformClient)
+	configMapStorage := configmapstorage.NewStorage(restOptionsGetter, platformClient)
+	persistentVolumeStorage := persistentvolumestorage.NewStorage(restOptionsGetter, platformClient)
+	persistentVolumeClaimStorage := persistentvolumeclaimstorage.NewStorage(restOptionsGetter, platformClient)
+	serviceAccountStorage := serviceaccountstorage.NewStorage(restOptionsGetter, platformClient)
+	secretStorage := secretstorage.NewStorage(restOptionsGetter, platformClient)
+	eventStorage := eventstorage.NewStorage(restOptionsGetter, platformClient)
 
-	restStorageMap := map[string]rest.Storage{
-		"pods":                          podStore.Pod,
-		"pods/status":                   podStore.Status,
-		"pods/binding":                  podStore.Binding,
-		"pods/events":                   podStore.Events,
-		"pods/log":                      podStore.Log,
-		"pods/exec":                     podStore.Exec,
-		"bindings":                      podStore.Binding,
-		"podTemplates":                  podTemplateStore.PodTemplate,
-		"replicationControllers":        replicationControllerStore.ReplicationController,
-		"replicationControllers/pods":   replicationControllerStore.Pods,
-		"replicationControllers/status": replicationControllerStore.Status,
-		"replicationControllers/scale":  replicationControllerStore.Scale,
-		"replicationControllers/events": replicationControllerStore.Events,
-		"services":                      serviceStore.Service,
-		"services/status":               serviceStore.Status,
-		"services/events":               serviceStore.Events,
-		"endpoints":                     endpointsStore.Endpoint,
-		"limitRanges":                   limitRangeStore.LimitRange,
-		"resourceQuotas":                resourceQuotaStore.ResourceQuota,
-		"resourceQuotas/status":         resourceQuotaStore.Status,
-		"namespaces":                    namespaceStore.Namespace,
-		"namespaces/status":             namespaceStore.Status,
-		"namespaces/finalize":           namespaceStore.Finalize,
-		"nodes":                         nodeStore.Node,
-		"nodes/pods":                    nodeStore.Pods,
-		"nodes/status":                  nodeStore.Status,
-		"events":                        eventStore.Event,
-		"secrets":                       secretStore.Secret,
-		"serviceAccounts":               serviceAccountStore.ServiceAccount,
-		"persistentVolumes":             persistentVolumeStore.PersistentVolume,
-		"persistentVolumes/status":      persistentVolumeStore.Status,
-		"persistentVolumes/events":      persistentVolumeStore.Events,
-		"persistentVolumeClaims":        persistentVolumeClaimStore.PersistentVolumeClaim,
-		"persistentVolumeClaims/status": persistentVolumeClaimStore.Status,
-		"persistentVolumeClaims/events": persistentVolumeClaimStore.Events,
-		"configMaps":                    configMapStore.ConfigMap,
-		"componentStatuses":             componentStatusStore.ComponentStatus,
+	storage := map[string]rest.Storage{}
+	if resource := "pods"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = podStorage.Pod
+		storage[resource+"/status"] = podStorage.Status
+		storage[resource+"/log"] = podStorage.Log
+		storage[resource+"/exec"] = podStorage.Exec
+		storage[resource+"/binding"] = podStorage.Binding
+		storage[resource+"/events"] = podStorage.Events
+
+	}
+	if resource := "bindings"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = podStorage.Binding
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap["v1"] = restStorageMap
+	if resource := "podtemplates"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = podTemplateStorage.PodTemplate
+	}
+
+	if resource := "replicationcontrollers"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = replicationControllerStorage.ReplicationController
+		storage[resource+"/status"] = replicationControllerStorage.Status
+		storage[resource+"/scale"] = replicationControllerStorage.Scale
+		storage[resource+"/events"] = replicationControllerStorage.Events
+	}
+
+	if resource := "services"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = serviceStorage.Service
+		storage[resource+"/status"] = serviceStorage.Status
+		storage[resource+"/events"] = serviceStorage.Events
+	}
+
+	if resource := "endpoints"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = endpointsStorage.Endpoint
+	}
+
+	if resource := "nodes"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = nodeStorage.Node
+		storage[resource+"/status"] = nodeStorage.Status
+	}
+
+	if resource := "events"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = eventStorage.Event
+	}
+
+	if resource := "limitranges"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = limitRangeStorage.LimitRange
+	}
+
+	if resource := "resourcequotas"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = resourceQuotaStorage.ResourceQuota
+		storage[resource+"/status"] = resourceQuotaStorage.Status
+	}
+
+	if resource := "namespaces"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = namespaceStorage.Namespace
+		storage[resource+"/status"] = namespaceStorage.Status
+		storage[resource+"/finalize"] = namespaceStorage.Finalize
+	}
+
+	if resource := "secrets"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = secretStorage.Secret
+	}
+
+	if resource := "serviceaccounts"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = serviceAccountStorage.ServiceAccount
+	}
+
+	if resource := "persistentvolumes"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = persistentVolumeStorage.PersistentVolume
+		storage[resource+"/status"] = persistentVolumeStorage.Status
+		storage[resource+"/events"] = persistentVolumeStorage.Events
+	}
+
+	if resource := "persistentvolumeclaims"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = persistentVolumeClaimStorage.PersistentVolumeClaim
+		storage[resource+"/status"] = persistentVolumeClaimStorage.Status
+		storage[resource+"/events"] = persistentVolumeClaimStorage.Events
+	}
+
+	if resource := "configmaps"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = configMapStorage.ConfigMap
+	}
+
+	if resource := "componentstatuses"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
+		storage[resource] = componentStatusStorage.ComponentStatus
+	}
+
+	if len(storage) > 0 {
+		apiGroupInfo.VersionedResourcesStorageMap["v1"] = storage
+	}
+
 	return apiGroupInfo, nil
 }

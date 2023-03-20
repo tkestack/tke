@@ -50,17 +50,11 @@ var _ storage.RESTStorageProvider = &StorageProvider{}
 func (s *StorageProvider) NewRESTStorage(apiResourceConfigSource serverstorage.APIResourceConfigSource, restOptionsGetter generic.RESTOptionsGetter) (genericserver.APIGroupInfo, bool) {
 	apiGroupInfo := genericserver.NewDefaultAPIGroupInfo(appsv1.GroupName, platform.Scheme, platform.ParameterCodec, platform.Codecs)
 
-	if apiResourceConfigSource.VersionEnabled(appsv1.SchemeGroupVersion) {
-		apiGroupInfo.VersionedResourcesStorageMap[appsv1.SchemeGroupVersion.Version] = s.v1Storage(restOptionsGetter, s.LoopbackClientConfig)
-	}
+	apiGroupInfo.VersionedResourcesStorageMap[appsv1.SchemeGroupVersion.Version] = s.v1Storage(restOptionsGetter, s.LoopbackClientConfig)
 
-	if apiResourceConfigSource.VersionEnabled(appsv1beta1.SchemeGroupVersion) {
-		apiGroupInfo.VersionedResourcesStorageMap[appsv1beta1.SchemeGroupVersion.Version] = s.v1Beta1Storage(restOptionsGetter, s.LoopbackClientConfig)
-	}
+	apiGroupInfo.VersionedResourcesStorageMap[appsv1beta1.SchemeGroupVersion.Version] = s.v1Beta1Storage(restOptionsGetter, s.LoopbackClientConfig)
 
-	if apiResourceConfigSource.VersionEnabled(appsv1beta2.SchemeGroupVersion) {
-		apiGroupInfo.VersionedResourcesStorageMap[appsv1beta2.SchemeGroupVersion.Version] = s.v1Beta2Storage(restOptionsGetter, s.LoopbackClientConfig)
-	}
+	apiGroupInfo.VersionedResourcesStorageMap[appsv1beta2.SchemeGroupVersion.Version] = s.v1Beta2Storage(restOptionsGetter, s.LoopbackClientConfig)
 
 	return apiGroupInfo, true
 }

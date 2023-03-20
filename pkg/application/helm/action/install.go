@@ -98,6 +98,7 @@ func (c *Client) InstallWithLocal(ctx context.Context, options *InstallOptions, 
 	if err != nil {
 		return nil, err
 	}
+
 	client := action.NewInstall(actionConfig)
 	client.DryRun = options.DryRun
 	client.DependencyUpdate = options.DependencyUpdate
@@ -108,6 +109,8 @@ func (c *Client) InstallWithLocal(ctx context.Context, options *InstallOptions, 
 	client.IsUpgrade = options.IsUpgrade
 	client.Atomic = options.Atomic
 	client.CreateNamespace = options.CreateNamespace
+	client.Wait = options.Wait
+	client.WaitForJobs = options.WaitForJobs
 
 	options.ChartPathOptions.ApplyTo(&client.ChartPathOptions)
 

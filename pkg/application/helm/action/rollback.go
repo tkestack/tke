@@ -29,6 +29,8 @@ type RollbackOptions struct {
 	ReleaseName string
 	Revision    int64
 	Timeout     time.Duration
+	Wait        bool
+	WaitForJobs bool
 }
 
 // Rollback roll back to the previous release.
@@ -40,5 +42,7 @@ func (c *Client) Rollback(options *RollbackOptions) error {
 	client := action.NewRollback(actionConfig)
 	client.Version = int(options.Revision)
 	client.Timeout = options.Timeout
+	client.Wait = options.Wait
+	client.WaitForJobs = options.WaitForJobs
 	return client.Run(options.ReleaseName)
 }

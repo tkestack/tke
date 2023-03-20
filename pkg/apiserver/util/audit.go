@@ -43,7 +43,7 @@ func SetupAuditConfig(genericAPIServerConfig *genericapiserver.Config, auditOpti
 		if err != nil {
 			return fmt.Errorf("loading audit policy file: %v", err)
 		}
-		checker := policy.NewChecker(p)
+		policyRuleEvaluator := policy.NewPolicyRuleEvaluator(p)
 
 		logBackend := buildLogAuditBackend(auditOptions.LogOptions)
 		webhookBackend, err := buildWebhookAuditBackend(auditOptions.WebhookOptions)
@@ -57,7 +57,7 @@ func SetupAuditConfig(genericAPIServerConfig *genericapiserver.Config, auditOpti
 			backend = audit.Union(backend, webhookBackend)
 		}
 		genericAPIServerConfig.AuditBackend = backend
-		genericAPIServerConfig.AuditPolicyChecker = checker
+		genericAPIServerConfig.AuditPolicyRuleEvaluator = policyRuleEvaluator
 	}
 	return nil
 }

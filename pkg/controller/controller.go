@@ -38,7 +38,7 @@ import (
 func GetAvailableResources(clientBuilder ClientBuilder) (map[schema.GroupVersionResource]bool, error) {
 	client := clientBuilder.ClientOrDie("controller-discovery")
 	discoveryClient := client.Discovery()
-	resourceMap, err := discoveryClient.ServerResources()
+	_, resourceMap, err := discoveryClient.ServerGroupsAndResources()
 	if err != nil {
 		runtimeutil.HandleError(fmt.Errorf("unable to get all supported resources from server: %v", err))
 	}

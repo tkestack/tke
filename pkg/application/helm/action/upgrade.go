@@ -30,6 +30,7 @@ import (
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+
 	"tkestack.io/tke/pkg/util/file"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -77,8 +78,9 @@ func (c *Client) Upgrade(ctx context.Context, options *UpgradeOptions) (*release
 		// If a release does not exist, install it.
 		histClient := action.NewHistory(actionConfig)
 		histClient.Max = 1
-		if _, err := histClient.Run(options.ReleaseName); err == driver.ErrReleaseNotFound {
-			log.Infof("Release %q does not exist. Installing it now.\n", options.ReleaseName)
+		_, err = histClient.Run(options.ReleaseName)
+		if err == driver.ErrReleaseNotFound {
+			log.Infof("Release %d does not exist. Installing it now.", options.ReleaseName)
 			return c.Install(ctx, &InstallOptions{
 				DryRun:           options.DryRun,
 				DependencyUpdate: options.DependencyUpdate,

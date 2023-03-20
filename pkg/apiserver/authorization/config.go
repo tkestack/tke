@@ -28,6 +28,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	"k8s.io/apiserver/pkg/authorization/union"
 	"k8s.io/apiserver/plugin/pkg/authorizer/webhook"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // Config contains the data on how to authorize a request to the Kube API Server
@@ -67,11 +68,15 @@ func (config Config) New() (authorizer.Authorizer, authorizer.RuleResolver, erro
 			authorizers = append(authorizers, alwaysDenyAuthorizer)
 			ruleResolvers = append(ruleResolvers, alwaysDenyAuthorizer)
 		case modes.ModeWebhook:
-			webhookAuthorizer, err := webhook.New(config.WebhookConfigFile,
+			restconfig, err := clientcmd.BuildConfigFromFlags("", config.WebhookConfigFile)
+			if err != nil {
+				return nil, nil, err
+			}
+			webhookAuthorizer, err := webhook.New(restconfig,
 				config.WebhookVersion,
 				config.WebhookCacheAuthorizedTTL,
 				config.WebhookCacheUnauthorizedTTL,
-				*webhook.DefaultRetryBackoff(), nil)
+				*webhook.DefaultRetryBackoff())
 			if err != nil {
 				return nil, nil, err
 			}

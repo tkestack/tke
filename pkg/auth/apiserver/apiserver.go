@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/cloudindustry"
 
 	"tkestack.io/tke/api/auth"
@@ -169,7 +170,7 @@ func (m *APIServer) InstallAPIs(apiResourceConfigSource serverstorage.APIResourc
 
 	for _, restStorageBuilder := range restStorageProviders {
 		groupName := restStorageBuilder.GroupName()
-		if !apiResourceConfigSource.AnyVersionForGroupEnabled(groupName) {
+		if !apiResourceConfigSource.AnyResourceForGroupEnabled(groupName) {
 			log.Infof("Skipping disabled API group %q.", groupName)
 			continue
 		}

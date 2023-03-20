@@ -136,7 +136,7 @@ func (m *APIServer) InstallAPIs(apiResourceConfigSource serverstorage.APIResourc
 
 	for _, restStorageBuilder := range restStorageProviders {
 		groupName := restStorageBuilder.GroupName()
-		if !apiResourceConfigSource.AnyVersionForGroupEnabled(groupName) {
+		if !apiResourceConfigSource.AnyResourceForGroupEnabled(groupName) {
 			log.Infof("Skipping disabled API group %q.", groupName)
 			continue
 		}
