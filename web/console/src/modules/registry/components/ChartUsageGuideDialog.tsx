@@ -141,7 +141,7 @@ export class ChartUsageGuideDialog extends React.Component<ChartUsageGuideDialog
               </code>
               <p className="text-weak">
                 <Trans>
-                  如安装失败，可以手动下载后解压到$HOME/.local/share/helm/plugins，解压路径可以通过helm --help 查看
+                  如安装失败，可以手动下载后解压到$HOME/.local/share/helm/plugins/helm-push，解压路径可以通过helm env查看
                 </Trans>
               </p>
             </li>
