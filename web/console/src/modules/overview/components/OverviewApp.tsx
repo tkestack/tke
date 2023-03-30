@@ -19,18 +19,16 @@ import * as React from 'react';
 import { connect, Provider } from 'react-redux';
 
 import { bindActionCreators } from '@tencent/ff-redux';
-import { ContentView, Row, Col } from '@tencent/tea-component';
+import { Col, ContentView, Row } from '@tencent/tea-component';
 
 import { ResetStoreAction } from '../../../../helpers';
 import { overviewActions } from '../actions/overviewActions';
+import { RootState } from '../models/RootState';
 import { router } from '../router';
 import { configStore } from '../stores/RootStore';
-import { OverviewHeadPanel } from './OverviewHeadPanel';
-import { RootState } from '../models/RootState';
-import { ClusterOverviewPanel } from './ClusterOverview';
-import { QuickHelpPanel } from './QuickHelpPanel';
-import { TipsPanel } from './TipsPanel';
 import { ClusterDetailPanel } from './ClusterDetailPanel';
+import { ClusterOverviewPanel } from './ClusterOverview';
+import { OverviewHeadPanel } from './OverviewHeadPanel';
 const store = configStore();
 
 export class OverviewAppContainer extends React.Component<any, any> {

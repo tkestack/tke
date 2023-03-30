@@ -37,13 +37,13 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class EditResourceContainerLimitItem extends React.Component<ResourceItemProps, {}> {
   render() {
-    let {
+    const {
       subRoot: {
         workloadEdit: { oversoldRatio }
       }
     } = this.props;
-    let hasCpuRatio = oversoldRatio.cpu ? true : false;
-    let hasMemoryRatio = oversoldRatio.memory ? true : false;
+    const hasCpuRatio = oversoldRatio.cpu ? true : false;
+    const hasMemoryRatio = oversoldRatio.memory ? true : false;
     return (
       <FormItem label={t('CPU/内存限制')}>
         <div className="form-input limit resource" style={{ paddingBottom: '0' }}>
@@ -60,6 +60,8 @@ export class EditResourceContainerLimitItem extends React.Component<ResourceItem
                 Request用于预分配资源,当集群中的节点没有request所要求的资源数量时,容器会创建失败。
                 <br />
                 Limit用于设置容器使用资源的最大上限,避免异常情况下节点资源消耗过多。
+                <br />
+                设置超售比后，此处只能设置CPU/内存Limit值，request值通过Limit和超售比计算得出。
               </Trans>
               <br />
             </p>
@@ -71,15 +73,15 @@ export class EditResourceContainerLimitItem extends React.Component<ResourceItem
 
   /** cpu的相关选项 */
   private _renderCpuItem(hasCpuRatio?: boolean) {
-    let { actions, cKey, subRoot } = this.props,
+    const { actions, cKey, subRoot } = this.props,
       { workloadEdit } = subRoot,
       { containers } = workloadEdit;
 
-    let container = containers.find(c => c.id === cKey);
+    const container = containers.find(c => c.id === cKey);
 
     return container.cpuLimit.map((cpu, index) => {
-      let partition = cpu.type === 'request' ? '-' : t('核');
-      let cpuGroupClassName = cpu.type === 'request' || hasCpuRatio ? 'tc-input-group' : 'tc-input-group mr15';
+      const partition = cpu.type === 'request' ? '-' : t('核');
+      const cpuGroupClassName = cpu.type === 'request' || hasCpuRatio ? 'tc-input-group' : 'tc-input-group mr15';
       if (hasCpuRatio && cpu.type === 'request') {
         return <noscript />;
       } else {
@@ -112,14 +114,14 @@ export class EditResourceContainerLimitItem extends React.Component<ResourceItem
 
   /** mem的相关选项 */
   private _renderMemItem(hasMemoryRatio?: boolean) {
-    let { actions, subRoot, cKey } = this.props,
+    const { actions, subRoot, cKey } = this.props,
       { workloadEdit } = subRoot,
       { containers } = workloadEdit;
 
-    let container = containers.find(item => item.id === cKey);
+    const container = containers.find(item => item.id === cKey);
 
     // 当limit不填是保持和request一致灰色提示
-    let _renderPlaceholder = (): string => {
+    const _renderPlaceholder = (): string => {
       let placeholder = t('不限制');
       if (container.memLimit[0].value && container.memLimit[0].v_value.status === 1) {
         placeholder = container.memLimit[0].value + '';
@@ -128,7 +130,7 @@ export class EditResourceContainerLimitItem extends React.Component<ResourceItem
     };
 
     return container.memLimit.map((mem, index) => {
-      let partition = mem.type === 'request' ? '-' : 'MiB';
+      const partition = mem.type === 'request' ? '-' : 'MiB';
       if (hasMemoryRatio && mem.type === 'request') {
         return <noscript />;
       } else {
