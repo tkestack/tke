@@ -19,36 +19,34 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import {
+  AttributeValue,
+  Bubble,
   Button,
-  Dropdown,
-  List,
   Modal,
   Select,
   Switch,
   Table,
   TagSearchBox,
   Text,
-  Tooltip,
-  AttributeValue,
-  Bubble
+  Tooltip
 } from 'tea-component';
 // import { TagSearchBox } from '../../../../common/components/tagsearchbox';
-import { bindActionCreators, FetchState, insertCSS } from '@tencent/ff-redux';
+import { bindActionCreators, FetchState } from '@tencent/ff-redux';
 import { ChartInstancesPanel } from '@tencent/tchart';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { t } from '@tencent/tea-app/lib/i18n';
 import { Justify } from '@tencent/tea-component/lib/justify';
 
-import { resourceConfig, PlatformTypeEnum } from '../../../../../../config';
+import { IPlatformContext, PlatformContext } from '@/Wrapper';
+import { PlatformTypeEnum, resourceConfig } from '../../../../../../config';
 import { dateFormatter, downloadCsv, reduceNs } from '../../../../../../helpers';
 import { DisplayFiledProps, ResourceInfo } from '../../../../common/models';
-import { includes, isEmpty } from '../../../../common/utils';
+import { isEmpty } from '../../../../common/utils';
 import { allActions } from '../../../actions';
 import { Resource } from '../../../models';
 import { MonitorPanelProps, resourceMonitorFields } from '../../../models/MonitorPanel';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { TellIsNeedFetchNS } from '../ResourceSidebarPanel';
-import { PlatformContext, IPlatformContext } from '@/Wrapper';
 
 interface ResouceActionPanelState {
   /** 是否开启自动刷新 */
@@ -353,19 +351,18 @@ export class ResourceActionPanel extends React.Component<RootProps, ResouceActio
 
   /** 搜索框的操作，不同的搜索进行相对应的操作 */
   private _handleClickForTagSearch(tags) {
-    const finalTags = tags.filter(({ attr }) => attr);
-
     this.setState({
-      searchBoxValues: finalTags,
-      searchBoxLength: finalTags.length
+      searchBoxValues: tags,
+      searchBoxLength: tags.length
     });
 
     const { actions } = this.props;
 
     // 这里是控制tagSearch的展示
 
-    const resourceName = finalTags.find(({ attr: { key } }) => key === 'resourceName')?.values?.[0]?.name ?? '';
-    const labelSelector = finalTags.find(({ attr: { key } }) => key === 'labelSelector')?.values?.[0]?.name;
+    const resourceName =
+      tags.find(({ attr }) => (attr?.key ?? 'resourceName') === 'resourceName')?.values?.[0]?.name ?? '';
+    const labelSelector = tags.find(({ attr }) => attr?.key === 'labelSelector')?.values?.[0]?.name;
 
     actions.resource.changeFilter({ labelSelector });
     actions.resource.changeKeyword(resourceName);
