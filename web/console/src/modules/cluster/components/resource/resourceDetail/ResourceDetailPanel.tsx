@@ -27,7 +27,7 @@ import { dateFormatter } from '../../../../../../helpers';
 import { HeadBubble, ListItem } from '../../../../common/components';
 import { DetailLayout } from '../../../../common/layouts';
 import { DetailDisplayFieldProps, DetailInfoProps } from '../../../../common/models';
-import { cloneDeep, isEmpty } from '../../../../common/utils';
+import { isEmpty } from '../../../../common/utils';
 import { allActions } from '../../../actions';
 import { ExternalTrafficPolicy, ResourceStatus, SessionAffinity } from '../../../constants/Config';
 import { BackendGroup, BackendRecord, CreateResource, LbcfResource, PortMap, Resource, RuleMap } from '../../../models';
@@ -52,23 +52,23 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
   }
 
   render() {
-    let { subRoot } = this.props,
+    const { subRoot } = this.props,
       { resourceName, resourceDetailState } = subRoot,
       { resourceDetailInfo } = resourceDetailState;
 
-    let istapp = resourceName === 'tapp';
-    let resourceIns = resourceDetailInfo.selection;
+    const istapp = resourceName === 'tapp';
+    const resourceIns = resourceDetailInfo.selection;
 
     if (istapp && resourceIns) {
       //tapp 需要展示灰度升级的container信息
       //如果有灰度升级项，需要展示在container当中
-      let { templates, templatePool } = resourceIns.spec;
+      const { templates, templatePool } = resourceIns.spec;
       if (templates) {
-        let extraContainers = Object.values(templates);
+        const extraContainers = Object.values(templates);
         extraContainers.forEach((item: string) => {
           if (templatePool[item]) {
             //修改提示信息
-            let grayUpdateContainers = templatePool[item].spec.containers.map(c => {
+            const grayUpdateContainers = templatePool[item].spec.containers.map(c => {
               return {
                 ...c,
                 name: `${c.name} (灰度升级${item})`
@@ -97,36 +97,38 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
 
   /** 展示基础数据 */
   private _renderBasicInfo(resourceIns: Resource) {
-    let { subRoot } = this.props,
+    const { subRoot } = this.props,
       { resourceInfo } = subRoot;
 
-    let basicInfo = resourceInfo.detailField.detailInfo.info ? resourceInfo.detailField.detailInfo.info : {};
-    let blockKeys = Object.keys(basicInfo);
+    const basicInfo = resourceInfo.detailField.detailInfo.info ? resourceInfo.detailField.detailInfo.info : {};
+    const blockKeys = Object.keys(basicInfo);
     let content: JSX.Element;
 
     if (blockKeys.length) {
       // 这里需要去遍历 info里面的  metadata 和 status当中的信息
 
-      let showContentObj: any[] = [];
+      const showContentObj: any[] = [];
       let showContentArr: any[] = [];
 
       blockKeys.forEach((blockKey, index) => {
-        let detailInfoField = basicInfo[blockKey].dataField[0].split('.');
+        const detailInfoField = basicInfo[blockKey].dataField[0].split('.');
         // 需要展示的详情的数据
-        let detailInfo = this._getFinalData(detailInfoField, resourceIns);
-        let displayField = Object.keys(basicInfo[blockKey].displayField).length ? basicInfo[blockKey].displayField : {};
+        const detailInfo = this._getFinalData(detailInfoField, resourceIns);
+        const displayField = Object.keys(basicInfo[blockKey].displayField).length
+          ? basicInfo[blockKey].displayField
+          : {};
 
         // 需要展示的字段名
-        let showField = Object.keys(displayField);
+        const showField = Object.keys(displayField);
 
         showField.forEach((item, showIndex) => {
-          let fieldInfo = displayField[item];
+          const fieldInfo = displayField[item];
           /**
            * 这里是去判断annotations里面，其为 *.*.*. 可以有很多 .
            * eg: storageclass.beta.kubernetes.io/is-default-class
            * 那么这里的 数组 ['annotations', 'storageclass.beta.kubernetes.io/is-default-class']
            */
-          let dataFieldIns =
+          const dataFieldIns =
             fieldInfo.dataField[0] !== ''
               ? fieldInfo.dataField.length > 1
                 ? fieldInfo.dataField
@@ -138,7 +140,7 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
           showData = showData === '' ? fieldInfo.noExsitedValue : showData;
 
           // 这里根据displayField当中搞得格式去展示相对应的showContent
-          let showElement = this._renderFormItem({ showData, fieldInfo, detailInfo });
+          const showElement = this._renderFormItem({ showData, fieldInfo, detailInfo });
           // 这里需要对齐进行排序
           showContentObj.push({
             order: fieldInfo.order,
@@ -170,14 +172,14 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
 
   /** 展示转发规则 rules */
   private _renderRules(resourceIns: Resource) {
-    let { subRoot } = this.props,
+    const { subRoot } = this.props,
       { resourceInfo } = subRoot;
 
     let content: JSX.Element;
     // 展示转发规则
-    let showContentArr: any[] = [];
+    const showContentArr: any[] = [];
 
-    let isQcloudIngress =
+    const isQcloudIngress =
       resourceIns &&
       resourceIns.metadata &&
       resourceIns.metadata.annotations &&
@@ -187,33 +189,33 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
 
     // 这里是为了腾讯云专用的Ingress的展示，转发配置是放在annotaions里面的
     if (isQcloudIngress) {
-      let annotations = resourceIns.metadata.annotations;
-      let showData = {
+      const annotations = resourceIns.metadata.annotations;
+      const showData = {
         http: annotations['kubernetes.io/ingress.http-rules'] || '',
         https: annotations['kubernetes.io/ingress.https-rules'] || ''
       };
 
-      let showContent = this._renderRulesItem(showData, true, resourceIns);
+      const showContent = this._renderRulesItem(showData, true, resourceIns);
       showContentArr.push(showContent);
     } else {
-      let basicInfo = resourceInfo.detailField.detailInfo.rules ? resourceInfo.detailField.detailInfo.rules : {};
-      let blockKeys = Object.keys(basicInfo);
+      const basicInfo = resourceInfo.detailField.detailInfo.rules ? resourceInfo.detailField.detailInfo.rules : {};
+      const blockKeys = Object.keys(basicInfo);
 
       if (blockKeys.length) {
         blockKeys.forEach((blockKey, index) => {
-          let detailInfoField = basicInfo[blockKey].dataField[0].split('.');
+          const detailInfoField = basicInfo[blockKey].dataField[0].split('.');
           //需要展示的详情的数据
-          let detailInfo = this._getFinalData(detailInfoField, resourceIns);
-          let displayField = Object.keys(basicInfo[blockKey].displayField).length
+          const detailInfo = this._getFinalData(detailInfoField, resourceIns);
+          const displayField = Object.keys(basicInfo[blockKey].displayField).length
             ? basicInfo[blockKey].displayField
             : {};
 
           // 需要展示的字段名
-          let showField = Object.keys(displayField);
+          const showField = Object.keys(displayField);
 
           showField.forEach((item, showIndex) => {
-            let fieldInfo = displayField[item];
-            let dataFieldIns = fieldInfo.dataField[0] !== '' ? fieldInfo.dataField[0].split('.') : [];
+            const fieldInfo = displayField[item];
+            const dataFieldIns = fieldInfo.dataField[0] !== '' ? fieldInfo.dataField[0].split('.') : [];
             let showData = this._getFinalData(dataFieldIns, detailInfo);
 
             // 这里是要去判断noExist的展示
@@ -251,17 +253,17 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
 
   /** 展示数据卷，数据卷这里特殊处理 */
   private _renderVolumes(resourceIns: Resource) {
-    let { subRoot } = this.props,
+    const { subRoot } = this.props,
       { resourceInfo } = subRoot;
 
-    let detailInfo = resourceInfo.detailField.detailInfo.volume ? resourceInfo.detailField.detailInfo.volume : {};
-    let blockKeys = Object.keys(detailInfo);
+    const detailInfo = resourceInfo.detailField.detailInfo.volume ? resourceInfo.detailField.detailInfo.volume : {};
+    const blockKeys = Object.keys(detailInfo);
     let content: JSX.Element;
 
     if (blockKeys.length) {
       // 目前此区域只展示 volumes，故只需要获取volumes
-      let detailInfoField = detailInfo['volumes'].dataField[0].split('.');
-      let volumns = this._getFinalData(detailInfoField, resourceIns);
+      const detailInfoField = detailInfo['volumes'].dataField[0].split('.');
+      const volumns = this._getFinalData(detailInfoField, resourceIns);
 
       // 展示数据卷资源的信息
       const renderVolumeInfo = (volumn, type: string) => {
@@ -271,7 +273,7 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
         } else if (type === 'secret') {
           content = volumn[type]['secretName'] + t('（资源名称）');
         } else if (type === 'hostPath') {
-          let validateType = volumn[type]['type'] ? volumn[type]['type'] : t('不校验');
+          const validateType = volumn[type]['type'] ? volumn[type]['type'] : t('不校验');
           content = volumn[type]['path'] + t('（主机路径）') + validateType + t('（路径检查类型）');
         } else if (type === 'nfs') {
           content = volumn[type]['server'] + ':' + volumn[type]['path'] + t('（NFS路径）');
@@ -303,8 +305,8 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
                      * }
                      * volumesType即数据卷的类型
                      */
-                    let keys = Object.keys(volumn);
-                    let label = keys.filter(item => item !== 'name')[0]; // 这里是因为volumes 当中的数据卷的类型是不固定的
+                    const keys = Object.keys(volumn);
+                    const label = keys.filter(item => item !== 'name')[0]; // 这里是因为volumes 当中的数据卷的类型是不固定的
 
                     return (
                       <ListItem key={index} label={label}>
@@ -328,18 +330,18 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
 
   /**展示service高级设置 */
   private _renderAdvancedInfo(resourceIns: Resource) {
-    let { subRoot } = this.props,
+    const { subRoot } = this.props,
       { resourceInfo } = subRoot;
 
-    let detailInfo = resourceInfo.detailField.detailInfo.advancedInfo
+    const detailInfo = resourceInfo.detailField.detailInfo.advancedInfo
       ? resourceInfo.detailField.detailInfo.advancedInfo
       : {};
-    let blockKeys = Object.keys(detailInfo);
+    const blockKeys = Object.keys(detailInfo);
     let content: JSX.Element;
 
     if (blockKeys.length) {
-      let advancedInfoField = detailInfo['spec'].dataField[0].split('.');
-      let advancedInfo = this._getFinalData(advancedInfoField, resourceIns);
+      const advancedInfoField = detailInfo['spec'].dataField[0].split('.');
+      const advancedInfo = this._getFinalData(advancedInfoField, resourceIns);
 
       content = (
         <DetailLayout>
@@ -380,21 +382,23 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
   }
   /** 展示容器 */
   private _renderBackGroup(resourceIns: LbcfResource) {
-    let { subRoot } = this.props,
+    const { subRoot } = this.props,
       { resourceInfo } = subRoot;
 
-    let detailInfo = resourceInfo.detailField.detailInfo.backGroup ? resourceInfo.detailField.detailInfo.backGroup : {};
-    let blockKeys = Object.keys(detailInfo);
+    const detailInfo = resourceInfo.detailField.detailInfo.backGroup
+      ? resourceInfo.detailField.detailInfo.backGroup
+      : {};
+    const blockKeys = Object.keys(detailInfo);
     let content: JSX.Element;
 
     if (blockKeys.length) {
       // 目前此区域只展示backGroups，故只需要获取backGroups
-      let detailInfoField = detailInfo['backGroups'].dataField[0].split('.');
-      let backGroups: BackendGroup[] = this._getFinalData(detailInfoField, resourceIns);
+      const detailInfoField = detailInfo['backGroups'].dataField[0].split('.');
+      const backGroups: BackendGroup[] = this._getFinalData(detailInfoField, resourceIns);
 
       const tabs = backGroups
         ? backGroups.map((item, index) => {
-            let tab = {
+            const tab = {
               id: item['name'] + index,
               label: item['name']
             };
@@ -404,7 +408,7 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
 
       let selected = tabs[0];
       if (this.state.tabName) {
-        let finder = tabs.find(x => x.id === this.state.tabName);
+        const finder = tabs.find(x => x.id === this.state.tabName);
         if (finder) {
           selected = finder;
         }
@@ -438,21 +442,23 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
 
   /** 展示容器 */
   private _renderContainer(resourceIns: Resource) {
-    let { subRoot } = this.props,
+    const { subRoot } = this.props,
       { resourceInfo } = subRoot;
 
-    let detailInfo = resourceInfo.detailField.detailInfo.container ? resourceInfo.detailField.detailInfo.container : {};
-    let blockKeys = Object.keys(detailInfo);
+    const detailInfo = resourceInfo.detailField.detailInfo.container
+      ? resourceInfo.detailField.detailInfo.container
+      : {};
+    const blockKeys = Object.keys(detailInfo);
     let content: JSX.Element;
 
     if (blockKeys.length) {
       // 目前此区域只展示 volumes，故只需要获取volumes
-      let detailInfoField = detailInfo['containers'].dataField[0].split('.');
-      let containers = this._getFinalData(detailInfoField, resourceIns);
+      const detailInfoField = detailInfo['containers'].dataField[0].split('.');
+      const containers = this._getFinalData(detailInfoField, resourceIns);
 
       const tabs = containers
         ? containers.map((item, index) => {
-            let tab = {
+            const tab = {
               id: item['name'] + index,
               label: item['name']
             };
@@ -462,7 +468,7 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
 
       let selected = tabs[0] ? tabs[0] : {};
       if (this.state.tabName) {
-        let finder = tabs.find(x => x.id === this.state.tabName);
+        const finder = tabs.find(x => x.id === this.state.tabName);
         if (finder) {
           selected = finder;
         }
@@ -499,9 +505,9 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
   /** 生成container内部的展示 */
   private _renderContainerBody(containers: any[], detailInfo: DetailInfoProps) {
     // 配置文件当中的detailInfo 下的 container
-    let displayField = Object.keys(detailInfo).length ? detailInfo.displayField : {};
+    const displayField = Object.keys(detailInfo).length ? detailInfo.displayField : {};
     // 需要展示的字段名
-    let showField = Object.keys(displayField);
+    const showField = Object.keys(displayField);
 
     return containers
       ? containers.map((container, index) => (
@@ -628,8 +634,12 @@ export class ResourceDetailPanel extends React.Component<RootProps, ResourceDeta
                 placement="left"
                 content={
                   <React.Fragment>
-                    <p>{t('名称：') + `${refData['name']}`}</p>
-                    <p>{`Key：${refData['key']}`}</p>
+                    {Object.entries(refData ?? {}).map(([key, value]) => (
+                      <>
+                        <p>{`${t('名称：')}${key}`}</p>
+                        <p>{`Key：${value}`}</p>
+                      </>
+                    ))}
                   </React.Fragment>
                 }
               >

@@ -15,14 +15,14 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+import { Bubble, Button, Card, Col, Icon, List, Row, SearchBox, Text } from '@tencent/tea-component';
 import * as React from 'react';
-import { Card, Row, Col, MetricsBoard, Icon, Text, SearchBox, Button, Bubble, List } from '@tencent/tea-component';
-import { ClusterOverview, ClusterDetail } from '../models/RootState';
 import { clusterStatus } from '../constants/Config';
+import { ClusterDetail, ClusterOverview } from '../models/RootState';
 export function ClusterDetailPanel(props: { clusterData: ClusterOverview }) {
-  let { clusterData } = props;
-  let isLodingDone = !!clusterData;
-  let [search, setSearch] = React.useState('');
+  const { clusterData } = props;
+  const isLodingDone = !!clusterData;
+  const [search, setSearch] = React.useState('');
   let clusterList = isLodingDone ? clusterData.clusters : [];
   if (search) {
     clusterList = clusterList.filter(item => item.clusterID.includes(search));
@@ -38,7 +38,7 @@ export function ClusterDetailPanel(props: { clusterData: ClusterOverview }) {
 }
 
 function _renderClusterCard(cluster: ClusterDetail, index: number) {
-  let masterErrorTips = [];
+  const masterErrorTips = [];
   if (!cluster.etcdHealthy) {
     masterErrorTips.push(
       <Text key={'etcd'} style={{ display: 'block' }}>
@@ -61,8 +61,8 @@ function _renderClusterCard(cluster: ClusterDetail, index: number) {
     );
   }
 
-  let isUnlink = cluster.clusterPhase !== 'Running';
-  let isFailed = cluster.clusterPhase === 'Failed';
+  const isUnlink = cluster.clusterPhase !== 'Running';
+  const isFailed = cluster.clusterPhase === 'Failed';
 
   return (
     <Card style={{ marginTop: index === 0 ? 20 : 1 }} key={cluster.clusterID}>
@@ -98,7 +98,7 @@ function _renderClusterCard(cluster: ClusterDetail, index: number) {
               <Text style={{ fontSize: 18, fontWeight: 500 }}>{isFailed ? '-' : cluster.cpuUsage}</Text>
               <Text style={{ fontSize: 12, fontWeight: 600 }}> CPU利用率</Text>
               <div>
-                <Text theme={'label'} reset>{`总数: ${cluster.cpuCapacity}核 Request已分配: ${
+                <Text theme={'label'} reset>{`总数: ${cluster.cpuCapacity} 核 Request已分配: ${
                   isFailed ? '-' : cluster.cpuRequestRate
                 }`}</Text>
               </div>
@@ -110,8 +110,8 @@ function _renderClusterCard(cluster: ClusterDetail, index: number) {
               <Text style={{ fontSize: 12, fontWeight: 600 }}> 内存利用率</Text>
               <div>
                 <Text theme={'label'} reset>{`总数: ${
-                  isFailed ? '-' : (cluster.memCapacity / 1.0 / 1024 / 1024 / 1024).toPrecision(3)
-                }GB Request已分配: ${isFailed ? '-' : cluster.memRequestRate}`}</Text>
+                  isFailed ? '-' : (cluster.memCapacity / 1.0 / 1024 / 1024 / 1024).toFixed(3)
+                } GB Request已分配: ${isFailed ? '-' : cluster.memRequestRate}`}</Text>
               </div>
             </div>
           </Col>
