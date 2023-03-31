@@ -597,6 +597,7 @@ func (c *Controller) genDaemonSet(version string) *appsv1.DaemonSet {
 					PriorityClassName:  "system-cluster-critical",
 					ServiceAccountName: svcAccountName,
 					HostNetwork:        true,
+					DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
 					Tolerations: []corev1.Toleration{
 						{Key: "node-role.kubernetes.io/master", Effect: corev1.TaintEffectNoSchedule},
 					},
