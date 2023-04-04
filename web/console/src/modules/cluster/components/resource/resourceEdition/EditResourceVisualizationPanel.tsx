@@ -21,10 +21,11 @@ import { connect } from 'react-redux';
 
 import { Button, Radio, Select, Text } from '@tea/component';
 import { FormPanel } from '@tencent/ff-component';
-import { bindActionCreators, insertCSS, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { OperationState, bindActionCreators, insertCSS, isSuccessWorkflow, uuid } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
 
 import { resourceConfig } from '../../../../../../config/resourceConfig';
+import { reduceNs } from '../../../../../../helpers';
 import { FormItem, InputField, TipInfo } from '../../../../common/components';
 import { FixedFormLayout, FormLayout, MainBodyLayout } from '../../../../common/layouts';
 import { ResourceInfo } from '../../../../common/models';
@@ -32,14 +33,15 @@ import { getWorkflowError, isEmpty } from '../../../../common/utils';
 import { allActions } from '../../../actions';
 import { validateWorkloadActions } from '../../../actions/validateWorkloadActions';
 import {
-  affinityType,
   NodeAbnormalStrategy,
   ResourceTypeList,
   RestartPolicyTypeList,
-  WorkloadNetworkTypeEnum
+  WorkloadNetworkTypeEnum,
+  affinityType
 } from '../../../constants/Config';
 import {
   Computer,
+  ContainerEnv,
   ContainerItem,
   CreateResource,
   DifferentInterfaceResourceOperation,
@@ -48,8 +50,7 @@ import {
   MetricOption,
   ServiceEditJSONYaml,
   VolumeItem,
-  WorkloadEditJSONYaml,
-  ContainerEnv
+  WorkloadEditJSONYaml
 } from '../../../models';
 import { AffinityRule } from '../../../models/WorkloadEdit';
 import { router } from '../../../router';
@@ -65,7 +66,6 @@ import { ReduceServiceAnnotations, ReduceServiceJSONData, ReduceServicePorts } f
 import { EditServicePortMapPanel } from './EditServicePortMapPanel';
 import { ResourceEditHostPathDialog } from './ResourceEditHostPathDialog';
 import { ResourceSelectConfigDialog } from './ResourceSelectConfigDialog';
-import { reduceNs } from '../../../../../../helpers';
 
 /** service YAML当中的type映射 */
 const serviceTypeMap = {
@@ -129,24 +129,24 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
 
     //初始化是否有超售比
     if (cluster.selection && cluster.selection.spec.properties && cluster.selection.spec.properties.oversoldRatio) {
-      let oversoldRatio = cluster.selection.spec.properties.oversoldRatio;
+      const oversoldRatio = cluster.selection.spec.properties.oversoldRatio;
       actions.editWorkload.initOversoldRatio(oversoldRatio);
     }
   }
 
   //在当前页面直接刷新时需要判断超售比前后状态
   componentWillReceiveProps(nextProps: RootProps) {
-    let { actions, cluster } = nextProps;
+    const { actions, cluster } = nextProps;
     if (nextProps.cluster.selection && !this.props.cluster.selection) {
       if (cluster.selection.spec.properties && cluster.selection.spec.properties.oversoldRatio) {
-        let oversoldRatio = cluster.selection.spec.properties.oversoldRatio;
+        const oversoldRatio = cluster.selection.spec.properties.oversoldRatio;
         actions.editWorkload.initOversoldRatio(oversoldRatio);
       }
     }
   }
 
   componentWillUnmount() {
-    let { actions } = this.props;
+    const { actions } = this.props;
     // 清除workloadEdit当中的所有数据，避免缓存
     actions.editWorkload.clearWorkloadEdit();
     // 如果同时创建Service，需要清空ServiceEdit当中的信息
@@ -157,7 +157,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
   }
 
   render() {
-    let { actions, subRoot, namespaceList, route, cluster } = this.props,
+    const { actions, subRoot, namespaceList, route, cluster } = this.props,
       urlParams = router.resolve(route),
       { workloadEdit, modifyResourceFlow, applyResourceFlow, serviceEdit, isNeedExistedLb, addons } = subRoot,
       {
@@ -184,10 +184,10 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
       { secretList } = configEdit;
 
     // 是否开启高级设置
-    let isOpenAdvanced = this.state.isOpenAdvancedSetting;
+    const isOpenAdvanced = this.state.isOpenAdvancedSetting;
 
     /** 渲染 重启策略列表 */
-    let restartOptions = RestartPolicyTypeList.map((item, index) => (
+    const restartOptions = RestartPolicyTypeList.map((item, index) => (
       <option key={index} value={item.value}>
         {item.label}
       </option>
@@ -197,8 +197,8 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
      * 渲染imagePullSecret的列表
      * pre: secret的类型为 kubernetes.io/dockercfg
      */
-    let finalSecretList = secretList.data.records.filter(item => item.type === 'kubernetes.io/dockercfg');
-    let secretListOptions = finalSecretList.map((item, index) => (
+    const finalSecretList = secretList.data.records.filter(item => item.type === 'kubernetes.io/dockercfg');
+    const secretListOptions = finalSecretList.map((item, index) => (
       <option key={index} value={item.metadata.name}>
         {item.metadata.name}
       </option>
@@ -209,20 +209,20 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
       </option>
     );
 
-    let failed =
+    const failed =
       (modifyResourceFlow.operationState === OperationState.Done && !isSuccessWorkflow(modifyResourceFlow)) ||
       (applyResourceFlow.operationState === OperationState.Done && !isSuccessWorkflow(applyResourceFlow));
 
     // 判断是否deployment 或者 statefulset
-    let isDeploymentOrStateful =
+    const isDeploymentOrStateful =
       workloadType === 'deployment' || workloadType === 'statefulset' || workloadType === 'tapp';
 
-    let namespaceOptions = namespaceList.data.records.map(item => ({
+    const namespaceOptions = namespaceList.data.records.map(item => ({
       value: item.name,
       text: item.displayName
     }));
 
-    let finalResourceTypeList = [];
+    const finalResourceTypeList = [];
     ResourceTypeList.forEach(list => {
       if (list.value !== 'tapp' || isCanUseTapp) {
         finalResourceTypeList.push(list);
@@ -508,7 +508,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
 
   /** 生成 workload类型的radio列表 */
   private _handleResourceTypeSelect(resourceType: string) {
-    let { actions } = this.props;
+    const { actions } = this.props;
     actions.editWorkload.selectResourceType(resourceType);
   }
 
@@ -782,15 +782,15 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
 
   /** 处理cronhpa的相关信息 */
   private _reduceCronHpaData() {
-    let { subRoot, clusterVersion } = this.props,
+    const { subRoot, clusterVersion } = this.props,
       { cronMetrics, workloadType, workloadName, namespace } = subRoot.workloadEdit;
 
-    let resourceInfo = resourceConfig(clusterVersion)['cronhpa'],
+    const resourceInfo = resourceConfig(clusterVersion)['cronhpa'],
       ResourceInfo = resourceConfig(clusterVersion)[workloadType];
 
-    let isTapp = workloadType === 'tapp' ? true : false;
+    const isTapp = workloadType === 'tapp' ? true : false;
 
-    let jsonData = {
+    const jsonData = {
       kind: resourceInfo.headTitle,
       apiVersion: (resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
       metadata: {
@@ -817,17 +817,17 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
 
   /** 处理hpa的相关信息 */
   private _reduceHpaData() {
-    let { subRoot, clusterVersion } = this.props,
+    const { subRoot, clusterVersion } = this.props,
       { minReplicas, maxReplicas, workloadName, namespace, metrics, workloadType } = subRoot.workloadEdit;
 
     // hpa的相关配置信息
 
-    let resourceInfo = resourceConfig(clusterVersion)['hpa'],
+    const resourceInfo = resourceConfig(clusterVersion)['hpa'],
       ResourceInfo = resourceConfig(clusterVersion)[workloadType];
 
-    let isTapp = workloadType === 'tapp' ? true : false;
+    const isTapp = workloadType === 'tapp' ? true : false;
     // 处理hpa的metrics
-    let metricsInfo: MetricOption[] = metrics.map(item => {
+    const metricsInfo: MetricOption[] = metrics.map(item => {
       let tmp: MetricOption;
       if (
         item.type === 'cpuUtilization' ||
@@ -861,7 +861,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
       return tmp;
     });
 
-    let jsonData: HpaEditJSONYaml = {
+    const jsonData: HpaEditJSONYaml = {
       kind: resourceInfo.headTitle,
       apiVersion: (resourceInfo.group ? resourceInfo.group + '/' : '') + resourceInfo.version,
       metadata: {
@@ -891,26 +891,26 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
    * @param labelInfo: any selector当中的信息
    */
   private _reduceServiceData(labelInfo: any) {
-    let { route, subRoot, clusterVersion } = this.props,
+    const { route, subRoot, clusterVersion } = this.props,
       { workloadEdit, serviceEdit } = subRoot,
       { portsMap, communicationType, isOpenHeadless } = serviceEdit;
 
     // svc的相关配置信息
-    let resourceInfo = resourceConfig(clusterVersion)['svc'];
+    const resourceInfo = resourceConfig(clusterVersion)['svc'];
 
     // vpc内访问、购买lb带宽等，都放置在annotations里面实现
-    let annotations = ReduceServiceAnnotations(serviceEdit, route.queries['clusterId']);
+    const annotations = ReduceServiceAnnotations(serviceEdit, route.queries['clusterId']);
 
     // 构建端口映射
-    let ports = ReduceServicePorts(portsMap, communicationType);
+    const ports = ReduceServicePorts(portsMap, communicationType);
 
-    let sessionConfig = {
+    const sessionConfig = {
       externalTrafficPolicy: serviceEdit.externalTrafficPolicy,
       sessionAffinity: serviceEdit.sessionAffinity,
       sessionAffinityTimeout: serviceEdit.sessionAffinityTimeout
     };
 
-    let jsonData: ServiceEditJSONYaml = ReduceServiceJSONData({
+    const jsonData: ServiceEditJSONYaml = ReduceServiceJSONData({
       resourceInfo,
       ports,
       annotations,
@@ -929,7 +929,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
   private _reduceVolumes(volumes: VolumeItem[]) {
     let volumesInfo = [];
     volumesInfo = volumes.map(volume => {
-      let volumeItem = {
+      const volumeItem = {
         name: volume.name
       };
 
@@ -943,7 +943,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
           type: volume.hostPathType !== 'NoChecks' ? volume.hostPathType : undefined
         };
       } else if (volume.volumeType === 'nfsDisk') {
-        let [server, path] = volume.nfsPath.split(':');
+        const [server, path] = volume.nfsPath.split(':');
         volumeItem['nfs'] = {
           path,
           server
@@ -985,9 +985,9 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
   /** 处理container相关的配置项 */
   private _reduceContainers(containers: ContainerItem[], volumes: VolumeItem[], extraOption?: any) {
     let containersInfo = [];
-    let { oversoldRatio, networkType } = extraOption;
+    const { oversoldRatio, networkType } = extraOption;
     containersInfo = containers.map(c => {
-      let containerItem = {
+      const containerItem = {
         name: c.name,
         image: c.registry + ':' + (c.tag ? c.tag : 'latest'),
         imagePullPolicy: c.imagePullPolicy
@@ -1015,7 +1015,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
         cpuRequest = (+cpuLimit * 1.0) / +oversoldRatio.cpu + '';
       }
       if (oversoldRatio.memory) {
-        memRequest = (+memLimit * 1.0) / +oversoldRatio.memory + '';
+        memRequest = Math.ceil((+memLimit * 1.0) / +oversoldRatio.memory) + '';
       }
       containerItem['resources'] = {};
       // !!!注意：如果设置了gpu，需要在limits里面设定
@@ -1058,7 +1058,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
 
       containerItem['env'] = [];
       c.envItems.forEach(env => {
-        let envItem = {
+        const envItem = {
           name: env.name
         };
 
@@ -1068,8 +1068,8 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
           env.type === ContainerEnv.EnvTypeEnum.SecretKeyRef ||
           env.type === ContainerEnv.EnvTypeEnum.ConfigMapRef
         ) {
-          let isSecret = env.type === ContainerEnv.EnvTypeEnum.SecretKeyRef;
-          let keyRef = {
+          const isSecret = env.type === ContainerEnv.EnvTypeEnum.SecretKeyRef;
+          const keyRef = {
             key: isSecret ? env.secretDataKey : env.configMapDataKey,
             name: isSecret ? env.secretName : env.configMapName,
             optional: false
@@ -1143,7 +1143,7 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
 
       // 存活检查
       const reduceHealthCheck = (healthCheckItem: HealthCheckItem) => {
-        let healthItem = {
+        const healthItem = {
           failureThreshold: +healthCheckItem.unhealthThreshold,
           successThreshold: +healthCheckItem.healthThreshold,
           initialDelaySeconds: healthCheckItem.delayTime ? +healthCheckItem.delayTime : undefined,
@@ -1171,12 +1171,12 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
       };
 
       if (c.healthCheck.isOpenLiveCheck) {
-        let healthCheckItem = c.healthCheck.liveCheck;
+        const healthCheckItem = c.healthCheck.liveCheck;
         containerItem['livenessProbe'] = reduceHealthCheck(healthCheckItem);
       }
 
       if (c.healthCheck.isOpenReadyCheck) {
-        let healthCheckItem = c.healthCheck.readyCheck;
+        const healthCheckItem = c.healthCheck.readyCheck;
         containerItem['readinessProbe'] = reduceHealthCheck(healthCheckItem);
       }
 
@@ -1186,9 +1186,9 @@ export class EditResourceVisualizationPanel extends React.Component<RootProps, E
   }
   /** 处理亲和性调度的相关信息 */
   private _reduceNodeAffinityInfo(nodeAffinityType: string, nodeAffinityRule: AffinityRule, nodeSelection: Computer[]) {
-    let affinityInfo = {};
+    const affinityInfo = {};
     if (nodeAffinityType === affinityType.node) {
-      let nodeSelector = nodeSelection.map(node => {
+      const nodeSelector = nodeSelection.map(node => {
         return node.metadata.labels['kubernetes.io/hostname'];
       });
       affinityInfo['requiredDuringSchedulingIgnoredDuringExecution'] = {

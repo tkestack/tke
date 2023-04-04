@@ -19,18 +19,18 @@ import * as React from 'react';
 import { connect, Provider } from 'react-redux';
 
 import { bindActionCreators } from '@tencent/ff-redux';
-import { ContentView, Row, Col } from '@tencent/tea-component';
+import { Col, ContentView, Row } from '@tencent/tea-component';
 
 import { ResetStoreAction } from '../../../../helpers';
 import { overviewActions } from '../actions/overviewActions';
+import { RootState } from '../models/RootState';
 import { router } from '../router';
 import { configStore } from '../stores/RootStore';
-import { OverviewHeadPanel } from './OverviewHeadPanel';
-import { RootState } from '../models/RootState';
+import { ClusterDetailPanel } from './ClusterDetailPanel';
 import { ClusterOverviewPanel } from './ClusterOverview';
+import { OverviewHeadPanel } from './OverviewHeadPanel';
 import { QuickHelpPanel } from './QuickHelpPanel';
 import { TipsPanel } from './TipsPanel';
-import { ClusterDetailPanel } from './ClusterDetailPanel';
 const store = configStore();
 
 export class OverviewAppContainer extends React.Component<any, any> {
@@ -59,7 +59,7 @@ const mapDispatchToProps = dispatch =>
 @((router.serve as any)())
 class OverviewApp extends React.Component<RootProps, {}> {
   render() {
-    let { clusterOverview } = this.props;
+    const { clusterOverview } = this.props;
     return (
       <ContentView>
         <ContentView.Header>
