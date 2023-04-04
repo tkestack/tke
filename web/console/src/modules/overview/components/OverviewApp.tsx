@@ -29,6 +29,8 @@ import { configStore } from '../stores/RootStore';
 import { ClusterDetailPanel } from './ClusterDetailPanel';
 import { ClusterOverviewPanel } from './ClusterOverview';
 import { OverviewHeadPanel } from './OverviewHeadPanel';
+import { QuickHelpPanel } from './QuickHelpPanel';
+import { TipsPanel } from './TipsPanel';
 const store = configStore();
 
 export class OverviewAppContainer extends React.Component<any, any> {
@@ -57,7 +59,7 @@ const mapDispatchToProps = dispatch =>
 @((router.serve as any)())
 class OverviewApp extends React.Component<RootProps, {}> {
   render() {
-    let { clusterOverview } = this.props;
+    const { clusterOverview } = this.props;
     return (
       <ContentView>
         <ContentView.Header>
