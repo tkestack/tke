@@ -18,20 +18,19 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 
-import { Bubble, Button, Drawer, Icon, Text, Dropdown, List } from '@tea/component';
+import { Bubble, Button, Drawer, Dropdown, Icon, List, Text } from '@tea/component';
 import { TablePanel, TablePanelColumnProps } from '@tencent/ff-component';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { ChartPanel } from '@tencent/tchart';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { Trans, t } from '@tencent/tea-app/lib/i18n';
 
 import { dateFormatter } from '../../../../../helpers';
-import { router as addonRouter } from '../../../addon/router';
 import { Clip, LinkButton, TipInfo } from '../../../common/components';
 import { Cluster } from '../../../common/models';
 import { allActions } from '../../actions';
 import { ClusterTypeMap } from '../../constants/Config';
 import { DialogNameEnum } from '../../models';
-import { getClusterTables, MonitorPanelProps } from '../../models/MonitorPanel';
+import { MonitorPanelProps, getClusterTables } from '../../models/MonitorPanel';
 import { router } from '../../router';
 import { RootProps } from '../ClusterApp';
 import { KubectlDialog } from '../KubectlDialog';
