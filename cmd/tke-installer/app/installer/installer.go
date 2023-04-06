@@ -318,12 +318,12 @@ func (t *TKE) initSteps() {
 		}
 		t.steps = append(t.steps, []types.Handler{
 			{
-				Name: "Install tke-gateway chart",
-				Func: t.installTKEGatewayChart,
-			},
-			{
 				Name: "Install ingress-nginx chart",
 				Func: t.installIngressChart,
+			},
+			{
+				Name: "Install tke-gateway chart",
+				Func: t.installTKEGatewayChart,
 			},
 		}...)
 	}
