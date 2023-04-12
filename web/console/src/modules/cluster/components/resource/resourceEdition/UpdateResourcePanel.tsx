@@ -19,16 +19,16 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import { bindActionCreators } from '@tencent/ff-redux';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { t } from '@tencent/tea-app/lib/i18n';
 
+import { upperFirst } from 'lodash';
 import { allActions } from '../../../actions';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
-import {
-    UpdateServiceAccessTypePanel
-} from '../resourceTableOperation/UpdateServiceAccessTypePanel';
+import { UpdateServiceAccessTypePanel } from '../resourceTableOperation/UpdateServiceAccessTypePanel';
 import { UpdateWorkloadPodNumPanel } from '../resourceTableOperation/UpdateWorkloadPodNumPanel';
 import { UpdateWorkloadRegistryPanel } from '../resourceTableOperation/UpdateWorkloadRegistryPanel';
+import { ModifyStrategyPanel } from '../resourceTableOperation/workloadUpdate/modifyStrategyPanel';
 import { EditLbcfBackGroupPanel } from './EditLbcfBackGroupPanel';
 import { SubHeaderPanel } from './SubHeaderPanel';
 
@@ -38,7 +38,7 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class UpdateResourcePanel extends React.Component<RootProps, {}> {
   render() {
-    let { route } = this.props,
+    const { route } = this.props,
       urlParams = router.resolve(route);
 
     let headTitle = '';
@@ -47,7 +47,7 @@ export class UpdateResourcePanel extends React.Component<RootProps, {}> {
     let content: JSX.Element;
 
     // 判断当前的资源
-    let resourceType = urlParams['resourceName'],
+    const resourceType = urlParams['resourceName'],
       updateType = urlParams['tab'];
 
     if (resourceType === 'svc' && updateType === 'modifyType') {
@@ -71,6 +71,8 @@ export class UpdateResourcePanel extends React.Component<RootProps, {}> {
     } else if (resourceType === 'lbcf' && updateType === 'updateBG') {
       content = <EditLbcfBackGroupPanel />;
       headTitle = t('更新后端负载');
+    } else if (['deployment', 'statefulset', 'daemonset'].includes(resourceType) && updateType === 'modifyStrategy') {
+      return <ModifyStrategyPanel kind={resourceType} />;
     }
 
     return (

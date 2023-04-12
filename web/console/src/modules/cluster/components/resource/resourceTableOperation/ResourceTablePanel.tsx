@@ -25,7 +25,7 @@ import { Bubble, TableColumn, Text } from '@tea/component';
 import { selectable } from '@tea/component/table/addons/selectable';
 import { TablePanel } from '@tencent/ff-component';
 import { bindActionCreators, uuid } from '@tencent/ff-redux';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { Trans, t } from '@tencent/tea-app/lib/i18n';
 
 import { dateFormatter } from '../../../../../../helpers';
 import { Clip, HeadBubble, LinkButton } from '../../../../common/components';
@@ -129,7 +129,7 @@ const mapDispatchToProps = dispatch =>
 @connect(state => state, mapDispatchToProps)
 export class ResourceTablePanel extends React.Component<RootProps, {}> {
   componentWillUnmount() {
-    let { actions } = this?.props;
+    const { actions } = this?.props;
     // 离开页面的话，清空当前的轮询操作
     actions?.resource?.clearPolling();
     // 离开页面的话，清空当前的多选
@@ -257,17 +257,17 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
    * @param fieldInfo: 配置文件
    */
   private _renderOperationCell(resource: Resource, fieldInfo: DisplayFiledProps) {
-    let { route, actions, subRoot, namespaceSelection } = this.props,
+    const { route, actions, subRoot, namespaceSelection } = this.props,
       urlParams = router.resolve(route),
       { clusterId } = route.queries,
       { resourceOption, resourceName } = subRoot,
       { ffResourceList } = resourceOption;
 
     // 操作列表的list
-    let operatorList = fieldInfo?.operatorList;
+    const operatorList = fieldInfo?.operatorList;
     // 更多按钮的 pop方向
-    let resourceIndex = ffResourceList?.list?.data?.records?.findIndex(c => c.id === resource.id);
-    let direction: 'down' | 'up' =
+    const resourceIndex = ffResourceList?.list?.data?.records?.findIndex(c => c.id === resource.id);
+    const direction: 'down' | 'up' =
       resourceIndex < ffResourceList?.list?.data?.recordCount - 2 || ffResourceList?.list?.data?.recordCount < 4
         ? 'down'
         : 'up';
@@ -401,19 +401,16 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
       );
     };
 
-    let btns = [];
+    const btns = [];
     operatorList?.forEach(operatorItem => {
       if (operatorItem?.actionType === 'modify') {
         btns.push(renderModifyButton(operatorItem));
       } else if (operatorItem.actionType === 'delete') {
         btns.push(renderDeleteButton(operatorItem));
       } else if (
-        operatorItem?.actionType === 'modifyPod' ||
-        operatorItem?.actionType === 'modifyRule' ||
-        operatorItem?.actionType === 'modifyType' ||
-        operatorItem?.actionType === 'modifyRegistry' ||
-        operatorItem?.actionType === 'createBG' ||
-        operatorItem?.actionType === 'updateBG'
+        ['modifyStrategy', 'modifyPod', 'modifyRule', 'modifyType', 'modifyRegistry', 'createBG', 'updateBG'].includes(
+          operatorItem?.actionType
+        )
       ) {
         btns.push(renderUpdateResourcePart(operatorItem));
       }
@@ -428,7 +425,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
   /** 展示ip的内容 */
   private _reduceIPCell(ipInfo: any, clipId: string, resource: Resource) {
-    let { resourceName } = this?.props?.subRoot;
+    const { resourceName } = this?.props?.subRoot;
     let ipArray = ipInfo;
     // 如果ipArray 不是一个数组
     if (typeof ipArray !== 'object') {
@@ -446,8 +443,8 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
     if (isNginxIngress) {
       content = <div className="ip-cell">-</div>;
     } else {
-      let [clusterIP, ingressIP] = ipArray;
-      let isShowLoading = IsResourceShowLoadingIcon(resourceName, resource);
+      const [clusterIP, ingressIP] = ipArray;
+      const isShowLoading = IsResourceShowLoadingIcon(resourceName, resource);
       content = (
         <div className="ip-cell">
           {ingressIP && (
@@ -479,9 +476,9 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
   /** 展示status */
   private _reduceStatus(showData: any, resource: Resource) {
-    let { resourceName } = this.props.subRoot;
+    const { resourceName } = this.props.subRoot;
 
-    let statusMap = ResourceStatus?.[resourceName];
+    const statusMap = ResourceStatus?.[resourceName];
 
     return (
       <div>
@@ -501,7 +498,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
   /** 展示映射的字段 */
   private _reduceMapText(showData: any, fieldInfo: DisplayFiledProps) {
-    let { mapTextConfig } = fieldInfo;
+    const { mapTextConfig } = fieldInfo;
 
     return (
       <Text parent="div" overflow>
@@ -512,7 +509,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
   /** 展示副本的相关 */
   private _reduceReplicas(showData: any, resource: Resource) {
-    let { resourceName } = this.props.subRoot;
+    const { resourceName } = this.props.subRoot;
 
     return (
       <Text parent="div" overflow>
@@ -542,9 +539,9 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
       }${rule.path}`;
     };
 
-    let finalRules = [...httpRules, ...httpsRules];
+    const finalRules = [...httpRules, ...httpsRules];
 
-    let finalRulesLength = finalRules.length;
+    const finalRulesLength = finalRules.length;
     return finalRules.length ? (
       <Bubble
         placement="top"
@@ -578,8 +575,8 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
   /** 展示ingress的后端服务 */
   private _reduceIngressRule_standalone(showData: any) {
-    let httpRules = showData !== '-' ? showData : [];
-    let finalRules =
+    const httpRules = showData !== '-' ? showData : [];
+    const finalRules =
       httpRules?.map(item => {
         return {
           protocol: 'http',
@@ -593,7 +590,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
       return `${rule?.protocol}://${rule?.host}${rule?.path}`;
     };
 
-    let finalRulesLength = finalRules?.length;
+    const finalRulesLength = finalRules?.length;
     return finalRules.length ? (
       <Bubble
         placement="top"
@@ -627,7 +624,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
     );
   }
   private _reducebackendGroups(showData) {
-    let backendGroups = showData,
+    const backendGroups = showData,
       backendGroupsLength = backendGroups !== '-' ? backendGroups.length : 0;
     return backendGroupsLength ? (
       <Bubble
@@ -656,9 +653,9 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
   /** 展示时间 */
   private _reduceTime(showData: any, direction: 'bottom' | 'top') {
-    let time = dateFormatter(new Date(showData), 'YYYY-MM-DD HH:mm:ss');
+    const time = dateFormatter(new Date(showData), 'YYYY-MM-DD HH:mm:ss');
 
-    let [year, currentTime] = time.split(' ');
+    const [year, currentTime] = time.split(' ');
 
     return (
       <Bubble placement="left" content={time || null}>
@@ -669,8 +666,8 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
   }
 
   private _reduceResourceLimit(showData) {
-    let resourceLimitKeys = showData !== '-' ? Object.keys(showData) : [];
-    let content = resourceLimitKeys.map((item, index) => (
+    const resourceLimitKeys = showData !== '-' ? Object.keys(showData) : [];
+    const content = resourceLimitKeys.map((item, index) => (
       <Text parent="p" key={index}>{`${resourceLimitTypeToText[item]}:${
         resourceTypeToUnit[item] === 'MiB'
           ? valueLabels1024(showData[item], K8SUNIT.Mi)
@@ -701,7 +698,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
   /** 根据 fieldInfo的 dataFormat来决定显示的bodyCell的具体内容 */
   private _renderBodyCell(resource: Resource, fieldInfo: DisplayFiledProps, clipId: string) {
-    let { subRoot } = this.props,
+    const { subRoot } = this.props,
       { resourceOption } = subRoot,
       { ffResourceList } = resourceOption;
 
@@ -710,8 +707,8 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
     // fieldInfo当中的 dataField是一个数组，可以同时输入多个值
     let showData: any = [];
     fieldInfo?.dataField?.forEach(item => {
-      let dataFieldIns = item.split('.');
-      let data: any = this._getFinalData(dataFieldIns, resource);
+      const dataFieldIns = item.split('.');
+      const data: any = this._getFinalData(dataFieldIns, resource);
       // 如果返回的为 '' ，即找不到这个对象，则使用配置文件所设定的默认值
       showData.push(data === '' ? fieldInfo?.noExsitedValue : data);
     });
@@ -719,8 +716,8 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
     showData = showData.length === 1 ? showData[0] : showData;
 
     // 这里是当列表有 bubble等情况的时候，判断当前行属于第几行
-    let resourceIndex = ffResourceList?.list?.data?.records?.findIndex(item => item.id === resource.id);
-    let direction: 'top' | 'bottom' =
+    const resourceIndex = ffResourceList?.list?.data?.records?.findIndex(item => item.id === resource.id);
+    const direction: 'top' | 'bottom' =
       ffResourceList?.list?.data?.recordCount < 4 || resourceIndex < ffResourceList?.list?.data?.recordCount - 2
         ? 'top'
         : 'bottom';
@@ -758,13 +755,13 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
       { resourceOption, resourceInfo, resourceName } = subRoot,
       { ffResourceList, resourceMultipleSelection } = resourceOption;
 
-    let addons = [];
+    const addons = [];
 
-    let displayField = resourceInfo?.displayField ?? {};
+    const displayField = resourceInfo?.displayField ?? {};
     // 根据 displayField当中的key来决定展示什么内容
-    let showField = [];
+    const showField = [];
     Object.keys(displayField).forEach(item => {
-      let fieldInfo = displayField?.[item];
+      const fieldInfo = displayField?.[item];
 
       // 操作的按钮现在都换成在tablePanel当中去展示
       if (fieldInfo?.dataFormat === 'operator') return;
@@ -782,7 +779,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
         );
         return;
       }
-      let columnInfo: TableColumn<Resource> = {
+      const columnInfo: TableColumn<Resource> = {
         key: item + uuid(),
         header: fieldInfo?.headTitle,
         width: fieldInfo?.width,
@@ -790,9 +787,9 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
       };
 
       if (fieldInfo.headCell) {
-        let style: React.CSSProperties = { display: 'block' };
+        const style: React.CSSProperties = { display: 'block' };
 
-        let headBubbleText = (
+        const headBubbleText = (
           <span style={style}>
             {fieldInfo?.headCell?.map((item, index) => (
               <span key={index} className="text" style={style}>
@@ -842,7 +839,7 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
 
   /** 链接的跳转 */
   private _handleClickForNavigate(resource: Resource) {
-    let { actions, route } = this.props,
+    const { actions, route } = this.props,
       urlParams = router.resolve(route);
 
     // 选择当前的具体的resouce
