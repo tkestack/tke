@@ -21,14 +21,13 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 
-import { upperFirst } from 'lodash';
 import { allActions } from '../../../actions';
 import { router } from '../../../router';
 import { RootProps } from '../../ClusterApp';
 import { UpdateServiceAccessTypePanel } from '../resourceTableOperation/UpdateServiceAccessTypePanel';
 import { UpdateWorkloadPodNumPanel } from '../resourceTableOperation/UpdateWorkloadPodNumPanel';
 import { UpdateWorkloadRegistryPanel } from '../resourceTableOperation/UpdateWorkloadRegistryPanel';
-import { ModifyStrategyPanel } from '../resourceTableOperation/workloadUpdate/modifyStrategyPanel';
+import { WorkloadUpdatePanel } from '../resourceTableOperation/workloadUpdate';
 import { EditLbcfBackGroupPanel } from './EditLbcfBackGroupPanel';
 import { SubHeaderPanel } from './SubHeaderPanel';
 
@@ -71,8 +70,11 @@ export class UpdateResourcePanel extends React.Component<RootProps, {}> {
     } else if (resourceType === 'lbcf' && updateType === 'updateBG') {
       content = <EditLbcfBackGroupPanel />;
       headTitle = t('更新后端负载');
-    } else if (['deployment', 'statefulset', 'daemonset'].includes(resourceType) && updateType === 'modifyStrategy') {
-      return <ModifyStrategyPanel kind={resourceType} />;
+    } else if (
+      ['deployment', 'statefulset', 'daemonset'].includes(resourceType) &&
+      ['modifyStrategy', 'modifyNodeAffinity'].includes(updateType)
+    ) {
+      return <WorkloadUpdatePanel kind={resourceType} updateType={updateType} />;
     }
 
     return (

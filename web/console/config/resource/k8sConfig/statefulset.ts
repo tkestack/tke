@@ -61,6 +61,11 @@ const displayField = Object.assign({}, commonDisplayField, {
         name: t('设置更新策略'),
         actionType: 'modifyStrategy',
         isInMoreOp: true
+      },
+      {
+        name: t('更新调度策略'),
+        actionType: 'modifyNodeAffinity',
+        isInMoreOp: true
       }
     ]
   }

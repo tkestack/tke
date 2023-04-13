@@ -63,6 +63,11 @@ const userDefinedDisplayField: DisplayField = {
         isInMoreOp: true
       },
       {
+        name: t('更新调度策略'),
+        actionType: 'modifyNodeAffinity',
+        isInMoreOp: true
+      },
+      {
         name: t('编辑YAML'),
         actionType: 'modify',
         isInMoreOp: true
