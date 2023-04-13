@@ -1,12 +1,5 @@
 import { t } from '@/tencent/tea-app/lib/i18n';
-
-export enum WorkloadKindEnum {
-  Deployment = 'deployment',
-
-  StatefulSet = 'statefulset',
-
-  DaemonSet = 'daemonset'
-}
+import { WorkloadKindEnum } from '../constants';
 
 export interface IModifyStrategyPanelProps {
   kind: WorkloadKindEnum;

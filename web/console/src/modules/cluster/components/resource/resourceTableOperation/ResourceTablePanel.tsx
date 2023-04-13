@@ -408,9 +408,16 @@ export class ResourceTablePanel extends React.Component<RootProps, {}> {
       } else if (operatorItem.actionType === 'delete') {
         btns.push(renderDeleteButton(operatorItem));
       } else if (
-        ['modifyStrategy', 'modifyPod', 'modifyRule', 'modifyType', 'modifyRegistry', 'createBG', 'updateBG'].includes(
-          operatorItem?.actionType
-        )
+        [
+          'modifyNodeAffinity',
+          'modifyStrategy',
+          'modifyPod',
+          'modifyRule',
+          'modifyType',
+          'modifyRegistry',
+          'createBG',
+          'updateBG'
+        ].includes(operatorItem?.actionType)
       ) {
         btns.push(renderUpdateResourcePart(operatorItem));
       }
