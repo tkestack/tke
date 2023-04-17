@@ -130,34 +130,34 @@ func (t *TKE) expansionRendAndCopy(from, to string, perm os.FileMode, needRend b
 }
 
 // importExpansionCharts uploads expansion charts
-func (t *TKE) importExpansionCharts(ctx context.Context) error {
-	chartPath := path.Join(t.Config.CustomExpansionDir, t.Config.CustomChartsName)
-	if info, err := os.Stat(chartPath); err != nil {
-		if os.IsNotExist(err) {
-			// no chart file found means no charts.
-			return nil
-		}
-		return fmt.Errorf("locate chart file get system error %v,%v", chartPath, err)
-	} else if info.IsDir() {
-		return fmt.Errorf("chart file is a directory %v", chartPath)
-	}
+// func (t *TKE) importExpansionCharts(ctx context.Context) error {
+// 	chartPath := path.Join(t.Config.CustomExpansionDir, t.Config.CustomChartsName)
+// 	if info, err := os.Stat(chartPath); err != nil {
+// 		if os.IsNotExist(err) {
+// 			// no chart file found means no charts.
+// 			return nil
+// 		}
+// 		return fmt.Errorf("locate chart file get system error %v,%v", chartPath, err)
+// 	} else if info.IsDir() {
+// 		return fmt.Errorf("chart file is a directory %v", chartPath)
+// 	}
 
-	// TODO: (workaround ) client init will only be called in createCluster.
-	// If we SKIP createCluster step, all client call will be panic
-	if t.registryClient == nil {
-		err := t.initDataForDeployTKE()
-		if err != nil {
-			return err
-		}
-	}
+// 	// TODO: (workaround ) client init will only be called in createCluster.
+// 	// If we SKIP createCluster step, all client call will be panic
+// 	if t.registryClient == nil {
+// 		err := t.initDataForDeployTKE()
+// 		if err != nil {
+// 			return err
+// 		}
+// 	}
 
-	err := t.pushCharts(ctx, chartPath, constants.DefaultTeantID, constants.DefaultExpansionChartGroupName)
-	if err != nil {
-		return err
-	}
-	return nil
+// 	err := t.pushCharts(ctx, chartPath, constants.DefaultTeantID, constants.DefaultExpansionChartGroupName)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
 
-}
+// }
 
 func copyFile(src, dst string, perm os.FileMode) error {
 
