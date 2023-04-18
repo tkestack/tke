@@ -50,133 +50,6 @@ teaApp.i18n.init({
   translation: zh_1
 });
 
-var _a, _b;
-var ResourceTypeEnum;
-(function (ResourceTypeEnum) {
-  ResourceTypeEnum["ServiceBinding"] = "ServiceBinding";
-  ResourceTypeEnum["Backup"] = "ServiceOpsPlan";
-  ResourceTypeEnum["ServiceResource"] = "ServiceInstance";
-  ResourceTypeEnum["ServicePlan"] = "ServicePlan";
-  ResourceTypeEnum["ServiceOpsBackup"] = "ServiceOpsBackup";
-  ResourceTypeEnum["Secret"] = "Secret";
-})(ResourceTypeEnum || (ResourceTypeEnum = {}));
-var ResourceTypeMap = (_a = {}, _a[ResourceTypeEnum.ServiceBinding] = {
-  path: 'servicebindings',
-  title: '服务绑定',
-  resourceKind: 'ServiceBinding',
-  schemaKey: 'BindingCreateParamsSchema'
-}, _a[ResourceTypeEnum.ServicePlan] = {
-  path: 'serviceplans',
-  title: '规格',
-  resourceKind: 'ServicePlan',
-  schemaKey: 'planSchema'
-}, _a[ResourceTypeEnum.ServiceResource] = {
-  path: 'serviceinstances',
-  title: '实例',
-  resourceKind: 'ServiceInstance',
-  schemaKey: 'instanceCreateParameterSchema'
-}, _a[ResourceTypeEnum.Backup] = {
-  path: 'serviceopsplans',
-  title: '备份',
-  resourceKind: 'ServiceOpsPlan',
-  schemaKey: 'instanceCreateParameterSchema'
-}, _a[ResourceTypeEnum.ServiceOpsBackup] = {
-  path: 'serviceopsbackups',
-  title: '备份',
-  resourceKind: 'ServiceOpsBackup',
-  schemaKey: ''
-}, _a[ResourceTypeEnum.Secret] = {
-  path: 'secrets',
-  title: 'Secret',
-  resourceKind: 'Secret',
-  schemaKey: ''
-}, _a);
-var serviceMngTabs = [{
-  id: ResourceTypeEnum.ServiceResource,
-  label: "实例管理"
-}, {
-  id: ResourceTypeEnum.ServicePlan,
-  label: "规格管理"
-}];
-var CreateSpecificOperatorEnum;
-(function (CreateSpecificOperatorEnum) {
-  CreateSpecificOperatorEnum["CreateResource"] = "CreateResource";
-  CreateSpecificOperatorEnum["BackupStrategy"] = "BackupStrategy";
-  CreateSpecificOperatorEnum["BackupNow"] = "BackupNow";
-  CreateSpecificOperatorEnum["CreateServiceBinding"] = "CreateServiceBinding";
-})(CreateSpecificOperatorEnum || (CreateSpecificOperatorEnum = {}));
-var CreateSpecificOperatorMap = (_b = {}, _b[CreateSpecificOperatorEnum.CreateResource] = {
-  msg: i18n.t('新建资源成功')
-}, _b[CreateSpecificOperatorEnum.BackupStrategy] = {
-  msg: i18n.t('备份策略成功')
-}, _b[CreateSpecificOperatorEnum.BackupNow] = {
-  msg: i18n.t('立即备份成功')
-}, _b[CreateSpecificOperatorEnum.CreateServiceBinding] = {
-  msg: i18n.t('新建资源成功')
-}, _b);
-var ErrorMsgEnum = {
-  COS_Resource_Not_Found: i18n.t('您尚未配置云上备份地址或者地址配置不正确，请进入服务概览-设置页面下检查配置是否正确')
-};
-var DefaultNamespace = 'sso';
-var SystemNamespace = 'ssm';
-var showResourceDeleteLoading = function showResourceDeleteLoading(resource, originResources) {
-  var loading = false;
-  var resourceType = resource === null || resource === void 0 ? void 0 : resource.kind;
-  switch (resourceType) {
-    case ResourceTypeEnum === null || ResourceTypeEnum === void 0 ? void 0 : ResourceTypeEnum.ServiceResource:
-    case ResourceTypeEnum === null || ResourceTypeEnum === void 0 ? void 0 : ResourceTypeEnum.ServiceOpsBackup:
-    case ResourceTypeEnum === null || ResourceTypeEnum === void 0 ? void 0 : ResourceTypeEnum.ServiceBinding:
-      loading = originResources === null || originResources === void 0 ? void 0 : originResources.some(function (item) {
-        var _a, _b, _c;
-        return ((_a = item === null || item === void 0 ? void 0 : item.metadata) === null || _a === void 0 ? void 0 : _a.name) === ((_b = resource === null || resource === void 0 ? void 0 : resource.metadata) === null || _b === void 0 ? void 0 : _b.name) && ((_c = item === null || item === void 0 ? void 0 : item.metadata) === null || _c === void 0 ? void 0 : _c.deletionTimestamp);
-      });
-  }
-  return loading;
-};
-var ExcludeNamespaces = ['clusternet-system', 'ssm'];
-
-var _a$1, _b$1, _c, _d, _e, _f;
-var PlatformType;
-(function (PlatformType) {
-  PlatformType["TDCC"] = "tdcc";
-  PlatformType["TKESTACK"] = "tkeStack";
-})(PlatformType || (PlatformType = {}));
-var YunApiName = {
-  DescribeServiceVendors: 'DescribeServiceVendors',
-  DescribeServiceResources: 'DescribeServiceInstances',
-  DescribeExternalClusters: 'DescribeExternalClusters',
-  DescribeHubClusters: 'DescribeHubClusters'
-};
-var ServiceMngYunApiName = (_a$1 = {}, _a$1[ResourceTypeEnum.ServiceResource] = 'DescribeServiceInstances', _a$1[ResourceTypeEnum.ServicePlan] = 'DescribeServicePlans', _a$1[ResourceTypeEnum.Backup] = 'ForwardRequestTDCC', _a$1[ResourceTypeEnum.ServiceBinding] = 'ForwardRequestTDCC', _a$1);
-var ResourceModuleName = (_b$1 = {}, _b$1[PlatformType.TDCC] = 'tdcc', _b$1);
-var ResourceVersionName = (_c = {}, _c[PlatformType.TDCC] = '2022-01-25', _c);
-var ResourceApiName = (_d = {}, _d[PlatformType.TDCC] = 'ForwardRequestTDCC', _d);
-var middlewareRouteRegStr = (_e = {}, _e[PlatformType.TDCC] = {
-  exactMatch: 'tdcc\/middleware$',
-  dimMatch: 'tdcc\/middleware'
-}, _e[PlatformType.TKESTACK] = {
-  exactMatch: 'middleware\/middleware$',
-  dimMatch: 'middleware\/middleware'
-}, _e);
-var rootNodeSelector = (_f = {}, _f[PlatformType.TDCC] = '#apaas-midleware', _f[PlatformType.TKESTACK] = '#apaas-midleware', _f);
-
-var requestResourceType;
-(function (requestResourceType) {
-  requestResourceType["MC"] = "MC";
-})(requestResourceType || (requestResourceType = {}));
-var ServiceDetailType;
-(function (ServiceDetailType) {
-  ServiceDetailType["ServiceClasses"] = "serviceclasses";
-  ServiceDetailType["ServiceBinding"] = "servicebinding";
-})(ServiceDetailType || (ServiceDetailType = {}));
-var ServiceNameType;
-(function (ServiceNameType) {
-  ServiceNameType["ETCD"] = "etcd";
-  ServiceNameType["MONGO"] = "mongo";
-  ServiceNameType["Redis"] = "redis";
-  ServiceNameType["Mariadb"] = "mariadb";
-})(ServiceNameType || (ServiceNameType = {}));
-
 function _typeof(obj) {
   "@babel/helpers - typeof";
 
@@ -481,25 +354,18 @@ var Util;
 (function (Util) {
   Util.TkeStackDefaultClusterId = 'global';
   Util.getCreator = function (platform, resource) {
-    var _a, _b, _c, _d, _e;
-    var name = '';
-    if (platform === PlatformType.TDCC) {
-      name = ((_b = (_a = resource === null || resource === void 0 ? void 0 : resource.metadata) === null || _a === void 0 ? void 0 : _a.labels) === null || _b === void 0 ? void 0 : _b['ssm.infra.tce.io/creator']) ? Util.getUserName(platform) : '-';
-    } else {
-      name = (_e = (_d = (_c = resource === null || resource === void 0 ? void 0 : resource.metadata) === null || _c === void 0 ? void 0 : _c.labels) === null || _d === void 0 ? void 0 : _d['ssm.infra.tce.io/creator']) !== null && _e !== void 0 ? _e : '-';
-    }
+    var _a, _b, _c, _d, _e, _f;
+    var name = (_f = (_c = (_b = (_a = resource === null || resource === void 0 ? void 0 : resource.metadata) === null || _a === void 0 ? void 0 : _a.annotations) === null || _b === void 0 ? void 0 : _b['ssm.infra.tce.io/creator']) !== null && _c !== void 0 ? _c : (_e = (_d = resource === null || resource === void 0 ? void 0 : resource.metadata) === null || _d === void 0 ? void 0 : _d.labels) === null || _e === void 0 ? void 0 : _e['ssm.infra.tce.io/creator']) !== null && _f !== void 0 ? _f : '-';
     return name;
   };
-  Util.getUserName = function (platform) {
+  Util.getUserName = function () {
     var _a, _b, _c;
     var name = '';
     if (document.cookie) {
-      if (platform === PlatformType.TDCC) {
-        try {
-          name = (_c = (_b = (_a = decodeURIComponent(Cookie === null || Cookie === void 0 ? void 0 : Cookie.getCookie('nick'))) === null || _a === void 0 ? void 0 : _a.split('@')) === null || _b === void 0 ? void 0 : _b[0]) === null || _c === void 0 ? void 0 : _c.toString();
-        } catch (error) {
-          name = '';
-        }
+      try {
+        name = (_c = (_b = (_a = decodeURIComponent(Cookie === null || Cookie === void 0 ? void 0 : Cookie.getCookie('nick'))) === null || _a === void 0 ? void 0 : _a.split('@')) === null || _b === void 0 ? void 0 : _b[0]) === null || _c === void 0 ? void 0 : _c.toString();
+      } catch (error) {
+        name = '';
       }
     }
     return name;
@@ -643,6 +509,138 @@ function downloadKubeconfig(crtText, filename) {
   downloadText(crtText, filename, 'applicatoin/octet-stream;charset=utf-8;');
 }
 
+var _a, _b;
+var ResourceTypeEnum;
+(function (ResourceTypeEnum) {
+  ResourceTypeEnum["ServiceBinding"] = "ServiceBinding";
+  ResourceTypeEnum["Backup"] = "ServiceOpsPlan";
+  ResourceTypeEnum["ServiceResource"] = "ServiceInstance";
+  ResourceTypeEnum["ServicePlan"] = "ServicePlan";
+  ResourceTypeEnum["ServiceOpsBackup"] = "ServiceOpsBackup";
+  ResourceTypeEnum["Secret"] = "Secret";
+})(ResourceTypeEnum || (ResourceTypeEnum = {}));
+var ResourceTypeMap = (_a = {}, _a[ResourceTypeEnum.ServiceBinding] = {
+  path: 'servicebindings',
+  title: '服务绑定',
+  resourceKind: 'ServiceBinding',
+  schemaKey: 'BindingCreateParamsSchema'
+}, _a[ResourceTypeEnum.ServicePlan] = {
+  path: 'serviceplans',
+  title: '规格',
+  resourceKind: 'ServicePlan',
+  schemaKey: 'planSchema'
+}, _a[ResourceTypeEnum.ServiceResource] = {
+  path: 'serviceinstances',
+  title: '实例',
+  resourceKind: 'ServiceInstance',
+  schemaKey: 'instanceCreateParameterSchema'
+}, _a[ResourceTypeEnum.Backup] = {
+  path: 'serviceopsplans',
+  title: '备份',
+  resourceKind: 'ServiceOpsPlan',
+  schemaKey: 'instanceCreateParameterSchema'
+}, _a[ResourceTypeEnum.ServiceOpsBackup] = {
+  path: 'serviceopsbackups',
+  title: '备份',
+  resourceKind: 'ServiceOpsBackup',
+  schemaKey: ''
+}, _a[ResourceTypeEnum.Secret] = {
+  path: 'secrets',
+  title: 'Secret',
+  resourceKind: 'Secret',
+  schemaKey: ''
+}, _a);
+var serviceMngTabs = [{
+  id: ResourceTypeEnum.ServiceResource,
+  label: "实例管理"
+}, {
+  id: ResourceTypeEnum.ServicePlan,
+  label: "规格管理"
+}];
+var CreateSpecificOperatorEnum;
+(function (CreateSpecificOperatorEnum) {
+  CreateSpecificOperatorEnum["CreateResource"] = "CreateResource";
+  CreateSpecificOperatorEnum["BackupStrategy"] = "BackupStrategy";
+  CreateSpecificOperatorEnum["BackupNow"] = "BackupNow";
+  CreateSpecificOperatorEnum["CreateServiceBinding"] = "CreateServiceBinding";
+})(CreateSpecificOperatorEnum || (CreateSpecificOperatorEnum = {}));
+var CreateSpecificOperatorMap = (_b = {}, _b[CreateSpecificOperatorEnum.CreateResource] = {
+  msg: i18n.t('新建资源成功')
+}, _b[CreateSpecificOperatorEnum.BackupStrategy] = {
+  msg: i18n.t('备份策略成功')
+}, _b[CreateSpecificOperatorEnum.BackupNow] = {
+  msg: i18n.t('立即备份成功')
+}, _b[CreateSpecificOperatorEnum.CreateServiceBinding] = {
+  msg: i18n.t('新建资源成功')
+}, _b);
+var ErrorMsgEnum = {
+  COS_Resource_Not_Found: i18n.t('您尚未配置云上备份地址或者地址配置不正确，请进入服务概览-设置页面下检查配置是否正确')
+};
+var DefaultNamespace = 'sso';
+var SystemNamespace = 'ssm';
+var showResourceDeleteLoading = function showResourceDeleteLoading(resource, originResources, platform) {
+  var loading = false;
+  var resourceType = resource === null || resource === void 0 ? void 0 : resource.kind;
+  switch (resourceType) {
+    case ResourceTypeEnum === null || ResourceTypeEnum === void 0 ? void 0 : ResourceTypeEnum.ServiceResource:
+      loading = originResources === null || originResources === void 0 ? void 0 : originResources.some(function (item) {
+        var _a, _b, _c;
+        return ((_a = resource === null || resource === void 0 ? void 0 : resource.metadata) === null || _a === void 0 ? void 0 : _a.name) === ((_b = item === null || item === void 0 ? void 0 : item.metadata) === null || _b === void 0 ? void 0 : _b.name) && Util.getClusterId(platform, resource) === Util.getClusterId(platform, item) && ((_c = resource === null || resource === void 0 ? void 0 : resource.metadata) === null || _c === void 0 ? void 0 : _c.deletionTimestamp);
+      });
+      break;
+    case ResourceTypeEnum === null || ResourceTypeEnum === void 0 ? void 0 : ResourceTypeEnum.ServiceOpsBackup:
+    case ResourceTypeEnum === null || ResourceTypeEnum === void 0 ? void 0 : ResourceTypeEnum.ServiceBinding:
+      loading = originResources === null || originResources === void 0 ? void 0 : originResources.some(function (item) {
+        var _a, _b, _c;
+        return ((_a = resource === null || resource === void 0 ? void 0 : resource.metadata) === null || _a === void 0 ? void 0 : _a.name) === ((_b = item === null || item === void 0 ? void 0 : item.metadata) === null || _b === void 0 ? void 0 : _b.name) && ((_c = resource === null || resource === void 0 ? void 0 : resource.metadata) === null || _c === void 0 ? void 0 : _c.deletionTimestamp);
+      });
+  }
+  return loading;
+};
+var ExcludeNamespaces = ['clusternet-system', 'ssm'];
+
+var _a$1, _b$1, _c, _d, _e, _f;
+var PlatformType;
+(function (PlatformType) {
+  PlatformType["TDCC"] = "tdcc";
+  PlatformType["TKESTACK"] = "tkeStack";
+})(PlatformType || (PlatformType = {}));
+var YunApiName = {
+  DescribeServiceVendors: 'DescribeServiceVendors',
+  DescribeServiceResources: 'DescribeServiceInstances',
+  DescribeExternalClusters: 'DescribeExternalClusters',
+  DescribeHubClusters: 'DescribeHubClusters'
+};
+var ServiceMngYunApiName = (_a$1 = {}, _a$1[ResourceTypeEnum.ServiceResource] = 'DescribeServiceInstances', _a$1[ResourceTypeEnum.ServicePlan] = 'DescribeServicePlans', _a$1[ResourceTypeEnum.Backup] = 'ForwardRequestTDCC', _a$1[ResourceTypeEnum.ServiceBinding] = 'ForwardRequestTDCC', _a$1);
+var ResourceModuleName = (_b$1 = {}, _b$1[PlatformType.TDCC] = 'tdcc', _b$1);
+var ResourceVersionName = (_c = {}, _c[PlatformType.TDCC] = '2022-01-25', _c);
+var ResourceApiName = (_d = {}, _d[PlatformType.TDCC] = 'ForwardRequestTDCC', _d);
+var middlewareRouteRegStr = (_e = {}, _e[PlatformType.TDCC] = {
+  exactMatch: 'tdcc\/middleware$',
+  dimMatch: 'tdcc\/middleware'
+}, _e[PlatformType.TKESTACK] = {
+  exactMatch: 'middleware\/middleware$',
+  dimMatch: 'middleware\/middleware'
+}, _e);
+var rootNodeSelector = (_f = {}, _f[PlatformType.TDCC] = '#apaas-midleware', _f[PlatformType.TKESTACK] = '#apaas-midleware', _f);
+
+var requestResourceType;
+(function (requestResourceType) {
+  requestResourceType["MC"] = "MC";
+})(requestResourceType || (requestResourceType = {}));
+var ServiceDetailType;
+(function (ServiceDetailType) {
+  ServiceDetailType["ServiceClasses"] = "serviceclasses";
+  ServiceDetailType["ServiceBinding"] = "servicebinding";
+})(ServiceDetailType || (ServiceDetailType = {}));
+var ServiceNameType;
+(function (ServiceNameType) {
+  ServiceNameType["ETCD"] = "etcd";
+  ServiceNameType["MONGO"] = "mongo";
+  ServiceNameType["Redis"] = "redis";
+  ServiceNameType["Mariadb"] = "mariadb";
+})(ServiceNameType || (ServiceNameType = {}));
+
 var _a$2, _b$2, _c$1, _d$1, _e$1, _f$1;
 /**
  * 类型
@@ -657,6 +655,7 @@ var SchemaType;
   SchemaType["Storage"] = "Storage";
   SchemaType["List"] = "List";
   SchemaType["Map"] = "Map";
+  SchemaType["Custom"] = "Custom";
 })(SchemaType || (SchemaType = {}));
 var DashboardStatusEnum;
 (function (DashboardStatusEnum) {
@@ -835,7 +834,7 @@ var validateAllProps = function validateAllProps(serviceInstanceEdit, instanceSc
   var formData = serviceInstanceEdit.formData;
   (_a = Object.keys(formData)) === null || _a === void 0 ? void 0 : _a.forEach(function (key) {
     var _a;
-    var _b, _c, _d, _e, _f, _g, _h, _j, _k;
+    var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s;
     var validator;
     if (isRequireBaseProps(key)) {
       validator = (_d = (_c = (_b = InstanceBaseValidateSchema === null || InstanceBaseValidateSchema === void 0 ? void 0 : InstanceBaseValidateSchema[key]) === null || _b === void 0 ? void 0 : _b.rules) === null || _c === void 0 ? void 0 : _c[0]) === null || _d === void 0 ? void 0 : _d.customFunc(formData[key], serviceInstanceEdit);
@@ -875,6 +874,11 @@ var validateAllProps = function validateAllProps(serviceInstanceEdit, instanceSc
           message: ''
         };
       }
+    } else if (key === 'nodeSchedule') {
+      validator = {
+        status: ((_l = formData === null || formData === void 0 ? void 0 : formData['nodeSchedule']) === null || _l === void 0 ? void 0 : _l.enable) && (((_m = formData === null || formData === void 0 ? void 0 : formData['nodeSchedule']) === null || _m === void 0 ? void 0 : _m['nodeSelector']) && !((_p = (_o = formData === null || formData === void 0 ? void 0 : formData['nodeSchedule']) === null || _o === void 0 ? void 0 : _o['nodeSelector']) === null || _p === void 0 ? void 0 : _p.isValid) || ((_q = formData === null || formData === void 0 ? void 0 : formData['nodeSchedule']) === null || _q === void 0 ? void 0 : _q['nodeAffinity']) && !((_s = (_r = formData === null || formData === void 0 ? void 0 : formData['nodeSchedule']) === null || _r === void 0 ? void 0 : _r['nodeAffinity']) === null || _s === void 0 ? void 0 : _s.isValid)) ? ffValidator.ValidatorStatusEnum.Failed : ffValidator.ValidatorStatusEnum.Success,
+        message: ''
+      };
     } else {
       validator = {
         status: ffValidator.ValidatorStatusEnum.Success,
@@ -2232,6 +2236,207 @@ var TipInfo = /** @class */function (_super) {
   };
   return TipInfo;
 }(React__default.Component);
+
+var BComponent;
+(function (BComponent) {
+  BComponent.BaseActionType = {
+    Clear: 'Clear',
+    Validator: 'Validator'
+  };
+  BComponent.getActionType = function (moduleName, actionType) {
+    return actionType ? moduleName + '_' + actionType : moduleName;
+  };
+  BComponent.createActionType = function (componentName, actionType) {
+    for (var key in actionType) {
+      var ns = [];
+      componentName && ns.push(componentName);
+      actionType[key] && ns.push(actionType[key]);
+      actionType[key] = ns.join('_');
+    }
+  };
+  BComponent.isNeedFetch = function (model, filter) {
+    if (filter === void 0) {
+      filter = null;
+    }
+    var isAllSame = true;
+    if (filter) {
+      var targetFilter_1 = [];
+      var originFilter_1 = [];
+      Object.keys(filter).forEach(function (key) {
+        targetFilter_1.push(filter === null || filter === void 0 ? void 0 : filter[key]);
+        originFilter_1.push(model.query.filter[key]);
+      });
+      isAllSame = JSON.stringify(targetFilter_1) === JSON.stringify(originFilter_1);
+    }
+    if (isAllSame) {
+      //如果参数都没变，
+      //1.正在加载的就不发请求
+      //2.之前的请求没出错就不再发起请求
+      if (typeof model['list'] !== 'undefined') {
+        if (model['list'].loading || model['list'].fetched
+        //&& model['list'].fetchState !== FetchState.Failed
+        ) {
+          return false;
+        } else {
+          return true;
+        }
+      }
+      if (typeof model['object'] !== 'undefined') {
+        if (model['object'].loading || model['object'].fetched
+        // && model['object'].fetchState !== FetchState.Failed
+        ) {
+          return false;
+        } else {
+          return true;
+        }
+      }
+    } else {
+      return true;
+    }
+  };
+  var ViewStyleEnum;
+  (function (ViewStyleEnum) {
+    ViewStyleEnum["Panel"] = "Panel";
+    ViewStyleEnum["FormItem"] = "FormItem";
+    ViewStyleEnum["Alert"] = "Alert";
+    ViewStyleEnum["Text"] = "Text";
+    ViewStyleEnum["Dialog"] = "Dialog";
+  })(ViewStyleEnum = BComponent.ViewStyleEnum || (BComponent.ViewStyleEnum = {}));
+  var EditStyleEnum;
+  (function (EditStyleEnum) {
+    EditStyleEnum["PopConfirm"] = "PopConfirm";
+    EditStyleEnum["Panel"] = "Panel";
+    EditStyleEnum["FormItem"] = "FormItem";
+  })(EditStyleEnum = BComponent.EditStyleEnum || (BComponent.EditStyleEnum = {}));
+  var OperationTypeEnum;
+  (function (OperationTypeEnum) {
+    OperationTypeEnum["Create"] = "Create";
+    /**
+     * @deprecated
+     */
+    OperationTypeEnum["CreateNode"] = "CreateNode";
+    OperationTypeEnum["Delete"] = "Delete";
+    OperationTypeEnum["Refund"] = "Refund";
+    OperationTypeEnum["Modify"] = "Modify";
+    OperationTypeEnum["View"] = "View";
+    /**
+     * @deprecated
+     */
+    OperationTypeEnum["EditSecret"] = "EditSecret";
+    /**
+     * @deprecated
+     */
+    OperationTypeEnum["IngressCreateSecret"] = "IngressCreateSecret";
+  })(OperationTypeEnum = BComponent.OperationTypeEnum || (BComponent.OperationTypeEnum = {}));
+  var ResourceTypeEnum;
+  (function (ResourceTypeEnum) {
+    ResourceTypeEnum["Asg"] = "Asg";
+    ResourceTypeEnum["Node"] = "Node";
+    ResourceTypeEnum["NodePool"] = "NodePool";
+    ResourceTypeEnum["AutonodePool"] = "AutoNodePool";
+    ResourceTypeEnum["VirtualNodePool"] = "VirtualNodePool";
+    ResourceTypeEnum["VirtualNode"] = "VirtualNode";
+    ResourceTypeEnum["EdgeCvm"] = "EdgeCvm";
+    ResourceTypeEnum["EdgeDeploymentGridInstance"] = "EdgeDeploymentGridInstance";
+    ResourceTypeEnum["LogListener"] = "LogListener";
+    ResourceTypeEnum["Audit"] = "Audit";
+    ResourceTypeEnum["Event"] = "Event";
+    ResourceTypeEnum["Ingress"] = "Ingress";
+    ResourceTypeEnum["Service"] = "Service";
+    ResourceTypeEnum["HPA"] = "HPA";
+    ResourceTypeEnum["Workload"] = "Workload";
+    ResourceTypeEnum["Secret"] = "Secret";
+    ResourceTypeEnum["EKSContainer"] = "EKSContainer";
+    ResourceTypeEnum["External"] = "External";
+    ResourceTypeEnum["ImageCache"] = "ImageCache";
+    ResourceTypeEnum["Subscription"] = "Subscription";
+    ResourceTypeEnum["Cluster"] = "Cluster";
+    ResourceTypeEnum["ECluster"] = "ECluster";
+    ResourceTypeEnum["HubCluster"] = "HubCluster";
+    ResourceTypeEnum["EdgeCluster"] = "EdgeCluster";
+    ResourceTypeEnum["PersistentVolume"] = "PersistentVolume";
+    ResourceTypeEnum["PersistentVolumeClaim"] = "PersistentVolumeClaim";
+    ResourceTypeEnum["StorageClass"] = "StorageClass";
+    ResourceTypeEnum["Label"] = "Label";
+    ResourceTypeEnum["Annotation"] = "Annotation";
+  })(ResourceTypeEnum = BComponent.ResourceTypeEnum || (BComponent.ResourceTypeEnum = {}));
+  BComponent.createHooks = function (_a) {
+    var Context = _a.Context,
+      itemsSelector = _a.itemsSelector,
+      vKeyPrefix = _a.vKeyPrefix;
+    var useModel = function useModel(modelSelector, eqFn) {
+      if (eqFn === void 0) {
+        eqFn = reactRedux.shallowEqual;
+      }
+      var context = React__default.useContext(Context);
+      return reactRedux.useSelector(function (state) {
+        return modelSelector(context.selector(function () {
+          return state;
+        }).model);
+      }, eqFn);
+    };
+    var useFilter = function useFilter(filterSelector) {
+      var context = React__default.useContext(Context);
+      return reactRedux.useSelector(function (state) {
+        return filterSelector(context.selector(function () {
+          return state;
+        }).filter);
+      }, reactRedux.shallowEqual);
+    };
+    var useItem = function useItem(itemId, itemSelector) {
+      return useModel(function (model) {
+        var items = itemsSelector(model);
+        var item = items.find(function (item) {
+          return item.id === itemId;
+        });
+        return itemSelector(item);
+      });
+    };
+    var useVkey = function useVkey(_a) {
+      var key = _a.key,
+        itemId = _a.itemId;
+      var itemIndex = useModel(function (model) {
+        var items = itemsSelector(model);
+        return items.findIndex(function (item) {
+          return item.id === itemId;
+        });
+      });
+      return "".concat(vKeyPrefix, "[").concat(itemIndex, "].").concat(String(key));
+    };
+    return {
+      useVkey: useVkey,
+      useModel: useModel,
+      useFilter: useFilter,
+      useItem: useItem
+    };
+  };
+  BComponent.createSimpleHooks = function (selector) {
+    var useModel = function useModel(modelSelector, eqFn) {
+      if (eqFn === void 0) {
+        eqFn = reactRedux.shallowEqual;
+      }
+      return reactRedux.useSelector(function (state) {
+        return modelSelector(selector(function () {
+          return state;
+        }).model);
+      }, eqFn);
+    };
+    var useFilter = function useFilter(filterSelector) {
+      return reactRedux.useSelector(function (state) {
+        return filterSelector(selector(function () {
+          return state;
+        }).filter);
+      }, reactRedux.shallowEqual);
+    };
+    return {
+      useModel: useModel,
+      useFilter: useFilter
+    };
+  };
+  BComponent.createSlice = function (_a) {
+    var pageName = _a.pageName;
+  };
+})(BComponent || (BComponent = {}));
 
 function RetryPanel(props) {
   var _a = props.style,
@@ -3878,7 +4083,8 @@ var fetchExternalClusters = function fetchExternalClusters(queryParams) {
                 return {
                   clusterId: item === null || item === void 0 ? void 0 : item.ClusterId,
                   status: item === null || item === void 0 ? void 0 : item.Status,
-                  clusterName: item === null || item === void 0 ? void 0 : item.ClusterName
+                  clusterName: item === null || item === void 0 ? void 0 : item.ClusterName,
+                  extraInfos: item === null || item === void 0 ? void 0 : item.ExtraInfos
                 };
               })) !== null && _d !== void 0 ? _d : [];
             } else {
@@ -5042,21 +5248,21 @@ function ServiceDetailTable(props) {
         key: 'status',
         header: i18n.t('状态'),
         render: function render(item) {
-          var _a, _b, _c, _d, _e, _f, _g, _h;
+          var _a, _b, _c, _d, _e, _f, _g, _h, _j;
           var state = ((_a = item === null || item === void 0 ? void 0 : item.status) === null || _a === void 0 ? void 0 : _a.state) || '-';
-          var className = ServiceInstanceMap === null || ServiceInstanceMap === void 0 ? void 0 : ServiceInstanceMap[((_b = item === null || item === void 0 ? void 0 : item.status) === null || _b === void 0 ? void 0 : _b.state) || (ServiceInstanceStatusEnum === null || ServiceInstanceStatusEnum === void 0 ? void 0 : ServiceInstanceStatusEnum.Unknown)].className;
-          var isDeleting = showResourceDeleteLoading(item, (_d = (_c = serviceResources === null || serviceResources === void 0 ? void 0 : serviceResources.list) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.records);
+          var className = (_c = ServiceInstanceMap === null || ServiceInstanceMap === void 0 ? void 0 : ServiceInstanceMap[((_b = item === null || item === void 0 ? void 0 : item.status) === null || _b === void 0 ? void 0 : _b.state) || (ServiceInstanceStatusEnum === null || ServiceInstanceStatusEnum === void 0 ? void 0 : ServiceInstanceStatusEnum.Unknown)]) === null || _c === void 0 ? void 0 : _c.className;
+          var isDeleting = showResourceDeleteLoading(item, (_e = (_d = serviceResources === null || serviceResources === void 0 ? void 0 : serviceResources.list) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e.records, platform);
           return React__default.createElement(React__default.Fragment, null, isDeleting && React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Icon, {
             type: 'loading'
           }), i18n.t('删除中')), !isDeleting && React__default.createElement(teaComponent.Text, {
             className: className + " tea-mr-1n"
-          }, state), !isDeleting && !!((_f = (_e = item === null || item === void 0 ? void 0 : item.status) === null || _e === void 0 ? void 0 : _e.conditions) === null || _f === void 0 ? void 0 : _f.length) && React__default.createElement(teaComponent.Bubble, {
+          }, state), !isDeleting && !!((_g = (_f = item === null || item === void 0 ? void 0 : item.status) === null || _f === void 0 ? void 0 : _f.conditions) === null || _g === void 0 ? void 0 : _g.length) && React__default.createElement(teaComponent.Bubble, {
             content: React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.List, {
               type: "number",
               style: {
                 width: '100%'
               }
-            }, (_h = (_g = item === null || item === void 0 ? void 0 : item.status) === null || _g === void 0 ? void 0 : _g.conditions) === null || _h === void 0 ? void 0 : _h.map(function (item) {
+            }, (_j = (_h = item === null || item === void 0 ? void 0 : item.status) === null || _h === void 0 ? void 0 : _h.conditions) === null || _j === void 0 ? void 0 : _j.map(function (item) {
               return React__default.createElement(teaComponent.List.Item, null, React__default.createElement(teaComponent.Text, {
                 className: 'tea-mr-2n'
               }, " ", "".concat(item === null || item === void 0 ? void 0 : item.type, " : ").concat((item === null || item === void 0 ? void 0 : item.reason) || (item === null || item === void 0 ? void 0 : item.message))), React__default.createElement(teaComponent.Icon, {
@@ -5501,7 +5707,10 @@ function PaasSiderPanel(props) {
         maxWidth: 200,
         border: '1px solid #eee'
       }
-    }, React__default.createElement(teaComponent.Card.Body, null, i18n.t('您尚未开通分布式云中心数据服务，请前往分布式云中心【数据服务->服务概览】开通')));
+    }, React__default.createElement(teaComponent.Card.Body, null, React__default.createElement(i18n.Trans, null, "\u60A8\u5C1A\u672A\u5F00\u901A\u5206\u5E03\u5F0F\u4E91\u4E2D\u5FC3\u6570\u636E\u670D\u52A1\uFF0C\u8BF7\u524D\u5F80\u5206\u5E03\u5F0F\u4E91\u4E2D\u5FC3", React__default.createElement("a", {
+      href: 'https://console.cloud.tencent.com/tdcc/paasoverview',
+      target: "_blank"
+    }, "\u5F00\u901A\u670D\u52A1"))));
   }
   function RetryPanel(retryProps) {
     return React__default.createElement(teaComponent.Card, {
@@ -5623,6 +5832,7 @@ var List;
   List["SHOW_INSTANCE_TABLE_DIALOG"] = "SHOW_INSTANCE_TABLE_DIALOG";
   List["SHOW_CREATE_RESOURCE_DIALOG"] = "SHOW_CREATE_RESOURCE_DIALOG";
   List["FETCH_EXTERNAL_CLUSTERS"] = "FETCH_EXTERNAL_CLUSTERS";
+  List["FETCH_Affinity_Localization"] = "FETCH_Affinity_Localization";
   List["Clear"] = "Clear";
 })(List || (List = {}));
 var Detail;
@@ -7318,7 +7528,7 @@ var baseActions = {
             case 0:
               if (!(((_a = query === null || query === void 0 ? void 0 : query.filter) === null || _a === void 0 ? void 0 : _a.platform) === PlatformType.TDCC)) return [3 /*break*/, 1];
               response = {
-                name: Util === null || Util === void 0 ? void 0 : Util.getUin()
+                name: Util === null || Util === void 0 ? void 0 : Util.getUserName()
               };
               return [3 /*break*/, 3];
             case 1:
@@ -7615,6 +7825,409 @@ var ResourceGetRbacAdminDialog = reactRedux.connect(function (state) {
   return state;
 }, mapDispatchToProps)(GetRbacAdminDialog);
 
+var _a$a, _b$7;
+/** 节点亲和性调度 亲和性调度操作符 */
+var NodeAffinityOperatorEnum;
+(function (NodeAffinityOperatorEnum) {
+  NodeAffinityOperatorEnum["In"] = "In";
+  NodeAffinityOperatorEnum["NotIn"] = "NotIn";
+  NodeAffinityOperatorEnum["Exists"] = "Exists";
+  NodeAffinityOperatorEnum["DoesNotExist"] = "DoesNotExist";
+  NodeAffinityOperatorEnum["Gt"] = "Gt";
+  NodeAffinityOperatorEnum["Lt"] = "Lt";
+})(NodeAffinityOperatorEnum || (NodeAffinityOperatorEnum = {}));
+/**
+ * 服务调度的操作符
+ */
+var NodeAffinityRuleOperatorList = [{
+  value: NodeAffinityOperatorEnum.In,
+  tip: i18n.t('Label的value在列表中')
+}, {
+  value: NodeAffinityOperatorEnum.NotIn,
+  tip: i18n.t('Label的value不在列表中')
+}, {
+  value: NodeAffinityOperatorEnum.Exists,
+  tip: i18n.t('Label的key存在')
+}, {
+  value: NodeAffinityOperatorEnum.DoesNotExist,
+  tip: i18n.t('Labe的key不存在')
+}, {
+  value: NodeAffinityOperatorEnum.Gt,
+  tip: i18n.t('Label的值大于列表值（字符串匹配）')
+}, {
+  value: NodeAffinityOperatorEnum.Lt,
+  tip: i18n.t('Label的值小于列表值（字符串匹配）')
+}];
+var initRecords$1 = [{
+  id: uuid(),
+  key: '',
+  value: '',
+  operator: NodeAffinityOperatorEnum.In,
+  v_key: {
+    status: ffValidator.ValidatorStatusEnum.Success,
+    message: ''
+  },
+  v_value: {
+    status: ffValidator.ValidatorStatusEnum.Success,
+    message: ''
+  }
+}];
+var NodeAffinityMustNeedKey = 'topology.loopdevice.csi.infra.tce.io/hostname';
+var NoeAffinityInitRecords = [{
+  id: uuid(),
+  key: NodeAffinityMustNeedKey,
+  value: '',
+  operator: NodeAffinityOperatorEnum.Exists,
+  v_key: (_a$a = initRecords$1 === null || initRecords$1 === void 0 ? void 0 : initRecords$1[0]) === null || _a$a === void 0 ? void 0 : _a$a.v_key,
+  v_value: (_b$7 = initRecords$1 === null || initRecords$1 === void 0 ? void 0 : initRecords$1[0]) === null || _b$7 === void 0 ? void 0 : _b$7.v_value
+}];
+var stylize = teaComponent.Table.addons.stylize;
+var AffinityMapField = function AffinityMapField(_a) {
+  var _b;
+  var plan = _a.plan,
+    onChange = _a.onChange;
+  var _c = React.useState({
+      'nodeSelector': initRecords$1,
+      'nodeAffinity': initRecords$1
+    }),
+    map = _c[0],
+    setMap = _c[1];
+  var _d = React.useState(true),
+    enable = _d[0],
+    setEnable = _d[1];
+  var _e = React.useState(''),
+    editType = _e[0],
+    setEditType = _e[1];
+  React.useEffect(function () {
+    var _a, _b, _c, _d, _e;
+    var data = {
+      nodeSelector: {
+        records: (_a = map === null || map === void 0 ? void 0 : map['nodeSelector']) !== null && _a !== void 0 ? _a : [],
+        isValid: true
+      },
+      nodeAffinity: {
+        records: ((_b = map === null || map === void 0 ? void 0 : map['nodeAffinity']) === null || _b === void 0 ? void 0 : _b.some(function (item) {
+          return item.key === NodeAffinityMustNeedKey;
+        })) ? map === null || map === void 0 ? void 0 : map['nodeAffinity'] : NoeAffinityInitRecords.concat(map === null || map === void 0 ? void 0 : map['nodeAffinity']),
+        isValid: true
+      }
+    };
+    data.nodeSelector.records = enable ? data.nodeSelector.records : [];
+    data.nodeSelector.isValid = enable ? (_c = data.nodeSelector.records) === null || _c === void 0 ? void 0 : _c.every(function (item) {
+      var _a, _b;
+      return ((_a = item === null || item === void 0 ? void 0 : item.v_key) === null || _a === void 0 ? void 0 : _a.status) === ffValidator.ValidatorStatusEnum.Success && ((_b = item === null || item === void 0 ? void 0 : item.v_value) === null || _b === void 0 ? void 0 : _b.status) === ffValidator.ValidatorStatusEnum.Success;
+    }) : true;
+    data.nodeAffinity.records = enable ? (_d = data.nodeAffinity.records) === null || _d === void 0 ? void 0 : _d.map(function (item) {
+      return tslib.__assign(tslib.__assign({}, item), {
+        value: item.operator === NodeAffinityOperatorEnum.Exists || item.operator === NodeAffinityOperatorEnum.DoesNotExist ? '' : item.value,
+        v_value: item.operator === NodeAffinityOperatorEnum.Exists || item.operator === NodeAffinityOperatorEnum.DoesNotExist ? {
+          status: ffValidator.ValidatorStatusEnum.Success,
+          message: ''
+        } : item === null || item === void 0 ? void 0 : item['v_value']
+      });
+    }) : [];
+    data.nodeAffinity.isValid = enable ? (_e = data.nodeAffinity.records) === null || _e === void 0 ? void 0 : _e.every(function (item) {
+      var _a, _b;
+      return ((_a = item === null || item === void 0 ? void 0 : item.v_key) === null || _a === void 0 ? void 0 : _a.status) === ffValidator.ValidatorStatusEnum.Success && ((_b = item === null || item === void 0 ? void 0 : item.v_value) === null || _b === void 0 ? void 0 : _b.status) === ffValidator.ValidatorStatusEnum.Success;
+    }) : true;
+    onChange(tslib.__assign({
+      enable: enable
+    }, data));
+  }, [map, editType]);
+  React.useEffect(function () {
+    var _a, _b;
+    var map;
+    if (!enable) {
+      map = {
+        'nodeSelector': [],
+        'nodeAffinity': []
+      };
+    } else {
+      var affinityRecords = [{
+        id: uuid(),
+        key: NodeAffinityMustNeedKey,
+        value: '',
+        operator: NodeAffinityOperatorEnum.Exists,
+        v_key: (_a = initRecords$1 === null || initRecords$1 === void 0 ? void 0 : initRecords$1[0]) === null || _a === void 0 ? void 0 : _a.v_key,
+        v_value: (_b = initRecords$1 === null || initRecords$1 === void 0 ? void 0 : initRecords$1[0]) === null || _b === void 0 ? void 0 : _b.v_value
+      }];
+      map = {
+        'nodeSelector': [],
+        'nodeAffinity': affinityRecords
+      };
+    }
+    setMap(tslib.__assign({}, map));
+  }, [enable]);
+  var _delete = function _delete(type, id) {
+    var _a;
+    setEditType(type);
+    var records = map === null || map === void 0 ? void 0 : map[type];
+    setMap(tslib.__assign(tslib.__assign({}, map), (_a = {}, _a[type] = records === null || records === void 0 ? void 0 : records.filter(function (item) {
+      return (item === null || item === void 0 ? void 0 : item.id) !== id;
+    }), _a)));
+  };
+  var _add = function _add(type) {
+    var _a;
+    setEditType(type);
+    var newItem = tslib.__assign(tslib.__assign({}, initRecords$1 === null || initRecords$1 === void 0 ? void 0 : initRecords$1[0]), {
+      id: uuid()
+    });
+    var records = map === null || map === void 0 ? void 0 : map[type];
+    setMap(tslib.__assign(tslib.__assign({}, map), (_a = {}, _a[type] = records === null || records === void 0 ? void 0 : records.concat([newItem]), _a)));
+  };
+  var _update = function _update(type, fieldName, selectItem, value) {
+    var _a;
+    if (value === void 0) {
+      value = '';
+    }
+    setEditType(type);
+    var records = map === null || map === void 0 ? void 0 : map[type];
+    var validation = {};
+    if (fieldName === 'key') {
+      validation = !value ? {
+        status: ffValidator.ValidatorStatusEnum.Failed,
+        message: i18n.t("".concat(fieldName, "\u4E0D\u80FD\u4E3A\u7A7A"))
+      } : (records === null || records === void 0 ? void 0 : records.some(function (item) {
+        return item.key === value;
+      })) ? {
+        status: ffValidator.ValidatorStatusEnum.Failed,
+        message: i18n.t("".concat(fieldName, "\u4E0D\u80FD\u91CD\u590D"))
+      } : {
+        status: ffValidator.ValidatorStatusEnum.Success,
+        message: ''
+      };
+    } else if (fieldName === 'value') {
+      validation = !value ? {
+        status: ffValidator.ValidatorStatusEnum.Failed,
+        message: i18n.t("".concat(fieldName, "\u4E0D\u80FD\u4E3A\u7A7A"))
+      } : {
+        status: ffValidator.ValidatorStatusEnum.Success,
+        message: ''
+      };
+    } else {
+      validation = {
+        status: ffValidator.ValidatorStatusEnum.Success,
+        message: ''
+      };
+    }
+    var newRecords = records === null || records === void 0 ? void 0 : records.map(function (item) {
+      var _a;
+      return tslib.__assign(tslib.__assign({}, item), (_a = {}, _a[fieldName] = (item === null || item === void 0 ? void 0 : item.id) === (selectItem === null || selectItem === void 0 ? void 0 : selectItem.id) ? value : item === null || item === void 0 ? void 0 : item[fieldName], _a["v_".concat(fieldName)] = item.id === (selectItem === null || selectItem === void 0 ? void 0 : selectItem.id) ? tslib.__assign({}, validation) : item === null || item === void 0 ? void 0 : item["v_".concat(fieldName)], _a));
+    });
+    setMap(tslib.__assign(tslib.__assign({}, map), (_a = {}, _a[type] = newRecords, _a)));
+  };
+  return React__default.createElement(React__default.Fragment, null, enable && React__default.createElement(ffComponent.FormPanel.Item, {
+    label: i18n.t('节点选择')
+  }, !!((_b = map === null || map === void 0 ? void 0 : map.nodeSelector) === null || _b === void 0 ? void 0 : _b.length) && React__default.createElement(teaComponent.Table, {
+    addons: [stylize({
+      headClassName: "nodeSelector-head",
+      headStyle: {
+        backgroundColor: "rgb(231, 234, 239)"
+      }
+    })],
+    bordered: true,
+    recordKey: "id",
+    columns: [{
+      key: "key",
+      header: 'Key',
+      width: '45%',
+      render: function render(item) {
+        var _a, _b;
+        return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Input, {
+          value: item === null || item === void 0 ? void 0 : item.key,
+          onChange: function onChange(value) {
+            _update('nodeSelector', 'key', item, value);
+          },
+          placeholder: i18n.t('Label Key'),
+          style: ((_a = item === null || item === void 0 ? void 0 : item['v_key']) === null || _a === void 0 ? void 0 : _a.status) === ffValidator.ValidatorStatusEnum.Failed ? {
+            border: '1px solid red',
+            width: '90%'
+          } : {
+            width: '100%'
+          },
+          className: 'tea-mr-2n',
+          width: '100%'
+        }), ((_b = item === null || item === void 0 ? void 0 : item['v_key']) === null || _b === void 0 ? void 0 : _b.status) === ffValidator.ValidatorStatusEnum.Failed && React__default.createElement(teaComponent.Bubble, {
+          content: i18n.t('{{msg}}', {
+            msg: item === null || item === void 0 ? void 0 : item['v_key'].message
+          })
+        }, React__default.createElement(teaComponent.Icon, {
+          type: 'error'
+        })));
+      }
+    }, {
+      key: "value",
+      header: 'Value',
+      width: '45%',
+      render: function render(item) {
+        var _a, _b;
+        return React__default.createElement("div", null, React__default.createElement(teaComponent.Input, {
+          value: item === null || item === void 0 ? void 0 : item.value,
+          onChange: function onChange(value) {
+            _update('nodeSelector', 'value', item, value);
+          },
+          placeholder: i18n.t('多个Label Value请以 ; 分隔符隔开'),
+          style: ((_a = item === null || item === void 0 ? void 0 : item['v_value']) === null || _a === void 0 ? void 0 : _a.status) === ffValidator.ValidatorStatusEnum.Failed ? {
+            border: '1px solid red',
+            width: '90%'
+          } : {
+            width: '100%'
+          },
+          className: 'tea-mr-2n',
+          width: '100%'
+        }), ((_b = item === null || item === void 0 ? void 0 : item['v_value']) === null || _b === void 0 ? void 0 : _b.status) === ffValidator.ValidatorStatusEnum.Failed && React__default.createElement(teaComponent.Bubble, {
+          content: i18n.t('{{msg}}', {
+            msg: item === null || item === void 0 ? void 0 : item['v_value'].message
+          })
+        }, React__default.createElement(teaComponent.Icon, {
+          type: 'error'
+        })));
+      }
+    }, {
+      key: 'operate',
+      header: null,
+      width: '10%',
+      render: function render(item) {
+        return React__default.createElement(teaComponent.Button, {
+          type: 'link',
+          onClick: function onClick() {
+            _delete('nodeSelector', item === null || item === void 0 ? void 0 : item.id);
+          }
+        }, i18n.t('删除'));
+      }
+    }],
+    records: map.nodeSelector
+  }), React__default.createElement(teaComponent.Button, {
+    onClick: function onClick() {
+      _add('nodeSelector');
+    },
+    type: 'link',
+    className: 'tea-mt-2n'
+  }, i18n.t('添加'))), enable && React__default.createElement(ffComponent.FormPanel.Item, {
+    label: i18n.t('节点亲和性')
+  }, React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Table, {
+    addons: [stylize({
+      headClassName: "nodeAffinity-head",
+      headStyle: {
+        backgroundColor: "rgb(231, 234, 239)"
+      }
+    })],
+    bordered: true,
+    recordKey: "id",
+    columns: [{
+      key: "key",
+      header: 'Key',
+      width: '30%',
+      render: function render(item) {
+        var _a, _b, _c, _d;
+        return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Tooltip, {
+          title: (item === null || item === void 0 ? void 0 : item.key) === NodeAffinityMustNeedKey && ((_a = item === null || item === void 0 ? void 0 : item.v_key) === null || _a === void 0 ? void 0 : _a.status) === ffValidator.ValidatorStatusEnum.Success ? i18n.t('该数据不可进行操作') : ''
+        }, React__default.createElement(teaComponent.Input, {
+          value: item === null || item === void 0 ? void 0 : item.key,
+          onChange: function onChange(value) {
+            _update('nodeAffinity', 'key', item, value);
+          },
+          placeholder: i18n.t('Label Key'),
+          style: ((_b = item === null || item === void 0 ? void 0 : item['v_key']) === null || _b === void 0 ? void 0 : _b.status) === ffValidator.ValidatorStatusEnum.Failed ? {
+            border: '1px solid red',
+            width: '90%'
+          } : {
+            width: '100%'
+          },
+          className: 'tea-mr-2n',
+          disabled: (item === null || item === void 0 ? void 0 : item.key) === NodeAffinityMustNeedKey && ((_c = item === null || item === void 0 ? void 0 : item.v_key) === null || _c === void 0 ? void 0 : _c.status) === ffValidator.ValidatorStatusEnum.Success
+        }), ((_d = item === null || item === void 0 ? void 0 : item['v_key']) === null || _d === void 0 ? void 0 : _d.status) === ffValidator.ValidatorStatusEnum.Failed && React__default.createElement(teaComponent.Bubble, {
+          content: i18n.t('{{msg}}', {
+            msg: item === null || item === void 0 ? void 0 : item['v_key'].message
+          })
+        }, React__default.createElement(teaComponent.Icon, {
+          type: 'error'
+        }))));
+      }
+    }, {
+      key: "operator",
+      header: '操作',
+      width: '30%',
+      render: function render(item) {
+        var _a;
+        return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Select, {
+          virtual: true,
+          value: item === null || item === void 0 ? void 0 : item.operator,
+          key: 'value',
+          options: NodeAffinityRuleOperatorList.map(function (item) {
+            return tslib.__assign(tslib.__assign({}, item), {
+              tooltip: item === null || item === void 0 ? void 0 : item.tip,
+              text: item === null || item === void 0 ? void 0 : item.value
+            });
+          }),
+          onChange: function onChange(value) {
+            _update('nodeAffinity', 'operator', item, value);
+          },
+          style: {
+            width: '100%'
+          },
+          disabled: (item === null || item === void 0 ? void 0 : item.key) === NodeAffinityMustNeedKey && ((_a = item === null || item === void 0 ? void 0 : item.v_key) === null || _a === void 0 ? void 0 : _a.status) === ffValidator.ValidatorStatusEnum.Success,
+          matchButtonWidth: true,
+          appearance: "button"
+        }));
+      }
+    }, {
+      key: "value",
+      header: 'Value',
+      width: '30%',
+      render: function render(item) {
+        var _a, _b;
+        return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Tooltip, {
+          title: item.operator === NodeAffinityOperatorEnum.Exists || item.operator === NodeAffinityOperatorEnum.DoesNotExist ? i18n.t('DoesNotExist,Exists操作符不需要填写value') : null
+        }, React__default.createElement(teaComponent.Input, {
+          value: item === null || item === void 0 ? void 0 : item.value,
+          onChange: function onChange(value) {
+            _update('nodeAffinity', 'value', item, value);
+          },
+          placeholder: item.operator === NodeAffinityOperatorEnum.Exists || item.operator === NodeAffinityOperatorEnum.DoesNotExist ? i18n.t('DoesNotExist,Exists操作符不需要填写value') : i18n.t('多个Label Value请以 ; 分隔符隔开'),
+          style: ((_a = item === null || item === void 0 ? void 0 : item['v_value']) === null || _a === void 0 ? void 0 : _a.status) === ffValidator.ValidatorStatusEnum.Failed ? {
+            border: '1px solid red',
+            width: '90%'
+          } : {
+            width: '100%'
+          },
+          disabled: item.operator === NodeAffinityOperatorEnum.Exists || item.operator === NodeAffinityOperatorEnum.DoesNotExist,
+          className: 'tea-mr-2n',
+          size: 'full'
+        })), ((_b = item === null || item === void 0 ? void 0 : item['v_value']) === null || _b === void 0 ? void 0 : _b.status) === ffValidator.ValidatorStatusEnum.Failed && React__default.createElement(teaComponent.Bubble, {
+          content: i18n.t('{{msg}}', {
+            msg: item === null || item === void 0 ? void 0 : item['v_value'].message
+          })
+        }, React__default.createElement(teaComponent.Icon, {
+          type: 'error'
+        })));
+      }
+    }, {
+      key: 'operate',
+      header: null,
+      width: '10%',
+      render: function render(item) {
+        var _a, _b;
+        return React__default.createElement(teaComponent.Button, {
+          type: 'link',
+          onClick: function onClick() {
+            _delete('nodeAffinity', item === null || item === void 0 ? void 0 : item.id);
+          },
+          disabled: (item === null || item === void 0 ? void 0 : item.key) === NodeAffinityMustNeedKey && ((_a = item === null || item === void 0 ? void 0 : item.v_key) === null || _a === void 0 ? void 0 : _a.status) === ffValidator.ValidatorStatusEnum.Success,
+          tooltip: (item === null || item === void 0 ? void 0 : item.key) === NodeAffinityMustNeedKey && ((_b = item === null || item === void 0 ? void 0 : item.v_key) === null || _b === void 0 ? void 0 : _b.status) === ffValidator.ValidatorStatusEnum.Success ? i18n.t('该数据不可进行删除操作') : ''
+        }, i18n.t('删除'));
+      }
+    }],
+    records: map === null || map === void 0 ? void 0 : map.nodeAffinity
+  }), React__default.createElement(teaComponent.Button, {
+    onClick: function onClick() {
+      _add('nodeAffinity');
+    },
+    type: 'link',
+    className: 'tea-mt-2n'
+  }, i18n.t('添加')))));
+};
+
 function ServiceInstanceCreatePanel(props) {
   var _this = this;
   var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
@@ -7643,6 +8256,7 @@ function ServiceInstanceCreatePanel(props) {
   });
   var isLoadingSchema = ((_a = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.list) === null || _a === void 0 ? void 0 : _a.fetched) && (externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) ? !((_b = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _b === void 0 ? void 0 : _b.fetched) : !((_c = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.list) === null || _c === void 0 ? void 0 : _c.fetched);
   var loadSchemaFailed = ((_d = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _d === void 0 ? void 0 : _d.fetched) && ((_e = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _e === void 0 ? void 0 : _e.error) && (!((_f = ['ResourceNotFound', 404]) === null || _f === void 0 ? void 0 : _f.includes((_h = (_g = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _g === void 0 ? void 0 : _g.error) === null || _h === void 0 ? void 0 : _h.code)) || !((_l = (_k = (_j = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _j === void 0 ? void 0 : _j.error) === null || _k === void 0 ? void 0 : _k.message) === null || _l === void 0 ? void 0 : _l.includes('404')));
+  var createWorkflow = ((_m = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _m === void 0 ? void 0 : _m.timeBackup) ? createServiceInstanceWorkflow : createResourceWorkflow;
   React.useEffect(function () {
     var _a;
     var clusterId = (_a = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _a === void 0 ? void 0 : _a.clusterId;
@@ -7670,6 +8284,17 @@ function ServiceInstanceCreatePanel(props) {
       });
     }
   }, [actions.list.servicePlans, platform, servicename, externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection]);
+  //切换集群时重置创建实例数据流状态
+  React.useEffect(function () {
+    var _a;
+    if (createWorkflow.operationState === ffRedux.OperationState.Done) {
+      if (!((_a = servicesInstanceEdit.formData) === null || _a === void 0 ? void 0 : _a.timeBackup)) {
+        actions.create.createResource.reset();
+      } else {
+        actions.create.createServiceInstance.reset();
+      }
+    }
+  }, [externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection]);
   React.useEffect(function () {
     var _a, _b;
     if (platform && ((_a = actions === null || actions === void 0 ? void 0 : actions.list) === null || _a === void 0 ? void 0 : _a.externalClusters) && (services === null || services === void 0 ? void 0 : services.selection)) {
@@ -7679,13 +8304,62 @@ function ServiceInstanceCreatePanel(props) {
         regionId: regionId
       });
     }
-  }, [(_m = actions === null || actions === void 0 ? void 0 : actions.list) === null || _m === void 0 ? void 0 : _m.externalClusters, platform, services === null || services === void 0 ? void 0 : services.selection]);
+  }, [(_o = actions === null || actions === void 0 ? void 0 : actions.list) === null || _o === void 0 ? void 0 : _o.externalClusters, platform, services === null || services === void 0 ? void 0 : services.selection]);
   // 由于vendor在目标集群上开启为异步操作，因此若vendor在集群上执行了开启且schema加载resource not found,则认为vendor正在开启中
   var openingVendor = React__default === null || React__default === void 0 ? void 0 : React__default.useMemo(function () {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
     return ((_b = (_a = services === null || services === void 0 ? void 0 : services.selection) === null || _a === void 0 ? void 0 : _a.clusters) === null || _b === void 0 ? void 0 : _b.includes((_c = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _c === void 0 ? void 0 : _c.clusterId)) && ((_d = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _d === void 0 ? void 0 : _d.fetched) && (((_f = (_e = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _e === void 0 ? void 0 : _e.error) === null || _f === void 0 ? void 0 : _f.code) === 'ResourceNotFound' || ((_h = (_g = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _g === void 0 ? void 0 : _g.error) === null || _h === void 0 ? void 0 : _h.code) === 404 || ((_l = (_k = (_j = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _j === void 0 ? void 0 : _j.error) === null || _k === void 0 ? void 0 : _k.message) === null || _l === void 0 ? void 0 : _l.includes('404')));
   }, [servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object, services === null || services === void 0 ? void 0 : services.selection, externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection]);
-  var createWorkflow = ((_o = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _o === void 0 ? void 0 : _o.timeBackup) ? createServiceInstanceWorkflow : createResourceWorkflow;
+  var reduceNodeAffinityJson = function reduceNodeAffinityJson(data) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+    var _m = (_a = data.formData) === null || _a === void 0 ? void 0 : _a['nodeSchedule'],
+      enable = _m.enable,
+      nodeSelector = _m.nodeSelector,
+      nodeAffinity = _m.nodeAffinity;
+    var nodeSelectorJson = ((_c = (_b = nodeSelector === null || nodeSelector === void 0 ? void 0 : nodeSelector.records) === null || _b === void 0 ? void 0 : _b.filter(function (item) {
+      return item === null || item === void 0 ? void 0 : item.key;
+    })) === null || _c === void 0 ? void 0 : _c.length) ? {
+      nodeSelector: (_e = (_d = nodeSelector === null || nodeSelector === void 0 ? void 0 : nodeSelector.records) === null || _d === void 0 ? void 0 : _d.filter(function (item) {
+        return item === null || item === void 0 ? void 0 : item.key;
+      })) === null || _e === void 0 ? void 0 : _e.reduce(function (pre, cur) {
+        var _a;
+        return tslib.__assign(tslib.__assign({}, pre), (_a = {}, _a[cur === null || cur === void 0 ? void 0 : cur.key] = cur === null || cur === void 0 ? void 0 : cur.value, _a));
+      }, {})
+    } : {};
+    var nodeAffinityJson = ((_g = (_f = nodeAffinity === null || nodeAffinity === void 0 ? void 0 : nodeAffinity.records) === null || _f === void 0 ? void 0 : _f.filter(function (item) {
+      return item === null || item === void 0 ? void 0 : item.key;
+    })) === null || _g === void 0 ? void 0 : _g.length) ? {
+      affinity: {
+        nodeAffinity: {
+          requiredDuringSchedulingIgnoredDuringExecution: {
+            nodeSelectorTerms: [{
+              matchExpressions: (_j = (_h = nodeAffinity === null || nodeAffinity === void 0 ? void 0 : nodeAffinity.records) === null || _h === void 0 ? void 0 : _h.filter(function (item) {
+                return item === null || item === void 0 ? void 0 : item.key;
+              })) === null || _j === void 0 ? void 0 : _j.map(function (item) {
+                var _a, _b;
+                if ([NodeAffinityOperatorEnum.DoesNotExist, NodeAffinityOperatorEnum.Exists].includes(item === null || item === void 0 ? void 0 : item.operator)) {
+                  return {
+                    key: item === null || item === void 0 ? void 0 : item.key,
+                    operator: item === null || item === void 0 ? void 0 : item.operator
+                  };
+                } else {
+                  return {
+                    key: item === null || item === void 0 ? void 0 : item.key,
+                    operator: item === null || item === void 0 ? void 0 : item.operator,
+                    value: (_b = (_a = item === null || item === void 0 ? void 0 : item.value) === null || _a === void 0 ? void 0 : _a.split(';')) !== null && _b !== void 0 ? _b : []
+                  };
+                }
+              })
+            }]
+          }
+        }
+      }
+    } : {};
+    var dataJson = enable && (((_k = nodeSelector === null || nodeSelector === void 0 ? void 0 : nodeSelector.records) === null || _k === void 0 ? void 0 : _k.length) || ((_l = nodeAffinity === null || nodeAffinity === void 0 ? void 0 : nodeAffinity.records) === null || _l === void 0 ? void 0 : _l.length)) ? {
+      scheduling: tslib.__assign(tslib.__assign({}, nodeSelectorJson), nodeAffinityJson)
+    } : {};
+    return dataJson;
+  };
   var reduceCreateServiceResourceDataJson = function reduceCreateServiceResourceDataJson(data) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
     var _l = data === null || data === void 0 ? void 0 : data.formData,
@@ -7699,13 +8373,17 @@ function ServiceInstanceCreatePanel(props) {
       var _b, _c, _d, _e;
       return Object.assign(pre, ((_b = data === null || data === void 0 ? void 0 : data.formData) === null || _b === void 0 ? void 0 : _b[cur === null || cur === void 0 ? void 0 : cur.name]) !== '' ? (_a = {}, _a[cur === null || cur === void 0 ? void 0 : cur.name] = formatPlanSchemaSubmitData(cur, (_c = data === null || data === void 0 ? void 0 : data.formData) === null || _c === void 0 ? void 0 : _c[cur === null || cur === void 0 ? void 0 : cur.name], (_e = (_d = data === null || data === void 0 ? void 0 : data.formData) === null || _d === void 0 ? void 0 : _d['unitMap']) === null || _e === void 0 ? void 0 : _e[cur === null || cur === void 0 ? void 0 : cur.name]), _a) : {});
     }, {});
+    //拼接节点调度选项参数
+    parameters = tslib.__assign(tslib.__assign({}, parameters), reduceNodeAffinityJson(data));
     var json = {
       id: uuid$1(),
       apiVersion: 'infra.tce.io/v1',
       kind: (_d = ResourceTypeMap === null || ResourceTypeMap === void 0 ? void 0 : ResourceTypeMap[ResourceTypeEnum.ServiceResource]) === null || _d === void 0 ? void 0 : _d.resourceKind,
       metadata: {
         labels: {
-          'ssm.infra.tce.io/cluster-id': clusterId,
+          'ssm.infra.tce.io/cluster-id': clusterId
+        },
+        annotations: {
           'ssm.infra.tce.io/creator': decodeURIComponent ? decodeURIComponent((_f = (_e = userInfo === null || userInfo === void 0 ? void 0 : userInfo.object) === null || _e === void 0 ? void 0 : _e.data) === null || _f === void 0 ? void 0 : _f.name) : (_h = (_g = userInfo === null || userInfo === void 0 ? void 0 : userInfo.object) === null || _g === void 0 ? void 0 : _g.data) === null || _h === void 0 ? void 0 : _h.name
         },
         name: instanceName,
@@ -8010,7 +8688,17 @@ function ServiceInstanceCreatePanel(props) {
         var _a;
         (_a = actions === null || actions === void 0 ? void 0 : actions.create) === null || _a === void 0 ? void 0 : _a.updateInstance('backupReserveDay', value);
       }
-    }), React__default.createElement(teaComponent.Text, null, i18n.t('天后自动删除')))) : null, React__default.createElement(ffComponent.FormPanel.Item, {
+    }), React__default.createElement(teaComponent.Text, null, i18n.t('天后自动删除')))) : null, React__default.createElement(AffinityMapField, {
+      plan: {
+        name: "nodeAffinity",
+        type: SchemaType.Custom,
+        label: i18n.t('节点调度策略')
+      },
+      onChange: function onChange(data) {
+        var _a;
+        actions === null || actions === void 0 ? void 0 : actions.create.updateInstance('nodeSchedule', tslib.__assign(tslib.__assign({}, (_a = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _a === void 0 ? void 0 : _a['nodeSchedule']), data));
+      }
+    }), React__default.createElement(ffComponent.FormPanel.Item, {
       label: i18n.t('设置实例参数'),
       required: false,
       validator: (_14 = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.validator) === null || _14 === void 0 ? void 0 : _14['isSetParams']
@@ -8107,7 +8795,7 @@ function ServiceInstanceCreatePanel(props) {
           actions === null || actions === void 0 ? void 0 : actions.create.updateInstance(item === null || item === void 0 ? void 0 : item.name, e);
         }
       }));
-    }), ((_23 = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _23 === void 0 ? void 0 : _23['isSetParams']) && (instanceParamsFields === null || instanceParamsFields === void 0 ? void 0 : instanceParamsFields.map(function (item, index) {
+    }), ((_23 = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _23 === void 0 ? void 0 : _23['isSetParams']) && React__default.createElement(React__default.Fragment, null, instanceParamsFields === null || instanceParamsFields === void 0 ? void 0 : instanceParamsFields.map(function (item, index) {
       var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
       var values = tslib.__assign({}, servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData);
       if (item.enabledCondition && values) {
@@ -8172,7 +8860,8 @@ function ServiceInstanceCreatePanel(props) {
         }),
         onChange: function onChange(e) {
           actions === null || actions === void 0 ? void 0 : actions.create.updateInstance(item === null || item === void 0 ? void 0 : item.name, e);
-        }
+        },
+        rules: false
       }), getFormItemType(item) === FormItemType.InputNumber && React__default.createElement(teaComponent.InputNumber, {
         value: (_j = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _j === void 0 ? void 0 : _j[item === null || item === void 0 ? void 0 : item.name],
         onChange: function onChange(e) {
@@ -8290,11 +8979,11 @@ function ServicePlanCreatePanel(props) {
     return ((_b = (_a = services === null || services === void 0 ? void 0 : services.selection) === null || _a === void 0 ? void 0 : _a.clusters) === null || _b === void 0 ? void 0 : _b.includes((_c = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _c === void 0 ? void 0 : _c.clusterId)) && ((_d = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _d === void 0 ? void 0 : _d.fetched) && (((_f = (_e = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _e === void 0 ? void 0 : _e.error) === null || _f === void 0 ? void 0 : _f.code) === 'ResourceNotFound' || ((_h = (_g = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _g === void 0 ? void 0 : _g.error) === null || _h === void 0 ? void 0 : _h.code) === 404 || ((_l = (_k = (_j = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _j === void 0 ? void 0 : _j.error) === null || _k === void 0 ? void 0 : _k.message) === null || _l === void 0 ? void 0 : _l.includes('404')));
   }, [servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object, services === null || services === void 0 ? void 0 : services.selection, externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection]);
   var reduceCreateServiceResourceDataJson = function reduceCreateServiceResourceDataJson(data) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
-    var _j = data === null || data === void 0 ? void 0 : data.formData,
-      instanceName = _j.instanceName,
-      description = _j.description,
-      clusterId = _j.clusterId;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+    var _l = data === null || data === void 0 ? void 0 : data.formData,
+      instanceName = _l.instanceName,
+      description = _l.description,
+      clusterId = _l.clusterId;
     //拼接中间件实例参数部分属性值
     var parameters = (_c = (_b = (_a = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.planSchema) === null || _c === void 0 ? void 0 : _c.reduce(function (pre, cur) {
       var _a;
@@ -8309,14 +8998,16 @@ function ServicePlanCreatePanel(props) {
       metadata: {
         labels: {
           'ssm.infra.tce.io/cluster-id': clusterId,
-          'ssm.infra.tce.io/owner': ServicePlanTypeEnum.Custom,
-          'ssm.infra.tce.io/creator': (_f = (_e = userInfo === null || userInfo === void 0 ? void 0 : userInfo.object) === null || _e === void 0 ? void 0 : _e.data) === null || _f === void 0 ? void 0 : _f.name
+          'ssm.infra.tce.io/owner': ServicePlanTypeEnum.Custom
+        },
+        annotations: {
+          'ssm.infra.tce.io/creator': decodeURIComponent ? decodeURIComponent((_f = (_e = userInfo === null || userInfo === void 0 ? void 0 : userInfo.object) === null || _e === void 0 ? void 0 : _e.data) === null || _f === void 0 ? void 0 : _f.name) : (_h = (_g = userInfo === null || userInfo === void 0 ? void 0 : userInfo.object) === null || _g === void 0 ? void 0 : _g.data) === null || _h === void 0 ? void 0 : _h.name
         },
         name: instanceName,
         namespace: DefaultNamespace
       },
       spec: {
-        serviceClass: ((_g = services === null || services === void 0 ? void 0 : services.selection) === null || _g === void 0 ? void 0 : _g.name) || ((_h = route === null || route === void 0 ? void 0 : route.queries) === null || _h === void 0 ? void 0 : _h.servicename),
+        serviceClass: ((_j = services === null || services === void 0 ? void 0 : services.selection) === null || _j === void 0 ? void 0 : _j.name) || ((_k = route === null || route === void 0 ? void 0 : route.queries) === null || _k === void 0 ? void 0 : _k.servicename),
         metadata: tslib.__assign({}, parameters)
       }
     };
