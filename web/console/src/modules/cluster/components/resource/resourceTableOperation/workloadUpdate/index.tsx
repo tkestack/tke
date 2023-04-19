@@ -11,9 +11,9 @@ import { ModifyNodeAffinityPanel } from './modifyNodeAffinityPanel';
 import { ModifyStrategyPanel } from './modifyStrategyPanel';
 
 export const WorkloadUpdatePanel = ({ kind, updateType }: IWrokloadUpdatePanelProps) => {
-  const clusterId = getParamByUrl('clusterId');
-  const namespace = getParamByUrl('np');
-  const resourceId = getParamByUrl('resourceIns');
+  const clusterId = getParamByUrl('clusterId')!;
+  const namespace = getParamByUrl('np')!;
+  const resourceId = getParamByUrl('resourceIns')!;
 
   const [flag, setFlag] = useState(false);
 
@@ -30,19 +30,21 @@ export const WorkloadUpdatePanel = ({ kind, updateType }: IWrokloadUpdatePanelPr
     router.navigate({ sub: 'sub', mode: 'list', type: 'resource', resourceName: kind }, { clusterId, np: namespace });
   }
 
-  async function onSubmit(data) {
-    try {
-      await workloadApi.updateWorkloadResource({
-        clusterId,
-        namespace,
-        resourceId,
-        kind,
-        data
-      });
+  async function onSubmit(data?: any) {
+    if (data) {
+      try {
+        await workloadApi.updateWorkloadResource({
+          clusterId,
+          namespace,
+          resourceId,
+          kind,
+          data
+        });
 
-      goBackToListPanel();
-    } catch (error) {
-      message.error({ content: error?.response?.data?.message ?? '请求失败！' });
+        goBackToListPanel();
+      } catch (error: any) {
+        message.error({ content: error?.response?.data?.message ?? '请求失败！' });
+      }
     }
 
     setFlag(false);
@@ -98,7 +100,9 @@ export const WorkloadUpdatePanel = ({ kind, updateType }: IWrokloadUpdatePanelPr
           <ModifyStrategyPanel kind={kind} resource={resource} onSubmit={onSubmit} flag={flag} />
         )}
 
-        {updateType === UpdateTypeEnum.ModifyNodeAffinity && <ModifyNodeAffinityPanel />}
+        {updateType === UpdateTypeEnum.ModifyNodeAffinity && (
+          <ModifyNodeAffinityPanel flag={flag} onSubmit={onSubmit} />
+        )}
       </>
     </TeaFormLayout>
   );
