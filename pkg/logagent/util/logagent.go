@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	LogagentPort = "8090"
+	LogagentPort = "31139"
 )
 
 type ReaderCloserGetter interface {

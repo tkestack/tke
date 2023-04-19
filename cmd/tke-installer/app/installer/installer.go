@@ -460,19 +460,19 @@ func (t *TKE) initSteps() {
 		},
 	}...)
 
-	if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
-		t.Para.Config.Registry.TKERegistry != nil {
-		t.steps = append(t.steps, []types.Handler{
-			{
-				Name: "Import charts",
-				Func: t.importCharts,
-			},
-			{
-				Name: "Import Expansion Charts",
-				Func: t.importExpansionCharts,
-			},
-		}...)
-	}
+	// if t.Para.Config.Registry.ThirdPartyRegistry == nil &&
+	// 	t.Para.Config.Registry.TKERegistry != nil {
+	// 	t.steps = append(t.steps, []types.Handler{
+	// 		{
+	// 			Name: "Import charts",
+	// 			Func: t.importCharts,
+	// 		},
+	// 		{
+	// 			Name: "Import Expansion Charts",
+	// 			Func: t.importExpansionCharts,
+	// 		},
+	// 	}...)
+	// }
 
 	if len(t.Para.Config.ExpansionApps) > 0 {
 		t.steps = append(t.steps, []types.Handler{
@@ -1922,7 +1922,7 @@ func (t *TKE) installInfluxDBChart(ctx context.Context) error {
 		LocalChartPath: constants.ChartDirName + "influxdb/",
 		Enable:         true,
 		ConditionFunc: func() (bool, error) {
-			ok, err := apiclient.CheckStatefulSet(ctx, t.globalClient, t.namespace, "influxdb")
+			ok, err := apiclient.CheckDeployment(ctx, t.globalClient, t.namespace, "influxdb")
 			if err != nil || !ok {
 				return false, nil
 			}
