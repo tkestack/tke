@@ -3,6 +3,9 @@ import { WorkloadKindEnum } from '../constants';
 
 export interface IModifyStrategyPanelProps {
   kind: WorkloadKindEnum;
+  resource: any;
+  onSubmit: (data?: any) => void;
+  flag: boolean;
 }
 
 /** 滚动更新的策略选择 */

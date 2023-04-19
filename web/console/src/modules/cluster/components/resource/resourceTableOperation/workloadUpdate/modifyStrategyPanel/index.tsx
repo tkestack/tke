@@ -4,13 +4,14 @@ import { Controller, useForm } from 'react-hook-form';
 import { Form, InputNumber, Radio, Select } from 'tea-component';
 import { WorkloadKindEnum } from '../constants';
 import {
+  IModifyStrategyPanelProps,
   RegistryUpdateTypeEnum,
   RollingUpdateTypeEnum,
   getUpdateTypeOptionsForKind,
   updateStrategyOptions
 } from './constants';
 
-export const ModifyStrategyPanel = ({ kind, resource, onSubmit, flag }) => {
+export const ModifyStrategyPanel = ({ kind, resource, onSubmit, flag }: IModifyStrategyPanelProps) => {
   const isDeployment = kind === WorkloadKindEnum.Deployment;
   const isStatefulSet = kind === WorkloadKindEnum.StatefulSet;
   const isDaemonSet = kind === WorkloadKindEnum.DaemonSet;
@@ -77,46 +78,49 @@ export const ModifyStrategyPanel = ({ kind, resource, onSubmit, flag }) => {
   useEffect(() => {
     if (!flag) return;
 
-    handleSubmit(({ updateType, updateInterval, updateStrategy, maxSurge, maxUnavailable, batchSize, partition }) => {
-      const isRollingUpdate = updateType === RegistryUpdateTypeEnum.RollingUpdate;
+    handleSubmit(
+      ({ updateType, updateInterval, updateStrategy, maxSurge, maxUnavailable, batchSize, partition }) => {
+        const isRollingUpdate = updateType === RegistryUpdateTypeEnum.RollingUpdate;
 
-      const isUserDefined = updateStrategy === RollingUpdateTypeEnum.UserDefined;
-      const isCreatePod = updateStrategy === RollingUpdateTypeEnum.CreatePod;
+        const isUserDefined = updateStrategy === RollingUpdateTypeEnum.UserDefined;
+        const isCreatePod = updateStrategy === RollingUpdateTypeEnum.CreatePod;
 
-      const data = {
-        spec: {
-          minReadySeconds: isStatefulSet ? undefined : isRollingUpdate ? updateInterval : 0,
+        const data = {
+          spec: {
+            minReadySeconds: isStatefulSet ? undefined : isRollingUpdate ? updateInterval : 0,
 
-          strategy: isDeployment
-            ? {
-                type: updateType,
-                rollingUpdate: isRollingUpdate
-                  ? {
-                      maxSurge: isUserDefined ? `${maxSurge}%` : isCreatePod ? batchSize : 0,
+            strategy: isDeployment
+              ? {
+                  type: updateType,
+                  rollingUpdate: isRollingUpdate
+                    ? {
+                        maxSurge: isUserDefined ? `${maxSurge}%` : isCreatePod ? batchSize : 0,
 
-                      maxUnavailable: isUserDefined ? `${maxUnavailable}%` : isCreatePod ? 0 : batchSize
-                    }
-                  : null
-              }
-            : undefined,
+                        maxUnavailable: isUserDefined ? `${maxUnavailable}%` : isCreatePod ? 0 : batchSize
+                      }
+                    : null
+                }
+              : undefined,
 
-          updateStrategy: isDeployment
-            ? undefined
-            : {
-                type: updateType,
-                rollingUpdate: isRollingUpdate
-                  ? isStatefulSet
-                    ? { partition }
-                    : maxUnavailable
-                    ? { maxUnavailable }
-                    : undefined
-                  : null
-              }
-        }
-      };
+            updateStrategy: isDeployment
+              ? undefined
+              : {
+                  type: updateType,
+                  rollingUpdate: isRollingUpdate
+                    ? isStatefulSet
+                      ? { partition }
+                      : maxUnavailable
+                      ? { maxUnavailable }
+                      : undefined
+                    : null
+                }
+          }
+        };
 
-      onSubmit(data);
-    })();
+        onSubmit(data);
+      },
+      () => onSubmit()
+    )();
   }, [flag, handleSubmit, isDaemonSet, isDeployment, isStatefulSet, onSubmit]);
 
   return (

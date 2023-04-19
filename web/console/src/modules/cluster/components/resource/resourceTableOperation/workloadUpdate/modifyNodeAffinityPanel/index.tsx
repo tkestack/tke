@@ -1,13 +1,17 @@
+import { t } from '@/tencent/tea-app/lib/i18n';
 import React, { useState } from 'react';
 import { Form, Radio } from 'tea-component';
 import { AffinityRulePanel } from './affinityRulePanel';
 import { NodeAffinityTypeEnum, TolerationTypeEnum } from './constants';
+import { TolerationRulePanel } from './tolerationRulePanel';
 
-export const ModifyNodeAffinityPanel = () => {
+export const ModifyNodeAffinityPanel = ({ flag, onSubmit }) => {
   const [state, setState] = useState({
     nodeAffinityType: NodeAffinityTypeEnum.Unset,
     tolerationType: TolerationTypeEnum.UnSet
   });
+
+  function handleSubmit() {}
 
   return (
     <Form>
@@ -21,9 +25,23 @@ export const ModifyNodeAffinityPanel = () => {
         </Radio.Group>
       </Form.Item>
 
-      <Form.Item>
-        <AffinityRulePanel />
-      </Form.Item>
+      {state.nodeAffinityType === NodeAffinityTypeEnum.Rule && (
+        <>
+          <Form.Item
+            label={t('强制满足条件')}
+            tips="调度期间如果满足其中一个亲和性条件则调度到对应node，如果没有节点满足条件则调度失败。"
+          >
+            <AffinityRulePanel showWeight={false} submiting={flag} onSubmit={handleSubmit} />
+          </Form.Item>
+
+          <Form.Item
+            label={t('尽量满足条件')}
+            tips="调度期间如果满足其中一个亲和性条件则调度到对应node，如果没有节点满足条件则随机调度到任意节点。"
+          >
+            <AffinityRulePanel submiting={flag} onSubmit={handleSubmit} />
+          </Form.Item>
+        </>
+      )}
 
       <Form.Item label="容忍调度">
         <Radio.Group
@@ -34,6 +52,12 @@ export const ModifyNodeAffinityPanel = () => {
           <Radio name={TolerationTypeEnum.Set}>使用容忍调度</Radio>
         </Radio.Group>
       </Form.Item>
+
+      {state.tolerationType === TolerationTypeEnum.Set && (
+        <Form.Item>
+          <TolerationRulePanel />
+        </Form.Item>
+      )}
     </Form>
   );
 };
