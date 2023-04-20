@@ -85,7 +85,11 @@ func ValidateApplicationUpdate(ctx context.Context, app *application.App, old *a
 	allErrs := apimachineryvalidation.ValidateObjectMetaUpdate(&app.ObjectMeta, &old.ObjectMeta, field.NewPath("metadata"))
 
 	if app.Spec.TenantID != old.Spec.TenantID {
-		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "tenantID"), "disallowed change the tenant"))
+		if app.Annotations != nil && app.Annotations["updateTenantID"] == "true" {
+			// 为了迁移tke，如果有这个annotation，允许修改TenantID
+		} else {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("spec", "tenantID"), "disallowed change the tenant"))
+		}
 	}
 
 	if app.Spec.Type != old.Spec.Type {
@@ -97,7 +101,11 @@ func ValidateApplicationUpdate(ctx context.Context, app *application.App, old *a
 	}
 
 	if app.Spec.TargetCluster != old.Spec.TargetCluster {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "targetCluster"), app.Spec.TargetCluster, "disallowed change the targetCluster"))
+		if app.Annotations != nil && app.Annotations["updateTargetCluster"] == "true" {
+			// 为了迁移tke，如果有这个annotation，允许修改TargetCluster
+		} else {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "targetCluster"), app.Spec.TargetCluster, "disallowed change the targetCluster"))
+		}
 	}
 
 	return allErrs

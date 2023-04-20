@@ -102,7 +102,7 @@ func Upgrade(ctx context.Context,
 			return nil, err
 		}
 		chartPathBasicOptions.ExistedFile = destfile
-		//* provide compatibility with online tke addon apps */
+		// * provide compatibility with online tke addon apps */
 		if app.Annotations != nil && app.Annotations[applicationprovider.AnnotationProviderNameKey] == "managecontrolplane" {
 			app.Spec.Chart.UpgradePara.Atomic = false
 			app.Spec.Chart.UpgradePara.Wait = true
@@ -112,7 +112,7 @@ func Upgrade(ctx context.Context,
 				app.Spec.Chart.UpgradePara.WaitForJobs = false
 			}
 		}
-		//* compatibility over, above code need to be deleted atfer the online addon apps are migrated */
+		// * compatibility over, above code need to be deleted atfer the online addon apps are migrated */
 
 		var clientTimeout = defaultTimeout
 		if app.Spec.Chart.UpgradePara.Timeout > 0 {
@@ -176,7 +176,7 @@ func Upgrade(ctx context.Context,
 		var updateStatusErr error
 		if err != nil {
 			newStatus.Phase = applicationv1.AppPhaseUpgradFailed
-			newStatus.Message = "upgrade app failed"
+			newStatus.Message = ""
 			newStatus.Reason = err.Error()
 			newStatus.LastTransitionTime = metav1.Now()
 			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)

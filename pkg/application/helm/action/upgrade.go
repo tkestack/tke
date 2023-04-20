@@ -21,6 +21,7 @@ package action
 import (
 	"context"
 	"os"
+	"strings"
 	"time"
 
 	securejoin "github.com/cyphar/filepath-securejoin"
@@ -30,7 +31,6 @@ import (
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-
 	"tkestack.io/tke/pkg/util/file"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -78,7 +78,7 @@ func (c *Client) Upgrade(ctx context.Context, options *UpgradeOptions) (*release
 		// If a release does not exist, install it.
 		histClient := action.NewHistory(actionConfig)
 		histClient.Max = 1
-		_, err = histClient.Run(options.ReleaseName)
+		rels, err := histClient.Run(options.ReleaseName)
 		if err == driver.ErrReleaseNotFound {
 			log.Infof("Release %d does not exist. Installing it now.", options.ReleaseName)
 			return c.Install(ctx, &InstallOptions{
@@ -96,6 +96,13 @@ func (c *Client) Upgrade(ctx context.Context, options *UpgradeOptions) (*release
 			})
 		} else if err != nil {
 			return nil, err
+		}
+		for _, rel := range rels {
+			if rel.Info.Status == release.StatusPendingInstall || rels[0].Info.Status == release.StatusPendingUpgrade || rels[0].Info.Status == release.StatusPendingRollback {
+				// if release is pending, delete it.
+				log.Infof("upgrade release %s is already exist, status is %s. delete it now.", options.ReleaseName, rel.Info.Status)
+				actionConfig.Releases.Delete(rel.Name, rel.Version)
+			}
 		}
 	}
 
@@ -166,5 +173,27 @@ func (c *Client) Upgrade(ctx context.Context, options *UpgradeOptions) (*release
 	if chartRequested.Metadata.Deprecated {
 		log.Warnf("This chart %s/%s is deprecated", options.ChartRepo, options.Chart)
 	}
-	return client.RunWithContext(ctx, options.ReleaseName, chartRequested, options.Values)
+	rel, err := client.RunWithContext(ctx, options.ReleaseName, chartRequested, options.Values)
+	// if current release resource is deprecated, delete it.
+	if err != nil {
+		log.Infof("upgrade %s RunWithContext failed,err:%s.", options.ReleaseName, err.Error())
+	}
+	if err != nil && strings.Contains(err.Error(), "unable to build kubernetes objects from current release manifest") {
+		histClient := action.NewHistory(actionConfig)
+		histClient.Max = 1
+		rels, err := histClient.Run(options.ReleaseName)
+		if err != nil {
+			log.Infof("upgrade get release %s history failed. err:%s.", options.ReleaseName, err.Error())
+			return nil, err
+		}
+		if len(rels) == 0 {
+			return nil, errors.Errorf("no revision for release %q", options.ReleaseName)
+		}
+		for _, rel := range rels {
+			// if release is deprecated, delete it.
+			log.Infof("upgrade release %s resource is deprecated. delete it now. rel name:%s, rel version:%d.", options.ReleaseName, rel.Name, rel.Version)
+			actionConfig.Releases.Delete(rel.Name, rel.Version)
+		}
+	}
+	return rel, err
 }
