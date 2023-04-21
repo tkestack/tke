@@ -49,6 +49,8 @@ export class UpdateResourcePanel extends React.Component<RootProps, {}> {
     const resourceType = urlParams['resourceName'],
       updateType = urlParams['tab'];
 
+    const { clusterVersion } = this.props;
+
     if (resourceType === 'svc' && updateType === 'modifyType') {
       content = <UpdateServiceAccessTypePanel />;
       headTitle = t('更新访问方式');
@@ -71,10 +73,10 @@ export class UpdateResourcePanel extends React.Component<RootProps, {}> {
       content = <EditLbcfBackGroupPanel />;
       headTitle = t('更新后端负载');
     } else if (
-      ['deployment', 'statefulset', 'daemonset'].includes(resourceType) &&
+      ['deployment', 'statefulset', 'daemonset', 'cronjob'].includes(resourceType) &&
       ['modifyStrategy', 'modifyNodeAffinity'].includes(updateType)
     ) {
-      return <WorkloadUpdatePanel kind={resourceType} updateType={updateType} />;
+      return <WorkloadUpdatePanel kind={resourceType} updateType={updateType} clusterVersion={clusterVersion} />;
     }
 
     return (

@@ -3,7 +3,9 @@ export enum WorkloadKindEnum {
 
   StatefulSet = 'statefulset',
 
-  DaemonSet = 'daemonset'
+  DaemonSet = 'daemonset',
+
+  Cronjob = 'cronjob'
 }
 
 export enum UpdateTypeEnum {
@@ -16,6 +18,8 @@ export interface IWrokloadUpdatePanelProps {
   kind: WorkloadKindEnum;
 
   updateType: UpdateTypeEnum;
+
+  clusterVersion: string;
 }
 
 export const updateType2text = {
