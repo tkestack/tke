@@ -105,6 +105,7 @@ func (c LegacyRESTStorageProvider) NewLegacyRESTStorage(apiResourceConfigSource 
 
 	if resource := "replicationcontrollers"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
 		storage[resource] = replicationControllerStorage.ReplicationController
+		storage[resource+"/pods"] = replicationControllerStorage.Pods
 		storage[resource+"/status"] = replicationControllerStorage.Status
 		storage[resource+"/scale"] = replicationControllerStorage.Scale
 		storage[resource+"/events"] = replicationControllerStorage.Events
@@ -122,6 +123,7 @@ func (c LegacyRESTStorageProvider) NewLegacyRESTStorage(apiResourceConfigSource 
 
 	if resource := "nodes"; apiResourceConfigSource.ResourceEnabled(corev1.SchemeGroupVersion.WithResource(resource)) {
 		storage[resource] = nodeStorage.Node
+		storage[resource+"/pods"] = nodeStorage.Pods
 		storage[resource+"/status"] = nodeStorage.Status
 	}
 
