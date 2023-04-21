@@ -16,10 +16,9 @@
  * specific language governing permissions and limitations under the License.
  */
 import { changeForbiddentConfig } from '@/index.tke';
+import { createCSRFHeader } from '@helper';
 import Axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
-import Cookies from 'js-cookie';
-import { createCSRFHeader } from '@helper';
 
 const instance = Axios.create({
   timeout: 10000

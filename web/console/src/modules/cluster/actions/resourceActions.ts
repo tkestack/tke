@@ -21,7 +21,7 @@ import { ResourceInfo } from '../../common/models';
 import { includes } from '../../common/utils';
 import { IsResourceShowLoadingIcon } from '../components/resource/resourceTableOperation/ResourceTablePanel';
 import * as ActionType from '../constants/ActionType';
-import { FFReduxActionName, PollEventName, ResourceNeedJudgeLoading } from '../constants/Config';
+import { FFReduxActionName, ResourceNeedJudgeLoading } from '../constants/Config';
 import { Resource, ResourceFilter, RootState } from '../models';
 import { router } from '../router';
 import * as WebAPI from '../WebAPI';

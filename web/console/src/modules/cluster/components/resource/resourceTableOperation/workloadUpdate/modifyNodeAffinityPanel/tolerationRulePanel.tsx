@@ -1,9 +1,10 @@
 import { getReactHookFormStatusWithMessage } from '@helper';
 import { ValidateProvider } from '@src/modules/common/components';
 import React from 'react';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import { Button, Input, InputNumber, Select, Table, TableColumn } from 'tea-component';
 import {
+  NodeAffinityFormType,
   TolerationEffectEnum,
   TolerationOperatorEnum,
   tolerationEffectOptions,
@@ -11,45 +12,24 @@ import {
 } from './constants';
 
 export const TolerationRulePanel = () => {
-  const { control, watch } = useForm<{
-    rules: {
-      key: string;
-      operator: TolerationOperatorEnum;
-      value: string;
-      effect: TolerationEffectEnum;
-      time: number;
-    }[];
-  }>({
-    mode: 'onBlur',
-    defaultValues: {
-      rules: []
-    }
-  });
+  const { control, watch } = useFormContext<NodeAffinityFormType>();
 
   const { fields, remove, append } = useFieldArray({
     control,
-    name: 'rules'
+    name: 'tolerationRules'
   });
 
-  const rulesWatch = watch('rules');
+  const rulesWatch = watch('tolerationRules');
 
   const columns: TableColumn[] = [
     {
       key: 'key',
       header: '标签名',
-      render(record, recordKey, index) {
+      render(_, __, index) {
         return (
           <Controller
             control={control}
-            name={`rules.${index}.key`}
-            rules={{
-              validate(key, { rules }) {
-                console.log('validate---->', key, rules);
-                if (rules?.[index]?.operator === TolerationOperatorEnum.Equal && !key.trim()) {
-                  return 'key不能为空';
-                }
-              }
-            }}
+            name={`tolerationRules.${index}.key`}
             render={({ field, ...another }) => (
               <ValidateProvider {...getReactHookFormStatusWithMessage(another)}>
                 <Input size="full" {...field} />
@@ -63,12 +43,11 @@ export const TolerationRulePanel = () => {
     {
       key: 'operator',
       header: '操作符',
-      render(record, recordKey, index) {
+      render(_, __, index) {
         return (
           <Controller
             control={control}
-            name={`rules.${index}.operator`}
-            rules={{ required: '必须' }}
+            name={`tolerationRules.${index}.operator`}
             render={({ field, ...another }) => (
               <ValidateProvider {...getReactHookFormStatusWithMessage(another)}>
                 <Select
@@ -88,18 +67,11 @@ export const TolerationRulePanel = () => {
     {
       key: 'value',
       header: '标签值',
-      render(record, recordKey, index) {
+      render(_, __, index) {
         return (
           <Controller
             control={control}
-            name={`rules.${index}.value`}
-            rules={{
-              validate(value, { rules }) {
-                if (rules?.[index]?.operator === TolerationOperatorEnum.Equal && !value.trim()) {
-                  return 'value不能为空';
-                }
-              }
-            }}
+            name={`tolerationRules.${index}.value`}
             render={({ field, ...another }) => (
               <ValidateProvider {...getReactHookFormStatusWithMessage(another)}>
                 <Input
@@ -117,12 +89,11 @@ export const TolerationRulePanel = () => {
     {
       key: 'effect',
       header: '效果',
-      render(record, recordKey, index) {
+      render(_, __, index) {
         return (
           <Controller
             control={control}
-            name={`rules.${index}.effect`}
-            rules={{ required: '必须' }}
+            name={`tolerationRules.${index}.effect`}
             render={({ field, ...another }) => (
               <ValidateProvider {...getReactHookFormStatusWithMessage(another)}>
                 <Select appearance="button" size="full" matchButtonWidth options={tolerationEffectOptions} {...field} />
@@ -136,11 +107,11 @@ export const TolerationRulePanel = () => {
     {
       key: 'time',
       header: '时间（秒）',
-      render(record, recordKey, index) {
+      render(_, __, index) {
         return (
           <Controller
             control={control}
-            name={`rules.${index}.time`}
+            name={`tolerationRules.${index}.time`}
             render={({ field, ...another }) => (
               <ValidateProvider {...getReactHookFormStatusWithMessage(another)}>
                 <InputNumber
@@ -161,7 +132,6 @@ export const TolerationRulePanel = () => {
     {
       key: 'action',
       header: '',
-
       render(_, __, index) {
         return (
           <Button
