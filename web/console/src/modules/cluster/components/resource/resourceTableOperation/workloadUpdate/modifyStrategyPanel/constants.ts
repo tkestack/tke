@@ -1,13 +1,6 @@
 import { t } from '@/tencent/tea-app/lib/i18n';
 import { WorkloadKindEnum } from '../constants';
 
-export interface IModifyStrategyPanelProps {
-  kind: WorkloadKindEnum;
-  resource: any;
-  onSubmit: (data?: any) => void;
-  flag: boolean;
-}
-
 /** 滚动更新的策略选择 */
 export enum RollingUpdateTypeEnum {
   /** 启动新的pod，停止旧的pod */

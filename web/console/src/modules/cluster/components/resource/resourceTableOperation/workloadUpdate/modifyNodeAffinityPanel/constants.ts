@@ -105,8 +105,6 @@ export const affinityRuleSchema = z.array(
             }
           }
 
-          console.log('message--->', message);
-
           if (message) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,

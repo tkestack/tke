@@ -3,7 +3,7 @@ import { TeaFormLayout } from '@src/modules/common/layouts/TeaFormLayout';
 import React, { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Button, Form, InputNumber, Radio, Select } from 'tea-component';
-import { WorkloadKindEnum } from '../constants';
+import { IModifyPanelProps, WorkloadKindEnum } from '../constants';
 import {
   RegistryUpdateTypeEnum,
   RollingUpdateTypeEnum,
@@ -11,7 +11,7 @@ import {
   updateStrategyOptions
 } from './constants';
 
-export const ModifyStrategyPanel = ({ kind, resource, title, baseInfo, onCancel, onUpdate }) => {
+export const ModifyStrategyPanel = ({ kind, resource, title, baseInfo, onCancel, onUpdate }: IModifyPanelProps) => {
   const isDeployment = kind === WorkloadKindEnum.Deployment;
   const isStatefulSet = kind === WorkloadKindEnum.StatefulSet;
   const isDaemonSet = kind === WorkloadKindEnum.DaemonSet;
@@ -39,11 +39,12 @@ export const ModifyStrategyPanel = ({ kind, resource, title, baseInfo, onCancel,
     const updateType = isDeployment ? resource?.spec?.strategy?.type : resource?.spec?.updateStrategy?.type;
 
     // 如果只有maxSurge 有值，而maxUnavailable为0，则为启动新的pod，停止旧的pod
+    const minReadySeconds = resource?.spec?.minReadySeconds ?? 0,
+      partition = resource?.spec?.updateStrategy?.rollingUpdate?.partition ?? 0;
+
     let maxSurge = resource?.spec?.strategy?.rollingUpdate?.maxSurge ?? 0,
       maxUnavailable = resource?.spec?.strategy?.rollingUpdate?.maxUnavailable ?? 0,
       rollingUpdateStrategy = RollingUpdateTypeEnum.CreatePod,
-      minReadySeconds = resource?.spec?.minReadySeconds ?? 0,
-      partition = resource?.spec?.updateStrategy?.rollingUpdate?.partition ?? 0,
       batchSize = 1;
 
     if (maxSurge === 0 && Number.isInteger(maxUnavailable)) {
