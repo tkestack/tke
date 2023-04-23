@@ -27,3 +27,12 @@ export const updateType2text = {
 
   [UpdateTypeEnum.ModifyNodeAffinity]: '更新调度策略'
 };
+
+export interface IModifyPanelProps {
+  kind: WorkloadKindEnum;
+  resource: any;
+  title: React.ReactNode;
+  baseInfo: React.ReactNode;
+  onCancel: () => void;
+  onUpdate: (data: any) => void;
+}

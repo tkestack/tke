@@ -4,7 +4,7 @@ import { TeaFormLayout } from '@src/modules/common/layouts/TeaFormLayout';
 import React, { useEffect } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { Button, Form, Radio } from 'tea-component';
-import { WorkloadKindEnum } from '../constants';
+import { IModifyPanelProps, WorkloadKindEnum } from '../constants';
 import { AffinityRulePanel } from './affinityRulePanel';
 import {
   AffinityTypeEnum,
@@ -18,7 +18,7 @@ import {
 } from './constants';
 import { TolerationRulePanel } from './tolerationRulePanel';
 
-export const ModifyNodeAffinityPanel = ({ title, baseInfo, onCancel, kind, onUpdate, resource }) => {
+export const ModifyNodeAffinityPanel = ({ title, baseInfo, onCancel, kind, onUpdate, resource }: IModifyPanelProps) => {
   const isCronjob = kind === WorkloadKindEnum.Cronjob;
 
   const useFormReturn = useForm<NodeAffinityFormType>({
@@ -31,9 +31,6 @@ export const ModifyNodeAffinityPanel = ({ title, baseInfo, onCancel, kind, onUpd
 
   useEffect(() => {
     if (!resource) return;
-    if (isCronjob) {
-    } else {
-    }
 
     let originNodeAffinityInfo = resource?.spec?.template?.spec?.affinity?.nodeAffinity;
 
@@ -90,8 +87,6 @@ export const ModifyNodeAffinityPanel = ({ title, baseInfo, onCancel, kind, onUpd
   }, [resource, isCronjob, reset]);
 
   function onSubmit({ nodeAffinityType, affinityRules, tolerationType, tolerationRules }: NodeAffinityFormType) {
-    console.log('NodeAffinityFormType--->');
-
     const templateContent = {
       spec: {
         tolerations:
