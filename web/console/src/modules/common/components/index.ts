@@ -35,7 +35,6 @@ export { LinkButton, LinkButtonProps } from './linkbutton';
 export { ListItem, ListItemProps } from './listitem';
 export * from './logviewer';
 export { Markdown } from './markdown';
-export * from './monitorPanel';
 export { Network, NetworkProps, VpcNetwork } from './network';
 export { RegionBar, RegionBarProps } from './regionbar';
 export { ResourceList } from './resourcelist';
