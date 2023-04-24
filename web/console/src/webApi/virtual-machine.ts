@@ -163,7 +163,7 @@ export function createVM({
                 },
                 bootOrder: index + 1,
                 name: item.name,
-                cache: 'writethrough'
+                cache: 'writeback'
               })),
 
               interfaces: [
