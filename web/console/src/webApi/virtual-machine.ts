@@ -156,12 +156,14 @@ export function createVM({
             },
 
             devices: {
+              blockMultiQueue: true,
               disks: diskList.map((item, index) => ({
                 disk: {
                   bus: 'virtio'
                 },
                 bootOrder: index + 1,
-                name: item.name
+                name: item.name,
+                cache: 'writeback'
               })),
 
               interfaces: [
