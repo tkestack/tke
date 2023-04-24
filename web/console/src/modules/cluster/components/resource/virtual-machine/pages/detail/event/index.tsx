@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Table, TableColumn, Switch, Alert, Justify, Button, Bubble, Text } from 'tea-component';
 import { useFetch } from '@src/modules/common/hooks/useFetch';
 import { virtualMachineAPI } from '@src/webApi';
 import dayjs from 'dayjs';
+import React, { useState } from 'react';
+import { Alert, Bubble, Button, Justify, Switch, Table, TableColumn, Text } from 'tea-component';
 import { v4 as uuidv4 } from 'uuid';
 
 const { autotip } = Table.addons;
@@ -14,12 +14,13 @@ export const VMEventPanel = ({ clusterId, namespace, name }) => {
     async () => {
       const { items } = await virtualMachineAPI.fetchEventList({ clusterId, namespace, name });
 
-      return { data: items.map(_ => ({ ..._, id: uuidv4() })) };
+      return { data: items.map(_ => ({ ..._, id: uuidv4() })).reverse() };
     },
     [clusterId, namespace, name],
     {
       fetchAble: !!(clusterId && namespace && name),
-      polling
+      polling,
+      needClearData: false
     }
   );
 
