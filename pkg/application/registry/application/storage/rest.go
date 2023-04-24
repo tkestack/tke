@@ -236,7 +236,7 @@ func (rs *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 		}
 	}
 
-	if !reflect.DeepEqual(oldApp.Spec, app.Spec) && app.Status.Phase != applicationapi.AppPhaseRolledBack {
+	if !reflect.DeepEqual(oldApp.Spec, app.Spec) && app.Status.Phase != applicationapi.AppPhaseRolledBack && oldApp.Status.Phase != applicationapi.AppPhaseTerminating {
 		app.Status.Phase = applicationapi.AppPhaseUpgrading
 	}
 
