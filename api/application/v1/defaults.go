@@ -33,11 +33,6 @@ func SetDefaults_App(obj *App) {
 }
 
 func SetDefaults_AppSpec(obj *AppSpec) {
-	if obj.Finalizers == nil || len(obj.Finalizers) == 0 {
-		obj.Finalizers = []FinalizerName{
-			AppFinalize,
-		}
-	}
 	if obj.Values.Values == nil || len(obj.Values.Values) == 0 {
 		obj.Values.Values = make([]string, 0)
 	}

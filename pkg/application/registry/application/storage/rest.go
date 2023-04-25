@@ -236,7 +236,7 @@ func (rs *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 		}
 	}
 
-	if !reflect.DeepEqual(oldApp.Spec, app.Spec) && app.Status.Phase != applicationapi.AppPhaseRolledBack {
+	if !reflect.DeepEqual(oldApp.Spec, app.Spec) && oldApp.Status.Phase != applicationapi.AppPhaseRolledBack && oldApp.Status.Phase != applicationapi.AppPhaseTerminating {
 		app.Status.Phase = applicationapi.AppPhaseUpgrading
 	}
 
@@ -263,7 +263,7 @@ func (rs *REST) prepareForCheck(ctx context.Context, app *application.App) error
 }
 
 func (rs *REST) canVisitChart(ctx context.Context, app *application.App) error {
-	//TODO: allowAlways if registryClient is empty?
+	// TODO: allowAlways if registryClient is empty?
 	if rs.registryClient == nil {
 		return nil
 	}
