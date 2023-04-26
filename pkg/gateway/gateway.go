@@ -33,13 +33,12 @@ import (
 	"tkestack.io/tke/pkg/gateway/websocket"
 	"tkestack.io/tke/pkg/gateway/webtty"
 
-	// "tkestack.io/tke/pkg/util/template"
 	"html/template"
 )
 
 const (
 	defaultTitle  = "TKEStack"
-	defaultLogDir = ""
+	defaultLogDir = "default"
 )
 
 // ExtraConfig contains the additional configuration of apiserver.
