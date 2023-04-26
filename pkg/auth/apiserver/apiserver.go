@@ -36,6 +36,8 @@ import (
 
 	dexstorage "github.com/dexidp/dex/storage"
 	"github.com/emicklei/go-restful"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"k8s.io/apiserver/pkg/server/mux"
 
 	"github.com/casbin/casbin/v2"
@@ -66,10 +68,12 @@ const (
 	AuthPath           = "/auth/"
 	APIKeyPasswordPath = "/apis/auth.tkestack.io/v1/apikeys/default/password"
 
-	APIKeyPath     = "/apis/auth.tkestack.io/v1/apikeys"
-	defaultTitle   = "TKEStack"
-	defaultLogoDir = ""
-	htmlTmplDir    = "web/auth/templates/"
+	APIKeyPath           = "/apis/auth.tkestack.io/v1/apikeys"
+	htmlTmplDir          = "web/auth/templates/"
+	flagConsoleTitle     = "title"
+	flagConsoleLogoDir   = "logo-dir"
+	configConsoleTitle   = "console_config.title"
+	configConsoleLogoDir = "console_config.logo_dir"
 )
 
 func IgnoreAuthPathPrefixes() []string {
@@ -133,6 +137,34 @@ type ConsoleConfig struct {
 	LogoDir string
 }
 
+// NewAuthOptions creates a AuthOptions object with default parameters.
+func NewConsoleConfigOptions() *ConsoleConfig {
+	return &ConsoleConfig{}
+}
+
+// AddFlags adds flags for console to the specified FlagSet object.
+func (o *ConsoleConfig) AddFlags(fs *pflag.FlagSet) {
+	fs.String(flagConsoleTitle, o.Title,
+		"Custom console title.")
+	_ = viper.BindPFlag(configConsoleTitle, fs.Lookup(flagConsoleTitle))
+
+	fs.String(flagConsoleLogoDir, o.LogoDir,
+		"Custom console logo dir.")
+	_ = viper.BindPFlag(configConsoleLogoDir, fs.Lookup(flagConsoleLogoDir))
+
+}
+
+// ApplyFlags parsing parameters from the command line or configuration file
+// to the options instance.
+func (o *ConsoleConfig) ApplyFlags() []error {
+	var errs []error
+
+	o.Title = viper.GetString(configConsoleTitle)
+	o.LogoDir = viper.GetString(configConsoleLogoDir)
+
+	return errs
+}
+
 // Complete fills in any fields not set that are required to have valid data.
 // It's mutating the receiver.
 func (cfg *Config) Complete() CompletedConfig {
@@ -151,14 +183,6 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		return nil, err
 	}
 
-	consoleConfig := new(ConsoleConfig)
-	if c.ExtraConfig.ConsoleConfig != nil {
-		consoleConfig = c.ExtraConfig.ConsoleConfig
-	} else {
-		consoleConfig.Title = defaultTitle
-		consoleConfig.LogoDir = defaultLogoDir
-	}
-
 	files, err := ioutil.ReadDir(htmlTmplDir)
 	if err != nil {
 		return nil, err
@@ -170,7 +194,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		if err != nil {
 			return nil, err
 		}
-		if err = t.Execute(&buf, consoleConfig); err != nil {
+		if err = t.Execute(&buf, c.ExtraConfig.ConsoleConfig); err != nil {
 			return nil, err
 		}
 		// // remove .tmpl in file name

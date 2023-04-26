@@ -71,6 +71,7 @@ func createAPIServerConfig(cfg *config.Config) *apiserver.Config {
 			Authorizer:              cfg.Authorizer,
 			CasbinReloadInterval:    cfg.CasbinReloadInterval,
 			PrivilegedUsername:      cfg.PrivilegedUsername,
+			ConsoleConfig:           cfg.ConsoleConfig,
 		},
 	}
 }

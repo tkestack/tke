@@ -25,6 +25,7 @@ import (
 	genericapiserveroptions "k8s.io/apiserver/pkg/server/options"
 	apiserveroptions "tkestack.io/tke/pkg/apiserver/options"
 	storageoptions "tkestack.io/tke/pkg/apiserver/storage/options"
+	"tkestack.io/tke/pkg/auth/apiserver"
 	"tkestack.io/tke/pkg/util/cachesize"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -40,6 +41,7 @@ type Options struct {
 	ETCD           *storageoptions.ETCDStorageOptions
 	Auth           *AuthOptions
 	Audit          *genericapiserveroptions.AuditOptions
+	ConsoleConfig  *apiserver.ConsoleConfig
 }
 
 // NewOptions creates a new Options with a default config.
@@ -54,6 +56,7 @@ func NewOptions(serverName string) *Options {
 		ETCD:           storageoptions.NewETCDStorageOptions("/tke/auth-api"),
 		Auth:           NewAuthOptions(),
 		Audit:          genericapiserveroptions.NewAuditOptions(),
+		ConsoleConfig:  apiserver.NewConsoleConfigOptions(),
 	}
 }
 
@@ -68,6 +71,7 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.Authorization.AddFlags(fs)
 	o.Auth.AddFlags(fs)
 	o.Audit.AddFlags(fs)
+	o.ConsoleConfig.AddFlags(fs)
 }
 
 // ApplyFlags parsing parameters from the command line or configuration file
@@ -83,6 +87,7 @@ func (o *Options) ApplyFlags() []error {
 	errs = append(errs, o.Authentication.ApplyFlags()...)
 	errs = append(errs, o.Authorization.ApplyFlags()...)
 	errs = append(errs, o.Auth.ApplyFlags()...)
+	errs = append(errs, o.ConsoleConfig.ApplyFlags()...)
 
 	return errs
 }
