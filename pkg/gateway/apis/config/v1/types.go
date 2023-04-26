@@ -32,9 +32,10 @@ type GatewayConfiguration struct {
 	// the OIDC server. This switch is used to disable this feature.
 	DisableOIDCProxy bool `json:"disableOIDCProxy"`
 	// components is used to wrap all the backend component settings in the TKE.
-	Components Components `json:"components"`
-	Registry   *Registry  `json:"registry,omitempty"`
-	Auth       *Auth      `json:"auth,omitempty"`
+	Components    Components     `json:"components"`
+	Registry      *Registry      `json:"registry,omitempty"`
+	Auth          *Auth          `json:"auth,omitempty"`
+	ConsoleConfig *ConsoleConfig `json:"consoleConfig,omitempty"`
 }
 
 type Components struct {
@@ -132,4 +133,10 @@ type Registry struct {
 
 type Auth struct {
 	DefaultTenant string `json:"defaultTenant"`
+}
+
+type ConsoleConfig struct {
+	Title        string `json:"title"`
+	LogoDir      string `json:"logoDir"`
+	CustomConfig string `json:"customConfig"`
 }

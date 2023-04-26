@@ -19,6 +19,8 @@
 package gateway
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net/http"
 
 	"golang.org/x/oauth2"
@@ -30,6 +32,14 @@ import (
 	"tkestack.io/tke/pkg/gateway/proxy"
 	"tkestack.io/tke/pkg/gateway/websocket"
 	"tkestack.io/tke/pkg/gateway/webtty"
+
+	// "tkestack.io/tke/pkg/util/template"
+	"html/template"
+)
+
+const (
+	defaultTitle  = "TKEStack"
+	defaultLogDir = ""
 )
 
 // ExtraConfig contains the additional configuration of apiserver.
@@ -89,6 +99,26 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		if err := registerAuthRoute(s.Handler.NonGoRestfulMux, c.ExtraConfig.OIDCHttpClient, c.ExtraConfig.OIDCAuthenticator); err != nil {
 			return nil, err
 		}
+	}
+	consoleConfig := new(gatewayconfig.ConsoleConfig)
+
+	if c.ExtraConfig.GatewayConfig.ConsoleConfig != nil {
+		consoleConfig = c.ExtraConfig.GatewayConfig.ConsoleConfig
+	} else {
+		consoleConfig.Title = defaultTitle
+		consoleConfig.LogoDir = defaultLogDir
+
+	}
+	var buf bytes.Buffer
+	t, err := template.New(assets.IndexTmplName).Delims("{%", "%}").ParseFiles(assets.RootDir + assets.IndexTmplName)
+	if err != nil {
+		return nil, err
+	}
+	if err = t.Execute(&buf, consoleConfig); err != nil {
+		return nil, err
+	}
+	if err = ioutil.WriteFile(assets.RootDir+assets.IndexFileName, buf.Bytes(), 0644); err != nil {
+		return nil, err
 	}
 
 	if err := proxy.RegisterRoute(s.Handler.NonGoRestfulMux, c.ExtraConfig.GatewayConfig, c.ExtraConfig.OIDCAuthenticator); err != nil {

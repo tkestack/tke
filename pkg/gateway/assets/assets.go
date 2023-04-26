@@ -33,7 +33,9 @@ import (
 )
 
 const (
-	rootDir = "assets/"
+	RootDir       = "assets/"
+	IndexTmplName = "index.tmpl.html"
+	IndexFileName = "index.html"
 )
 
 var (
@@ -80,7 +82,7 @@ func RegisterRoute(m *mux.PathRecorderMux, oauthConfig *oauth2.Config, disableOI
 			http.ServeFile(
 				writer,
 				request,
-				path.Join(rootDir, request.URL.Path))
+				path.Join(RootDir, request.URL.Path))
 		}
 	}
 

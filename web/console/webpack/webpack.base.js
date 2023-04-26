@@ -183,7 +183,7 @@ module.exports = ({ version, mode }) => ({
       : [
           new BundleAnalyzerPlugin(),
           new HtmlWebpackPlugin({
-            template: path.resolve(__dirname, '../public/index.html'),
+            template: path.resolve(__dirname, '../public/index.tmpl.html'),
             inject: false,
             templateParameters: (_, { js }) => {
               const index = js.find(path => path.includes('index'));

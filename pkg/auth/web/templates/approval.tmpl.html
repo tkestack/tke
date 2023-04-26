@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>TKEStack - Approval</title>
+    <title>{%.Title%}  - Approval</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="/oidc/static/style.css" rel="stylesheet" data-role="global">
     <link rel="apple-touch-icon" sizes="57x57" href="/oidc/static/apple-icon-57x57.png">
@@ -29,7 +29,7 @@
 <div class="clg-head">
     <div class="clg-head-inner">
         <div class="clg-logo ">
-            <a href="/">TKEStack</a>
+            <a href="/">{%.Title%} </a>
         </div>
     </div>
 </div>
@@ -40,7 +40,7 @@
                 <div class="clg-mod-tab J-loginContentBox J-qcloginBox">
                     <div class="clg-mod-tit J-txtLoginTitle">授权信息</div>
                     <div class="clg-form J-loginForm">
-                        <div>【TKEStack控制台】将获得以下权限:</div>
+                        <div>【{%.Title%} 控制台】将获得以下权限:</div>
                         <ul class="clg-form-list">
                             {{ range $scope := .Scopes }}
                                 <li>
@@ -83,10 +83,10 @@
             </div>
             <div class="clg-wrap-aside">
                 <div class="clg-wrap-aside-inner">
-                    <div class="clg-wrap-aside-tit">TKEStack</div>
+                    <div class="clg-wrap-aside-tit">{%.Title%} </div>
                     <div class="clg-wrap-aside-list">
                         <ul>
-                            <li><span>登录成功，需要您再次确认 【TKEStack控制台】 可以获取权限</span></li>
+                            <li><span>登录成功，需要您再次确认 【{%.Title%} 控制台】 可以获取权限</span></li>
                         </ul>
                     </div>
                     <div class="clg-wrap-aside-btn"></div>

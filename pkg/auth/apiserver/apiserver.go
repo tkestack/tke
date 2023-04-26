@@ -19,9 +19,12 @@
 package apiserver
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"regexp"
 	"time"
 
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/cloudindustry"
@@ -54,6 +57,8 @@ import (
 	authrest "tkestack.io/tke/pkg/auth/registry/rest"
 	"tkestack.io/tke/pkg/auth/route"
 	"tkestack.io/tke/pkg/util/log"
+
+	"html/template"
 )
 
 const (
@@ -61,7 +66,10 @@ const (
 	AuthPath           = "/auth/"
 	APIKeyPasswordPath = "/apis/auth.tkestack.io/v1/apikeys/default/password"
 
-	APIKeyPath = "/apis/auth.tkestack.io/v1/apikeys"
+	APIKeyPath     = "/apis/auth.tkestack.io/v1/apikeys"
+	defaultTitle   = "TKEStack"
+	defaultLogoDir = ""
+	htmlTmplDir    = "web/auth/templates/"
 )
 
 func IgnoreAuthPathPrefixes() []string {
@@ -94,6 +102,7 @@ type ExtraConfig struct {
 	Authorizer           authorizer.Authorizer
 	CasbinReloadInterval time.Duration
 	PrivilegedUsername   string
+	ConsoleConfig        *ConsoleConfig
 }
 
 // Config contains the core configuration instance of apiserver and
@@ -119,6 +128,11 @@ type APIServer struct {
 	GenericAPIServer *genericapiserver.GenericAPIServer
 }
 
+type ConsoleConfig struct {
+	Title   string
+	LogoDir string
+}
+
 // Complete fills in any fields not set that are required to have valid data.
 // It's mutating the receiver.
 func (cfg *Config) Complete() CompletedConfig {
@@ -135,6 +149,36 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 	s, err := c.GenericConfig.New(c.ExtraConfig.ServerName, delegationTarget)
 	if err != nil {
 		return nil, err
+	}
+
+	consoleConfig := new(ConsoleConfig)
+	if c.ExtraConfig.ConsoleConfig != nil {
+		consoleConfig = c.ExtraConfig.ConsoleConfig
+	} else {
+		consoleConfig.Title = defaultTitle
+		consoleConfig.LogoDir = defaultLogoDir
+	}
+
+	files, err := ioutil.ReadDir(htmlTmplDir)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, file := range files {
+		var buf bytes.Buffer
+		t, err := template.New(file.Name()).Delims("{%", "%}").ParseFiles(htmlTmplDir + file.Name())
+		if err != nil {
+			return nil, err
+		}
+		if err = t.Execute(&buf, consoleConfig); err != nil {
+			return nil, err
+		}
+		// // remove .tmpl in file name
+		re := regexp.MustCompile(`\.tmpl`)
+		targetFileName := re.ReplaceAllString(file.Name(), "")
+		if err = ioutil.WriteFile(htmlTmplDir+targetFileName, buf.Bytes(), 0644); err != nil {
+			return nil, err
+		}
 	}
 
 	dexHandler := identityprovider.DexHander{}
