@@ -15,7 +15,9 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
-export { resourceConfig } from './resourceConfig';
-export { firstRouterNameMap, typeMapName, subRouterConfig } from './routerConfig';
 export { apiServerVersion } from './apiServerVersion';
 export * from './platform';
+export { resourceConfig } from './resourceConfig';
+export { firstRouterNameMap, subRouterConfig, typeMapName } from './routerConfig';
+
+export { getCustomConfig } from './customConfig';

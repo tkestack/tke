@@ -15,22 +15,24 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+import { TkeVersion } from '@/src/modules/common/components/tke-version';
+import { getCustomConfig } from '@config';
+import { ConsoleModuleEnum } from '@config/platform';
+import { insertCSS } from '@tencent/ff-redux';
 import * as React from 'react';
+import { ExternalLink, Layout, List, Menu, NavMenu, StatusTip } from 'tea-component';
+import 'tea-component/dist/tea.css';
+import { PlatformTypeEnum, resourceConfig } from './config';
 import {
   ConsoleModuleMapProps,
-  reduceK8sRestfulPath,
   Method,
+  reduceK8sRestfulPath,
   reduceNetworkRequest,
   setConsoleAPIAddress
 } from './helpers';
-import { ResourceInfo, RequestParams } from './src/modules/common/models';
-import { resourceConfig, PlatformTypeEnum } from './config';
+import { RequestParams, ResourceInfo } from './src/modules/common/models';
 import { isEmpty } from './src/modules/common/utils';
-import { NavMenu, List, StatusTip, Menu, Layout, ExternalLink } from 'tea-component';
-import { TkeVersion } from '@/src/modules/common/components/tke-version';
-import { ConsoleModuleEnum } from '@config/platform';
-import 'tea-component/dist/tea.css';
-import { insertCSS } from '@tencent/ff-redux';
+
 require('promise.prototype.finally').shim();
 
 insertCSS(
@@ -617,7 +619,11 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
         left={
           <React.Fragment>
             <NavMenu.Item>
-              <img src="/static/icon/logo.svg" style={{ height: '30px' }} alt="logo" />
+              <img
+                src={`/static/icon/${getCustomConfig()?.data?.logoDir ?? 'default'}/logo.svg`}
+                style={{ height: '30px' }}
+                alt="logo"
+              />
             </NavMenu.Item>
           </React.Fragment>
         }
