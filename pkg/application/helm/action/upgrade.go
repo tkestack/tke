@@ -98,7 +98,7 @@ func (c *Client) Upgrade(ctx context.Context, options *UpgradeOptions) (*release
 			return nil, err
 		}
 		for _, rel := range rels {
-			if rel.Info.Status == release.StatusPendingInstall || rels[0].Info.Status == release.StatusPendingUpgrade || rels[0].Info.Status == release.StatusPendingRollback {
+			if rel.Info.Status == release.StatusPendingInstall || rel.Info.Status == release.StatusPendingUpgrade || rel.Info.Status == release.StatusPendingRollback {
 				// if release is pending, delete it.
 				log.Infof("upgrade release %s is already exist, status is %s. delete it now.", options.ReleaseName, rel.Info.Status)
 				actionConfig.Releases.Delete(rel.Name, rel.Version)
