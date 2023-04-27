@@ -2,25 +2,21 @@ import { getCustomConfig } from '@config';
 import React, { useMemo } from 'react';
 
 interface IPermissionProviderProps {
-  children: React.ReactElement;
+  children: React.ReactNode;
   value: string;
 }
 
-function checkVisible(path: string[], config = getCustomConfig()) {
-  if (path.length <= 0) return true;
+export function checkCustomVisible(value: string) {
+  const path = value.split('.');
+  const customConfig = getCustomConfig();
 
-  const [current, ...restPath] = path;
+  const config = path.reduce((config, key) => config?.[key], customConfig);
 
-  const currentConfig = config?.children?.find(item => item.key === current);
-
-  if (currentConfig?.data?.visible === false) return false;
-
-  return checkVisible(restPath, currentConfig);
+  return config?.visible ?? true;
 }
 
 export const PermissionProvider: React.FC<IPermissionProviderProps> = ({ value, children }) => {
-  const path = value.split('.');
-  const isVisible = useMemo(() => checkVisible(path), [path]);
+  const isVisible = useMemo(() => checkCustomVisible(value), [value]);
 
-  return isVisible ? children : null;
+  return <>{isVisible ? children : null}</>;
 };

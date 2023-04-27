@@ -24,7 +24,7 @@ import { bindActionCreators } from '@tencent/ff-redux';
 import { router } from '../../../router';
 import { allActions } from '../../../actions';
 import { RootProps } from '../ChartApp';
-import { Clip, GridTable, TipDialog, WorkflowDialog } from '../../../../common/components';
+import { checkCustomVisible } from '@common/components/permission-provider';
 
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
@@ -40,8 +40,8 @@ interface ChartActionState {
 export class ActionPanel extends React.Component<RootProps, ChartActionState> {
   constructor(props, context) {
     super(props, context);
-    let { route } = props;
-    let urlParams = router.resolve(route);
+    const { route } = props;
+    const urlParams = router.resolve(route);
     this.state = {
       scene: urlParams['tab'] || 'all',
       projectID: ''
@@ -51,14 +51,14 @@ export class ActionPanel extends React.Component<RootProps, ChartActionState> {
 
   render() {
     const { actions, route, chartList, projectList, chartGroupList } = this.props;
-    let urlParam = router.resolve(route);
+    const urlParam = router.resolve(route);
     const { sub } = urlParam;
 
-    let { scene, projectID } = this.state;
-    let sceneOptions = [
+    const { scene, projectID } = this.state;
+    const sceneOptions = [
       { value: 'all', text: t('所有模板') },
       { value: 'user', text: t('用户模板') },
-      { value: 'project', text: t('业务模板') },
+      ...(checkCustomVisible('platform.registry.project') ? [{ value: 'project', text: t('业务模板') }] : []),
       { value: 'public', text: t('公共模板') }
     ];
 

@@ -15,13 +15,13 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+import './i18n';
 import { Entry, insertCSS } from '@tencent/ff-redux';
 import { t } from '@tencent/tea-app/lib/i18n';
 import { Alert, Button, Text } from '@tencent/tea-component';
 import * as React from 'react';
 import { Wrapper } from './Wrapper';
 import { Init_Forbiddent_Config } from './helpers/reduceNetwork';
-import './i18n';
 import { Addon } from './src/modules/addon';
 import { AlarmRecord } from './src/modules/alarmRecord';
 import { Audit } from './src/modules/audit';
@@ -74,7 +74,7 @@ import Notify from './src/modules/notify';
 
 import { getCustomConfig } from '@config';
 
-const Title = getCustomConfig()?.data?.title ?? 'TKEStack';
+const Title = getCustomConfig()?.title ?? 'TKEStack';
 
 insertCSS(
   'hidden-checkbox',

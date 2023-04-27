@@ -1,13 +1,15 @@
 import defaultCustomConfig from './defaultCustomConfig.json';
 
-interface ICustomConfig {
-  key: string;
+interface ICustomConfigItem {
   des: string;
-  data: {
-    visible: boolean;
-    [key: string]: any;
-  };
-  children?: ICustomConfig[];
+  visible: boolean;
+  children: ICustomConfigItem;
+}
+
+interface ICustomConfig {
+  title: string;
+  logoDir: string;
+  children: ICustomConfigItem;
 }
 
 let CustomConfig: ICustomConfig = null;

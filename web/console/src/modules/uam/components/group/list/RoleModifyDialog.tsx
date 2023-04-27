@@ -15,14 +15,15 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
-import * as React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { Button, Modal, Form, Text, Radio, Transfer, Table, SearchBox } from '@tea/component';
+import { PermissionProvider } from '@common';
+import { Button, Form, Modal, Radio, SearchBox, Table, Text, Transfer } from '@tea/component';
 import { bindActionCreators, uuid } from '@tencent/ff-redux';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { useForm, useField } from 'react-final-form-hooks';
-import { allActions } from '../../../actions';
+import { Trans, t } from '@tencent/tea-app/lib/i18n';
+import * as React from 'react';
+import { useField, useForm } from 'react-final-form-hooks';
+import { useDispatch, useSelector } from 'react-redux';
 import { getStatus } from '../../../../common/validate';
+import { allActions } from '../../../actions';
 
 const { useState, useEffect } = React;
 const { scrollable, selectable, removeable } = Table.addons;
@@ -136,10 +137,12 @@ export function RoleModifyDialog(props) {
                   <Text>平台用户</Text>
                   <Text parent="div">平台预设角色，允许访问和管理大部分平台功能，可以新建集群及业务</Text>
                 </Radio>
-                <Radio name={tenantID ? `pol-${tenantID}-viewer` : 'pol-default-viewer'}>
-                  <Text>租户</Text>
-                  <Text parent="div">平台预设角色，不绑定任何平台权限，仅能登录</Text>
-                </Radio>
+                <PermissionProvider value="platform.uam.tenant">
+                  <Radio name={tenantID ? `pol-${tenantID}-viewer` : 'pol-default-viewer'}>
+                    <Text>租户</Text>
+                    <Text parent="div">平台预设角色，不绑定任何平台权限，仅能登录</Text>
+                  </Radio>
+                </PermissionProvider>
                 <Radio name="custom">
                   <Text>自定义</Text>
                   <Transfer

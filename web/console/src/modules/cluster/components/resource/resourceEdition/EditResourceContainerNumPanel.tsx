@@ -23,7 +23,7 @@ import { Bubble, Checkbox, InputNumber, Text } from '@tea/component';
 import { bindActionCreators, FetchState } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
-import { FormItem, LinkButton } from '../../../../common/components';
+import { FormItem, LinkButton, PermissionProvider } from '../../../../common/components';
 import { allActions } from '../../../actions';
 import { ContainerMaxNumLimit, HpaMetricsTypeList } from '../../../constants/Config';
 import { RootProps } from '../../ClusterApp';
@@ -47,8 +47,8 @@ export class EditResourceContainerNumPanel extends React.Component<RootProps, {}
       { mode, workloadEdit, resourceOption } = subRoot,
       { isNeedContainerNum, workloadType, hpaList } = workloadEdit;
 
-    let isHasCbs = false;
-    let isCanUseHpa = workloadType === 'deployment' || workloadType === 'statefulset' || workloadType === 'tapp';
+    const isHasCbs = false;
+    const isCanUseHpa = workloadType === 'deployment' || workloadType === 'statefulset' || workloadType === 'tapp';
 
     return (
       <>
@@ -76,44 +76,46 @@ export class EditResourceContainerNumPanel extends React.Component<RootProps, {}
       { workloadEdit, addons } = subRoot,
       { scaleType, isOpenCronHpa } = workloadEdit;
 
-    let disabled = addons['CronHPA'] === undefined;
+    const disabled = addons['CronHPA'] === undefined;
 
     return (
-      <FormItem label={t('定时调节')}>
-        <Bubble
-          content={disabled ? t('当前集群尚未安装CronHPA扩展组件，请联系管理员进行安装') : null}
-          placement="right"
-        >
-          <Checkbox
-            style={{ marginTop: '5px' }}
-            disabled={disabled}
-            value={isOpenCronHpa}
-            onChange={value => actions.editWorkload.toggleIsOpenCronHpa()}
+      <PermissionProvider value="platform.cluster.workload.workload_create_cronHpa">
+        <FormItem label={t('定时调节')}>
+          <Bubble
+            content={disabled ? t('当前集群尚未安装CronHPA扩展组件，请联系管理员进行安装') : null}
+            placement="right"
           >
-            <span style={{ verticalAlign: '5px' }}>开启</span>
-          </Checkbox>
-        </Bubble>
-        <Text theme="label" parent="p">
-          {t('根据设置的Crontab（Crontab语法格式，例如 "0 23 * * 5"表示每周五23:00）周期性地设置实例数量')}
-        </Text>
-        {isOpenCronHpa ? <ul className="form-list">{this._renderCronTabList()}</ul> : <noscript />}
-      </FormItem>
+            <Checkbox
+              style={{ marginTop: '5px' }}
+              disabled={disabled}
+              value={isOpenCronHpa}
+              onChange={value => actions.editWorkload.toggleIsOpenCronHpa()}
+            >
+              <span style={{ verticalAlign: '5px' }}>开启</span>
+            </Checkbox>
+          </Bubble>
+          <Text theme="label" parent="p">
+            {t('根据设置的Crontab（Crontab语法格式，例如 "0 23 * * 5"表示每周五23:00）周期性地设置实例数量')}
+          </Text>
+          {isOpenCronHpa ? <ul className="form-list">{this._renderCronTabList()}</ul> : <noscript />}
+        </FormItem>
+      </PermissionProvider>
     );
   }
 
   /** 展示cronhpa的触发策略 */
   private _renderCronTabList() {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { cronMetrics } = subRoot.workloadEdit;
 
     // 是否可以删除该触发策略
-    let canDelete = cronMetrics.length > 1 ? true : false;
+    const canDelete = cronMetrics.length > 1 ? true : false;
 
     return (
       <FormItem label={t('触发策略')}>
         <div className="form-unit is-success">
           {cronMetrics.map((metric, index) => {
-            let mId = metric.id + '';
+            const mId = metric.id + '';
 
             return (
               <div className="code-list" key={index}>
@@ -183,13 +185,13 @@ export class EditResourceContainerNumPanel extends React.Component<RootProps, {}
     let { actions, subRoot, cluster, clusterVersion } = this.props,
       { scaleType, minReplicas, maxReplicas, v_minReplicas, v_maxReplicas } = subRoot.workloadEdit;
 
-    let isAutoScale = scaleType === 'autoScale';
+    const isAutoScale = scaleType === 'autoScale';
 
     // 判断是否可以使用hpa
     let canUseHpa = false;
     if (cluster.selection) {
       // k8s版本只有 >= 1.7.0 才能使用hpa
-      let k8sVersion = clusterVersion.split('.');
+      const k8sVersion = clusterVersion.split('.');
       canUseHpa = Number(k8sVersion[0]) >= 1 && Number(k8sVersion[1]) >= 7 ? true : false;
     }
 
@@ -274,7 +276,7 @@ export class EditResourceContainerNumPanel extends React.Component<RootProps, {}
   }
 
   /** 展示hpa的相关提示 */
-  private _renderBubbleText(canUseHpa: boolean = false, canAddNum: boolean) {
+  private _renderBubbleText(canUseHpa = false, canAddNum: boolean) {
     let bubbleText = '';
     if (!canUseHpa) {
       bubbleText = t('设置服务自动伸缩要求集群版本大于1.7.0');
@@ -287,16 +289,16 @@ export class EditResourceContainerNumPanel extends React.Component<RootProps, {}
 
   /** 渲染自动伸缩规则 */
   private _renderAutoScaleList() {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { metrics } = subRoot.workloadEdit;
 
     // 是否可以删除该项触发策略
-    let canDelete = metrics.length > 1 ? true : false;
+    const canDelete = metrics.length > 1 ? true : false;
     // 是否可以新增触发策略
-    let canAdd = metrics.length < 4 ? true : false;
+    const canAdd = metrics.length < 4 ? true : false;
 
     /** 渲染指标的列表 */
-    let metricTypeOptions = HpaMetricsTypeList.map((item, index) => {
+    const metricTypeOptions = HpaMetricsTypeList.map((item, index) => {
       return (
         <option key={index} value={item.value}>
           {item.label}
@@ -308,7 +310,7 @@ export class EditResourceContainerNumPanel extends React.Component<RootProps, {}
       <FormItem label={t('触发策略')}>
         <div className="form-unit is-success">
           {metrics.map((metric, index) => {
-            let mId = metric.id + '';
+            const mId = metric.id + '';
 
             return (
               <div className="code-list" key={index}>
@@ -372,12 +374,12 @@ export class EditResourceContainerNumPanel extends React.Component<RootProps, {}
 
   /** 展示 手动调节的逻辑 */
   private _manualUpdateContainerNum(isHasCbs: boolean) {
-    let { actions, subRoot } = this.props,
+    const { actions, subRoot } = this.props,
       { workloadEdit } = subRoot,
       { volumes, containerNum, scaleType } = workloadEdit;
 
     // 当前的实例数量的模式
-    let isManual = scaleType === 'manualScale';
+    const isManual = scaleType === 'manualScale';
 
     // 当前容器实例的最大数量的控制
     let canAddNum = true,

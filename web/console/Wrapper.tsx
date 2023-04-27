@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations under the License.
  */
 import { TkeVersion } from '@/src/modules/common/components/tke-version';
+import { PermissionProvider, checkCustomVisible } from '@common/components/permission-provider';
 import { getCustomConfig } from '@config';
 import { ConsoleModuleEnum } from '@config/platform';
 import { insertCSS } from '@tencent/ff-redux';
@@ -79,6 +80,8 @@ interface RouterConfig {
   subRouterConfig?: RouterConfig[];
 
   icon?: [string, string];
+
+  key?: string;
 }
 
 console.log('svg----->', require('./public/static/icon/overview.svg'));
@@ -97,16 +100,26 @@ const commonRouterConfig: RouterConfig[] = [
     watchModule: ConsoleModuleEnum.PLATFORM,
     icon: [require('./public/static/icon/cluster.svg'), require('./public/static/icon/cluster-hover.svg')]
   },
-  {
-    url: '/tkestack/project',
-    title: '业务管理',
-    watchModule: ConsoleModuleEnum.Business
-  },
-  {
-    url: '/tkestack/addon',
-    title: '扩展组件',
-    watchModule: ConsoleModuleEnum.PLATFORM
-  },
+  ...(checkCustomVisible('platform.project')
+    ? [
+        {
+          url: '/tkestack/project',
+          title: '业务管理',
+          watchModule: ConsoleModuleEnum.Business,
+          key: 'project'
+        }
+      ]
+    : []),
+  ...(checkCustomVisible('platform.addon')
+    ? [
+        {
+          url: '/tkestack/addon',
+          title: '扩展组件',
+          watchModule: ConsoleModuleEnum.PLATFORM,
+          key: 'addon'
+        }
+      ]
+    : []),
   {
     title: '组织资源',
     icon: [require('./public/static/icon/registry.svg'), require('./public/static/icon/registry-hover.svg')],
@@ -198,11 +211,15 @@ const commonRouterConfig: RouterConfig[] = [
         title: '日志采集',
         watchModule: ConsoleModuleEnum.LogAgent
       },
-      {
-        url: '/tkestack/persistent-event',
-        title: '事件持久化',
-        watchModule: ConsoleModuleEnum.PLATFORM
-      },
+      ...(checkCustomVisible('platform.persistent-event')
+        ? [
+            {
+              url: '/tkestack/persistent-event',
+              title: '事件持久化',
+              watchModule: ConsoleModuleEnum.PLATFORM
+            }
+          ]
+        : []),
       {
         url: '/tkestack/audit',
         title: '审计记录',
@@ -620,7 +637,7 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
           <React.Fragment>
             <NavMenu.Item>
               <img
-                src={`/static/icon/${getCustomConfig()?.data?.logoDir ?? 'default'}/logo.svg`}
+                src={`/static/icon/${getCustomConfig()?.logoDir ?? 'default'}/logo.svg`}
                 style={{ height: '30px' }}
                 alt="logo"
               />
@@ -629,9 +646,11 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
         }
         right={
           <React.Fragment>
-            <NavMenu.Item>
-              <ExternalLink href={'https://tkestack.github.io/docs/'}>容器服务帮助手册</ExternalLink>
-            </NavMenu.Item>
+            <PermissionProvider value="platform.overview.help">
+              <NavMenu.Item>
+                <ExternalLink href={'https://tkestack.github.io/docs/'}>容器服务帮助手册</ExternalLink>
+              </NavMenu.Item>
+            </PermissionProvider>
 
             <NavMenu.Item
               type="dropdown"

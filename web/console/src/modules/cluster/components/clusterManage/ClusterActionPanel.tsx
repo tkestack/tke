@@ -30,6 +30,8 @@ import { allActions } from '../../actions';
 import { router } from '../../router';
 import { RootProps } from '../ClusterApp';
 
+console.log('clusteraction----->', t('新建独立集群'));
+
 const mapDispatchToProps = dispatch =>
   Object.assign({}, bindActionCreators({ actions: allActions }, dispatch), {
     dispatch
@@ -64,7 +66,7 @@ export class ClusterActionPanel extends React.Component<RootProps, any> {
       <Table.ActionPanel>
         <Justify
           left={
-            <PermissionProvider value="cluster.create_import_button">
+            <PermissionProvider value="platform.cluster.create_import_button">
               <Bubble placement="right" content={bubbleContent}>
                 <Button
                   type="primary"

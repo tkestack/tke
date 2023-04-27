@@ -140,6 +140,8 @@ module.exports = ({ version, mode }) => ({
       '@config/*': path.resolve(__dirname, '../config/*'),
       '@src/*': path.resolve(__dirname, '../src/*'),
       '@src': path.resolve(__dirname, '../src'),
+      '@common': path.resolve(__dirname, '../src/modules/common'),
+      '@common/*': path.resolve(__dirname, '../src/modules/common/*'),
       '@tencent/ff-validator': path.resolve(__dirname, '../lib/ff-validator'),
       '@tencent/ff-validator/*': path.resolve(__dirname, '../lib/ff-validator/*'),
       '@tencent/ff-redux': path.resolve(__dirname, '../lib/ff-redux'),

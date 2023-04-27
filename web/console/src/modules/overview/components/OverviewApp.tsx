@@ -31,6 +31,8 @@ import { ClusterOverviewPanel } from './ClusterOverview';
 import { OverviewHeadPanel } from './OverviewHeadPanel';
 import { QuickHelpPanel } from './QuickHelpPanel';
 import { TipsPanel } from './TipsPanel';
+import { PermissionProvider } from '@common';
+
 const store = configStore();
 
 export class OverviewAppContainer extends React.Component<any, any> {
@@ -75,10 +77,12 @@ class OverviewApp extends React.Component<RootProps, {}> {
                 clusterData={clusterOverview.object && clusterOverview.object.data ? clusterOverview.object.data : null}
               />
             </Col>
-            <Col span={6}>
-              <QuickHelpPanel />
-              <TipsPanel />
-            </Col>
+            <PermissionProvider value="platform.overview.help">
+              <Col span={6}>
+                <QuickHelpPanel />
+                <TipsPanel />
+              </Col>
+            </PermissionProvider>
           </Row>
         </ContentView.Body>
       </ContentView>
