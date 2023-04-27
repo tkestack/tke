@@ -67,6 +67,10 @@ export const AlarmPolicyType = [
   {
     text: 'pod',
     value: 'pod'
+  },
+  {
+    text: t('虚拟机'),
+    value: 'virtualMachine'
   }
 ];
 //统计周期
@@ -542,6 +546,138 @@ export const AlarmPolicyMetrics = {
       tip: t('不包括缓存'),
       // metricType: 'metric',
       unit: 'MB'
+    }
+  ],
+
+  virtualMachine: [
+    {
+      enable: true,
+      measurement: 'virtualMachine',
+      statisticsPeriod: 1,
+      metricName: 'vm_cpu_usage_rate',
+      evaluatorType: 'gt',
+      evaluatorValue: '',
+      metricDisplayName: t('CPU 使用率'),
+      continuePeriod: 5,
+      type: 'percent',
+      unit: '%'
+    },
+
+    {
+      enable: true,
+      measurement: 'virtualMachine',
+      statisticsPeriod: 1,
+      metricName: 'vm_memory_usage_rate',
+      evaluatorType: 'gt',
+      evaluatorValue: '',
+      metricDisplayName: t('内存使用率'),
+      continuePeriod: 5,
+      type: 'percent',
+      unit: '%'
+    },
+
+    {
+      enable: false,
+      measurement: 'virtualMachine',
+      statisticsPeriod: 1,
+      metricName: 'vm_network_transmit_bw',
+      evaluatorType: 'gt',
+      evaluatorValue: '',
+      metricDisplayName: t('网络入带宽'),
+      continuePeriod: 5,
+      type: '',
+      unit: 'Mbps'
+    },
+
+    {
+      enable: false,
+      measurement: 'virtualMachine',
+      statisticsPeriod: 1,
+      metricName: 'vm_network_receive_bw',
+      evaluatorType: 'gt',
+      evaluatorValue: '',
+      metricDisplayName: t('网络出带宽'),
+      continuePeriod: 5,
+      type: '',
+      unit: 'Mbps'
+    },
+
+    {
+      enable: false,
+      measurement: 'virtualMachine',
+      statisticsPeriod: 1,
+      metricName: 'vm_network_transmit_packets_rate',
+      evaluatorType: 'gt',
+      evaluatorValue: '',
+      metricDisplayName: t('网络入包量'),
+      continuePeriod: 5,
+      type: '',
+      unit: '个/s'
+    },
+
+    {
+      enable: false,
+      measurement: 'virtualMachine',
+      statisticsPeriod: 1,
+      metricName: 'vm_network_receive_packets_rate',
+      evaluatorType: 'gt',
+      evaluatorValue: '',
+      metricDisplayName: t('网络出包量'),
+      continuePeriod: 5,
+      type: '',
+      unit: '个/s'
+    },
+
+    {
+      enable: false,
+      measurement: 'virtualMachine',
+      statisticsPeriod: 1,
+      metricName: 'vm_storage_read_bw',
+      evaluatorType: 'gt',
+      evaluatorValue: '',
+      metricDisplayName: t('磁盘读流量'),
+      continuePeriod: 5,
+      type: '',
+      unit: 'MB/s'
+    },
+
+    {
+      enable: false,
+      measurement: 'virtualMachine',
+      statisticsPeriod: 1,
+      metricName: 'vm_storage_write_bw',
+      evaluatorType: 'gt',
+      evaluatorValue: '',
+      metricDisplayName: t('磁盘写流量'),
+      continuePeriod: 5,
+      type: '',
+      unit: 'MB/s'
+    },
+
+    {
+      enable: false,
+      measurement: 'virtualMachine',
+      statisticsPeriod: 1,
+      metricName: 'vm_storage_read_iops',
+      evaluatorType: 'gt',
+      evaluatorValue: '',
+      metricDisplayName: t('磁盘读IOPS （基于每块磁盘）'),
+      continuePeriod: 5,
+      type: '',
+      unit: '次/s'
+    },
+
+    {
+      enable: false,
+      measurement: 'virtualMachine',
+      statisticsPeriod: 1,
+      metricName: 'vm_storage_write_iops',
+      evaluatorType: 'gt',
+      evaluatorValue: '',
+      metricDisplayName: t('磁盘写IOPS （基于每块磁盘）'),
+      continuePeriod: 5,
+      type: '',
+      unit: '次/s'
     }
   ]
 };

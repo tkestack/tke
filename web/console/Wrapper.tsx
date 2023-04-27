@@ -15,22 +15,26 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+import { TkeVersion } from '@/src/modules/common/components/tke-version';
+import { PermissionProvider, checkCustomVisible } from '@common/components/permission-provider';
+import { getCustomConfig } from '@config';
+import { ConsoleModuleEnum } from '@config/platform';
+import { insertCSS } from '@tencent/ff-redux';
 import * as React from 'react';
+import { ExternalLink, Layout, List, Menu, NavMenu, StatusTip } from 'tea-component';
+import 'tea-component/dist/tea.css';
+import { PlatformTypeEnum, resourceConfig } from './config';
 import {
   ConsoleModuleMapProps,
-  reduceK8sRestfulPath,
   Method,
+  reduceK8sRestfulPath,
   reduceNetworkRequest,
-  setConsoleAPIAddress
+  setConsoleAPIAddress,
+  isInIframe
 } from './helpers';
-import { ResourceInfo, RequestParams } from './src/modules/common/models';
-import { resourceConfig, PlatformTypeEnum } from './config';
+import { RequestParams, ResourceInfo } from './src/modules/common/models';
 import { isEmpty } from './src/modules/common/utils';
-import { NavMenu, List, StatusTip, Menu, Layout, ExternalLink } from 'tea-component';
-import { TkeVersion } from '@/src/modules/common/components/tke-version';
-import { ConsoleModuleEnum } from '@config/platform';
-import 'tea-component/dist/tea.css';
-import { insertCSS } from '@tencent/ff-redux';
+
 require('promise.prototype.finally').shim();
 
 insertCSS(
@@ -77,6 +81,8 @@ interface RouterConfig {
   subRouterConfig?: RouterConfig[];
 
   icon?: [string, string];
+
+  key?: string;
 }
 
 console.log('svg----->', require('./public/static/icon/overview.svg'));
@@ -95,16 +101,26 @@ const commonRouterConfig: RouterConfig[] = [
     watchModule: ConsoleModuleEnum.PLATFORM,
     icon: [require('./public/static/icon/cluster.svg'), require('./public/static/icon/cluster-hover.svg')]
   },
-  {
-    url: '/tkestack/project',
-    title: '业务管理',
-    watchModule: ConsoleModuleEnum.Business
-  },
-  {
-    url: '/tkestack/addon',
-    title: '扩展组件',
-    watchModule: ConsoleModuleEnum.PLATFORM
-  },
+  ...(checkCustomVisible('platform.project')
+    ? [
+        {
+          url: '/tkestack/project',
+          title: '业务管理',
+          watchModule: ConsoleModuleEnum.Business,
+          key: 'project'
+        }
+      ]
+    : []),
+  ...(checkCustomVisible('platform.addon')
+    ? [
+        {
+          url: '/tkestack/addon',
+          title: '扩展组件',
+          watchModule: ConsoleModuleEnum.PLATFORM,
+          key: 'addon'
+        }
+      ]
+    : []),
   {
     title: '组织资源',
     icon: [require('./public/static/icon/registry.svg'), require('./public/static/icon/registry-hover.svg')],
@@ -196,11 +212,15 @@ const commonRouterConfig: RouterConfig[] = [
         title: '日志采集',
         watchModule: ConsoleModuleEnum.LogAgent
       },
-      {
-        url: '/tkestack/persistent-event',
-        title: '事件持久化',
-        watchModule: ConsoleModuleEnum.PLATFORM
-      },
+      ...(checkCustomVisible('platform.persistent-event')
+        ? [
+            {
+              url: '/tkestack/persistent-event',
+              title: '事件持久化',
+              watchModule: ConsoleModuleEnum.PLATFORM
+            }
+          ]
+        : []),
       {
         url: '/tkestack/audit',
         title: '审计记录',
@@ -575,7 +595,11 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
         <React.Fragment>
           {this._renderTopBar(query)}
 
-          <div className="qc-animation-empty container container-tke2-cluster" id="tkestack" style={{ left: 0 }}>
+          <div
+            className="qc-animation-empty container container-tke2-cluster"
+            id="tkestack"
+            style={{ left: 0, top: isInIframe() ? 0 : undefined }}
+          >
             {sideBar && this._renderSideBar(query)}
 
             <div id="appArea" className="main" style={sideBar ? {} : { left: 0 }}>
@@ -617,15 +641,21 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
         left={
           <React.Fragment>
             <NavMenu.Item>
-              <img src="/static/icon/logo.svg" style={{ height: '30px' }} alt="logo" />
+              <img
+                src={`/static/icon/${getCustomConfig()?.logoDir ?? 'default'}/logo.svg`}
+                style={{ height: '30px' }}
+                alt="logo"
+              />
             </NavMenu.Item>
           </React.Fragment>
         }
         right={
           <React.Fragment>
-            <NavMenu.Item>
-              <ExternalLink href={'https://tkestack.github.io/docs/'}>容器服务帮助手册</ExternalLink>
-            </NavMenu.Item>
+            <PermissionProvider value="platform.overview.help">
+              <NavMenu.Item>
+                <ExternalLink href={'https://tkestack.github.io/docs/'}>容器服务帮助手册</ExternalLink>
+              </NavMenu.Item>
+            </PermissionProvider>
 
             <NavMenu.Item
               type="dropdown"

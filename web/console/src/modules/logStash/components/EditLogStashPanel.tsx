@@ -21,9 +21,7 @@ import { CreateResource } from 'src/modules/cluster/models';
 
 import { Button, Bubble, ExternalLink, Segment, Text } from '@tea/component';
 import { FormPanel } from '@tencent/ff-component';
-import {
-    bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid
-} from '@tencent/ff-redux';
+import { bindActionCreators, FetchState, isSuccessWorkflow, OperationState, uuid } from '@tencent/ff-redux';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 import { SegmentOption } from '@tencent/tea-component/lib/segment/SegmentOption';
 
@@ -34,8 +32,13 @@ import { allActions } from '../actions';
 import { validatorActions } from '../actions/validatorActions';
 import { logModeList } from '../constants/Config';
 import {
-    ContainerLogInput, ContainerLogNamespace, ElasticsearchOutput, HostLogInput, KafkaOutpot,
-    LogStashEditYaml, PodLogInput
+  ContainerLogInput,
+  ContainerLogNamespace,
+  ElasticsearchOutput,
+  HostLogInput,
+  KafkaOutpot,
+  LogStashEditYaml,
+  PodLogInput
 } from '../models/LogStashEdit';
 import { router } from '../router';
 import { EditConsumerPanel } from './EditConsumerPanel';
@@ -45,6 +48,7 @@ import { EditOriginNodePanel } from './EditOriginNodePanel';
 import { isCanCreateLogStash } from './LogStashActionPanel';
 import { RootProps } from './LogStashApp';
 import { Base64 } from 'js-base64';
+import { HOST_LOG_INPUT_PATH_PREFIX } from '../constants/Config';
 
 /** 日志采集类型的提示 */
 const logModeTip = {
@@ -83,7 +87,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
   }
 
   componentWillUnmount() {
-    let { actions, route } = this.props;
+    const { actions, route } = this.props;
     // 清理logStashEdit的内容
     actions.editLogStash.clearLogStashEdit();
     // 重置workflow
@@ -109,13 +113,13 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
       { logStashName, v_logStashName, v_clusterSelection, logMode } = logStashEdit,
       urlParams = router.resolve(route);
     // 当前的类型 create | update
-    let { mode } = urlParams;
-    let byProject = window.location.href.includes('/tkestack-project');
+    const { mode } = urlParams;
+    const byProject = window.location.href.includes('/tkestack-project');
 
-    let isCreateMode: boolean = mode === 'create';
+    const isCreateMode: boolean = mode === 'create';
 
     // 判断当前是否能够新建日志收集规则
-    let { canCreate, tip, ifLogDaemonset } = isCanCreateLogStash(
+    const { canCreate, tip, ifLogDaemonset } = isCanCreateLogStash(
       clusterSelection[0],
       logList.data.records,
       isDaemonsetNormal,
@@ -123,12 +127,12 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
     );
 
     /** 渲染日志类型 */
-    let selectedLogMode = Object.values(logModeList).find(item => item.value === logMode);
+    const selectedLogMode = Object.values(logModeList).find(item => item.value === logMode);
 
-    let ifLogDaemonsetNeedLoading = logDaemonset.fetchState === FetchState.Fetching;
+    const ifLogDaemonsetNeedLoading = logDaemonset.fetchState === FetchState.Fetching;
 
     /** 创建日志采集规则失败 */
-    let failed = modifyLogStashFlow.operationState === OperationState.Done && !isSuccessWorkflow(modifyLogStashFlow);
+    const failed = modifyLogStashFlow.operationState === OperationState.Done && !isSuccessWorkflow(modifyLogStashFlow);
 
     //渲染集群列表selectList选择项
     const selectClusterList = cloneDeep(clusterList);
@@ -152,7 +156,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
     }
 
     // 根据当前是平台侧/业务侧返回业务/集群选择器，或者显示业务/集群信息（修改）
-    let getSelector = () => {
+    const getSelector = () => {
       if (byProject) {
         if (!isCreateMode) {
           return (
@@ -161,28 +165,30 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
             </FormPanel.Item>
           );
         }
-        let projectListOptions = projectList.map((p, index) => ({
+        const projectListOptions = projectList.map((p, index) => ({
           text: p.displayName,
           value: p.name
         }));
 
-        return (<>
-          <FormPanel.Item label={t('业务：')}>
-            <FormPanel.Select
-              options={projectListOptions}
-              value={projectSelection}
-              onChange={value => {
-                actions.cluster.selectProject(value);
-              }}
-            ></FormPanel.Select>
-          </FormPanel.Item>
-        </>);
+        return (
+          <>
+            <FormPanel.Item label={t('业务：')}>
+              <FormPanel.Select
+                options={projectListOptions}
+                value={projectSelection}
+                onChange={value => {
+                  actions.cluster.selectProject(value);
+                }}
+              ></FormPanel.Select>
+            </FormPanel.Item>
+          </>
+        );
       }
       if (!isCreateMode) {
         return (
           <FormPanel.Item label={t('所属集群')} text>
             {clusterSelection[0] &&
-            clusterSelection[0].metadata.name + '(' + clusterSelection[0].spec.displayName + ')'}
+              clusterSelection[0].metadata.name + '(' + clusterSelection[0].spec.displayName + ')'}
           </FormPanel.Item>
         );
       }
@@ -192,19 +198,10 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
           label={t('所属集群')}
           message={
             <React.Fragment>
-              <Text parent="p">
-                <Trans>
-                  如现有的集群不合适，您可以去控制台
-                  <ExternalLink href={`/tkestack/cluster/create?rid=${route.queries['rid']}`} target="_self">
-                    导入集群
-                  </ExternalLink>
-                  或者
-                  <ExternalLink href={`/tkestack/cluster/createIC?rid=${route.queries['rid']}`} target="_self">
-                    新建一个独立集群
-                  </ExternalLink>
-                </Trans>
-              </Text>
-              {!(clusterSelection && clusterSelection[0] && clusterSelection[0].spec.logAgentName || isOpenLogStash) && (
+              {!(
+                (clusterSelection && clusterSelection[0] && clusterSelection[0].spec.logAgentName) ||
+                isOpenLogStash
+              ) && (
                 <Text theme="danger">
                   <Trans>
                     该集群未开启日志收集功能，
@@ -298,7 +295,10 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         <EditConsumerPanel onESStatusChange={this.handleESStatusChange} />
 
         <FormPanel.Footer>
-          <Bubble placement="top-start" content={esNotOK ? t('请检测连接 ElasticSearch，连接成功才能设置日志采集规则') : null}>
+          <Bubble
+            placement="top-start"
+            content={esNotOK ? t('请检测连接 ElasticSearch，连接成功才能设置日志采集规则') : null}
+          >
             <Button
               type="primary"
               disabled={modifyLogStashFlow.operationState === OperationState.Performing || !canCreate || esNotOK}
@@ -315,7 +315,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
           <Button
             type="weak"
             onClick={e => {
-              let newRouteQueies = JSON.parse(
+              const newRouteQueies = JSON.parse(
                 JSON.stringify(Object.assign({}, route.queries, { stashName: undefined, namespace: undefined }))
               );
               router.navigate({}, newRouteQueies);
@@ -352,18 +352,19 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
   }
 
   private async _handleSubmit(mode) {
-    let { actions, route, logStashEdit, clusterVersion, logSelection, clusterSelection } = this.props;
+    const { actions, route, logStashEdit, clusterVersion, logSelection, clusterSelection } = this.props;
     // let { rid, clusterId } = route.queries;
-    let { rid } = route.queries;
-    let { logAgentName } = clusterSelection[0].spec;
-    let { name: clusterId } = clusterSelection[0].metadata;
-    let {
+    const { rid } = route.queries;
+    const { logAgentName } = clusterSelection[0].spec;
+    const { name: clusterId } = clusterSelection[0].metadata;
+    const {
       logStashName,
       logMode,
       consumerMode,
       isSelectedAllNamespace,
       containerLogs,
       metadatas,
+      nodeLogPathType,
       nodeLogPath,
       addressIP,
       addressPort,
@@ -389,7 +390,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
     // 验证所有的编辑内容是否合法
     actions.validate.validateLogStashEdit();
 
-    let valResult = await validatorActions._validateLogStashEdit(
+    const valResult = await validatorActions._validateLogStashEdit(
       logStashEdit,
       namespace,
       clusterVersion,
@@ -400,9 +401,9 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
 
     if (valResult) {
       // let { rid, clusterId } = route.queries;
-      let { rid } = route.queries;
+      const { rid } = route.queries;
 
-      let logResourceInfo = resourceConfig(clusterVersion)['logcs'];
+      const logResourceInfo = resourceConfig(clusterVersion)['logcs'];
 
       let inputType;
       let outputType;
@@ -411,29 +412,27 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         // 这里需要去判断 是否选择了所有的Namespace，如果是所有的namespace，则namespaces为空数组即可
         let namespaces = [];
         if (isSelectedAllNamespace === 'selectOne') {
-          namespaces = containerLogs.map(
-            (containerLog): ContainerLogNamespace => {
-              let workloads = [];
-              let workloadTypeKeys = Object.keys(containerLog.workloadSelection);
-              workloadTypeKeys.forEach(item => {
-                containerLog.workloadSelection[item].forEach((workloadItem: string) => {
-                  workloads.push({
-                    name: workloadItem,
-                    type: item
-                  });
+          namespaces = containerLogs.map((containerLog): ContainerLogNamespace => {
+            const workloads = [];
+            const workloadTypeKeys = Object.keys(containerLog.workloadSelection);
+            workloadTypeKeys.forEach(item => {
+              containerLog.workloadSelection[item].forEach((workloadItem: string) => {
+                workloads.push({
+                  name: workloadItem,
+                  type: item
                 });
               });
-              return {
-                namespace: containerLog.namespaceSelection.replace(new RegExp(`^${clusterId}-`), ''),
-                all_containers: containerLog.collectorWay === 'container',
-                workloads
-              };
-            }
-          );
+            });
+            return {
+              namespace: containerLog.namespaceSelection.replace(new RegExp(`^${clusterId}-`), ''),
+              all_containers: containerLog.collectorWay === 'container',
+              workloads
+            };
+          });
           // 按照v1.3的日志采集规范，指定容器只允许设置一个ns，这里要把namespace改写成这里指定的具体的ns，而不是kube-system
           namespace = namespaces[0] && namespaces[0].namespace;
         }
-        let containerLogInput: ContainerLogInput = {
+        const containerLogInput: ContainerLogInput = {
           container_log_input: {
             all_namespaces: isSelectedAllNamespace === 'selectOne' ? false : true,
             namespaces
@@ -442,21 +441,21 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         };
         inputType = containerLogInput;
       } else if (logMode === 'node') {
-        let labels = {};
+        const labels = {};
         metadatas.forEach(item => {
           labels[item.metadataKey] = item.metadataValue;
         });
-        let hostLogInput: HostLogInput = {
+        const hostLogInput: HostLogInput = {
           host_log_input: {
             labels,
-            path: nodeLogPath
+            path: nodeLogPathType === 'container' ? `${HOST_LOG_INPUT_PATH_PREFIX}${nodeLogPath}` : nodeLogPath
           },
           type: 'host-log'
         };
         inputType = hostLogInput;
       } else if (logMode === 'containerFile') {
         //聚合 将containerFilePaths中相同cantainerName的containerFilePath聚合在一块成数组
-        let containerFiles = {};
+        const containerFiles = {};
         containerFilePaths.forEach(item => {
           if (containerFiles[item.containerName]) {
             containerFiles[item.containerName].push({ path: item.containerFilePath });
@@ -466,7 +465,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
           }
         });
 
-        let podLogInput: PodLogInput = {
+        const podLogInput: PodLogInput = {
           pod_log_input: {
             container_log_files: containerFiles,
             metadata: true,
@@ -483,7 +482,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
 
       // 处理消费端的相关配置
       if (consumerMode === 'kafka') {
-        let kafkaOutput: KafkaOutpot = {
+        const kafkaOutput: KafkaOutpot = {
           kafka_output: {
             host: addressIP,
             port: +addressPort,
@@ -494,8 +493,8 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         outputType = kafkaOutput;
       } else if (consumerMode === 'es') {
         // 这里的和 kafka的类型一样
-        let [scheme, address] = esAddress.split('://');
-        let esOutput: ElasticsearchOutput = {
+        const [scheme, address] = esAddress.split('://');
+        const esOutput: ElasticsearchOutput = {
           elasticsearch_output: {
             hosts: [address],
             index: indexName,
@@ -507,7 +506,7 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         outputType = esOutput;
       }
 
-      let logStashEditYaml: LogStashEditYaml = {
+      const logStashEditYaml: LogStashEditYaml = {
         kind: logResourceInfo.headTitle,
         apiVersion: (logResourceInfo.group ? logResourceInfo.group + '/' : '') + logResourceInfo.version,
         metadata: {
@@ -532,8 +531,8 @@ export class EditLogStashPanel extends React.Component<RootProps, any> {
         };
       }
 
-      let jsonData = JSON.stringify(logStashEditYaml);
-      let resource: CreateResource = {
+      const jsonData = JSON.stringify(logStashEditYaml);
+      const resource: CreateResource = {
         id: uuid(),
         resourceInfo: logResourceInfo,
         mode: mode === 'update' ? 'modify' : mode, // 更新方式为put，不是patch，update对应的为patch，modify对应为put

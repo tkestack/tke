@@ -140,6 +140,8 @@ module.exports = ({ version, mode }) => ({
       '@config/*': path.resolve(__dirname, '../config/*'),
       '@src/*': path.resolve(__dirname, '../src/*'),
       '@src': path.resolve(__dirname, '../src'),
+      '@common': path.resolve(__dirname, '../src/modules/common'),
+      '@common/*': path.resolve(__dirname, '../src/modules/common/*'),
       '@tencent/ff-validator': path.resolve(__dirname, '../lib/ff-validator'),
       '@tencent/ff-validator/*': path.resolve(__dirname, '../lib/ff-validator/*'),
       '@tencent/ff-redux': path.resolve(__dirname, '../lib/ff-redux'),
@@ -181,7 +183,7 @@ module.exports = ({ version, mode }) => ({
     ...(mode === 'production'
       ? []
       : [
-          new BundleAnalyzerPlugin(),
+          // new BundleAnalyzerPlugin(),
           new HtmlWebpackPlugin({
             template: path.resolve(__dirname, '../public/index.tmpl.html'),
             inject: false,

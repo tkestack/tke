@@ -18,9 +18,11 @@
 import * as React from 'react';
 import { Card, Row, Col, MetricsBoard, Icon, Text, Bubble } from '@tencent/tea-component';
 import { ClusterOverview } from '../models/RootState';
+import { PermissionProvider } from '@common';
+
 export function ClusterOverviewPanel(props: { clusterData: ClusterOverview }) {
-  let { clusterData } = props;
-  let isLodingDone = !!clusterData;
+  const { clusterData } = props;
+  const isLodingDone = !!clusterData;
 
   function projectRender(count) {
     if (count === -1) {
@@ -109,25 +111,27 @@ export function ClusterOverviewPanel(props: { clusterData: ClusterOverview }) {
               }
             />
           </Col>
-          <Col>
-            <MetricsBoard
-              title="业务"
-              value={
-                isLodingDone ? (
-                  <>
-                    {projectRender(clusterData.projectCount)}
-                    {clusterData.projectAbnormal > 0 && (
-                      <Text theme="danger" style={{ fontSize: 14 }}>
-                        （异常 {clusterData.projectAbnormal} 个）
-                      </Text>
-                    )}
-                  </>
-                ) : (
-                  '-'
-                )
-              }
-            />
-          </Col>
+          <PermissionProvider value="platform.overview.project">
+            <Col>
+              <MetricsBoard
+                title="业务"
+                value={
+                  isLodingDone ? (
+                    <>
+                      {projectRender(clusterData.projectCount)}
+                      {clusterData.projectAbnormal > 0 && (
+                        <Text theme="danger" style={{ fontSize: 14 }}>
+                          （异常 {clusterData.projectAbnormal} 个）
+                        </Text>
+                      )}
+                    </>
+                  ) : (
+                    '-'
+                  )
+                }
+              />
+            </Col>
+          </PermissionProvider>
         </Row>
       </Card.Body>
     </Card>

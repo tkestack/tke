@@ -15,8 +15,9 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
+import { checkCustomVisible } from '@common/components/permission-provider';
 import { virtualMachineAPI } from '@src/webApi';
+import { t } from '@tencent/tea-app/lib/i18n';
 
 export const firstRouterNameMap = {
   overview: t('概览'),
@@ -102,7 +103,8 @@ const clusterSubRouterConfig = [
       },
       {
         name: 'CronHPA',
-        path: 'cronhpa'
+        path: 'cronhpa',
+        visible: () => checkCustomVisible('platform.cluster.cronHpa_menu')
       }
     ]
   },

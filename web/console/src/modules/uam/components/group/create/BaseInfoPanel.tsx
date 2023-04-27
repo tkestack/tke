@@ -15,16 +15,17 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+import { PermissionProvider } from '@common';
+import { bindActionCreators, uuid } from '@tencent/ff-redux';
+import { t } from '@tencent/tea-app/lib/i18n';
+import { Affix, Button, Card, Form, Input, Radio, SearchBox, Table, Text, Transfer } from '@tencent/tea-component';
 import * as React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
-import { bindActionCreators, insertCSS, uuid } from '@tencent/ff-redux';
-import { useForm, useField } from 'react-final-form-hooks';
-import { allActions } from '../../../actions';
-import { Button, Text, Form, Input, Affix, Card, Radio, Transfer, Table, SearchBox } from '@tencent/tea-component';
-import { router } from '../../../router';
-import { User, UserPlain } from '../../../models';
+import { useField, useForm } from 'react-final-form-hooks';
+import { useDispatch, useSelector } from 'react-redux';
 import { getStatus } from '../../../../common/validate';
+import { allActions } from '../../../actions';
+import { UserPlain } from '../../../models';
+import { router } from '../../../router';
 
 const { useState, useEffect, useRef } = React;
 const { scrollable, selectable, removeable } = Table.addons;
@@ -219,10 +220,12 @@ export const BaseInfoPanel = props => {
                   <Text>平台用户</Text>
                   <Text parent="div">平台预设角色，允许访问和管理大部分平台功能，可以新建集群及业务</Text>
                 </Radio>
-                <Radio name={tenantID ? `pol-${tenantID}-viewer` : 'pol-default-viewer'}>
-                  <Text>租户</Text>
-                  <Text parent="div">平台预设角色，不绑定任何平台权限，仅能登录</Text>
-                </Radio>
+                <PermissionProvider value="platform.uam.tenant">
+                  <Radio name={tenantID ? `pol-${tenantID}-viewer` : 'pol-default-viewer'}>
+                    <Text>租户</Text>
+                    <Text parent="div">平台预设角色，不绑定任何平台权限，仅能登录</Text>
+                  </Radio>
+                </PermissionProvider>
                 <Radio name="custom">
                   <Text>自定义</Text>
                   {roleValue === 'custom' && (

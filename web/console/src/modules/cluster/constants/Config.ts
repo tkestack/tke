@@ -15,6 +15,7 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+import { checkCustomVisible } from '@src/modules/common/components/permission-provider';
 import { t, Trans } from '@tencent/tea-app/lib/i18n';
 /** ========================= start FFRedux的相关配置 ======================== */
 export const FFReduxActionName = {
@@ -324,10 +325,14 @@ export const ServiceWorkloadList = [
     value: 'daemonset',
     name: 'DaemonSet'
   },
-  {
-    value: 'tapp',
-    name: 'TApp'
-  },
+  ...(checkCustomVisible('platform.cluster.service.service_create_tapp')
+    ? [
+        {
+          value: 'tapp',
+          name: 'TApp'
+        }
+      ]
+    : []),
   {
     value: 'vmi',
     name: 'VirtualMachines'
