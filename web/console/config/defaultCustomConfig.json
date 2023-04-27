@@ -16,7 +16,7 @@
             },
             "help": {
               "des": "快速帮助信息",
-              "visible": false
+              "visible": true
             }
           }
         },
@@ -68,17 +68,17 @@
             },
             "business": {
               "des": "业务策略",
-              "visible": false
+              "visible": true
             }
           }
         },
         "persistent-event": {
           "des": "事件持久化模块",
-          "visible": false
+          "visible": true
         },
         "project": {
           "des": "业务模块",
-          "visible": false
+          "visible": true
         },
         "addon": {
           "des": "扩展组件模块",
@@ -100,7 +100,7 @@
           "children": {
             "project": {
               "des": "访问凭证下的业务选项",
-              "visible": false
+              "visible": true
             }
           }
         },
@@ -110,7 +110,7 @@
           "children": {
             "project": {
               "des": "业务模板",
-              "visible": false
+              "visible": true
             }
           }
         }
