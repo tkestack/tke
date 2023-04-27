@@ -183,7 +183,7 @@ module.exports = ({ version, mode }) => ({
     ...(mode === 'production'
       ? []
       : [
-          new BundleAnalyzerPlugin(),
+          // new BundleAnalyzerPlugin(),
           new HtmlWebpackPlugin({
             template: path.resolve(__dirname, '../public/index.tmpl.html'),
             inject: false,
