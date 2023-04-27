@@ -1,0 +1,27 @@
+{
+  "key": "root",
+  "des": "整个项目的配置",
+  "data": {
+    "visible": true,
+    "logoDir": "tkeanywhere",
+    "title": "TKEAnywhere"
+  },
+  "children": [
+    {
+      "key": "cluster",
+      "des": "集群模块",
+      "data": {
+        "visible": true
+      },
+      "children": [
+        {
+          "key": "create_import_button",
+          "des": "新建和导入集群按钮",
+          "data": {
+            "visible": true
+          }
+        }
+      ]
+    }
+  ]
+}
