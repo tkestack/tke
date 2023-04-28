@@ -15,8 +15,8 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
-import { Validation } from 'src/modules/common';
 import { ControllerFieldState, UseFormStateReturn } from 'react-hook-form';
+import { Validation } from 'src/modules/common';
 
 export interface Rule {
   /**标签名 */
@@ -159,10 +159,10 @@ export function getReactHookFormStatusWithMessage({
   status?: 'error' | 'success';
   message?: string;
 } {
-  console.log('getReactHookFormStatus:', fieldState, formState);
   if (!fieldState.isTouched && !fieldState.isDirty && !formState.isSubmitted) {
     return {};
   }
+
   return fieldState.invalid
     ? {
         status: 'error',

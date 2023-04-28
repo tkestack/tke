@@ -15,17 +15,17 @@
  * WARRANTIES OF ANY KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations under the License.
  */
+import { t } from '@tencent/tea-app/lib/i18n';
 import { DetailField, DetailInfo } from '../../../src/modules/common/models';
 import {
-  commonDisplayField,
-  defaulNotExistedValue,
   commonActionField,
-  dataFormatConfig,
   commonDetailInfo,
-  workloadCommonTabList,
-  generateResourceInfo
+  commonDisplayField,
+  dataFormatConfig,
+  defaulNotExistedValue,
+  generateResourceInfo,
+  workloadCommonTabList
 } from '../common';
-import { t, Trans } from '@tencent/tea-app/lib/i18n';
 
 const displayField = Object.assign({}, commonDisplayField, {
   runningReplicas: {
@@ -56,6 +56,16 @@ const displayField = Object.assign({}, commonDisplayField, {
         name: t('删除'),
         actionType: 'delete',
         isInMoreOp: false
+      },
+      {
+        name: t('设置更新策略'),
+        actionType: 'modifyStrategy',
+        isInMoreOp: true
+      },
+      {
+        name: t('更新调度策略'),
+        actionType: 'modifyNodeAffinity',
+        isInMoreOp: true
       }
     ]
   }
