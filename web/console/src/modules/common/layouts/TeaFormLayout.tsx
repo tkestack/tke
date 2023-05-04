@@ -1,5 +1,5 @@
-import React from 'react';
 import { Card, Layout } from '@tencent/tea-component';
+import React from 'react';
 
 const { Content, Footer } = Layout;
 

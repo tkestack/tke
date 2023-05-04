@@ -28,6 +28,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "@hookform/resolvers": "^3.0.1",
     "@novnc/novnc": "^1.3.0",
     "ahooks": "^3.3.10",
     "axios": "^0.21.1",
@@ -60,7 +61,7 @@
     "react-codemirror2": "^5.1.0",
     "react-dom": "^18.0.0",
     "react-final-form-hooks": "^2.0.2",
-    "react-hook-form": "^7.10.1",
+    "react-hook-form": "^7.43.9",
     "react-i18next": "^9.0.2",
     "react-redux": "^7.1.3",
     "react-transition-group": "^2.5.2",
@@ -74,7 +75,8 @@
     "ts-optchain": "^0.1.7",
     "use-immer": "^0.4.1",
     "uuid": "^8.3.1",
-    "validator": "^13.5.2"
+    "validator": "^13.5.2",
+    "zod": "^3.21.4"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0",
@@ -124,7 +126,7 @@
     "style-loader": "^2.0.0",
     "thread-loader": "^3.0.4",
     "ts-loader": "^9.2.1",
-    "typescript": "^4.3.5",
+    "typescript": "^5.0.4",
     "url-loader": "^4.1.1",
     "webpack": "^5.37.0",
     "webpack-bundle-analyzer": "^4.4.1",

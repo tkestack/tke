@@ -48,6 +48,7 @@ export { TagSearchBox, TagSearchBoxProps } from './tagsearchbox';
 export { TipDialog } from './tipdialog';
 export { TipInfo } from './tipinfo';
 export { TransferTable, TransferTableProps } from './transferTable';
+export * from './validate-provider';
 export { WorkflowDialog } from './workflowdialog';
 export * from './yamleditor';
 export * from './monitorPanel';
