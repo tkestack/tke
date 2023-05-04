@@ -69,11 +69,13 @@ const (
 	APIKeyPasswordPath = "/apis/auth.tkestack.io/v1/apikeys/default/password"
 
 	APIKeyPath           = "/apis/auth.tkestack.io/v1/apikeys"
-	htmlTmplDir          = "web/auth/templates/"
-	flagConsoleTitle     = "title"
-	flagConsoleLogoDir   = "logo-dir"
-	configConsoleTitle   = "console_config.title"
-	configConsoleLogoDir = "console_config.logo_dir"
+	DefaultTitle         = "TKEStack"
+	DefaultLogoDir       = "default"
+	HtmlTmplDir          = "web/auth/templates/"
+	FlagConsoleTitle     = "title"
+	FlagConsoleLogoDir   = "logo-dir"
+	ConfigConsoleTitle   = "console_config.title"
+	ConfigConsoleLogoDir = "console_config.logo_dir"
 )
 
 func IgnoreAuthPathPrefixes() []string {
@@ -144,13 +146,13 @@ func NewConsoleConfigOptions() *ConsoleConfig {
 
 // AddFlags adds flags for console to the specified FlagSet object.
 func (o *ConsoleConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.String(flagConsoleTitle, o.Title,
+	fs.String(FlagConsoleTitle, o.Title,
 		"Custom console title.")
-	_ = viper.BindPFlag(configConsoleTitle, fs.Lookup(flagConsoleTitle))
+	_ = viper.BindPFlag(ConfigConsoleTitle, fs.Lookup(FlagConsoleTitle))
 
-	fs.String(flagConsoleLogoDir, o.LogoDir,
+	fs.String(FlagConsoleLogoDir, o.LogoDir,
 		"Custom console logo dir.")
-	_ = viper.BindPFlag(configConsoleLogoDir, fs.Lookup(flagConsoleLogoDir))
+	_ = viper.BindPFlag(ConfigConsoleLogoDir, fs.Lookup(FlagConsoleLogoDir))
 
 }
 
@@ -159,8 +161,8 @@ func (o *ConsoleConfig) AddFlags(fs *pflag.FlagSet) {
 func (o *ConsoleConfig) ApplyFlags() []error {
 	var errs []error
 
-	o.Title = viper.GetString(configConsoleTitle)
-	o.LogoDir = viper.GetString(configConsoleLogoDir)
+	o.Title = viper.GetString(ConfigConsoleTitle)
+	o.LogoDir = viper.GetString(ConfigConsoleLogoDir)
 
 	return errs
 }
@@ -183,14 +185,30 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		return nil, err
 	}
 
-	files, err := ioutil.ReadDir(htmlTmplDir)
+	consoleConfig := new(ConsoleConfig)
+
+	if c.ExtraConfig.ConsoleConfig != nil {
+		consoleConfig = c.ExtraConfig.ConsoleConfig
+	} else {
+		consoleConfig.Title = DefaultTitle
+		consoleConfig.LogoDir = DefaultLogoDir
+
+	}
+
+	files, err := ioutil.ReadDir(HtmlTmplDir)
 	if err != nil {
 		return nil, err
 	}
 
+	sourceRe := regexp.MustCompile(`\.tmpl\.html$`)
+	targetRe := regexp.MustCompile(`\.tmpl`)
+
 	for _, file := range files {
 		var buf bytes.Buffer
-		t, err := template.New(file.Name()).Delims("{%", "%}").ParseFiles(htmlTmplDir + file.Name())
+		if !sourceRe.MatchString(file.Name()) {
+			continue
+		}
+		t, err := template.New(file.Name()).Delims("{%", "%}").ParseFiles(HtmlTmplDir + file.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -198,9 +216,8 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 			return nil, err
 		}
 		// // remove .tmpl in file name
-		re := regexp.MustCompile(`\.tmpl`)
-		targetFileName := re.ReplaceAllString(file.Name(), "")
-		if err = ioutil.WriteFile(htmlTmplDir+targetFileName, buf.Bytes(), 0644); err != nil {
+		targetFileName := targetRe.ReplaceAllString(file.Name(), "")
+		if err = ioutil.WriteFile(HtmlTmplDir+targetFileName, buf.Bytes(), 0644); err != nil {
 			return nil, err
 		}
 	}

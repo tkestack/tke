@@ -77,10 +77,8 @@ import (
 )
 
 const (
-	license        = "Apache 2.0"
-	title          = "Tencent Kubernetes Engine Auth API"
-	defaultTitle   = "TKEStack"
-	defaultLogoDir = "default"
+	license = "Apache 2.0"
+	title   = "Tencent Kubernetes Engine Auth API"
 )
 
 // Config is the running configuration structure of the TKE controller manager.
@@ -226,10 +224,10 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 
 func setupDefaultConsoleConfig(consoleConfig *apiserver.ConsoleConfig) {
 	if len(consoleConfig.Title) == 0 {
-		consoleConfig.Title = defaultTitle
+		consoleConfig.Title = apiserver.DefaultTitle
 	}
 	if len(consoleConfig.LogoDir) == 0 {
-		consoleConfig.LogoDir = defaultLogoDir
+		consoleConfig.LogoDir = apiserver.DefaultLogoDir
 	}
 }
 
