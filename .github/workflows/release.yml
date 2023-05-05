@@ -170,39 +170,39 @@ jobs:
             -d @-
           ginkgo -nodes=1 -v test/e2e_installer/cluster
 
-#  node:
-#    name: node test
-#    runs-on: self-hosted
-#    needs: image
-#    if: success()
-#    steps:
-#      - name: Set VERSION
-#        run: |
-#          if ${{github.event_name == 'push'}}; then
-#            echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-#          elif ${{ github.event.inputs.commit != '' }}; then
-#            echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
-#          fi
-#      - uses: actions/checkout@v2
-#        with:
-#          ref: ${{ env.VERSION }}
-#      - name: Test node
-#        run: |
-#          (
-#          cat <<EOF
-#          {
-#          "msgtype": "markdown",
-#          "markdown": {
-#            "content": "<font color=\"info\">${{ github.repository }}: Start test node.</font>\n
-#          >version: <font color=\"comment\">$VERSION</font>
-#          "
-#            }
-#          }
-#          EOF
-#          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
-#            -H 'Content-Type: application/json' \
-#            -d @-
-#          ginkgo -nodes=2 -v test/e2e_installer/node
+  node:
+    name: node test
+    runs-on: self-hosted
+    needs: image
+    if: success()
+    steps:
+      - name: Set VERSION
+        run: |
+          if ${{github.event_name == 'push'}}; then
+            echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          elif ${{ github.event.inputs.commit != '' }}; then
+            echo "VERSION=${{ github.event.inputs.commit }}" >> $GITHUB_ENV
+          fi
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ env.VERSION }}
+      - name: Test node
+        run: |
+          (
+          cat <<EOF
+          {
+          "msgtype": "markdown",
+          "markdown": {
+            "content": "<font color=\"info\">${{ github.repository }}: Start test node.</font>\n
+          >version: <font color=\"comment\">$VERSION</font>
+          "
+            }
+          }
+          EOF
+          ) | curl '${{ secrets.WECHATWORK_WEBHOOK }}' \
+            -H 'Content-Type: application/json' \
+            -d @-
+          ginkgo -nodes=2 -v test/e2e_installer/node
 
   report-failure:
     name: report failure
