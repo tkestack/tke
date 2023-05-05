@@ -15,16 +15,17 @@ var teaComponent = require('@tencent/tea-component');
 var reactRedux = require('react-redux');
 var ffRedux = require('@tencent/ff-redux');
 var ffComponent = require('@tencent/ff-component');
-var InputPassword = require('@tencent/tea-component/lib/input/InputPassword');
+var ModalMain = require('@tencent/tea-component/lib/modal/ModalMain');
+var redux = require('redux');
 var Cookies = _interopDefault(require('js-cookie'));
 var SparkMD5 = _interopDefault(require('spark-md5'));
 var axios = _interopDefault(require('axios'));
-var bridge = require('@tencent/tea-app/lib/bridge');
 var jsBase64 = require('js-base64');
-var redux = require('redux');
+var bridge = require('@tencent/tea-app/lib/bridge');
+var teaComponent$1 = require('tea-component');
+var InputPassword = require('@tencent/tea-component/lib/input/InputPassword');
 var reduxLogger = require('redux-logger');
 var thunk = _interopDefault(require('redux-thunk'));
-var ModalMain = require('@tencent/tea-component/lib/modal/ModalMain');
 
 /**
  * @fileoverview
@@ -49,6 +50,31 @@ var zh_1 = zh.translation;
 teaApp.i18n.init({
   translation: zh_1
 });
+
+var UrlParams;
+(function (UrlParams) {
+  var Sub;
+  (function (Sub) {
+    Sub["redirect"] = "redirect";
+    Sub["startUp"] = "startUp";
+    Sub["sub"] = "sub";
+    Sub["create"] = "create";
+    Sub["addExist"] = "addExist";
+    Sub["upgrade"] = "upgrade";
+    Sub["upgradeMaster"] = "upgradeMaster";
+  })(Sub = UrlParams.Sub || (UrlParams.Sub = {}));
+  var Mode;
+  (function (Mode) {
+    Mode["list"] = "list";
+    Mode["detail"] = "detail";
+    Mode["create"] = "create";
+    Mode["addnode"] = "addnode";
+    Mode["modify"] = "modify";
+    Mode["apply"] = "apply";
+    Mode["createnode"] = "createnode";
+    Mode["update"] = "update";
+  })(Mode = UrlParams.Mode || (UrlParams.Mode = {}));
+})(UrlParams || (UrlParams = {}));
 
 function _typeof(obj) {
   "@babel/helpers - typeof";
@@ -552,10 +578,10 @@ var ResourceTypeMap = (_a = {}, _a[ResourceTypeEnum.ServiceBinding] = {
 }, _a);
 var serviceMngTabs = [{
   id: ResourceTypeEnum.ServiceResource,
-  label: "实例管理"
+  label: '实例管理'
 }, {
   id: ResourceTypeEnum.ServicePlan,
-  label: "规格管理"
+  label: '规格管理'
 }];
 var CreateSpecificOperatorEnum;
 (function (CreateSpecificOperatorEnum) {
@@ -1449,6 +1475,26 @@ var HubCluster;
   })(StatusEnum = HubCluster.StatusEnum || (HubCluster.StatusEnum = {}));
 })(HubCluster || (HubCluster = {}));
 
+var PaasMedium;
+(function (PaasMedium) {
+  var _a;
+  var StorageTypeEnum;
+  (function (StorageTypeEnum) {
+    StorageTypeEnum["S3"] = "s3";
+    StorageTypeEnum["NFS"] = "nfs";
+  })(StorageTypeEnum = PaasMedium.StorageTypeEnum || (PaasMedium.StorageTypeEnum = {}));
+  PaasMedium.StorageTypeMap = (_a = {}, _a[StorageTypeEnum.S3] = i18n.t("对象存储(S3)"), _a[StorageTypeEnum.NFS] = i18n.t("文件存储NFS"), _a);
+  PaasMedium.storageTypeOptions = [{
+    text: i18n.t("对象存储(S3)"),
+    value: StorageTypeEnum.S3
+  }, {
+    text: i18n.t("文件存储NFS"),
+    value: StorageTypeEnum.NFS
+  }];
+  PaasMedium.StorageTypeLabel = "tdcc.cloud.tencent.com/paas-storage-medium";
+  PaasMedium.MeduimCreatorLabel = "tdcc.cloud.tencent.com/creato";
+})(PaasMedium || (PaasMedium = {}));
+
 var _a$4, _b$3, _c$2;
 var DetailTabType;
 (function (DetailTabType) {
@@ -1700,6 +1746,7 @@ var Backup;
     }, {});
   };
   Backup.reduceBackupStrategyJson = function (data) {
+    var _a, _b, _c, _d;
     var backupDate = data.backupDate,
       backupTime = data.backupTime,
       backupReserveDay = data.backupReserveDay,
@@ -1707,16 +1754,18 @@ var Backup;
       enable = data.enable,
       instanceId = data.instanceId,
       serviceName = data.serviceName,
-      _a = data.mode,
-      mode = _a === void 0 ? 'create' : _a;
+      _e = data.mode,
+      mode = _e === void 0 ? 'create' : _e,
+      medium = data.medium;
     var weekStr = backupDate.sort().join(',') || '*';
     var hourStr = backupTime.sort().join(',') || '0';
     var minuteStr = '0';
     //cron 格式:`* * * * * *`,即:分 时 天 月 周 年(可省略)
     // const cron = `${minuteStr} ${hourStr} ? * ${weekStr}`;
+    // 更改备份策略的资源空间
     var cron = "".concat(minuteStr, " ").concat(hourStr, " ? * ").concat(weekStr);
     var jsonData = {
-      apiVersion: "infra.tce.io/v1",
+      apiVersion: 'infra.tce.io/v1',
       kind: ResourceTypeEnum === null || ResourceTypeEnum === void 0 ? void 0 : ResourceTypeEnum.Backup,
       metadata: {
         name: mode === 'create' ? 'backup-' + instanceName + '-' + new Date().getTime() : data === null || data === void 0 ? void 0 : data.name,
@@ -1733,6 +1782,39 @@ var Backup;
         }
       }
     };
+    var operation = {
+      backup: {}
+    };
+    if (medium) {
+      if (((_b = (_a = medium === null || medium === void 0 ? void 0 : medium.metadata) === null || _a === void 0 ? void 0 : _a.labels) === null || _b === void 0 ? void 0 : _b[PaasMedium.StorageTypeLabel]) === PaasMedium.StorageTypeEnum.S3) {
+        operation = {
+          backup: {
+            destination: {
+              s3Objects: {
+                secretRef: {
+                  namespace: 'ssm',
+                  name: (_c = medium === null || medium === void 0 ? void 0 : medium.metadata) === null || _c === void 0 ? void 0 : _c.name
+                }
+              }
+            }
+          }
+        };
+      } else {
+        operation = {
+          backup: {
+            destination: {
+              nfsObjects: {
+                secretRef: {
+                  namespace: 'ssm',
+                  name: (_d = medium === null || medium === void 0 ? void 0 : medium.metadata) === null || _d === void 0 ? void 0 : _d.name
+                }
+              }
+            }
+          }
+        };
+      }
+    }
+    jsonData.spec['operation'] = operation;
     if (enable) {
       jsonData.spec['retain'] = {
         days: backupReserveDay
@@ -2438,38 +2520,60 @@ var BComponent;
   };
 })(BComponent || (BComponent = {}));
 
-function RetryPanel(props) {
-  var _a = props.style,
-    style = _a === void 0 ? {} : _a,
-    action = props.action,
-    _b = props.loadingText,
-    loadingText = _b === void 0 ? i18n.t('加载失败') : _b,
-    _c = props.retryText,
-    retryText = _c === void 0 ? i18n.t('刷新重试') : _c,
-    _d = props.loadingTextTheme,
-    loadingTextTheme = _d === void 0 ? 'danger' : _d;
-  return React__default.createElement("div", {
-    style: tslib.__assign({
-      width: '100%',
-      display: 'flex',
-      alignItems: 'center'
-    }, style)
-  }, React__default.createElement(teaComponent.Text, {
-    theme: loadingTextTheme,
-    className: 'tea-mr-2n'
-  }, loadingText), React__default.createElement(teaComponent.Button, {
-    type: "link",
-    onClick: function onClick() {
-      action && action();
-    }
-  }, retryText));
-}
-
 var index = 10000;
 var timeLead = 1e12;
 function uuid() {
   return "app-tke-fe-" + (++index * timeLead + Math.random() * timeLead).toString(36);
 }
+
+var _a$5, _b$4;
+var ClusterType;
+(function (ClusterType) {
+  ClusterType["TKE"] = "tke";
+  ClusterType["EKS"] = "eks";
+  ClusterType["EDGE"] = "tkeedge";
+  ClusterType["External"] = "external";
+})(ClusterType || (ClusterType = {}));
+var ClusterResourceModuleName = (_a$5 = {}, _a$5[ClusterType.TKE] = 'tke', _a$5[ClusterType.EKS] = 'tke', _a$5[ClusterType.EDGE] = 'tke', _a$5[ClusterType.External] = 'tdcc', _a$5);
+var ClusterResourceVersionName = (_b$4 = {}, _b$4[ClusterType.TKE] = '2018-05-25', _b$4[ClusterType.EKS] = '2018-05-25', _b$4[ClusterType.EDGE] = '2018-05-25', _b$4[ClusterType.External] = '2022-01-25', _b$4);
+var ExternalCluster;
+(function (ExternalCluster) {
+  var StatusEnum;
+  (function (StatusEnum) {
+    StatusEnum["Running"] = "Running";
+    StatusEnum["Failed"] = "Failed";
+    StatusEnum["Waiting"] = "Waiting";
+    // Initializing = 'Initializing',
+    // Confined = 'Confined',
+    // Idling = 'Idling',
+    // Upgrading = 'Upgrading',
+    StatusEnum["Terminating"] = "Terminating";
+    // Upscaling = 'Upscaling',
+    // Downscaling = 'Downscaling'
+  })(StatusEnum = ExternalCluster.StatusEnum || (ExternalCluster.StatusEnum = {}));
+  ExternalCluster.TKEStackDefaultCluster = 'global';
+  ExternalCluster.getClusterDetailUrl = function (clusterInfo, regionId) {
+    var _a = clusterInfo || {},
+      clusterCategory = _a.clusterCategory,
+      originalRegion = _a.originalRegion,
+      originalClusterId = _a.originalClusterId;
+    var url = "/tke2/external/sub/list/basic/info?rid=".concat(regionId, "&clusterId=").concat(clusterInfo === null || clusterInfo === void 0 ? void 0 : clusterInfo.clusterId);
+    if (clusterCategory && originalRegion && originalClusterId) {
+      switch (clusterCategory) {
+        case 'tke':
+          url = "/tke2/cluster/sub/list/basic/info?rid=".concat(originalRegion, "&clusterId=").concat(originalClusterId);
+          break;
+        case 'eks':
+          url = "/tke2/ecluster/sub/list/basic/info?rid=".concat(originalRegion, "&clusterId=").concat(originalClusterId);
+          break;
+        case 'tkeedge':
+          url = "/tke2/edge/sub/list/basic/info?rid=".concat(originalRegion, "&clusterId=").concat(originalClusterId);
+          break;
+      }
+    }
+    return url;
+  };
+})(ExternalCluster || (ExternalCluster = {}));
 
 var getWorkflowError = function getWorkflowError(workflow) {
   var _a, _b, _c, _d, _e, _f, _g, _h;
@@ -2478,593 +2582,209 @@ var getWorkflowError = function getWorkflowError(workflow) {
   return message;
 };
 
-var initRecords = [{
-  id: uuid(),
-  key: '',
-  value: ''
-}];
-var MapField = function MapField(_a) {
-  var plan = _a.plan,
-    onChange = _a.onChange;
-  var _b = React.useState(initRecords),
-    records = _b[0],
-    setRecords = _b[1];
-  React.useEffect(function () {
-    onChange && onChange({
-      field: plan === null || plan === void 0 ? void 0 : plan.name,
-      value: records
-    });
-  }, [records]);
-  var _delete = function _delete(id) {
-    setRecords(records === null || records === void 0 ? void 0 : records.filter(function (item) {
-      return (item === null || item === void 0 ? void 0 : item.id) !== id;
-    }));
+var BComponent$1;
+(function (BComponent) {
+  BComponent.BaseActionType = {
+    PageName: '',
+    Clear: 'Clear',
+    Validator: 'Validator'
   };
-  var _add = function _add() {
-    var newItem = {
-      id: uuid(),
-      key: '',
-      value: ''
-    };
-    setRecords(records === null || records === void 0 ? void 0 : records.concat([newItem]));
+  BComponent.getActionType = function (moduleName, actionType) {
+    return actionType ? moduleName + '_' + actionType : moduleName;
   };
-  var _update = function _update(fieldName, selectItem, value) {
-    if (value === void 0) {
-      value = '';
-    }
-    var newRecords = records === null || records === void 0 ? void 0 : records.map(function (item) {
-      var _a;
-      return tslib.__assign(tslib.__assign({}, item), (_a = {}, _a[fieldName] = (item === null || item === void 0 ? void 0 : item.id) === (selectItem === null || selectItem === void 0 ? void 0 : selectItem.id) ? value : item === null || item === void 0 ? void 0 : item[fieldName], _a));
-    });
-    setRecords(newRecords);
-  };
-  return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Table, {
-    bordered: true,
-    recordKey: "id",
-    columns: [{
-      key: "key",
-      header: 'Key',
-      render: function render(item) {
-        return React__default.createElement(teaComponent.Input, {
-          value: item === null || item === void 0 ? void 0 : item.key,
-          onChange: function onChange(value) {
-            _update('key', item, value);
-          }
-        });
-      }
-    }, {
-      key: "value",
-      header: 'Value',
-      render: function render(item) {
-        return React__default.createElement(teaComponent.Input, {
-          value: item === null || item === void 0 ? void 0 : item.value,
-          onChange: function onChange(value) {
-            _update('value', item, value);
-          }
-        });
-      }
-    }, {
-      key: "operate",
-      header: '操作',
-      render: function render(item) {
-        return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Button, {
-          type: "link",
-          onClick: function onClick() {
-            _delete(item === null || item === void 0 ? void 0 : item.id);
-          }
-        }, i18n.t('删除')));
-      }
-    }],
-    records: records
-  }), React__default.createElement(teaComponent.Button, {
-    onClick: _add,
-    type: 'link',
-    className: 'tea-mt-2n'
-  }, i18n.t('添加配置')));
-};
-
-function UpdateResource(props) {
-  var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
-  var _p = props.base,
-    platform = _p.platform,
-    isI18n = _p.isI18n,
-    route = _p.route,
-    _q = props.list,
-    services = _q.services,
-    servicePlanEdit = _q.servicePlanEdit,
-    updateResourceWorkflow = _q.updateResourceWorkflow,
-    resourceDetail = props.detail.resourceDetail,
-    actions = props.actions;
-  var servicename = (route === null || route === void 0 ? void 0 : route.queries).servicename;
-  var instanceParamsFields = (_b = (_a = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.instanceSchema;
-  var reduceCreateServiceResourceDataJson = function reduceCreateServiceResourceDataJson(data) {
-    var _a, _b, _c, _d, _e, _f;
-    var _g = data === null || data === void 0 ? void 0 : data.formData,
-      instanceName = _g.instanceName,
-      description = _g.description,
-      clusterId = _g.clusterId;
-    //拼接中间件实例参数部分属性值
-    var parameters = (_c = (_b = (_a = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.instanceSchema) === null || _c === void 0 ? void 0 : _c.reduce(function (pre, cur) {
-      var _a;
-      var _b, _c, _d, _e;
-      // return Object.assign(pre,!!data?.formData?.[cur?.name] ? {[cur?.name]:data?.formData?.[cur?.name] + (data?.formData?.['unitMap']?.[cur?.name] ?? '')} : {});
-      return Object.assign(pre, ((_b = data === null || data === void 0 ? void 0 : data.formData) === null || _b === void 0 ? void 0 : _b[cur === null || cur === void 0 ? void 0 : cur.name]) !== '' ? (_a = {}, _a[cur === null || cur === void 0 ? void 0 : cur.name] = formatPlanSchemaSubmitData(cur, (_c = data === null || data === void 0 ? void 0 : data.formData) === null || _c === void 0 ? void 0 : _c[cur === null || cur === void 0 ? void 0 : cur.name], (_e = (_d = data === null || data === void 0 ? void 0 : data.formData) === null || _d === void 0 ? void 0 : _d['unitMap']) === null || _e === void 0 ? void 0 : _e[cur === null || cur === void 0 ? void 0 : cur.name]), _a) : {});
-    }, {});
-    var json = {
-      id: uuid(),
-      apiVersion: 'infra.tce.io/v1',
-      kind: (_d = ResourceTypeMap === null || ResourceTypeMap === void 0 ? void 0 : ResourceTypeMap[ResourceTypeEnum.ServicePlan]) === null || _d === void 0 ? void 0 : _d.resourceKind,
-      metadata: {
-        labels: {
-          'ssm.infra.tce.io/owner': ServicePlanTypeEnum.Custom
-        },
-        name: instanceName,
-        namespace: DefaultNamespace
-      },
-      spec: {
-        serviceClass: ((_e = services === null || services === void 0 ? void 0 : services.selection) === null || _e === void 0 ? void 0 : _e.name) || ((_f = route === null || route === void 0 ? void 0 : route.queries) === null || _f === void 0 ? void 0 : _f.servicename),
-        metadata: tslib.__assign({}, parameters)
-      }
-    };
-    if (description) {
-      json.spec['description'] = description;
-    }
-    return JSON.stringify(json);
-  };
-  var _submit = function _submit() {
-    var _a, _b, _c, _d;
-    var formData = servicePlanEdit.formData;
-    actions.create.validatePlan((_b = (_a = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.instanceSchema);
-    if (_validatePlan(servicePlanEdit, (_d = (_c = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.instanceSchema)) {
-      var params = {
-        platform: platform,
-        regionId: HubCluster === null || HubCluster === void 0 ? void 0 : HubCluster.DefaultRegion,
-        clusterId: formData === null || formData === void 0 ? void 0 : formData.clusterId,
-        jsonData: reduceCreateServiceResourceDataJson(servicePlanEdit),
-        resourceType: ResourceTypeEnum.ServicePlan,
-        instanceName: formData === null || formData === void 0 ? void 0 : formData.instanceName
-      };
-      actions.create.updateResource.start([params], HubCluster === null || HubCluster === void 0 ? void 0 : HubCluster.DefaultRegion);
-      actions.create.updateResource.perform();
+  BComponent.createActionType = function (componentName, actionType) {
+    for (var key in actionType) {
+      var ns = [];
+      componentName && ns.push(componentName);
+      actionType[key] && ns.push(actionType[key]);
+      actionType[key] = ns.join('_');
     }
   };
-  var _cancel = function _cancel() {
-    actions.create.updateResource.reset();
-    actions.list.showCreateResourceDialog(false);
-  };
-  var loading = !((_c = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _c === void 0 ? void 0 : _c.fetched) || (resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object.fetchState) === ffRedux.FetchState.Fetching;
-  var loadSchemaFailed = ((_d = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _d === void 0 ? void 0 : _d.error) || ((_e = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _e === void 0 ? void 0 : _e.fetchState) === ffRedux.FetchState.Failed;
-  var isSubmitting = (updateResourceWorkflow === null || updateResourceWorkflow === void 0 ? void 0 : updateResourceWorkflow.operationState) === ffRedux.OperationState.Performing;
-  var failed = updateResourceWorkflow.operationState === ffRedux.OperationState.Done && !ffRedux.isSuccessWorkflow(updateResourceWorkflow);
-  return React__default.createElement(ffComponent.FormPanel, {
-    isNeedCard: false
-  }, loading && React__default.createElement(LoadingPanel, null), !loading && loadSchemaFailed && React__default.createElement(RetryPanel, {
-    style: {
-      minWidth: 150
-    },
-    loadingText: i18n.t('加载失败'),
-    action: (_g = (_f = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _f === void 0 ? void 0 : _f.instanceDetail) === null || _g === void 0 ? void 0 : _g.fetch
-  }), !loading && !loadSchemaFailed && React__default.createElement(React__default.Fragment, null, React__default.createElement(ffComponent.FormPanel.Item, {
-    label: React__default.createElement(teaComponent.Text, {
-      style: {
-        display: 'flex',
-        alignItems: 'center'
-      }
-    }, React__default.createElement(teaComponent.Text, null, i18n.t('规格名称')), React__default.createElement(teaComponent.Text, {
-      className: 'text-danger tea-pt-1n'
-    }, "*")),
-    validator: (_h = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.validator) === null || _h === void 0 ? void 0 : _h['instanceName'],
-    input: {
-      value: (_j = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _j === void 0 ? void 0 : _j['instanceName'],
-      onChange: function onChange(e) {
-        var _a;
-        (_a = actions === null || actions === void 0 ? void 0 : actions.create) === null || _a === void 0 ? void 0 : _a.updatePlan('instanceName', e);
-      },
-      onBlur: function onBlur() {},
-      disabled: true
+  BComponent.isNeedFetch = function (model, filter) {
+    if (filter === void 0) {
+      filter = null;
     }
-  }), React__default.createElement(ffComponent.FormPanel.Item, {
-    label: i18n.t('中间件类型'),
-    text: true
-  }, React__default.createElement(ffComponent.FormPanel.Text, null, i18n.t('{{name}}', {
-    name: (_k = services === null || services === void 0 ? void 0 : services.selection) === null || _k === void 0 ? void 0 : _k.name
-  }))), React__default.createElement(ffComponent.FormPanel.Item, {
-    label: i18n.t('目标集群:')
-  }, React__default.createElement(ffComponent.FormPanel.Text, null, i18n.t('{{clusterId}}', {
-    clusterId: (_l = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _l === void 0 ? void 0 : _l['clusterId']
-  }))), React__default.createElement(ffComponent.FormPanel.Item, {
-    label: i18n.t('描述'),
-    validator: (_m = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.validator) === null || _m === void 0 ? void 0 : _m['description'],
-    input: {
-      value: (_o = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _o === void 0 ? void 0 : _o['description'],
-      onChange: function onChange(e) {
-        var _a;
-        (_a = actions === null || actions === void 0 ? void 0 : actions.create) === null || _a === void 0 ? void 0 : _a.updatePlan('description', e);
-      },
-      onBlur: function onBlur() {}
+    var isAllSame = true;
+    if (filter) {
+      var targetFilter_1 = [];
+      var originFilter_1 = [];
+      Object.keys(filter).forEach(function (key) {
+        targetFilter_1.push(filter === null || filter === void 0 ? void 0 : filter[key]);
+        originFilter_1.push(model.query.filter[key]);
+      });
+      isAllSame = JSON.stringify(targetFilter_1) === JSON.stringify(originFilter_1);
     }
-  }), instanceParamsFields === null || instanceParamsFields === void 0 ? void 0 : instanceParamsFields.map(function (item, index) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
-    var _l = (_b = (_a = item.description) === null || _a === void 0 ? void 0 : _a.split('---')) !== null && _b !== void 0 ? _b : [],
-      english = _l[0],
-      chinese = _l[1];
-    return React__default.createElement(ffComponent.FormPanel.Item, {
-      label: React__default.createElement(teaComponent.Text, {
-        style: {
-          display: 'flex',
-          alignItems: 'center'
+    if (isAllSame) {
+      //如果参数都没变，
+      //1.正在加载的就不发请求
+      //2.之前的请求没出错就不再发起请求
+      if (typeof model['list'] !== 'undefined') {
+        if (model['list'].loading || model['list'].fetched
+        //&& model['list'].fetchState !== FetchState.Failed
+        ) {
+          return false;
+        } else {
+          return true;
         }
-      }, React__default.createElement(teaComponent.Text, null, i18n.t('{{name}}', {
-        name: prefixForSchema(item, servicename) + (item === null || item === void 0 ? void 0 : item.label) + suffixUnitForSchema(item)
-      })), React__default.createElement(teaComponent.Icon, {
-        type: "info",
-        tooltip: isI18n ? english : chinese
-      }), !(item === null || item === void 0 ? void 0 : item.optional) && React__default.createElement(teaComponent.Text, {
-        className: 'text-danger tea-pt-1n'
-      }, "*")),
-      key: "".concat(item === null || item === void 0 ? void 0 : item.name).concat(index),
-      validator: (_c = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.validator) === null || _c === void 0 ? void 0 : _c[item === null || item === void 0 ? void 0 : item.name]
-    }, getFormItemType(item) === FormItemType.Select && React__default.createElement(ffComponent.FormPanel.Select, {
-      placeholder: i18n.t('{{title}}', {
-        title: '请选择' + (item === null || item === void 0 ? void 0 : item.label)
-      }),
-      options: (_d = item === null || item === void 0 ? void 0 : item.candidates) === null || _d === void 0 ? void 0 : _d.map(function (candidate) {
-        return {
-          value: candidate,
-          text: candidate
-        };
-      }),
-      value: (_e = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _e === void 0 ? void 0 : _e[item === null || item === void 0 ? void 0 : item.name],
-      onChange: function onChange(e) {
-        actions === null || actions === void 0 ? void 0 : actions.create.updatePlan(item === null || item === void 0 ? void 0 : item.name, e);
       }
-    }), getFormItemType(item) === FormItemType.Switch && React__default.createElement(teaComponent.Switch, {
-      value: (_f = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _f === void 0 ? void 0 : _f[item === null || item === void 0 ? void 0 : item.name],
-      onChange: function onChange(e) {
-        actions === null || actions === void 0 ? void 0 : actions.create.updatePlan(item === null || item === void 0 ? void 0 : item.name, e);
+      if (typeof model['object'] !== 'undefined') {
+        if (model['object'].loading || model['object'].fetched
+        // && model['object'].fetchState !== FetchState.Failed
+        ) {
+          return false;
+        } else {
+          return true;
+        }
       }
-    }), getFormItemType(item) === FormItemType.Input && React__default.createElement(teaComponent.Input, {
-      value: (_g = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _g === void 0 ? void 0 : _g[item === null || item === void 0 ? void 0 : item.name],
-      placeholder: i18n.t('{{title}}', {
-        title: '请输入' + (item === null || item === void 0 ? void 0 : item.label)
-      }),
-      onChange: function onChange(e) {
-        actions === null || actions === void 0 ? void 0 : actions.create.updatePlan(item === null || item === void 0 ? void 0 : item.name, e);
-      }
-    }), getFormItemType(item) === FormItemType.Paasword && React__default.createElement(InputPassword.InputPassword, {
-      value: (_h = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _h === void 0 ? void 0 : _h[item === null || item === void 0 ? void 0 : item.name],
-      placeholder: i18n.t('{{title}}', {
-        title: '请输入' + (item === null || item === void 0 ? void 0 : item.label)
-      }),
-      onChange: function onChange(e) {
-        actions === null || actions === void 0 ? void 0 : actions.create.updatePlan(item === null || item === void 0 ? void 0 : item.name, e);
-      }
-    }), getFormItemType(item) === FormItemType.MapField && React__default.createElement(MapField, {
-      plan: item,
-      onChange: function onChange(_a) {
-        var field = _a.field,
-          value = _a.value;
-        actions === null || actions === void 0 ? void 0 : actions.create.updatePlan(item === null || item === void 0 ? void 0 : item.name, JSON.stringify(value === null || value === void 0 ? void 0 : value.reduce(function (pre, cur) {
-          var _a;
-          return tslib.__assign(tslib.__assign({}, pre), (_a = {}, _a[cur === null || cur === void 0 ? void 0 : cur.key] = cur === null || cur === void 0 ? void 0 : cur.value, _a));
-        }, {})));
-      }
-    }), showUnitOptions(item) && React__default.createElement(ffComponent.FormPanel.Select, {
-      size: 's',
-      className: 'tea-ml-2n',
-      placeholder: i18n.t('{{title}}', {
-        title: '请选择unit'
-      }),
-      options: getUnitOptions(item),
-      value: (_k = (_j = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _j === void 0 ? void 0 : _j['unitMap']) === null || _k === void 0 ? void 0 : _k[item === null || item === void 0 ? void 0 : item.name],
-      onChange: function onChange(e) {
-        var _a;
-        var _b;
-        actions === null || actions === void 0 ? void 0 : actions.create.updatePlan('unitMap', tslib.__assign(tslib.__assign({}, (_b = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _b === void 0 ? void 0 : _b['unitMap']), (_a = {}, _a[item === null || item === void 0 ? void 0 : item.name] = e, _a)));
-      }
-    }));
-  }), React__default.createElement(ffComponent.FormPanel.Item, {
-    className: 'tea-mr-2n'
-  }, React__default.createElement(teaComponent.Col, {
-    span: 24
-  }, React__default.createElement(teaComponent.Button, {
-    type: 'primary',
-    className: 'tea-mr-2n',
-    onClick: _submit,
-    loading: isSubmitting,
-    disabled: isSubmitting
-  }, failed ? i18n.t('重试') : i18n.t('确定')), React__default.createElement(teaComponent.Button, {
-    onClick: _cancel
-  }, i18n.t('取消')), React__default.createElement(TipInfo, {
-    isShow: failed,
-    type: "error",
-    isForm: true
-  }, getWorkflowError(updateResourceWorkflow))))));
-}
-
-function ServiceCreateDialog(props) {
-  var _a, _b;
-  var showCreateResourceDialog = props.list.showCreateResourceDialog,
-    resourceDetail = props.detail.resourceDetail,
-    actions = props.actions,
-    _c = props.mode,
-    mode = _c === void 0 ? 'edit' : _c;
-  var loading = ((_a = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _a === void 0 ? void 0 : _a.loading) || (resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object.fetchState) === ffRedux.FetchState.Fetching;
-  var failed = (resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object.fetchState) === ffRedux.FetchState.Failed;
-  var resource = (_b = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _b === void 0 ? void 0 : _b.data;
-  return React__default.createElement(teaComponent.Modal, {
-    visible: showCreateResourceDialog,
-    caption: mode === 'create' ? i18n.t('新建规格') : i18n.t('编辑规格'),
-    onClose: function onClose() {
-      actions.list.showCreateResourceDialog(false);
-    },
-    size: 'm'
-  }, React__default.createElement(teaComponent.Modal.Body, null, React__default.createElement(UpdateResource, tslib.__assign({}, props))));
-}
-
-var routerSea$1 = seajs.require('router');
-function ServiceDetailHeader(props) {
-  var _a, _b, _c, _d, _e, _f;
-  var services = reactRedux.useSelector(function (state) {
-    var _a;
-    return (_a = state === null || state === void 0 ? void 0 : state.list) === null || _a === void 0 ? void 0 : _a.services;
-  });
-  var selectedTab = reactRedux.useSelector(function (state) {
-    var _a;
-    return (_a = state === null || state === void 0 ? void 0 : state.base) === null || _a === void 0 ? void 0 : _a.selectedTab;
-  });
-  var resource = reactRedux.useSelector(function (state) {
-    var _a;
-    return (_a = state === null || state === void 0 ? void 0 : state.list) === null || _a === void 0 ? void 0 : _a.serviceResources;
-  });
-  var platform = reactRedux.useSelector(function (state) {
-    var _a;
-    return (_a = state === null || state === void 0 ? void 0 : state.base) === null || _a === void 0 ? void 0 : _a.platform;
-  });
-  var actions = props.actions;
-  var _g = React.useState([]),
-    searchBoxValues = _g[0],
-    setSearchBoxValues = _g[1];
-  var _h = React.useState(0),
-    searchBoxLength = _h[0],
-    setSearchBoxLength = _h[1];
-  var onCreate = function onCreate() {
-    var _a, _b, _c, _d, _e;
-    (_b = (_a = actions === null || actions === void 0 ? void 0 : actions.list) === null || _a === void 0 ? void 0 : _a.serviceResources) === null || _b === void 0 ? void 0 : _b.clearPolling();
-    if (selectedTab === ResourceTypeEnum.ServiceResource) {
-      router.navigate({
-        sub: 'create',
-        tab: ResourceTypeEnum.ServiceResource
-      }, {
-        servicename: (_c = services === null || services === void 0 ? void 0 : services.selection) === null || _c === void 0 ? void 0 : _c.name,
-        resourceType: ResourceTypeEnum.ServiceResource,
-        mode: "create"
-      });
-    } else if (selectedTab === (ResourceTypeEnum === null || ResourceTypeEnum === void 0 ? void 0 : ResourceTypeEnum.ServicePlan)) {
-      router.navigate({
-        sub: 'create',
-        tab: ResourceTypeEnum.ServicePlan
-      }, {
-        servicename: (_d = services === null || services === void 0 ? void 0 : services.selection) === null || _d === void 0 ? void 0 : _d.name,
-        resourceType: ResourceTypeEnum.ServicePlan,
-        mode: "create"
-      });
     } else {
-      router.navigate({
-        sub: 'create',
-        tab: ResourceTypeEnum.ServiceResource
-      }, {
-        servicename: (_e = services === null || services === void 0 ? void 0 : services.selection) === null || _e === void 0 ? void 0 : _e.name,
-        resourceType: ResourceTypeEnum.ServiceResource,
-        mode: "create"
-      });
+      return true;
     }
   };
-  var btnText = selectedTab === ResourceTypeEnum.ServiceResource ? i18n.t('创建中间件实例') : i18n.t('创建规格');
-  /** 生成手动刷新按钮 */
-  var _renderManualRenew = function _renderManualRenew() {
-    var loading = resource.list.loading || resource.list.fetchState === ffRedux.FetchState.Fetching;
-    return  React__default.createElement(teaComponent.Button, {
-      icon: "refresh",
-      disabled: loading,
-      onClick: function onClick(e) {
-        // actions.list.serviceResources.reset();
-        actions.list.serviceResources.fetch({
-          noCache: true
+  var ViewStyleEnum;
+  (function (ViewStyleEnum) {
+    ViewStyleEnum["Panel"] = "Panel";
+    ViewStyleEnum["FormItem"] = "FormItem";
+    ViewStyleEnum["Alert"] = "Alert";
+    ViewStyleEnum["Text"] = "Text";
+    ViewStyleEnum["Dialog"] = "Dialog";
+  })(ViewStyleEnum = BComponent.ViewStyleEnum || (BComponent.ViewStyleEnum = {}));
+  var EditStyleEnum;
+  (function (EditStyleEnum) {
+    EditStyleEnum["PopConfirm"] = "PopConfirm";
+    EditStyleEnum["Panel"] = "Panel";
+    EditStyleEnum["FormItem"] = "FormItem";
+    EditStyleEnum["Drawer"] = "Drawer";
+  })(EditStyleEnum = BComponent.EditStyleEnum || (BComponent.EditStyleEnum = {}));
+  var OperationTypeEnum;
+  (function (OperationTypeEnum) {
+    OperationTypeEnum["Create"] = "Create";
+    /**
+     * @deprecated
+     */
+    OperationTypeEnum["CreateNode"] = "CreateNode";
+    OperationTypeEnum["Delete"] = "Delete";
+    OperationTypeEnum["Refund"] = "Refund";
+    OperationTypeEnum["Modify"] = "Modify";
+    OperationTypeEnum["View"] = "View";
+    /**
+     * @deprecated
+     */
+    OperationTypeEnum["EditSecret"] = "EditSecret";
+    /**
+     * @deprecated
+     */
+    OperationTypeEnum["IngressCreateSecret"] = "IngressCreateSecret";
+  })(OperationTypeEnum = BComponent.OperationTypeEnum || (BComponent.OperationTypeEnum = {}));
+  var ResourceTypeEnum;
+  (function (ResourceTypeEnum) {
+    ResourceTypeEnum["Asg"] = "Asg";
+    ResourceTypeEnum["Node"] = "Node";
+    ResourceTypeEnum["MasterEtcdNode"] = "MasterEtcdNode";
+    ResourceTypeEnum["NodePool"] = "NodePool";
+    ResourceTypeEnum["NativeNodePool"] = "NativeNodePool";
+    ResourceTypeEnum["VirtualNodePool"] = "VirtualNodePool";
+    ResourceTypeEnum["VirtualNode"] = "VirtualNode";
+    ResourceTypeEnum["EdgeCvm"] = "EdgeCvm";
+    ResourceTypeEnum["EdgeDeploymentGridInstance"] = "EdgeDeploymentGridInstance";
+    ResourceTypeEnum["LogListener"] = "LogListener";
+    ResourceTypeEnum["Audit"] = "Audit";
+    ResourceTypeEnum["Event"] = "Event";
+    ResourceTypeEnum["Ingress"] = "Ingress";
+    ResourceTypeEnum["Service"] = "Service";
+    ResourceTypeEnum["HPA"] = "HPA";
+    ResourceTypeEnum["Workload"] = "Workload";
+    ResourceTypeEnum["Secret"] = "Secret";
+    ResourceTypeEnum["EKSContainer"] = "EKSContainer";
+    ResourceTypeEnum["External"] = "External";
+    ResourceTypeEnum["ImageCache"] = "ImageCache";
+    ResourceTypeEnum["Subscription"] = "Subscription";
+    ResourceTypeEnum["Cluster"] = "Cluster";
+    ResourceTypeEnum["ECluster"] = "ECluster";
+    ResourceTypeEnum["HubCluster"] = "HubCluster";
+    ResourceTypeEnum["EdgeCluster"] = "EdgeCluster";
+    ResourceTypeEnum["PersistentVolume"] = "PersistentVolume";
+    ResourceTypeEnum["PersistentVolumeClaim"] = "PersistentVolumeClaim";
+    ResourceTypeEnum["StorageClass"] = "StorageClass";
+    ResourceTypeEnum["Label"] = "Label";
+    ResourceTypeEnum["Annotation"] = "Annotation";
+  })(ResourceTypeEnum = BComponent.ResourceTypeEnum || (BComponent.ResourceTypeEnum = {}));
+  BComponent.createHooks = function (_a) {
+    var Context = _a.Context,
+      itemsSelector = _a.itemsSelector,
+      vKeyPrefix = _a.vKeyPrefix;
+    var useModel = function useModel(modelSelector, eqFn) {
+      if (eqFn === void 0) {
+        eqFn = reactRedux.shallowEqual;
+      }
+      var context = React__default.useContext(Context);
+      return reactRedux.useSelector(function (state) {
+        return modelSelector(context.selector(function () {
+          return state;
+        }).model);
+      }, eqFn);
+    };
+    var useFilter = function useFilter(filterSelector) {
+      var context = React__default.useContext(Context);
+      return reactRedux.useSelector(function (state) {
+        return filterSelector(context.selector(function () {
+          return state;
+        }).filter);
+      }, reactRedux.shallowEqual);
+    };
+    var useItem = function useItem(itemId, itemSelector) {
+      return useModel(function (model) {
+        var items = itemsSelector(model);
+        var item = items.find(function (item) {
+          return item.id === itemId;
         });
-      },
-      title: i18n.t('刷新')
-    }) ;
+        return itemSelector(item);
+      });
+    };
+    var useVkey = function useVkey(_a) {
+      var key = _a.key,
+        itemId = _a.itemId;
+      var itemIndex = useModel(function (model) {
+        var items = itemsSelector(model);
+        return items.findIndex(function (item) {
+          return item.id === itemId;
+        });
+      });
+      return "".concat(vKeyPrefix, "[").concat(itemIndex, "].").concat(String(key));
+    };
+    return {
+      useVkey: useVkey,
+      useModel: useModel,
+      useFilter: useFilter,
+      useItem: useItem
+    };
   };
-  /** 生成搜索框 */
-  var _renderTagSearchBox = function _renderTagSearchBox() {
-    // tagSearch的过滤选项
-    var attributes = [{
-      type: 'input',
-      key: 'resourceName',
-      name: i18n.t('名称')
-    }];
-    var values = resource.query.search ? searchBoxValues : [];
-    return  React__default.createElement("div", {
-      style: {
-        width: 350,
-        display: 'inline-block'
+  BComponent.createSimpleHooks = function (selector) {
+    var useModel = function useModel(modelSelector, eqFn) {
+      if (eqFn === void 0) {
+        eqFn = reactRedux.shallowEqual;
       }
-    }, React__default.createElement(teaComponent.TagSearchBox, {
-      className: "myTagSearchBox",
-      attributes: attributes,
-      value: values,
-      onChange: function onChange(tags) {
-        _handleClickForTagSearch(tags);
-      }
-    })) ;
+      return reactRedux.useSelector(function (state) {
+        return modelSelector(selector(function () {
+          return state;
+        }).model);
+      }, eqFn);
+    };
+    var useFilter = function useFilter(filterSelector) {
+      return reactRedux.useSelector(function (state) {
+        return filterSelector(selector(function () {
+          return state;
+        }).filter);
+      }, reactRedux.shallowEqual);
+    };
+    return {
+      useModel: useModel,
+      useFilter: useFilter
+    };
   };
-  /** 搜索框的操作，不同的搜索进行相对应的操作 */
-  var _handleClickForTagSearch = function _handleClickForTagSearch(tags) {
-    // 这里是控制tagSearch的展示
-    setSearchBoxValues(tags);
-    setSearchBoxLength(tags.length);
-    // 如果检测到 tags的长度变化，并且key为 resourceName 去掉了，则清除搜索条件
-    if (tags.length === 0 || tags.length === 1 && resource.query.search && tags[0].attr && tags[0].attr.key !== 'resourceName') {
-      actions.list.serviceResources.changeKeyword('');
-      actions.list.serviceResources.performSearch('');
-    }
-    tags.forEach(function (tagItem) {
-      var attrKey = tagItem.attr ? tagItem.attr.key : null;
-      if (attrKey === 'resourceName' || attrKey === null) {
-        var search = tagItem.values[0].name;
-        actions.list.serviceResources.changeKeyword(search);
-        actions.list.serviceResources.performSearch(search);
-      }
-    });
+  BComponent.createSlice = function (_a) {
+    var pageName = _a.pageName;
   };
-  var isDisabledCreate = !((_b = (_a = services === null || services === void 0 ? void 0 : services.selection) === null || _a === void 0 ? void 0 : _a.clusters) === null || _b === void 0 ? void 0 : _b.length);
-  var title = !((_c = services === null || services === void 0 ? void 0 : services.selection) === null || _c === void 0 ? void 0 : _c.name) ? i18n.t('请您选择左侧的服务') : !((_e = (_d = services === null || services === void 0 ? void 0 : services.selection) === null || _d === void 0 ? void 0 : _d.clusters) === null || _e === void 0 ? void 0 : _e.length) ? i18n.t('{{title}}', {
-    title: "".concat((_f = services === null || services === void 0 ? void 0 : services.selection) === null || _f === void 0 ? void 0 : _f.name, "\u5C1A\u672A\u5728\u76EE\u6807\u96C6\u7FA4\u5F00\u542F\uFF0C\u8BF7\u60A8\u524D\u5F80\u5206\u5E03\u5F0F\u4E91\u4E2D\u5FC3\u6982\u89C8\u9875\u5F00\u542F")
-  }) : null;
-  return React__default.createElement("div", {
-    className: 'tea-pb-5n'
-  }, React__default.createElement(teaComponent.Justify, {
-    left: React__default.createElement(teaComponent.Button, {
-      type: "primary",
-      onClick: onCreate,
-      disabled: isDisabledCreate,
-      title: title
-    }, btnText),
-    right: React__default.createElement(React__default.Fragment, null, _renderTagSearchBox(), _renderManualRenew())
-  }));
-}
-
-/*
- * @File: 这是文件的描述
- * @Description: 这是文件的描述
- * @Version: 1.0
- * @Autor: brycewwang
- * @Date: 2022-06-25 20:24:07
- * @LastEditors: brycewwang
- * @LastEditTime: 2022-06-28 20:24:57
- */
-function dateFormatter(date, format) {
-  if (date.toString() === 'Invalid Date') {
-    return '-';
-  }
-  var o = {
-    /**
-     * 完整年份
-     * @example 2015 2016 2017 2018
-     */
-    YYYY: function YYYY() {
-      return date.getFullYear().toString();
-    },
-    /**
-     * 年份后两位
-     * @example 15 16 17 18
-     */
-    YY: function YY() {
-      return this.YYYY().slice(-2);
-    },
-    /**
-     * 月份，保持两位数
-     * @example 01 02 03 .... 11 12
-     */
-    MM: function MM() {
-      return leftPad(this.M(), 2);
-    },
-    /**
-     * 月份
-     * @example 1 2 3 .... 11 12
-     */
-    M: function M() {
-      return (date.getMonth() + 1).toString();
-    },
-    /**
-     * 每月中的日期，保持两位数
-     * @example 01 02 03 .... 30 31
-     */
-    DD: function DD() {
-      return leftPad(this.D(), 2);
-    },
-    /**
-     * 每月中的日期
-     * @example 1 2 3 .... 30 31
-     */
-    D: function D() {
-      return date.getDate().toString();
-    },
-    /**
-     * 小时，24 小时制，保持两位数
-     * @example 00 01 02 .... 22 23
-     */
-    HH: function HH() {
-      return leftPad(this.H(), 2);
-    },
-    /**
-     * 小时，24 小时制
-     * @example 0 1 2 .... 22 23
-     */
-    H: function H() {
-      return date.getHours().toString();
-    },
-    /**
-     * 小时，12 小时制，保持两位数
-     * @example 00 01 02 .... 22 23
-     */
-    hh: function hh() {
-      return leftPad(this.h(), 2);
-    },
-    /**
-     * 小时，12 小时制
-     * @example 0 1 2 .... 22 23
-     */
-    h: function h() {
-      var h = (date.getHours() % 12).toString();
-      return h === '0' ? '12' : h;
-    },
-    /**
-     * 分钟，保持两位数
-     * @example 00 01 02 .... 59 60
-     */
-    mm: function mm() {
-      return leftPad(this.m(), 2);
-    },
-    /**
-     * 分钟
-     * @example 0 1 2 .... 59 60
-     */
-    m: function m() {
-      return date.getMinutes().toString();
-    },
-    /**
-     * 秒，保持两位数
-     * @example 00 01 02 .... 59 60
-     */
-    ss: function ss() {
-      return leftPad(this.s(), 2);
-    },
-    /**
-     * 秒
-     * @example 0 1 2 .... 59 60
-     */
-    s: function s() {
-      return date.getSeconds().toString();
-    }
-  };
-  return Object.keys(o).reduce(function (pre, cur) {
-    return pre.replace(new RegExp(cur), function (match) {
-      /* eslint-disable */
-      return o[match].call(o);
-      /* eslint-enable */
-    });
-  }, format);
-}
-function leftPad(num, width, c) {
-  if (c === void 0) {
-    c = '0';
-  }
-  var numStr = num.toString();
-  var padWidth = width - numStr.length;
-  return padWidth > 0 ? new Array(padWidth + 1).join(c.toString()) + numStr : numStr;
-}
+})(BComponent$1 || (BComponent$1 = {}));
 
 var Method = {
   get: 'GET',
@@ -3515,55 +3235,6 @@ var RequestApi;
     });
   };
 })(RequestApi || (RequestApi = {}));
-
-var _a$5, _b$4;
-var ClusterType;
-(function (ClusterType) {
-  ClusterType["TKE"] = "tke";
-  ClusterType["EKS"] = "eks";
-  ClusterType["EDGE"] = "tkeedge";
-  ClusterType["External"] = "external";
-})(ClusterType || (ClusterType = {}));
-var ClusterResourceModuleName = (_a$5 = {}, _a$5[ClusterType.TKE] = 'tke', _a$5[ClusterType.EKS] = 'tke', _a$5[ClusterType.EDGE] = 'tke', _a$5[ClusterType.External] = 'tdcc', _a$5);
-var ClusterResourceVersionName = (_b$4 = {}, _b$4[ClusterType.TKE] = '2018-05-25', _b$4[ClusterType.EKS] = '2018-05-25', _b$4[ClusterType.EDGE] = '2018-05-25', _b$4[ClusterType.External] = '2022-01-25', _b$4);
-var ExternalCluster;
-(function (ExternalCluster) {
-  var StatusEnum;
-  (function (StatusEnum) {
-    StatusEnum["Running"] = "Running";
-    StatusEnum["Failed"] = "Failed";
-    StatusEnum["Waiting"] = "Waiting";
-    // Initializing = 'Initializing',
-    // Confined = 'Confined',
-    // Idling = 'Idling',
-    // Upgrading = 'Upgrading',
-    StatusEnum["Terminating"] = "Terminating";
-    // Upscaling = 'Upscaling',
-    // Downscaling = 'Downscaling'
-  })(StatusEnum = ExternalCluster.StatusEnum || (ExternalCluster.StatusEnum = {}));
-  ExternalCluster.TKEStackDefaultCluster = 'global';
-  ExternalCluster.getClusterDetailUrl = function (clusterInfo, regionId) {
-    var _a = clusterInfo || {},
-      clusterCategory = _a.clusterCategory,
-      originalRegion = _a.originalRegion,
-      originalClusterId = _a.originalClusterId;
-    var url = "/tke2/external/sub/list/basic/info?rid=".concat(regionId, "&clusterId=").concat(clusterInfo === null || clusterInfo === void 0 ? void 0 : clusterInfo.clusterId);
-    if (clusterCategory && originalRegion && originalClusterId) {
-      switch (clusterCategory) {
-        case 'tke':
-          url = "/tke2/cluster/sub/list/basic/info?rid=".concat(originalRegion, "&clusterId=").concat(originalClusterId);
-          break;
-        case 'eks':
-          url = "/tke2/ecluster/sub/list/basic/info?rid=".concat(originalRegion, "&clusterId=").concat(originalClusterId);
-          break;
-        case 'tkeedge':
-          url = "/tke2/edge/sub/list/basic/info?rid=".concat(originalRegion, "&clusterId=").concat(originalClusterId);
-          break;
-      }
-    }
-    return url;
-  };
-})(ExternalCluster || (ExternalCluster = {}));
 
 var tips$2 = seajs.require('tips');
 // 获取应用实例列表
@@ -5026,6 +4697,1226 @@ var getClusterAdminRole = function getClusterAdminRole(resource, regionId) {
   });
 };
 
+var reduceK8sQueryStringForTdcc = function reduceK8sQueryStringForTdcc(_a) {
+  var _b;
+  var _c = _a.k8sQueryObj,
+    k8sQueryObj = _c === void 0 ? {} : _c,
+    _d = _a.restfulPath,
+    restfulPath = _d === void 0 ? '' : _d,
+    _e = _a.isShadow,
+    isShadow = _e === void 0 ? false : _e;
+  var operator = '?';
+  var queryString = '';
+  if (!isEmpty(k8sQueryObj)) {
+    var queryKeys = Object.keys(k8sQueryObj);
+    queryKeys.forEach(function (queryKey, index) {
+      if (index !== 0) {
+        queryString += '&';
+      }
+      // 这里去判断每种资源的query，eg：fieldSelector、limit等
+      var specificQuery = k8sQueryObj[queryKey];
+      if (_typeof(specificQuery) === 'object') {
+        // 这里是对于 query的字段里面，还有多种过滤条件，比如fieldSelector支持 involvedObject.name=*,involvedObject.kind=*
+        var specificKeys = Object.keys(specificQuery),
+          specificString_1 = '';
+        specificKeys.forEach(function (speKey, index) {
+          if (index !== 0) {
+            specificString_1 += ',';
+          }
+          if (Array.isArray(specificQuery[speKey]) && specificQuery[speKey].length !== 0) {
+            // tdcc 应用管理中的接口需要编码
+            if (isShadow) {
+              specificString_1 += encodeURIComponent("".concat(speKey, "+in+(").concat(specificQuery[speKey].join(','), ")"));
+            } else {
+              specificString_1 += "".concat(speKey, "+in+(").concat(specificQuery[speKey].join(','), ")");
+            }
+          } else {
+            specificString_1 += speKey + (specificQuery[speKey] ? "=".concat(specificQuery[speKey]) : '');
+          }
+        });
+        if (specificString_1) {
+          queryString += "".concat(queryKey, "=").concat(specificString_1);
+        }
+      } else {
+        queryString += "".concat(queryKey, "=").concat(k8sQueryObj[queryKey]);
+      }
+    });
+  }
+  /** 如果原本的url里面已经有 ? 了，则我们这里的query的内容，必须是拼接在后面，而不能直接加多一个 ? */
+  /**
+   * 分布式云中前面已经有个？了，所以需要继续往后面拼Method=GET&amp;Path=/apis/platform.tke/v1/clusters/cls-afg8xkzg/proxy?path=/apis/shadow/v1alpha1/namespaces/foo/deployments?labelSelector=clusternet-app%3Dmulti-cluster-nginx
+   */
+  if (!isShadow && restfulPath.includes('?')) {
+    operator = '&';
+  } else if (((_b = restfulPath === null || restfulPath === void 0 ? void 0 : restfulPath.split('?')) === null || _b === void 0 ? void 0 : _b.length) === 3) {
+    operator = '&';
+  }
+  return queryString ? "".concat(operator).concat(queryString) : '';
+};
+var medium = {
+  fetchResourceList: function fetchResourceList(queryParams) {
+    return tslib.__awaiter(void 0, void 0, void 0, function () {
+      var userDefinedHeader, clusterId, regionId, platform, searchFilter, k8sQueryObj, params, result, url, queryString, response, responseBody, error_1;
+      var _a, _b, _c, _d, _e;
+      return tslib.__generator(this, function (_f) {
+        switch (_f.label) {
+          case 0:
+            userDefinedHeader = {};
+            clusterId = queryParams.clusterId, regionId = queryParams.regionId, platform = queryParams.platform, searchFilter = queryParams.searchFilter, k8sQueryObj = queryParams.k8sQueryObj;
+            result = {
+              records: [],
+              recordCount: 0
+            };
+            url = '/api/v1/namespaces/ssm/secrets';
+            if (searchFilter === null || searchFilter === void 0 ? void 0 : searchFilter.resourceName) {
+              k8sQueryObj.fieldSelector = tslib.__assign(tslib.__assign({}, k8sQueryObj.fieldSelector), {
+                'metadata.name': (_a = searchFilter.resourceName) === null || _a === void 0 ? void 0 : _a[0]
+              });
+            }
+            if (k8sQueryObj) {
+              queryString = reduceK8sQueryStringForTdcc({
+                k8sQueryObj: k8sQueryObj,
+                restfulPath: url
+              });
+              url = url + queryString;
+            }
+            if (platform === PlatformType.TDCC) {
+              params = {
+                userDefinedHeader: userDefinedHeader,
+                apiParams: {
+                  module: ResourceModuleName[PlatformType.TDCC],
+                  interfaceName: ResourceApiName[PlatformType.TDCC],
+                  regionId: regionId,
+                  restParams: {
+                    Method: Method.get,
+                    Version: ResourceVersionName[PlatformType.TDCC],
+                    ClusterId: clusterId,
+                    Filters: [],
+                    Path: url
+                  },
+                  opts: {
+                    tipErr: false,
+                    global: false
+                  }
+                },
+                platform: platform
+              };
+            } else if (platform === PlatformType.TKESTACK) {
+              params = {
+                userDefinedHeader: userDefinedHeader,
+                url: url,
+                restParams: {
+                  ClusterId: clusterId,
+                  ProjectId: ''
+                },
+                platform: platform
+              };
+            }
+            _f.label = 1;
+          case 1:
+            _f.trys.push([1, 3,, 4]);
+            return [4 /*yield*/, RequestApi.GET(params)];
+          case 2:
+            response = _f.sent();
+            if ((response === null || response === void 0 ? void 0 : response.code) === 0) {
+              if (platform === PlatformType.TDCC) {
+                responseBody = JSON.parse((_b = response === null || response === void 0 ? void 0 : response.data) === null || _b === void 0 ? void 0 : _b.ResponseBody);
+                result.records = (_c = responseBody === null || responseBody === void 0 ? void 0 : responseBody.items) !== null && _c !== void 0 ? _c : [];
+              } else {
+                result.records = (_e = (_d = response === null || response === void 0 ? void 0 : response.data) === null || _d === void 0 ? void 0 : _d.items) !== null && _e !== void 0 ? _e : [];
+              }
+              result['code'] = response;
+            } else {
+              throw response;
+            }
+            return [3 /*break*/, 4];
+          case 3:
+            error_1 = _f.sent();
+            result['hasError'] = true;
+            result['code'] = response;
+            throw error_1;
+          case 4:
+            return [2 /*return*/, result];
+        }
+      });
+    });
+  },
+  createCosConfigForTdcc: function createCosConfigForTdcc(resource, options) {
+    return tslib.__awaiter(void 0, void 0, void 0, function () {
+      var _a, mode, yamlData, resourceInfo, namespace, jsonData, _b, base64encode, regionId, clusterId, platform, url, RequestBody, EncodedBody, params, response;
+      return tslib.__generator(this, function (_c) {
+        switch (_c.label) {
+          case 0:
+            _a = resource[0], mode = _a.mode, yamlData = _a.yamlData, resourceInfo = _a.resourceInfo, namespace = _a.namespace, jsonData = _a.jsonData, _b = _a.base64encode, base64encode = _b === void 0 ? false : _b;
+            regionId = options.regionId, clusterId = options.clusterId, platform = options.platform;
+            url = "/apis/platform.tkestack.io/v1/clusters/".concat(clusterId, "/apply");
+            EncodedBody = false;
+            if (yamlData) {
+              RequestBody = EncodedBody ? jsBase64.Base64.encode(yamlData) : yamlData;
+            } else {
+              RequestBody = EncodedBody ? jsBase64.Base64.encode(jsonData) : jsonData;
+            }
+            params = {
+              method: Method.post,
+              url: url,
+              data: yamlData ? yamlData : jsonData,
+              apiParams: {
+                module: 'tdcc',
+                interfaceName: 'ForwardRequestTDCC',
+                regionId: regionId,
+                restParams: {
+                  Method: Method.post,
+                  ClusterId: clusterId,
+                  Path: url,
+                  Version: '2022-01-25',
+                  RequestBody: jsonData,
+                  EncodedBody: EncodedBody
+                },
+                opts: {
+                  tipErr: false,
+                  global: false
+                }
+              },
+              platform: platform
+            };
+            return [4 /*yield*/, RequestApi.POST(params)];
+          case 1:
+            response = _c.sent();
+            try {
+              if ((response === null || response === void 0 ? void 0 : response.code) === 0) {
+                return [2 /*return*/, operationResult(resource)];
+              }
+              bridge.tips.error(response === null || response === void 0 ? void 0 : response.message);
+              return [2 /*return*/, operationResult(resource, response)];
+            } catch (error) {
+              bridge.tips.error(error);
+              return [2 /*return*/, operationResult(resource, error)];
+            }
+            return [2 /*return*/];
+        }
+      });
+    });
+  },
+
+  deleteResource: function deleteResource(resource, regionId) {
+    return tslib.__awaiter(void 0, void 0, void 0, function () {
+      var userDefinedHeader, clusterId, platform, resourceInfo, resourceIns, params, url, response;
+      return tslib.__generator(this, function (_a) {
+        switch (_a.label) {
+          case 0:
+            userDefinedHeader = {};
+            clusterId = resource.clusterId, platform = resource.platform, resourceInfo = resource.resourceInfo, resourceIns = resource.resourceIns;
+            url = "/api/v1/namespaces/ssm/secrets/".concat(resourceIns);
+            if (platform === PlatformType.TDCC) {
+              params = {
+                userDefinedHeader: userDefinedHeader,
+                apiParams: {
+                  module: ResourceModuleName[PlatformType.TDCC],
+                  interfaceName: ResourceApiName[PlatformType.TDCC],
+                  regionId: regionId,
+                  restParams: {
+                    Method: Method["delete"],
+                    Path: url,
+                    Version: ResourceVersionName[PlatformType.TDCC],
+                    ClusterId: clusterId,
+                    Filters: []
+                  },
+                  opts: {
+                    tipErr: false,
+                    global: false
+                  }
+                },
+                platform: platform
+              };
+            } else if (platform === PlatformType.TKESTACK) {
+              params = {
+                userDefinedHeader: userDefinedHeader,
+                url: url,
+                restParams: {
+                  ClusterId: clusterId,
+                  ProjectId: ''
+                },
+                platform: platform,
+                method: Method["delete"]
+              };
+            }
+            return [4 /*yield*/, RequestApi.DELETE(params)];
+          case 1:
+            response = _a.sent();
+            try {
+              if ((response === null || response === void 0 ? void 0 : response.code) === 0) {
+                return [2 /*return*/, operationResult(resource)];
+              }
+              return [2 /*return*/, operationResult(resource, response)];
+            } catch (error) {
+              return [2 /*return*/, operationResult(resource, error)];
+            }
+            return [2 /*return*/];
+        }
+      });
+    });
+  },
+
+  fetchResourceDetail: function fetchResourceDetail(queryParams) {
+    return tslib.__awaiter(void 0, void 0, void 0, function () {
+      var userDefinedHeader, clusterId, regionId, platform, instanceName, params, result, url, url_1, response, responseBody;
+      var _a, _b, _c, _d;
+      return tslib.__generator(this, function (_e) {
+        switch (_e.label) {
+          case 0:
+            userDefinedHeader = {};
+            clusterId = queryParams.clusterId, regionId = queryParams.regionId, platform = queryParams.platform, instanceName = queryParams.instanceName;
+            result = {
+              records: [],
+              recordCount: 0
+            };
+            url = "/api/v1/namespaces/ssm/secrets/".concat(instanceName);
+            if (platform === PlatformType.TDCC) {
+              params = {
+                userDefinedHeader: userDefinedHeader,
+                apiParams: {
+                  module: ResourceModuleName[PlatformType.TDCC],
+                  interfaceName: ResourceApiName[PlatformType.TDCC],
+                  regionId: regionId,
+                  restParams: {
+                    Method: Method.get,
+                    Version: ResourceVersionName[PlatformType.TDCC],
+                    ClusterId: clusterId,
+                    Filters: [],
+                    Path: url
+                  },
+                  opts: {
+                    tipErr: false,
+                    global: false
+                  }
+                },
+                platform: platform
+              };
+            } else if (platform === PlatformType.TKESTACK) {
+              url_1 = "/apis/platform.tkestack.io/v1/clusters/".concat(clusterId, "/proxy?path=/apis/infra.tce.io/v1/test");
+              params = {
+                userDefinedHeader: userDefinedHeader,
+                url: url_1,
+                restParams: {
+                  ClusterId: clusterId,
+                  ProjectId: ''
+                },
+                platform: platform
+              };
+            }
+            return [4 /*yield*/, RequestApi.GET(params)];
+          case 1:
+            response = _e.sent();
+            if ((response === null || response === void 0 ? void 0 : response.code) === 0) {
+              if (platform === PlatformType.TDCC) {
+                responseBody = JSON.parse((_a = response === null || response === void 0 ? void 0 : response.data) === null || _a === void 0 ? void 0 : _a.ResponseBody);
+                result.records = (_b = responseBody === null || responseBody === void 0 ? void 0 : responseBody.items) !== null && _b !== void 0 ? _b : [];
+              } else {
+                result.records = (_d = (_c = response === null || response === void 0 ? void 0 : response.data) === null || _c === void 0 ? void 0 : _c.items) !== null && _d !== void 0 ? _d : [];
+              }
+            } else {
+              result['hasError'] = true;
+            }
+            return [2 /*return*/, result];
+        }
+      });
+    });
+  }
+};
+
+var MediumSelectPanel;
+(function (MediumSelectPanel) {
+  var _this = this;
+  var ComponentName = 'MediumSelectPanel';
+  var ActionTypes;
+  (function (ActionTypes) {
+    ActionTypes["VALIDATOR"] = "VALIDATOR";
+    ActionTypes["Clear"] = "Clear";
+    ActionTypes["Mediums"] = "Mediums";
+  })(ActionTypes = MediumSelectPanel.ActionTypes || (MediumSelectPanel.ActionTypes = {}));
+  BComponent$1.createActionType(ComponentName, ActionTypes);
+  MediumSelectPanel.createValidateSchema = function (_a) {
+    var pageName = _a.pageName;
+    var schema = {
+      formKey: BComponent$1.getActionType(pageName, ActionTypes.VALIDATOR),
+      fields: [{
+        label: i18n.t('备份介质'),
+        vKey: 'mediums',
+        modelType: ffValidator.ModelTypeEnum.FFRedux,
+        rules: [ffValidator.RuleTypeEnum.isRequire]
+      }]
+    };
+    return schema;
+  };
+  MediumSelectPanel.createActions = function (_a) {
+    var pageName = _a.pageName,
+      _getRecord = _a.getRecord;
+    var actions = {
+      validator: ffValidator.createValidatorActions({
+        userDefinedSchema: MediumSelectPanel.createValidateSchema({
+          pageName: pageName
+        }),
+        validateStateLocator: function validateStateLocator(store) {
+          return _getRecord(function () {
+            return store;
+          });
+        },
+        validatorStateLocation: function validatorStateLocation(store) {
+          return _getRecord(function () {
+            return store;
+          }).validator;
+        }
+      }),
+      mediums: ffRedux.createFFListActions({
+        actionName: BComponent$1.getActionType(pageName, ActionTypes.Mediums),
+        fetcher: function fetcher(query) {
+          return tslib.__awaiter(_this, void 0, void 0, function () {
+            var k8sQueryObj, result;
+            return tslib.__generator(this, function (_a) {
+              switch (_a.label) {
+                case 0:
+                  k8sQueryObj = {
+                    labelSelector: {
+                      'tdcc.cloud.tencent.com/paas-storage-medium': ['s3', 'nfs']
+                    }
+                  };
+                  if (!(query === null || query === void 0 ? void 0 : query.filter)) return [3 /*break*/, 2];
+                  return [4 /*yield*/, medium.fetchResourceList(tslib.__assign(tslib.__assign({}, query === null || query === void 0 ? void 0 : query.filter), {
+                    k8sQueryObj: k8sQueryObj
+                  }))];
+                case 1:
+                  result = _a.sent();
+                  _a.label = 2;
+                case 2:
+                  return [2 /*return*/, result];
+              }
+            });
+          });
+        },
+        getRecord: function getRecord(getState) {
+          return _getRecord(getState).mediums;
+        },
+        selectFirst: true,
+        onFinish: function onFinish(record, dispatch) {}
+      }),
+      clearState: function clearState() {
+        return {
+          type: BComponent$1.getActionType(pageName, ActionTypes.Clear)
+        };
+      }
+    };
+    return actions;
+  };
+  MediumSelectPanel.createReducer = function (_a) {
+    var pageName = _a.pageName;
+    var reducer = redux.combineReducers({
+      validator: ffValidator.createValidatorReducer(MediumSelectPanel.createValidateSchema({
+        pageName: pageName
+      })),
+      mediums: ffRedux.createFFListReducer({
+        actionName: BComponent$1.getActionType(pageName, ActionTypes.Mediums),
+        displayField: function displayField(r) {
+          return r.metadata.name;
+        },
+        valueField: function valueField(r) {
+          return r.metadata.name;
+        }
+      })
+    });
+    var finalReducer = function finalReducer(state, action) {
+      var newState = state;
+      // 销毁组件
+      if (action.type === BComponent$1.getActionType(pageName, ActionTypes.Clear)) {
+        newState = undefined;
+      }
+      return reducer(newState, action);
+    };
+    return finalReducer;
+  };
+  MediumSelectPanel.Component = function (props) {
+    var _a, _b, _c, _d, _e, _f;
+    var _g = props.clearData,
+      clearData = _g === void 0 ? false : _g,
+      model = props.model,
+      action = props.action,
+      clusterId = props.clusterId,
+      regionId = props.regionId,
+      platform = props.platform;
+    var mediums = model.mediums,
+      validator = model.validator;
+    React.useEffect(function () {
+      return function () {
+        var _a;
+        if (clearData) {
+          (_a = action === null || action === void 0 ? void 0 : action.mediums) === null || _a === void 0 ? void 0 : _a.select(null);
+        }
+      };
+    }, [clearData, action]);
+    React.useEffect(function () {
+      var filter = {
+        platform: platform,
+        regionId: regionId,
+        clusterId: clusterId,
+        namespace: 'ssm'
+      };
+      if (clusterId && regionId && BComponent$1.isNeedFetch(mediums, filter)) {
+        action.mediums.changeFilter(filter);
+        action.mediums.fetch({
+          fetchAll: true
+        });
+      }
+    }, [clusterId, regionId, mediums, action.mediums, platform]);
+    var RBACForbidden = 'FailedOperation.RBACForbidden';
+    var RBACForbidden403 = 403;
+    if (mediums.list.fetchState === ffRedux.FetchState.Failed) {
+      if (ffComponent.isCamRefused(mediums.list.error)) {
+        return React__default.createElement(ffComponent.CamBox, {
+          message: mediums.list.error.message
+        });
+      }
+    }
+    return React__default.createElement(ffComponent.FormPanel.Item, {
+      formvalidator: validator,
+      vactions: action.validator,
+      vkey: 'mediums',
+      label: i18n.t('备份介质'),
+      select: {
+        model: mediums,
+        action: action.mediums,
+        showRefreshBtn: true
+      },
+      message: i18n.t('自定义设置外部存储介质，例如用户自己的对象存储或者文件存储，适合用户创建的中间件实例备份场景'),
+      errorTips: ((_b = (_a = mediums === null || mediums === void 0 ? void 0 : mediums.list) === null || _a === void 0 ? void 0 : _a.error) === null || _b === void 0 ? void 0 : _b.code) === RBACForbidden || ((_d = (_c = mediums === null || mediums === void 0 ? void 0 : mediums.list) === null || _c === void 0 ? void 0 : _c.error) === null || _d === void 0 ? void 0 : _d.code) === RBACForbidden403 ? i18n.t('权限不足，请联系集群管理员添加权限') : (_f = (_e = mediums === null || mediums === void 0 ? void 0 : mediums.list) === null || _e === void 0 ? void 0 : _e.error) === null || _f === void 0 ? void 0 : _f.code,
+      after: React__default.createElement(teaComponent$1.ExternalLink, {
+        href: platform === PlatformType.TKESTACK ? "https://console.cloud.tencent.com/tdcc/medium?clusterId=".concat(clusterId) : "/tdcc/medium?clusterId=".concat(clusterId)
+      }, i18n.t('前往添加备份介质'))
+    });
+  };
+})(MediumSelectPanel || (MediumSelectPanel = {}));
+
+var GetRbacAdminDialog;
+(function (GetRbacAdminDialog) {
+  GetRbacAdminDialog.ComponentName = "GetRbacAdminDialog";
+  GetRbacAdminDialog.ActionType = Object.assign({}, BComponent$1.BaseActionType, {
+    GetClusterAdminRoleFlow: "GetClusterAdminRoleFlow"
+  });
+  BComponent$1.createActionType(GetRbacAdminDialog.ComponentName, GetRbacAdminDialog.ActionType);
+  GetRbacAdminDialog.createActions = function (_a) {
+    var pageName = _a.pageName,
+      getRecord = _a.getRecord;
+    var actions = {
+      getClusterAdminRole: ffRedux.generateWorkflowActionCreator({
+        actionType: BComponent$1.getActionType(pageName, GetRbacAdminDialog.ActionType.GetClusterAdminRoleFlow),
+        workflowStateLocator: function workflowStateLocator(state) {
+          return getRecord(function () {
+            return state;
+          }).getClusterAdminRoleFlow;
+        },
+        operationExecutor: getClusterAdminRole,
+        after: {}
+      })
+    };
+    return actions;
+  };
+  GetRbacAdminDialog.createReducer = function (_a) {
+    var pageName = _a.pageName;
+    var TempReducer = redux.combineReducers({
+      getClusterAdminRoleFlow: ffRedux.generateWorkflowReducer({
+        actionType: BComponent$1.getActionType(pageName, GetRbacAdminDialog.ActionType.GetClusterAdminRoleFlow)
+      })
+    });
+    var Reducer = function Reducer(state, action) {
+      var newState = state;
+      // 销毁页面
+      if (action.type === BComponent$1.getActionType(pageName, GetRbacAdminDialog.ActionType.Clear)) {
+        newState = undefined;
+      }
+      return TempReducer(newState, action);
+    };
+    return Reducer;
+  };
+  GetRbacAdminDialog.Component = function (props) {
+    var action = props.action,
+      getClusterAdminRoleFlow = props.model.getClusterAdminRoleFlow,
+      _a = props.filter,
+      clusterId = _a.clusterId,
+      regionId = _a.regionId,
+      platform = _a.platform,
+      onSuccess = props.onSuccess,
+      resourceType = props.resourceType;
+    var workflow = getClusterAdminRoleFlow;
+    var workFlowAction = action.getClusterAdminRole;
+    React.useEffect(function () {
+      if (workflow.operationState === ffRedux.OperationState.Done && ffRedux.isSuccessWorkflow(workflow)) {
+        workFlowAction.reset();
+        if (typeof onSuccess === "function") {
+          onSuccess();
+        }
+      }
+    }, [workflow.operationState, onSuccess, workflow, workFlowAction]);
+    var cancel = function cancel() {
+      if (workflow.operationState === ffRedux.OperationState.Done) {
+        workFlowAction.reset();
+      } else {
+        workFlowAction.cancel();
+      }
+    };
+    var perform = function perform() {
+      // 提交操作
+      var params = {
+        id: uuid(),
+        platform: platform,
+        clusterId: clusterId,
+        clusterType: ClusterType.External
+      };
+      workFlowAction.start([params], regionId);
+      workFlowAction.perform();
+    };
+    var failed = workflow.operationState === ffRedux.OperationState.Done && !ffRedux.isSuccessWorkflow(workflow);
+    if (getClusterAdminRoleFlow.operationState === ffRedux.OperationState.Pending) {
+      return React__default.createElement("noscript", null);
+    }
+    return React__default.createElement(ModalMain.Modal, {
+      caption: i18n.t("获取集群Admin角色"),
+      disableEscape: true,
+      visible: true,
+      onClose: cancel
+    }, React__default.createElement(ModalMain.Modal.Body, null, React__default.createElement(i18n.Trans, null, React__default.createElement(teaComponent.Text, {
+      theme: "text",
+      parent: "p"
+    }, "\u5B50\u8D26\u6237\u5728CAM\u62E5\u6709AcquireClusterAdminRole Action\u6743\u9650\u4E4B\u540E\u53EF\u4EE5\u901A\u8FC7\u6B64\u65B9\u5F0F\u83B7\u53D6\u96C6\u7FA4Kubernetes RBAC\u7684tke:admin\u89D2\u8272"), React__default.createElement(teaComponent.Text, {
+      theme: "text",
+      parent: "p"
+    }, "\u70B9\u51FB\u786E\u5B9A\u4E4B\u540E\uFF0C\u540E\u53F0\u4F1A\u4E3A\u60A8\u521B\u5EFAtke:admin\u89D2\u8272\u7684ClusterRolebinding\uFF0C\u4E4B\u540E\u60A8\u5C06\u62E5\u6709\u6B64\u96C6\u7FA4\u5185\u8D44\u6E90\u7684\u7BA1\u7406\u5458\u6743\u9650\u3002")), failed && (ffComponent.isCamRefused(workflow.results[0].error) ? React__default.createElement(ffComponent.CamBox, {
+      message: workflow.results[0].error.message
+    }) : React__default.createElement(TipInfo, {
+      isForm: true,
+      type: "error"
+    }, getWorkflowError(workflow)))), React__default.createElement(ModalMain.Modal.Footer, null, React__default.createElement(teaComponent.Button, {
+      disabled: workflow.operationState === ffRedux.OperationState.Performing,
+      type: "primary",
+      onClick: perform
+    }, failed ? i18n.t("重试") : i18n.t("确定")), React__default.createElement(teaComponent.Button, {
+      onClick: cancel
+    }, i18n.t("取消"))));
+  };
+})(GetRbacAdminDialog || (GetRbacAdminDialog = {}));
+
+function RetryPanel(props) {
+  var _a = props.style,
+    style = _a === void 0 ? {} : _a,
+    action = props.action,
+    _b = props.loadingText,
+    loadingText = _b === void 0 ? i18n.t('加载失败') : _b,
+    _c = props.retryText,
+    retryText = _c === void 0 ? i18n.t('刷新重试') : _c,
+    _d = props.loadingTextTheme,
+    loadingTextTheme = _d === void 0 ? 'danger' : _d;
+  return React__default.createElement("div", {
+    style: tslib.__assign({
+      width: '100%',
+      display: 'flex',
+      alignItems: 'center'
+    }, style)
+  }, React__default.createElement(teaComponent.Text, {
+    theme: loadingTextTheme,
+    className: 'tea-mr-2n'
+  }, loadingText), React__default.createElement(teaComponent.Button, {
+    type: "link",
+    onClick: function onClick() {
+      action && action();
+    }
+  }, retryText));
+}
+
+var initRecords = [{
+  id: uuid(),
+  key: '',
+  value: ''
+}];
+var MapField = function MapField(_a) {
+  var plan = _a.plan,
+    onChange = _a.onChange;
+  var _b = React.useState(initRecords),
+    records = _b[0],
+    setRecords = _b[1];
+  React.useEffect(function () {
+    onChange && onChange({
+      field: plan === null || plan === void 0 ? void 0 : plan.name,
+      value: records
+    });
+  }, [records]);
+  var _delete = function _delete(id) {
+    setRecords(records === null || records === void 0 ? void 0 : records.filter(function (item) {
+      return (item === null || item === void 0 ? void 0 : item.id) !== id;
+    }));
+  };
+  var _add = function _add() {
+    var newItem = {
+      id: uuid(),
+      key: '',
+      value: ''
+    };
+    setRecords(records === null || records === void 0 ? void 0 : records.concat([newItem]));
+  };
+  var _update = function _update(fieldName, selectItem, value) {
+    if (value === void 0) {
+      value = '';
+    }
+    var newRecords = records === null || records === void 0 ? void 0 : records.map(function (item) {
+      var _a;
+      return tslib.__assign(tslib.__assign({}, item), (_a = {}, _a[fieldName] = (item === null || item === void 0 ? void 0 : item.id) === (selectItem === null || selectItem === void 0 ? void 0 : selectItem.id) ? value : item === null || item === void 0 ? void 0 : item[fieldName], _a));
+    });
+    setRecords(newRecords);
+  };
+  return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Table, {
+    bordered: true,
+    recordKey: "id",
+    columns: [{
+      key: "key",
+      header: 'Key',
+      render: function render(item) {
+        return React__default.createElement(teaComponent.Input, {
+          value: item === null || item === void 0 ? void 0 : item.key,
+          onChange: function onChange(value) {
+            _update('key', item, value);
+          }
+        });
+      }
+    }, {
+      key: "value",
+      header: 'Value',
+      render: function render(item) {
+        return React__default.createElement(teaComponent.Input, {
+          value: item === null || item === void 0 ? void 0 : item.value,
+          onChange: function onChange(value) {
+            _update('value', item, value);
+          }
+        });
+      }
+    }, {
+      key: "operate",
+      header: '操作',
+      render: function render(item) {
+        return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Button, {
+          type: "link",
+          onClick: function onClick() {
+            _delete(item === null || item === void 0 ? void 0 : item.id);
+          }
+        }, i18n.t('删除')));
+      }
+    }],
+    records: records
+  }), React__default.createElement(teaComponent.Button, {
+    onClick: _add,
+    type: 'link',
+    className: 'tea-mt-2n'
+  }, i18n.t('添加配置')));
+};
+
+function UpdateResource(props) {
+  var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
+  var _p = props.base,
+    platform = _p.platform,
+    isI18n = _p.isI18n,
+    route = _p.route,
+    _q = props.list,
+    services = _q.services,
+    servicePlanEdit = _q.servicePlanEdit,
+    updateResourceWorkflow = _q.updateResourceWorkflow,
+    resourceDetail = props.detail.resourceDetail,
+    actions = props.actions;
+  var servicename = (route === null || route === void 0 ? void 0 : route.queries).servicename;
+  var instanceParamsFields = (_b = (_a = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.instanceSchema;
+  var reduceCreateServiceResourceDataJson = function reduceCreateServiceResourceDataJson(data) {
+    var _a, _b, _c, _d, _e, _f;
+    var _g = data === null || data === void 0 ? void 0 : data.formData,
+      instanceName = _g.instanceName,
+      description = _g.description,
+      clusterId = _g.clusterId;
+    //拼接中间件实例参数部分属性值
+    var parameters = (_c = (_b = (_a = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.instanceSchema) === null || _c === void 0 ? void 0 : _c.reduce(function (pre, cur) {
+      var _a;
+      var _b, _c, _d, _e;
+      // return Object.assign(pre,!!data?.formData?.[cur?.name] ? {[cur?.name]:data?.formData?.[cur?.name] + (data?.formData?.['unitMap']?.[cur?.name] ?? '')} : {});
+      return Object.assign(pre, ((_b = data === null || data === void 0 ? void 0 : data.formData) === null || _b === void 0 ? void 0 : _b[cur === null || cur === void 0 ? void 0 : cur.name]) !== '' ? (_a = {}, _a[cur === null || cur === void 0 ? void 0 : cur.name] = formatPlanSchemaSubmitData(cur, (_c = data === null || data === void 0 ? void 0 : data.formData) === null || _c === void 0 ? void 0 : _c[cur === null || cur === void 0 ? void 0 : cur.name], (_e = (_d = data === null || data === void 0 ? void 0 : data.formData) === null || _d === void 0 ? void 0 : _d['unitMap']) === null || _e === void 0 ? void 0 : _e[cur === null || cur === void 0 ? void 0 : cur.name]), _a) : {});
+    }, {});
+    var json = {
+      id: uuid(),
+      apiVersion: 'infra.tce.io/v1',
+      kind: (_d = ResourceTypeMap === null || ResourceTypeMap === void 0 ? void 0 : ResourceTypeMap[ResourceTypeEnum.ServicePlan]) === null || _d === void 0 ? void 0 : _d.resourceKind,
+      metadata: {
+        labels: {
+          'ssm.infra.tce.io/owner': ServicePlanTypeEnum.Custom
+        },
+        name: instanceName,
+        namespace: DefaultNamespace
+      },
+      spec: {
+        serviceClass: ((_e = services === null || services === void 0 ? void 0 : services.selection) === null || _e === void 0 ? void 0 : _e.name) || ((_f = route === null || route === void 0 ? void 0 : route.queries) === null || _f === void 0 ? void 0 : _f.servicename),
+        metadata: tslib.__assign({}, parameters)
+      }
+    };
+    if (description) {
+      json.spec['description'] = description;
+    }
+    return JSON.stringify(json);
+  };
+  var _submit = function _submit() {
+    var _a, _b, _c, _d;
+    var formData = servicePlanEdit.formData;
+    actions.create.validatePlan((_b = (_a = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.instanceSchema);
+    if (_validatePlan(servicePlanEdit, (_d = (_c = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.instanceSchema)) {
+      var params = {
+        platform: platform,
+        regionId: HubCluster === null || HubCluster === void 0 ? void 0 : HubCluster.DefaultRegion,
+        clusterId: formData === null || formData === void 0 ? void 0 : formData.clusterId,
+        jsonData: reduceCreateServiceResourceDataJson(servicePlanEdit),
+        resourceType: ResourceTypeEnum.ServicePlan,
+        instanceName: formData === null || formData === void 0 ? void 0 : formData.instanceName
+      };
+      actions.create.updateResource.start([params], HubCluster === null || HubCluster === void 0 ? void 0 : HubCluster.DefaultRegion);
+      actions.create.updateResource.perform();
+    }
+  };
+  var _cancel = function _cancel() {
+    actions.create.updateResource.reset();
+    actions.list.showCreateResourceDialog(false);
+  };
+  var loading = !((_c = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _c === void 0 ? void 0 : _c.fetched) || (resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object.fetchState) === ffRedux.FetchState.Fetching;
+  var loadSchemaFailed = ((_d = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _d === void 0 ? void 0 : _d.error) || ((_e = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _e === void 0 ? void 0 : _e.fetchState) === ffRedux.FetchState.Failed;
+  var isSubmitting = (updateResourceWorkflow === null || updateResourceWorkflow === void 0 ? void 0 : updateResourceWorkflow.operationState) === ffRedux.OperationState.Performing;
+  var failed = updateResourceWorkflow.operationState === ffRedux.OperationState.Done && !ffRedux.isSuccessWorkflow(updateResourceWorkflow);
+  return React__default.createElement(ffComponent.FormPanel, {
+    isNeedCard: false
+  }, loading && React__default.createElement(LoadingPanel, null), !loading && loadSchemaFailed && React__default.createElement(RetryPanel, {
+    style: {
+      minWidth: 150
+    },
+    loadingText: i18n.t('加载失败'),
+    action: (_g = (_f = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _f === void 0 ? void 0 : _f.instanceDetail) === null || _g === void 0 ? void 0 : _g.fetch
+  }), !loading && !loadSchemaFailed && React__default.createElement(React__default.Fragment, null, React__default.createElement(ffComponent.FormPanel.Item, {
+    label: React__default.createElement(teaComponent.Text, {
+      style: {
+        display: 'flex',
+        alignItems: 'center'
+      }
+    }, React__default.createElement(teaComponent.Text, null, i18n.t('规格名称')), React__default.createElement(teaComponent.Text, {
+      className: 'text-danger tea-pt-1n'
+    }, "*")),
+    validator: (_h = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.validator) === null || _h === void 0 ? void 0 : _h['instanceName'],
+    input: {
+      value: (_j = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _j === void 0 ? void 0 : _j['instanceName'],
+      onChange: function onChange(e) {
+        var _a;
+        (_a = actions === null || actions === void 0 ? void 0 : actions.create) === null || _a === void 0 ? void 0 : _a.updatePlan('instanceName', e);
+      },
+      onBlur: function onBlur() {},
+      disabled: true
+    }
+  }), React__default.createElement(ffComponent.FormPanel.Item, {
+    label: i18n.t('中间件类型'),
+    text: true
+  }, React__default.createElement(ffComponent.FormPanel.Text, null, i18n.t('{{name}}', {
+    name: (_k = services === null || services === void 0 ? void 0 : services.selection) === null || _k === void 0 ? void 0 : _k.name
+  }))), React__default.createElement(ffComponent.FormPanel.Item, {
+    label: i18n.t('目标集群:')
+  }, React__default.createElement(ffComponent.FormPanel.Text, null, i18n.t('{{clusterId}}', {
+    clusterId: (_l = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _l === void 0 ? void 0 : _l['clusterId']
+  }))), React__default.createElement(ffComponent.FormPanel.Item, {
+    label: i18n.t('描述'),
+    validator: (_m = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.validator) === null || _m === void 0 ? void 0 : _m['description'],
+    input: {
+      value: (_o = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _o === void 0 ? void 0 : _o['description'],
+      onChange: function onChange(e) {
+        var _a;
+        (_a = actions === null || actions === void 0 ? void 0 : actions.create) === null || _a === void 0 ? void 0 : _a.updatePlan('description', e);
+      },
+      onBlur: function onBlur() {}
+    }
+  }), instanceParamsFields === null || instanceParamsFields === void 0 ? void 0 : instanceParamsFields.map(function (item, index) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+    var _l = (_b = (_a = item.description) === null || _a === void 0 ? void 0 : _a.split('---')) !== null && _b !== void 0 ? _b : [],
+      english = _l[0],
+      chinese = _l[1];
+    return React__default.createElement(ffComponent.FormPanel.Item, {
+      label: React__default.createElement(teaComponent.Text, {
+        style: {
+          display: 'flex',
+          alignItems: 'center'
+        }
+      }, React__default.createElement(teaComponent.Text, null, i18n.t('{{name}}', {
+        name: prefixForSchema(item, servicename) + (item === null || item === void 0 ? void 0 : item.label) + suffixUnitForSchema(item)
+      })), React__default.createElement(teaComponent.Icon, {
+        type: "info",
+        tooltip: isI18n ? english : chinese
+      }), !(item === null || item === void 0 ? void 0 : item.optional) && React__default.createElement(teaComponent.Text, {
+        className: 'text-danger tea-pt-1n'
+      }, "*")),
+      key: "".concat(item === null || item === void 0 ? void 0 : item.name).concat(index),
+      validator: (_c = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.validator) === null || _c === void 0 ? void 0 : _c[item === null || item === void 0 ? void 0 : item.name]
+    }, getFormItemType(item) === FormItemType.Select && React__default.createElement(ffComponent.FormPanel.Select, {
+      placeholder: i18n.t('{{title}}', {
+        title: '请选择' + (item === null || item === void 0 ? void 0 : item.label)
+      }),
+      options: (_d = item === null || item === void 0 ? void 0 : item.candidates) === null || _d === void 0 ? void 0 : _d.map(function (candidate) {
+        return {
+          value: candidate,
+          text: candidate
+        };
+      }),
+      value: (_e = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _e === void 0 ? void 0 : _e[item === null || item === void 0 ? void 0 : item.name],
+      onChange: function onChange(e) {
+        actions === null || actions === void 0 ? void 0 : actions.create.updatePlan(item === null || item === void 0 ? void 0 : item.name, e);
+      }
+    }), getFormItemType(item) === FormItemType.Switch && React__default.createElement(teaComponent.Switch, {
+      value: (_f = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _f === void 0 ? void 0 : _f[item === null || item === void 0 ? void 0 : item.name],
+      onChange: function onChange(e) {
+        actions === null || actions === void 0 ? void 0 : actions.create.updatePlan(item === null || item === void 0 ? void 0 : item.name, e);
+      }
+    }), getFormItemType(item) === FormItemType.Input && React__default.createElement(teaComponent.Input, {
+      value: (_g = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _g === void 0 ? void 0 : _g[item === null || item === void 0 ? void 0 : item.name],
+      placeholder: i18n.t('{{title}}', {
+        title: '请输入' + (item === null || item === void 0 ? void 0 : item.label)
+      }),
+      onChange: function onChange(e) {
+        actions === null || actions === void 0 ? void 0 : actions.create.updatePlan(item === null || item === void 0 ? void 0 : item.name, e);
+      }
+    }), getFormItemType(item) === FormItemType.Paasword && React__default.createElement(InputPassword.InputPassword, {
+      value: (_h = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _h === void 0 ? void 0 : _h[item === null || item === void 0 ? void 0 : item.name],
+      placeholder: i18n.t('{{title}}', {
+        title: '请输入' + (item === null || item === void 0 ? void 0 : item.label)
+      }),
+      onChange: function onChange(e) {
+        actions === null || actions === void 0 ? void 0 : actions.create.updatePlan(item === null || item === void 0 ? void 0 : item.name, e);
+      }
+    }), getFormItemType(item) === FormItemType.MapField && React__default.createElement(MapField, {
+      plan: item,
+      onChange: function onChange(_a) {
+        var field = _a.field,
+          value = _a.value;
+        actions === null || actions === void 0 ? void 0 : actions.create.updatePlan(item === null || item === void 0 ? void 0 : item.name, JSON.stringify(value === null || value === void 0 ? void 0 : value.reduce(function (pre, cur) {
+          var _a;
+          return tslib.__assign(tslib.__assign({}, pre), (_a = {}, _a[cur === null || cur === void 0 ? void 0 : cur.key] = cur === null || cur === void 0 ? void 0 : cur.value, _a));
+        }, {})));
+      }
+    }), showUnitOptions(item) && React__default.createElement(ffComponent.FormPanel.Select, {
+      size: 's',
+      className: 'tea-ml-2n',
+      placeholder: i18n.t('{{title}}', {
+        title: '请选择unit'
+      }),
+      options: getUnitOptions(item),
+      value: (_k = (_j = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _j === void 0 ? void 0 : _j['unitMap']) === null || _k === void 0 ? void 0 : _k[item === null || item === void 0 ? void 0 : item.name],
+      onChange: function onChange(e) {
+        var _a;
+        var _b;
+        actions === null || actions === void 0 ? void 0 : actions.create.updatePlan('unitMap', tslib.__assign(tslib.__assign({}, (_b = servicePlanEdit === null || servicePlanEdit === void 0 ? void 0 : servicePlanEdit.formData) === null || _b === void 0 ? void 0 : _b['unitMap']), (_a = {}, _a[item === null || item === void 0 ? void 0 : item.name] = e, _a)));
+      }
+    }));
+  }), React__default.createElement(ffComponent.FormPanel.Item, {
+    className: 'tea-mr-2n'
+  }, React__default.createElement(teaComponent.Col, {
+    span: 24
+  }, React__default.createElement(teaComponent.Button, {
+    type: 'primary',
+    className: 'tea-mr-2n',
+    onClick: _submit,
+    loading: isSubmitting,
+    disabled: isSubmitting
+  }, failed ? i18n.t('重试') : i18n.t('确定')), React__default.createElement(teaComponent.Button, {
+    onClick: _cancel
+  }, i18n.t('取消')), React__default.createElement(TipInfo, {
+    isShow: failed,
+    type: "error",
+    isForm: true
+  }, getWorkflowError(updateResourceWorkflow))))));
+}
+
+function ServiceCreateDialog(props) {
+  var _a, _b;
+  var showCreateResourceDialog = props.list.showCreateResourceDialog,
+    resourceDetail = props.detail.resourceDetail,
+    actions = props.actions,
+    _c = props.mode,
+    mode = _c === void 0 ? 'edit' : _c;
+  var loading = ((_a = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _a === void 0 ? void 0 : _a.loading) || (resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object.fetchState) === ffRedux.FetchState.Fetching;
+  var failed = (resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object.fetchState) === ffRedux.FetchState.Failed;
+  var resource = (_b = resourceDetail === null || resourceDetail === void 0 ? void 0 : resourceDetail.object) === null || _b === void 0 ? void 0 : _b.data;
+  return React__default.createElement(teaComponent.Modal, {
+    visible: showCreateResourceDialog,
+    caption: mode === 'create' ? i18n.t('新建规格') : i18n.t('编辑规格'),
+    onClose: function onClose() {
+      actions.list.showCreateResourceDialog(false);
+    },
+    size: 'm'
+  }, React__default.createElement(teaComponent.Modal.Body, null, React__default.createElement(UpdateResource, tslib.__assign({}, props))));
+}
+
+var routerSea$1 = seajs.require('router');
+function ServiceDetailHeader(props) {
+  var _a, _b, _c, _d, _e, _f;
+  var services = reactRedux.useSelector(function (state) {
+    var _a;
+    return (_a = state === null || state === void 0 ? void 0 : state.list) === null || _a === void 0 ? void 0 : _a.services;
+  });
+  var selectedTab = reactRedux.useSelector(function (state) {
+    var _a;
+    return (_a = state === null || state === void 0 ? void 0 : state.base) === null || _a === void 0 ? void 0 : _a.selectedTab;
+  });
+  var resource = reactRedux.useSelector(function (state) {
+    var _a;
+    return (_a = state === null || state === void 0 ? void 0 : state.list) === null || _a === void 0 ? void 0 : _a.serviceResources;
+  });
+  var platform = reactRedux.useSelector(function (state) {
+    var _a;
+    return (_a = state === null || state === void 0 ? void 0 : state.base) === null || _a === void 0 ? void 0 : _a.platform;
+  });
+  var actions = props.actions;
+  var _g = React.useState([]),
+    searchBoxValues = _g[0],
+    setSearchBoxValues = _g[1];
+  var _h = React.useState(0),
+    searchBoxLength = _h[0],
+    setSearchBoxLength = _h[1];
+  var onCreate = function onCreate() {
+    var _a, _b, _c, _d, _e;
+    (_b = (_a = actions === null || actions === void 0 ? void 0 : actions.list) === null || _a === void 0 ? void 0 : _a.serviceResources) === null || _b === void 0 ? void 0 : _b.clearPolling();
+    if (selectedTab === ResourceTypeEnum.ServiceResource) {
+      router.navigate({
+        sub: 'create',
+        tab: ResourceTypeEnum.ServiceResource
+      }, {
+        servicename: (_c = services === null || services === void 0 ? void 0 : services.selection) === null || _c === void 0 ? void 0 : _c.name,
+        resourceType: ResourceTypeEnum.ServiceResource,
+        mode: "create"
+      });
+    } else if (selectedTab === (ResourceTypeEnum === null || ResourceTypeEnum === void 0 ? void 0 : ResourceTypeEnum.ServicePlan)) {
+      router.navigate({
+        sub: 'create',
+        tab: ResourceTypeEnum.ServicePlan
+      }, {
+        servicename: (_d = services === null || services === void 0 ? void 0 : services.selection) === null || _d === void 0 ? void 0 : _d.name,
+        resourceType: ResourceTypeEnum.ServicePlan,
+        mode: "create"
+      });
+    } else {
+      router.navigate({
+        sub: 'create',
+        tab: ResourceTypeEnum.ServiceResource
+      }, {
+        servicename: (_e = services === null || services === void 0 ? void 0 : services.selection) === null || _e === void 0 ? void 0 : _e.name,
+        resourceType: ResourceTypeEnum.ServiceResource,
+        mode: "create"
+      });
+    }
+  };
+  var btnText = selectedTab === ResourceTypeEnum.ServiceResource ? i18n.t('创建中间件实例') : i18n.t('创建规格');
+  /** 生成手动刷新按钮 */
+  var _renderManualRenew = function _renderManualRenew() {
+    var loading = resource.list.loading || resource.list.fetchState === ffRedux.FetchState.Fetching;
+    return  React__default.createElement(teaComponent.Button, {
+      icon: "refresh",
+      disabled: loading,
+      onClick: function onClick(e) {
+        // actions.list.serviceResources.reset();
+        actions.list.serviceResources.fetch({
+          noCache: true
+        });
+      },
+      title: i18n.t('刷新')
+    }) ;
+  };
+  /** 生成搜索框 */
+  var _renderTagSearchBox = function _renderTagSearchBox() {
+    // tagSearch的过滤选项
+    var attributes = [{
+      type: 'input',
+      key: 'resourceName',
+      name: i18n.t('名称')
+    }];
+    var values = resource.query.search ? searchBoxValues : [];
+    return  React__default.createElement("div", {
+      style: {
+        width: 350,
+        display: 'inline-block'
+      }
+    }, React__default.createElement(teaComponent.TagSearchBox, {
+      className: "myTagSearchBox",
+      attributes: attributes,
+      value: values,
+      onChange: function onChange(tags) {
+        _handleClickForTagSearch(tags);
+      }
+    })) ;
+  };
+  /** 搜索框的操作，不同的搜索进行相对应的操作 */
+  var _handleClickForTagSearch = function _handleClickForTagSearch(tags) {
+    // 这里是控制tagSearch的展示
+    setSearchBoxValues(tags);
+    setSearchBoxLength(tags.length);
+    // 如果检测到 tags的长度变化，并且key为 resourceName 去掉了，则清除搜索条件
+    if (tags.length === 0 || tags.length === 1 && resource.query.search && tags[0].attr && tags[0].attr.key !== 'resourceName') {
+      actions.list.serviceResources.changeKeyword('');
+      actions.list.serviceResources.performSearch('');
+    }
+    tags.forEach(function (tagItem) {
+      var attrKey = tagItem.attr ? tagItem.attr.key : null;
+      if (attrKey === 'resourceName' || attrKey === null) {
+        var search = tagItem.values[0].name;
+        actions.list.serviceResources.changeKeyword(search);
+        actions.list.serviceResources.performSearch(search);
+      }
+    });
+  };
+  var isDisabledCreate = !((_b = (_a = services === null || services === void 0 ? void 0 : services.selection) === null || _a === void 0 ? void 0 : _a.clusters) === null || _b === void 0 ? void 0 : _b.length);
+  var title = !((_c = services === null || services === void 0 ? void 0 : services.selection) === null || _c === void 0 ? void 0 : _c.name) ? i18n.t('请您选择左侧的服务') : !((_e = (_d = services === null || services === void 0 ? void 0 : services.selection) === null || _d === void 0 ? void 0 : _d.clusters) === null || _e === void 0 ? void 0 : _e.length) ? i18n.t('{{title}}', {
+    title: "".concat((_f = services === null || services === void 0 ? void 0 : services.selection) === null || _f === void 0 ? void 0 : _f.name, "\u5C1A\u672A\u5728\u76EE\u6807\u96C6\u7FA4\u5F00\u542F\uFF0C\u8BF7\u60A8\u524D\u5F80\u5206\u5E03\u5F0F\u4E91\u4E2D\u5FC3\u6982\u89C8\u9875\u5F00\u542F")
+  }) : null;
+  return React__default.createElement("div", {
+    className: 'tea-pb-5n'
+  }, React__default.createElement(teaComponent.Justify, {
+    left: React__default.createElement(teaComponent.Button, {
+      type: "primary",
+      onClick: onCreate,
+      disabled: isDisabledCreate,
+      title: title
+    }, btnText),
+    right: React__default.createElement(React__default.Fragment, null, _renderTagSearchBox(), _renderManualRenew())
+  }));
+}
+
+/*
+ * @File: 这是文件的描述
+ * @Description: 这是文件的描述
+ * @Version: 1.0
+ * @Autor: brycewwang
+ * @Date: 2022-06-25 20:24:07
+ * @LastEditors: brycewwang
+ * @LastEditTime: 2022-06-28 20:24:57
+ */
+function dateFormatter(date, format) {
+  if (date.toString() === 'Invalid Date') {
+    return '-';
+  }
+  var o = {
+    /**
+     * 完整年份
+     * @example 2015 2016 2017 2018
+     */
+    YYYY: function YYYY() {
+      return date.getFullYear().toString();
+    },
+    /**
+     * 年份后两位
+     * @example 15 16 17 18
+     */
+    YY: function YY() {
+      return this.YYYY().slice(-2);
+    },
+    /**
+     * 月份，保持两位数
+     * @example 01 02 03 .... 11 12
+     */
+    MM: function MM() {
+      return leftPad(this.M(), 2);
+    },
+    /**
+     * 月份
+     * @example 1 2 3 .... 11 12
+     */
+    M: function M() {
+      return (date.getMonth() + 1).toString();
+    },
+    /**
+     * 每月中的日期，保持两位数
+     * @example 01 02 03 .... 30 31
+     */
+    DD: function DD() {
+      return leftPad(this.D(), 2);
+    },
+    /**
+     * 每月中的日期
+     * @example 1 2 3 .... 30 31
+     */
+    D: function D() {
+      return date.getDate().toString();
+    },
+    /**
+     * 小时，24 小时制，保持两位数
+     * @example 00 01 02 .... 22 23
+     */
+    HH: function HH() {
+      return leftPad(this.H(), 2);
+    },
+    /**
+     * 小时，24 小时制
+     * @example 0 1 2 .... 22 23
+     */
+    H: function H() {
+      return date.getHours().toString();
+    },
+    /**
+     * 小时，12 小时制，保持两位数
+     * @example 00 01 02 .... 22 23
+     */
+    hh: function hh() {
+      return leftPad(this.h(), 2);
+    },
+    /**
+     * 小时，12 小时制
+     * @example 0 1 2 .... 22 23
+     */
+    h: function h() {
+      var h = (date.getHours() % 12).toString();
+      return h === '0' ? '12' : h;
+    },
+    /**
+     * 分钟，保持两位数
+     * @example 00 01 02 .... 59 60
+     */
+    mm: function mm() {
+      return leftPad(this.m(), 2);
+    },
+    /**
+     * 分钟
+     * @example 0 1 2 .... 59 60
+     */
+    m: function m() {
+      return date.getMinutes().toString();
+    },
+    /**
+     * 秒，保持两位数
+     * @example 00 01 02 .... 59 60
+     */
+    ss: function ss() {
+      return leftPad(this.s(), 2);
+    },
+    /**
+     * 秒
+     * @example 0 1 2 .... 59 60
+     */
+    s: function s() {
+      return date.getSeconds().toString();
+    }
+  };
+  return Object.keys(o).reduce(function (pre, cur) {
+    return pre.replace(new RegExp(cur), function (match) {
+      /* eslint-disable */
+      return o[match].call(o);
+      /* eslint-enable */
+    });
+  }, format);
+}
+function leftPad(num, width, c) {
+  if (c === void 0) {
+    c = '0';
+  }
+  var numStr = num.toString();
+  var padWidth = width - numStr.length;
+  return padWidth > 0 ? new Array(padWidth + 1).join(c.toString()) + numStr : numStr;
+}
+
 function ServiceDetailTable(props) {
   var _this = this;
   var _a, _b, _c;
@@ -5818,6 +6709,7 @@ var Create;
   Create["UPDATE_SERVICE_RESOURCE"] = "UPDATE_SERVICE_RESOURCE";
   Create["SERVICE_PLAN_EDIT"] = "SERVICE_PLAN_EDIT";
   Create["CREATE_SERVICE_INSTANCE"] = "CREATE_SERVICE_INSTANCE";
+  Create["BackupNowWorkflow"] = "BackupNowWorkflow";
 })(Create || (Create = {}));
 var List;
 (function (List) {
@@ -5853,6 +6745,7 @@ var Detail;
   Detail["FETCH_SERVICE_INSTANCE_SCHEMA"] = "FETCH_SERVICE_INSTANCE_SCHEMA";
   Detail["SELECT_DETAIL_RESOURCE"] = "SELECT_DETAIL_RESOURCE";
   Detail["FETCH_BACKUP_STRATEGY"] = "FETCH_BACKUP_STRATEGY";
+  Detail["BackupStrategyMedium"] = "BackupStrategyMedium";
 })(Detail || (Detail = {}));
 prefixPageId(Base, 'Base');
 prefixPageId(Create, 'Create');
@@ -5866,7 +6759,7 @@ var ActionType = {
 };
 
 var _a$6;
-var _b$5;
+var _b$5, _c$3;
 var detailActions = {
   selectDetailTab: function selectDetailTab(tabId) {
     return function (dispatch, getState) {
@@ -6000,7 +6893,7 @@ var detailActions = {
                 instanceSchema: (_f = instanceSchema === null || instanceSchema === void 0 ? void 0 : instanceSchema.filter(function (item) {
                   var _a;
                   if (item === null || item === void 0 ? void 0 : item.enabledCondition) {
-                    var _b = (_a = item === null || item === void 0 ? void 0 : item.enabledCondition) === null || _a === void 0 ? void 0 : _a.split('=='),
+                    var _b = (_a = item === null || item === void 0 ? void 0 : item.enabledCondition) === null || _a === void 0 ? void 0 : _a.split("=="),
                       conditionKey_1 = _b[0],
                       conditionValue = _b[1];
                     var values = instanceSchema === null || instanceSchema === void 0 ? void 0 : instanceSchema.find(function (schema) {
@@ -6013,17 +6906,17 @@ var detailActions = {
                   }
                 }).map(function (item) {
                   var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
-                  var schemaValue = '';
+                  var schemaValue = "";
                   var schemaName = item === null || item === void 0 ? void 0 : item.name;
                   switch (resourceType) {
                     case ResourceTypeEnum.ServiceResource:
-                      schemaValue = ((_a = resource === null || resource === void 0 ? void 0 : resource.status) === null || _a === void 0 ? void 0 : _a.metadata) && schemaName || !isEmpty((_b = resource === null || resource === void 0 ? void 0 : resource.spec) === null || _b === void 0 ? void 0 : _b.parameters) ? formatPlanSchemaValue(((_d = (_c = resource === null || resource === void 0 ? void 0 : resource.status) === null || _c === void 0 ? void 0 : _c.metadata) === null || _d === void 0 ? void 0 : _d[schemaName]) || ((_e = resource === null || resource === void 0 ? void 0 : resource.spec) === null || _e === void 0 ? void 0 : _e.parameters[schemaName])) || '-' : '';
+                      schemaValue = ((_a = resource === null || resource === void 0 ? void 0 : resource.status) === null || _a === void 0 ? void 0 : _a.metadata) && schemaName || !isEmpty((_b = resource === null || resource === void 0 ? void 0 : resource.spec) === null || _b === void 0 ? void 0 : _b.parameters) ? formatPlanSchemaValue(((_d = (_c = resource === null || resource === void 0 ? void 0 : resource.status) === null || _c === void 0 ? void 0 : _c.metadata) === null || _d === void 0 ? void 0 : _d[schemaName]) || ((_e = resource === null || resource === void 0 ? void 0 : resource.spec) === null || _e === void 0 ? void 0 : _e.parameters[schemaName])) || "-" : "";
                       break;
                     case ResourceTypeEnum.ServiceBinding:
-                      schemaValue = (secretResource === null || secretResource === void 0 ? void 0 : secretResource.data) && schemaName && ((_f = secretResource === null || secretResource === void 0 ? void 0 : secretResource.data) === null || _f === void 0 ? void 0 : _f[schemaName]) ? ((_h = jsBase64.Base64.atob((_g = secretResource === null || secretResource === void 0 ? void 0 : secretResource.data) === null || _g === void 0 ? void 0 : _g[schemaName])) === null || _h === void 0 ? void 0 : _h.toString()) || '-' : '';
+                      schemaValue = (secretResource === null || secretResource === void 0 ? void 0 : secretResource.data) && schemaName && ((_f = secretResource === null || secretResource === void 0 ? void 0 : secretResource.data) === null || _f === void 0 ? void 0 : _f[schemaName]) ? ((_h = jsBase64.Base64.atob((_g = secretResource === null || secretResource === void 0 ? void 0 : secretResource.data) === null || _g === void 0 ? void 0 : _g[schemaName])) === null || _h === void 0 ? void 0 : _h.toString()) || "-" : "";
                       break;
                     default:
-                      schemaValue = ((_j = resource === null || resource === void 0 ? void 0 : resource.spec) === null || _j === void 0 ? void 0 : _j.metadata) && schemaName ? formatPlanSchemaValue((_m = (_l = (_k = resource === null || resource === void 0 ? void 0 : resource.spec) === null || _k === void 0 ? void 0 : _k.metadata) === null || _l === void 0 ? void 0 : _l[schemaName]) === null || _m === void 0 ? void 0 : _m.toString()) || '-' : '';
+                      schemaValue = ((_j = resource === null || resource === void 0 ? void 0 : resource.spec) === null || _j === void 0 ? void 0 : _j.metadata) && schemaName ? formatPlanSchemaValue((_m = (_l = (_k = resource === null || resource === void 0 ? void 0 : resource.spec) === null || _k === void 0 ? void 0 : _k.metadata) === null || _l === void 0 ? void 0 : _l[schemaName]) === null || _m === void 0 ? void 0 : _m.toString()) || "-" : "";
                       break;
                   }
                   return tslib.__assign(tslib.__assign({}, item), {
@@ -6178,7 +7071,7 @@ var detailActions = {
           dispatch(createActions.createResource.start([filter], filter === null || filter === void 0 ? void 0 : filter.regionId));
         }
       } else {
-        bridge.tips.error(i18n.t('{{msg}}', {
+        bridge.tips.error(i18n.t("{{msg}}", {
           msg: ErrorMsgEnum === null || ErrorMsgEnum === void 0 ? void 0 : ErrorMsgEnum.COS_Resource_Not_Found
         }));
       }
@@ -6242,7 +7135,7 @@ var detailActions = {
             validator: (_a = Object.keys(formData)) === null || _a === void 0 ? void 0 : _a.reduce(function (pre, key) {
               var _a;
               return tslib.__assign(tslib.__assign({}, pre), (_a = {}, _a[key] = {
-                message: '',
+                message: "",
                 status: ffValidator.ValidatorStatusEnum === null || ffValidator.ValidatorStatusEnum === void 0 ? void 0 : ffValidator.ValidatorStatusEnum.Success
               }, _a));
             }, {}),
@@ -6282,6 +7175,13 @@ var detailActions = {
     };
   },
 
+  mediums: MediumSelectPanel.createActions({
+    pageName: (_b$5 = ActionType === null || ActionType === void 0 ? void 0 : ActionType.Detail) === null || _b$5 === void 0 ? void 0 : _b$5.BackupStrategyMedium,
+    getRecord: function getRecord(getState) {
+      var _a, _b;
+      return (_b = (_a = getState()) === null || _a === void 0 ? void 0 : _a.detail) === null || _b === void 0 ? void 0 : _b.mediums;
+    }
+  }),
   validateAll: function validateAll() {
     return function (dispatch, getState) {
       return tslib.__awaiter(void 0, void 0, void 0, function () {
@@ -6332,7 +7232,7 @@ var detailActions = {
   },
 
   openInstanceConsole: ffRedux.generateWorkflowActionCreator({
-    actionType: (_b$5 = ActionType.Detail) === null || _b$5 === void 0 ? void 0 : _b$5.OPEN_CONSOLE_WORKFLOW,
+    actionType: (_c$3 = ActionType.Detail) === null || _c$3 === void 0 ? void 0 : _c$3.OPEN_CONSOLE_WORKFLOW,
     workflowStateLocator: function workflowStateLocator(state) {
       var _a;
       return (_a = state.detail) === null || _a === void 0 ? void 0 : _a.openConsoleWorkflow;
@@ -6507,13 +7407,15 @@ var detailActions = {
             case 1:
               response = _o.sent();
               if (response) {
-                cronArr = (_f = (_e = (_d = (_c = response === null || response === void 0 ? void 0 : response.spec) === null || _c === void 0 ? void 0 : _c.trigger) === null || _d === void 0 ? void 0 : _d.params) === null || _e === void 0 ? void 0 : _e.cron) === null || _f === void 0 ? void 0 : _f.split(' ');
+                cronArr = (_f = (_e = (_d = (_c = response === null || response === void 0 ? void 0 : response.spec) === null || _c === void 0 ? void 0 : _c.trigger) === null || _d === void 0 ? void 0 : _d.params) === null || _e === void 0 ? void 0 : _e.cron) === null || _f === void 0 ? void 0 : _f.split(" ");
                 result = {
                   enable: (_g = response === null || response === void 0 ? void 0 : response.spec) === null || _g === void 0 ? void 0 : _g.enabled,
                   backupReserveDay: (_j = (_h = response === null || response === void 0 ? void 0 : response.spec) === null || _h === void 0 ? void 0 : _h.retain) === null || _j === void 0 ? void 0 : _j.days,
-                  backupDate: (_k = cronArr === null || cronArr === void 0 ? void 0 : cronArr[4]) === null || _k === void 0 ? void 0 : _k.split(','),
-                  backupTime: (_l = cronArr === null || cronArr === void 0 ? void 0 : cronArr[1]) === null || _l === void 0 ? void 0 : _l.split(','),
-                  name: (_m = response === null || response === void 0 ? void 0 : response.metadata) === null || _m === void 0 ? void 0 : _m.name
+                  backupDate: (_k = cronArr === null || cronArr === void 0 ? void 0 : cronArr[4]) === null || _k === void 0 ? void 0 : _k.split(","),
+                  backupTime: (_l = cronArr === null || cronArr === void 0 ? void 0 : cronArr[1]) === null || _l === void 0 ? void 0 : _l.split(","),
+                  name: (_m = response === null || response === void 0 ? void 0 : response.metadata) === null || _m === void 0 ? void 0 : _m.name,
+                  spec: response === null || response === void 0 ? void 0 : response.spec,
+                  metadata: response === null || response === void 0 ? void 0 : response.metadata
                 };
               }
               return [2 /*return*/, result];
@@ -6566,7 +7468,7 @@ var detailActions = {
   }
 };
 
-var _a$7, _b$6, _c$3;
+var _a$7, _b$6, _c$4, _d$2;
 var createActions = {
   updateInstanceEditSchema: function updateInstanceEditSchema(data) {
     return function (dispatch, getState) {
@@ -6794,7 +7696,7 @@ var createActions = {
           }, {
             servicename: (_d = route === null || route === void 0 ? void 0 : route.queries) === null || _d === void 0 ? void 0 : _d.servicename,
             resourceType: (_e = route === null || route === void 0 ? void 0 : route.queries) === null || _e === void 0 ? void 0 : _e.resourceType,
-            mode: "list"
+            mode: 'list'
           });
         }
         dispatch(createActions.createResource.reset());
@@ -6807,6 +7709,15 @@ var createActions = {
       });
     }, _a$7)
   }),
+  backupNowWorkflow: ffRedux.generateWorkflowActionCreator({
+    actionType: ActionType.Create.BackupNowWorkflow,
+    workflowStateLocator: function workflowStateLocator(state) {
+      var _a;
+      return (_a = state.list) === null || _a === void 0 ? void 0 : _a.backupNowWorkflow;
+    },
+    operationExecutor: createServiceResource,
+    after: (_b$6 = {}, _b$6[ffRedux.OperationTrigger.Done] = function (dispatch, getState) {}, _b$6)
+  }),
   updateResource: ffRedux.generateWorkflowActionCreator({
     actionType: ActionType.Create.CREATE_SERVICE_RESOURCE,
     workflowStateLocator: function workflowStateLocator(state) {
@@ -6814,7 +7725,7 @@ var createActions = {
       return (_a = state.list) === null || _a === void 0 ? void 0 : _a.updateResourceWorkflow;
     },
     operationExecutor: updateServiceResource,
-    after: (_b$6 = {}, _b$6[ffRedux.OperationTrigger.Done] = function (dispatch, getState) {
+    after: (_c$4 = {}, _c$4[ffRedux.OperationTrigger.Done] = function (dispatch, getState) {
       var _a, _b, _c;
       var updateResourceWorkflow = getState().list.updateResourceWorkflow;
       if (ffRedux.isSuccessWorkflow(updateResourceWorkflow)) {
@@ -6828,7 +7739,7 @@ var createActions = {
           dispatch(listActions.serviceResources.fetch());
         }
       }
-    }, _b$6)
+    }, _c$4)
   }),
   backupResourceNow: function backupResourceNow(params) {
     return function (dispatch, getState) {
@@ -6915,7 +7826,7 @@ var createActions = {
       });
     },
 
-    after: (_c$3 = {}, _c$3[ffRedux.OperationTrigger.Done] = function (dispatch, getState) {
+    after: (_d$2 = {}, _d$2[ffRedux.OperationTrigger.Done] = function (dispatch, getState) {
       var _a, _b, _c, _d, _e, _f;
       var _g = getState(),
         route = _g.base.route,
@@ -6930,10 +7841,10 @@ var createActions = {
         }, {
           servicename: (_e = route === null || route === void 0 ? void 0 : route.queries) === null || _e === void 0 ? void 0 : _e.servicename,
           resourceType: (_f = route === null || route === void 0 ? void 0 : route.queries) === null || _f === void 0 ? void 0 : _f.resourceType,
-          mode: "list"
+          mode: 'list'
         });
       }
-    }, _c$3)
+    }, _d$2)
   })
 };
 
@@ -7364,7 +8275,6 @@ var listActions = {
   })
 };
 
-var _a$9;
 var routerSea$3 = seajs.require('router');
 var baseActions = {
   /** 国际版 */
@@ -7547,21 +8457,31 @@ var baseActions = {
     }
   }),
   // 获取集群Admin权限
-  getClusterAdminRole: ffRedux.generateWorkflowActionCreator({
-    actionType: ActionType.Base.GetClusterAdminRoleFlow,
-    workflowStateLocator: function workflowStateLocator(state) {
-      return state.base.getClusterAdminRoleFlow;
-    },
-    operationExecutor: getClusterAdminRole,
-    after: (_a$9 = {}, _a$9[ffRedux.OperationTrigger.Done] = function (dispatch, getState) {
-      var getClusterAdminRoleFlow = getState().base.getClusterAdminRoleFlow;
-      if (ffRedux.isSuccessWorkflow(getClusterAdminRoleFlow)) {
-        dispatch(baseActions.getClusterAdminRole.reset());
-        dispatch(listActions.servicePlans.fetch());
-        dispatch(listActions.resourceSchemas.fetch());
-      }
-    }, _a$9)
+  getClusterAdminRole: GetRbacAdminDialog.createActions({
+    pageName: ActionType.Base.GetClusterAdminRoleFlow,
+    getRecord: function getRecord(getState) {
+      return getState().base.getClusterAdminRole;
+    }
   })
+  // generateWorkflowActionCreator<RBACResource, number>({
+  //   actionType: ActionType.Base.GetClusterAdminRoleFlow,
+  //   workflowStateLocator: state => state.base.getClusterAdminRoleFlow,
+  //   operationExecutor: getClusterAdminRole,
+  //   after: {
+  //     [OperationTrigger.Done]: (dispatch, getState: GetState) => {
+  //       let {
+  //         base: {
+  //           getClusterAdminRoleFlow
+  //         }
+  //       } = getState();
+  //       if(isSuccessWorkflow(getClusterAdminRoleFlow)){
+  //         dispatch(baseActions.getClusterAdminRole.reset());
+  //         dispatch(listActions.servicePlans.fetch());
+  //         dispatch(listActions.resourceSchemas.fetch());
+  //       }
+  //     }
+  //   }
+  // })
 };
 
 var allActions = {
@@ -7603,8 +8523,8 @@ var TempReducer = redux.combineReducers({
   userInfo: ffRedux.createFFObjectReducer({
     actionName: ActionType.Base.FETCH_UserInfo
   }),
-  getClusterAdminRoleFlow: ffRedux.generateWorkflowReducer({
-    actionType: ActionType.Base.GetClusterAdminRoleFlow
+  getClusterAdminRole: GetRbacAdminDialog.createReducer({
+    pageName: ActionType.Base.GetClusterAdminRoleFlow
   })
 });
 var baseReducer = function baseReducer(state, action) {
@@ -7636,6 +8556,9 @@ var TempReducer$1 = redux.combineReducers({
   /** 开启/关闭控制台 */
   openConsoleWorkflow: ffRedux.generateWorkflowReducer({
     actionType: ActionType.Detail.OPEN_CONSOLE_WORKFLOW
+  }),
+  mediums: MediumSelectPanel.createReducer({
+    pageName: ActionType.Detail.BackupStrategyMedium
   }),
   namespaces: ffRedux.createFFListReducer({
     actionName: ActionType.Detail.FETCH_NAMESPACES
@@ -7673,11 +8596,14 @@ var TempReducer$2 = redux.combineReducers({
   externalClusters: ffRedux.createFFListReducer({
     actionName: ActionType.List.FETCH_EXTERNAL_CLUSTERS
   }),
+  backupNowWorkflow: ffRedux.generateWorkflowReducer({
+    actionType: ActionType.Create.BackupNowWorkflow
+  }),
   serviceInstanceEdit: ffRedux.reduceToPayload(ActionType.Create.SERVICE_INSTANCE_EDIT, {
     formData: {
-      clusterId: '',
-      instanceName: '',
-      plan: '',
+      clusterId: "",
+      instanceName: "",
+      plan: "",
       timeBackup: false,
       isSetParams: false,
       backupDate: [],
@@ -7687,9 +8613,9 @@ var TempReducer$2 = redux.combineReducers({
   }),
   servicePlanEdit: ffRedux.reduceToPayload(ActionType.Create.SERVICE_PLAN_EDIT, {
     formData: {
-      clusterId: '',
-      instanceName: '',
-      description: ''
+      clusterId: "",
+      instanceName: "",
+      description: ""
     }
   }),
   /** 新建资源工作流 */
@@ -7756,76 +8682,7 @@ var ErrorEnum;
   })(Code = ErrorEnum.Code || (ErrorEnum.Code = {}));
 })(ErrorEnum || (ErrorEnum = {}));
 
-function GetRbacAdminDialog(props) {
-  var _a, _b, _c;
-  var actions = props.actions,
-    _d = props.base,
-    hubCluster = _d.hubCluster,
-    getClusterAdminRoleFlow = _d.getClusterAdminRoleFlow,
-    platform = _d.platform,
-    externalClusters = props.list.externalClusters,
-    clusterId = (_a = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _a === void 0 ? void 0 : _a.clusterId,
-    regionId = (_c = (_b = hubCluster === null || hubCluster === void 0 ? void 0 : hubCluster.object) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.regionId;
-  var workflow = getClusterAdminRoleFlow;
-  var action = actions.base.getClusterAdminRole;
-  if (workflow.operationState === ffRedux.OperationState.Pending) {
-    return React__default.createElement("noscript", null);
-  }
-  var cancel = function cancel() {
-    if (workflow.operationState === ffRedux.OperationState.Done) {
-      action.reset();
-    } else {
-      action.cancel();
-    }
-  };
-  var perform = function perform() {
-    // 提交操作
-    var params = {
-      id: uuid(),
-      platform: platform,
-      clusterId: clusterId,
-      clusterType: ClusterType.External
-    };
-    action.start([params], regionId);
-    action.perform();
-  };
-  var failed = workflow.operationState === ffRedux.OperationState.Done && !ffRedux.isSuccessWorkflow(workflow);
-  return React__default.createElement(ModalMain.Modal, {
-    visible: true,
-    caption: i18n.t('获取集群Admin角色'),
-    onClose: cancel,
-    disableEscape: true
-  }, React__default.createElement(ModalMain.Modal.Body, null, React__default.createElement(i18n.Trans, null, React__default.createElement(teaComponent.Text, {
-    theme: "text",
-    parent: "p"
-  }, "\u5B50\u8D26\u6237\u5728CAM\u62E5\u6709AcquireClusterAdminRole Action\u6743\u9650\u4E4B\u540E\u53EF\u4EE5\u901A\u8FC7\u6B64\u65B9\u5F0F\u83B7\u53D6\u96C6\u7FA4Kubernetes RBAC\u7684tke:admin\u89D2\u8272"), React__default.createElement(teaComponent.Text, {
-    theme: "text",
-    parent: "p"
-  }, "\u70B9\u51FB\u786E\u5B9A\u4E4B\u540E\uFF0C\u540E\u53F0\u4F1A\u4E3A\u60A8\u521B\u5EFAtke:admin\u89D2\u8272\u7684ClusterRolebinding\uFF0C\u4E4B\u540E\u60A8\u5C06\u62E5\u6709\u6B64\u96C6\u7FA4\u5185\u8D44\u6E90\u7684\u7BA1\u7406\u5458\u6743\u9650\u3002")), failed && (ffComponent.isCamRefused(workflow.results[0].error) ? React__default.createElement(ffComponent.CamBox, {
-    message: workflow.results[0].error.message
-  }) : React__default.createElement(TipInfo, {
-    isForm: true,
-    type: "error"
-  }, getWorkflowError(workflow)))), React__default.createElement(ModalMain.Modal.Footer, null, React__default.createElement(teaComponent.Button, {
-    type: "primary",
-    disabled: workflow.operationState === ffRedux.OperationState.Performing,
-    onClick: perform
-  }, failed ? i18n.t('重试') : i18n.t('确定')), React__default.createElement(teaComponent.Button, {
-    onClick: cancel
-  }, i18n.t('取消'))));
-}
-var mapDispatchToProps = function mapDispatchToProps(dispatch) {
-  return Object.assign({}, ffRedux.bindActionCreators({
-    actions: allActions
-  }, dispatch), {
-    dispatch: dispatch
-  });
-};
-var ResourceGetRbacAdminDialog = reactRedux.connect(function (state) {
-  return state;
-}, mapDispatchToProps)(GetRbacAdminDialog);
-
-var _a$a, _b$7;
+var _a$9, _b$7;
 /** 节点亲和性调度 亲和性调度操作符 */
 var NodeAffinityOperatorEnum;
 (function (NodeAffinityOperatorEnum) {
@@ -7878,7 +8735,7 @@ var NoeAffinityInitRecords = [{
   key: NodeAffinityMustNeedKey,
   value: '',
   operator: NodeAffinityOperatorEnum.Exists,
-  v_key: (_a$a = initRecords$1 === null || initRecords$1 === void 0 ? void 0 : initRecords$1[0]) === null || _a$a === void 0 ? void 0 : _a$a.v_key,
+  v_key: (_a$9 = initRecords$1 === null || initRecords$1 === void 0 ? void 0 : initRecords$1[0]) === null || _a$9 === void 0 ? void 0 : _a$9.v_key,
   v_value: (_b$7 = initRecords$1 === null || initRecords$1 === void 0 ? void 0 : initRecords$1[0]) === null || _b$7 === void 0 ? void 0 : _b$7.v_value
 }];
 var stylize = teaComponent.Table.addons.stylize;
@@ -8239,6 +9096,7 @@ function ServiceInstanceCreatePanel(props) {
     isI18n = _q.isI18n,
     userInfo = _q.userInfo,
     regionId = _q.regionId,
+    getClusterAdminRole = _q.getClusterAdminRole,
     _r = props.list,
     services = _r.services,
     servicePlans = _r.servicePlans,
@@ -8409,7 +9267,7 @@ function ServiceInstanceCreatePanel(props) {
     }, {
       servicename: (_a = route === null || route === void 0 ? void 0 : route.queries) === null || _a === void 0 ? void 0 : _a.servicename,
       resourceType: (_c = (_b = route === null || route === void 0 ? void 0 : route.queries) === null || _b === void 0 ? void 0 : _b.resourceType) !== null && _c !== void 0 ? _c : ResourceTypeEnum === null || ResourceTypeEnum === void 0 ? void 0 : ResourceTypeEnum.ServiceResource,
-      mode: "list"
+      mode: 'list'
     });
   };
   var _submit = function _submit() {
@@ -8436,6 +9294,7 @@ function ServiceInstanceCreatePanel(props) {
           specificOperate: CreateSpecificOperatorEnum === null || CreateSpecificOperatorEnum === void 0 ? void 0 : CreateSpecificOperatorEnum.CreateResource,
           namespace: DefaultNamespace
         };
+        //更改备份策略命名空间
         var backupStrategyParams = {
           platform: platform,
           regionId: HubCluster === null || HubCluster === void 0 ? void 0 : HubCluster.DefaultRegion,
@@ -8462,7 +9321,7 @@ function ServiceInstanceCreatePanel(props) {
     }
   };
   var renderContent = function renderContent(data) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, _27, _28, _29;
     var versionFields = (_a = data === null || data === void 0 ? void 0 : data.instanceCreateParameterSchema) === null || _a === void 0 ? void 0 : _a.filter(function (item) {
       return (item === null || item === void 0 ? void 0 : item.name) === 'version';
     });
@@ -8488,7 +9347,7 @@ function ServiceInstanceCreatePanel(props) {
       name: (_f = route === null || route === void 0 ? void 0 : route.queries) === null || _f === void 0 ? void 0 : _f.servicename
     }))), React__default.createElement(ffComponent.FormPanel.Item, {
       after: React__default.createElement(teaComponent.Button, {
-        icon: 'refresh',
+        icon: "refresh",
         onClick: function onClick() {
           actions.list.externalClusters.fetch();
         }
@@ -8554,7 +9413,7 @@ function ServiceInstanceCreatePanel(props) {
       }
     }), React__default.createElement(ffComponent.FormPanel.Item, {
       after: React__default.createElement(teaComponent.Button, {
-        icon: 'refresh',
+        icon: "refresh",
         onClick: function onClick() {
           actions.list.servicePlans.fetch();
         }
@@ -8573,7 +9432,7 @@ function ServiceInstanceCreatePanel(props) {
         loadingText: "\u52A0\u8F7D\u89C4\u683C\u5931\u8D25",
         action: actions.list.servicePlans
       }) : ((_u = servicePlans === null || servicePlans === void 0 ? void 0 : servicePlans.list) === null || _u === void 0 ? void 0 : _u.fetched) && !((_w = (_v = servicePlans === null || servicePlans === void 0 ? void 0 : servicePlans.list) === null || _v === void 0 ? void 0 : _v.data) === null || _w === void 0 ? void 0 : _w.recordCount) ? React__default.createElement(teaComponent.Text, null, i18n.t('无可用规格,'), React__default.createElement(teaComponent.Button, {
-        type: 'link',
+        type: "link",
         onClick: function onClick() {
           var _a, _b;
           router.navigate({
@@ -8606,7 +9465,7 @@ function ServiceInstanceCreatePanel(props) {
       required: false,
       validator: (_0 = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.validator) === null || _0 === void 0 ? void 0 : _0['timeBackup'],
       message: ((_2 = (_1 = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.validator) === null || _1 === void 0 ? void 0 : _1['backupDate']) === null || _2 === void 0 ? void 0 : _2.status) === 2 || ((_4 = (_3 = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.validator) === null || _3 === void 0 ? void 0 : _3['backupTime']) === null || _4 === void 0 ? void 0 : _4.status) === 2 ? React__default.createElement(teaComponent.Text, {
-        className: 'text-danger'
+        className: "text-danger"
       }, i18n.t('{{message}}', {
         message: (_6 = (_5 = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.validator) === null || _5 === void 0 ? void 0 : _5['backupDate']) === null || _6 === void 0 ? void 0 : _6.message
       })) : null
@@ -8656,7 +9515,7 @@ function ServiceInstanceCreatePanel(props) {
       return React__default.createElement(teaComponent.Checkbox, {
         key: item === null || item === void 0 ? void 0 : item.value,
         name: item === null || item === void 0 ? void 0 : item.value,
-        className: 'tea-mb-2n',
+        className: "tea-mb-2n",
         style: {
           borderRadius: 5
         }
@@ -8673,7 +9532,7 @@ function ServiceInstanceCreatePanel(props) {
       return React__default.createElement(teaComponent.Checkbox, {
         key: item === null || item === void 0 ? void 0 : item.value,
         name: item === null || item === void 0 ? void 0 : item.value,
-        className: 'tea-mb-2n',
+        className: "tea-mb-2n",
         style: {
           borderRadius: 5
         }
@@ -8690,7 +9549,7 @@ function ServiceInstanceCreatePanel(props) {
       }
     }), React__default.createElement(teaComponent.Text, null, i18n.t('天后自动删除')))) : null, React__default.createElement(AffinityMapField, {
       plan: {
-        name: "nodeAffinity",
+        name: 'nodeAffinity',
         type: SchemaType.Custom,
         label: i18n.t('节点调度策略')
       },
@@ -8720,34 +9579,38 @@ function ServiceInstanceCreatePanel(props) {
         alignItems: 'center'
       }
     }, React__default.createElement(teaComponent.Text, {
-      theme: 'danger',
-      className: 'tea-mr-2n',
+      theme: "danger",
+      className: "tea-mr-2n",
       style: {
         minWidth: 100
       }
-    }, "\u52A0\u8F7DSchema\u5931\u8D25:"), ((_17 = [ErrorEnum.Code.RBACForbidden, ErrorEnum.Code.RBACForbidden403]) === null || _17 === void 0 ? void 0 : _17.includes((_19 = (_18 = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _18 === void 0 ? void 0 : _18.error) === null || _19 === void 0 ? void 0 : _19.code)) ? React__default.createElement(React__default.Fragment, null, React__default.createElement(i18n.Trans, null, React__default.createElement(teaComponent.Text, {
-      verticalAlign: "middle",
-      theme: 'danger'
-    }, "\u6743\u9650\u4E0D\u8DB3\uFF0C\u8BF7\u8054\u7CFB\u96C6\u7FA4\u7BA1\u7406\u5458\u6DFB\u52A0\u6743\u9650\uFF1B\u82E5\u60A8\u672C\u8EAB\u662F\u96C6\u7FA4\u7BA1\u7406\u5458\uFF0C\u53EF\u76F4\u63A5"), React__default.createElement(teaComponent.Button, {
-      type: "link",
-      onClick: function onClick() {
-        actions.base.getClusterAdminRole.start([]);
-      },
-      className: 'tea-mr-2n'
-    }, "\u83B7\u53D6\u96C6\u7FA4admin\u89D2\u8272"), React__default.createElement(teaComponent.Button, {
-      type: "link",
-      onClick: function onClick() {
-        var _a, _b;
-        actions === null || actions === void 0 ? void 0 : actions.list.servicePlans.fetch();
-        (_b = (_a = actions === null || actions === void 0 ? void 0 : actions.list) === null || _a === void 0 ? void 0 : _a.resourceSchemas) === null || _b === void 0 ? void 0 : _b.fetch();
-      }
-    }, i18n.t('重试')))) : React__default.createElement(RetryPanel, {
-      loadingText: (_21 = (_20 = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _20 === void 0 ? void 0 : _20.error) === null || _21 === void 0 ? void 0 : _21.message,
-      action: function action() {
-        var _a, _b;
-        actions === null || actions === void 0 ? void 0 : actions.list.servicePlans.fetch();
-        (_b = (_a = actions === null || actions === void 0 ? void 0 : actions.list) === null || _a === void 0 ? void 0 : _a.resourceSchemas) === null || _b === void 0 ? void 0 : _b.fetch();
-      }
+    }, "\u52A0\u8F7DSchema\u5931\u8D25:"), React__default.createElement(i18n.Slot, {
+      content: ((_17 = [ErrorEnum.Code.RBACForbidden, ErrorEnum.Code.RBACForbidden403]) === null || _17 === void 0 ? void 0 : _17.includes((_19 = (_18 = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _18 === void 0 ? void 0 : _18.error) === null || _19 === void 0 ? void 0 : _19.code)) ? React__default.createElement(i18n.Trans, null, React__default.createElement(teaComponent.Text, {
+        verticalAlign: "middle",
+        theme: "danger"
+      }, "\u6743\u9650\u4E0D\u8DB3\uFF0C\u8BF7\u8054\u7CFB\u96C6\u7FA4\u7BA1\u7406\u5458\u6DFB\u52A0\u6743\u9650\uFF1B\u82E5\u60A8\u672C\u8EAB\u662F\u96C6\u7FA4\u7BA1\u7406\u5458\uFF0C\u53EF\u76F4\u63A5"), React__default.createElement(teaComponent.Button, {
+        type: "link",
+        onClick: function onClick() {
+          actions.base.getClusterAdminRole.getClusterAdminRole.start([]);
+        },
+        className: 'tea-mr-2n'
+      }, "\u83B7\u53D6\u96C6\u7FA4admin\u89D2\u8272"), React__default.createElement(teaComponent.Button, {
+        type: "link",
+        onClick: function onClick() {
+          var _a, _b;
+          actions === null || actions === void 0 ? void 0 : actions.list.servicePlans.fetch();
+          (_b = (_a = actions === null || actions === void 0 ? void 0 : actions.list) === null || _a === void 0 ? void 0 : _a.resourceSchemas) === null || _b === void 0 ? void 0 : _b.fetch();
+        }
+      }, React__default.createElement(i18n.Slot, {
+        content: i18n.t('重试')
+      }))) : React__default.createElement(RetryPanel, {
+        loadingText: (_21 = (_20 = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _20 === void 0 ? void 0 : _20.error) === null || _21 === void 0 ? void 0 : _21.message,
+        action: function action() {
+          var _a, _b;
+          actions === null || actions === void 0 ? void 0 : actions.list.servicePlans.fetch();
+          (_b = (_a = actions === null || actions === void 0 ? void 0 : actions.list) === null || _a === void 0 ? void 0 : _a.resourceSchemas) === null || _b === void 0 ? void 0 : _b.fetch();
+        }
+      })
     })))), !isLoadingSchema && (externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) && !loadSchemaFailed && React__default.createElement(React__default.Fragment, null, openingVendor && React__default.createElement(ffComponent.FormPanel.Item, {
       label: i18n.t(''),
       text: true
@@ -8879,8 +9742,8 @@ function ServiceInstanceCreatePanel(props) {
           }, {})));
         }
       }), showUnitOptions(item) && React__default.createElement(ffComponent.FormPanel.Select, {
-        size: 's',
-        className: 'tea-ml-2n',
+        size: "s",
+        className: "tea-ml-2n",
         placeholder: i18n.t('{{title}}', {
           title: '请选择unit'
         }),
@@ -8892,21 +9755,34 @@ function ServiceInstanceCreatePanel(props) {
           actions === null || actions === void 0 ? void 0 : actions.create.updateInstance('unitMap', tslib.__assign(tslib.__assign({}, (_b = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _b === void 0 ? void 0 : _b['unitMap']), (_a = {}, _a[item === null || item === void 0 ? void 0 : item.name] = e, _a)));
         }
       })) : null;
-    })))), React__default.createElement(GetRbacAdminDialog, tslib.__assign({}, props)), React__default.createElement(ffComponent.FormPanel.Footer, null, React__default.createElement(teaComponent.Button, {
-      type: 'primary',
+    })))), React__default.createElement(GetRbacAdminDialog.Component, {
+      model: getClusterAdminRole,
+      action: actions.base.getClusterAdminRole,
+      filter: {
+        platform: platform,
+        regionId: regionId,
+        clusterId: (_24 = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _24 === void 0 ? void 0 : _24.clusterId
+      },
+      onSuccess: function onSuccess() {
+        var _a, _b;
+        (_a = actions.list) === null || _a === void 0 ? void 0 : _a.servicePlans.fetch();
+        (_b = actions.list) === null || _b === void 0 ? void 0 : _b.resourceSchemas.fetch();
+      }
+    }), React__default.createElement(ffComponent.FormPanel.Footer, null, React__default.createElement(teaComponent.Button, {
+      type: "primary",
       style: {
         marginRight: 10
       },
       onClick: _submit,
       loading: isSubmitting,
-      disabled: isSubmitting || !(externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) || ((_24 = servicesInstanceEdit.formData) === null || _24 === void 0 ? void 0 : _24['isSetParams']) && loadSchemaFailed || openingVendor
+      disabled: isSubmitting || !(externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) || ((_25 = servicesInstanceEdit.formData) === null || _25 === void 0 ? void 0 : _25['isSetParams']) && loadSchemaFailed || openingVendor
     }, failed ? i18n.t('重试') : i18n.t('确定')), React__default.createElement(teaComponent.Button, {
       onClick: _cancel
     }, i18n.t('取消')), React__default.createElement(TipInfo, {
       isShow: failed,
       type: "error",
       isForm: true
-    }, !((_25 = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _25 === void 0 ? void 0 : _25.timeBackup) ? getWorkflowError(createWorkflow) : (_28 = (_27 = (_26 = createWorkflow === null || createWorkflow === void 0 ? void 0 : createWorkflow.results) === null || _26 === void 0 ? void 0 : _26[0]) === null || _27 === void 0 ? void 0 : _27.error) === null || _28 === void 0 ? void 0 : _28.message)));
+    }, !((_26 = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _26 === void 0 ? void 0 : _26.timeBackup) ? getWorkflowError(createWorkflow) : (_29 = (_28 = (_27 = createWorkflow === null || createWorkflow === void 0 ? void 0 : createWorkflow.results) === null || _27 === void 0 ? void 0 : _27[0]) === null || _28 === void 0 ? void 0 : _28.error) === null || _29 === void 0 ? void 0 : _29.message)));
   };
   return React__default.createElement(React__default.Fragment, null, renderContent((_p = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _p === void 0 ? void 0 : _p.data));
 }
@@ -8920,6 +9796,7 @@ function ServicePlanCreatePanel(props) {
     isI18n = _p.isI18n,
     userInfo = _p.userInfo,
     regionId = _p.regionId,
+    getClusterAdminRole = _p.getClusterAdminRole,
     _q = props.list,
     services = _q.services,
     servicePlans = _q.servicePlans,
@@ -8973,10 +9850,10 @@ function ServicePlanCreatePanel(props) {
     return (_a = state === null || state === void 0 ? void 0 : state.list) === null || _a === void 0 ? void 0 : _a.servicePlanEdit;
   });
   var isLoadingSchema = ((_b = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.list) === null || _b === void 0 ? void 0 : _b.fetched) && (externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) ? !((_c = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _c === void 0 ? void 0 : _c.fetched) : !((_d = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.list) === null || _d === void 0 ? void 0 : _d.fetched);
-  var loadSchemaFailed = ((_e = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _e === void 0 ? void 0 : _e.fetched) && ((_f = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _f === void 0 ? void 0 : _f.error) && (!((_g = ['ResourceNotFound', 404]) === null || _g === void 0 ? void 0 : _g.includes((_j = (_h = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _h === void 0 ? void 0 : _h.error) === null || _j === void 0 ? void 0 : _j.code)) || !((_m = (_l = (_k = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _k === void 0 ? void 0 : _k.error) === null || _l === void 0 ? void 0 : _l.message) === null || _m === void 0 ? void 0 : _m.includes('404')));
+  var loadSchemaFailed = ((_e = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _e === void 0 ? void 0 : _e.fetched) && ((_f = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _f === void 0 ? void 0 : _f.error) && (!((_g = ["ResourceNotFound", 404]) === null || _g === void 0 ? void 0 : _g.includes((_j = (_h = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _h === void 0 ? void 0 : _h.error) === null || _j === void 0 ? void 0 : _j.code)) || !((_m = (_l = (_k = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _k === void 0 ? void 0 : _k.error) === null || _l === void 0 ? void 0 : _l.message) === null || _m === void 0 ? void 0 : _m.includes("404")));
   var openingVendor = React__default === null || React__default === void 0 ? void 0 : React__default.useMemo(function () {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
-    return ((_b = (_a = services === null || services === void 0 ? void 0 : services.selection) === null || _a === void 0 ? void 0 : _a.clusters) === null || _b === void 0 ? void 0 : _b.includes((_c = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _c === void 0 ? void 0 : _c.clusterId)) && ((_d = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _d === void 0 ? void 0 : _d.fetched) && (((_f = (_e = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _e === void 0 ? void 0 : _e.error) === null || _f === void 0 ? void 0 : _f.code) === 'ResourceNotFound' || ((_h = (_g = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _g === void 0 ? void 0 : _g.error) === null || _h === void 0 ? void 0 : _h.code) === 404 || ((_l = (_k = (_j = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _j === void 0 ? void 0 : _j.error) === null || _k === void 0 ? void 0 : _k.message) === null || _l === void 0 ? void 0 : _l.includes('404')));
+    return ((_b = (_a = services === null || services === void 0 ? void 0 : services.selection) === null || _a === void 0 ? void 0 : _a.clusters) === null || _b === void 0 ? void 0 : _b.includes((_c = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _c === void 0 ? void 0 : _c.clusterId)) && ((_d = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _d === void 0 ? void 0 : _d.fetched) && (((_f = (_e = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _e === void 0 ? void 0 : _e.error) === null || _f === void 0 ? void 0 : _f.code) === "ResourceNotFound" || ((_h = (_g = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _g === void 0 ? void 0 : _g.error) === null || _h === void 0 ? void 0 : _h.code) === 404 || ((_l = (_k = (_j = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _j === void 0 ? void 0 : _j.error) === null || _k === void 0 ? void 0 : _k.message) === null || _l === void 0 ? void 0 : _l.includes("404")));
   }, [servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object, services === null || services === void 0 ? void 0 : services.selection, externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection]);
   var reduceCreateServiceResourceDataJson = function reduceCreateServiceResourceDataJson(data) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
@@ -8989,19 +9866,19 @@ function ServicePlanCreatePanel(props) {
       var _a;
       var _b, _c, _d, _e;
       // return Object.assign(pre,!!data?.formData?.[cur?.name] ? {[cur?.name]:data?.formData?.[cur?.name] + (data?.formData?.['unitMap']?.[cur?.name] ?? '')} : {});
-      return Object.assign(pre, ((_b = data === null || data === void 0 ? void 0 : data.formData) === null || _b === void 0 ? void 0 : _b[cur === null || cur === void 0 ? void 0 : cur.name]) !== '' ? (_a = {}, _a[cur === null || cur === void 0 ? void 0 : cur.name] = formatPlanSchemaSubmitData(cur, (_c = data === null || data === void 0 ? void 0 : data.formData) === null || _c === void 0 ? void 0 : _c[cur === null || cur === void 0 ? void 0 : cur.name], (_e = (_d = data === null || data === void 0 ? void 0 : data.formData) === null || _d === void 0 ? void 0 : _d['unitMap']) === null || _e === void 0 ? void 0 : _e[cur === null || cur === void 0 ? void 0 : cur.name]), _a) : {});
+      return Object.assign(pre, ((_b = data === null || data === void 0 ? void 0 : data.formData) === null || _b === void 0 ? void 0 : _b[cur === null || cur === void 0 ? void 0 : cur.name]) !== "" ? (_a = {}, _a[cur === null || cur === void 0 ? void 0 : cur.name] = formatPlanSchemaSubmitData(cur, (_c = data === null || data === void 0 ? void 0 : data.formData) === null || _c === void 0 ? void 0 : _c[cur === null || cur === void 0 ? void 0 : cur.name], (_e = (_d = data === null || data === void 0 ? void 0 : data.formData) === null || _d === void 0 ? void 0 : _d["unitMap"]) === null || _e === void 0 ? void 0 : _e[cur === null || cur === void 0 ? void 0 : cur.name]), _a) : {});
     }, {});
     var json = {
       id: uuid$1(),
-      apiVersion: 'infra.tce.io/v1',
+      apiVersion: "infra.tce.io/v1",
       kind: (_d = ResourceTypeMap === null || ResourceTypeMap === void 0 ? void 0 : ResourceTypeMap[ResourceTypeEnum.ServicePlan]) === null || _d === void 0 ? void 0 : _d.resourceKind,
       metadata: {
         labels: {
-          'ssm.infra.tce.io/cluster-id': clusterId,
-          'ssm.infra.tce.io/owner': ServicePlanTypeEnum.Custom
+          "ssm.infra.tce.io/cluster-id": clusterId,
+          "ssm.infra.tce.io/owner": ServicePlanTypeEnum.Custom
         },
         annotations: {
-          'ssm.infra.tce.io/creator': decodeURIComponent ? decodeURIComponent((_f = (_e = userInfo === null || userInfo === void 0 ? void 0 : userInfo.object) === null || _e === void 0 ? void 0 : _e.data) === null || _f === void 0 ? void 0 : _f.name) : (_h = (_g = userInfo === null || userInfo === void 0 ? void 0 : userInfo.object) === null || _g === void 0 ? void 0 : _g.data) === null || _h === void 0 ? void 0 : _h.name
+          "ssm.infra.tce.io/creator": decodeURIComponent ? decodeURIComponent((_f = (_e = userInfo === null || userInfo === void 0 ? void 0 : userInfo.object) === null || _e === void 0 ? void 0 : _e.data) === null || _f === void 0 ? void 0 : _f.name) : (_h = (_g = userInfo === null || userInfo === void 0 ? void 0 : userInfo.object) === null || _g === void 0 ? void 0 : _g.data) === null || _h === void 0 ? void 0 : _h.name
         },
         name: instanceName,
         namespace: DefaultNamespace
@@ -9012,14 +9889,14 @@ function ServicePlanCreatePanel(props) {
       }
     };
     if (description) {
-      json.spec['description'] = description;
+      json.spec["description"] = description;
     }
     return JSON.stringify(json);
   };
   var _cancel = function _cancel() {
     var _a, _b;
     router.navigate({
-      sub: 'list',
+      sub: "list",
       tab: undefined
     }, {
       servicename: (_a = route === null || route === void 0 ? void 0 : route.queries) === null || _a === void 0 ? void 0 : _a.servicename,
@@ -9044,43 +9921,43 @@ function ServicePlanCreatePanel(props) {
     }
   };
   var renderContent = function renderContent(data) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v;
     var instanceParamsFields = data === null || data === void 0 ? void 0 : data.planSchema;
     var isSubmitting = (createResourceWorkflow === null || createResourceWorkflow === void 0 ? void 0 : createResourceWorkflow.operationState) === ffRedux.OperationState.Performing;
     var failed = createResourceWorkflow.operationState === ffRedux.OperationState.Done && !ffRedux.isSuccessWorkflow(createResourceWorkflow);
     return React__default.createElement(ffComponent.FormPanel, null, React__default.createElement(ffComponent.FormPanel.Item, {
       label: React__default.createElement(teaComponent.Text, {
         style: {
-          display: 'flex',
-          alignItems: 'center'
+          display: "flex",
+          alignItems: "center"
         }
-      }, React__default.createElement(teaComponent.Text, null, i18n.t('中间件类型')), React__default.createElement(teaComponent.Text, {
-        className: 'text-danger tea-pt-1n'
+      }, React__default.createElement(teaComponent.Text, null, i18n.t("中间件类型")), React__default.createElement(teaComponent.Text, {
+        className: "text-danger tea-pt-1n"
       }, "*")),
       text: true
-    }, React__default.createElement(ffComponent.FormPanel.Text, null, i18n.t('{{name}}', {
+    }, React__default.createElement(ffComponent.FormPanel.Text, null, i18n.t("{{name}}", {
       name: (_a = route === null || route === void 0 ? void 0 : route.queries) === null || _a === void 0 ? void 0 : _a.servicename
     }))), React__default.createElement(ffComponent.FormPanel.Item, {
       after: React__default.createElement(teaComponent.Button, {
-        icon: 'refresh',
+        icon: "refresh",
         onClick: function onClick() {
           actions.list.externalClusters.fetch();
         }
       }),
       label: React__default.createElement(teaComponent.Text, {
         style: {
-          display: 'flex',
-          alignItems: 'center'
+          display: "flex",
+          alignItems: "center"
         }
-      }, React__default.createElement(teaComponent.Text, null, i18n.t('目标集群')), React__default.createElement(teaComponent.Text, {
-        className: 'text-danger tea-pt-1n'
+      }, React__default.createElement(teaComponent.Text, null, i18n.t("目标集群")), React__default.createElement(teaComponent.Text, {
+        className: "text-danger tea-pt-1n"
       }, "*")),
-      validator: (_b = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.validator) === null || _b === void 0 ? void 0 : _b['clusterId'],
+      validator: (_b = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.validator) === null || _b === void 0 ? void 0 : _b["clusterId"],
       select: {
         model: externalClusters,
-        valueField: 'clusterId',
+        valueField: "clusterId",
         displayField: function displayField(record) {
-          return (record === null || record === void 0 ? void 0 : record.clusterId) + ' (' + (record === null || record === void 0 ? void 0 : record.clusterName) + ') ';
+          return (record === null || record === void 0 ? void 0 : record.clusterId) + " (" + (record === null || record === void 0 ? void 0 : record.clusterName) + ") ";
         },
         action: (_c = actions === null || actions === void 0 ? void 0 : actions.list) === null || _c === void 0 ? void 0 : _c.externalClusters,
         disabledField: function disabledField(record) {
@@ -9088,102 +9965,106 @@ function ServicePlanCreatePanel(props) {
           var disabled = !((_b = (_a = services === null || services === void 0 ? void 0 : services.selection) === null || _a === void 0 ? void 0 : _a.clusters) === null || _b === void 0 ? void 0 : _b.includes(record === null || record === void 0 ? void 0 : record.clusterId));
           return {
             disabled: disabled,
-            tooltip: disabled ? i18n.t('{{tooltip}}', {
+            tooltip: disabled ? i18n.t("{{tooltip}}", {
               tooltip: "".concat((_c = services === null || services === void 0 ? void 0 : services.selection) === null || _c === void 0 ? void 0 : _c.name, "\u5C1A\u672A\u5728\u8BE5\u76EE\u6807\u96C6\u7FA4\u5F00\u542F,\u8BF7\u60A8\u524D\u5F80\u5206\u5E03\u5F0F\u4E91\u4E2D\u5FC3\u6982\u89C8\u9875\u5F00\u542F")
             }) : null
           };
         }
       },
       message: React__default.createElement(React__default.Fragment, null, ((_d = services === null || services === void 0 ? void 0 : services.list) === null || _d === void 0 ? void 0 : _d.fetched) && !((_f = (_e = services.selection) === null || _e === void 0 ? void 0 : _e.clusters) === null || _f === void 0 ? void 0 : _f.length) ? React__default.createElement(RetryPanel, {
-        loadingText: i18n.t('集群列表尚无已开启vendor的集群'),
-        retryText: i18n.t('刷新重试'),
+        loadingText: i18n.t("集群列表尚无已开启vendor的集群"),
+        retryText: i18n.t("刷新重试"),
         action: actions.list.services.fetch
       }) : ((_g = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.list) === null || _g === void 0 ? void 0 : _g.fetched) && !((_j = (_h = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.list) === null || _h === void 0 ? void 0 : _h.data) === null || _j === void 0 ? void 0 : _j.recordCount) ? React__default.createElement(RetryPanel, {
-        loadingText: i18n.t('集群列表尚无运行状态的目标集群'),
-        retryText: i18n.t('前往确认'),
+        loadingText: i18n.t("集群列表尚无运行状态的目标集群"),
+        retryText: i18n.t("前往确认"),
         action: function action() {
-          router.navigate({}, {}, '/tdcc/cluster');
+          router.navigate({}, {}, "/tdcc/cluster");
         }
       }) : null)
     }), React__default.createElement(ffComponent.FormPanel.Item, {
       label: React__default.createElement(teaComponent.Text, {
         style: {
-          display: 'flex',
-          alignItems: 'center'
+          display: "flex",
+          alignItems: "center"
         }
-      }, React__default.createElement(teaComponent.Text, null, i18n.t('规格名称')), React__default.createElement(teaComponent.Text, {
-        className: 'text-danger tea-pt-1n'
+      }, React__default.createElement(teaComponent.Text, null, i18n.t("规格名称")), React__default.createElement(teaComponent.Text, {
+        className: "text-danger tea-pt-1n"
       }, "*")),
-      validator: (_k = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.validator) === null || _k === void 0 ? void 0 : _k['instanceName'],
+      validator: (_k = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.validator) === null || _k === void 0 ? void 0 : _k["instanceName"],
       input: {
-        value: (_l = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _l === void 0 ? void 0 : _l['instanceName'],
+        value: (_l = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _l === void 0 ? void 0 : _l["instanceName"],
         onChange: function onChange(e) {
           var _a;
-          (_a = actions === null || actions === void 0 ? void 0 : actions.create) === null || _a === void 0 ? void 0 : _a.updatePlan('instanceName', e);
+          (_a = actions === null || actions === void 0 ? void 0 : actions.create) === null || _a === void 0 ? void 0 : _a.updatePlan("instanceName", e);
         },
         onBlur: function onBlur() {}
       }
     }), React__default.createElement(ffComponent.FormPanel.Item, {
-      label: i18n.t('描述'),
-      validator: (_m = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.validator) === null || _m === void 0 ? void 0 : _m['description'],
+      label: i18n.t("描述"),
+      validator: (_m = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.validator) === null || _m === void 0 ? void 0 : _m["description"],
       input: {
-        value: (_o = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _o === void 0 ? void 0 : _o['description'],
+        value: (_o = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _o === void 0 ? void 0 : _o["description"],
         onChange: function onChange(e) {
           var _a;
-          (_a = actions === null || actions === void 0 ? void 0 : actions.create) === null || _a === void 0 ? void 0 : _a.updatePlan('description', e);
+          (_a = actions === null || actions === void 0 ? void 0 : actions.create) === null || _a === void 0 ? void 0 : _a.updatePlan("description", e);
         },
         onBlur: function onBlur() {}
       }
     }), isLoadingSchema && React__default.createElement(ffComponent.FormPanel.Item, {
-      label: i18n.t(''),
+      label: i18n.t(""),
       text: true
     }, React__default.createElement(LoadingPanel, null)), !isLoadingSchema && (externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) && loadSchemaFailed && React__default.createElement(ffComponent.FormPanel.Item, {
-      label: i18n.t(''),
+      label: i18n.t(""),
       text: true
     }, React__default.createElement(i18n.Trans, null, React__default.createElement("div", {
       style: {
-        display: 'flex',
-        alignItems: 'center'
+        display: "flex",
+        alignItems: "center"
       }
     }, React__default.createElement(teaComponent.Text, {
-      theme: 'danger',
-      className: 'tea-mr-2n',
+      theme: "danger",
+      className: "tea-mr-2n",
       style: {
         minWidth: 100
       }
-    }, "\u52A0\u8F7DSchema\u5931\u8D25:"), ((_p = [ErrorEnum.Code.RBACForbidden, ErrorEnum.Code.RBACForbidden403]) === null || _p === void 0 ? void 0 : _p.includes((_r = (_q = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _q === void 0 ? void 0 : _q.error) === null || _r === void 0 ? void 0 : _r.code)) ? React__default.createElement(React__default.Fragment, null, React__default.createElement(i18n.Trans, null, React__default.createElement(teaComponent.Text, {
-      verticalAlign: "middle",
-      theme: 'danger'
-    }, "\u6743\u9650\u4E0D\u8DB3\uFF0C\u8BF7\u8054\u7CFB\u96C6\u7FA4\u7BA1\u7406\u5458\u6DFB\u52A0\u6743\u9650\uFF1B\u82E5\u60A8\u672C\u8EAB\u662F\u96C6\u7FA4\u7BA1\u7406\u5458\uFF0C\u53EF\u76F4\u63A5"), React__default.createElement(teaComponent.Button, {
-      type: "link",
-      onClick: function onClick() {
-        actions.base.getClusterAdminRole.start([]);
-      },
-      className: 'tea-mr-2n'
-    }, "\u83B7\u53D6\u96C6\u7FA4admin\u89D2\u8272"), React__default.createElement(teaComponent.Button, {
-      type: "link",
-      onClick: function onClick() {
-        var _a, _b;
-        (_b = (_a = actions === null || actions === void 0 ? void 0 : actions.list) === null || _a === void 0 ? void 0 : _a.resourceSchemas) === null || _b === void 0 ? void 0 : _b.fetch();
-      }
-    }, i18n.t('重试')))) : React__default.createElement(RetryPanel, {
-      loadingText: (_t = (_s = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _s === void 0 ? void 0 : _s.error) === null || _t === void 0 ? void 0 : _t.message,
-      action: function action() {
-        var _a, _b;
-        (_b = (_a = actions === null || actions === void 0 ? void 0 : actions.list) === null || _a === void 0 ? void 0 : _a.resourceSchemas) === null || _b === void 0 ? void 0 : _b.fetch();
-      }
+    }, "\u52A0\u8F7DSchema\u5931\u8D25:"), React__default.createElement(i18n.Slot, {
+      content: ((_p = [ErrorEnum.Code.RBACForbidden, ErrorEnum.Code.RBACForbidden403]) === null || _p === void 0 ? void 0 : _p.includes((_r = (_q = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _q === void 0 ? void 0 : _q.error) === null || _r === void 0 ? void 0 : _r.code)) ? React__default.createElement(i18n.Trans, null, React__default.createElement(teaComponent.Text, {
+        verticalAlign: "middle",
+        theme: "danger"
+      }, "\u6743\u9650\u4E0D\u8DB3\uFF0C\u8BF7\u8054\u7CFB\u96C6\u7FA4\u7BA1\u7406\u5458\u6DFB\u52A0\u6743\u9650\uFF1B\u82E5\u60A8\u672C\u8EAB\u662F\u96C6\u7FA4\u7BA1\u7406\u5458\uFF0C\u53EF\u76F4\u63A5"), React__default.createElement(teaComponent.Button, {
+        type: "link",
+        onClick: function onClick() {
+          actions.base.getClusterAdminRole.getClusterAdminRole.start([]);
+        },
+        className: "tea-mr-2n"
+      }, "\u83B7\u53D6\u96C6\u7FA4admin\u89D2\u8272"), React__default.createElement(teaComponent.Button, {
+        type: "link",
+        onClick: function onClick() {
+          var _a, _b;
+          (_b = (_a = actions === null || actions === void 0 ? void 0 : actions.list) === null || _a === void 0 ? void 0 : _a.resourceSchemas) === null || _b === void 0 ? void 0 : _b.fetch();
+        }
+      }, React__default.createElement(i18n.Slot, {
+        content: i18n.t("重试")
+      }))) : React__default.createElement(RetryPanel, {
+        loadingText: (_t = (_s = servicesInstance === null || servicesInstance === void 0 ? void 0 : servicesInstance.object) === null || _s === void 0 ? void 0 : _s.error) === null || _t === void 0 ? void 0 : _t.message,
+        action: function action() {
+          var _a, _b;
+          (_b = (_a = actions === null || actions === void 0 ? void 0 : actions.list) === null || _a === void 0 ? void 0 : _a.resourceSchemas) === null || _b === void 0 ? void 0 : _b.fetch();
+        }
+      })
     })))), !isLoadingSchema && (externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) && !loadSchemaFailed && React__default.createElement(React__default.Fragment, null, openingVendor && React__default.createElement(ffComponent.FormPanel.Item, {
-      label: i18n.t(''),
+      label: i18n.t(""),
       text: true
     }, React__default.createElement(RetryPanel, {
       style: {
         minWidth: 170,
         width: 170
       },
-      loadingText: i18n.t('{{text}}', {
+      loadingText: i18n.t("{{text}}", {
         text: "".concat((_u = services === null || services === void 0 ? void 0 : services.selection) === null || _u === void 0 ? void 0 : _u.name, "\u5F00\u542F\u4E2D...")
       }),
-      loadingTextTheme: 'text',
+      loadingTextTheme: "text",
       action: function action() {
         var _a, _b;
         (_b = (_a = actions === null || actions === void 0 ? void 0 : actions.list) === null || _a === void 0 ? void 0 : _a.resourceSchemas) === null || _b === void 0 ? void 0 : _b.fetch();
@@ -9192,7 +10073,7 @@ function ServicePlanCreatePanel(props) {
       var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
       var values = tslib.__assign({}, servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData);
       if (item.enabledCondition && values) {
-        var _m = item === null || item === void 0 ? void 0 : item.enabledCondition.split('=='),
+        var _m = item === null || item === void 0 ? void 0 : item.enabledCondition.split("=="),
           conditionKey = _m[0],
           conditionValue = _m[1];
         var value = values[conditionKey];
@@ -9200,28 +10081,28 @@ function ServicePlanCreatePanel(props) {
           return null;
         }
       }
-      var _o = (_b = (_a = item.description) === null || _a === void 0 ? void 0 : _a.split('---')) !== null && _b !== void 0 ? _b : [],
+      var _o = (_b = (_a = item.description) === null || _a === void 0 ? void 0 : _a.split("---")) !== null && _b !== void 0 ? _b : [],
         english = _o[0],
         chinese = _o[1];
       return !hideSchema(item) ? React__default.createElement(ffComponent.FormPanel.Item, {
         label: React__default.createElement(teaComponent.Text, {
           style: {
-            display: 'flex',
-            alignItems: 'center'
+            display: "flex",
+            alignItems: "center"
           }
-        }, React__default.createElement(teaComponent.Text, null, i18n.t('{{name}}', {
+        }, React__default.createElement(teaComponent.Text, null, i18n.t("{{name}}", {
           name: prefixForSchema(item, servicename) + (item === null || item === void 0 ? void 0 : item.label) + suffixUnitForSchema(item)
         })), React__default.createElement(teaComponent.Icon, {
           type: "info",
           tooltip: isI18n ? english : chinese
         }), !(item === null || item === void 0 ? void 0 : item.optional) && React__default.createElement(teaComponent.Text, {
-          className: 'text-danger tea-pt-1n'
+          className: "text-danger tea-pt-1n"
         }, "*")),
         key: "".concat(item === null || item === void 0 ? void 0 : item.name).concat(index),
         validator: (_c = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.validator) === null || _c === void 0 ? void 0 : _c[item === null || item === void 0 ? void 0 : item.name]
       }, getFormItemType(item) === FormItemType.Select && React__default.createElement(ffComponent.FormPanel.Select, {
-        placeholder: i18n.t('{{title}}', {
-          title: '请选择' + (item === null || item === void 0 ? void 0 : item.label)
+        placeholder: i18n.t("{{title}}", {
+          title: "请选择" + (item === null || item === void 0 ? void 0 : item.label)
         }),
         options: (_d = item === null || item === void 0 ? void 0 : item.candidates) === null || _d === void 0 ? void 0 : _d.map(function (candidate) {
           return {
@@ -9240,16 +10121,16 @@ function ServicePlanCreatePanel(props) {
         }
       }), getFormItemType(item) === FormItemType.Input && React__default.createElement(teaComponent.Input, {
         value: (_g = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _g === void 0 ? void 0 : _g[item === null || item === void 0 ? void 0 : item.name],
-        placeholder: i18n.t('{{title}}', {
-          title: '请输入' + (item === null || item === void 0 ? void 0 : item.label)
+        placeholder: i18n.t("{{title}}", {
+          title: "请输入" + (item === null || item === void 0 ? void 0 : item.label)
         }),
         onChange: function onChange(e) {
           actions === null || actions === void 0 ? void 0 : actions.create.updatePlan(item === null || item === void 0 ? void 0 : item.name, e);
         }
       }), getFormItemType(item) === FormItemType.Paasword && React__default.createElement(InputPassword.InputPassword, {
         value: (_h = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _h === void 0 ? void 0 : _h[item === null || item === void 0 ? void 0 : item.name],
-        placeholder: i18n.t('{{title}}', {
-          title: '请输入' + (item === null || item === void 0 ? void 0 : item.label)
+        placeholder: i18n.t("{{title}}", {
+          title: "请输入" + (item === null || item === void 0 ? void 0 : item.label)
         }),
         onChange: function onChange(e) {
           actions === null || actions === void 0 ? void 0 : actions.create.updatePlan(item === null || item === void 0 ? void 0 : item.name, e);
@@ -9271,28 +10152,41 @@ function ServicePlanCreatePanel(props) {
           }, {})));
         }
       }), showUnitOptions(item) && React__default.createElement(ffComponent.FormPanel.Select, {
-        size: 's',
-        className: 'tea-ml-2n',
-        placeholder: i18n.t('{{title}}', {
-          title: '请选择unit'
+        size: "s",
+        className: "tea-ml-2n",
+        placeholder: i18n.t("{{title}}", {
+          title: "请选择unit"
         }),
         options: getUnitOptions(item),
-        value: (_l = (_k = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _k === void 0 ? void 0 : _k['unitMap']) === null || _l === void 0 ? void 0 : _l[item === null || item === void 0 ? void 0 : item.name],
+        value: (_l = (_k = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _k === void 0 ? void 0 : _k["unitMap"]) === null || _l === void 0 ? void 0 : _l[item === null || item === void 0 ? void 0 : item.name],
         onChange: function onChange(e) {
           var _a;
           var _b;
-          actions === null || actions === void 0 ? void 0 : actions.create.updatePlan('unitMap', tslib.__assign(tslib.__assign({}, (_b = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _b === void 0 ? void 0 : _b['unitMap']), (_a = {}, _a[item === null || item === void 0 ? void 0 : item.name] = e, _a)));
+          actions === null || actions === void 0 ? void 0 : actions.create.updatePlan("unitMap", tslib.__assign(tslib.__assign({}, (_b = servicesInstanceEdit === null || servicesInstanceEdit === void 0 ? void 0 : servicesInstanceEdit.formData) === null || _b === void 0 ? void 0 : _b["unitMap"]), (_a = {}, _a[item === null || item === void 0 ? void 0 : item.name] = e, _a)));
         }
       })) : null;
-    }))), React__default.createElement(GetRbacAdminDialog, tslib.__assign({}, props)), React__default.createElement(ffComponent.FormPanel.Footer, null, React__default.createElement(teaComponent.Button, {
-      type: 'primary',
-      className: 'tea-mr-2n',
+    }))), React__default.createElement(GetRbacAdminDialog.Component, {
+      model: getClusterAdminRole,
+      action: actions.base.getClusterAdminRole,
+      filter: {
+        platform: platform,
+        regionId: regionId,
+        clusterId: (_v = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _v === void 0 ? void 0 : _v.clusterId
+      },
+      onSuccess: function onSuccess() {
+        var _a, _b;
+        (_a = actions.list) === null || _a === void 0 ? void 0 : _a.servicePlans.fetch();
+        (_b = actions.list) === null || _b === void 0 ? void 0 : _b.resourceSchemas.fetch();
+      }
+    }), React__default.createElement(ffComponent.FormPanel.Footer, null, React__default.createElement(teaComponent.Button, {
+      type: "primary",
+      className: "tea-mr-2n",
       onClick: _submit,
       loading: isSubmitting,
       disabled: isSubmitting || !(externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) || loadSchemaFailed || openingVendor
-    }, failed ? i18n.t('重试') : i18n.t('确定')), React__default.createElement(teaComponent.Button, {
+    }, failed ? i18n.t("重试") : i18n.t("确定")), React__default.createElement(teaComponent.Button, {
       onClick: _cancel
-    }, i18n.t('取消')), React__default.createElement(TipInfo, {
+    }, i18n.t("取消")), React__default.createElement(TipInfo, {
       isShow: failed,
       type: "error",
       isForm: true
@@ -10149,87 +11043,254 @@ function ServiceBindingPanel(props) {
   })), React__default.createElement(CreateServiceBindingDialog, tslib.__assign({}, props)), React__default.createElement(ResourceDetailPanel, tslib.__assign({}, props)));
 }
 
+/* eslint-disable no-unused-expressions */
+function getMediumOpration(medium) {
+  var _a, _b, _c, _d;
+  var operation = {
+    backup: {}
+  };
+  if (medium) {
+    if (((_b = (_a = medium === null || medium === void 0 ? void 0 : medium.metadata) === null || _a === void 0 ? void 0 : _a.labels) === null || _b === void 0 ? void 0 : _b[PaasMedium.StorageTypeLabel]) === PaasMedium.StorageTypeEnum.S3) {
+      operation = {
+        backup: {
+          destination: {
+            s3Objects: {
+              secretRef: {
+                namespace: 'ssm',
+                name: (_c = medium === null || medium === void 0 ? void 0 : medium.metadata) === null || _c === void 0 ? void 0 : _c.name
+              }
+            }
+          }
+        }
+      };
+    } else {
+      operation = {
+        backup: {
+          destination: {
+            nfsObjects: {
+              secretRef: {
+                namespace: 'ssm',
+                name: (_d = medium === null || medium === void 0 ? void 0 : medium.metadata) === null || _d === void 0 ? void 0 : _d.name
+              }
+            }
+          }
+        }
+      };
+    }
+  }
+  return operation;
+}
+function BackUpNowDialog(props) {
+  var _this = this;
+  var _a, _b, _c, _d, _e, _f, _g, _h;
+  var _j = props.detail,
+    showBackupStrategyDialog = _j.showBackupStrategyDialog,
+    mediums = _j.mediums,
+    _k = props.base,
+    platform = _k.platform,
+    route = _k.route,
+    hubCluster = _k.hubCluster,
+    regionId = _k.regionId,
+    _l = props.list,
+    backupNowWorkflow = _l.backupNowWorkflow,
+    serviceResources = _l.serviceResources,
+    services = _l.services,
+    actions = props.actions,
+    _m = props.mode;
+  var clusterId = (_a = route === null || route === void 0 ? void 0 : route.queries) === null || _a === void 0 ? void 0 : _a.clusterid;
+  React.useEffect(function () {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+    if (backupNowWorkflow.operationState === ffRedux.OperationState.Done) {
+      (_c = (_b = (_a = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _a === void 0 ? void 0 : _a.mediums) === null || _b === void 0 ? void 0 : _b.mediums) === null || _c === void 0 ? void 0 : _c.selectByValue((_h = (_g = (_f = (_e = (_d = mediums === null || mediums === void 0 ? void 0 : mediums.mediums) === null || _d === void 0 ? void 0 : _d.list) === null || _e === void 0 ? void 0 : _e.data) === null || _f === void 0 ? void 0 : _f.records) === null || _g === void 0 ? void 0 : _g[0]) === null || _h === void 0 ? void 0 : _h.clusterId);
+      (_k = (_j = actions === null || actions === void 0 ? void 0 : actions.create) === null || _j === void 0 ? void 0 : _j.backupNowWorkflow) === null || _k === void 0 ? void 0 : _k.reset();
+      (_m = (_l = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _l === void 0 ? void 0 : _l.instanceResource) === null || _m === void 0 ? void 0 : _m.fetch();
+    }
+  }, [(_b = actions === null || actions === void 0 ? void 0 : actions.create) === null || _b === void 0 ? void 0 : _b.backupNowWorkflow, (_c = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _c === void 0 ? void 0 : _c.instanceResource, (_e = (_d = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _d === void 0 ? void 0 : _d.mediums) === null || _e === void 0 ? void 0 : _e.mediums, backupNowWorkflow.operationState, (_h = (_g = (_f = mediums === null || mediums === void 0 ? void 0 : mediums.mediums) === null || _f === void 0 ? void 0 : _f.list) === null || _g === void 0 ? void 0 : _g.data) === null || _h === void 0 ? void 0 : _h.records]);
+  if (backupNowWorkflow.operationState === ffRedux.OperationState.Pending) return null;
+  var failed = backupNowWorkflow.operationState === ffRedux.OperationState.Done && !ffRedux.isSuccessWorkflow(backupNowWorkflow);
+  var perform = function perform() {
+    return tslib.__awaiter(_this, void 0, void 0, function () {
+      return tslib.__generator(this, function (_a) {
+        actions.detail.mediums.validator.validate(null, function (validateResult) {
+          var _a, _b, _c, _d, _e, _f, _g;
+          if (ffValidator.isValid(validateResult)) {
+            var regionId_1 = HubCluster === null || HubCluster === void 0 ? void 0 : HubCluster.DefaultRegion;
+            var params = {
+              platform: platform,
+              clusterId: clusterId,
+              regionId: regionId_1,
+              resourceType: ResourceTypeEnum.Backup,
+              specificOperate: CreateSpecificOperatorEnum === null || CreateSpecificOperatorEnum === void 0 ? void 0 : CreateSpecificOperatorEnum.BackupNow,
+              jsonData: JSON.stringify({
+                apiVersion: 'infra.tce.io/v1',
+                kind: ResourceTypeEnum === null || ResourceTypeEnum === void 0 ? void 0 : ResourceTypeEnum.Backup,
+                metadata: {
+                  name: "backup-".concat((_a = route === null || route === void 0 ? void 0 : route.queries) === null || _a === void 0 ? void 0 : _a.instancename, "-").concat(new Date().getTime()),
+                  namespace: SystemNamespace
+                },
+                spec: {
+                  enabled: true,
+                  operation: getMediumOpration((_b = mediums === null || mediums === void 0 ? void 0 : mediums.mediums) === null || _b === void 0 ? void 0 : _b.selection),
+                  retain: {
+                    days: Backup === null || Backup === void 0 ? void 0 : Backup.maxReserveDay
+                  },
+                  target: {
+                    instanceID: Util === null || Util === void 0 ? void 0 : Util.getInstanceId(platform, (_c = route === null || route === void 0 ? void 0 : route.queries) === null || _c === void 0 ? void 0 : _c.instancename, serviceResources === null || serviceResources === void 0 ? void 0 : serviceResources.selection),
+                    serviceClass: (_d = route === null || route === void 0 ? void 0 : route.queries) === null || _d === void 0 ? void 0 : _d.servicename
+                  },
+                  trigger: {
+                    type: BackupTypeNum.Manual
+                  }
+                }
+              }),
+              instanceName: "backup-".concat((_e = route === null || route === void 0 ? void 0 : route.queries) === null || _e === void 0 ? void 0 : _e.instancename, "-").concat(new Date().getTime()),
+              namespace: SystemNamespace
+            };
+            (_f = actions === null || actions === void 0 ? void 0 : actions.create) === null || _f === void 0 ? void 0 : _f.backupNowWorkflow.start([params], regionId_1);
+            (_g = actions === null || actions === void 0 ? void 0 : actions.create) === null || _g === void 0 ? void 0 : _g.backupNowWorkflow.perform();
+          } else {
+            bridge.tips.error(i18n.t('请选择备份介质'));
+          }
+        });
+        return [2 /*return*/];
+      });
+    });
+  };
+
+  var cancel = function cancel() {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    var workflow = backupNowWorkflow;
+    if (workflow.operationState === ffRedux.OperationState.Done) {
+      actions.create.backupNowWorkflow.reset();
+    }
+    if (workflow.operationState === ffRedux.OperationState.Started) {
+      actions.create.backupNowWorkflow.cancel();
+    }
+    //重置选中第一个
+    (_c = (_b = (_a = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _a === void 0 ? void 0 : _a.mediums) === null || _b === void 0 ? void 0 : _b.mediums) === null || _c === void 0 ? void 0 : _c.selectByValue((_h = (_g = (_f = (_e = (_d = mediums === null || mediums === void 0 ? void 0 : mediums.mediums) === null || _d === void 0 ? void 0 : _d.list) === null || _e === void 0 ? void 0 : _e.data) === null || _f === void 0 ? void 0 : _f.records) === null || _g === void 0 ? void 0 : _g[0]) === null || _h === void 0 ? void 0 : _h.clusterId);
+  };
+  return React__default.createElement(teaComponent.Modal, {
+    visible: true,
+    caption: i18n.t('立即开始备份'),
+    onClose: cancel,
+    size: 'm'
+  }, React__default.createElement(teaComponent.Modal.Body, null, React__default.createElement(teaComponent.Alert, null, i18n.t('中间件实例将开始备份，备份不会造成业务中断，是否立即开始备份')), React__default.createElement(ffComponent.FormPanel, {
+    isNeedCard: false
+  }, React__default.createElement(MediumSelectPanel.Component, {
+    model: mediums,
+    action: actions.detail.mediums,
+    platform: platform,
+    clusterId: clusterId,
+    regionId: regionId
+  }))), React__default.createElement(teaComponent.Modal.Footer, null, React__default.createElement(teaComponent.Button, {
+    type: "primary",
+    className: "tea-mr-2n",
+    disabled: backupNowWorkflow.operationState === ffRedux.OperationState.Performing,
+    onClick: perform
+  }, failed ? i18n.t('重试') : i18n.t('完成')), React__default.createElement(teaComponent.Button, {
+    title: i18n.t('取消'),
+    onClick: cancel
+  }, i18n.t('取消')), React__default.createElement(TipInfo, {
+    isShow: failed,
+    type: "error",
+    isForm: true
+  }, getWorkflowError(backupNowWorkflow))));
+}
+
 function BackUpStrategyDialog(props) {
   var _this = this;
-  var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
-  var _m = props.detail,
-    showBackupStrategyDialog = _m.showBackupStrategyDialog,
-    backupStrategyEdit = _m.backupStrategyEdit,
-    backupStrategy = _m.backupStrategy,
-    _o = props.base,
-    platform = _o.platform,
-    route = _o.route,
-    hubCluster = _o.hubCluster,
-    regionId = _o.regionId,
-    _p = props.list,
-    createResourceWorkflow = _p.createResourceWorkflow,
-    serviceResources = _p.serviceResources,
-    services = _p.services,
+  var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
+  var _v = props.detail,
+    showBackupStrategyDialog = _v.showBackupStrategyDialog,
+    backupStrategyEdit = _v.backupStrategyEdit,
+    backupStrategy = _v.backupStrategy,
+    mediums = _v.mediums,
+    _w = props.base,
+    platform = _w.platform,
+    route = _w.route,
+    hubCluster = _w.hubCluster,
+    regionId = _w.regionId,
+    _x = props.list,
+    createResourceWorkflow = _x.createResourceWorkflow,
+    serviceResources = _x.serviceResources,
+    services = _x.services,
     actions = props.actions,
-    _q = props.mode;
-  var _r = React.useState(''),
-    errorMsg = _r[0],
-    setErrorMsg = _r[1];
+    _y = props.mode;
+  var _z = React.useState(''),
+    errorMsg = _z[0],
+    setErrorMsg = _z[1];
+  var clusterId = Util === null || Util === void 0 ? void 0 : Util.getClusterId(platform, serviceResources === null || serviceResources === void 0 ? void 0 : serviceResources.selection);
   React.useEffect(function () {
     var _a, _b, _c, _d;
     if (platform && regionId && (serviceResources === null || serviceResources === void 0 ? void 0 : serviceResources.selection) && showBackupStrategyDialog) {
-      var clusterId = Util === null || Util === void 0 ? void 0 : Util.getClusterId(platform, serviceResources === null || serviceResources === void 0 ? void 0 : serviceResources.selection);
+      var clusterId_1 = Util === null || Util === void 0 ? void 0 : Util.getClusterId(platform, serviceResources === null || serviceResources === void 0 ? void 0 : serviceResources.selection);
       var instanceId = (_b = (_a = serviceResources === null || serviceResources === void 0 ? void 0 : serviceResources.selection) === null || _a === void 0 ? void 0 : _a.spec) === null || _b === void 0 ? void 0 : _b.externalID;
       (_d = (_c = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _c === void 0 ? void 0 : _c.backupStrategy) === null || _d === void 0 ? void 0 : _d.applyFilter({
         regionId: regionId,
-        clusterId: clusterId,
+        clusterId: clusterId_1,
         resourceType: ResourceTypeEnum === null || ResourceTypeEnum === void 0 ? void 0 : ResourceTypeEnum.Backup,
         platform: platform,
         instanceId: instanceId
       });
     }
   }, [platform, regionId, serviceResources === null || serviceResources === void 0 ? void 0 : serviceResources.selection, showBackupStrategyDialog]);
-  var backupStrategyLoading = ((_a = backupStrategy === null || backupStrategy === void 0 ? void 0 : backupStrategy.object) === null || _a === void 0 ? void 0 : _a.loading) || !((_b = backupStrategy === null || backupStrategy === void 0 ? void 0 : backupStrategy.object) === null || _b === void 0 ? void 0 : _b.fetched);
-  var backupStrategyFailed = (_c = backupStrategy === null || backupStrategy === void 0 ? void 0 : backupStrategy.object) === null || _c === void 0 ? void 0 : _c.error;
+  //初始化备份介质
+  React.useEffect(function () {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x;
+    if (((_a = backupStrategy === null || backupStrategy === void 0 ? void 0 : backupStrategy.object) === null || _a === void 0 ? void 0 : _a.data) && ((_c = (_b = mediums === null || mediums === void 0 ? void 0 : mediums.mediums) === null || _b === void 0 ? void 0 : _b.list) === null || _c === void 0 ? void 0 : _c.fetched)) {
+      var backupMedium = ((_l = (_k = (_j = (_h = (_g = (_f = (_e = (_d = backupStrategy === null || backupStrategy === void 0 ? void 0 : backupStrategy.object) === null || _d === void 0 ? void 0 : _d.data) === null || _e === void 0 ? void 0 : _e.spec) === null || _f === void 0 ? void 0 : _f.operation) === null || _g === void 0 ? void 0 : _g.backup) === null || _h === void 0 ? void 0 : _h.destination) === null || _j === void 0 ? void 0 : _j.nfsObjects) === null || _k === void 0 ? void 0 : _k.secretRef) === null || _l === void 0 ? void 0 : _l.name) || ((_u = (_t = (_s = (_r = (_q = (_p = (_o = (_m = backupStrategy === null || backupStrategy === void 0 ? void 0 : backupStrategy.object) === null || _m === void 0 ? void 0 : _m.data) === null || _o === void 0 ? void 0 : _o.spec) === null || _p === void 0 ? void 0 : _p.operation) === null || _q === void 0 ? void 0 : _q.backup) === null || _r === void 0 ? void 0 : _r.destination) === null || _s === void 0 ? void 0 : _s.s3Objects) === null || _t === void 0 ? void 0 : _t.secretRef) === null || _u === void 0 ? void 0 : _u.name);
+      console.log('6666', backupMedium);
+      (_x = (_w = (_v = actions.detail) === null || _v === void 0 ? void 0 : _v.mediums) === null || _w === void 0 ? void 0 : _w.mediums) === null || _x === void 0 ? void 0 : _x.selectByValue(backupMedium);
+    }
+  }, [(_b = (_a = actions.detail) === null || _a === void 0 ? void 0 : _a.mediums) === null || _b === void 0 ? void 0 : _b.mediums, (_c = backupStrategy === null || backupStrategy === void 0 ? void 0 : backupStrategy.object) === null || _c === void 0 ? void 0 : _c.data, (_f = (_e = (_d = mediums === null || mediums === void 0 ? void 0 : mediums.mediums) === null || _d === void 0 ? void 0 : _d.list) === null || _e === void 0 ? void 0 : _e.data) === null || _f === void 0 ? void 0 : _f.recordCount, (_h = (_g = mediums === null || mediums === void 0 ? void 0 : mediums.mediums) === null || _g === void 0 ? void 0 : _g.list) === null || _h === void 0 ? void 0 : _h.fetched]);
+  var backupStrategyLoading = ((_j = backupStrategy === null || backupStrategy === void 0 ? void 0 : backupStrategy.object) === null || _j === void 0 ? void 0 : _j.loading) || !((_k = backupStrategy === null || backupStrategy === void 0 ? void 0 : backupStrategy.object) === null || _k === void 0 ? void 0 : _k.fetched);
+  var backupStrategyFailed = (_l = backupStrategy === null || backupStrategy === void 0 ? void 0 : backupStrategy.object) === null || _l === void 0 ? void 0 : _l.error;
   var operateLoading = (createResourceWorkflow === null || createResourceWorkflow === void 0 ? void 0 : createResourceWorkflow.operationState) === ffRedux.OperationState.Performing;
   var failed = createResourceWorkflow.operationState === ffRedux.OperationState.Done && !ffRedux.isSuccessWorkflow(createResourceWorkflow);
   var _submit = function _submit() {
     return tslib.__awaiter(_this, void 0, void 0, function () {
-      var cosResource, result, formData, regionId_1, params;
+      var validateFun, validateResult, result, formData, regionId_1, params;
+      var _this = this;
       var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
       return tslib.__generator(this, function (_r) {
         switch (_r.label) {
           case 0:
-            return [4 /*yield*/, checkCosResource({
-              platform: platform,
-              clusterId: Util === null || Util === void 0 ? void 0 : Util.getCOSClusterId(platform, (_a = hubCluster === null || hubCluster === void 0 ? void 0 : hubCluster.object) === null || _a === void 0 ? void 0 : _a.data),
-              regionId: regionId
-            })];
+            validateFun = function validateFun() {
+              return tslib.__awaiter(_this, void 0, void 0, function () {
+                return tslib.__generator(this, function (_a) {
+                  return [2 /*return*/, new Promise(function (resove, reject) {
+                    actions.detail.mediums.validator.validate(null, function (result) {
+                      resove(ffValidator.isValid(result));
+                    });
+                  })];
+                });
+              });
+            };
+            return [4 /*yield*/, validateFun()];
           case 1:
-            cosResource = _r.sent();
-            if (!cosResource) {
-              setErrorMsg(i18n.t('{{msg}}', {
-                msg: ErrorMsgEnum.COS_Resource_Not_Found
-              }));
-              return [2 /*return*/];
-            }
-
-            return [4 /*yield*/, (_b = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _b === void 0 ? void 0 : _b.validateAll()];
+            validateResult = _r.sent();
+            return [4 /*yield*/, (_a = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _a === void 0 ? void 0 : _a.validateAll()];
           case 2:
             _r.sent();
             result = Backup === null || Backup === void 0 ? void 0 : Backup._validateAll(backupStrategyEdit);
             formData = backupStrategyEdit.formData;
-            if (result === null || result === void 0 ? void 0 : result.valid) {
+            if ((result === null || result === void 0 ? void 0 : result.valid) && validateResult) {
               regionId_1 = HubCluster === null || HubCluster === void 0 ? void 0 : HubCluster.DefaultRegion;
               params = {
                 platform: platform,
                 regionId: regionId_1,
-                clusterId: (_c = route === null || route === void 0 ? void 0 : route.queries) === null || _c === void 0 ? void 0 : _c.clusterid,
+                clusterId: (_b = route === null || route === void 0 ? void 0 : route.queries) === null || _b === void 0 ? void 0 : _b.clusterid,
                 jsonData: Backup.reduceBackupStrategyJson({
-                  mode: ((_d = backupStrategy === null || backupStrategy === void 0 ? void 0 : backupStrategy.object) === null || _d === void 0 ? void 0 : _d.data) ? 'edit' : 'create',
-                  name: ((_e = backupStrategy === null || backupStrategy === void 0 ? void 0 : backupStrategy.object) === null || _e === void 0 ? void 0 : _e.data) ? formData === null || formData === void 0 ? void 0 : formData.name : '',
+                  mode: ((_c = backupStrategy === null || backupStrategy === void 0 ? void 0 : backupStrategy.object) === null || _c === void 0 ? void 0 : _c.data) ? 'edit' : 'create',
+                  name: ((_d = backupStrategy === null || backupStrategy === void 0 ? void 0 : backupStrategy.object) === null || _d === void 0 ? void 0 : _d.data) ? formData === null || formData === void 0 ? void 0 : formData.name : '',
                   enable: formData === null || formData === void 0 ? void 0 : formData.enable,
                   backupDate: formData === null || formData === void 0 ? void 0 : formData.backupDate,
                   backupTime: formData === null || formData === void 0 ? void 0 : formData.backupTime,
                   backupReserveDay: formData === null || formData === void 0 ? void 0 : formData.backupReserveDay,
-                  instanceId: Util === null || Util === void 0 ? void 0 : Util.getInstanceId(platform, (_f = route === null || route === void 0 ? void 0 : route.queries) === null || _f === void 0 ? void 0 : _f.instancename, serviceResources === null || serviceResources === void 0 ? void 0 : serviceResources.selection),
-                  instanceName: (_g = route === null || route === void 0 ? void 0 : route.queries) === null || _g === void 0 ? void 0 : _g.instancename,
-                  serviceName: ((_h = services === null || services === void 0 ? void 0 : services.selection) === null || _h === void 0 ? void 0 : _h.name) || ((_j = route === null || route === void 0 ? void 0 : route.queries) === null || _j === void 0 ? void 0 : _j.servicename)
+                  instanceId: Util === null || Util === void 0 ? void 0 : Util.getInstanceId(platform, (_e = route === null || route === void 0 ? void 0 : route.queries) === null || _e === void 0 ? void 0 : _e.instancename, serviceResources === null || serviceResources === void 0 ? void 0 : serviceResources.selection),
+                  instanceName: (_f = route === null || route === void 0 ? void 0 : route.queries) === null || _f === void 0 ? void 0 : _f.instancename,
+                  serviceName: ((_g = services === null || services === void 0 ? void 0 : services.selection) === null || _g === void 0 ? void 0 : _g.name) || ((_h = route === null || route === void 0 ? void 0 : route.queries) === null || _h === void 0 ? void 0 : _h.servicename),
+                  medium: (_j = mediums === null || mediums === void 0 ? void 0 : mediums.mediums) === null || _j === void 0 ? void 0 : _j.selection
                 }),
                 resourceType: ResourceTypeEnum.Backup,
                 instanceName: "backup-".concat((_k = route === null || route === void 0 ? void 0 : route.queries) === null || _k === void 0 ? void 0 : _k.instancename, "-").concat(new Date().getTime()),
@@ -10290,61 +11351,44 @@ function BackUpStrategyDialog(props) {
     size: 'm'
   }, React__default.createElement(teaComponent.Modal.Body, null, backupStrategyLoading && React__default.createElement(LoadingPanel, null), !backupStrategyLoading && backupStrategyFailed && React__default.createElement(RetryPanel, {
     retryText: i18n.t('查询失败'),
-    action: (_d = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _d === void 0 ? void 0 : _d.backupStrategy
+    action: (_m = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _m === void 0 ? void 0 : _m.backupStrategy
   }), !backupStrategyLoading && !backupStrategyFailed && React__default.createElement(ffComponent.FormPanel, {
     isNeedCard: false
-  }, React__default.createElement(ffComponent.FormPanel.Item, {
+  }, React__default.createElement(MediumSelectPanel.Component, {
+    model: mediums,
+    action: actions.detail.mediums,
+    platform: platform,
+    clusterId: clusterId,
+    regionId: regionId
+  }), React__default.createElement(ffComponent.FormPanel.Item, {
     label: i18n.t('启用备份策略'),
     message: errorMsg ? React__default.createElement(teaComponent.Text, {
-      className: 'text-danger'
+      className: "text-danger"
     }, errorMsg) : null
   }, React__default.createElement(ffComponent.FormPanel.Switch, {
-    value: (_e = backupStrategyEdit === null || backupStrategyEdit === void 0 ? void 0 : backupStrategyEdit.formData) === null || _e === void 0 ? void 0 : _e.enable,
+    value: (_o = backupStrategyEdit === null || backupStrategyEdit === void 0 ? void 0 : backupStrategyEdit.formData) === null || _o === void 0 ? void 0 : _o.enable,
     onChange: function onChange(value) {
       return tslib.__awaiter(_this, void 0, void 0, function () {
-        var cosResource;
-        var _a, _b, _c;
-        return tslib.__generator(this, function (_d) {
-          switch (_d.label) {
-            case 0:
-              if (!value) return [3 /*break*/, 2];
-              return [4 /*yield*/, checkCosResource({
-                platform: platform,
-                clusterId: Util.getCOSClusterId(platform, (_a = hubCluster === null || hubCluster === void 0 ? void 0 : hubCluster.object) === null || _a === void 0 ? void 0 : _a.data),
-                regionId: regionId
-              })];
-            case 1:
-              cosResource = _d.sent();
-              if (cosResource) {
-                (_b = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _b === void 0 ? void 0 : _b.updateBackUpStrategy('enable', value);
-              } else {
-                setErrorMsg(i18n.t('{{msg}}', {
-                  msg: ErrorMsgEnum.COS_Resource_Not_Found
-                }));
-              }
-              return [3 /*break*/, 3];
-            case 2:
-              (_c = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _c === void 0 ? void 0 : _c.updateBackUpStrategy('enable', value);
-              _d.label = 3;
-            case 3:
-              return [2 /*return*/];
-          }
+        var _a;
+        return tslib.__generator(this, function (_b) {
+          (_a = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _a === void 0 ? void 0 : _a.updateBackUpStrategy('enable', value);
+          return [2 /*return*/];
         });
       });
     }
-  })), ((_f = backupStrategyEdit === null || backupStrategyEdit === void 0 ? void 0 : backupStrategyEdit.formData) === null || _f === void 0 ? void 0 : _f.enable) ? React__default.createElement(React__default.Fragment, null, React__default.createElement(ffComponent.FormPanel.Item, {
+  })), ((_p = backupStrategyEdit === null || backupStrategyEdit === void 0 ? void 0 : backupStrategyEdit.formData) === null || _p === void 0 ? void 0 : _p.enable) ? React__default.createElement(React__default.Fragment, null, React__default.createElement(ffComponent.FormPanel.Item, {
     label: i18n.t('备份日期')
   }, React__default.createElement(teaComponent.Checkbox.Group, {
-    value: (_g = backupStrategyEdit === null || backupStrategyEdit === void 0 ? void 0 : backupStrategyEdit.formData) === null || _g === void 0 ? void 0 : _g.backupDate,
+    value: (_q = backupStrategyEdit === null || backupStrategyEdit === void 0 ? void 0 : backupStrategyEdit.formData) === null || _q === void 0 ? void 0 : _q.backupDate,
     onChange: function onChange(value) {
       var _a;
       (_a = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _a === void 0 ? void 0 : _a.updateBackUpStrategy('backupDate', value);
     }
-  }, (_h = Backup === null || Backup === void 0 ? void 0 : Backup.weekConfig) === null || _h === void 0 ? void 0 : _h.map(function (item) {
+  }, (_r = Backup === null || Backup === void 0 ? void 0 : Backup.weekConfig) === null || _r === void 0 ? void 0 : _r.map(function (item) {
     return React__default.createElement(teaComponent.Checkbox, {
       key: item === null || item === void 0 ? void 0 : item.value,
       name: item === null || item === void 0 ? void 0 : item.value,
-      className: 'tea-mb-2n',
+      className: "tea-mb-2n",
       style: {
         borderRadius: 5
       }
@@ -10352,16 +11396,16 @@ function BackUpStrategyDialog(props) {
   }))), React__default.createElement(ffComponent.FormPanel.Item, {
     label: i18n.t('备份时间点')
   }, React__default.createElement(teaComponent.Checkbox.Group, {
-    value: (_j = backupStrategyEdit === null || backupStrategyEdit === void 0 ? void 0 : backupStrategyEdit.formData) === null || _j === void 0 ? void 0 : _j.backupTime,
+    value: (_s = backupStrategyEdit === null || backupStrategyEdit === void 0 ? void 0 : backupStrategyEdit.formData) === null || _s === void 0 ? void 0 : _s.backupTime,
     onChange: function onChange(value) {
       var _a;
       (_a = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _a === void 0 ? void 0 : _a.updateBackUpStrategy('backupTime', value);
     }
-  }, (_k = Backup === null || Backup === void 0 ? void 0 : Backup.hourConfig) === null || _k === void 0 ? void 0 : _k.map(function (item) {
+  }, (_t = Backup === null || Backup === void 0 ? void 0 : Backup.hourConfig) === null || _t === void 0 ? void 0 : _t.map(function (item) {
     return React__default.createElement(teaComponent.Checkbox, {
       key: item === null || item === void 0 ? void 0 : item.value,
       name: item === null || item === void 0 ? void 0 : item.value,
-      className: 'tea-mb-2n',
+      className: "tea-mb-2n",
       style: {
         borderRadius: 5
       }
@@ -10371,7 +11415,7 @@ function BackUpStrategyDialog(props) {
   }, React__default.createElement(ffComponent.FormPanel.InputNumber, {
     min: Backup.minReserveDay,
     max: Backup.maxReserveDay,
-    value: (_l = backupStrategyEdit === null || backupStrategyEdit === void 0 ? void 0 : backupStrategyEdit.formData) === null || _l === void 0 ? void 0 : _l.backupReserveDay,
+    value: (_u = backupStrategyEdit === null || backupStrategyEdit === void 0 ? void 0 : backupStrategyEdit.formData) === null || _u === void 0 ? void 0 : _u.backupReserveDay,
     onChange: function onChange(value) {
       var _a;
       (_a = actions === null || actions === void 0 ? void 0 : actions.detail) === null || _a === void 0 ? void 0 : _a.updateBackUpStrategy('backupReserveDay', value);
@@ -10384,7 +11428,6 @@ function BackUpStrategyDialog(props) {
 }
 
 function InstanceBackupPanel(props) {
-  var _this = this;
   var _a, _b, _c, _d;
   var _e = props.detail,
     instanceResource = _e.instanceResource,
@@ -10402,68 +11445,10 @@ function InstanceBackupPanel(props) {
   var _h = route === null || route === void 0 ? void 0 : route.queries,
     instancename = _h.instancename,
     clusterid = _h.clusterid;
-  var _backupNow = function _backupNow() {
-    return tslib.__awaiter(_this, void 0, void 0, function () {
-      var result, params;
-      var _a, _b, _c, _d;
-      return tslib.__generator(this, function (_e) {
-        switch (_e.label) {
-          case 0:
-            return [4 /*yield*/, teaComponent.Modal.confirm({
-              message: i18n.t('确认备份资源'),
-              okText: i18n.t('确定'),
-              cancelText: i18n.t('取消'),
-              description: i18n.t('根据备份数据大小，备份过程可能持续数分钟，请确保期间网络连接畅通，云上存储空间足够。')
-            })];
-          case 1:
-            result = _e.sent();
-            if (!result) {
-              return [2 /*return*/];
-            }
-
-            params = {
-              platform: platform,
-              clusterId: clusterid,
-              regionId: regionId,
-              resourceType: ResourceTypeEnum.Backup,
-              specificOperate: CreateSpecificOperatorEnum === null || CreateSpecificOperatorEnum === void 0 ? void 0 : CreateSpecificOperatorEnum.BackupNow,
-              jsonData: JSON.stringify({
-                "apiVersion": "infra.tce.io/v1",
-                "kind": ResourceTypeEnum === null || ResourceTypeEnum === void 0 ? void 0 : ResourceTypeEnum.Backup,
-                "metadata": {
-                  "name": "backup-".concat((_a = route === null || route === void 0 ? void 0 : route.queries) === null || _a === void 0 ? void 0 : _a.instancename, "-").concat(new Date().getTime()),
-                  "namespace": SystemNamespace
-                },
-                "spec": {
-                  "enabled": true,
-                  "operation": {
-                    "backup": {}
-                  },
-                  "retain": {
-                    "days": Backup === null || Backup === void 0 ? void 0 : Backup.maxReserveDay
-                  },
-                  "target": {
-                    "instanceID": Util === null || Util === void 0 ? void 0 : Util.getInstanceId(platform, (_b = route === null || route === void 0 ? void 0 : route.queries) === null || _b === void 0 ? void 0 : _b.instancename, serviceResources === null || serviceResources === void 0 ? void 0 : serviceResources.selection),
-                    "serviceClass": (_c = route === null || route === void 0 ? void 0 : route.queries) === null || _c === void 0 ? void 0 : _c.servicename
-                  },
-                  "trigger": {
-                    "type": BackupTypeNum.Manual
-                  }
-                }
-              }),
-              instanceName: "backup-".concat((_d = route === null || route === void 0 ? void 0 : route.queries) === null || _d === void 0 ? void 0 : _d.instancename, "-").concat(new Date().getTime()),
-              namespace: SystemNamespace
-            };
-            actions.create.backupResourceNow(params);
-            return [2 /*return*/];
-        }
-      });
-    });
-  };
 
   var columns = [{
-    key: "name",
-    header: "名称",
+    key: 'name',
+    header: i18n.t('名称'),
     render: function render(item) {
       var _a, _b, _c;
       return React__default.createElement("p", null, React__default.createElement(teaComponent.Text, {
@@ -10474,8 +11459,8 @@ function InstanceBackupPanel(props) {
       }));
     }
   }, {
-    key: "status",
-    header: "状态",
+    key: 'status',
+    header: i18n.t('状态'),
     render: function render(item) {
       var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
       var isFailed = ((_a = item === null || item === void 0 ? void 0 : item.status) === null || _a === void 0 ? void 0 : _a.phase) && ![BackupStatusNum.Waiting, BackupStatusNum.Success].includes((_b = item === null || item === void 0 ? void 0 : item.status) === null || _b === void 0 ? void 0 : _b.phase);
@@ -10484,25 +11469,27 @@ function InstanceBackupPanel(props) {
       var isDeleting = showResourceDeleteLoading(item, (_g = (_f = instanceResource === null || instanceResource === void 0 ? void 0 : instanceResource.list) === null || _f === void 0 ? void 0 : _f.data) === null || _g === void 0 ? void 0 : _g.records);
       if (isDeleting) {
         return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Icon, {
-          type: 'loading'
+          type: "loading"
         }), i18n.t('删除中'));
       }
       return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Text, {
-        className: ((_h = BackupStatusMap === null || BackupStatusMap === void 0 ? void 0 : BackupStatusMap[state]) === null || _h === void 0 ? void 0 : _h.className) + ' tea-mr-1n',
+        className: "".concat((_h = BackupStatusMap === null || BackupStatusMap === void 0 ? void 0 : BackupStatusMap[state]) === null || _h === void 0 ? void 0 : _h.className, " tea-mr-1n"),
         overflow: true
       }, (_j = BackupStatusMap[state]) === null || _j === void 0 ? void 0 : _j.text), isFailed && React__default.createElement(teaComponent.Bubble, {
-        content: React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.List, {
+        content: React__default.createElement(teaComponent.List, {
           type: "number",
           style: {
             width: '100%'
           }
-        }, (_l = (_k = item === null || item === void 0 ? void 0 : item.status) === null || _k === void 0 ? void 0 : _k.conditions) === null || _l === void 0 ? void 0 : _l.map(function (item) {
-          return React__default.createElement(teaComponent.List.Item, null, React__default.createElement(teaComponent.Text, {
-            className: 'tea-mr-2n'
+        }, (_l = (_k = item === null || item === void 0 ? void 0 : item.status) === null || _k === void 0 ? void 0 : _k.conditions) === null || _l === void 0 ? void 0 : _l.map(function (item, index) {
+          return React__default.createElement(teaComponent.List.Item, {
+            key: index
+          }, React__default.createElement(teaComponent.Text, {
+            className: "tea-mr-2n"
           }, " ", "".concat(item === null || item === void 0 ? void 0 : item.type, " : ").concat((item === null || item === void 0 ? void 0 : item.reason) || (item === null || item === void 0 ? void 0 : item.message))), React__default.createElement(teaComponent.Icon, {
             type: (item === null || item === void 0 ? void 0 : item.status) === 'True' ? 'success' : 'error'
           }));
-        })))
+        }))
       }, React__default.createElement(teaComponent.Icon, {
         type: "info",
         className: "tea-mr-2n"
@@ -10515,8 +11502,12 @@ function InstanceBackupPanel(props) {
           isNeedCard: false
         }, (_p = (_o = (_m = item === null || item === void 0 ? void 0 : item.status) === null || _m === void 0 ? void 0 : _m.results) === null || _o === void 0 ? void 0 : _o.BACKUP_FILE_PATH) === null || _p === void 0 ? void 0 : _p.map(function (path, index) {
           return React__default.createElement(ffComponent.FormPanel.Item, {
+            key: index,
             label: i18n.t('{{name}}', {
-              name: '备份地址' + (index + 1) + ':'
+              // eslint-disable-next-line prefer-template
+              name: i18n.t('备份地址{{attr0}}', {
+                attr0: index + 1
+              })
             }),
             text: true
           }, path, React__default.createElement(teaComponent.Copy, {
@@ -10538,8 +11529,8 @@ function InstanceBackupPanel(props) {
       })));
     }
   }, {
-    key: "instanceId",
-    header: "实例ID",
+    key: 'instanceId',
+    header: i18n.t('实例ID'),
     render: function render(item) {
       var _a, _b;
       return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Text, {
@@ -10548,15 +11539,15 @@ function InstanceBackupPanel(props) {
       }, ((_b = (_a = item === null || item === void 0 ? void 0 : item.spec) === null || _a === void 0 ? void 0 : _a.target) === null || _b === void 0 ? void 0 : _b.instanceID) || '-'));
     }
   }, {
-    key: "size",
-    header: "大小",
+    key: 'size',
+    header: i18n.t('大小'),
     render: function render(item) {
       var _a, _b;
       return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Text, null, Util === null || Util === void 0 ? void 0 : Util.getReadableFileSizeString((_b = (_a = item === null || item === void 0 ? void 0 : item.status) === null || _a === void 0 ? void 0 : _a.results) === null || _b === void 0 ? void 0 : _b.BACKUP_FILE_SIZE)));
     }
   }, {
-    key: "backupType",
-    header: "备份类型",
+    key: 'backupType',
+    header: i18n.t('备份类型'),
     render: function render(item) {
       var _a, _b, _c, _d, _e, _f;
       return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Text, {
@@ -10564,29 +11555,29 @@ function InstanceBackupPanel(props) {
       }, (_f = BackupTypeMap[(_e = (_d = item === null || item === void 0 ? void 0 : item.spec) === null || _d === void 0 ? void 0 : _d.trigger) !== null && _e !== void 0 ? _e : BackupTypeNum.Unknown]) === null || _f === void 0 ? void 0 : _f.text));
     }
   }, {
-    key: "createTime",
-    header: "创建时间",
+    key: 'createTime',
+    header: i18n.t('创建时间'),
     render: function render(item) {
       var _a, _b;
       return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Text, null, (_b = dateFormatter(new Date((_a = item === null || item === void 0 ? void 0 : item.metadata) === null || _a === void 0 ? void 0 : _a.creationTimestamp), 'YYYY-MM-DD HH:mm:ss')) !== null && _b !== void 0 ? _b : '-'));
     }
   }, {
-    key: "reserveTime",
-    header: "保留时间",
+    key: 'reserveTime',
+    header: i18n.t('保留时间'),
     render: function render(item) {
       var _a, _b, _c;
       return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Text, null, ((_a = item === null || item === void 0 ? void 0 : item.spec) === null || _a === void 0 ? void 0 : _a.trigger) === (BackupTypeNum === null || BackupTypeNum === void 0 ? void 0 : BackupTypeNum.Manual) ? i18n.t('永久保留') : (_c = dateFormatter(new Date((_b = item === null || item === void 0 ? void 0 : item.spec) === null || _b === void 0 ? void 0 : _b.retainTime), 'YYYY-MM-DD HH:mm:ss')) !== null && _c !== void 0 ? _c : '-'));
     }
   }, {
-    key: "deleteTime",
-    header: "删除时间",
+    key: 'deleteTime',
+    header: i18n.t('删除时间'),
     render: function render(item) {
       var _a, _b;
       return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Text, null, (_b = dateFormatter(new Date((_a = item === null || item === void 0 ? void 0 : item.metadata) === null || _a === void 0 ? void 0 : _a.deletionTimestamp), 'YYYY-MM-DD HH:mm:ss')) !== null && _b !== void 0 ? _b : '-'));
     }
   }, {
-    key: "operate",
-    header: "操作",
+    key: 'operate',
+    header: i18n.t('操作'),
     render: function render(item) {
       var _a;
       return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Button, {
@@ -10613,15 +11604,18 @@ function InstanceBackupPanel(props) {
     }, i18n.t('备份策略')), React__default.createElement(teaComponent.Button, {
       loading: backupResourceLoading,
       type: 'primary',
-      onClick: _backupNow,
+      onClick: function onClick() {
+        // actions.detail?.mediums?.mediums?.select(null);
+        actions.create.backupNowWorkflow.start([]);
+      },
       disabled: backupResourceLoading
     }, i18n.t('立即备份'))),
-    right: React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Button, {
+    right: React__default.createElement(teaComponent.Button, {
       icon: "refresh",
       onClick: function onClick() {
         actions.detail.instanceResource.fetch();
       }
-    }))
+    })
   })), React__default.createElement(ffComponent.TablePanel, {
     recordKey: function recordKey(record) {
       var _a;
@@ -10635,7 +11629,7 @@ function InstanceBackupPanel(props) {
       var _a;
       return !!((_a = record === null || record === void 0 ? void 0 : record.metadata) === null || _a === void 0 ? void 0 : _a.deletionTimestamp);
     }
-  }), React__default.createElement(BackUpStrategyDialog, tslib.__assign({}, props)));
+  }), React__default.createElement(BackUpStrategyDialog, tslib.__assign({}, props)), React__default.createElement(BackUpNowDialog, tslib.__assign({}, props)));
 }
 
 function InstanceDetailContainer(props) {
@@ -10746,7 +11740,7 @@ var MiddlewareAppContainer = /** @class */function (_super) {
   };
   return MiddlewareAppContainer;
 }(React.Component);
-var mapDispatchToProps$1 = function mapDispatchToProps(dispatch) {
+var mapDispatchToProps = function mapDispatchToProps(dispatch) {
   return Object.assign({}, ffRedux.bindActionCreators({
     actions: allActions
   }, dispatch), {
@@ -10799,10 +11793,1933 @@ var MiddlewareApp = /** @class */function (_super) {
   };
   MiddlewareApp = tslib.__decorate([reactRedux.connect(function (state) {
     return state;
-  }, mapDispatchToProps$1)], MiddlewareApp);
+  }, mapDispatchToProps)], MiddlewareApp);
   return MiddlewareApp;
 }(React.Component);
 
+var MediumEditDialog;
+(function (MediumEditDialog) {
+  var _this = this;
+  MediumEditDialog.ComponentName = 'MediumEditDialog';
+  var ActionType;
+  (function (ActionType) {
+    ActionType["NodeList"] = "NodeList";
+    ActionType["Workflow"] = "Workflow";
+    ActionType["Validator"] = "Validator";
+    ActionType["NodeUnitName"] = "NodeUnitName";
+    //介质管理类型
+    ActionType["Type"] = "StorageType";
+    //对象存储配置
+    ActionType["CosConfig"] = "CosConfig";
+    ActionType["NfsConfig"] = "NfsConfig";
+    ActionType["Clear"] = "Clear";
+  })(ActionType = MediumEditDialog.ActionType || (MediumEditDialog.ActionType = {}));
+  BComponent$1.createActionType(MediumEditDialog.ComponentName, ActionType);
+  MediumEditDialog.createValidateSchema = function (_a) {
+    var pageName = _a.pageName;
+    var schema = {
+      formKey: BComponent$1.getActionType(pageName, ActionType.Validator),
+      fields: [{
+        vKey: 'mediumName',
+        label: i18n.t('名称'),
+        rules: [{
+          type: ffValidator.RuleTypeEnum.custom,
+          customFunc: function customFunc(value, store) {
+            var mediumName = store.mediumName;
+            // eslint-disable-next-line prefer-const
+            var reg = /^[a-z]([-a-z0-9]*[a-z0-9])?$/,
+              status = ffValidator.ValidatorStatusEnum.Success,
+              message = '';
+            // 验证服务名称
+            if (!mediumName) {
+              status = ffValidator.ValidatorStatusEnum.Failed;
+              message = i18n.t('名称不能为空');
+            } else if (mediumName.length > 63) {
+              status = ffValidator.ValidatorStatusEnum.Failed;
+              message = i18n.t('名称不能超过63个字符');
+            } else if (!reg.test(mediumName)) {
+              status = ffValidator.ValidatorStatusEnum.Failed;
+              message = i18n.t('名称格式不正确');
+            }
+            return {
+              status: status,
+              message: message
+            };
+          }
+        }]
+      }, {
+        vKey: 'cosConfig.bucketNames',
+        label: i18n.t('存储名称'),
+        rules: [ffValidator.RuleTypeEnum.isRequire],
+        condition: function condition(value, store) {
+          return store.storageType === PaasMedium.StorageTypeEnum.S3;
+        } //对象存储
+      }, {
+        vKey: 'cosConfig.port',
+        label: i18n.t('端口'),
+        rules: [{
+          type: ffValidator.RuleTypeEnum.custom,
+          customFunc: function customFunc(value, store) {
+            var cosConfig = store.cosConfig;
+            var port = cosConfig === null || cosConfig === void 0 ? void 0 : cosConfig.port;
+            // eslint-disable-next-line prefer-const
+            var status = ffValidator.ValidatorStatusEnum.Success,
+              message = '';
+            // 验证端口号
+            if (port && (!Number.isInteger(+port) || +port < 1 || +port > 65535)) {
+              status = ffValidator.ValidatorStatusEnum.Failed;
+              message = i18n.t('检查端口范围必须在1~65535之间');
+            }
+            return {
+              status: status,
+              message: message
+            };
+          }
+        }],
+        condition: function condition(value, store) {
+          return store.storageType === PaasMedium.StorageTypeEnum.S3;
+        } //对象存储
+      }, {
+        vKey: 'cosConfig.domain',
+        label: i18n.t('域名'),
+        rules: [ffValidator.RuleTypeEnum.isRequire],
+        condition: function condition(value, store) {
+          return store.storageType === PaasMedium.StorageTypeEnum.S3;
+        } //对象存储
+      }, {
+        vKey: 'cosConfig.secretId',
+        label: i18n.t('secretId'),
+        rules: [ffValidator.RuleTypeEnum.isRequire],
+        condition: function condition(value, store) {
+          return store.storageType === PaasMedium.StorageTypeEnum.S3;
+        } //对象存储
+      }, {
+        vKey: 'cosConfig.secretKey',
+        label: i18n.t('secretKey'),
+        rules: [ffValidator.RuleTypeEnum.isRequire],
+        condition: function condition(value, store) {
+          return store.storageType === PaasMedium.StorageTypeEnum.S3;
+        } //对象存储
+      }, {
+        vKey: 'nfsConfig.serverName',
+        label: i18n.t('ServerName'),
+        rules: [ffValidator.RuleTypeEnum.isRequire],
+        condition: function condition(value, store) {
+          return store.storageType === PaasMedium.StorageTypeEnum.NFS;
+        } //文件存储
+      }, {
+        vKey: 'nfsConfig.server',
+        label: i18n.t('Server'),
+        rules: [ffValidator.RuleTypeEnum.isRequire],
+        condition: function condition(value, store) {
+          return store.storageType === PaasMedium.StorageTypeEnum.NFS;
+        } //文件存储
+      }, {
+        vKey: 'nfsConfig.path',
+        label: i18n.t('Path'),
+        rules: [ffValidator.RuleTypeEnum.isRequire],
+        condition: function condition(value, store) {
+          return store.storageType === PaasMedium.StorageTypeEnum.NFS;
+        } //文件存储
+      }]
+    };
+
+    return schema;
+  };
+  MediumEditDialog.createActions = function (_a) {
+    var _b;
+    var pageName = _a.pageName,
+      getRecord = _a.getRecord;
+    var actions = {
+      // 获取列表
+      // nodeList: createFFListActions<EdgeNode, EdgeNode.Filter>({
+      //   actionName: BComponent.getActionType(pageName, ActionType.NodeList),
+      //   getRecord: getState => getRecord(getState).nodeList,
+      //   fetcher: async query => {
+      //     let response = await WebApi.edge.fetchAllEdgeNodeList(query);
+      //     return response;
+      //   }
+      // }),
+      setName: function setName(value) {
+        return function (dispatch) {
+          dispatch({
+            type: BComponent$1.getActionType(pageName, ActionType.NodeUnitName),
+            payload: value
+          });
+        };
+      },
+      setType: function setType(value) {
+        return function (dispatch) {
+          dispatch({
+            type: BComponent$1.getActionType(pageName, ActionType.Type),
+            payload: value
+          });
+        };
+      },
+      cosConfig: function cosConfig(data) {
+        return function (dispach, getState) {
+          var cosConfig = getRecord(getState).cosConfig;
+          var newData = tslib.__assign(tslib.__assign({}, cosConfig), data);
+          dispach({
+            type: BComponent$1.getActionType(pageName, ActionType.CosConfig),
+            payload: newData
+          });
+        };
+      },
+      nfsConfig: function nfsConfig(data) {
+        return function (dispach, getState) {
+          var nfsConfig = getRecord(getState).nfsConfig;
+          var newData = tslib.__assign(tslib.__assign({}, nfsConfig), data);
+          dispach({
+            type: BComponent$1.getActionType(pageName, ActionType.NfsConfig),
+            payload: newData
+          });
+        };
+      },
+      workflow: ffRedux.generateWorkflowActionCreator({
+        actionType: ActionType.Workflow,
+        workflowStateLocator: function workflowStateLocator(state) {
+          return getRecord(function () {
+            return state;
+          }).workflow;
+        },
+        operationExecutor: function operationExecutor(targets, params, dispatch, getState) {
+          return tslib.__awaiter(_this, void 0, void 0, function () {
+            var result, error_1;
+            return tslib.__generator(this, function (_a) {
+              switch (_a.label) {
+                case 0:
+                  _a.trys.push([0, 2,, 3]);
+                  return [4 /*yield*/, medium.createCosConfigForTdcc(targets, params)];
+                case 1:
+                  result = _a.sent();
+                  return [2 /*return*/, result];
+                case 2:
+                  error_1 = _a.sent();
+                  return [2 /*return*/, operationResult(targets, error_1)];
+                case 3:
+                  return [2 /*return*/];
+              }
+            });
+          });
+        },
+
+        after: (_b = {}, _b[ffRedux.OperationTrigger.Done] = function (dispatch, getState) {}, _b)
+      }),
+      initForUpdate: function initForUpdate(resource) {
+        return function (dispatch, getState) {
+          var _a, _b, _c, _d, _e, _f;
+          dispatch(actions.setName(resource === null || resource === void 0 ? void 0 : resource.metadata.name));
+          var storageType = (_b = (_a = resource === null || resource === void 0 ? void 0 : resource.metadata) === null || _a === void 0 ? void 0 : _a.labels) === null || _b === void 0 ? void 0 : _b[PaasMedium.StorageTypeLabel];
+          dispatch(actions.setType(storageType));
+          if (storageType === PaasMedium.StorageTypeEnum.S3) {
+            var cosConfigInfo = resource === null || resource === void 0 ? void 0 : resource.data;
+            var bucketNames = '';
+            try {
+              var decode = jsBase64.Base64.decode(cosConfigInfo === null || cosConfigInfo === void 0 ? void 0 : cosConfigInfo.bucketNames);
+              bucketNames = (_d = (_c = decode === null || decode === void 0 ? void 0 : decode.replace('[', '')) === null || _c === void 0 ? void 0 : _c.replace(']', '')) === null || _d === void 0 ? void 0 : _d.replace(/\"/g, '');
+            } catch (err) {}
+            var host = jsBase64.Base64.decode(cosConfigInfo === null || cosConfigInfo === void 0 ? void 0 : cosConfigInfo.host);
+            var cosConfig = {
+              domain: host === null || host === void 0 ? void 0 : host.split(':')[0],
+              port: host === null || host === void 0 ? void 0 : host.split(':')[1],
+              bucketNames: bucketNames,
+              secretId: jsBase64.Base64.decode(cosConfigInfo === null || cosConfigInfo === void 0 ? void 0 : cosConfigInfo.access_key),
+              secretKey: jsBase64.Base64.decode(cosConfigInfo === null || cosConfigInfo === void 0 ? void 0 : cosConfigInfo.secret_key)
+            };
+            dispatch(actions.cosConfig(cosConfig));
+          } else {
+            var nfsConfigInfo = resource === null || resource === void 0 ? void 0 : resource.data;
+            var mountOptions = '';
+            try {
+              var decode = jsBase64.Base64.decode(nfsConfigInfo === null || nfsConfigInfo === void 0 ? void 0 : nfsConfigInfo.mountOptions);
+              mountOptions = (_f = (_e = decode === null || decode === void 0 ? void 0 : decode.replace('[', '')) === null || _e === void 0 ? void 0 : _e.replace(']', '')) === null || _f === void 0 ? void 0 : _f.replace(/\"/g, '');
+            } catch (err) {}
+            var nfsConfig = {
+              mountOptions: mountOptions,
+              serverName: jsBase64.Base64.decode(nfsConfigInfo === null || nfsConfigInfo === void 0 ? void 0 : nfsConfigInfo.name),
+              path: jsBase64.Base64.decode(nfsConfigInfo === null || nfsConfigInfo === void 0 ? void 0 : nfsConfigInfo.path),
+              server: jsBase64.Base64.decode(nfsConfigInfo === null || nfsConfigInfo === void 0 ? void 0 : nfsConfigInfo.server)
+            };
+            dispatch(actions.nfsConfig(nfsConfig));
+          }
+        };
+      },
+      validator: ffValidator.createValidatorActions({
+        userDefinedSchema: MediumEditDialog.createValidateSchema({
+          pageName: pageName
+        }),
+        validateStateLocator: function validateStateLocator(state) {
+          return getRecord(function () {
+            return state;
+          });
+        },
+        validatorStateLocation: function validatorStateLocation(state) {
+          return getRecord(function () {
+            return state;
+          }).validator;
+        }
+      }),
+      clear: function clear() {
+        return {
+          type: BComponent$1.getActionType(pageName, ActionType.Clear)
+        };
+      }
+    };
+    return actions;
+  };
+  MediumEditDialog.createReducer = function (_a) {
+    var pageName = _a.pageName;
+    var reducer = redux.combineReducers({
+      mediumName: ffRedux.reduceToPayload(BComponent$1.getActionType(pageName, ActionType.NodeUnitName), ''),
+      storageType: ffRedux.reduceToPayload(BComponent$1.getActionType(pageName, ActionType.Type), PaasMedium.StorageTypeEnum.S3),
+      cosConfig: ffRedux.reduceToPayload(BComponent$1.getActionType(pageName, ActionType.CosConfig), {}),
+      nfsConfig: ffRedux.reduceToPayload(BComponent$1.getActionType(pageName, ActionType.NfsConfig), {}),
+      workflow: ffRedux.generateWorkflowReducer({
+        actionType: ActionType.Workflow
+      }),
+      validator: ffValidator.createValidatorReducer(MediumEditDialog.createValidateSchema({
+        pageName: pageName
+      }))
+    });
+    return function (state, action) {
+      var newState = state;
+      if (action.type === BComponent$1.getActionType(pageName, ActionType.Clear)) {
+        newState = undefined;
+      }
+      return reducer(newState, action);
+    };
+  };
+  MediumEditDialog.Component = function (props) {
+    var _a = props.model,
+      workflow = _a.workflow,
+      mediumName = _a.mediumName,
+      validator = _a.validator,
+      storageType = _a.storageType,
+      _b = _a.cosConfig,
+      domain = _b.domain,
+      bucketNames = _b.bucketNames,
+      secretId = _b.secretId,
+      secretKey = _b.secretKey,
+      port = _b.port,
+      _c = _a.nfsConfig,
+      server = _c.server,
+      path = _c.path,
+      mountOptions = _c.mountOptions,
+      serverName = _c.serverName,
+      actions = props.actions,
+      platform = props.platform,
+      operationType = props.operationType,
+      userInfo = props.userInfo,
+      onSuccess = props.onSuccess,
+      clusterId = props.clusterId,
+      clusterName = props.clusterName,
+      existNames = props.existNames,
+      resourceInstance = props.resourceInstance,
+      regionId = props.regionId;
+    var isCreate = operationType === BComponent$1.OperationTypeEnum.Create;
+    var failed = workflow.operationState === ffRedux.OperationState.Done && !ffRedux.isSuccessWorkflow(workflow);
+    var _d = React.useState(''),
+      nameInUseTip = _d[0],
+      setNameInUseTip = _d[1];
+    React.useEffect(function () {
+      if (workflow.operationState === ffRedux.OperationState.Done) {
+        if (!failed && typeof onSuccess === 'function') {
+          onSuccess();
+        }
+      }
+    }, [failed, onSuccess, workflow.operationState]);
+    var cancel = function cancel() {
+      actions.clear();
+      actions.workflow.reset();
+    };
+    var perform = function perform() {
+      return tslib.__awaiter(_this, void 0, void 0, function () {
+        var host, bucketNamesString, mountOPtionsString, jsonData, resource, find;
+        var _a, _b, _c, _d;
+        return tslib.__generator(this, function (_e) {
+          host = domain;
+          if (port) {
+            host = "".concat(domain, ":").concat(port);
+          }
+          bucketNamesString = "[".concat((_a = bucketNames === null || bucketNames === void 0 ? void 0 : bucketNames.split(',')) === null || _a === void 0 ? void 0 : _a.map(function (item) {
+            return "\"".concat(item, "\"");
+          }), "]");
+          mountOPtionsString = "[".concat((_b = mountOptions === null || mountOptions === void 0 ? void 0 : mountOptions.split(',')) === null || _b === void 0 ? void 0 : _b.map(function (item) {
+            return "\"".concat(item, "\"");
+          }), "]");
+          jsonData = {
+            apiVersion: 'v1',
+            kind: 'Secret',
+            metadata: {
+              name: mediumName,
+              namespace: 'ssm',
+              labels: {
+                'tdcc.cloud.tencent.com/paas-storage-medium': storageType,
+                'tdcc.cloud.tencent.com/creator': (_d = (_c = userInfo === null || userInfo === void 0 ? void 0 : userInfo.object) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.name
+              }
+            },
+            data: storageType === PaasMedium.StorageTypeEnum.S3 ? {
+              host: jsBase64.Base64.encode(host),
+              bucketNames: jsBase64.Base64.encode(bucketNamesString),
+              access_key: jsBase64.Base64.encode(secretId),
+              secret_key: jsBase64.Base64.encode(secretKey)
+            } : {
+              name: jsBase64.Base64.encode(serverName),
+              server: jsBase64.Base64.encode(server),
+              path: jsBase64.Base64.encode(path),
+              mountOptions: jsBase64.Base64.encode(mountOPtionsString)
+            }
+          };
+          resource = {
+            id: uuid(),
+            mode: isCreate ? 'create' : 'update',
+            namespace: SystemNamespace,
+            clusterId: clusterId,
+            jsonData: JSON.stringify(jsonData),
+            isNavToEvent: false,
+            base64encode: true
+          };
+          if (isCreate) {
+            find = existNames === null || existNames === void 0 ? void 0 : existNames.find(function (item) {
+              return item === mediumName;
+            });
+            if (find) {
+              setNameInUseTip(i18n.t('已存在相同名字的备份介质'));
+              return [2 /*return*/];
+            }
+          }
+
+          actions.validator.validate(null, function (validateResult) {
+            if (ffValidator.isValid(validateResult)) {
+              actions.workflow.start([resource], {
+                regionId: regionId,
+                clusterId: clusterId,
+                platform: platform
+              });
+              actions.workflow.perform();
+            }
+          });
+          return [2 /*return*/];
+        });
+      });
+    };
+
+    if (workflow.operationState === ffRedux.OperationState.Pending) return null;
+    return React__default.createElement(teaComponent.Modal, {
+      visible: true,
+      caption: isCreate ? i18n.t('添加自定义介质') : i18n.t('更新自定义介质'),
+      onClose: cancel,
+      size: 800,
+      disableEscape: true
+    }, React__default.createElement(teaComponent.Modal.Body, null, React__default.createElement(ffComponent.FormPanel, {
+      isNeedCard: false,
+      className: "tea-mb-2n"
+    }, !isCreate ? React__default.createElement(ffComponent.FormPanel.Item, {
+      label: i18n.t('名称')
+    }, ' ', React__default.createElement(ffComponent.FormPanel.Text, null, mediumName)) : React__default.createElement(ffComponent.FormPanel.Item, {
+      label: i18n.t('名称'),
+      message: i18n.t('最长60个字符，只能包含小写字母、数字及分隔符("-")，且必须以小写字母开头，数字或小写字母结尾')
+    }, React__default.createElement(ffComponent.FormPanel.Input, {
+      formvalidator: validator,
+      vactions: actions.validator,
+      vkey: "mediumName",
+      value: mediumName,
+      onChange: function onChange(v) {
+        setNameInUseTip('');
+        actions.setName(v);
+      },
+      size: "l"
+    })), React__default.createElement(ffComponent.FormPanel.Item, {
+      label: i18n.t('集群')
+    }, React__default.createElement(ffComponent.FormPanel.Text, null, "".concat(clusterId, "(").concat(clusterName, ")"))), React__default.createElement(ffComponent.FormPanel.Item, {
+      label: i18n.t('存储类型')
+    }, React__default.createElement(ffComponent.FormPanel.Select, {
+      options: PaasMedium.storageTypeOptions,
+      onChange: actions.setType,
+      vkey: "type",
+      value: storageType,
+      size: "l"
+    })), storageType === PaasMedium.StorageTypeEnum.S3 && React__default.createElement(React__default.Fragment, null, React__default.createElement(ffComponent.FormPanel.Item, {
+      label: i18n.t('域名')
+    }, React__default.createElement(ffComponent.FormPanel.Input, {
+      vactions: actions.validator,
+      formvalidator: validator,
+      errorTipsStyle: 'Bubble',
+      vkey: "cosConfig.domain",
+      value: domain,
+      onChange: function onChange(v) {
+        return actions.cosConfig({
+          domain: v
+        });
+      },
+      size: "l"
+    })), React__default.createElement(ffComponent.FormPanel.Item, {
+      label: i18n.t('端口')
+    }, React__default.createElement(ffComponent.FormPanel.Input, {
+      vactions: actions.validator,
+      formvalidator: validator,
+      errorTipsStyle: 'Bubble',
+      vkey: "cosConfig.port",
+      value: port,
+      onChange: function onChange(v) {
+        return actions.cosConfig({
+          port: v
+        });
+      },
+      size: "l"
+    })), React__default.createElement(ffComponent.FormPanel.Item, {
+      label: i18n.t('存储桶名称'),
+      message: i18n.t('支持填写多个存储桶；用,分割')
+    }, React__default.createElement(ffComponent.FormPanel.Input, {
+      vactions: actions.validator,
+      formvalidator: validator,
+      errorTipsStyle: 'Bubble',
+      vkey: "cosConfig.bucketNames",
+      value: bucketNames,
+      // className="tea-mr-2n"
+      onChange: function onChange(v) {
+        return actions.cosConfig({
+          bucketNames: v
+        });
+      },
+      size: "l"
+    })), React__default.createElement(ffComponent.FormPanel.Item, {
+      label: i18n.t('secretId'),
+      message: React__default.createElement(ffComponent.FormPanel.HelpText, {
+        parent: 'div'
+      }, React__default.createElement(i18n.Trans, null, "\u8BBF\u95EECOS\u7684\u5BC6\u94A5Key,\u5BF9\u5E94\u5BC6\u94A5\u7BA1\u7406\u7684SecretId\uFF0C \u70B9\u51FB", React__default.createElement(teaComponent.ExternalLink, {
+        href: '/cam/capi'
+      }, "\u8FD9\u91CC"), "\u67E5\u770B\u76F8\u5173\u4FE1\u606F"))
+    }, React__default.createElement(ffComponent.FormPanel.Input, {
+      vkey: "cosConfig.secretId",
+      type: "password",
+      vactions: actions.validator,
+      formvalidator: validator,
+      errorTipsStyle: 'Bubble',
+      value: secretId,
+      onChange: function onChange(v) {
+        return actions.cosConfig({
+          secretId: v
+        });
+      },
+      size: "l"
+    })), React__default.createElement(ffComponent.FormPanel.Item, {
+      label: i18n.t('secretKey'),
+      message: React__default.createElement(ffComponent.FormPanel.HelpText, {
+        parent: 'div'
+      }, React__default.createElement(i18n.Trans, null, "\u8BBF\u95EECOS\u7684\u5BC6\u94A5Key,\u5BF9\u5E94\u5BC6\u94A5\u7BA1\u7406\u7684SecretKey\uFF0C \u70B9\u51FB", React__default.createElement(teaComponent.ExternalLink, {
+        href: '/cam/capi'
+      }, "\u8FD9\u91CC"), "\u67E5\u770B\u76F8\u5173\u4FE1\u606F"))
+    }, React__default.createElement(ffComponent.FormPanel.Input, {
+      vkey: "cosConfig.secretKey",
+      type: "password",
+      vactions: actions.validator,
+      formvalidator: validator,
+      errorTipsStyle: 'Bubble',
+      value: secretKey,
+      onChange: function onChange(v) {
+        return actions.cosConfig({
+          secretKey: v
+        });
+      },
+      size: "l"
+    }))), storageType === PaasMedium.StorageTypeEnum.NFS && React__default.createElement(React__default.Fragment, null, React__default.createElement(ffComponent.FormPanel.Item, {
+      label: i18n.t('Server Name')
+    }, React__default.createElement(ffComponent.FormPanel.Input, {
+      vactions: actions.validator,
+      formvalidator: validator,
+      errorTipsStyle: 'Bubble',
+      vkey: "nfsConfig.serverName",
+      value: serverName,
+      onChange: function onChange(v) {
+        return actions.nfsConfig({
+          serverName: v
+        });
+      },
+      size: "l"
+    })), React__default.createElement(ffComponent.FormPanel.Item, {
+      label: i18n.t('Server')
+    }, React__default.createElement(ffComponent.FormPanel.Input, {
+      vactions: actions.validator,
+      formvalidator: validator,
+      errorTipsStyle: 'Bubble',
+      vkey: "nfsConfig.server",
+      value: server,
+      onChange: function onChange(v) {
+        return actions.nfsConfig({
+          server: v
+        });
+      },
+      size: "l"
+    })), React__default.createElement(ffComponent.FormPanel.Item, {
+      label: i18n.t('Path')
+    }, React__default.createElement(ffComponent.FormPanel.Input, {
+      vactions: actions.validator,
+      formvalidator: validator,
+      errorTipsStyle: 'Bubble',
+      vkey: "nfsConfig.path",
+      value: path,
+      onChange: function onChange(v) {
+        return actions.nfsConfig({
+          path: v
+        });
+      },
+      size: "l"
+    })), React__default.createElement(ffComponent.FormPanel.Item, {
+      label: i18n.t('MountOptions'),
+      message: i18n.t('支持填写多个；用,分割')
+    }, React__default.createElement(ffComponent.FormPanel.Input, {
+      vactions: actions.validator,
+      formvalidator: validator,
+      errorTipsStyle: 'Bubble',
+      vkey: "nfsConfig.mountOptions",
+      value: mountOptions,
+      className: "tea-mr-2n",
+      onChange: function onChange(v) {
+        return actions.nfsConfig({
+          mountOptions: v
+        });
+      },
+      size: "l"
+    }))))), React__default.createElement(teaComponent.Modal.Footer, null, React__default.createElement(teaComponent.Button, {
+      type: "primary",
+      className: "tea-mr-2n",
+      disabled: workflow.operationState === ffRedux.OperationState.Performing,
+      onClick: perform
+    }, failed ? i18n.t('重试') : i18n.t('完成')), React__default.createElement(teaComponent.Button, {
+      title: i18n.t('取消'),
+      onClick: cancel
+    }, i18n.t('取消')), React__default.createElement(TipInfo, {
+      isShow: failed,
+      type: "error",
+      isForm: true
+    }, getWorkflowError(workflow)), React__default.createElement(TipInfo, {
+      isShow: !!nameInUseTip,
+      type: "error",
+      isForm: true
+    }, nameInUseTip)));
+  };
+})(MediumEditDialog || (MediumEditDialog = {}));
+
+var MediumDeleteDialog;
+(function (MediumDeleteDialog) {
+  var _this = this;
+  MediumDeleteDialog.ComponentName = "MediumDeleteDialog";
+  var ActionTypes;
+  (function (ActionTypes) {
+    ActionTypes["DELETE_RESOURCE_WORKFLOW"] = "DELETE_RESOURCE_WORKFLOW";
+    ActionTypes["CLEAR_STATE"] = "CLEAR_STATE";
+    ActionTypes["SET_VISIBLE"] = "SET_VISIBLE";
+  })(ActionTypes = MediumDeleteDialog.ActionTypes || (MediumDeleteDialog.ActionTypes = {}));
+  // 将ActionType加上ns的隔离
+  BComponent$1.createActionType(MediumDeleteDialog.ComponentName, ActionTypes);
+  MediumDeleteDialog.createActions = function (_a) {
+    var pageName = _a.pageName,
+      getRecord = _a.getRecord;
+    var actions = {
+      destory: function destory() {
+        return {
+          type: BComponent$1.getActionType(pageName, ActionTypes.CLEAR_STATE)
+        };
+      },
+      setVisible: function setVisible(visible) {
+        return {
+          type: BComponent$1.getActionType(pageName, ActionTypes.SET_VISIBLE),
+          payload: visible
+        };
+      },
+      deleteResourceWorkflow: ffRedux.generateWorkflowActionCreator({
+        actionType: BComponent$1.getActionType(pageName, ActionTypes.DELETE_RESOURCE_WORKFLOW),
+        // operationExecutor: WebApi.k8sResource.deleteMutliResourceIns,
+        operationExecutor: function operationExecutor(targets, options) {
+          return tslib.__awaiter(_this, void 0, void 0, function () {
+            var result;
+            return tslib.__generator(this, function (_a) {
+              switch (_a.label) {
+                case 0:
+                  return [4 /*yield*/, medium.deleteResource(targets === null || targets === void 0 ? void 0 : targets[0], options)];
+                case 1:
+                  result = _a.sent();
+                  return [2 /*return*/, result];
+              }
+            });
+          });
+        },
+        workflowStateLocator: function workflowStateLocator(state) {
+          return getRecord(function () {
+            return state;
+          }).deleteResourceWorkflow;
+        },
+        /** DONT USE THIS*/
+        after: {}
+      })
+    };
+    return actions;
+  };
+  MediumDeleteDialog.createReducer = function (_a) {
+    var pageName = _a.pageName;
+    var reducer = redux.combineReducers({
+      visible: ffRedux.reduceToPayload(BComponent$1.getActionType(pageName, ActionTypes.SET_VISIBLE), false),
+      deleteResourceWorkflow: ffRedux.generateWorkflowReducer({
+        actionType: BComponent$1.getActionType(pageName, ActionTypes.DELETE_RESOURCE_WORKFLOW)
+      })
+    });
+    var finalReducer = function finalReducer(state, action) {
+      var newState = state;
+      // 销毁组件
+      if (action.type === BComponent$1.getActionType(pageName, ActionTypes.CLEAR_STATE)) {
+        newState = undefined;
+      }
+      return reducer(newState, action);
+    };
+    return finalReducer;
+  };
+  MediumDeleteDialog.Component = function (props) {
+    var model = props.model,
+      _a = props.destoryOnClose,
+      destoryOnClose = _a === void 0 ? true : _a,
+      regionId = props.regionId,
+      clusterId = props.clusterId,
+      platform = props.platform,
+      resourceIns = props.resourceIns,
+      resourceInfo = props.resourceInfo,
+      onFail = props.onFail,
+      onCancelFromProps = props.onCancel,
+      onCloseFromProps = props.onClose,
+      onSuccess = props.onSuccess,
+      _b = props.headTitle,
+      headTitle = _b === void 0 ? i18n.t("资源") : _b,
+      deleteTips = props.deleteTips,
+      action = props.action,
+      _c = props.caption,
+      caption = _c === void 0 ? i18n.t("删除资源") : _c,
+      _d = props.width,
+      width = _d === void 0 ? 495 : _d,
+      _e = props.disabledConfirm,
+      disabledConfirm = _e === void 0 ? false : _e,
+      body = props.body,
+      _f = props.showIcon,
+      showIcon = _f === void 0 ? false : _f;
+    var visible = model.visible,
+      deleteResourceWorkflow = model.deleteResourceWorkflow;
+    React.useEffect(function () {
+      return function () {
+        if (destoryOnClose) {
+          action.destory();
+        }
+      };
+    }, [destoryOnClose, action.destory, action]);
+    var onClose = function onClose() {
+      if (typeof onCloseFromProps === "function") {
+        onCloseFromProps();
+      } else {
+        action.setVisible(false);
+        action.deleteResourceWorkflow.reset();
+      }
+    };
+    var onCancel = function onCancel() {
+      if (typeof onCancelFromProps === "function") {
+        onCancelFromProps();
+      } else {
+        action.setVisible(false);
+        action.deleteResourceWorkflow.reset();
+      }
+    };
+    var operationState = deleteResourceWorkflow.operationState;
+    var failed = operationState === ffRedux.OperationState.Done && !ffRedux.isSuccessWorkflow(deleteResourceWorkflow);
+    React.useEffect(function () {
+      if (operationState === ffRedux.OperationState.Done) {
+        if (failed && typeof onFail === "function") {
+          onFail();
+        } else if (!failed && typeof onSuccess === "function") {
+          onSuccess();
+        }
+      }
+    }, [operationState, failed, onFail, onSuccess]);
+    var finalBody = body ? body : React__default.createElement("div", {
+      style: {
+        fontSize: "14px",
+        lineHeight: "20px"
+      }
+    }, React__default.createElement("p", {
+      style: {
+        wordWrap: "break-word"
+      }
+    }, showIcon && React__default.createElement(teaComponent.Icon, {
+      type: "warning",
+      size: "l",
+      style: {
+        marginRight: "8px"
+      }
+    }), React__default.createElement("strong", null, i18n.t("您确定要删除{{headTitle}}：{{resourceIns}}吗？", {
+      headTitle: headTitle,
+      resourceIns: resourceIns
+    }))), deleteTips && React__default.createElement("div", {
+      style: {
+        marginLeft: showIcon ? "40px" : ""
+      }
+    }, deleteTips));
+    return React__default.createElement(ModalMain.Modal, {
+      caption: caption,
+      size: width,
+      onClose: onClose,
+      visible: visible,
+      disableEscape: true
+    }, React__default.createElement(ModalMain.Modal.Body, null, finalBody, React__default.createElement(TipInfo, {
+      isShow: failed,
+      type: "error",
+      isForm: true
+    }, getWorkflowError(deleteResourceWorkflow))), React__default.createElement(ModalMain.Modal.Footer, null, React__default.createElement(teaComponent.Button, {
+      loading: deleteResourceWorkflow.operationState === ffRedux.OperationState.Performing,
+      type: "primary",
+      disabled: disabledConfirm || deleteResourceWorkflow.operationState === ffRedux.OperationState.Performing /** inputDeleteTarget可能是空數組？ */,
+      onClick: function onClick() {
+        action.deleteResourceWorkflow.start([{
+          clusterId: clusterId,
+          resourceIns: resourceIns,
+          platform: platform,
+          regionId: +regionId,
+          resourceInfo: resourceInfo
+        }], +regionId);
+        action.deleteResourceWorkflow.perform();
+      }
+    }, failed ? React__default.createElement("span", null, i18n.t("重试")) : React__default.createElement("span", null, i18n.t("确定"))), React__default.createElement(teaComponent.Button, {
+      onClick: onCancel
+    }, i18n.t("取消"))));
+  };
+})(MediumDeleteDialog || (MediumDeleteDialog = {}));
+
+var SubEnum$1;
+(function (SubEnum) {
+  SubEnum["List"] = "list";
+  SubEnum["Detail"] = "detail";
+  SubEnum["Create"] = "create";
+  //编辑实例
+  SubEnum["Edit"] = "edit";
+})(SubEnum$1 || (SubEnum$1 = {}));
+var TabEnum$1;
+(function (TabEnum) {
+  TabEnum["Info"] = "info";
+  TabEnum["Instance"] = "instance";
+  TabEnum["Yaml"] = "yaml";
+})(TabEnum$1 || (TabEnum$1 = {}));
+var getRouterPath = function getRouterPath(pathname) {
+  var _a;
+  var path;
+  if (pathname === null || pathname === void 0 ? void 0 : pathname.includes((_a = PlatformType.TKESTACK) === null || _a === void 0 ? void 0 : _a.toLowerCase())) {
+    path = "/tkestack/medium";
+  } else {
+    path = "/tdcc/medium";
+  }
+  return path;
+};
+/**
+ * @param sub 当前的模式，create | update | detail
+ */
+var router$1 = new Router("".concat(getRouterPath(location === null || location === void 0 ? void 0 : location.pathname), "(/:sub)(/:tab)"), {
+  sub: SubEnum$1.List,
+  tab: ""
+});
+
+var MediumTablePanel;
+(function (MediumTablePanel) {
+  var _this = this;
+  MediumTablePanel.ComponentName = 'MediumTablePanel';
+  MediumTablePanel.ActionType = Object.assign({}, BComponent$1.BaseActionType, {
+    List: 'List',
+    ExternalCluster: 'FETCH_EXTERNAL_CLUSTERS',
+    Subscription: 'Subscription',
+    AddonList: 'AddonList',
+    ConfigMap: 'ConfigMap',
+    HealthCheckWorkflow: 'HealthCheckWorkflow'
+  });
+  // 将ActionType加上ns的隔离
+  BComponent$1.createActionType(MediumTablePanel.ComponentName, MediumTablePanel.ActionType);
+  MediumTablePanel.createActions = function (_a) {
+    var pageName = _a.pageName,
+      _getRecord = _a.getRecord;
+    var actions = {
+      list: ffRedux.createFFListActions({
+        actionName: BComponent$1.getActionType(pageName, MediumTablePanel.ActionType.List),
+        fetcher: function fetcher(query) {
+          return tslib.__awaiter(_this, void 0, void 0, function () {
+            var k8sQueryObj, result;
+            return tslib.__generator(this, function (_a) {
+              switch (_a.label) {
+                case 0:
+                  k8sQueryObj = {
+                    labelSelector: {
+                      'tdcc.cloud.tencent.com/paas-storage-medium': ['s3', 'nfs']
+                    }
+                  };
+                  if (!(query === null || query === void 0 ? void 0 : query.filter)) return [3 /*break*/, 2];
+                  return [4 /*yield*/, medium.fetchResourceList(tslib.__assign(tslib.__assign({}, query === null || query === void 0 ? void 0 : query.filter), {
+                    k8sQueryObj: k8sQueryObj
+                  }))];
+                case 1:
+                  result = _a.sent();
+                  _a.label = 2;
+                case 2:
+                  return [2 /*return*/, result];
+              }
+            });
+          });
+        },
+        getRecord: function getRecord(getState) {
+          return _getRecord(getState).list;
+        },
+        onFinish: function onFinish(record, dispatch) {
+          dispatch(actions.list.clearPolling());
+        }
+      }),
+      getClusterAdminRole: GetRbacAdminDialog.createActions({
+        pageName: BComponent$1.getActionType(pageName, MediumTablePanel.ComponentName),
+        getRecord: function getRecord(getState) {
+          return _getRecord(getState).getClusterAdminRole;
+        }
+      }),
+      externalClusters: ffRedux.createFFListActions({
+        actionName: BComponent$1.getActionType(pageName, MediumTablePanel.ActionType.ExternalCluster),
+        fetcher: function fetcher(query, getState) {
+          return tslib.__awaiter(_this, void 0, void 0, function () {
+            var _a, regionId, platform, result;
+            var _b, _c;
+            return tslib.__generator(this, function (_d) {
+              switch (_d.label) {
+                case 0:
+                  _a = query.filter, regionId = _a.regionId, platform = _a.platform;
+                  if (!(platform && regionId)) return [3 /*break*/, 2];
+                  return [4 /*yield*/, fetchExternalClusters({
+                    platform: platform,
+                    regionId: regionId
+                  })];
+                case 1:
+                  result = _d.sent();
+                  // 过滤状态为运行状态的注册集群
+                  result.records = (_b = result === null || result === void 0 ? void 0 : result.records) === null || _b === void 0 ? void 0 : _b.filter(function (item) {
+                    var _a;
+                    return (item === null || item === void 0 ? void 0 : item.status) === ((_a = ExternalCluster === null || ExternalCluster === void 0 ? void 0 : ExternalCluster.StatusEnum) === null || _a === void 0 ? void 0 : _a.Running);
+                  });
+                  result.recordCount = (_c = result === null || result === void 0 ? void 0 : result.records) === null || _c === void 0 ? void 0 : _c.length;
+                  _d.label = 2;
+                case 2:
+                  return [2 /*return*/, result];
+              }
+            });
+          });
+        },
+        getRecord: function getRecord(getState) {
+          return _getRecord(getState).externalClusters;
+        },
+        selectFirst: false
+      }),
+      create: MediumEditDialog.createActions({
+        pageName: BComponent$1.getActionType(pageName, MediumTablePanel.ComponentName),
+        getRecord: function getRecord(getState) {
+          return _getRecord(getState).create;
+        }
+      }),
+      "delete": MediumDeleteDialog.createActions({
+        pageName: BComponent$1.getActionType(pageName, MediumTablePanel.ComponentName),
+        getRecord: function getRecord(getState) {
+          return _getRecord(getState)["delete"];
+        }
+      }),
+      clear: function clear() {
+        return function (dispatch, getState) {
+          return tslib.__awaiter(_this, void 0, void 0, function () {
+            return tslib.__generator(this, function (_a) {
+              dispatch({
+                type: BComponent$1.getActionType(pageName, MediumTablePanel.ActionType.Clear)
+              });
+              return [2 /*return*/];
+            });
+          });
+        };
+      }
+    };
+
+    return actions;
+  };
+  MediumTablePanel.createValidateSchema = function (_a) {
+    var pageName = _a.pageName;
+    var schema = {
+      formKey: BComponent$1.getActionType(pageName, MediumTablePanel.ActionType.Validator),
+      fields: []
+    };
+    return schema;
+  };
+  MediumTablePanel.createReducer = function (_a) {
+    var pageName = _a.pageName;
+    var TempReducer = redux.combineReducers({
+      list: ffRedux.createFFListReducer({
+        actionName: BComponent$1.getActionType(pageName, MediumTablePanel.ActionType.List),
+        displayField: function displayField(r) {
+          return r.metadata.name;
+        },
+        valueField: function valueField(r) {
+          return r.metadata.name;
+        }
+      }),
+      getClusterAdminRole: GetRbacAdminDialog.createReducer({
+        pageName: BComponent$1.getActionType(pageName, MediumTablePanel.ComponentName)
+      }),
+      externalClusters: ffRedux.createFFListReducer({
+        actionName: BComponent$1.getActionType(pageName, MediumTablePanel.ActionType.ExternalCluster),
+        displayField: 'clusterName',
+        valueField: 'clusterId'
+      }),
+      create: MediumEditDialog.createReducer({
+        pageName: BComponent$1.getActionType(pageName, MediumTablePanel.ComponentName)
+      }),
+      "delete": MediumDeleteDialog.createReducer({
+        pageName: BComponent$1.getActionType(pageName, MediumTablePanel.ComponentName)
+      })
+    });
+    var Reducer = function Reducer(state, action) {
+      var newState = state;
+      // 销毁页面
+      if (action.type === BComponent$1.getActionType(pageName, MediumTablePanel.ActionType.Clear)) {
+        newState = undefined;
+      }
+      return TempReducer(newState, action);
+    };
+    return Reducer;
+  };
+  MediumTablePanel.Component = React__default.memo(function (props) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
+    var action = props.action,
+      _u = props.model,
+      list = _u.list,
+      externalClusters = _u.externalClusters,
+      create = _u.create,
+      getClusterAdminRole = _u.getClusterAdminRole,
+      model = props.model,
+      _v = props.filter,
+      regionId = _v.regionId,
+      platform = _v.platform,
+      route = _v.route,
+      k8sVersion = _v.k8sVersion,
+      userInfo = _v.userInfo;
+    var _w = React.useState(null),
+      operateType = _w[0],
+      setOperateType = _w[1];
+    var clusterId = ((_a = route.queries) !== null && _a !== void 0 ? _a : {}).clusterId;
+    React.useEffect(function () {
+      var _a, _b, _c, _d, _e, _f;
+      if ((_a = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.list) === null || _a === void 0 ? void 0 : _a.fetched) {
+        (_b = action.externalClusters) === null || _b === void 0 ? void 0 : _b.selectByValue(clusterId || ((_f = (_e = (_d = (_c = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.list) === null || _c === void 0 ? void 0 : _c.data) === null || _d === void 0 ? void 0 : _d.records) === null || _e === void 0 ? void 0 : _e[0]) === null || _f === void 0 ? void 0 : _f.clusterId));
+      }
+    }, [action.externalClusters, clusterId, (_c = (_b = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.list) === null || _b === void 0 ? void 0 : _b.data) === null || _c === void 0 ? void 0 : _c.records, (_d = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.list) === null || _d === void 0 ? void 0 : _d.fetched]);
+    React.useEffect(function () {
+      var _a, _b;
+      var filter = {
+        platform: platform,
+        regionId: regionId,
+        clusterId: (_a = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _a === void 0 ? void 0 : _a.clusterId,
+        namespace: 'ssm'
+      };
+      if (((_b = externalClusters.list) === null || _b === void 0 ? void 0 : _b.fetched) && filter.clusterId && BComponent$1.isNeedFetch(list, filter)) {
+        action.list.applyFilter(filter);
+      }
+    }, [action.list, list, externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection, platform, regionId, (_e = externalClusters.list) === null || _e === void 0 ? void 0 : _e.fetched]);
+    React.useEffect(function () {
+      var filter = {
+        platform: platform,
+        clusterIds: [],
+        regionId: regionId
+      };
+      if (BComponent$1.isNeedFetch(externalClusters, filter)) {
+        action.externalClusters.applyFilter({
+          platform: platform,
+          clusterIds: [],
+          regionId: regionId
+        });
+      }
+    }, [externalClusters, action.externalClusters]);
+    //无权限提示
+    var errorText = React__default.useMemo(function () {
+      var _a, _b, _c, _d;
+      var errorText;
+      try {
+        var listRbacErrorInfo = JSON.parse((_c = (_b = (_a = list === null || list === void 0 ? void 0 : list.list) === null || _a === void 0 ? void 0 : _a.error) === null || _b === void 0 ? void 0 : _b.message) !== null && _c !== void 0 ? _c : null);
+        errorText = (listRbacErrorInfo === null || listRbacErrorInfo === void 0 ? void 0 : listRbacErrorInfo.code) === 403 ? React__default.createElement(i18n.Trans, null, React__default.createElement(teaComponent.Text, {
+          verticalAlign: "middle"
+        }, "\u6743\u9650\u4E0D\u8DB3\uFF0C\u8BF7\u8054\u7CFB\u96C6\u7FA4\u7BA1\u7406\u5458\u6DFB\u52A0\u6743\u9650\uFF1B\u82E5\u60A8\u672C\u8EAB\u662F\u96C6\u7FA4\u7BA1\u7406\u5458\uFF0C\u53EF\u76F4\u63A5"), React__default.createElement(teaComponent.Button, {
+          type: "link",
+          onClick: function onClick() {
+            // 弹出获取集群admin角色的按钮
+            action.getClusterAdminRole.getClusterAdminRole.start([]);
+          }
+        }, "\u83B7\u53D6\u96C6\u7FA4admin\u89D2\u8272"), React__default.createElement(teaComponent.Text, {
+          verticalAlign: "middle"
+        }, React__default.createElement(i18n.Slot, {
+          content: "(".concat((_d = listRbacErrorInfo === null || listRbacErrorInfo === void 0 ? void 0 : listRbacErrorInfo.message) !== null && _d !== void 0 ? _d : '-', ")")
+        }))) : undefined;
+      } catch (error) {}
+      return errorText;
+    }, [action.getClusterAdminRole.getClusterAdminRole, (_g = (_f = list === null || list === void 0 ? void 0 : list.list) === null || _f === void 0 ? void 0 : _f.error) === null || _g === void 0 ? void 0 : _g.message]);
+    var navigateDetail = function navigateDetail(resource) {
+      var _a;
+      router$1.navigate({
+        sub: 'detail'
+      }, {
+        resourceIns: resource.metadata.name,
+        clusterId: (_a = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _a === void 0 ? void 0 : _a.clusterId
+      });
+    };
+    React.useEffect(function () {
+      return function () {
+        action.clear();
+      };
+    }, []);
+    var columns = [{
+      key: 'name',
+      header: i18n.t('名称'),
+      render: function render(item) {
+        var _a;
+        return React__default.createElement(teaComponent.Button, {
+          type: "link",
+          onClick: function onClick() {
+            navigateDetail(item);
+          }
+        }, (_a = item === null || item === void 0 ? void 0 : item.metadata) === null || _a === void 0 ? void 0 : _a.name);
+      }
+    }, {
+      key: 'type',
+      header: i18n.t('类型'),
+      render: function render(item) {
+        var _a, _b;
+        return React__default.createElement("p", null, PaasMedium.StorageTypeMap[(_b = (_a = item === null || item === void 0 ? void 0 : item.metadata) === null || _a === void 0 ? void 0 : _a.labels) === null || _b === void 0 ? void 0 : _b['tdcc.cloud.tencent.com/paas-storage-medium']]);
+      }
+    },
+    // {
+    //   key: "clusterId",
+    //   // header: t('集群ID(集群名称)'),
+    //   header: t("集群ID"),
+    //   render: (item) => (
+    //     <Text>
+    //       {t("{{clusterId}}", {
+    //         clusterId: Util.getClusterId(platform, item, route),
+    //       })}
+    //       {/* {t('{{clusterName}}', { clusterName: `(${Util.getClusterName(platform,item,route)})`})} */}
+    //     </Text>
+    //   ),
+    // },
+    {
+      key: 'user',
+      header: i18n.t('创建人'),
+      render: function render(item) {
+        var _a, _b, _c;
+        return React__default.createElement("p", null, (_c = (_b = (_a = item === null || item === void 0 ? void 0 : item.metadata) === null || _a === void 0 ? void 0 : _a.labels) === null || _b === void 0 ? void 0 : _b['tdcc.cloud.tencent.com/creator']) !== null && _c !== void 0 ? _c : '-');
+      }
+    }, {
+      key: 'creationTimestamp',
+      header: i18n.t('时间戳'),
+      render: function render(item) {
+        var _a;
+        return React__default.createElement("p", null, dateFormatter(new Date((_a = item === null || item === void 0 ? void 0 : item.metadata) === null || _a === void 0 ? void 0 : _a.creationTimestamp), 'YYYY-MM-DD HH:mm:ss') || '-');
+      }
+    }, {
+      key: 'operate',
+      header: i18n.t('操作'),
+      render: function render(item) {
+        return React__default.createElement(React__default.Fragment, null, React__default.createElement(teaComponent.Button, {
+          type: "link",
+          onClick: function onClick() {
+            action.list.select(item);
+            setOperateType(BComponent$1.OperationTypeEnum.Modify);
+            action.create.initForUpdate(item);
+            action.create.workflow.start([]);
+          }
+        }, i18n.t('更新配置')), React__default.createElement(teaComponent.Button, {
+          key: 'delete',
+          type: "link",
+          onClick: function onClick() {
+            action.list.select(item);
+            action["delete"].setVisible(true);
+          }
+        }, i18n.t('删除')));
+      }
+    }];
+    return React__default.createElement(teaComponent.Layout, null, React__default.createElement(teaComponent.Layout.Body, null, React__default.createElement(teaComponent.Layout.Content, null, React__default.createElement(teaComponent.Layout.Content.Header, {
+      title: i18n.t('备份介质')
+    }), React__default.createElement(teaComponent.Layout.Content.Body, {
+      full: true
+    }, React__default.createElement(teaComponent.Table.ActionPanel, null, React__default.createElement(teaComponent.Justify, {
+      left: React__default.createElement(teaComponent.Button, {
+        type: "primary",
+        // disabled={!isCanCreateExternal}
+        onClick: function onClick() {
+          setOperateType(BComponent$1.OperationTypeEnum.Create);
+          action.create.workflow.start([]);
+        }
+      }, i18n.t('创建')),
+      right: React__default.createElement(React__default.Fragment, null, React__default.createElement("div", {
+        style: {
+          display: 'inline-block',
+          fontSize: '12px',
+          verticalAlign: 'middle'
+        }
+      }, React__default.createElement(teaComponent.Text, {
+        theme: "label",
+        verticalAlign: "middle"
+      }, i18n.t('注册集群')), React__default.createElement(ffComponent.FormPanel.Select, {
+        model: externalClusters,
+        onChange: function onChange(value) {
+          action.externalClusters.selectByValue(value);
+          router$1.navigate({}, {
+            clusterId: value
+          });
+        },
+        action: action.externalClusters,
+        size: "m",
+        errorTipsStyle: "Bubble"
+      })), React__default.createElement("div", {
+        style: {
+          width: 350,
+          display: 'inline-block'
+        }
+      }, React__default.createElement(ffComponent.TablePanelTagSearchBox, {
+        disabled: !((_j = (_h = model.list) === null || _h === void 0 ? void 0 : _h.list) === null || _j === void 0 ? void 0 : _j.fetched),
+        onChange: function onChange(searchFilter) {
+          var _a;
+          action.list.changeSearchFilter(searchFilter);
+          action.list.applyFilter({
+            platform: platform,
+            regionId: regionId,
+            clusterId: (_a = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _a === void 0 ? void 0 : _a.clusterId,
+            namespace: SystemNamespace,
+            searchFilter: searchFilter
+          });
+        },
+        attributes: [{
+          type: 'input',
+          key: 'resourceName',
+          name: i18n.t('名称')
+        }],
+        model: model.list,
+        tips: i18n.t('名称只能搜索一个关键字')
+      })), React__default.createElement(teaComponent.Button, {
+        icon: "refresh",
+        title: i18n.t('刷新'),
+        onClick: function onClick() {
+          action.list.fetch();
+        }
+      }))
+    })), React__default.createElement(ffComponent.TablePanel, {
+      operationsWidth: 300,
+      recordKey: function recordKey(record) {
+        var _a;
+        return (_a = record === null || record === void 0 ? void 0 : record.metadata) === null || _a === void 0 ? void 0 : _a.name;
+      },
+      columns: columns,
+      model: list,
+      action: action.list,
+      isNeedPagination: true,
+      errorText: errorText
+    }), React__default.createElement(MediumDeleteDialog.Component, {
+      action: action["delete"],
+      model: model["delete"],
+      regionId: regionId,
+      clusterId: (_k = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _k === void 0 ? void 0 : _k.clusterId,
+      resourceIns: (_m = (_l = list === null || list === void 0 ? void 0 : list.selection) === null || _l === void 0 ? void 0 : _l.metadata) === null || _m === void 0 ? void 0 : _m.name,
+      resourceInfo: list === null || list === void 0 ? void 0 : list.selection,
+      platform: platform,
+      headTitle: i18n.t('存储介质'),
+      onSuccess: function onSuccess() {
+        action["delete"].setVisible(false);
+        action.list.startPolling({
+          delayTime: 10000
+        });
+        action.list.fetch();
+        action["delete"].deleteResourceWorkflow.reset();
+        action.list.resetPaging();
+      }
+    }), React__default.createElement(MediumEditDialog.Component, {
+      actions: action.create,
+      model: create,
+      regionId: regionId,
+      clusterId: (_o = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _o === void 0 ? void 0 : _o.clusterId,
+      clusterName: (_p = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _p === void 0 ? void 0 : _p.clusterName,
+      k8sVersion: k8sVersion,
+      operationType: operateType,
+      userInfo: userInfo,
+      platform: platform,
+      existNames: (_s = (_r = (_q = list === null || list === void 0 ? void 0 : list.list) === null || _q === void 0 ? void 0 : _q.data) === null || _r === void 0 ? void 0 : _r.records) === null || _s === void 0 ? void 0 : _s.map(function (item) {
+        var _a;
+        return (_a = item === null || item === void 0 ? void 0 : item.metadata) === null || _a === void 0 ? void 0 : _a.name;
+      }),
+      resourceInstance: operateType === BComponent$1.OperationTypeEnum.Modify ? list === null || list === void 0 ? void 0 : list.selection : undefined,
+      onSuccess: function onSuccess() {
+        action.list.fetch();
+        action.create.clear();
+        action.list.resetPaging();
+        action.create.workflow.reset();
+      }
+    }), React__default.createElement(GetRbacAdminDialog.Component, {
+      model: getClusterAdminRole,
+      action: action.getClusterAdminRole,
+      filter: {
+        platform: platform,
+        regionId: regionId,
+        clusterId: (_t = externalClusters === null || externalClusters === void 0 ? void 0 : externalClusters.selection) === null || _t === void 0 ? void 0 : _t.clusterId
+      },
+      onSuccess: function onSuccess() {
+        var _a;
+        (_a = action.list) === null || _a === void 0 ? void 0 : _a.fetch();
+      }
+    })))));
+  });
+})(MediumTablePanel || (MediumTablePanel = {}));
+
+/**
+ *
+ * @param filter
+ * @returns
+ */
+function isFilterReady(filter) {
+  if (_typeof(filter) !== "object") {
+    return false;
+  }
+  var keys = Object.keys(filter);
+  var isOk = true;
+  for (var _i = 0, keys_1 = keys; _i < keys_1.length; _i++) {
+    var key = keys_1[_i];
+    //保证filter内的key都是可预设的值
+    isOk = isOk && filter[key] !== undefined && filter[key] !== null;
+    if (!isOk) {
+      break;
+    }
+  }
+  return isOk;
+}
+
+var MediumInfoPanel = React__default.memo(function (props) {
+  var _a;
+  var resourceInstance = props.model.resourceInstance;
+  var _b = React__default.useMemo(function () {
+      var resourceIns = resourceInstance.object.data;
+      var isNeedLoading = resourceInstance.object.fetched !== true || resourceInstance.object.fetchState === ffRedux.FetchState.Fetching || resourceIns === null;
+      return {
+        resourceIns: resourceIns,
+        isNeedLoading: isNeedLoading
+      };
+    }, [resourceInstance.object]),
+    resourceIns = _b.resourceIns,
+    isNeedLoading = _b.isNeedLoading;
+  return isNeedLoading ? React__default.createElement(teaComponent.Card, null, React__default.createElement(teaComponent.Card.Body, null, React__default.createElement(teaComponent.Icon, {
+    type: "loading"
+  }))) : React__default.createElement(ffComponent.FormPanel, {
+    title: i18n.t("基本信息")
+  }, React__default.createElement(ffComponent.FormPanel.Item, {
+    label: i18n.t("名称"),
+    text: true
+  }, (_a = resourceIns.metadata) === null || _a === void 0 ? void 0 : _a.name), React__default.createElement(ffComponent.FormPanel.Item, {
+    label: i18n.t("运行的节点列表"),
+    text: true
+  }, React__default.createElement("div", null, "test")), React__default.createElement(ffComponent.FormPanel.Item, {
+    label: i18n.t("期望的节点列表"),
+    text: true
+  }, React__default.createElement("div", null, "test")));
+});
+
+var MediumDetailPanel;
+(function (MediumDetailPanel) {
+  var _this = this;
+  MediumDetailPanel.ComponentName = "MediumDetailPanel";
+  MediumDetailPanel.ActionType = Object.assign({}, BComponent$1.BaseActionType, {
+    ResourceInstance: "ResourceInstance"
+  });
+  // 将ActionType加上ns的隔离
+  BComponent$1.createActionType(MediumDetailPanel.ComponentName, MediumDetailPanel.ActionType);
+  MediumDetailPanel.createActions = function (_a) {
+    var pageName = _a.pageName,
+      _getRecord = _a.getRecord;
+    var actions = {
+      resourceInstance: ffRedux.createFFObjectActions({
+        actionName: BComponent$1.getActionType(pageName, MediumDetailPanel.ActionType.ResourceInstance),
+        fetcher: function fetcher(query) {
+          return tslib.__awaiter(_this, void 0, void 0, function () {
+            var result;
+            return tslib.__generator(this, function (_a) {
+              switch (_a.label) {
+                case 0:
+                  return [4 /*yield*/, medium.fetchResourceDetail(tslib.__assign({}, query === null || query === void 0 ? void 0 : query.filter))];
+                case 1:
+                  result = _a.sent();
+                  return [2 /*return*/, result];
+              }
+            });
+          });
+        },
+        getRecord: function getRecord(getState) {
+          return _getRecord(getState).resourceInstance;
+        }
+      }),
+      clear: function clear() {
+        return function (dispatch, getState) {
+          return tslib.__awaiter(_this, void 0, void 0, function () {
+            return tslib.__generator(this, function (_a) {
+              dispatch({
+                type: BComponent$1.getActionType(pageName, MediumDetailPanel.ActionType.Clear)
+              });
+              return [2 /*return*/];
+            });
+          });
+        };
+      }
+    };
+
+    return actions;
+  };
+  MediumDetailPanel.createValidateSchema = function (_a) {
+    var pageName = _a.pageName;
+    var schema = {
+      formKey: BComponent$1.getActionType(pageName, MediumDetailPanel.ActionType.Validator),
+      fields: []
+    };
+    return schema;
+  };
+  MediumDetailPanel.createReducer = function (_a) {
+    var pageName = _a.pageName;
+    var TempReducer = redux.combineReducers({
+      resourceInstance: ffRedux.createFFObjectReducer({
+        actionName: BComponent$1.getActionType(pageName, MediumDetailPanel.ActionType.ResourceInstance)
+      })
+    });
+    var Reducer = function Reducer(state, action) {
+      var newState = state;
+      // 销毁页面
+      if (action.type === BComponent$1.getActionType(pageName, MediumDetailPanel.ActionType.Clear)) {
+        newState = undefined;
+      }
+      return TempReducer(newState, action);
+    };
+    return Reducer;
+  };
+  MediumDetailPanel.Component = React__default.memo(function (props) {
+    // const { navigate, urlParams } = useRoute();
+    var action = props.action,
+      resourceType = props.resourceType,
+      resourceInstance = props.model.resourceInstance,
+      filter = props.filter,
+      _a = props.filter,
+      regionId = _a.regionId,
+      clusterId = _a.clusterId,
+      k8sVersion = _a.k8sVersion,
+      resourceIns = _a.resourceIns,
+      platform = _a.platform,
+      route = _a.route;
+    React__default.useEffect(function () {
+      return function () {
+        action.clear();
+      };
+    }, [action]);
+    //获取当前资源实例
+    React.useEffect(function () {
+      var filter = {
+        regionId: regionId,
+        clusterId: clusterId,
+        platform: platform,
+        instanceName: resourceIns,
+        // specificName: resourceIns,
+        k8sVersion: k8sVersion
+      };
+      if (isFilterReady(filter) && BComponent$1.isNeedFetch(resourceInstance, filter)) {
+        action.resourceInstance.applyFilter(filter);
+      }
+    }, [action, resourceInstance, k8sVersion, regionId, clusterId, resourceIns, platform]);
+    return React__default.createElement(teaComponent$1.Layout, null, React__default.createElement(teaComponent$1.Layout.Body, null, React__default.createElement(teaComponent$1.Layout.Content, null, React__default.createElement(teaComponent$1.Layout.Content.Header, {
+      showBackButton: true,
+      onBackButtonClick: function onBackButtonClick() {
+        var clusterId = route.queries.clusterId;
+        var urlParams = router$1 === null || router$1 === void 0 ? void 0 : router$1.resolve(route);
+        router$1.navigate(tslib.__assign(tslib.__assign({}, urlParams), {
+          sub: "list"
+        }), {
+          clusterId: clusterId
+        });
+      },
+      title: i18n.t("备份介质")
+    }), React__default.createElement(teaComponent$1.Layout.Content.Body, {
+      full: true
+    }, React__default.createElement(MediumInfoPanel, tslib.__assign({}, props))))));
+  });
+})(MediumDetailPanel || (MediumDetailPanel = {}));
+
+var MediumPage;
+(function (MediumPage) {
+  MediumPage.List = MediumTablePanel;
+  MediumPage.ComponentName = "MediumPage";
+  MediumPage.ActionType = Object.assign({}, BComponent$1.BaseActionType, {});
+  // 将ActionType加上ns的隔离
+  BComponent$1.createActionType(MediumPage.ComponentName, MediumPage.ActionType);
+  MediumPage.createActions = function (_a) {
+    var pageName = _a.pageName,
+      _getRecord = _a.getRecord;
+    var actions = {
+      list: MediumTablePanel.createActions({
+        pageName: pageName,
+        getRecord: function getRecord(getState) {
+          return _getRecord(getState).list;
+        }
+      }),
+      detail: MediumDetailPanel.createActions({
+        pageName: pageName,
+        getRecord: function getRecord(getState) {
+          return _getRecord(getState).detail;
+        }
+      })
+    };
+    return actions;
+  };
+  MediumPage.createReducer = function (_a) {
+    var pageName = _a.pageName;
+    var TempReducer = redux.combineReducers({
+      list: MediumTablePanel.createReducer({
+        pageName: pageName
+      }),
+      detail: MediumDetailPanel.createReducer({
+        pageName: pageName
+      })
+    });
+    var Reducer = function Reducer(state, action) {
+      var newState = state;
+      return TempReducer(newState, action);
+    };
+    return Reducer;
+  };
+  MediumPage.Component = React__default.memo(function (props) {
+    var _a;
+    var action = props.action,
+      route = props.filter.route,
+      filter = props.filter,
+      _b = props.model,
+      list = _b.list,
+      detail = _b.detail;
+    var urlParams = router$1 === null || router$1 === void 0 ? void 0 : router$1.resolve(route);
+    var _c = (_a = route.queries) !== null && _a !== void 0 ? _a : {},
+      resourceIns = _c.resourceIns,
+      clusterId = _c.clusterId;
+    var content = null;
+    if ((urlParams === null || urlParams === void 0 ? void 0 : urlParams.sub) === "detail") {
+      content = React__default.createElement(MediumDetailPanel.Component, {
+        action: action.detail,
+        model: detail,
+        filter: tslib.__assign(tslib.__assign({}, filter), {
+          resourceIns: resourceIns,
+          clusterId: clusterId
+        })
+      });
+    } else {
+      content = React__default.createElement(MediumTablePanel.Component, {
+        action: action.list,
+        model: list,
+        filter: filter
+      });
+    }
+    return React__default.createElement(React__default.Fragment, null, content);
+  });
+})(MediumPage || (MediumPage = {}));
+
+function prefixPageId$1(obj, pageId) {
+  Object.keys(obj).forEach(function (key) {
+    obj[key] = "".concat(pageId, "_").concat(obj[key]);
+  });
+}
+var Base$1;
+(function (Base) {
+  Base["IsI18n"] = "IsI18n";
+  Base["FETCH_PLATFORM"] = "FETCH_PLATFORM";
+  Base["FETCH_REGION"] = "FETCH_REGION";
+  Base["HubCluster"] = "HubCluster";
+  Base["ClusterVersion"] = "ClusterVersion";
+  Base["SELECT_TAB"] = "SELECT_TAB";
+  Base["Clear"] = "Clear";
+  Base["FETCH_UserInfo"] = "FETCH_UserInfo";
+  Base["UPDATE_ROUTE"] = "UPDATE_ROUTE";
+  Base["GetClusterAdminRoleFlow"] = "GetClusterAdminRoleFlow";
+})(Base$1 || (Base$1 = {}));
+var Create$1;
+(function (Create) {
+  Create["SERVICE_INSTANCE_EDIT"] = "SERVICE_INSTANCE_EDIT";
+  Create["SERVICE_INSTANCE_EDIT_VALIDATOR"] = "SERVICE_INSTANCE_EDIT_VALIDATOR";
+  Create["CREATE_SERVICE_RESOURCE"] = "CREATE_SERVICE_RESOURCE";
+  Create["UPDATE_SERVICE_RESOURCE"] = "UPDATE_SERVICE_RESOURCE";
+  Create["SERVICE_PLAN_EDIT"] = "SERVICE_PLAN_EDIT";
+  Create["CREATE_SERVICE_INSTANCE"] = "CREATE_SERVICE_INSTANCE";
+})(Create$1 || (Create$1 = {}));
+var List$1;
+(function (List) {
+  List["FETCH_SERVICES"] = "FETCH_SERVICES";
+  List["FETCH_CREATE_RESOURCE_SCHEMAS"] = "FETCH_CREATE_RESOURCE_SCHEMAS";
+  List["FETCH_SERVICE_RESOURCE"] = "FETCH_SERVICE_RESOURCE";
+  List["FETCH_SERVICE_PLANS"] = "FETCH_SERVICE_PLANS";
+  List["FETCH_Service_Plan_Map"] = "FETCH_Service_Plan_Map";
+  List["FETCH_SERVICE_RESOURCE_LIST"] = "FETCH_SERVICE_RESOURCE_LIST";
+  List["SELECT_DELETE_RESOURCE"] = "SELECT_DELETE_RESOURCE";
+  List["DELETE_SERVICE_RESOURCE"] = "DELETE_SERVICE_RESOURCE";
+  List["SHOW_INSTANCE_TABLE_DIALOG"] = "SHOW_INSTANCE_TABLE_DIALOG";
+  List["SHOW_CREATE_RESOURCE_DIALOG"] = "SHOW_CREATE_RESOURCE_DIALOG";
+  List["FETCH_EXTERNAL_CLUSTERS"] = "FETCH_EXTERNAL_CLUSTERS";
+  List["Clear"] = "Clear";
+})(List$1 || (List$1 = {}));
+var Detail$1;
+(function (Detail) {
+  Detail["RESOURCE_DETAIL"] = "RESOURCE_DETAIL";
+  Detail["Clear"] = "Clear";
+  Detail["Select_Detail_Tab"] = "Select_Detail_Tab";
+  Detail["FETCH_INSTANCE_RESOURCE"] = "FETCH_INSTANCE_RESOURCE";
+  Detail["BACKUP_RESOURCE"] = "BACKUP_RESOURCE";
+  Detail["CHECK_COS"] = "CHECK_COS";
+  Detail["BACKUP_RESOURCE_LOADING"] = "BACKUP_RESOURCE_LOADING";
+  Detail["SHOW_BACKUP_STRATEGY_DIALOG"] = "SHOW_BACKUP_STRATEGY_DIALOG";
+  Detail["BACKUP_STRATEGY_EDIT"] = "BACKUP_STRATEGY_EDIT";
+  Detail["OPEN_CONSOLE_WORKFLOW"] = "OPEN_CONSOLE_WORKFLOW";
+  Detail["SHOW_CREATE_RESOURCE_DIALOG"] = "SHOW_CREATE_RESOURCE_DIALOG";
+  Detail["FETCH_NAMESPACES"] = "FETCH_NAMESPACES";
+  Detail["SERVICE_BINDING_EDIT"] = "SERVICE_BINDING_EDIT";
+  Detail["FETCH_SERVICE_INSTANCE_SCHEMA"] = "FETCH_SERVICE_INSTANCE_SCHEMA";
+  Detail["SELECT_DETAIL_RESOURCE"] = "SELECT_DETAIL_RESOURCE";
+  Detail["FETCH_BACKUP_STRATEGY"] = "FETCH_BACKUP_STRATEGY";
+})(Detail$1 || (Detail$1 = {}));
+prefixPageId$1(Base$1, "Base");
+prefixPageId$1(Create$1, "Create");
+prefixPageId$1(List$1, "List");
+prefixPageId$1(Detail$1, "Detail");
+var ActionType$1 = {
+  Base: Base$1,
+  Create: Create$1,
+  List: List$1,
+  Detail: Detail$1
+};
+
+var routerSea$5 = seajs.require('router');
+var baseActions$1 = {
+  /** 国际版 */
+  toggleIsI18n: function toggleIsI18n(isI18n) {
+    return {
+      type: ActionType$1.Base.IsI18n,
+      payload: isI18n
+    };
+  },
+  fetchRegion: function fetchRegion(regionId) {
+    return function (dispatch, getState) {
+      return tslib.__awaiter(void 0, void 0, void 0, function () {
+        var _a, route, platform;
+        return tslib.__generator(this, function (_b) {
+          dispatch({
+            type: ActionType$1.Base.FETCH_REGION,
+            payload: regionId
+          });
+          _a = getState().base, route = _a.route, platform = _a.platform;
+          // tdcc首先拉取hub集群,然后拉取已开通的服务列表;tkeStack同时拉取目标集群和拉取已开通的服务列表
+          if (platform === (PlatformType === null || PlatformType === void 0 ? void 0 : PlatformType.TDCC)) {
+            dispatch(baseActions$1.hubCluster.applyFilter({
+              regionId: regionId,
+              platform: platform
+            }));
+          } else if (platform === (PlatformType === null || PlatformType === void 0 ? void 0 : PlatformType.TKESTACK)) ;
+          return [2 /*return*/];
+        });
+      });
+    };
+  },
+
+  fetchPlatform: function fetchPlatform(platform, region) {
+    return function (dispatch, getState) {
+      return tslib.__awaiter(void 0, void 0, void 0, function () {
+        var route;
+        return tslib.__generator(this, function (_a) {
+          dispatch({
+            type: ActionType$1.Base.FETCH_PLATFORM,
+            payload: platform
+          });
+          window['platform'] = platform;
+          route = getState().base.route;
+          return [2 /*return*/];
+        });
+      });
+    };
+  },
+
+  hubCluster: ffRedux.createFFObjectActions({
+    actionName: ActionType$1.Base.HubCluster,
+    fetcher: function fetcher(query, getState) {
+      return tslib.__awaiter(void 0, void 0, void 0, function () {
+        var _a, platform, route, response, data;
+        var _b;
+        return tslib.__generator(this, function (_c) {
+          switch (_c.label) {
+            case 0:
+              _a = getState().base, platform = _a.platform, route = _a.route;
+              return [4 /*yield*/, fetchHubCluster(query === null || query === void 0 ? void 0 : query.filter)];
+            case 1:
+              response = _c.sent();
+              data = (_b = response === null || response === void 0 ? void 0 : response.records) === null || _b === void 0 ? void 0 : _b[0];
+              if (data && !(data === null || data === void 0 ? void 0 : data.regionId)) {
+                data.regionId = HubCluster === null || HubCluster === void 0 ? void 0 : HubCluster.DefaultRegion;
+              }
+              return [2 /*return*/, data];
+          }
+        });
+      });
+    },
+    getRecord: function getRecord(getState) {
+      return getState().base.hubCluster;
+    },
+    onFinish: function onFinish(record, dispatch, getState) {
+      var _a, _b;
+      var _c = getState().base,
+        route = _c.route,
+        platform = _c.platform,
+        regionId = _c.regionId;
+      dispatch({
+        type: ActionType$1.Base.ClusterVersion,
+        payload: '1.18.4'
+      });
+      if (!record.data) {
+        if (platform === PlatformType.TDCC) {
+          routerSea$5.navigate('/tdcc/paasoverview/startup');
+        }
+      } else {
+        // 更新region
+        dispatch({
+          payload: (_a = record === null || record === void 0 ? void 0 : record.data) === null || _a === void 0 ? void 0 : _a.regionId,
+          type: (_b = ActionType$1 === null || ActionType$1 === void 0 ? void 0 : ActionType$1.Base) === null || _b === void 0 ? void 0 : _b.FETCH_REGION
+        });
+        // dispatch(
+        //   listActions.services.applyFilter({
+        //     platform,
+        //     clusterId: record.data?.clusterId,
+        //     regionId: record?.data?.regionId,
+        //   })
+        // );
+        // dispatch(
+        //   listActions?.externalClusters.applyFilter({
+        //     platform,
+        //     clusterIds: [],
+        //     regionId: record?.data?.regionId,
+        //   })
+        // );
+      }
+    }
+  }),
+
+  userInfo: ffRedux.createFFObjectActions({
+    actionName: ActionType$1.Base.FETCH_UserInfo,
+    fetcher: function fetcher(query, getState) {
+      return tslib.__awaiter(void 0, void 0, void 0, function () {
+        var response;
+        var _a;
+        return tslib.__generator(this, function (_b) {
+          switch (_b.label) {
+            case 0:
+              if (!(((_a = query === null || query === void 0 ? void 0 : query.filter) === null || _a === void 0 ? void 0 : _a.platform) === PlatformType.TDCC)) return [3 /*break*/, 1];
+              response = {
+                name: Util === null || Util === void 0 ? void 0 : Util.getUserName()
+              };
+              return [3 /*break*/, 3];
+            case 1:
+              return [4 /*yield*/, fetchUserInfo(query === null || query === void 0 ? void 0 : query.filter)];
+            case 2:
+              response = _b.sent();
+              _b.label = 3;
+            case 3:
+              return [2 /*return*/, response !== null && response !== void 0 ? response : {}];
+          }
+        });
+      });
+    },
+    getRecord: function getRecord(getState) {
+      return getState().base.userInfo;
+    }
+  }),
+  // 获取集群Admin权限
+  getClusterAdminRole: GetRbacAdminDialog.createActions({
+    pageName: ActionType$1.Base.GetClusterAdminRoleFlow,
+    getRecord: function getRecord(getState) {
+      return getState().base.getClusterAdminRole;
+    }
+  })
+};
+
+var createActions$1 = {};
+
+var detailActions$1 = {};
+
+var listActions$1 = {};
+
+var allActions$1 = {
+  base: baseActions$1,
+  create: createActions$1,
+  list: listActions$1,
+  detail: detailActions$1,
+  mediumPage: MediumPage.createActions({
+    pageName: "TdccMedium",
+    getRecord: function getRecord(getState) {
+      return getState().mediumPage;
+    }
+  })
+};
+
+/* eslint-disable no-undef */
+/**
+ * 重置redux store，用于离开页面时清空状态
+ */
+var ResetStoreAction$1 = "ResetStore";
+/**
+ * 生成可重置的reducer，用于rootReducer简单包装
+ * @return 可重置的reducer，当接收到 ResetStoreAction 时重置之
+ */
+// eslint-disable-next-line no-unused-vars
+var generateResetableReducer$1 = function generateResetableReducer(rootReducer) {
+  return function (state, action) {
+    var newState = state;
+    // 销毁页面
+    if (action.type === ResetStoreAction$1) {
+      newState = undefined;
+    }
+    return rootReducer(newState, action);
+  };
+};
+
+var TempReducer$3 = redux.combineReducers({
+  route: router.getReducer(),
+  isI18n: ffRedux.reduceToPayload(ActionType.Base.IsI18n, false),
+  platform: ffRedux.reduceToPayload(ActionType.Base.FETCH_PLATFORM, PlatformType === null || PlatformType === void 0 ? void 0 : PlatformType.TDCC),
+  regionId: ffRedux.reduceToPayload(ActionType.Base.FETCH_REGION, HubCluster === null || HubCluster === void 0 ? void 0 : HubCluster.DefaultRegion),
+  hubCluster: ffRedux.createFFObjectReducer({
+    actionName: ActionType.Base.HubCluster
+  }),
+  selectedTab: ffRedux.reduceToPayload(ActionType.Base.SELECT_TAB, ResourceTypeEnum === null || ResourceTypeEnum === void 0 ? void 0 : ResourceTypeEnum.ServiceResource),
+  clusterVersion: ffRedux.reduceToPayload(ActionType.Base.ClusterVersion, ""),
+  userInfo: ffRedux.createFFObjectReducer({
+    actionName: ActionType.Base.FETCH_UserInfo
+  }),
+  getClusterAdminRole: GetRbacAdminDialog.createReducer({
+    pageName: ActionType.Base.GetClusterAdminRoleFlow
+  })
+});
+var baseReducer$1 = function baseReducer(state, action) {
+  var newState = state;
+  // 销毁页面
+  if (action.type === ActionType.Base.Clear) {
+    newState = undefined;
+  }
+  return TempReducer$3(newState, action);
+};
+
+var RootReducer$1 = redux.combineReducers({
+  base: baseReducer$1,
+  mediumPage: MediumPage.createReducer({
+    pageName: "TdccMedium"
+  })
+});
+
+var createStore$1 = process.env.NODE_ENV === 'development' ? redux.applyMiddleware(thunk, reduxLogger.createLogger({
+  collapsed: true,
+  diff: true
+}))(redux.createStore) : redux.applyMiddleware(thunk)(redux.createStore);
+
+function configStore$1() {
+  var store = createStore$1(generateResetableReducer$1(RootReducer$1));
+  // hot reloading
+  // if (typeof module !== 'undefined' && (module as any).hot) {
+  //   (module as any).hot.accept('../reducers/RootReducer', () => {
+  //     store.replaceReducer(generateResetableReducer(require('../reducers/RootReducer').RootReducer));
+  //   });
+  // }
+  return store;
+}
+
+var store$1 = configStore$1();
+var MediumAppContainer = /** @class */function (_super) {
+  tslib.__extends(MediumAppContainer, _super);
+  function MediumAppContainer(props, context) {
+    return _super.call(this, props, context) || this;
+  }
+  // 页面离开时，清空store
+  MediumAppContainer.prototype.componentWillUnmount = function () {
+    store$1.dispatch({
+      type: ResetStoreAction$1
+    });
+  };
+  MediumAppContainer.prototype.render = function () {
+    return React.createElement(reactRedux.Provider, {
+      store: store$1
+    }, React.createElement(MediumApp, tslib.__assign({}, this.props)));
+  };
+  return MediumAppContainer;
+}(React.Component);
+var mapDispatchToProps$1 = function mapDispatchToProps(dispatch) {
+  return Object.assign({}, ffRedux.bindActionCreators({
+    actions: allActions$1
+  }, dispatch), {
+    dispatch: dispatch
+  });
+};
+var MediumApp = /** @class */function (_super) {
+  tslib.__extends(MediumApp, _super);
+  function MediumApp(props, context) {
+    return _super.call(this, props, context) || this;
+  }
+  MediumApp.prototype.componentDidMount = function () {
+    var _a, _b, _c, _d, _e, _f, _g;
+    var _h = this.props,
+      actions = _h.actions,
+      platform = _h.platform,
+      isI18n = _h.base.isI18n,
+      _j = _h.regionId,
+      regionId = _j === void 0 ? HubCluster === null || HubCluster === void 0 ? void 0 : HubCluster.DefaultRegion : _j;
+    if (window['VERSION'] === 'en' && !isI18n) {
+      actions.base.toggleIsI18n(true);
+    }
+    if ((_a = this.props) === null || _a === void 0 ? void 0 : _a.platform) {
+      (_b = actions === null || actions === void 0 ? void 0 : actions.base) === null || _b === void 0 ? void 0 : _b.fetchPlatform(platform, (_c = this === null || this === void 0 ? void 0 : this.props) === null || _c === void 0 ? void 0 : _c.regionId);
+      (_e = (_d = actions === null || actions === void 0 ? void 0 : actions.base) === null || _d === void 0 ? void 0 : _d.hubCluster) === null || _e === void 0 ? void 0 : _e.applyFilter({
+        regionId: regionId,
+        platform: platform
+      });
+      (_g = (_f = actions.base) === null || _f === void 0 ? void 0 : _f.userInfo) === null || _g === void 0 ? void 0 : _g.applyFilter({
+        platform: platform
+      });
+    }
+  };
+  MediumApp.prototype.render = function () {
+    var _a = this.props,
+      _b = _a.base,
+      route = _b.route,
+      platform = _b.platform,
+      regionId = _b.regionId,
+      clusterVersion = _b.clusterVersion,
+      userInfo = _b.userInfo,
+      actions = _a.actions,
+      mediumPage = _a.mediumPage;
+    // eslint-disable-next-line no-undef
+    var content = React.createElement(MediumPage.Component, {
+      filter: {
+        platform: platform,
+        route: route,
+        regionId: regionId,
+        k8sVersion: clusterVersion,
+        userInfo: userInfo
+      },
+      action: actions.mediumPage,
+      model: mediumPage
+    });
+    return React.createElement(React.Fragment, null, content);
+  };
+  MediumApp = tslib.__decorate([reactRedux.connect(function (state) {
+    return state;
+  }, mapDispatchToProps$1), router$1.serve()], MediumApp);
+  return MediumApp;
+}(React.Component);
+
+exports.MediumApp = MediumApp;
+exports.MediumAppContainer = MediumAppContainer;
 exports.MiddlewareApp = MiddlewareApp;
 exports.MiddlewareAppContainer = MiddlewareAppContainer;
 exports.store = store;
