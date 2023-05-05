@@ -40,7 +40,9 @@
       "@tencent/tea-component": ["./node_modules/tea-component"],
       "@tencent/tea-component/*": ["./node_modules/tea-component/*"],
       "@tencent/tchart": ["./tencent/tchart/src/panel/index.tsx"],
-      "@tencent/tea-app/*": ["./tencent/tea-app/*"]
+      "@tencent/tea-app/*": ["./tencent/tea-app/*"],
+      "@common": ["./src/modules/common"],
+      "@common/*": ["./src/modules/common/*"]
     }
   },
   "exclude": ["node_modules", "dist", "build", "develop", "loader", "public", "webpack", "tencent"],

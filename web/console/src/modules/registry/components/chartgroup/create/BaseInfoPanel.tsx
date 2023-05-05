@@ -28,6 +28,7 @@ import { InputField, TipInfo, getWorkflowError } from '../../../../../modules/co
 import { ChartGroup } from '../../../models';
 import { isValid } from '@tencent/ff-validator';
 import { UserAssociatePanel } from '../associate/UserAssociatePanel';
+import { checkCustomVisible } from '@src/modules/common/components/permission-provider';
 
 const tips = seajs.require('tips');
 
@@ -107,7 +108,7 @@ export class BaseInfoPanel extends React.Component<RootProps, {}> {
             value={chartGroupCreation.spec.visibility}
             options={[
               { value: 'User', text: '指定用户' },
-              { value: 'Project', text: '指定业务' },
+              ...(checkCustomVisible('platform.registry.project') ? [{ value: 'Project', text: '指定业务' }] : []),
               { value: 'Public', text: '公共' }
             ]}
             onChange={value => {

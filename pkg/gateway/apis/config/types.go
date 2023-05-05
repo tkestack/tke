@@ -34,8 +34,9 @@ type GatewayConfiguration struct {
 	// components is used to wrap all the backend component settings in the TKE.
 	Components Components
 
-	Registry *Registry
-	Auth     *Auth
+	Registry      *Registry
+	Auth          *Auth
+	ConsoleConfig *ConsoleConfig
 }
 
 type Components struct {
@@ -133,4 +134,10 @@ type Registry struct {
 
 type Auth struct {
 	DefaultTenant string
+}
+
+type ConsoleConfig struct {
+	Title        string
+	LogoDir      string
+	CustomConfig string
 }

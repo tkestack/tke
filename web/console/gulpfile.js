@@ -40,7 +40,7 @@ async function minifyIndexHtmlWithInjectJs() {
   const PROJECT_JS_NAME = rsp.find(p => p.includes('project'));
   const COMMON_VENDOR_JS_NAME = rsp.find(p => p.includes('common-vendor'));
 
-  return src('public/index.html')
+  return src('public/index.tmpl.html')
     .pipe(ejs({ TKE_JS_NAME, PROJECT_JS_NAME, COMMON_VENDOR_JS_NAME }))
     .pipe(
       htmlmin({
@@ -54,7 +54,7 @@ async function minifyIndexHtmlWithInjectJs() {
 }
 
 function minifyHtml() {
-  return src(['public/**/*.html', '!public/index.html'])
+  return src(['public/**/*.html', '!public/index.tmpl.html'])
     .pipe(
       htmlmin({
         removeComments: true,

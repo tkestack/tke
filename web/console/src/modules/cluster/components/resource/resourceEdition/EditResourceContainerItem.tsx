@@ -33,6 +33,7 @@ import { EditResourceContainerEnvItem } from './EditResourceContainerEnvItem';
 import { EditResourceContainerLimitItem } from './EditResourceContainerLimitItem';
 import { EditResourceContainerMountItem } from './EditResourceContainerMountItem';
 import { RegistrySelectDialog, RegistryTagSelectDialog } from './registrySelect';
+import { PermissionProvider } from '@common';
 
 interface ContainerItemProps extends RootProps {
   /** 容器的id */
@@ -174,59 +175,65 @@ export class EditResourceContainerItem extends React.Component<ContainerItemProp
 
                   <EditResourceContainerLimitItem cKey={cKey} />
 
-                  <FormItem label={t('GPU限制')} isShow={canUseGpu || canUseGpuManager}>
-                    {canUseGpuManager ? (
-                      <React.Fragment>
-                        <Row>
-                          <Col span={6}>
-                            <Text theme="text">{t('卡数:')}</Text>
-                            <InputField
-                              type="text"
-                              className="tc-15-input-text m"
-                              style={{ width: '60px' }}
-                              value={container.gpuCore}
-                              validator={container.v_gpuCore}
-                              tipMode="popup"
-                              ops={t('个')}
-                              onChange={value =>
-                                actions.editWorkload.updateContainer({ gpuCore: value }, container.id + '')
-                              }
-                              onBlur={value => actions.validate.workload.validateGpuCoreLimit(value, container.id + '')}
-                            />
-                          </Col>
-                          <Col span={8}>
-                            <Text theme="text">{t('显存:')}</Text>
-                            <InputField
-                              type="text"
-                              className="tc-15-input-text m"
-                              style={{ width: '60px' }}
-                              value={container.gpuMem}
-                              validator={container.v_gpuMem}
-                              tipMode="popup"
-                              onChange={value =>
-                                actions.editWorkload.updateContainer({ gpuMem: value }, container.id + '')
-                              }
-                              ops={'*256MiB'}
-                              onBlur={value => actions.validate.workload.validateGpuMemLimit(value, container.id + '')}
-                            />
-                          </Col>
-                        </Row>
-                        <p className="form-input-help">
-                          <Trans>卡数只能填写0.1-1或者1的整数倍。 显存须为256MiB整数倍。</Trans>
-                          <br />
-                        </p>
-                      </React.Fragment>
-                    ) : (
-                      <InputNumber
-                        value={container.gpu}
-                        min={0}
-                        max={100}
-                        step={1}
-                        unit={t('个')}
-                        onChange={value => actions.editWorkload.updateContainer({ gpu: value }, container.id + '')}
-                      />
-                    )}
-                  </FormItem>
+                  <PermissionProvider value="platform.cluster.workload.workload_create_gpu">
+                    <FormItem label={t('GPU限制')} isShow={canUseGpu || canUseGpuManager}>
+                      {canUseGpuManager ? (
+                        <React.Fragment>
+                          <Row>
+                            <Col span={6}>
+                              <Text theme="text">{t('卡数:')}</Text>
+                              <InputField
+                                type="text"
+                                className="tc-15-input-text m"
+                                style={{ width: '60px' }}
+                                value={container.gpuCore}
+                                validator={container.v_gpuCore}
+                                tipMode="popup"
+                                ops={t('个')}
+                                onChange={value =>
+                                  actions.editWorkload.updateContainer({ gpuCore: value }, container.id + '')
+                                }
+                                onBlur={value =>
+                                  actions.validate.workload.validateGpuCoreLimit(value, container.id + '')
+                                }
+                              />
+                            </Col>
+                            <Col span={8}>
+                              <Text theme="text">{t('显存:')}</Text>
+                              <InputField
+                                type="text"
+                                className="tc-15-input-text m"
+                                style={{ width: '60px' }}
+                                value={container.gpuMem}
+                                validator={container.v_gpuMem}
+                                tipMode="popup"
+                                onChange={value =>
+                                  actions.editWorkload.updateContainer({ gpuMem: value }, container.id + '')
+                                }
+                                ops={'*256MiB'}
+                                onBlur={value =>
+                                  actions.validate.workload.validateGpuMemLimit(value, container.id + '')
+                                }
+                              />
+                            </Col>
+                          </Row>
+                          <p className="form-input-help">
+                            <Trans>卡数只能填写0.1-1或者1的整数倍。 显存须为256MiB整数倍。</Trans>
+                            <br />
+                          </p>
+                        </React.Fragment>
+                      ) : (
+                        <InputNumber
+                          value={container.gpu}
+                          min={0}
+                          max={100}
+                          step={1}
+                          unit={t('个')}
+                          onChange={value => actions.editWorkload.updateContainer({ gpu: value }, container.id + '')}
+                        />
+                      )}
+                    </FormItem>
+                  </PermissionProvider>
 
                   <EditResourceContainerEnvItem cKey={cKey} />
                 </ul>

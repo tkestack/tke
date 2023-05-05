@@ -19,9 +19,12 @@
 package apiserver
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"regexp"
 	"time"
 
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/cloudindustry"
@@ -33,6 +36,8 @@ import (
 
 	dexstorage "github.com/dexidp/dex/storage"
 	"github.com/emicklei/go-restful"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"k8s.io/apiserver/pkg/server/mux"
 
 	"github.com/casbin/casbin/v2"
@@ -54,6 +59,8 @@ import (
 	authrest "tkestack.io/tke/pkg/auth/registry/rest"
 	"tkestack.io/tke/pkg/auth/route"
 	"tkestack.io/tke/pkg/util/log"
+
+	"html/template"
 )
 
 const (
@@ -61,7 +68,14 @@ const (
 	AuthPath           = "/auth/"
 	APIKeyPasswordPath = "/apis/auth.tkestack.io/v1/apikeys/default/password"
 
-	APIKeyPath = "/apis/auth.tkestack.io/v1/apikeys"
+	APIKeyPath           = "/apis/auth.tkestack.io/v1/apikeys"
+	DefaultTitle         = "TKEStack"
+	DefaultLogoDir       = "default"
+	HtmlTmplDir          = "web/auth/templates/"
+	FlagConsoleTitle     = "title"
+	FlagConsoleLogoDir   = "logo-dir"
+	ConfigConsoleTitle   = "console_config.title"
+	ConfigConsoleLogoDir = "console_config.logo_dir"
 )
 
 func IgnoreAuthPathPrefixes() []string {
@@ -94,6 +108,7 @@ type ExtraConfig struct {
 	Authorizer           authorizer.Authorizer
 	CasbinReloadInterval time.Duration
 	PrivilegedUsername   string
+	ConsoleConfig        *ConsoleConfig
 }
 
 // Config contains the core configuration instance of apiserver and
@@ -119,6 +134,39 @@ type APIServer struct {
 	GenericAPIServer *genericapiserver.GenericAPIServer
 }
 
+type ConsoleConfig struct {
+	Title   string
+	LogoDir string
+}
+
+// NewAuthOptions creates a AuthOptions object with default parameters.
+func NewConsoleConfigOptions() *ConsoleConfig {
+	return &ConsoleConfig{}
+}
+
+// AddFlags adds flags for console to the specified FlagSet object.
+func (o *ConsoleConfig) AddFlags(fs *pflag.FlagSet) {
+	fs.String(FlagConsoleTitle, o.Title,
+		"Custom console title.")
+	_ = viper.BindPFlag(ConfigConsoleTitle, fs.Lookup(FlagConsoleTitle))
+
+	fs.String(FlagConsoleLogoDir, o.LogoDir,
+		"Custom console logo dir.")
+	_ = viper.BindPFlag(ConfigConsoleLogoDir, fs.Lookup(FlagConsoleLogoDir))
+
+}
+
+// ApplyFlags parsing parameters from the command line or configuration file
+// to the options instance.
+func (o *ConsoleConfig) ApplyFlags() []error {
+	var errs []error
+
+	o.Title = viper.GetString(ConfigConsoleTitle)
+	o.LogoDir = viper.GetString(ConfigConsoleLogoDir)
+
+	return errs
+}
+
 // Complete fills in any fields not set that are required to have valid data.
 // It's mutating the receiver.
 func (cfg *Config) Complete() CompletedConfig {
@@ -135,6 +183,43 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 	s, err := c.GenericConfig.New(c.ExtraConfig.ServerName, delegationTarget)
 	if err != nil {
 		return nil, err
+	}
+
+	consoleConfig := new(ConsoleConfig)
+
+	if c.ExtraConfig.ConsoleConfig != nil {
+		consoleConfig = c.ExtraConfig.ConsoleConfig
+	} else {
+		consoleConfig.Title = DefaultTitle
+		consoleConfig.LogoDir = DefaultLogoDir
+
+	}
+
+	files, err := ioutil.ReadDir(HtmlTmplDir)
+	if err != nil {
+		return nil, err
+	}
+
+	sourceRe := regexp.MustCompile(`\.tmpl\.html$`)
+	targetRe := regexp.MustCompile(`\.tmpl`)
+
+	for _, file := range files {
+		var buf bytes.Buffer
+		if !sourceRe.MatchString(file.Name()) {
+			continue
+		}
+		t, err := template.New(file.Name()).Delims("{%", "%}").ParseFiles(HtmlTmplDir + file.Name())
+		if err != nil {
+			return nil, err
+		}
+		if err = t.Execute(&buf, c.ExtraConfig.ConsoleConfig); err != nil {
+			return nil, err
+		}
+		// // remove .tmpl in file name
+		targetFileName := targetRe.ReplaceAllString(file.Name(), "")
+		if err = ioutil.WriteFile(HtmlTmplDir+targetFileName, buf.Bytes(), 0644); err != nil {
+			return nil, err
+		}
 	}
 
 	dexHandler := identityprovider.DexHander{}

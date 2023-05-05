@@ -26,6 +26,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
 	"tkestack.io/tke/pkg/auth/authentication/oidc/identityprovider/cloudindustry"
 
 	"github.com/casbin/casbin/v2"
@@ -96,6 +97,7 @@ type Config struct {
 	Authorizer           authorizer.Authorizer
 	CasbinReloadInterval time.Duration
 	PrivilegedUsername   string
+	ConsoleConfig        *apiserver.ConsoleConfig
 }
 
 // CreateConfigFromOptions creates a running configuration instance based
@@ -200,6 +202,8 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		return nil, err
 	}
 
+	setupDefaultConsoleConfig(opts.ConsoleConfig)
+
 	return &Config{
 		ServerName:                     serverName,
 		OIDCExternalAddress:            dexConfig.Issuer,
@@ -214,7 +218,17 @@ func CreateConfigFromOptions(serverName string, opts *options.Options) (*Config,
 		Authorizer:                     aggregateAuthz,
 		PrivilegedUsername:             opts.Authentication.PrivilegedUsername,
 		CasbinReloadInterval:           opts.Authorization.CasbinReloadInterval,
+		ConsoleConfig:                  opts.ConsoleConfig,
 	}, nil
+}
+
+func setupDefaultConsoleConfig(consoleConfig *apiserver.ConsoleConfig) {
+	if len(consoleConfig.Title) == 0 {
+		consoleConfig.Title = apiserver.DefaultTitle
+	}
+	if len(consoleConfig.LogoDir) == 0 {
+		consoleConfig.LogoDir = apiserver.DefaultLogoDir
+	}
 }
 
 func setupAuthentication(genericAPIServerConfig *genericapiserver.Config, opts *apiserveroptions.AuthenticationWithAPIOptions, tokenAuthenticators []genericauthenticator.Token) error {

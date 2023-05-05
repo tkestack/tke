@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" style="padding: 0; margin: 0;">
+
+<head>
+  <meta charset="utf-8" />
+  <title>{%.Title%} WebTTY</title>
+  <link href="/static/css/xterm/xterm.css" rel="stylesheet" data-role="global" />
+  <style>
+    body {
+      margin: 0;
+      background-color: #000;
+    }
+
+    #terminal {
+      height: 100vh;
+    }
+
+    .xterm .xterm-viewport {
+      overflow-y: hidden;
+    }
+  </style>
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/icon/{%.LogoDir%}/favicon.svg" />
+  <link rel="manifest" href="/static/image/manifest.json" />
+  <meta name="msapplication-TileColor" content="#262626" />
+  <meta name="msapplication-TileImage" content="/static/image/ms-icon-144x144.png" />
+  <meta name="theme-color" content="#262626" />
+  <script src="/static/js/base64.min.js"></script>
+  <script src="/static/js/xterm.js"></script>
+  <script src="/static/js/xterm-addon-fit.js"></script>
+</head>
+
+<body>
+  <div id="terminal-tips" style="font-size: 24px; color: #0efdff; text-align: center;"></div>
+  <div id="terminal"></div>
+  <script>
+    const termElem = document.getElementById('terminal');
+    const tipsElem = document.getElementById('terminal-tips');
+    termElem.oncontextmenu = () => false;
+
+    const term = new Terminal({
+      fontSize: 14,
+      cursorBlink: true,
+      fontFamily: "'Courier New', 'Courier', monospace",
+      lineHeight: 1
+    });
+    term.open(termElem);
+
+    const fitAddon = new FitAddon.FitAddon();
+    term.loadAddon(fitAddon);
+
+    fitAddon.fit();
+    term.focus();
+
+    termElem.hidden = true;
+
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const sock = new WebSocket(proto + '//' + window.location.host + '/webtty' + window.location.search);
+    sock.onopen = function (event) {
+      setTips('Connected');
+      var msg = { type: 'resize', rows: term.rows, cols: term.cols };
+      sock.send(JSON.stringify(msg));
+      msg = { type: 'input', input: Base64.encode('export TERM=xterm && clear \r') };
+      sock.send(JSON.stringify(msg));
+      setTimeout(function () {
+        setTips();
+        termElem.hidden = false;
+      }, 500);
+    };
+    sock.onclose = function (event) {
+      if (event.wasClean) {
+        console.log('[close] Connection closed cleanly, code: ' + event.code + ', reason: ' + event.reason);
+      } else {
+        console.log('[close] Connection died');
+        term.write('\r');
+      }
+      term.write('Connection Reset By Peer! Try Refresh');
+    };
+    sock.onmessage = function (event) {
+      term.write(Base64.decode(event.data));
+    };
+    sock.onerror = function (event) {
+      console.log('[error] Connection error');
+      term.write('error: ' + event.message);
+      term.destroy();
+    };
+
+    window.addEventListener('resize', function () {
+      fitAddon.fit();
+      var msg = { type: 'resize', rows: term.rows, cols: term.cols };
+      sock.send(JSON.stringify(msg));
+    });
+
+    term.onData(input => {
+      var msg = { type: 'input', input: Base64.encode(input) };
+      sock.send(JSON.stringify(msg));
+    });
+
+    term.onTitleChange(evt => {
+      document.title = evt;
+    });
+
+    function setTips(content) {
+      if (typeof content === 'undefined') {
+        tipsElem.hidden = true;
+      }
+      console.log('setTips:' + content);
+      tipsElem.innerText = content;
+    }
+
+    setTips('Connecting...');
+  </script>
+</body>
+
+</html>

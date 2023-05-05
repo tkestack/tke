@@ -1,0 +1,124 @@
+{
+  "title": "TKEStack",
+  "logoDir": "default",
+  "children": {
+    "platform": {
+      "des": "平台管理入口",
+      "visible": true,
+      "children": {
+        "overview": {
+          "des": "概览模块",
+          "visible": true,
+          "children": {
+            "project": {
+              "des": "概览是否显示业务数据",
+              "visible": true
+            },
+            "help": {
+              "des": "快速帮助信息",
+              "visible": true
+            }
+          }
+        },
+        "cluster": {
+          "des": "集群模块",
+          "visible": true,
+          "children": {
+            "create_import_button": {
+              "des": "新建和导入集群按钮",
+              "visible": true
+            },
+            "cronHpa_menu": {
+              "des": "cronHpa 菜单",
+              "visible": true
+            },
+            "workload": {
+              "des": "工作负载菜单",
+              "visible": true,
+              "children": {
+                "workload_create_gpu": {
+                  "des": "创建workload时的gpu选项",
+                  "visible": true
+                },
+                "workload_create_cronHpa": {
+                  "des": "创建workload时的cronHpa选项",
+                  "visible": true
+                }
+              }
+            },
+            "service": {
+              "des": "service 菜单",
+              "visible": true,
+              "children": {
+                "service_create_tapp": {
+                  "des": "创建service的时候，workload的列表选项是否包含tapp",
+                  "visible": true
+                }
+              }
+            }
+          }
+        },
+        "uam": {
+          "des": "访问管理模块",
+          "visible": true,
+          "children": {
+            "tenant": {
+              "des": "租户角色相关",
+              "visible": true
+            },
+            "business": {
+              "des": "业务策略",
+              "visible": true
+            }
+          }
+        },
+        "persistent-event": {
+          "des": "事件持久化模块",
+          "visible": true
+        },
+        "project": {
+          "des": "业务模块",
+          "visible": true
+        },
+        "addon": {
+          "des": "扩展组件模块",
+          "visible": true
+        },
+        "notify": {
+          "des": "通知设置模块",
+          "visible": true,
+          "children": {
+            "sms_wechat_webhook": {
+              "des": "短信和微信以及webhook通知渠道",
+              "visible": true
+            }
+          }
+        },
+        "register": {
+          "des": "访问凭证模块",
+          "visible": true,
+          "children": {
+            "project": {
+              "des": "访问凭证下的业务选项",
+              "visible": true
+            }
+          }
+        },
+        "application": {
+          "des": "Helm应用模块",
+          "visible": true,
+          "children": {
+            "project": {
+              "des": "业务模板",
+              "visible": true
+            }
+          }
+        }
+      }
+    },
+    "project": {
+      "des": "业务管理入口",
+      "visible": true
+    }
+  }
+}

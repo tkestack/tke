@@ -50,6 +50,8 @@ export interface LogStashEdit extends Identifiable {
   nodeLogPath?: string;
   v_nodeLogPath?: Validation;
 
+  nodeLogPathType: 'host' | 'container';
+
   /**
    * pre: 类型为指定主机路径
    * metadata标签

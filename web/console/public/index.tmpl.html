@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta charset="utf-8" />
+  <title>{%.Title%}</title>
+  <link href="/static/css/mc_2014/global/css/v1/global.css" rel="stylesheet" data-role="global" />
+  <link href="/static/css/bee-v2/css/bee.css" rel="stylesheet" data-role="global" />
+  <link href="/static/css/mc_2014/break/css/break.css" rel="stylesheet" data-role="global" />
+
+  <link href="/static/css/mc_2014/css/monitor-sdk.css" rel="stylesheet" data-role="global" />
+  <link href="/static/css/business/tke/common.css" rel="stylesheet" data-role="global" />
+  <link href="/static/css/business/tke/tke.2019_06_04.css" rel="stylesheet" data-role="global" />
+
+
+  <link rel="icon" type="image/png" sizes="96x96" href="/static/icon/{%.LogoDir%}/favicon.svg" />
+
+  <link rel="manifest" href="/static/image/manifest.json" />
+  <meta name="msapplication-TileColor" content="#262626" />
+
+  <meta name="theme-color" content="#262626" />
+</head>
+
+<body>
+  <script>
+    var __CUSTOM_CONFIG = '{%.CustomConfig%}'
+  </script>
+
+  <script src="/<%= COMMON_VENDOR_JS_NAME %>"></script>
+  <!-- <div id="pageWrapper"></div> -->
+  <div id="appArea"></div>
+
+  <script type="text/javascript">
+    window.VERSION = 'zh';
+
+    var jsVersion = {};
+    var jsVersionEn = {};
+    var jsVersionKo = {};
+    // jsVersion['console.js'] = 'console.js';
+    jsVersion['platform.js'] = 'platform.js';
+    jsVersion['common.js'] = 'common.js';
+    jsVersion['vendor.js'] = 'vendor.js';
+
+    var cssVersion = {};
+  </script>
+
+  <script type="text/javascript">
+    try {
+      window.g_config_data = window.g_config_data || {};
+      window.g_config_data.whitelist_keys = [];
+      window.g_config_data.nccm_business = ['tke'];
+
+      // 此处为配置js的路由
+      window.g_config_data.jsRouter_zh = {
+        tkestack: {
+          // content: "http://localhost:8088/js/app.js",
+          content: '/<%= TKE_JS_NAME %>',
+          isUpdateLteIE9: '',
+          component: 'tea2.0'
+        },
+        'tkestack-project': {
+          content: '/<%= PROJECT_JS_NAME %>',
+          isUpdateLteIE9: '',
+          component: 'tea2.0'
+        }
+      };
+
+      // 此处为配置css的相关配置文件
+      // window.g_config_data.css_config = {
+      //   tke: ['/static/css/business/tke/tke.css'],
+      //   'tke-project': ['/static/css/business/tke/tke.css']
+      // };
+
+      g_config_data.redirect_config = {
+        ticket: '/workorder',
+        permission: '/cam'
+      };
+    } catch (e) { }
+  </script>
+
+  <script type="text/javascript">
+    !(function (a, b) {
+      function e(a) {
+        return function (b) {
+          return Object.prototype.toString.call(b) === '[object ' + a + ']';
+        };
+      }
+
+      function k() {
+        return j++;
+      }
+
+      function q(a) {
+        return a.match(n)[0];
+      }
+
+      function r(a) {
+        for (a = a.replace(o, '/'); a.match(p);) a = a.replace(p, '/');
+        return a;
+      }
+
+      function s(a) {
+        var b = a.length - 1,
+          c = a.charAt(b);
+        return '#' === c
+          ? a.substring(0, b)
+          : '.js' === a.substring(b - 2) || a.indexOf('?') > 0 || '.css' === a.substring(b - 3) || '/' === c
+            ? a
+            : a + '.js';
+      }
+
+      function v(a) {
+        var b = d.alias;
+        return b && g(b[a]) ? b[a] : a;
+      }
+
+      function w(a) {
+        var c,
+          b = d.paths;
+        return b && (c = a.match(t)) && g(b[c[1]]) && (a = b[c[1]] + c[2]), a;
+      }
+
+      function x(a) {
+        var b = d.vars;
+        return (
+          b &&
+          a.indexOf('{') > -1 &&
+          (a = a.replace(u, function (a, c) {
+            return g(b[c]) ? b[c] : a;
+          })),
+          a
+        );
+      }
+
+      function y(a) {
+        var e,
+          f,
+          g,
+          b = d.map,
+          c = a;
+        if (b)
+          for (
+            e = 0, f = b.length;
+            f > e && ((g = b[e]), (c = i(g) ? g(a) || a : a.replace(g[0], g[1])), c === a);
+            e++
+          );
+        return c;
+      }
+
+      function B(a, b) {
+        var c,
+          f,
+          e = a.charAt(0);
+        return (
+          z.test(a)
+            ? (c = a)
+            : '.' === e
+              ? (c = r((b ? q(b) : d.cwd) + a))
+              : '/' === e
+                ? ((f = d.cwd.match(A)), (c = f ? f[0] + a.substring(1) : a))
+                : (c = d.base + a),
+          c
+        );
+      }
+
+      function C(a, b) {
+        if (!a) return '';
+        (a = v(a)), (a = w(a)), (a = x(a)), (a = s(a));
+        var c = B(a, b);
+        return (c = y(c));
+      }
+
+      function J(a) {
+        return a.hasAttribute ? a.src : a.getAttribute('src', 4);
+      }
+
+      function R(a, b, c) {
+        var f,
+          d = M.test(a),
+          e = D.createElement(d ? 'link' : 'script');
+        c && ((f = i(c) ? c(a) : c), f && (e.charset = f)),
+          S(e, b, d),
+          d ? ((e.rel = 'stylesheet'), (e.href = a)) : ((e.async = !0), (e.src = a)),
+          (O = e),
+          L ? K.insertBefore(e, L) : K.appendChild(e),
+          (O = null);
+      }
+
+      function S(a, b, c) {
+        var e = c && (Q || !('onload' in a));
+        return e
+          ? (setTimeout(function () {
+            T(a, b);
+          }, 1),
+            void 0)
+          : ((a.onload =
+            a.onerror =
+            a.onreadystatechange =
+            function () {
+              N.test(a.readyState) &&
+                ((a.onload = a.onerror = a.onreadystatechange = null),
+                  c || d.debug || K.removeChild(a),
+                  (a = null),
+                  b());
+            }),
+            void 0);
+      }
+
+      function T(a, b) {
+        var d,
+          c = a.sheet;
+        if (Q) c && (d = !0);
+        else if (c)
+          try {
+            c.cssRules && (d = !0);
+          } catch (e) {
+            'NS_ERROR_DOM_SECURITY_ERR' === e.name && (d = !0);
+          }
+        setTimeout(function () {
+          d ? b() : T(a, b);
+        }, 20);
+      }
+
+      function U() {
+        var a, b, c;
+        if (O) return O;
+        if (P && 'interactive' === P.readyState) return P;
+        for (a = K.getElementsByTagName('script'), b = a.length - 1; b >= 0; b--)
+          if (((c = a[b]), 'interactive' === c.readyState)) return (P = c);
+      }
+
+      function X(a) {
+        var b = [];
+        return (
+          a.replace(W, '').replace(V, function (a, c, d) {
+            d && b.push(d);
+          }),
+          b
+        );
+      }
+
+      function cb(a, b) {
+        (this.uri = a),
+          (this.dependencies = b || []),
+          (this.exports = null),
+          (this.status = 0),
+          (this._waitings = {}),
+          (this._remain = 0);
+      }
+      var c,
+        d,
+        f,
+        g,
+        h,
+        i,
+        j,
+        l,
+        m,
+        n,
+        o,
+        p,
+        t,
+        u,
+        z,
+        A,
+        D,
+        E,
+        F,
+        G,
+        H,
+        I,
+        K,
+        L,
+        M,
+        N,
+        O,
+        P,
+        Q,
+        V,
+        W,
+        Y,
+        Z,
+        $,
+        _,
+        ab,
+        bb,
+        db;
+      a.seajs ||
+        ((c = a.seajs =
+        {
+          version: '2.1.1'
+        }),
+          (d = c.data = {}),
+          (f = e('Object')),
+          (g = e('String')),
+          (h = Array.isArray || e('Array')),
+          (i = e('Function')),
+          (j = 0),
+          (l = d.events = {}),
+          (c.on = function (a, b) {
+            var d = l[a] || (l[a] = []);
+            return d.push(b), c;
+          }),
+          (c.off = function (a, b) {
+            var e, f;
+            if (!a && !b) return (l = d.events = {}), c;
+            if ((e = l[a]))
+              if (b) for (f = e.length - 1; f >= 0; f--) e[f] === b && e.splice(f, 1);
+              else delete l[a];
+            return c;
+          }),
+          (m = c.emit =
+            function (a, b) {
+              var e,
+                d = l[a];
+              if (d) for (d = d.slice(); (e = d.shift());) e(b);
+              return c;
+            }),
+          (n = /[^?#]*\//),
+          (o = /\/\.\//g),
+          (p = /\/[^/]+\/\.\.\//),
+          (t = /^([^/:]+)(\/.+)$/),
+          (u = /{([^{]+)}/g),
+          (z = /^\/\/.|:\//),
+          (A = /^.*?\/\/.*?\//),
+          (D = document),
+          (E = location),
+          (F = q(E.href)),
+          (G = D.getElementsByTagName('script')),
+          (H = D.getElementById('seajsnode') || G[G.length - 1]),
+          (I = q(J(H) || F)),
+          (K = D.getElementsByTagName('head')[0] || D.documentElement),
+          (L = K.getElementsByTagName('base')[0]),
+          (M = /\.css(?:\?|$)/i),
+          (N = /^(?:loaded|complete|undefined)$/),
+          (Q = 1 * navigator.userAgent.replace(/.*AppleWebKit\/(\d+)\..*/, '$1') < 536),
+          (V =
+            /"(?:\\"|[^"])*"|'(?:\\'|[^'])*'|\/\*[\S\s]*?\*\/|\/(?:\\\/|[^\/\r\n])+\/(?=[^\/])|\/\/.*|\.\s*require|(?:^|[^$])\brequire\s*\(\s*(["'])(.+?)\1\s*\)/g),
+          (W = /\\\\/g),
+          (Y = c.cache = {}),
+          ($ = {}),
+          (_ = {}),
+          (ab = {}),
+          (bb = cb.STATUS =
+          {
+            FETCHING: 1,
+            SAVED: 2,
+            LOADING: 3,
+            LOADED: 4,
+            EXECUTING: 5,
+            EXECUTED: 6
+          }),
+          (cb.prototype.resolve = function () {
+            var d,
+              e,
+              a = this,
+              b = a.dependencies,
+              c = [];
+            for (d = 0, e = b.length; e > d; d++) c[d] = cb.resolve(b[d], a.uri);
+            return c;
+          }),
+          (cb.prototype.load = function () {
+            var b,
+              c,
+              d,
+              e,
+              f,
+              g,
+              a = this;
+            if (!(a.status >= bb.LOADING)) {
+              for (a.status = bb.LOADING, b = a.resolve(), m('load', b), c = a._remain = b.length, e = 0; c > e; e++)
+                (d = cb.get(b[e])),
+                  d.status < bb.LOADED ? (d._waitings[a.uri] = (d._waitings[a.uri] || 0) + 1) : a._remain--;
+              if (0 === a._remain) return a.onload(), void 0;
+              for (f = {}, e = 0; c > e; e++)
+                (d = Y[b[e]]), d.status < bb.FETCHING ? d.fetch(f) : d.status === bb.SAVED && d.load();
+              for (g in f) f.hasOwnProperty(g) && f[g]();
+            }
+          }),
+          (cb.prototype.onload = function () {
+            var b,
+              c,
+              d,
+              a = this;
+            (a.status = bb.LOADED), a.callback && a.callback(), (b = a._waitings);
+            for (c in b) b.hasOwnProperty(c) && ((d = Y[c]), (d._remain -= b[c]), 0 === d._remain && d.onload());
+            delete a._waitings, delete a._remain;
+          }),
+          (cb.prototype.fetch = function (a) {
+            function g() {
+              R(e.requestUri, e.onRequest, e.charset);
+            }
+
+            function h() {
+              delete $[f], (_[f] = !0), Z && (cb.save(c, Z), (Z = null));
+              var a,
+                b = ab[f];
+              for (delete ab[f]; (a = b.shift());) a.load();
+            }
+            var e,
+              f,
+              b = this,
+              c = b.uri;
+            return (
+              (b.status = bb.FETCHING),
+              (e = {
+                uri: c
+              }),
+              m('fetch', e),
+              (f = e.requestUri || c),
+              !f || _[f]
+                ? (b.load(), void 0)
+                : $[f]
+                  ? (ab[f].push(b), void 0)
+                  : (($[f] = !0),
+                    (ab[f] = [b]),
+                    m(
+                      'request',
+                      (e = {
+                        uri: c,
+                        requestUri: f,
+                        onRequest: h,
+                        charset: d.charset
+                      })
+                    ),
+                    e.requested || (a ? (a[e.requestUri] = g) : g()),
+                    void 0)
+            );
+          }),
+          (cb.prototype.exec = function () {
+            function d(a) {
+              return cb.get(d.resolve(a)).exec();
+            }
+            var c,
+              e,
+              f,
+              a = this;
+            return a.status >= bb.EXECUTING
+              ? a.exports
+              : ((a.status = bb.EXECUTING),
+                (c = a.uri),
+                (d.resolve = function (a) {
+                  return cb.resolve(a, c);
+                }),
+                (d.async = function (a, b) {
+                  return cb.use(a, b, c + '_async_' + k()), d;
+                }),
+                (e = a.factory),
+                (f = i(e) ? e(d, (a.exports = {}), a) : e),
+                f === b && (f = a.exports),
+                null !== f || M.test(c) || m('error', a),
+                delete a.factory,
+                (a.exports = f),
+                (a.status = bb.EXECUTED),
+                m('exec', a),
+                f);
+          }),
+          (cb.resolve = function (a, b) {
+            var c = {
+              id: a,
+              refUri: b
+            };
+            return m('resolve', c), c.uri || C(c.id, b);
+          }),
+          (c.ownCode = arguments.callee.toString()),
+          (c.modules = {}),
+          (c.hasDefined = {}),
+          (cb.define = function (a, d, e) {
+            var g,
+              j,
+              k,
+              f = arguments.length;
+            1 === f ? ((e = a), (a = b)) : 2 === f && ((e = d), h(a) ? ((d = a), (a = b)) : (d = b)),
+              !h(d) && i(e) && ((g = e.toString()), (d = X(g))),
+              (j = {
+                id: a,
+                uri: cb.resolve(a),
+                deps: d,
+                factory: e
+              }),
+              !j.uri && D.attachEvent && ((k = U()), k && (j.uri = k.src)),
+              m('define', j),
+              j.uri ? cb.save(j.uri, j) : (Z = j),
+              g || (g = e.toString()),
+              (c.hasDefined[a] = c.modules[a] = g);
+          }),
+          (cb.save = function (a, b) {
+            var c = cb.get(a);
+            c.status < bb.SAVED &&
+              ((c.id = b.id || a), (c.dependencies = b.deps || []), (c.factory = b.factory), (c.status = bb.SAVED));
+          }),
+          (cb.get = function (a, b) {
+            return Y[a] || (Y[a] = new cb(a, b));
+          }),
+          (cb.use = function (b, c, d) {
+            var e = cb.get(d, h(b) ? b : [b]);
+            (e.callback = function () {
+              var f,
+                g,
+                b = [],
+                d = e.resolve();
+              for (f = 0, g = d.length; g > f; f++) b[f] = Y[d[f]].exec();
+              c && c.apply(a, b), delete e.callback;
+            }),
+              e.load();
+          }),
+          (cb.preload = function (a) {
+            var b = d.preload,
+              c = b.length;
+            c
+              ? cb.use(
+                b,
+                function () {
+                  b.splice(0, c), cb.preload(a);
+                },
+                d.cwd + '_preload_' + k()
+              )
+              : a();
+          }),
+          (c.use = function (a, b) {
+            return (
+              cb.preload(function () {
+                cb.use(a, b, d.cwd + '_use_' + k());
+              }),
+              c
+            );
+          }),
+          (cb.define.cmd = {}),
+          (a.define = cb.define),
+          (c.Module = cb),
+          (d.fetchedList = _),
+          (d.cid = k),
+          (c.resolve = C),
+          (c.require = function (a) {
+            return (Y[cb.resolve(a)] || {}).exports;
+          }),
+          (db = /^(.+?\/)(\?\?)?(seajs\/)+/),
+          (d.base = (I.match(db) || ['', I])[1]),
+          (d.dir = I),
+          (d.cwd = F),
+          (d.charset = 'utf-8'),
+          (d.preload = (function () {
+            var a = [],
+              b = E.search.replace(/(seajs-\w+)(&|$)/g, '$1=1$2');
+            return (
+              (b += ' ' + D.cookie),
+              b.replace(/(seajs-\w+)=1/g, function (b, c) {
+                a.push(c);
+              }),
+              a
+            );
+          })()),
+          (c.config = function (a) {
+            var b, e, g, i;
+            for (b in a)
+              if (((e = a[b]), (g = d[b]), g && f(g))) for (i in e) g[i] = e[i];
+              else
+                h(g) ? (e = g.concat(e)) : 'base' === b && ('/' === e.slice(-1) || (e += '/'), (e = B(e))), (d[b] = e);
+            return m('config', a), c;
+          }));
+    })(this);
+  </script>
+
+  <script type="text/javascript">
+    window.VERSION = 'zh';
+
+    (function (win, doc) {
+      window.QCCONSOLE_HOST = 'console.' + doc.domain;
+
+      var basePath = '/static/js/';
+      var max_age = 31536000;
+
+      //language begin
+      (function () {
+        var key, result;
+        var map = {
+          en: 'en/',
+          ko: 'ko/'
+        };
+        var cleanUrl = false;
+
+        if ((result = /lang(?:uage)?=(\w+)/.exec(window.location.href))) {
+          // key = result[1];
+          key = 'zh';
+          cleanUrl = true; // 如果从 url 上带有 language 参数, 则应该清除这个参数
+
+          var cn_en_tag;
+
+          if (key === 'en') {
+            cn_en_tag = 1;
+          } else if (key === 'zh') {
+            cn_en_tag = 0;
+          }
+
+          // 当query有language，且==en时，设tag为1；==zh时设0，其他不管，过期时间半年 from ericji
+          if (typeof cn_en_tag !== 'undefined') {
+            document.cookie =
+              'cn_en_tag=' +
+              cn_en_tag +
+              '; expires=' +
+              new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toUTCString() +
+              ' ;domain=' +
+              document.domain +
+              '; path=/';
+          }
+        } else if ((result = /(?:^|\s)language=(\w+)(?:;|$)/.exec(document.cookie))) {
+          key = 'zh';
+        } else {
+          key = 'zh';
+        }
+
+        if (map[key]) {
+          basePath = '';
+          VERSION = key;
+          max_age = 86400;
+          var bodyLangCls = {
+            en: 'international',
+            ko: 'qc-lang-ko'
+          };
+          document.body.className = bodyLangCls[key];
+        }
+
+        document.cookie =
+          'language=' +
+          window.VERSION +
+          '; expires=' +
+          new Date(2153717523864).toUTCString() +
+          ' ;domain=' +
+          document.domain +
+          '; path=/';
+
+        if (cleanUrl) {
+          location.search = location.search.replace(/&?lang(uage)?=\w+/, '');
+        }
+      })();
+
+      //language end
+
+      var loader = {
+        load: function (url, cb) {
+          var urlArr = [];
+          if (typeof url == 'string') {
+            urlArr.push(url);
+          } else {
+            urlArr = url;
+          }
+          var len = urlArr.length,
+            callback = function () {
+              if (!--len) {
+                cb && cb();
+              }
+            };
+          for (var i = 0, url; (url = urlArr[i]); i++) {
+            this._load(url, callback);
+          }
+        },
+        _load: function (url, cb) {
+          var oldIe = /msie [\w.]+/.test(navigator.userAgent.toLowerCase());
+          if (oldIe && VERSION === 'zh') {
+            this._iframeLoad(url, cb);
+          } else {
+            this._scriptLoad(url, cb);
+          }
+        },
+        _scriptLoad: function (url, cb) {
+          var el = doc.createElement('script');
+          var scriptVersion = '20180329';
+          url = /^(https?:)?\/\//i.test(url) ? url : basePath + url;
+          el.setAttribute('type', 'text/javascript');
+          el.setAttribute('src', url);
+          el.setAttribute('async', true);
+          el.onerror = function () {
+            cb();
+            el.onerror = null;
+          };
+          el.onload = el.onreadystatechange = function () {
+            if (!this.readyState || this.readyState === 'loaded' || this.readyState === 'complete') {
+              if (storeMode && seajs.modules) {
+                var modules = seajs.modules,
+                  jsStr = '';
+                for (var key in modules) {
+                  jsStr += 'define("' + key + '",' + modules[key] + ');';
+                }
+                try {
+                  clearLocal(url);
+                  localStorage[url] = jsStr;
+                } catch (e) { }
+
+                seajs.modules = {};
+              }
+              cb();
+              el.onload = el.onreadystatechange = null;
+            }
+          };
+          doc.getElementsByTagName('head')[0].appendChild(el);
+        },
+        _iframeLoad: function (url, cb) {
+          var iframe = doc.createElement('iframe');
+          iframe.style.display = 'none';
+          iframe.src =
+            'javascript:void(function(){document.open();' +
+            'document.domain = "' +
+            doc.domain +
+            '";document.close();}());';
+          url = /^(https?:)?\/\//i.test(url) ? url : basePath + url + '?max_age=' + max_age;
+          iframe.callback = function (jsStr) {
+            eval(jsStr);
+            if (storeMode) {
+              try {
+                clearLocal(url);
+                localStorage[url] = jsStr;
+              } catch (e) { }
+            }
+            cb();
+            setTimeout(function () {
+              doc.body.removeChild(iframe);
+              iframe = null;
+            }, 1000);
+          };
+          var iframeLoad = function () {
+            var iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            var iframeHtm = [
+              '<html><head><meta charset="utf-8"></head><body onload="callback()">',
+              '<script type="text/javascript">',
+              'var jsStr = "", cb = false;',
+              'var define = function (id, factory) {',
+              'if (typeof(factory) == "function") {',
+              'var factoryStr = factory.toString();',
+              'jsStr += "define(\'" + id + "\'," + factoryStr + ");"',
+              '}',
+              '};<\/script>',
+              '<script type="text/javascript" src="' + url + '"><\/script>',
+              '<script type="text/javascript">',
+              'function callback() {',
+              'if (jsStr && !cb) {',
+              'frameElement.callback(jsStr);',
+              'cb = true;',
+              '}',
+              '};',
+              'callback();',
+              '<\/script>',
+              '</body></html>'
+            ].join('');
+            iframeDoc.open();
+            iframeDoc.domain = doc.domain;
+            iframeDoc.write(iframeHtm);
+            iframeDoc.close();
+          };
+
+          if (iframe.attachEvent) {
+            var _ifmLoad = function () {
+              iframe.detachEvent('onload', _ifmLoad);
+              iframeLoad();
+            };
+            iframe.attachEvent('onload', _ifmLoad);
+          } else {
+            iframe.onload = function () {
+              iframe.onload = null;
+              iframeLoad();
+            };
+          }
+
+          doc.body.appendChild(iframe);
+        }
+      };
+
+      function clearLocal(url) {
+        for (var key in win.localStorage) {
+          var urlName = url.substring(0, url.indexOf('.'));
+          var stoName = key.substring(0, key.indexOf('.'));
+          if (urlName == stoName) {
+            localStorage.removeItem(key);
+            break;
+          }
+        }
+      }
+
+      function configSeajs() {
+        seajs.config({
+          base: basePath,
+          alias: {
+            //nmc
+            $: 'jquery-1.10.2',
+            util: 'nmc/lib/util',
+
+            twofactor: 'nmc/lib/twofactor',
+            event: 'nmc/lib/event',
+            nmcConfig: 'nmc/config/config',
+            pageManager: 'nmc/main/pagemanager',
+            router: 'nmc/main/router',
+            entry: 'nmc/main/entry',
+            tips: 'nmc/widget/tips',
+
+            //external
+            manager: 'models/manager',
+            constants: 'config/constants',
+            appUtil: 'lib/appUtil',
+            startup: 'main/startup'
+          }
+        });
+      }
+
+      var coreJs = ['vendor.js', 'platform.js', 'common.js'];
+      var qcbaseSource = {};
+
+      function isInCoreJs(name) {
+        var isInArray = false;
+        if (Array.prototype.indexOf) {
+          isInArray = coreJs.indexOf(name) >= 0;
+        } else {
+          for (var i = 0; i < coreJs.length; i++) {
+            if (coreJs[i] == name) {
+              isInArray = true;
+              break;
+            }
+          }
+        }
+        return isInArray;
+      }
+
+      function loadModule() {
+        configSeajs();
+
+        var needLoadArr = [],
+          needEvalArr = [];
+
+        for (var name in jsVersion) {
+          if (isInCoreJs(name)) {
+            var loadName = getTargetName(name);
+            if (storeMode) {
+              if (localStorage[loadName]) {
+                needEvalArr.push(loadName);
+              } else {
+                needLoadArr.push(loadName);
+              }
+            } else {
+              needLoadArr.push(loadName);
+            }
+          }
+        }
+
+        function gettingStarted() {
+          var errorEvalArr = [];
+          if (storeMode) {
+            for (var i = 0, item; (item = needEvalArr[i]); i++) {
+              try {
+                eval(localStorage[item]);
+              } catch (e) {
+                errorEvalArr.push(item);
+                console.warn('错误的缓存：', item, e);
+              }
+            }
+          }
+          if (errorEvalArr.length) {
+            loader.load(errorEvalArr, start);
+          } else {
+            start();
+          }
+        }
+
+        if (needLoadArr.length) {
+          loader.load(needLoadArr, gettingStarted);
+        } else {
+          gettingStarted();
+        }
+      }
+
+      function start() {
+        seajs.use('startup', function (app) {
+          app.startup();
+        });
+      }
+
+      function getTargetName(name) {
+        var targetName;
+        var jsVersionMap = {
+          en: 'jsVersionEn',
+          ko: 'jsVersionKo'
+        };
+
+        if (VERSION !== 'zh') {
+          if (jsVersionMap[VERSION] && window[jsVersionMap[VERSION]] && window[jsVersionMap[VERSION]][name]) {
+            targetName = window[jsVersionMap[VERSION]][name];
+          } else {
+            targetName = name;
+          }
+        } else if (debug == 2) {
+          targetName = name;
+        } else {
+          targetName = jsVersion[name];
+        }
+        return qcbaseSource[name] || targetName;
+      }
+
+      function nmcLoad(name, cb) {
+        var loadName = getTargetName(name);
+        if (nmcLoad.loaded[loadName]) {
+          cb && cb();
+          return;
+        }
+        if (storeMode && localStorage[loadName]) {
+          eval(localStorage[loadName]);
+          nmcLoad.loaded[loadName] = true;
+          cb && cb();
+        } else {
+          seajs.modules = {};
+          loader.load(loadName, function () {
+            nmcLoad.loaded[loadName] = true;
+            cb && cb();
+          });
+        }
+      }
+
+      nmcLoad.loaded = {};
+
+      var locationHref = win.location.href,
+        debug = 0,
+        storeMode = 0;
+
+      if (/\/debug_online/.test(locationHref)) {
+        debug = 1;
+      } else if (/\/debug_https/.test(locationHref)) {
+        debug = 2;
+      } else if (/\/debug_http/.test(locationHref)) {
+        debug = 0;
+      } else if (/\/debug/.test(locationHref)) {
+        debug = 2;
+      }
+
+      win.startLoadJs = new Date();
+      win.nmcLoad = nmcLoad;
+
+      loadModule();
+    })(window, document);
+  </script>
+
+  <script>
+    let path = location.pathname;
+    if (!path || path === '/') {
+      location.pathname = 'tkestack';
+    }
+  </script>
+</body>
+
+</html>
