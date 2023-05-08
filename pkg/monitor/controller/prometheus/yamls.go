@@ -503,7 +503,7 @@ groups:
     expr: container_memory_usage_bytes * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_container_mem_no_cache_bytes
-    expr: (container_memory_usage_bytes -  container_memory_cache)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+    expr: container_memory_working_set_bytes * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_container_rate_mem_usage_request
     expr: k8s_container_mem_usage_bytes * 100 / on (pod_name,namespace,container_name)  group_left kube_pod_container_resource_requests{resource="memory"}
@@ -548,10 +548,10 @@ groups:
     expr: sum(rate(container_network_transmit_bytes_total[4m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_container_network_receive_bytes
-    expr: sum(idelta(container_network_receive_bytes_total[2m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+    expr: sum(idelta(container_network_receive_bytes_total[4m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_container_network_transmit_bytes
-    expr: sum(idelta(container_network_transmit_bytes_total[2m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+    expr: sum(idelta(container_network_transmit_bytes_total[4m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_container_network_receive_packets
     expr: sum(rate(container_network_receive_packets_total[4m])) without(interface)  * on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
@@ -671,7 +671,7 @@ groups:
     expr: sum(kube_pod_status_phase{phase=~"Running|Succeeded"}) by (namespace,pod_name) *  on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_pod_restart_total
-    expr: sum(idelta(kube_pod_container_status_restarts_total [2m])) by (namespace,pod_name) *  on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
+    expr: sum(idelta(kube_pod_container_status_restarts_total [4m])) by (namespace,pod_name) *  on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
 
   - record: k8s_pod_restart_total_number
     expr: sum(kube_pod_container_status_restarts_total) by (namespace,pod_name) *  on(namespace, pod_name) group_left(workload_kind,workload_name,node, node_role)  __pod_info2
