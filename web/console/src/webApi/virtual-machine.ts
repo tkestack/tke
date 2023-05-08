@@ -322,3 +322,28 @@ export const checkVmEnable = async clusterId => {
     return false;
   }
 };
+
+export const createSnapshot = async ({ clusterId, namespace, vmName, name }) => {
+  return Request.post(
+    `apis/snapshot.kubevirt.io/v1alpha1/namespaces/${namespace}/virtualmachinesnapshots`,
+    {
+      apiVersion: 'snapshot.kubevirt.io/v1alpha1',
+      kind: 'VirtualMachineSnapshot',
+      metadata: {
+        name: name
+      },
+      spec: {
+        source: {
+          apiGroup: 'kubevirt.io',
+          kind: 'VirtualMachine',
+          name: vmName
+        }
+      }
+    },
+    {
+      headers: {
+        'X-TKE-ClusterName': clusterId
+      }
+    }
+  );
+};

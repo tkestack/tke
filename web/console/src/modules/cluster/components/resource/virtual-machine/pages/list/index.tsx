@@ -7,7 +7,7 @@ import { useSetRecoilState, useRecoilState, useRecoilValue } from 'recoil';
 import { clusterIdState, namespaceSelectionState, vmSelectionState } from '../../store/base';
 import { virtualMachineAPI } from '@src/webApi';
 import { router } from '@src/modules/cluster/router';
-import { BootButton, ShutdownButton, DelButton, VNCButton } from '../../components';
+import { BootButton, ShutdownButton, DelButton, VNCButton, SnapshotButton } from '../../components';
 
 const { autotip } = Table.addons;
 
@@ -123,6 +123,10 @@ export const VMListPanel = ({ route }) => {
 
                 <List.Item>
                   <DelButton clusterId={clusterId} name={name} namespace={namespace} type="link" onSuccess={reFetch} />
+                </List.Item>
+
+                <List.Item>
+                  <SnapshotButton clusterId={clusterId} name={name} namespace={namespace} onSuccess={reFetch} />
                 </List.Item>
               </List>
             </Dropdown>
