@@ -21,13 +21,13 @@ package application
 import (
 	"context"
 	"fmt"
-
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
@@ -104,6 +104,10 @@ func (s *Strategy) PrepareForCreate(ctx context.Context, obj runtime.Object) {
 	app.ObjectMeta.GenerateName = "app-"
 	app.Generation = 1
 
+	app.Spec.Finalizers = []application.FinalizerName{
+		application.AppFinalize,
+	}
+
 	if app.Spec.Chart.TenantID == "" {
 		app.Spec.Chart.TenantID = app.Spec.TenantID
 	}
@@ -151,11 +155,11 @@ func (Strategy) WarningsOnUpdate(ctx context.Context, obj, old runtime.Object) [
 
 // GetAttrs returns labels and fields of a given object for filtering purposes.
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
-	application, ok := obj.(*application.App)
+	app, ok := obj.(*application.App)
 	if !ok {
 		return nil, nil, fmt.Errorf("not a application")
 	}
-	return application.ObjectMeta.Labels, ToSelectableFields(application), nil
+	return app.ObjectMeta.Labels, ToSelectableFields(app), nil
 }
 
 // MatchApplication returns a generic matcher for a given label and field selector.
@@ -186,6 +190,15 @@ func ToSelectableFields(app *application.App) fields.Set {
 		"spec.targetNamespace": app.Spec.TargetNamespace,
 	}
 	return genericregistry.MergeFieldsSets(objectMetaFieldsSet, specificFieldsSet)
+}
+
+func ShouldDeleteDuringUpdate(ctx context.Context, key string, obj, existing runtime.Object) bool {
+	app, ok := obj.(*application.App)
+	if !ok {
+		log.Errorf("unexpected object, key:%s", key)
+		return false
+	}
+	return len(app.Spec.Finalizers) == 0 && registry.ShouldDeleteDuringUpdate(ctx, key, obj, existing)
 }
 
 // StatusStrategy implements verification logic for status of app request.
