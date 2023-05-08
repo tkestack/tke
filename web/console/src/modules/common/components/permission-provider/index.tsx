@@ -10,7 +10,7 @@ export function checkCustomVisible(value: string) {
   const path = value.split('.');
   const customConfig = getCustomConfig();
 
-  const config = path.reduce((config, key) => config?.[key], customConfig);
+  const config = path.reduce((config, key) => config?.children?.[key], customConfig);
 
   return config?.visible ?? true;
 }
