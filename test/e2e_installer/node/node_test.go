@@ -30,6 +30,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/apiserver/cluster"
+	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
+	baremetalmachine "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
+	importedcluster "tkestack.io/tke/pkg/platform/provider/imported/cluster"
 	tke2 "tkestack.io/tke/test/tke"
 	testclient "tkestack.io/tke/test/util/client"
 	"tkestack.io/tke/test/util/cloudprovider/tencent"
@@ -44,6 +47,9 @@ var (
 )
 
 var _ = Describe("node", func() {
+	baremetalcluster.RegisterProvider()
+	baremetalmachine.RegisterProvider()
+	importedcluster.RegisterProvider()
 
 	SynchronizedBeforeSuite(func() []byte {
 		// Download and install tke-installer
