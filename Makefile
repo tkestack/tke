@@ -140,7 +140,7 @@ release.build:
 ifeq ($(NEED_BUILD_PROVIDER),true)
 	cd build/docker/tools/provider-res && make all
 endif
-	make asset && make push.multiarch
+	make asset && make push.multiarch && make manifest.multiarch
 
 ## release: Release tke
 .PHONY: release
