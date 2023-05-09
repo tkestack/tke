@@ -27,6 +27,16 @@ export const VMListActionPanel = ({ route, reFetch, vmList, onQueryChange }) => 
             </Button>
 
             <VmMonitorDialog clusterId={clusterId} namespace={namespaceSelection} vmList={vmList} />
+
+            <Button
+              type="primary"
+              onClick={() => {
+                const urlParams = router.resolve(route);
+                router.navigate(Object.assign({}, urlParams, { mode: 'snapshot' }), route.queries);
+              }}
+            >
+              快照
+            </Button>
           </>
         }
         right={
@@ -46,7 +56,11 @@ export const VMListActionPanel = ({ route, reFetch, vmList, onQueryChange }) => 
                   ? namespaceListLoadable?.contents?.map(value => ({ value }))
                   : []
               }
-              onChange={value => setNamespaceSelection(value)}
+              onChange={value => {
+                setNamespaceSelection(value);
+                const urlParams = router.resolve(route);
+                router.navigate(urlParams, Object.assign({}, route.queries, { np: value }));
+              }}
             />
 
             <TagSearchBox

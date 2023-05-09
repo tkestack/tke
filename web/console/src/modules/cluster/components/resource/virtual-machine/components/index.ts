@@ -8,4 +8,8 @@ export { VNCButton } from './vncButton';
 
 export { VmMonitorDialog } from './vmMonitorDialog';
 
-export { SnapshotButton } from './snapshotButton';
+export { CreateSnapshotButton } from './createSnapshotButton';
+
+export { DelSnapshotButton } from './delSnapshotButton';
+
+export { RecoverySnapshotButton } from './recoverySnapshotButton';

@@ -1,7 +1,15 @@
 import { VolumeModeEnum } from '@src/modules/cluster/components/resource/virtual-machine/constants';
 import { Request, generateQueryString } from './request';
+import { v4 as uuid } from 'uuid';
 
 const IMAGE_NAMESPACE = 'kube-public';
+
+const basePath = (clusterId: string) => `/apis/platform.tkestack.io/v1/clusters/${clusterId}/proxy?path=`;
+const header = (clusterId: string) => ({
+  headers: {
+    'X-TKE-ClusterName': clusterId
+  }
+});
 
 export function fetchVMList({ clusterId, namespace }, { limit = null, continueToken = null }) {
   const path = encodeURIComponent(
@@ -325,7 +333,7 @@ export const checkVmEnable = async clusterId => {
 
 export const createSnapshot = async ({ clusterId, namespace, vmName, name }) => {
   return Request.post(
-    `apis/snapshot.kubevirt.io/v1alpha1/namespaces/${namespace}/virtualmachinesnapshots`,
+    `/apis/platform.tkestack.io/v1/clusters/${clusterId}/proxy?path=/apis/snapshot.kubevirt.io/v1alpha1/namespaces/${namespace}/virtualmachinesnapshots`,
     {
       apiVersion: 'snapshot.kubevirt.io/v1alpha1',
       kind: 'VirtualMachineSnapshot',
@@ -347,3 +355,71 @@ export const createSnapshot = async ({ clusterId, namespace, vmName, name }) => 
     }
   );
 };
+
+export function fetchSnapshotItem({ clusterId, namespace, name }) {
+  return Request.get(
+    `${basePath(clusterId)}/apis/snapshot.kubevirt.io/v1alpha1/namespaces/${namespace}/virtualmachinesnapshots/${name}`,
+    header(clusterId)
+  );
+}
+
+export async function fetchSnapshotList(
+  { clusterId, namespace },
+  { limit = null, continueToken = null, query = null }
+) {
+  if (query) {
+    const item = await fetchSnapshotItem({ clusterId, namespace, name: query });
+
+    return {
+      items: item ? [item] : []
+    };
+  }
+
+  const path = `/apis/snapshot.kubevirt.io/v1alpha1/namespaces/${namespace}/virtualmachinesnapshots?${generateQueryString(
+    {
+      limit,
+      continue: continueToken
+    }
+  )}`;
+
+  return Request.get<any, any>(`${basePath(clusterId)}${path}`, {
+    headers: {
+      'X-TKE-ClusterName': clusterId
+    }
+  });
+}
+
+export function delSnapshot({ clusterId, namespace, name }) {
+  return Request.delete(
+    `${basePath(clusterId)}/apis/snapshot.kubevirt.io/v1alpha1/namespaces/${namespace}/virtualmachinesnapshots/${name}`,
+    {
+      headers: {
+        'X-TKE-ClusterName': clusterId
+      }
+    }
+  );
+}
+
+export function recoverySnapshot({ clusterId, namespace, name, vmName }) {
+  const body = {
+    apiVersion: 'snapshot.kubevirt.io/v1alpha1',
+    kind: 'VirtualMachineRestore',
+    metadata: {
+      name: `${name}-restore-${uuid()}`
+    },
+    spec: {
+      target: {
+        apiGroup: 'kubevirt.io',
+        kind: 'VirtualMachine',
+        name: vmName
+      },
+      virtualMachineSnapshotName: name
+    }
+  };
+
+  return Request.post(
+    `${basePath(clusterId)}/apis/snapshot.kubevirt.io/v1alpha1/namespaces/${namespace}/virtualmachinerestores`,
+    body,
+    header(clusterId)
+  );
+}

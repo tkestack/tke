@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { getReactHookFormStatusWithMessage } from '@helper';
 import { virtualMachineAPI } from '@src/webApi';
 
-export const SnapshotButton = ({ clusterId, namespace, name, onSuccess }) => {
+export const CreateSnapshotButton = ({ clusterId, namespace, name, onSuccess }) => {
   const [visible, setVisible] = useState(false);
 
   const { control, handleSubmit, reset } = useForm({

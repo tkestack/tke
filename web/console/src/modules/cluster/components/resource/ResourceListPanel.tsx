@@ -47,7 +47,7 @@ import { ResourceLogPanel } from './resourceTableOperation/ResourceLogPanel';
 import { ResourceTablePanel } from './resourceTableOperation/ResourceTablePanel';
 import { HPAPanel } from '../scale/hpa';
 import { CronHpaPanel } from '../scale/cronhpa';
-import { VMListPanel } from './virtual-machine';
+import { VMListPanel, SnapshotTablePanel } from './virtual-machine';
 
 const loadingElement: JSX.Element = (
   <div>
