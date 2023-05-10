@@ -229,6 +229,7 @@ const commonRouterConfig: RouterConfig[] = [
     ]
   },
   {
+    icon: [require('./public/static/icon/data-service.svg'), require('./public/static/icon/data-service-hover.svg')],
     title: '数据服务',
     watchModule: [ConsoleModuleEnum.Middleware],
     subRouterConfig: [
@@ -484,6 +485,10 @@ export class Wrapper extends React.Component<ConsoleWrapperProps, ConsoleWrapper
       //追加数据服务菜单
       if (!currentRouterConfig?.every(item => item?.watchModule?.includes(ConsoleModuleEnum.Middleware))) {
         currentRouterConfig.push({
+          icon: [
+            require('./public/static/icon/data-service.svg'),
+            require('./public/static/icon/data-service-hover.svg')
+          ],
           title: '数据服务',
           watchModule: [ConsoleModuleEnum.Middleware],
           subRouterConfig: [
