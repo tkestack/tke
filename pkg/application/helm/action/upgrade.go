@@ -30,7 +30,6 @@ import (
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-
 	"tkestack.io/tke/pkg/util/file"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -78,8 +77,8 @@ func (c *Client) Upgrade(ctx context.Context, options *UpgradeOptions) (*release
 		// If a release does not exist, install it.
 		histClient := action.NewHistory(actionConfig)
 		histClient.Max = 1
-		_, err = histClient.Run(options.ReleaseName)
-		if err == driver.ErrReleaseNotFound {
+		rels, err := histClient.Run(options.ReleaseName)
+		if errors.Is(err, driver.ErrReleaseNotFound) {
 			log.Infof("Release %d does not exist. Installing it now.", options.ReleaseName)
 			return c.Install(ctx, &InstallOptions{
 				DryRun:           options.DryRun,
@@ -96,6 +95,13 @@ func (c *Client) Upgrade(ctx context.Context, options *UpgradeOptions) (*release
 			})
 		} else if err != nil {
 			return nil, err
+		}
+		for _, rel := range rels {
+			if rel.Info.Status == release.StatusPendingInstall || rel.Info.Status == release.StatusPendingUpgrade || rel.Info.Status == release.StatusPendingRollback {
+				// if release status is pending, delete it
+				log.Infof("upgrade release %s is already exist, status is %s. delete it now.", options.ReleaseName, rel.Info.Status)
+				actionConfig.Releases.Delete(rel.Name, rel.Version)
+			}
 		}
 	}
 
