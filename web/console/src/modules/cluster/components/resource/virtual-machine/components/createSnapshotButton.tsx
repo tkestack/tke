@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { getReactHookFormStatusWithMessage } from '@helper';
 import { virtualMachineAPI } from '@src/webApi';
 
-export const CreateSnapshotButton = ({ clusterId, namespace, name, onSuccess }) => {
+export const CreateSnapshotButton = ({ clusterId, namespace, name, onSuccess = () => {}, disabled }) => {
   const [visible, setVisible] = useState(false);
 
   const { control, handleSubmit, reset } = useForm({
@@ -44,7 +44,7 @@ export const CreateSnapshotButton = ({ clusterId, namespace, name, onSuccess }) 
 
   return (
     <>
-      <Button type="link" onClick={() => setVisible(true)}>
+      <Button type="link" onClick={() => setVisible(true)} disabled={disabled}>
         新建快照
       </Button>
 

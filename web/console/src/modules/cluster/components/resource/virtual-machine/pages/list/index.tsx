@@ -93,7 +93,7 @@ export const VMListPanel = ({ route }) => {
     {
       key: 'actions',
       header: '操作',
-      render({ name, status }) {
+      render({ name, status, supportSnapshot }) {
         return (
           <>
             <VNCButton type="link" clusterId={clusterId} name={name} namespace={namespace} status={status} />
@@ -126,7 +126,12 @@ export const VMListPanel = ({ route }) => {
                 </List.Item>
 
                 <List.Item>
-                  <CreateSnapshotButton clusterId={clusterId} name={name} namespace={namespace} onSuccess={() => {}} />
+                  <CreateSnapshotButton
+                    clusterId={clusterId}
+                    name={name}
+                    namespace={namespace}
+                    disabled={!supportSnapshot}
+                  />
                 </List.Item>
               </List>
             </Dropdown>
@@ -176,7 +181,11 @@ export const VMListPanel = ({ route }) => {
               }`,
               createTime: metadata?.creationTimestamp,
 
-              id: metadata?.uid
+              id: metadata?.uid,
+
+              supportSnapshot:
+                metadata?.annotations?.['tkestack.io/support-snapshot'] === 'true' &&
+                (realStatus === 'Running' || realStatus === 'Stopped')
             };
           }) ?? [],
 

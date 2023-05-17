@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, TableColumn, Justify, SearchBox, Pagination, Button, Select, Text } from 'tea-component';
+import { Table, TableColumn, Justify, SearchBox, Pagination, Button, Select, Text, Icon } from 'tea-component';
 import { useFetch } from '@src/modules/common/hooks';
 import { virtualMachineAPI, namespaceAPI } from '@src/webApi';
 import { getParamByUrl } from '@helper';
@@ -12,6 +12,13 @@ import { TeaFormLayout } from '@src/modules/common/layouts/TeaFormLayout';
 const { autotip } = Table.addons;
 
 const defaultPageSize = 10;
+
+const statusMap = {
+  Succeeded: '正常',
+  Failed: '异常',
+  Recovering: '恢复中',
+  RecoverFailed: '恢复失败'
+};
 
 export const SnapshotTablePanel = ({ route }) => {
   const clusterId = getParamByUrl('clusterId');
@@ -37,12 +44,38 @@ export const SnapshotTablePanel = ({ route }) => {
     paging
   } = useFetch(
     async ({ paging, continueToken }) => {
-      const rsp = await virtualMachineAPI.fetchSnapshotList(
-        { clusterId, namespace },
-        { limit: paging?.pageSize, continueToken, query }
-      );
+      const [rsp, storeRsp] = await Promise.all([
+        virtualMachineAPI.fetchSnapshotList(
+          { clusterId, namespace },
+          { limit: paging?.pageSize, continueToken, query }
+        ),
 
-      const items = rsp?.items ?? [];
+        virtualMachineAPI.fetchRecoveryStoreList({ clusterId, namespace })
+      ]);
+
+      const storeItems = storeRsp?.items ?? [];
+
+      const items = (rsp?.items ?? []).map(item => {
+        const itemStore = storeItems.find(
+          store =>
+            store?.spec?.target?.virtualMachineSnapshotName === item?.metadata?.name &&
+            store?.status?.complete === false
+        );
+
+        if (itemStore) {
+          const conditions = itemStore.status.conditions ?? [];
+          const lastConditions = conditions?.[conditions.length - 1];
+
+          if (lastConditions?.type === 'Progressing') {
+            item.status.phase = 'Recovering';
+          } else if (lastConditions?.type === 'Failure') {
+            item.status.phase = 'RecoverFailed';
+            item.status.reason = lastConditions?.reason;
+          }
+        }
+
+        return item;
+      });
 
       const newContinueToken = rsp?.metadata?.continue || null;
 
@@ -76,10 +109,17 @@ export const SnapshotTablePanel = ({ route }) => {
       header: '状态',
       render(snapshot) {
         const status = snapshot?.status?.phase;
+        const reason = snapshot?.status?.reason;
 
         const theme = status === 'Succeeded' ? 'success' : 'danger';
 
-        return <Text theme={theme}>{status}</Text>;
+        return (
+          <>
+            <Text theme={theme}>{statusMap?.[status] ?? status}</Text>
+
+            {reason && <Icon style={{ marginLeft: 10 }} type="error" tooltip={reason} />}
+          </>
+        );
       }
     },
 
@@ -127,6 +167,7 @@ export const SnapshotTablePanel = ({ route }) => {
               namespace={namespace}
               name={snapshot?.metadata?.name}
               vmName={snapshot?.spec?.source?.name}
+              onSuccess={reFetch}
             />
           </>
         );

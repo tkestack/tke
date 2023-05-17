@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActionButton } from './actionButton';
 import { virtualMachineAPI } from '@src/webApi';
-import { Text } from 'tea-component';
+import { Text, Alert } from 'tea-component';
 
 export const RecoverySnapshotButton = ({
   type,
@@ -25,6 +25,7 @@ export const RecoverySnapshotButton = ({
       disabled={disabled}
       body={
         <>
+          <Alert type="warning">请确保虚拟机处于关机状态！</Alert>
           <Text parent="p">
             您将要对虚拟机<Text theme="warning">{vmName}</Text>恢复快照<Text theme="warning">{name}</Text>,
             恢复操作将会覆盖当前状态下虚拟机数据

@@ -136,6 +136,9 @@ export function createVM({
         'kubevirt.io/latest-observed-api-version': 'v1',
         'kubevirt.io/storage-observed-api-version': 'v1alpha3',
         'tkestack.io/image-display-name': mirror.text,
+        'tkestack.io/support-snapshot': diskList.every(item => item?.scProvisioner === 'rbd.csi.ceph.com')
+          ? 'true'
+          : 'false',
         description
       },
       labels: {
@@ -420,6 +423,13 @@ export function recoverySnapshot({ clusterId, namespace, name, vmName }) {
   return Request.post(
     `${basePath(clusterId)}/apis/snapshot.kubevirt.io/v1alpha1/namespaces/${namespace}/virtualmachinerestores`,
     body,
+    header(clusterId)
+  );
+}
+
+export function fetchRecoveryStoreList({ clusterId, namespace }) {
+  return Request.get<any, any>(
+    `${basePath(clusterId)}/apis/snapshot.kubevirt.io/v1alpha1/namespaces/${namespace}/virtualmachinerestores`,
     header(clusterId)
   );
 }
