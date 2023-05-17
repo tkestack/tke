@@ -207,7 +207,7 @@ jobs:
   report-failure:
     name: report failure
     runs-on: self-hosted
-    needs: [cluster]
+    needs: [cluster, node]
     if: failure()
     steps:
       - name: Set VERSION
@@ -239,7 +239,7 @@ jobs:
   report-success:
     name: report success
     runs-on: self-hosted
-    needs: [cluster]
+    needs: [cluster, node]
     if: success()
     steps:
       - name: Set VERSION
