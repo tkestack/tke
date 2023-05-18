@@ -21,7 +21,10 @@ package node_test
 import (
 	"context"
 	"errors"
+	"io/ioutil"
+	"log"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -31,7 +34,9 @@ import (
 	platformv1 "tkestack.io/tke/api/platform/v1"
 	"tkestack.io/tke/pkg/platform/apiserver/cluster"
 	baremetalcluster "tkestack.io/tke/pkg/platform/provider/baremetal/cluster"
+	baremetalconstants "tkestack.io/tke/pkg/platform/provider/baremetal/constants"
 	baremetalmachine "tkestack.io/tke/pkg/platform/provider/baremetal/machine"
+	clusterprovider "tkestack.io/tke/pkg/platform/provider/cluster"
 	importedcluster "tkestack.io/tke/pkg/platform/provider/imported/cluster"
 	tke2 "tkestack.io/tke/test/tke"
 	testclient "tkestack.io/tke/test/util/client"
@@ -46,8 +51,26 @@ var (
 	err      error
 )
 
+func copyProviderConfig() {
+	wd, _ := os.Getwd()
+	log.Printf("current test dir is %v", wd)
+	err := os.MkdirAll(path.Dir(baremetalconstants.ConfDir), 0755)
+	if err != nil {
+		log.Fatalf("create dir failed: %v", err)
+	}
+	input, err := ioutil.ReadFile("../../../pkg/platform/" + baremetalconstants.ConfigFile)
+	if err != nil {
+		log.Fatalf("read config failed: %v", err)
+	}
+	err = ioutil.WriteFile(baremetalconstants.ConfigFile, input, 0755)
+	if err != nil {
+		log.Fatalf("write config failed: %v", err)
+	}
+}
+
 var _ = Describe("node", func() {
-	baremetalcluster.RegisterProvider()
+	copyProviderConfig()
+	baremetalProvider, _ := baremetalcluster.NewProvider()
 	baremetalmachine.RegisterProvider()
 	importedcluster.RegisterProvider()
 
@@ -73,6 +96,8 @@ var _ = Describe("node", func() {
 		testTKE := tke2.Init(tkeClient, provider)
 		cls, err := testTKE.CreateCluster()
 		Expect(err).To(BeNil(), "Create cluster failed")
+		baremetalProvider.PlatformClient = testTKE.TkeClient.PlatformV1()
+		clusterprovider.Register(baremetalProvider.Name(), baremetalProvider)
 
 		return []byte(cls.Name + ";" + kubeconfig)
 	}, func(data []byte) {
