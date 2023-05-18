@@ -20,11 +20,12 @@ package deletion
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
-	"strings"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	"helm.sh/helm/v3/pkg/storage/driver"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -74,7 +75,7 @@ type applicationResourcesDeleter struct {
 	finalizerToken applicationv1.FinalizerName
 	// Also delete the app when all resources in the app have been deleted.
 	deleteAppWhenDone bool
-	//RepoConfiguration contains options to connect to a chart repo.
+	// RepoConfiguration contains options to connect to a chart repo.
 	repo appconfig.RepoConfiguration
 }
 
@@ -98,7 +99,7 @@ func (d *applicationResourcesDeleter) Delete(ctx context.Context, namespace, app
 	// if the app was deleted already, don't do anything
 	app, err := d.applicationClient.Apps(namespace).Get(ctx, appName, metav1.GetOptions{})
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if k8serrors.IsNotFound(err) {
 			return nil
 		}
 		return err
@@ -113,7 +114,7 @@ func (d *applicationResourcesDeleter) Delete(ctx context.Context, namespace, app
 	// if we get a not found error, we assume the app is truly gone
 	app, err = d.retryOnConflictError(ctx, app, d.updateApplicationStatusFunc)
 	if err != nil {
-		if errors.IsNotFound(err) {
+		if k8serrors.IsNotFound(err) {
 			return nil
 		}
 		return err
@@ -141,7 +142,7 @@ func (d *applicationResourcesDeleter) Delete(ctx context.Context, namespace, app
 		// in normal practice, this should not be possible, but if a deployment is running
 		// two controllers to do app deletion that share a common finalizer token it's
 		// possible that a not found could occur since the other controller would have finished the delete.
-		if errors.IsNotFound(err) {
+		if k8serrors.IsNotFound(err) {
 			return nil
 		}
 		return err
@@ -162,7 +163,7 @@ func (d *applicationResourcesDeleter) deleteApplication(ctx context.Context, app
 		opts = metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
 	}
 	err := d.applicationClient.Apps(app.Namespace).Delete(ctx, app.Name, opts)
-	if err != nil && !errors.IsNotFound(err) {
+	if err != nil && !k8serrors.IsNotFound(err) {
 		return err
 	}
 	return nil
@@ -181,7 +182,7 @@ func (d *applicationResourcesDeleter) retryOnConflictError(ctx context.Context, 
 		if err == nil {
 			return result, nil
 		}
-		if !errors.IsConflict(err) {
+		if !k8serrors.IsConflict(err) {
 			return nil, err
 		}
 		prevApplication := latestApplication
@@ -244,7 +245,7 @@ func (d *applicationResourcesDeleter) finalizeApplication(ctx context.Context, a
 
 	if err != nil {
 		// it was removed already, so life is good
-		if errors.IsNotFound(err) {
+		if k8serrors.IsNotFound(err) {
 			return app, nil
 		}
 	}
@@ -289,7 +290,7 @@ func deleteApplication(ctx context.Context,
 	repo appconfig.RepoConfiguration) error {
 	_, err := action.Uninstall(ctx, deleter.applicationClient, deleter.platformClient, app, repo)
 	if err != nil {
-		if strings.Contains(err.Error(), "release: not found") || errors.IsNotFound(err) {
+		if errors.Is(err, driver.ErrReleaseNotFound) || k8serrors.IsNotFound(err) {
 			log.Warn(err.Error())
 			return nil
 		}

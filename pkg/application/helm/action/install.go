@@ -31,6 +31,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	"tkestack.io/tke/pkg/util/file"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -99,6 +100,25 @@ func (c *Client) InstallWithLocal(ctx context.Context, options *InstallOptions, 
 		return nil, err
 	}
 
+	histClient := action.NewHistory(actionConfig)
+	histClient.Max = 1
+	rels, err := histClient.Run(options.ReleaseName)
+	if err != nil {
+		if errors.Is(err, driver.ErrReleaseNotFound) {
+			return nil, err
+		}
+	} else {
+		for _, rel := range rels {
+			if rel.Info.Status == release.StatusDeployed {
+				// if release status is deployed, ignore it
+				log.Infof("Release %s is already exist. igonre it now.", options.ReleaseName)
+				return nil, nil
+			}
+			// if release status is other, delete it
+			log.Infof("install release %s is already exist, status is %s. delete it now.", options.ReleaseName, rel.Info.Status)
+			actionConfig.Releases.Delete(rel.Name, rel.Version)
+		}
+	}
 	client := action.NewInstall(actionConfig)
 	client.DryRun = options.DryRun
 	client.DependencyUpdate = options.DependencyUpdate
