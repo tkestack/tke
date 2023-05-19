@@ -19,13 +19,13 @@
 package action
 
 import (
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/releaseutil"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
@@ -77,7 +77,7 @@ func (c *Client) Uninstall(options *UninstallOptions) (*release.UninstallRelease
 		if rel.Info.Status != release.StatusUninstalled {
 			_, err = client.Run(options.ReleaseName)
 			if err != nil {
-				if !strings.Contains(err.Error(), "release: not found") || !k8serrors.IsNotFound(err) {
+				if !errors.Is(err, driver.ErrReleaseNotFound) || !k8serrors.IsNotFound(err) {
 					return nil, err
 				}
 			}

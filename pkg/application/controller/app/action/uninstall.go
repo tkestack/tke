@@ -20,9 +20,10 @@ package action
 
 import (
 	"context"
-	"strings"
+	"errors"
 
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
@@ -52,7 +53,7 @@ func Uninstall(ctx context.Context,
 		Timeout:     defaultTimeout,
 	})
 
-	if err != nil && !strings.Contains(err.Error(), "release: not found") {
+	if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
 		return resp, err
 	}
 

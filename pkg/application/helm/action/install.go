@@ -22,7 +22,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	securejoin "github.com/cyphar/filepath-securejoin"
@@ -32,6 +31,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/storage/driver"
 	"tkestack.io/tke/pkg/util/file"
 	"tkestack.io/tke/pkg/util/log"
 )
@@ -104,7 +104,7 @@ func (c *Client) InstallWithLocal(ctx context.Context, options *InstallOptions, 
 	histClient.Max = 1
 	rels, err := histClient.Run(options.ReleaseName)
 	if err != nil {
-		if !strings.Contains(err.Error(), "release: not found") {
+		if !errors.Is(err, driver.ErrReleaseNotFound) {
 			return nil, err
 		}
 	} else {
