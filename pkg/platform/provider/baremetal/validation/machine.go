@@ -78,6 +78,8 @@ func ValidateMachineSpec(spec *platform.MachineSpec, cluster *platformv1.Cluster
 			}
 		}
 	}
+	firewallErrors := ValidateFirewall(fldPath, []*ssh.SSH{s})
+	allErrs = append(allErrs, firewallErrors...)
 
 	return allErrs
 }
