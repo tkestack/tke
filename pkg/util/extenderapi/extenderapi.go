@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	appsv1alpha1 "github.com/clusternet/apis/apps/v1alpha1"
 	clustersv1beta1 "github.com/clusternet/apis/clusters/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -83,7 +84,11 @@ func GetSubscription(clientSet client.Client, name, namespace string) (*appsv1al
 	return sub, nil
 }
 
-func GenerateHelmReleaseName(subName, componentNamespace, componentName string) string {
+func GenerateHelmReleaseName(subNamespace, subName, componentNamespace, componentName string) string {
+	// clusternet v0.15 changed helmreleaes name rule, ref https://github.com/clusternet/clusternet/pull/681
+	if len(subNamespace) != 0 {
+		return fmt.Sprintf("%s-%s-helm-%s-%s", subNamespace, subName, componentNamespace, componentName)
+	}
 	return fmt.Sprintf("%s-helm-%s-%s", subName, componentNamespace, componentName)
 }
 
