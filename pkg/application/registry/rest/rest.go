@@ -84,12 +84,14 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		appHistoryREST := applicationstorage.NewHistoryREST(appRESTStorage.App, applicationClient, s.PlatformClient)
 		appResourceREST := applicationstorage.NewResourceREST(appRESTStorage.App, applicationClient, s.PlatformClient)
 		appRollbackREST := applicationstorage.NewRollbackREST(appRESTStorage.App, applicationClient, s.PlatformClient)
+		appMapKubeApiREST := applicationstorage.NewMapKubeApiREST(appRESTStorage.App, applicationClient, s.PlatformClient)
 		storageMap["apps"] = appREST
 		storageMap["apps/histories"] = appHistoryREST
 		storageMap["apps/resources"] = appResourceREST
 		storageMap["apps/rollback"] = appRollbackREST
 		storageMap["apps/status"] = appRESTStorage.Status
 		storageMap["apps/finalize"] = appRESTStorage.Finalize
+		storageMap["apps/mapkubeapis"] = appMapKubeApiREST
 	}
 
 	return storageMap

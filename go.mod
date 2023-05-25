@@ -124,6 +124,8 @@ require (
 	yunion.io/x/pkg v0.0.0-20200603123312-ad58e621aec0
 )
 
+require golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3
+
 require (
 	cloud.google.com/go v0.99.0 // indirect
 	cloud.google.com/go/storage v1.16.1 // indirect

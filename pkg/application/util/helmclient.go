@@ -22,6 +22,8 @@ import (
 	"context"
 	"fmt"
 
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/registry"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applicationv1 "tkestack.io/tke/api/application/v1"
@@ -30,6 +32,7 @@ import (
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	helmconfig "tkestack.io/tke/pkg/application/helm/config"
 	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
+	"tkestack.io/tke/pkg/util/log"
 )
 
 // NewHelmClientWithProvider return a new helm client used to run helm cmd
@@ -47,6 +50,29 @@ func NewHelmClientWithProvider(ctx context.Context, platformClient platformversi
 	restClientGetter.Namespace = &app.Spec.TargetNamespace
 	client := helmaction.NewClient("", restClientGetter)
 	return client, nil
+}
+
+// NewHelmClientWithProvider return a new helm client used to run helm cmd
+func NewActionConfigWithProvider(ctx context.Context, platformClient platformversionedclient.PlatformV1Interface, app *applicationv1.App) (*action.Configuration, error) {
+	actionConfig := new(action.Configuration)
+	provider, err := applicationprovider.GetProvider(app)
+	if err != nil {
+		return nil, err
+	}
+	restConfig, err := provider.GetRestConfig(ctx, platformClient, app)
+	if err != nil {
+		return nil, err
+	}
+	restClientGetter := &helmconfig.RESTClientGetter{RestConfig: restConfig}
+	err = actionConfig.Init(restClientGetter, app.Spec.TargetNamespace, "", log.Debugf)
+	if err != nil {
+		return nil, err
+	}
+	actionConfig.RegistryClient, err = registry.NewClient()
+	if err != nil {
+		return nil, err
+	}
+	return actionConfig, nil
 }
 
 // NewHelmClient return a new client used to run helm cmd
