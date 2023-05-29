@@ -57,7 +57,7 @@ func PullKubernetesImages(c *v1.Cluster, s ssh.Interface, option *Option) error 
 				return err
 			}
 		} else {
-			cmd = fmt.Sprintf("nerdctl -n k8s.io pull %s", image)
+			cmd = fmt.Sprintf("nerdctl --insecure-registry -n k8s.io pull %s", image)
 			_, err := s.CombinedOutput(cmd)
 			if err != nil {
 				if strings.Contains(err.Error(), "502 Bad Gateway") {
