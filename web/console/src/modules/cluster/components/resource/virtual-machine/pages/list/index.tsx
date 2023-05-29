@@ -131,6 +131,10 @@ export const VMListPanel = ({ route }) => {
                     name={name}
                     namespace={namespace}
                     disabled={!supportSnapshot}
+                    onSuccess={() => {
+                      const urlParams = router.resolve(route);
+                      router.navigate(Object.assign({}, urlParams, { mode: 'snapshot' }), route.queries);
+                    }}
                   />
                 </List.Item>
               </List>
