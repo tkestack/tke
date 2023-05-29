@@ -44,3 +44,5 @@ export * from './csrf';
 export * from './isInIframe';
 export { satisfyClusterVersion } from './satisfyClusterVersion';
 export { cutNsStartClusterId, parseQueryString, reduceK8sQueryString, reduceK8sRestfulPath, reduceNs } from './urlUtil';
+
+export * from './path';

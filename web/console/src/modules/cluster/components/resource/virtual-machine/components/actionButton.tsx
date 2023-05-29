@@ -8,6 +8,7 @@ interface ActionButtonProps {
   onSuccess?: () => void;
   children: React.ReactNode;
   disabled?: boolean;
+  body?: React.ReactNode;
 }
 
 export const ActionButton = ({
@@ -16,7 +17,8 @@ export const ActionButton = ({
   title,
   confirm,
   children,
-  disabled = false
+  disabled = false,
+  body
 }: ActionButtonProps) => {
   const [visible, setVisible] = useState(false);
 
@@ -35,6 +37,8 @@ export const ActionButton = ({
       </Button>
 
       <Modal caption={title} visible={visible} onClose={() => setVisible(false)}>
+        {body && <Modal.Body>{body}</Modal.Body>}
+
         <Modal.Footer>
           <Button type="primary" onClick={handleOk}>
             确定

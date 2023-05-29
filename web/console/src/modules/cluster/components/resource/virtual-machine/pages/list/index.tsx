@@ -7,7 +7,7 @@ import { useSetRecoilState, useRecoilState, useRecoilValue } from 'recoil';
 import { clusterIdState, namespaceSelectionState, vmSelectionState } from '../../store/base';
 import { virtualMachineAPI } from '@src/webApi';
 import { router } from '@src/modules/cluster/router';
-import { BootButton, ShutdownButton, DelButton, VNCButton } from '../../components';
+import { BootButton, ShutdownButton, DelButton, VNCButton, CreateSnapshotButton } from '../../components';
 
 const { autotip } = Table.addons;
 
@@ -93,7 +93,7 @@ export const VMListPanel = ({ route }) => {
     {
       key: 'actions',
       header: '操作',
-      render({ name, status }) {
+      render({ name, status, supportSnapshot }) {
         return (
           <>
             <VNCButton type="link" clusterId={clusterId} name={name} namespace={namespace} status={status} />
@@ -123,6 +123,19 @@ export const VMListPanel = ({ route }) => {
 
                 <List.Item>
                   <DelButton clusterId={clusterId} name={name} namespace={namespace} type="link" onSuccess={reFetch} />
+                </List.Item>
+
+                <List.Item>
+                  <CreateSnapshotButton
+                    clusterId={clusterId}
+                    name={name}
+                    namespace={namespace}
+                    disabled={!supportSnapshot}
+                    onSuccess={() => {
+                      const urlParams = router.resolve(route);
+                      router.navigate(Object.assign({}, urlParams, { mode: 'snapshot' }), route.queries);
+                    }}
+                  />
                 </List.Item>
               </List>
             </Dropdown>
@@ -172,7 +185,11 @@ export const VMListPanel = ({ route }) => {
               }`,
               createTime: metadata?.creationTimestamp,
 
-              id: metadata?.uid
+              id: metadata?.uid,
+
+              supportSnapshot:
+                metadata?.annotations?.['tkestack.io/support-snapshot'] === 'true' &&
+                (realStatus === 'Running' || realStatus === 'Stopped')
             };
           }) ?? [],
 

@@ -32,7 +32,7 @@ import { UpdateResourcePanel } from './resourceEdition/UpdateResourcePanel';
 import { ResourceListPanel } from './ResourceListPanel';
 import { HPAPanel } from '@src/modules/cluster/components/scale/hpa';
 import { CronHpaPanel } from '@src/modules/cluster/components/scale/cronhpa';
-import { VMDetailPanel } from './virtual-machine';
+import { VMDetailPanel, SnapshotTablePanel } from './virtual-machine';
 
 interface ResourceContainerPanelState {
   /** 共享锁 */
@@ -173,6 +173,8 @@ export class ResourceContainerPanel extends React.Component<RootProps, ResourceC
       }
     } else if (mode === 'detail' && resourceName === 'virtual-machine') {
       return <VMDetailPanel />;
+    } else if (mode === 'snapshot' && resourceName === 'virtual-machine') {
+      return <SnapshotTablePanel route={route} />;
     } else {
       // 判断应该展示什么组件
       switch (mode) {
