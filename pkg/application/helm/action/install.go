@@ -104,7 +104,7 @@ func (c *Client) InstallWithLocal(ctx context.Context, options *InstallOptions, 
 	histClient.Max = 1
 	rels, err := histClient.Run(options.ReleaseName)
 	if err != nil {
-		if errors.Is(err, driver.ErrReleaseNotFound) {
+		if !errors.Is(err, driver.ErrReleaseNotFound) {
 			return nil, err
 		}
 	} else {
