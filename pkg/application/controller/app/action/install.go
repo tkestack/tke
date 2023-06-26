@@ -40,31 +40,26 @@ func Install(ctx context.Context,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
 	updateStatusFunc applicationprovider.UpdateStatusFunc) (*applicationv1.App, error) {
-	newApp, err := applicationClient.Apps(app.Namespace).Get(ctx, app.Name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
 	hooks := getHooks(app)
 
-	if newApp.Status.Message != "hook pre install app failed" && newApp.Status.Message != "install app failed" && newApp.Status.Message != "hook post install app failed" {
-		newApp.Status.Message = ""
+	if app.Status.Message != "hook pre install app failed" && app.Status.Message != "install app failed" && app.Status.Message != "hook post install app failed" {
+		app.Status.Message = ""
 	}
 
-	if newApp.Status.Message == "" || newApp.Status.Message == "hook pre install app failed" {
-		err = hooks.PreInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	if app.Status.Message == "" || app.Status.Message == "hook pre install app failed" {
+		err := hooks.PreInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 		if err != nil {
 			if updateStatusFunc != nil {
-				newStatus := newApp.Status.DeepCopy()
+				newStatus := app.Status.DeepCopy()
 				var updateStatusErr error
 				newStatus.Phase = applicationv1.AppPhaseInstallFailed
 				newStatus.Message = "hook pre install app failed"
 				newStatus.Reason = err.Error()
 				newStatus.LastTransitionTime = metav1.Now()
 				metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-				newApp, updateStatusErr = updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
+				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
 				if updateStatusErr != nil {
-					return newApp, updateStatusErr
+					return app, updateStatusErr
 				}
 			}
 			return nil, err
@@ -73,21 +68,21 @@ func Install(ctx context.Context,
 
 	destfile, err := Pull(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 	if err != nil {
-		newStatus := newApp.Status.DeepCopy()
+		newStatus := app.Status.DeepCopy()
 		if updateStatusFunc != nil {
 			newStatus.Phase = applicationv1.AppPhaseInstallFailed
 			newStatus.Message = "fetch chart failed"
 			newStatus.Reason = err.Error()
 			newStatus.LastTransitionTime = metav1.Now()
-			_, updateStatusErr := updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
-			metrics.GaugeApplicationInstallFailed.WithLabelValues(newApp.Spec.TargetCluster, newApp.Name).Set(1)
+			_, updateStatusErr := updateStatusFunc(ctx, app, &app.Status, newStatus)
+			metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 			if updateStatusErr != nil {
 				return nil, updateStatusErr
 			}
 		}
 	}
 
-	if newApp.Status.Message == "" || newApp.Status.Message == "hook pre install app failed" || newApp.Status.Message == "install app failed" {
+	if app.Status.Message == "" || app.Status.Message == "hook pre install app failed" || app.Status.Message == "install app failed" {
 		client, err := util.NewHelmClientWithProvider(ctx, platformClient, app)
 		if err != nil {
 			return nil, err
@@ -96,7 +91,7 @@ func Install(ctx context.Context,
 		if err != nil {
 			return nil, err
 		}
-		chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(repo, newApp.Spec.Chart)
+		chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(repo, app.Spec.Chart)
 		if err != nil {
 			return nil, err
 		}
@@ -104,18 +99,23 @@ func Install(ctx context.Context,
 
 		/* provide compatibility with online tke addon apps */
 		if app.Annotations != nil && app.Annotations[applicationprovider.AnnotationProviderNameKey] == "managecontrolplane" {
-			newApp.Spec.Chart.InstallPara.Atomic = false
-			newApp.Spec.Chart.InstallPara.Wait = true
-			newApp.Spec.Chart.InstallPara.WaitForJobs = true
+			app.Spec.Chart.InstallPara.Atomic = false
+			app.Spec.Chart.InstallPara.Wait = true
+			app.Spec.Chart.InstallPara.WaitForJobs = true
 			if app.Annotations["ignore-install-wait"] == "true" {
-				newApp.Spec.Chart.InstallPara.Atomic = false
-				newApp.Spec.Chart.InstallPara.Wait = false
-				newApp.Spec.Chart.InstallPara.WaitForJobs = false
+				app.Spec.Chart.InstallPara.Atomic = false
+				app.Spec.Chart.InstallPara.Wait = false
+				app.Spec.Chart.InstallPara.WaitForJobs = false
 			}
 			if app.Labels != nil && app.Labels["application.tkestack.io/type"] == "internal-addon" {
-				newApp.Spec.Chart.InstallPara.Atomic = false
-				newApp.Spec.Chart.InstallPara.Wait = false
-				newApp.Spec.Chart.InstallPara.WaitForJobs = false
+				app.Spec.Chart.InstallPara.Atomic = false
+				app.Spec.Chart.InstallPara.Wait = false
+				app.Spec.Chart.InstallPara.WaitForJobs = false
+			}
+			if app.Spec.Chart.ChartName == "cranescheduler" {
+				app.Spec.Chart.InstallPara.Atomic = false
+				app.Spec.Chart.InstallPara.Wait = true
+				app.Spec.Chart.InstallPara.WaitForJobs = true
 			}
 		}
 		/* compatibility over, above code need to be deleted atfer the online addon apps are migrated */
@@ -126,59 +126,59 @@ func Install(ctx context.Context,
 		}
 
 		_, err = client.Install(ctx, &helmaction.InstallOptions{
-			Namespace:        newApp.Spec.TargetNamespace,
-			ReleaseName:      newApp.Spec.Name,
+			Namespace:        app.Spec.TargetNamespace,
+			ReleaseName:      app.Spec.Name,
 			DependencyUpdate: true,
 			Values:           values,
 			Timeout:          clientTimeout,
 			ChartPathOptions: chartPathBasicOptions,
-			CreateNamespace:  newApp.Spec.Chart.InstallPara.CreateNamespace,
-			Atomic:           newApp.Spec.Chart.InstallPara.Atomic,
-			Wait:             newApp.Spec.Chart.InstallPara.Wait,
-			WaitForJobs:      newApp.Spec.Chart.InstallPara.WaitForJobs,
+			CreateNamespace:  app.Spec.Chart.InstallPara.CreateNamespace,
+			Atomic:           app.Spec.Chart.InstallPara.Atomic,
+			Wait:             app.Spec.Chart.InstallPara.Wait,
+			WaitForJobs:      app.Spec.Chart.InstallPara.WaitForJobs,
 		})
 
 		if err != nil {
 			if updateStatusFunc != nil {
-				newStatus := newApp.Status.DeepCopy()
+				newStatus := app.Status.DeepCopy()
 				var updateStatusErr error
 				newStatus.Phase = applicationv1.AppPhaseInstallFailed
 				newStatus.Message = "install app failed"
 				newStatus.Reason = err.Error()
 				newStatus.LastTransitionTime = metav1.Now()
 				metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-				newApp, updateStatusErr = updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
+				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
 				if updateStatusErr != nil {
-					return newApp, updateStatusErr
+					return app, updateStatusErr
 				}
 			}
-			return newApp, err
+			return app, err
 		}
 	}
 
-	if newApp.Status.Message == "" || newApp.Status.Message == "hook pre install app failed" || newApp.Status.Message == "install app failed" || newApp.Status.Message == "hook post install app failed" {
+	if app.Status.Message == "" || app.Status.Message == "hook pre install app failed" || app.Status.Message == "install app failed" || app.Status.Message == "hook post install app failed" {
 		err = hooks.PostInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 		// 先走完hook，在更新app状态为succeed
 		if err != nil {
 			if updateStatusFunc != nil {
-				newStatus := newApp.Status.DeepCopy()
+				newStatus := app.Status.DeepCopy()
 				var updateStatusErr error
 				newStatus.Phase = applicationv1.AppPhaseInstallFailed
 				newStatus.Message = "hook post install app failed"
 				newStatus.Reason = err.Error()
 				newStatus.LastTransitionTime = metav1.Now()
 				metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-				newApp, updateStatusErr = updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
+				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
 				if updateStatusErr != nil {
-					return newApp, updateStatusErr
+					return app, updateStatusErr
 				}
 			}
-			return newApp, err
+			return app, err
 		}
 	}
 
 	if updateStatusFunc != nil {
-		newStatus := newApp.Status.DeepCopy()
+		newStatus := app.Status.DeepCopy()
 		var updateStatusErr error
 		newStatus.Phase = applicationv1.AppPhaseSucceeded
 		newStatus.Message = ""
@@ -187,10 +187,10 @@ func Install(ctx context.Context,
 		metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 		metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 		metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
-		newApp, updateStatusErr = updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
+		app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
 		if updateStatusErr != nil {
-			return newApp, updateStatusErr
+			return app, updateStatusErr
 		}
 	}
-	return newApp, nil
+	return app, nil
 }

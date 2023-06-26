@@ -22,8 +22,6 @@ import (
 	"context"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"tkestack.io/tke/pkg/util/metrics"
-
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
@@ -31,6 +29,7 @@ import (
 	helmaction "tkestack.io/tke/pkg/application/helm/action"
 	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
 	"tkestack.io/tke/pkg/application/util"
+	"tkestack.io/tke/pkg/util/metrics"
 )
 
 // Rollback roll back to the previous release
@@ -40,20 +39,16 @@ func Rollback(ctx context.Context,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
 	updateStatusFunc applicationprovider.UpdateStatusFunc) (*applicationv1.App, error) {
-	newApp, err := applicationClient.Apps(app.Namespace).Get(ctx, app.Name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
 	hooks := getHooks(app)
-	if newApp.Status.Message != "hook pre rollback app failed" && newApp.Status.Message != "rollback app failed" && newApp.Status.Message != "hook post rollback app failed" {
-		newApp.Status.Message = ""
+	if app.Status.Message != "hook pre rollback app failed" && app.Status.Message != "rollback app failed" && app.Status.Message != "hook post rollback app failed" {
+		app.Status.Message = ""
 	}
 
-	if newApp.Status.Message == "" || newApp.Status.Message == "hook pre rollback app failed" {
-		err = hooks.PreRollback(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	if app.Status.Message == "" || app.Status.Message == "hook pre rollback app failed" {
+		err := hooks.PreRollback(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 		if err != nil {
 			if updateStatusFunc != nil {
-				newStatus := newApp.Status.DeepCopy()
+				newStatus := app.Status.DeepCopy()
 				var updateStatusErr error
 				newStatus.Phase = applicationv1.AppPhaseRollbackFailed
 				newStatus.Message = "hook pre rollback app failed"
@@ -69,7 +64,7 @@ func Rollback(ctx context.Context,
 		}
 	}
 
-	if newApp.Status.Message == "" || newApp.Status.Message == "hook pre rollback app failed" || newApp.Status.Message == "rollback app failed" {
+	if app.Status.Message == "" || app.Status.Message == "hook pre rollback app failed" || app.Status.Message == "rollback app failed" {
 		client, err := util.NewHelmClientWithProvider(ctx, platformClient, app)
 		if err != nil {
 			return nil, err
@@ -86,7 +81,7 @@ func Rollback(ctx context.Context,
 
 		if err != nil {
 			if updateStatusFunc != nil {
-				newStatus := newApp.Status.DeepCopy()
+				newStatus := app.Status.DeepCopy()
 				var updateStatusErr error
 				newStatus.Phase = applicationv1.AppPhaseRollbackFailed
 				newStatus.Message = "rollback app failed"
@@ -102,12 +97,12 @@ func Rollback(ctx context.Context,
 		}
 	}
 
-	if newApp.Status.Message == "" || newApp.Status.Message == "hook pre rollback app failed" || newApp.Status.Message == "rollback app failed" || newApp.Status.Message == "hook post rollback app failed" {
-		err = hooks.PostRollback(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	if app.Status.Message == "" || app.Status.Message == "hook pre rollback app failed" || app.Status.Message == "rollback app failed" || app.Status.Message == "hook post rollback app failed" {
+		err := hooks.PostRollback(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 		// 先走完hook，在更新app状态为succeed
 		if err != nil {
 			if updateStatusFunc != nil {
-				newStatus := newApp.Status.DeepCopy()
+				newStatus := app.Status.DeepCopy()
 				var updateStatusErr error
 				newStatus.Phase = applicationv1.AppPhaseRollbackFailed
 				newStatus.Message = "hook post rollback app failed"
@@ -120,12 +115,12 @@ func Rollback(ctx context.Context,
 					return app, updateStatusErr
 				}
 			}
-			return newApp, err
+			return app, err
 		}
 	}
 
 	if updateStatusFunc != nil {
-		newStatus := newApp.Status.DeepCopy()
+		newStatus := app.Status.DeepCopy()
 		var updateStatusErr error
 		newStatus.Phase = applicationv1.AppPhaseSucceeded
 		newStatus.Message = ""
@@ -134,9 +129,9 @@ func Rollback(ctx context.Context,
 		metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 		metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 		metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
-		newApp, updateStatusErr = updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
+		app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
 		if updateStatusErr != nil {
-			return newApp, updateStatusErr
+			return app, updateStatusErr
 		}
 	}
 	return app, nil

@@ -41,30 +41,25 @@ func Upgrade(ctx context.Context,
 	app *applicationv1.App,
 	repo appconfig.RepoConfiguration,
 	updateStatusFunc applicationprovider.UpdateStatusFunc) (*applicationv1.App, error) {
-	newApp, err := applicationClient.Apps(app.Namespace).Get(ctx, app.Name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
 	hooks := getHooks(app)
 
-	if newApp.Status.Message != "hook pre upgrade app failed" && newApp.Status.Message != "upgrade app failed" && newApp.Status.Message != "hook post upgrade app failed" {
-		newApp.Status.Message = ""
+	if app.Status.Message != "hook pre upgrade app failed" && app.Status.Message != "upgrade app failed" && app.Status.Message != "hook post upgrade app failed" {
+		app.Status.Message = ""
 	}
-	if newApp.Status.Message == "" || newApp.Status.Message == "hook pre upgrade app failed" {
-		err = hooks.PreUpgrade(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	if app.Status.Message == "" || app.Status.Message == "hook pre upgrade app failed" {
+		err := hooks.PreUpgrade(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 		if err != nil {
 			if updateStatusFunc != nil {
-				newStatus := newApp.Status.DeepCopy()
+				newStatus := app.Status.DeepCopy()
 				var updateStatusErr error
 				newStatus.Phase = applicationv1.AppPhaseUpgradFailed
 				newStatus.Message = "hook pre upgrade app failed"
 				newStatus.Reason = err.Error()
 				newStatus.LastTransitionTime = metav1.Now()
 				metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-				newApp, updateStatusErr = updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
+				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
 				if updateStatusErr != nil {
-					return newApp, updateStatusErr
+					return app, updateStatusErr
 				}
 			}
 			return nil, err
@@ -73,22 +68,22 @@ func Upgrade(ctx context.Context,
 
 	destfile, err := Pull(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 	if err != nil {
-		newStatus := newApp.Status.DeepCopy()
+		newStatus := app.Status.DeepCopy()
 		if updateStatusFunc != nil {
 			newStatus.Phase = applicationv1.AppPhaseUpgradFailed
 			newStatus.Message = "fetch chart failed"
 			newStatus.Reason = err.Error()
 			newStatus.LastTransitionTime = metav1.Now()
-			_, updateStatusErr := updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
-			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(newApp.Spec.TargetCluster, newApp.Name).Set(1)
+			_, updateStatusErr := updateStatusFunc(ctx, app, &app.Status, newStatus)
+			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 			if updateStatusErr != nil {
-				return newApp, updateStatusErr
+				return app, updateStatusErr
 			}
 		}
 		return nil, err
 	}
 
-	if newApp.Status.Message == "" || newApp.Status.Message == "hook pre upgrade app failed" || newApp.Status.Message == "upgrade app failed" {
+	if app.Status.Message == "" || app.Status.Message == "hook pre upgrade app failed" || app.Status.Message == "upgrade app failed" {
 		client, err := util.NewHelmClientWithProvider(ctx, platformClient, app)
 		if err != nil {
 			return nil, err
@@ -97,7 +92,7 @@ func Upgrade(ctx context.Context,
 		if err != nil {
 			return nil, err
 		}
-		chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(repo, newApp.Spec.Chart)
+		chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(repo, app.Spec.Chart)
 		if err != nil {
 			return nil, err
 		}
@@ -134,45 +129,45 @@ func Upgrade(ctx context.Context,
 		})
 		if err != nil {
 			if updateStatusFunc != nil {
-				newStatus := newApp.Status.DeepCopy()
+				newStatus := app.Status.DeepCopy()
 				var updateStatusErr error
 				newStatus.Phase = applicationv1.AppPhaseUpgradFailed
 				newStatus.Message = "upgrade app failed"
 				newStatus.Reason = err.Error()
 				newStatus.LastTransitionTime = metav1.Now()
 				metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-				newApp, updateStatusErr = updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
+				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
 				if updateStatusErr != nil {
-					return newApp, updateStatusErr
+					return app, updateStatusErr
 				}
 			}
 			return nil, err
 		}
 	}
 
-	if newApp.Status.Message == "" || newApp.Status.Message == "hook pre upgrade app failed" || newApp.Status.Message == "upgrade app failed" || newApp.Status.Message == "hook post upgrade app failed" {
+	if app.Status.Message == "" || app.Status.Message == "hook pre upgrade app failed" || app.Status.Message == "upgrade app failed" || app.Status.Message == "hook post upgrade app failed" {
 		err = hooks.PostUpgrade(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 		// 先走完hook，在更新app状态为succeed
 		if err != nil {
 			if updateStatusFunc != nil {
-				newStatus := newApp.Status.DeepCopy()
+				newStatus := app.Status.DeepCopy()
 				var updateStatusErr error
 				newStatus.Phase = applicationv1.AppPhaseUpgradFailed
 				newStatus.Message = "hook post upgrade app failed"
 				newStatus.Reason = err.Error()
 				newStatus.LastTransitionTime = metav1.Now()
 				metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-				newApp, updateStatusErr = updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
+				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
 				if updateStatusErr != nil {
-					return newApp, updateStatusErr
+					return app, updateStatusErr
 				}
 			}
-			return newApp, err
+			return app, err
 		}
 	}
 
 	if updateStatusFunc != nil {
-		newStatus := newApp.Status.DeepCopy()
+		newStatus := app.Status.DeepCopy()
 		var updateStatusErr error
 		if err != nil {
 			newStatus.Phase = applicationv1.AppPhaseUpgradFailed
@@ -189,10 +184,10 @@ func Upgrade(ctx context.Context,
 			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 			metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 		}
-		newApp, updateStatusErr = updateStatusFunc(ctx, newApp, &newApp.Status, newStatus)
+		app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
 		if updateStatusErr != nil {
-			return newApp, updateStatusErr
+			return app, updateStatusErr
 		}
 	}
-	return newApp, nil
+	return app, nil
 }
