@@ -73,6 +73,8 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter, platformClient pla
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 
+		ShouldDeleteDuringUpdate: clusterstrategy.ShouldDeleteDuringUpdate,
+
 		TableConvertor: printerstorage.TableConvertor{TableGenerator: printers.NewTableGenerator().With(AddHandlers)},
 	}
 	options := &genericregistry.StoreOptions{
