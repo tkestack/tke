@@ -30,6 +30,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
@@ -249,6 +250,15 @@ func MatchCluster(label labels.Selector, field fields.Selector) storage.Selectio
 		IndexFields: []string{
 			"spec.tenantID", "spec.type", "spec.version", "status.locked", "status.version", "status.phase"},
 	}
+}
+
+func ShouldDeleteDuringUpdate(ctx context.Context, key string, obj, existing runtime.Object) bool {
+	app, ok := obj.(*platform.Cluster)
+	if !ok {
+		log.Errorf("unexpected object, key:%s", key)
+		return false
+	}
+	return len(app.Spec.Finalizers) == 0 && registry.ShouldDeleteDuringUpdate(ctx, key, obj, existing)
 }
 
 // ToSelectableFields returns a field set that represents the object
