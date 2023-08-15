@@ -135,7 +135,9 @@ func Upgrade(ctx context.Context,
 				newStatus.Message = "upgrade app failed"
 				newStatus.Reason = err.Error()
 				newStatus.LastTransitionTime = metav1.Now()
-				metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+				if hooks.NeedMetrics(ctx, applicationClient, platformClient, app, repo) {
+					metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+				}
 				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
 				if updateStatusErr != nil {
 					return app, updateStatusErr

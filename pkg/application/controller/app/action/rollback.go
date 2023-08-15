@@ -109,7 +109,9 @@ func Rollback(ctx context.Context,
 				newStatus.Reason = err.Error()
 				newStatus.RollbackRevision = 0 // clean revision，next not do rollback again
 				newStatus.LastTransitionTime = metav1.Now()
-				metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+				if hooks.NeedMetrics(ctx, applicationClient, platformClient, app, repo) {
+					metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+				}
 				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
 				if updateStatusErr != nil {
 					return app, updateStatusErr

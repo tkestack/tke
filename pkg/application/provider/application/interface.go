@@ -39,6 +39,11 @@ type ControllerProvider interface {
 }
 
 type HooksProvider interface {
+	NeedMetrics(ctx context.Context,
+		applicationClient applicationversionedclient.ApplicationV1Interface,
+		platformClient platformversionedclient.PlatformV1Interface,
+		app *applicationv1.App,
+		repo appconfig.RepoConfiguration) bool
 	PreInstall(ctx context.Context,
 		applicationClient applicationversionedclient.ApplicationV1Interface,
 		platformClient platformversionedclient.PlatformV1Interface,
@@ -136,6 +141,14 @@ func (p *DelegateProvider) GetRestConfig(ctx context.Context, platformClient pla
 		return nil, fmt.Errorf("get cluster's credential error, no cluster credential")
 	}
 	return credential.RESTConfig(cluster), nil
+}
+
+func (DelegateProvider) NeedMetrics(ctx context.Context,
+	applicationClient applicationversionedclient.ApplicationV1Interface,
+	platformClient platformversionedclient.PlatformV1Interface,
+	app *applicationv1.App,
+	repo appconfig.RepoConfiguration) bool {
+	return true
 }
 
 func (DelegateProvider) PreInstall(ctx context.Context,

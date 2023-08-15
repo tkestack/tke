@@ -103,17 +103,14 @@ func Install(ctx context.Context,
 			app.Spec.Chart.InstallPara.Wait = true
 			app.Spec.Chart.InstallPara.WaitForJobs = true
 			if app.Annotations["ignore-install-wait"] == "true" {
-				app.Spec.Chart.InstallPara.Atomic = false
 				app.Spec.Chart.InstallPara.Wait = false
 				app.Spec.Chart.InstallPara.WaitForJobs = false
 			}
 			if app.Labels != nil && app.Labels["application.tkestack.io/type"] == "internal-addon" {
-				app.Spec.Chart.InstallPara.Atomic = false
 				app.Spec.Chart.InstallPara.Wait = false
 				app.Spec.Chart.InstallPara.WaitForJobs = false
 			}
 			if app.Spec.Chart.ChartName == "cranescheduler" {
-				app.Spec.Chart.InstallPara.Atomic = false
 				app.Spec.Chart.InstallPara.Wait = true
 				app.Spec.Chart.InstallPara.WaitForJobs = true
 			}
@@ -146,7 +143,9 @@ func Install(ctx context.Context,
 				newStatus.Message = "install app failed"
 				newStatus.Reason = err.Error()
 				newStatus.LastTransitionTime = metav1.Now()
-				metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+				if hooks.NeedMetrics(ctx, applicationClient, platformClient, app, repo) {
+					metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+				}
 				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
 				if updateStatusErr != nil {
 					return app, updateStatusErr
