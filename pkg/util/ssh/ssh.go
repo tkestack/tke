@@ -216,7 +216,7 @@ func (s *SSH) WriteFile(src io.Reader, dst string) error {
 		return err
 	}
 
-	if _, err := tmpfile.Seek(0, os.SEEK_SET); err != nil {
+	if _, err := tmpfile.Seek(0, io.SeekStart); err != nil {
 		return err
 	}
 
@@ -229,7 +229,7 @@ func (s *SSH) WriteFile(src io.Reader, dst string) error {
 		return nil
 	}
 
-	if _, err := tmpfile.Seek(0, os.SEEK_SET); err != nil {
+	if _, err := tmpfile.Seek(0, io.SeekStart); err != nil {
 		return err
 	}
 
