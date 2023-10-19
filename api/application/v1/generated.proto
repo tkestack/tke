@@ -42,6 +42,31 @@ message App {
   optional AppStatus status = 3;
 }
 
+message AppCheckResult {
+  optional string level = 1;
+
+  optional string name = 2;
+
+  optional string description = 3;
+
+  optional string proposal = 4;
+}
+
+// AppCheckResult is the check result to app for install/upgrade/delete.
+message AppCheckResultList {
+  // +optional
+  repeated AppCheckResult appCheckResults = 2;
+}
+
+// AppDeleteOptions is the options to app for delete.
+message AppDeleteOptions {
+  // +optional
+  optional string clusterId = 1;
+
+  // +optional
+  optional string name = 2;
+}
+
 // AppHistory is a app history in TKE.
 message AppHistory {
   // +optional
@@ -66,6 +91,24 @@ message AppHistorySpec {
 
   // +optional
   repeated History histories = 6;
+}
+
+// AppInstallOptions is the options to app for install.
+message AppInstallOptions {
+  // +optional
+  optional string clusterId = 1;
+
+  // +optional
+  optional string name = 2;
+
+  // +optional
+  optional string version = 3;
+
+  // +optional
+  optional string rawValues = 4;
+
+  // +optional
+  optional string config = 5;
 }
 
 // AppList is the whole list of all bootstraps.
@@ -174,6 +217,18 @@ message AppStatus {
   // Dryrun result.
   // +optional
   optional string manifest = 10;
+}
+
+// AppUpgradeOptions is the options to app for upgrade.
+message AppUpgradeOptions {
+  // +optional
+  optional string version = 3;
+
+  // +optional
+  optional string rawValues = 4;
+
+  // +optional
+  optional string config = 5;
 }
 
 // AppValues string the values for this app.

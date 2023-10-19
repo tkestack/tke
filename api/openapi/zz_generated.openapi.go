@@ -878,13 +878,18 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"k8s.io/apimachinery/pkg/util/intstr.IntOrString":                             schema_apimachinery_pkg_util_intstr_IntOrString(ref),
 		"k8s.io/apimachinery/pkg/version.Info":                                        schema_k8sio_apimachinery_pkg_version_Info(ref),
 		"tkestack.io/tke/api/application/v1.App":                                      schema_tke_api_application_v1_App(ref),
+		"tkestack.io/tke/api/application/v1.AppCheckResult":                           schema_tke_api_application_v1_AppCheckResult(ref),
+		"tkestack.io/tke/api/application/v1.AppCheckResultList":                       schema_tke_api_application_v1_AppCheckResultList(ref),
+		"tkestack.io/tke/api/application/v1.AppDeleteOptions":                         schema_tke_api_application_v1_AppDeleteOptions(ref),
 		"tkestack.io/tke/api/application/v1.AppHistory":                               schema_tke_api_application_v1_AppHistory(ref),
 		"tkestack.io/tke/api/application/v1.AppHistorySpec":                           schema_tke_api_application_v1_AppHistorySpec(ref),
+		"tkestack.io/tke/api/application/v1.AppInstallOptions":                        schema_tke_api_application_v1_AppInstallOptions(ref),
 		"tkestack.io/tke/api/application/v1.AppList":                                  schema_tke_api_application_v1_AppList(ref),
 		"tkestack.io/tke/api/application/v1.AppResource":                              schema_tke_api_application_v1_AppResource(ref),
 		"tkestack.io/tke/api/application/v1.AppResourceSpec":                          schema_tke_api_application_v1_AppResourceSpec(ref),
 		"tkestack.io/tke/api/application/v1.AppSpec":                                  schema_tke_api_application_v1_AppSpec(ref),
 		"tkestack.io/tke/api/application/v1.AppStatus":                                schema_tke_api_application_v1_AppStatus(ref),
+		"tkestack.io/tke/api/application/v1.AppUpgradeOptions":                        schema_tke_api_application_v1_AppUpgradeOptions(ref),
 		"tkestack.io/tke/api/application/v1.AppValues":                                schema_tke_api_application_v1_AppValues(ref),
 		"tkestack.io/tke/api/application/v1.Chart":                                    schema_tke_api_application_v1_Chart(ref),
 		"tkestack.io/tke/api/application/v1.ConfigMap":                                schema_tke_api_application_v1_ConfigMap(ref),
@@ -43683,6 +43688,130 @@ func schema_tke_api_application_v1_App(ref common.ReferenceCallback) common.Open
 	}
 }
 
+func schema_tke_api_application_v1_AppCheckResult(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"level": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"proposal": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"level", "name", "description", "proposal"},
+			},
+		},
+	}
+}
+
+func schema_tke_api_application_v1_AppCheckResultList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "AppCheckResult is the check result to app for install/upgrade/delete.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"checkItems": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("tkestack.io/tke/api/application/v1.AppCheckResult"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"tkestack.io/tke/api/application/v1.AppCheckResult"},
+	}
+}
+
+func schema_tke_api_application_v1_AppDeleteOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "AppDeleteOptions is the options to app for delete.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"clusterId": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_tke_api_application_v1_AppHistory(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -43786,6 +43915,68 @@ func schema_tke_api_application_v1_AppHistorySpec(ref common.ReferenceCallback) 
 		},
 		Dependencies: []string{
 			"tkestack.io/tke/api/application/v1.History"},
+	}
+}
+
+func schema_tke_api_application_v1_AppInstallOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "AppInstallOptions is the options to app for install.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"clusterId": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"rawValues": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"config": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -44121,6 +44312,54 @@ func schema_tke_api_application_v1_AppStatus(ref common.ReferenceCallback) commo
 		},
 		Dependencies: []string{
 			"k8s.io/apimachinery/pkg/apis/meta/v1.Time"},
+	}
+}
+
+func schema_tke_api_application_v1_AppUpgradeOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "AppUpgradeOptions is the options to app for upgrade.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"version": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"rawValues": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"config": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

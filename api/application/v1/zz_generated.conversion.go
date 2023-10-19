@@ -49,6 +49,36 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*AppCheckResult)(nil), (*application.AppCheckResult)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_AppCheckResult_To_application_AppCheckResult(a.(*AppCheckResult), b.(*application.AppCheckResult), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*application.AppCheckResult)(nil), (*AppCheckResult)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_application_AppCheckResult_To_v1_AppCheckResult(a.(*application.AppCheckResult), b.(*AppCheckResult), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AppCheckResultList)(nil), (*application.AppCheckResultList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_AppCheckResultList_To_application_AppCheckResultList(a.(*AppCheckResultList), b.(*application.AppCheckResultList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*application.AppCheckResultList)(nil), (*AppCheckResultList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_application_AppCheckResultList_To_v1_AppCheckResultList(a.(*application.AppCheckResultList), b.(*AppCheckResultList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AppDeleteOptions)(nil), (*application.AppDeleteOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_AppDeleteOptions_To_application_AppDeleteOptions(a.(*AppDeleteOptions), b.(*application.AppDeleteOptions), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*application.AppDeleteOptions)(nil), (*AppDeleteOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_application_AppDeleteOptions_To_v1_AppDeleteOptions(a.(*application.AppDeleteOptions), b.(*AppDeleteOptions), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*AppHistory)(nil), (*application.AppHistory)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_AppHistory_To_application_AppHistory(a.(*AppHistory), b.(*application.AppHistory), scope)
 	}); err != nil {
@@ -66,6 +96,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*application.AppHistorySpec)(nil), (*AppHistorySpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_application_AppHistorySpec_To_v1_AppHistorySpec(a.(*application.AppHistorySpec), b.(*AppHistorySpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AppInstallOptions)(nil), (*application.AppInstallOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_AppInstallOptions_To_application_AppInstallOptions(a.(*AppInstallOptions), b.(*application.AppInstallOptions), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*application.AppInstallOptions)(nil), (*AppInstallOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_application_AppInstallOptions_To_v1_AppInstallOptions(a.(*application.AppInstallOptions), b.(*AppInstallOptions), scope)
 	}); err != nil {
 		return err
 	}
@@ -116,6 +156,16 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*application.AppStatus)(nil), (*AppStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_application_AppStatus_To_v1_AppStatus(a.(*application.AppStatus), b.(*AppStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*AppUpgradeOptions)(nil), (*application.AppUpgradeOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_AppUpgradeOptions_To_application_AppUpgradeOptions(a.(*AppUpgradeOptions), b.(*application.AppUpgradeOptions), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*application.AppUpgradeOptions)(nil), (*AppUpgradeOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_application_AppUpgradeOptions_To_v1_AppUpgradeOptions(a.(*application.AppUpgradeOptions), b.(*AppUpgradeOptions), scope)
 	}); err != nil {
 		return err
 	}
@@ -209,6 +259,21 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*AppDeleteOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_url_Values_To_v1_AppDeleteOptions(a.(*url.Values), b.(*AppDeleteOptions), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*AppInstallOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_url_Values_To_v1_AppInstallOptions(a.(*url.Values), b.(*AppInstallOptions), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*AppUpgradeOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_url_Values_To_v1_AppUpgradeOptions(a.(*url.Values), b.(*AppUpgradeOptions), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*url.Values)(nil), (*RollbackProxyOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_url_Values_To_v1_RollbackProxyOptions(a.(*url.Values), b.(*RollbackProxyOptions), scope)
 	}); err != nil {
@@ -247,6 +312,95 @@ func autoConvert_application_App_To_v1_App(in *application.App, out *App, s conv
 // Convert_application_App_To_v1_App is an autogenerated conversion function.
 func Convert_application_App_To_v1_App(in *application.App, out *App, s conversion.Scope) error {
 	return autoConvert_application_App_To_v1_App(in, out, s)
+}
+
+func autoConvert_v1_AppCheckResult_To_application_AppCheckResult(in *AppCheckResult, out *application.AppCheckResult, s conversion.Scope) error {
+	out.Level = application.AppCheckLevel(in.Level)
+	out.Name = in.Name
+	out.Description = in.Description
+	out.Proposal = in.Proposal
+	return nil
+}
+
+// Convert_v1_AppCheckResult_To_application_AppCheckResult is an autogenerated conversion function.
+func Convert_v1_AppCheckResult_To_application_AppCheckResult(in *AppCheckResult, out *application.AppCheckResult, s conversion.Scope) error {
+	return autoConvert_v1_AppCheckResult_To_application_AppCheckResult(in, out, s)
+}
+
+func autoConvert_application_AppCheckResult_To_v1_AppCheckResult(in *application.AppCheckResult, out *AppCheckResult, s conversion.Scope) error {
+	out.Level = AppCheckLevel(in.Level)
+	out.Name = in.Name
+	out.Description = in.Description
+	out.Proposal = in.Proposal
+	return nil
+}
+
+// Convert_application_AppCheckResult_To_v1_AppCheckResult is an autogenerated conversion function.
+func Convert_application_AppCheckResult_To_v1_AppCheckResult(in *application.AppCheckResult, out *AppCheckResult, s conversion.Scope) error {
+	return autoConvert_application_AppCheckResult_To_v1_AppCheckResult(in, out, s)
+}
+
+func autoConvert_v1_AppCheckResultList_To_application_AppCheckResultList(in *AppCheckResultList, out *application.AppCheckResultList, s conversion.Scope) error {
+	out.AppCheckResults = *(*[]application.AppCheckResult)(unsafe.Pointer(&in.AppCheckResults))
+	return nil
+}
+
+// Convert_v1_AppCheckResultList_To_application_AppCheckResultList is an autogenerated conversion function.
+func Convert_v1_AppCheckResultList_To_application_AppCheckResultList(in *AppCheckResultList, out *application.AppCheckResultList, s conversion.Scope) error {
+	return autoConvert_v1_AppCheckResultList_To_application_AppCheckResultList(in, out, s)
+}
+
+func autoConvert_application_AppCheckResultList_To_v1_AppCheckResultList(in *application.AppCheckResultList, out *AppCheckResultList, s conversion.Scope) error {
+	// WARNING: in.Level requires manual conversion: does not exist in peer-type
+	out.AppCheckResults = *(*[]AppCheckResult)(unsafe.Pointer(&in.AppCheckResults))
+	return nil
+}
+
+func autoConvert_v1_AppDeleteOptions_To_application_AppDeleteOptions(in *AppDeleteOptions, out *application.AppDeleteOptions, s conversion.Scope) error {
+	out.ClusterId = in.ClusterId
+	out.Name = in.Name
+	return nil
+}
+
+// Convert_v1_AppDeleteOptions_To_application_AppDeleteOptions is an autogenerated conversion function.
+func Convert_v1_AppDeleteOptions_To_application_AppDeleteOptions(in *AppDeleteOptions, out *application.AppDeleteOptions, s conversion.Scope) error {
+	return autoConvert_v1_AppDeleteOptions_To_application_AppDeleteOptions(in, out, s)
+}
+
+func autoConvert_application_AppDeleteOptions_To_v1_AppDeleteOptions(in *application.AppDeleteOptions, out *AppDeleteOptions, s conversion.Scope) error {
+	out.ClusterId = in.ClusterId
+	out.Name = in.Name
+	return nil
+}
+
+// Convert_application_AppDeleteOptions_To_v1_AppDeleteOptions is an autogenerated conversion function.
+func Convert_application_AppDeleteOptions_To_v1_AppDeleteOptions(in *application.AppDeleteOptions, out *AppDeleteOptions, s conversion.Scope) error {
+	return autoConvert_application_AppDeleteOptions_To_v1_AppDeleteOptions(in, out, s)
+}
+
+func autoConvert_url_Values_To_v1_AppDeleteOptions(in *url.Values, out *AppDeleteOptions, s conversion.Scope) error {
+	// WARNING: Field TypeMeta does not have json tag, skipping.
+
+	if values, ok := map[string][]string(*in)["clusterId"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.ClusterId, s); err != nil {
+			return err
+		}
+	} else {
+		out.ClusterId = ""
+	}
+	if values, ok := map[string][]string(*in)["name"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Name, s); err != nil {
+			return err
+		}
+	} else {
+		out.Name = ""
+	}
+	return nil
+}
+
+// Convert_url_Values_To_v1_AppDeleteOptions is an autogenerated conversion function.
+func Convert_url_Values_To_v1_AppDeleteOptions(in *url.Values, out *AppDeleteOptions, s conversion.Scope) error {
+	return autoConvert_url_Values_To_v1_AppDeleteOptions(in, out, s)
 }
 
 func autoConvert_v1_AppHistory_To_application_AppHistory(in *AppHistory, out *application.AppHistory, s conversion.Scope) error {
@@ -303,6 +457,80 @@ func autoConvert_application_AppHistorySpec_To_v1_AppHistorySpec(in *application
 // Convert_application_AppHistorySpec_To_v1_AppHistorySpec is an autogenerated conversion function.
 func Convert_application_AppHistorySpec_To_v1_AppHistorySpec(in *application.AppHistorySpec, out *AppHistorySpec, s conversion.Scope) error {
 	return autoConvert_application_AppHistorySpec_To_v1_AppHistorySpec(in, out, s)
+}
+
+func autoConvert_v1_AppInstallOptions_To_application_AppInstallOptions(in *AppInstallOptions, out *application.AppInstallOptions, s conversion.Scope) error {
+	out.ClusterId = in.ClusterId
+	out.Name = in.Name
+	out.Version = in.Version
+	out.RawValues = in.RawValues
+	out.Config = in.Config
+	return nil
+}
+
+// Convert_v1_AppInstallOptions_To_application_AppInstallOptions is an autogenerated conversion function.
+func Convert_v1_AppInstallOptions_To_application_AppInstallOptions(in *AppInstallOptions, out *application.AppInstallOptions, s conversion.Scope) error {
+	return autoConvert_v1_AppInstallOptions_To_application_AppInstallOptions(in, out, s)
+}
+
+func autoConvert_application_AppInstallOptions_To_v1_AppInstallOptions(in *application.AppInstallOptions, out *AppInstallOptions, s conversion.Scope) error {
+	out.ClusterId = in.ClusterId
+	out.Name = in.Name
+	out.Version = in.Version
+	out.RawValues = in.RawValues
+	out.Config = in.Config
+	return nil
+}
+
+// Convert_application_AppInstallOptions_To_v1_AppInstallOptions is an autogenerated conversion function.
+func Convert_application_AppInstallOptions_To_v1_AppInstallOptions(in *application.AppInstallOptions, out *AppInstallOptions, s conversion.Scope) error {
+	return autoConvert_application_AppInstallOptions_To_v1_AppInstallOptions(in, out, s)
+}
+
+func autoConvert_url_Values_To_v1_AppInstallOptions(in *url.Values, out *AppInstallOptions, s conversion.Scope) error {
+	// WARNING: Field TypeMeta does not have json tag, skipping.
+
+	if values, ok := map[string][]string(*in)["clusterId"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.ClusterId, s); err != nil {
+			return err
+		}
+	} else {
+		out.ClusterId = ""
+	}
+	if values, ok := map[string][]string(*in)["name"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Name, s); err != nil {
+			return err
+		}
+	} else {
+		out.Name = ""
+	}
+	if values, ok := map[string][]string(*in)["version"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Version, s); err != nil {
+			return err
+		}
+	} else {
+		out.Version = ""
+	}
+	if values, ok := map[string][]string(*in)["rawValues"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.RawValues, s); err != nil {
+			return err
+		}
+	} else {
+		out.RawValues = ""
+	}
+	if values, ok := map[string][]string(*in)["config"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Config, s); err != nil {
+			return err
+		}
+	} else {
+		out.Config = ""
+	}
+	return nil
+}
+
+// Convert_url_Values_To_v1_AppInstallOptions is an autogenerated conversion function.
+func Convert_url_Values_To_v1_AppInstallOptions(in *url.Values, out *AppInstallOptions, s conversion.Scope) error {
+	return autoConvert_url_Values_To_v1_AppInstallOptions(in, out, s)
 }
 
 func autoConvert_v1_AppList_To_application_AppList(in *AppList, out *application.AppList, s conversion.Scope) error {
@@ -463,6 +691,59 @@ func autoConvert_application_AppStatus_To_v1_AppStatus(in *application.AppStatus
 // Convert_application_AppStatus_To_v1_AppStatus is an autogenerated conversion function.
 func Convert_application_AppStatus_To_v1_AppStatus(in *application.AppStatus, out *AppStatus, s conversion.Scope) error {
 	return autoConvert_application_AppStatus_To_v1_AppStatus(in, out, s)
+}
+
+func autoConvert_v1_AppUpgradeOptions_To_application_AppUpgradeOptions(in *AppUpgradeOptions, out *application.AppUpgradeOptions, s conversion.Scope) error {
+	out.Version = in.Version
+	out.RawValues = in.RawValues
+	out.Config = in.Config
+	return nil
+}
+
+// Convert_v1_AppUpgradeOptions_To_application_AppUpgradeOptions is an autogenerated conversion function.
+func Convert_v1_AppUpgradeOptions_To_application_AppUpgradeOptions(in *AppUpgradeOptions, out *application.AppUpgradeOptions, s conversion.Scope) error {
+	return autoConvert_v1_AppUpgradeOptions_To_application_AppUpgradeOptions(in, out, s)
+}
+
+func autoConvert_application_AppUpgradeOptions_To_v1_AppUpgradeOptions(in *application.AppUpgradeOptions, out *AppUpgradeOptions, s conversion.Scope) error {
+	// WARNING: in.ClusterId requires manual conversion: does not exist in peer-type
+	// WARNING: in.Name requires manual conversion: does not exist in peer-type
+	out.Version = in.Version
+	out.RawValues = in.RawValues
+	out.Config = in.Config
+	return nil
+}
+
+func autoConvert_url_Values_To_v1_AppUpgradeOptions(in *url.Values, out *AppUpgradeOptions, s conversion.Scope) error {
+	// WARNING: Field TypeMeta does not have json tag, skipping.
+
+	if values, ok := map[string][]string(*in)["version"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Version, s); err != nil {
+			return err
+		}
+	} else {
+		out.Version = ""
+	}
+	if values, ok := map[string][]string(*in)["rawValues"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.RawValues, s); err != nil {
+			return err
+		}
+	} else {
+		out.RawValues = ""
+	}
+	if values, ok := map[string][]string(*in)["config"]; ok && len(values) > 0 {
+		if err := runtime.Convert_Slice_string_To_string(&values, &out.Config, s); err != nil {
+			return err
+		}
+	} else {
+		out.Config = ""
+	}
+	return nil
+}
+
+// Convert_url_Values_To_v1_AppUpgradeOptions is an autogenerated conversion function.
+func Convert_url_Values_To_v1_AppUpgradeOptions(in *url.Values, out *AppUpgradeOptions, s conversion.Scope) error {
+	return autoConvert_url_Values_To_v1_AppUpgradeOptions(in, out, s)
 }
 
 func autoConvert_v1_AppValues_To_application_AppValues(in *AppValues, out *application.AppValues, s conversion.Scope) error {

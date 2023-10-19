@@ -82,31 +82,31 @@ type Chart struct {
 	RepoPassword   string
 	ImportedRepo   bool
 
-	InstallPara InstallPara //parameters used to install a chart
-	UpgradePara UpgradePara //parameters used to upgrade a chart
+	InstallPara InstallPara // parameters used to install a chart
+	UpgradePara UpgradePara // parameters used to upgrade a chart
 
 }
 
-//parameters used to install a chart
+// parameters used to install a chart
 type InstallPara struct {
 	HelmPublicPara
 }
 
-//parameters used to upgrade a chart
+// parameters used to upgrade a chart
 type UpgradePara struct {
 	HelmPublicPara
 }
 
-//public parameters used in helm install and helm upgrade command
+// public parameters used in helm install and helm upgrade command
 type HelmPublicPara struct {
-	//Client timeout when installiing or upgrading helm release, override default clientTimeOut
+	// Client timeout when installiing or upgrading helm release, override default clientTimeOut
 	Timeout time.Duration
 	// CreateNamespace create namespace when install helm release
 	CreateNamespace bool
 	// Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.
 	Atomic bool
 	// Wait, if true, will wait until all Pods, PVCs, Services, and minimum number of Pods of a Deployment,StatefulSet,
-	//or ReplicaSet are in a ready state before marking the release as successful, or wait until client timeout
+	// or ReplicaSet are in a ready state before marking the release as successful, or wait until client timeout
 	Wait bool
 	// WaitForJobs, if true, wait until all Jobs have been completed before marking the release as successful
 	// or wait until client timeout
@@ -340,3 +340,82 @@ type ConfigMapList struct {
 	// Items is the list of ConfigMaps.
 	Items []ConfigMap
 }
+
+// +k8s:conversion-gen:explicit-from=net/url.Values
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// AppInstallOptions is the options to app for install.
+type AppInstallOptions struct {
+	metav1.TypeMeta
+	// +optional
+	ClusterId string
+	// +optional
+	Name string
+	// +optional
+	Version string
+	// +optional
+	RawValues string
+	// +optional
+	Config string
+}
+
+// +k8s:conversion-gen:explicit-from=net/url.Values
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// AppUpgradeOptions is the options to app for upgrade.
+type AppUpgradeOptions struct {
+	metav1.TypeMeta
+	// +optional
+	ClusterId string
+	// +optional
+	Name string
+	// +optional
+	Version string
+	// +optional
+	RawValues string
+	// +optional
+	Config string
+}
+
+// +k8s:conversion-gen:explicit-from=net/url.Values
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// AppDeleteOptions is the options to app for delete.
+type AppDeleteOptions struct {
+	metav1.TypeMeta
+	// +optional
+	ClusterId string
+	// +optional
+	Name string
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// AppCheckResult is the options to app for install/upgrade.
+type AppCheckResultList struct {
+	metav1.TypeMeta
+	// +optional
+	Level AppCheckLevel
+	// +optional
+	AppCheckResults []AppCheckResult
+}
+
+type AppCheckResult struct {
+	Level       AppCheckLevel
+	Name        string
+	Description string
+	Proposal    string
+}
+
+// AppCheckLevel indicates the type of app.
+type AppCheckLevel string
+
+const (
+	// AppCheckLevelGood means no health problem
+	AppCheckLevelGood AppCheckLevel = "good"
+	// AppCheckLevelWarn means warn unHealthy
+	AppCheckLevelWarn AppCheckLevel = "warn"
+	// AppCheckLevelRisk means risk unHealthy
+	AppCheckLevelRisk AppCheckLevel = "risk"
+)

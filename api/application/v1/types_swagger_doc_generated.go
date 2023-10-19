@@ -38,6 +38,22 @@ func (App) SwaggerDoc() map[string]string {
 	return map_App
 }
 
+var map_AppCheckResultList = map[string]string{
+	"": "AppCheckResult is the check result to app for install/upgrade/delete.",
+}
+
+func (AppCheckResultList) SwaggerDoc() map[string]string {
+	return map_AppCheckResultList
+}
+
+var map_AppDeleteOptions = map[string]string{
+	"": "AppDeleteOptions is the options to app for delete.",
+}
+
+func (AppDeleteOptions) SwaggerDoc() map[string]string {
+	return map_AppDeleteOptions
+}
+
 var map_AppHistory = map[string]string{
 	"":     "AppHistory is a app history in TKE.",
 	"spec": "Spec defines the desired identities of bootstrap in this set.",
@@ -53,6 +69,14 @@ var map_AppHistorySpec = map[string]string{
 
 func (AppHistorySpec) SwaggerDoc() map[string]string {
 	return map_AppHistorySpec
+}
+
+var map_AppInstallOptions = map[string]string{
+	"": "AppInstallOptions is the options to app for install.",
+}
+
+func (AppInstallOptions) SwaggerDoc() map[string]string {
+	return map_AppInstallOptions
 }
 
 var map_AppList = map[string]string{
@@ -106,6 +130,14 @@ var map_AppStatus = map[string]string{
 
 func (AppStatus) SwaggerDoc() map[string]string {
 	return map_AppStatus
+}
+
+var map_AppUpgradeOptions = map[string]string{
+	"": "AppUpgradeOptions is the options to app for upgrade.",
+}
+
+func (AppUpgradeOptions) SwaggerDoc() map[string]string {
+	return map_AppUpgradeOptions
 }
 
 var map_AppValues = map[string]string{

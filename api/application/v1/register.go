@@ -55,6 +55,11 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&RollbackProxyOptions{},
 		&ConfigMap{},
 		&ConfigMapList{},
+
+		&AppInstallOptions{},
+		&AppUpgradeOptions{},
+		&AppDeleteOptions{},
+		&AppCheckResultList{},
 	)
 
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)

@@ -70,8 +70,7 @@ func GetProvider(app *applicationv1.App) (Provider, error) {
 	provider, ok := providers[app.Annotations[AnnotationProviderNameKey]]
 	providersMu.RUnlock()
 	if !ok {
-		return nil, fmt.Errorf("application: unknown provider %q (forgotten import?)", app.Annotations[app.Annotations[AnnotationProviderNameKey]])
-
+		return nil, fmt.Errorf("application: unknown provider %q (forgotten import?)", app.Annotations[AnnotationProviderNameKey])
 	}
 
 	return provider, nil

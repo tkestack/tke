@@ -39,6 +39,26 @@ type ControllerProvider interface {
 }
 
 type HooksProvider interface {
+	// CanInstall(ctx context.Context,
+	// 	applicationClient applicationversionedclient.ApplicationV1Interface,
+	// 	platformClient platformversionedclient.PlatformV1Interface,
+	// 	repo appconfig.RepoConfiguration,
+	// 	ops applicationv1.AppInstallOptions) (applicationv1.AppCheckResult, error)
+	CanUpgrade(ctx context.Context,
+		applicationClient applicationversionedclient.ApplicationV1Interface,
+		platformClient platformversionedclient.PlatformV1Interface,
+		app *applicationv1.App,
+		repo appconfig.RepoConfiguration,
+		ops applicationv1.AppUpgradeOptions) (applicationv1.AppCheckResultList, error)
+	CanDelete(ctx context.Context,
+		applicationClient applicationversionedclient.ApplicationV1Interface,
+		platformClient platformversionedclient.PlatformV1Interface,
+		app *applicationv1.App) (applicationv1.AppCheckResultList, error)
+	HealthCheck(ctx context.Context,
+		applicationClient applicationversionedclient.ApplicationV1Interface,
+		platformClient platformversionedclient.PlatformV1Interface,
+		app *applicationv1.App,
+		repo appconfig.RepoConfiguration) error
 	NeedMetrics(ctx context.Context,
 		applicationClient applicationversionedclient.ApplicationV1Interface,
 		platformClient platformversionedclient.PlatformV1Interface,
@@ -141,6 +161,24 @@ func (p *DelegateProvider) GetRestConfig(ctx context.Context, platformClient pla
 		return nil, fmt.Errorf("get cluster's credential error, no cluster credential")
 	}
 	return credential.RESTConfig(cluster), nil
+}
+
+// func (DelegateProvider) CanInstall(ctx context.Context, applicationClient applicationversionedclient.ApplicationV1Interface, platformClient platformversionedclient.PlatformV1Interface, repo appconfig.RepoConfiguration, ops applicationv1.AppInstallOptions) (applicationv1.AppCheckResult, error) {
+// 	return applicationv1.AppCheckResult{
+// 		Level: applicationv1.AppCheckLevelGood,
+// 	}, nil
+// }
+
+func (DelegateProvider) CanUpgrade(ctx context.Context, applicationClient applicationversionedclient.ApplicationV1Interface, platformClient platformversionedclient.PlatformV1Interface, app *applicationv1.App, repo appconfig.RepoConfiguration, ops applicationv1.AppUpgradeOptions) (applicationv1.AppCheckResultList, error) {
+	return applicationv1.AppCheckResultList{}, nil
+}
+
+func (DelegateProvider) CanDelete(ctx context.Context, applicationClient applicationversionedclient.ApplicationV1Interface, platformClient platformversionedclient.PlatformV1Interface, app *applicationv1.App) (applicationv1.AppCheckResultList, error) {
+	return applicationv1.AppCheckResultList{}, nil
+}
+
+func (DelegateProvider) HealthCheck(ctx context.Context, applicationClient applicationversionedclient.ApplicationV1Interface, platformClient platformversionedclient.PlatformV1Interface, app *applicationv1.App, repo appconfig.RepoConfiguration) error {
+	return nil
 }
 
 func (DelegateProvider) NeedMetrics(ctx context.Context,

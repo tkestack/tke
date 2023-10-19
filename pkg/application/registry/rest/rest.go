@@ -28,6 +28,7 @@ import (
 	"tkestack.io/tke/api/application"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/application/internalversion"
+	applicationclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	"tkestack.io/tke/pkg/apiserver/storage"
@@ -69,6 +70,7 @@ func (*StorageProvider) GroupName() string {
 func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIResourceConfigSource,
 	restOptionsGetter generic.RESTOptionsGetter, loopbackClientConfig *restclient.Config) map[string]rest.Storage {
 	applicationClient := applicationinternalclient.NewForConfigOrDie(loopbackClientConfig)
+	applicationVersionedClient := applicationclient.NewForConfigOrDie(loopbackClientConfig)
 	storageMap := make(map[string]rest.Storage)
 	{
 		configMapREST := configmapstorage.NewStorage(restOptionsGetter)
@@ -85,6 +87,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		appResourceREST := applicationstorage.NewResourceREST(appRESTStorage.App, applicationClient, s.PlatformClient)
 		appRollbackREST := applicationstorage.NewRollbackREST(appRESTStorage.App, applicationClient, s.PlatformClient)
 		appMapKubeApiREST := applicationstorage.NewMapKubeApiREST(appRESTStorage.App, applicationClient, s.PlatformClient)
+		appCanUpgradeREST := applicationstorage.NewCanUpgradeREST(appRESTStorage.App, applicationVersionedClient, s.PlatformClient, s.RepoConfiguration)
 		storageMap["apps"] = appREST
 		storageMap["apps/histories"] = appHistoryREST
 		storageMap["apps/resources"] = appResourceREST
@@ -92,6 +95,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["apps/status"] = appRESTStorage.Status
 		storageMap["apps/finalize"] = appRESTStorage.Finalize
 		storageMap["apps/mapkubeapis"] = appMapKubeApiREST
+		storageMap["apps/canupgrade"] = appCanUpgradeREST
 	}
 
 	return storageMap

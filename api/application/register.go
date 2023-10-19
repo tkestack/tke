@@ -67,6 +67,11 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&RollbackProxyOptions{},
 		&ConfigMap{},
 		&ConfigMapList{},
+
+		&AppInstallOptions{},
+		&AppUpgradeOptions{},
+		&AppDeleteOptions{},
+		&AppCheckResultList{},
 	)
 
 	return nil

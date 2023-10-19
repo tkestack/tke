@@ -87,26 +87,26 @@ type Chart struct {
 	UpgradePara  UpgradePara `json:"upgradePara" protobuf:"bytes,10,opt,name=upgradePara"`
 }
 
-//parameters used to install a chart
+// parameters used to install a chart
 type InstallPara struct {
 	HelmPublicPara `json:",inline" protobuf:"bytes,1,opt,name=helmPublicPara"`
 }
 
-//parameters used to upgrade a chart
+// parameters used to upgrade a chart
 type UpgradePara struct {
 	HelmPublicPara `json:",inline" protobuf:"bytes,1,opt,name=helmPublicPara"`
 }
 
-//public parameters used in helm install and helm upgrade command
+// public parameters used in helm install and helm upgrade command
 type HelmPublicPara struct {
-	//Client timeout when installiing or upgrading helm release, override default clientTimeOut
+	// Client timeout when installiing or upgrading helm release, override default clientTimeOut
 	Timeout time.Duration `json:"clientTimeout" protobuf:"bytes,1,opt,name=clientTimeout"`
 	// CreateNamespace create namespace when install helm release
 	CreateNamespace bool `json:"createNamespace" protobuf:"bytes,2,opt,name=createNamespace"`
 	// Atomic, if true, for install case, will uninstall failed release, for upgrade case, will roll back on failure.
 	Atomic bool `json:"atomic" protobuf:"bytes,3,opt,name=atomic"`
 	// Wait, if true, will wait until all Pods, PVCs, Services, and minimum number of Pods of a Deployment,StatefulSet,
-	//or ReplicaSet are in a ready state before marking the release as successful, or wait until client timeout
+	// or ReplicaSet are in a ready state before marking the release as successful, or wait until client timeout
 	Wait bool `json:"wait" protobuf:"bytes,4,opt,name=wait"`
 	// WaitForJobs, if true, wait until all Jobs have been completed before marking the release as successful
 	// or wait until client timeout
@@ -345,3 +345,76 @@ type ConfigMapList struct {
 	// Items is the list of ConfigMaps.
 	Items []ConfigMap `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
+
+// +k8s:conversion-gen:explicit-from=net/url.Values
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// AppInstallOptions is the options to app for install.
+type AppInstallOptions struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	ClusterId string `json:"clusterId" protobuf:"bytes,1,rep,name=clusterId"`
+	// +optional
+	Name string `json:"name" protobuf:"bytes,2,rep,name=name"`
+	// +optional
+	Version string `json:"version" protobuf:"bytes,3,rep,name=version"`
+	// +optional
+	RawValues string `json:"rawValues" protobuf:"bytes,4,rep,name=rawValues"`
+	// +optional
+	Config string `json:"config" protobuf:"bytes,5,rep,name=config"`
+}
+
+// +k8s:conversion-gen:explicit-from=net/url.Values
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// AppUpgradeOptions is the options to app for upgrade.
+type AppUpgradeOptions struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	Version string `json:"version" protobuf:"bytes,3,rep,name=version"`
+	// +optional
+	RawValues string `json:"rawValues" protobuf:"bytes,4,rep,name=rawValues"`
+	// +optional
+	Config string `json:"config" protobuf:"bytes,5,rep,name=config"`
+}
+
+// +k8s:conversion-gen:explicit-from=net/url.Values
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// AppDeleteOptions is the options to app for delete.
+type AppDeleteOptions struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	ClusterId string `json:"clusterId" protobuf:"bytes,1,rep,name=clusterId"`
+	// +optional
+	Name string `json:"name" protobuf:"bytes,2,rep,name=name"`
+}
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// AppCheckResult is the check result to app for install/upgrade/delete.
+type AppCheckResultList struct {
+	metav1.TypeMeta `json:",inline"`
+	// +optional
+	AppCheckResults []AppCheckResult `json:"checkItems" protobuf:"bytes,2,rep,name=appCheckResults"`
+}
+
+type AppCheckResult struct {
+	Level       AppCheckLevel `json:"level" protobuf:"bytes,1,rep,name=level"`
+	Name        string        `json:"name" protobuf:"bytes,2,rep,name=name"`
+	Description string        `json:"description" protobuf:"bytes,3,rep,name=description"`
+	Proposal    string        `json:"proposal" protobuf:"bytes,4,rep,name=proposal"`
+}
+
+// AppCheckLevel indicates the type of app.
+type AppCheckLevel string
+
+const (
+	// AppCheckLevelGood means no health problem
+	AppCheckLevelGood AppCheckLevel = "good"
+	// AppCheckLevelWarn means warn unHealthy
+	AppCheckLevelWarn AppCheckLevel = "warn"
+	// AppCheckLevelRisk means risk unHealthy
+	AppCheckLevelRisk AppCheckLevel = "risk"
+)
