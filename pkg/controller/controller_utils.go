@@ -21,10 +21,13 @@ package controller
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"tkestack.io/tke/pkg/util/log"
@@ -108,4 +111,22 @@ func CatchPanic(funcName string, addon string) {
 	if err := recover(); err != nil {
 		runtime.HandleError(fmt.Errorf("recover from %s.%s(), err is %v", addon, funcName, err))
 	}
+}
+
+// CheckClusterHealthStatus uses client to probe cluster health status for mutiple time
+func CheckClusterHealthStatus(client kubernetes.Interface) (*version.Info, error) {
+	totalProbeCount := 3
+	var version *version.Info
+	var err error
+
+	for i := 0; i < totalProbeCount; i++ {
+		version, err = client.Discovery().ServerVersion()
+		if err == nil {
+			break
+		}
+		// sleep 20ms-100ms when failed
+		randomNumber := rand.Intn(80) + 20
+		time.Sleep(time.Millisecond * time.Duration(randomNumber))
+	}
+	return version, err
 }

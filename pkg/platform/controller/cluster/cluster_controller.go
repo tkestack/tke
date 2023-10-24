@@ -615,7 +615,7 @@ func (c *Controller) checkHealth(ctx context.Context, cluster *typesv1.Cluster) 
 		healthCheckCondition.Reason = failedHealthCheckReason
 		healthCheckCondition.Message = err.Error()
 	} else {
-		version, err := client.Discovery().ServerVersion()
+		version, err := controllerutil.CheckClusterHealthStatus(client)
 		if err != nil {
 			cluster.Status.Phase = platformv1.ClusterFailed
 
