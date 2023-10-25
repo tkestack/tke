@@ -397,7 +397,7 @@ type AppDeleteOptions struct {
 type AppCheckResultList struct {
 	metav1.TypeMeta `json:",inline"`
 	// +optional
-	AppCheckResults []AppCheckResult `json:"checkItems" protobuf:"bytes,2,rep,name=appCheckResults"`
+	AppCheckResults []AppCheckResult `json:"appCheckResults" protobuf:"bytes,2,rep,name=appCheckResults"`
 }
 
 type AppCheckResult struct {

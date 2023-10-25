@@ -43750,7 +43750,7 @@ func schema_tke_api_application_v1_AppCheckResultList(ref common.ReferenceCallba
 							Format:      "",
 						},
 					},
-					"checkItems": {
+					"appCheckResults": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{

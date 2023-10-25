@@ -366,10 +366,6 @@ type AppInstallOptions struct {
 type AppUpgradeOptions struct {
 	metav1.TypeMeta
 	// +optional
-	ClusterId string
-	// +optional
-	Name string
-	// +optional
 	Version string
 	// +optional
 	RawValues string
@@ -395,8 +391,6 @@ type AppDeleteOptions struct {
 // AppCheckResult is the options to app for install/upgrade.
 type AppCheckResultList struct {
 	metav1.TypeMeta
-	// +optional
-	Level AppCheckLevel
 	// +optional
 	AppCheckResults []AppCheckResult
 }

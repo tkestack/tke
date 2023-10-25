@@ -20,7 +20,10 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"strings"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -107,8 +110,15 @@ type upgradeHandler struct {
 }
 
 func (h *upgradeHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	ops := h.ops
+	if strings.ToLower(req.Method) == "post" {
+		data, err := ioutil.ReadAll(req.Body)
+		if err == nil {
+			json.Unmarshal(data, &ops)
+		}
+	}
 	hook := getHooks(h.app)
-	result, err := hook.CanUpgrade(h.ctx, h.applicationClient, h.platformClient, h.app, h.repo, h.ops)
+	result, err := hook.CanUpgrade(h.ctx, h.applicationClient, h.platformClient, h.app, h.repo, ops)
 
 	if err != nil {
 		responsewriters.WriteRawJSON(http.StatusInternalServerError, k8serrors.NewInternalError(err), w)
