@@ -76,9 +76,14 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		configMapREST := configmapstorage.NewStorage(restOptionsGetter)
 		storageMap["configmaps"] = configMapREST.ConfigMap
 
-		appRESTStorage := applicationstorage.NewStorage(restOptionsGetter, applicationClient)
+		appRESTStorage := applicationstorage.NewStorage(restOptionsGetter,
+			applicationClient,
+			applicationVersionedClient,
+			s.PlatformClient,
+			s.RepoConfiguration)
 		appREST := applicationstorage.NewREST(appRESTStorage.App,
 			applicationClient,
+			applicationVersionedClient,
 			s.PlatformClient,
 			s.RegistryClient,
 			s.Authorizer,
@@ -88,6 +93,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		appRollbackREST := applicationstorage.NewRollbackREST(appRESTStorage.App, applicationClient, s.PlatformClient)
 		appMapKubeApiREST := applicationstorage.NewMapKubeApiREST(appRESTStorage.App, applicationClient, s.PlatformClient)
 		appCanUpgradeREST := applicationstorage.NewCanUpgradeREST(appRESTStorage.App, applicationVersionedClient, s.PlatformClient, s.RepoConfiguration)
+		appCanDeleteREST := applicationstorage.NewCanDeleteREST(appRESTStorage.App, applicationVersionedClient, s.PlatformClient)
 		storageMap["apps"] = appREST
 		storageMap["apps/histories"] = appHistoryREST
 		storageMap["apps/resources"] = appResourceREST
@@ -96,6 +102,7 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 		storageMap["apps/finalize"] = appRESTStorage.Finalize
 		storageMap["apps/mapkubeapis"] = appMapKubeApiREST
 		storageMap["apps/canupgrade"] = appCanUpgradeREST
+		storageMap["apps/candelete"] = appCanDeleteREST
 	}
 
 	return storageMap

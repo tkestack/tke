@@ -21,6 +21,7 @@ package application
 import (
 	"context"
 	"fmt"
+
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -32,8 +33,12 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
 	"tkestack.io/tke/api/application"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/application/internalversion"
+	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
+	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	"tkestack.io/tke/pkg/apiserver/authentication"
+	appconfig "tkestack.io/tke/pkg/application/config"
 	helmutil "tkestack.io/tke/pkg/application/helm/util"
 	"tkestack.io/tke/pkg/util/log"
 	namesutil "tkestack.io/tke/pkg/util/names"
@@ -44,13 +49,27 @@ type Strategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
 
-	applicationClient applicationinternalclient.ApplicationInterface
+	applicationClient          applicationinternalclient.ApplicationInterface
+	applicationVersionedClient applicationversionedclient.ApplicationV1Interface
+	platformClient             platformversionedclient.PlatformV1Interface
+	repo                       appconfig.RepoConfiguration
 }
 
 // NewStrategy creates a strategy that is the default logic that applies when
 // creating and updating application objects.
-func NewStrategy(applicationClient applicationinternalclient.ApplicationInterface) *Strategy {
-	return &Strategy{application.Scheme, namesutil.Generator, applicationClient}
+func NewStrategy(applicationClient applicationinternalclient.ApplicationInterface,
+	applicationVersionedClient applicationversionedclient.ApplicationV1Interface,
+	platformClient platformversionedclient.PlatformV1Interface,
+	repo appconfig.RepoConfiguration,
+) *Strategy {
+	return &Strategy{
+		ObjectTyper:                application.Scheme,
+		NameGenerator:              namesutil.Generator,
+		applicationClient:          applicationClient,
+		applicationVersionedClient: applicationVersionedClient,
+		platformClient:             platformClient,
+		repo:                       repo,
+	}
 }
 
 // DefaultGarbageCollectionPolicy returns the default garbage collection behavior.
@@ -145,7 +164,32 @@ func (Strategy) Canonicalize(runtime.Object) {
 
 // ValidateUpdate is the default update validation for an end application.
 func (s *Strategy) ValidateUpdate(ctx context.Context, obj, old runtime.Object) field.ErrorList {
-	return ValidateApplicationUpdate(ctx, obj.(*application.App), old.(*application.App))
+	newApp := obj.(*application.App)
+	oldApp := old.(*application.App)
+	allErrs := ValidateApplicationUpdate(ctx, obj.(*application.App), old.(*application.App))
+
+	oldAppV1 := &applicationv1.App{}
+	err := applicationv1.Convert_application_App_To_v1_App(oldApp, oldAppV1, nil)
+	if err != nil {
+		return allErrs
+	}
+	hook := GetHooks(oldAppV1)
+	appCheckResultList, err := hook.CanUpgrade(ctx, s.applicationVersionedClient, s.platformClient, oldAppV1, s.repo, applicationv1.AppUpgradeOptions{
+		Version:   newApp.Spec.Chart.ChartVersion,
+		RawValues: newApp.Spec.Values.RawValues,
+		Config:    "",
+	})
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("update", "check"), "checkFailed", fmt.Sprintf("check update failed,err:%s", err.Error())))
+		return allErrs
+	} else {
+		for _, appCheckResult := range appCheckResultList.AppCheckResults {
+			if appCheckResult.Level == applicationv1.AppCheckLevelRisk {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("update", "check"), "checkFailed", fmt.Sprintf("check:%s, info:%s, you need:%s", appCheckResult.Name, appCheckResult.Description, appCheckResult.Proposal)))
+			}
+		}
+	}
+	return allErrs
 }
 
 // WarningsOnUpdate returns warnings for the given update.

@@ -32,17 +32,16 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"tkestack.io/tke/api/application"
 	applicationv1 "tkestack.io/tke/api/application/v1"
-	v1 "tkestack.io/tke/api/application/v1"
-	applicationclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
+	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	appconfig "tkestack.io/tke/pkg/application/config"
-	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
+	applicationstrategy "tkestack.io/tke/pkg/application/registry/application"
 )
 
 // CanUpgradeREST adapts a service registry into apiserver's RESTStorage model.
 type CanUpgradeREST struct {
 	store             ApplicationStorage
-	applicationClient *applicationclient.ApplicationV1Client
+	applicationClient applicationversionedclient.ApplicationV1Interface
 	platformClient    platformversionedclient.PlatformV1Interface
 	repo              appconfig.RepoConfiguration
 }
@@ -50,7 +49,7 @@ type CanUpgradeREST struct {
 // NewCanUpgradeREST returns a wrapper around the underlying generic storage and performs mapkubeapi of helm releases.
 func NewCanUpgradeREST(
 	store ApplicationStorage,
-	applicationClient *applicationclient.ApplicationV1Client,
+	applicationClient applicationversionedclient.ApplicationV1Interface,
 	platformClient platformversionedclient.PlatformV1Interface,
 	repo appconfig.RepoConfiguration,
 ) *CanUpgradeREST {
@@ -87,8 +86,8 @@ func (m *CanUpgradeREST) Connect(ctx context.Context, appName string, opts runti
 	app := obj.(*application.App)
 	upgradeOpts := opts.(*applicationv1.AppUpgradeOptions)
 
-	appv1 := &v1.App{}
-	if err = v1.Convert_application_App_To_v1_App(app, appv1, nil); err != nil {
+	appv1 := &applicationv1.App{}
+	if err = applicationv1.Convert_application_App_To_v1_App(app, appv1, nil); err != nil {
 		return nil, err
 	}
 	return &upgradeHandler{
@@ -105,7 +104,7 @@ type upgradeHandler struct {
 	app               *applicationv1.App
 	ops               applicationv1.AppUpgradeOptions
 	repo              appconfig.RepoConfiguration
-	applicationClient *applicationclient.ApplicationV1Client
+	applicationClient applicationversionedclient.ApplicationV1Interface
 	platformClient    platformversionedclient.PlatformV1Interface
 }
 
@@ -117,7 +116,7 @@ func (h *upgradeHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			json.Unmarshal(data, &ops)
 		}
 	}
-	hook := getHooks(h.app)
+	hook := applicationstrategy.GetHooks(h.app)
 	result, err := hook.CanUpgrade(h.ctx, h.applicationClient, h.platformClient, h.app, h.repo, ops)
 
 	if err != nil {
@@ -125,12 +124,4 @@ func (h *upgradeHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	responsewriters.WriteRawJSON(http.StatusOK, result, w)
-}
-
-func getHooks(app *applicationv1.App) applicationprovider.HooksProvider {
-	result, _ := applicationprovider.GetProvider(app)
-	if result == nil {
-		return applicationprovider.DelegateProvider{}
-	}
-	return result
 }

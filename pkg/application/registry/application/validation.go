@@ -26,7 +26,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"tkestack.io/tke/api/application"
+	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/application/internalversion"
+	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
 	"yunion.io/x/pkg/util/sets"
 )
 
@@ -109,4 +111,12 @@ func ValidateApplicationUpdate(ctx context.Context, app *application.App, old *a
 	}
 
 	return allErrs
+}
+
+func GetHooks(app *applicationv1.App) applicationprovider.HooksProvider {
+	result, _ := applicationprovider.GetProvider(app)
+	if result == nil {
+		return applicationprovider.DelegateProvider{}
+	}
+	return result
 }

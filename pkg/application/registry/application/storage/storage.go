@@ -23,6 +23,8 @@ import (
 	"fmt"
 	"strings"
 
+	applicationv1 "tkestack.io/tke/api/application/v1"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +39,11 @@ import (
 	"k8s.io/apiserver/pkg/util/dryrun"
 	applicationapi "tkestack.io/tke/api/application"
 	applicationinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/application/internalversion"
+	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
+	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	apiserverutil "tkestack.io/tke/pkg/apiserver/util"
+	appconfig "tkestack.io/tke/pkg/application/config"
+	applicationstrategy "tkestack.io/tke/pkg/application/registry/application"
 	applicationtrategy "tkestack.io/tke/pkg/application/registry/application"
 	applicationutil "tkestack.io/tke/pkg/application/util"
 	platformfilter "tkestack.io/tke/pkg/platform/apiserver/filter"
@@ -55,8 +61,12 @@ type Storage struct {
 
 // NewStorage returns a Storage object that will work against application.
 func NewStorage(optsGetter genericregistry.RESTOptionsGetter,
-	applicationClient *applicationinternalclient.ApplicationClient) *Storage {
-	strategy := applicationtrategy.NewStrategy(applicationClient)
+	applicationClient *applicationinternalclient.ApplicationClient,
+	applicationVersionedClient applicationversionedclient.ApplicationV1Interface,
+	platformClient platformversionedclient.PlatformV1Interface,
+	repo appconfig.RepoConfiguration,
+) *Storage {
+	strategy := applicationtrategy.NewStrategy(applicationClient, applicationVersionedClient, platformClient, repo)
 	store := &registry.Store{
 		NewFunc:                  func() runtime.Object { return &applicationapi.App{} },
 		NewListFunc:              func() runtime.Object { return &applicationapi.AppList{} },
@@ -87,7 +97,7 @@ func NewStorage(optsGetter genericregistry.RESTOptionsGetter,
 	finalizeStore.UpdateStrategy = applicationtrategy.NewFinalizerStrategy(strategy)
 
 	return &Storage{
-		App:      &GenericREST{store, applicationClient},
+		App:      &GenericREST{store, applicationClient, applicationVersionedClient, platformClient},
 		Status:   &StatusREST{&statusStore},
 		Finalize: &FinalizeREST{&finalizeStore},
 	}
@@ -110,7 +120,9 @@ func ValidateGetObjectAndTenantID(ctx context.Context, store *registry.Store, na
 // GenericREST implements a RESTStorage for application against etcd.
 type GenericREST struct {
 	*registry.Store
-	applicationClient *applicationinternalclient.ApplicationClient
+	applicationClient          *applicationinternalclient.ApplicationClient
+	applicationVersionedClient applicationversionedclient.ApplicationV1Interface
+	platformClient             platformversionedclient.PlatformV1Interface
 }
 
 var _ rest.ShortNamesProvider = &GenericREST{}
@@ -179,7 +191,37 @@ func (r *GenericREST) Delete(ctx context.Context, name string, deleteValidation 
 		return nil, false, err
 	}
 	app := obj.(*applicationapi.App)
-
+	appV1 := &applicationv1.App{}
+	err = applicationv1.Convert_application_App_To_v1_App(app, appV1, nil)
+	if err != nil {
+		err = errors.NewConflict(
+			applicationapi.Resource("apps"),
+			name,
+			fmt.Errorf("convert app to v1 failed,err:%s", err.Error()),
+		)
+		return nil, false, err
+	}
+	hook := applicationstrategy.GetHooks(appV1)
+	appCheckResultList, err := hook.CanDelete(ctx, r.applicationVersionedClient, r.platformClient, appV1)
+	if err != nil {
+		err = errors.NewConflict(
+			applicationapi.Resource("apps"),
+			name,
+			fmt.Errorf("check app hook can delete failed,err:%s", err.Error()),
+		)
+		return nil, false, err
+	} else {
+		for _, appCheckResult := range appCheckResultList.AppCheckResults {
+			if appCheckResult.Level == applicationv1.AppCheckLevelRisk {
+				err = errors.NewConflict(
+					applicationapi.Resource("apps"),
+					name,
+					fmt.Errorf("check app hook can delete:%s, info:%s, you need:%s", appCheckResult.Name, appCheckResult.Description, appCheckResult.Proposal),
+				)
+				return nil, false, err
+			}
+		}
+	}
 	// Ensure we have a UID precondition
 	if options == nil {
 		options = metav1.NewDeleteOptions(0)

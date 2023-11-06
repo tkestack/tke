@@ -37,6 +37,7 @@ import (
 	applicationapi "tkestack.io/tke/api/application"
 	v1 "tkestack.io/tke/api/application/v1"
 	applicationinternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/application/internalversion"
+	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"
 	registryversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/registry/v1"
 	registryv1 "tkestack.io/tke/api/registry/v1"
@@ -51,12 +52,13 @@ import (
 
 // REST adapts a service registry into apiserver's RESTStorage model.
 type REST struct {
-	application       ApplicationStorage
-	applicationClient *applicationinternalclient.ApplicationClient
-	platformClient    platformversionedclient.PlatformV1Interface
-	registryClient    registryversionedclient.RegistryV1Interface
-	authorizer        authorizer.Authorizer
-	repo              appconfig.RepoConfiguration
+	application                ApplicationStorage
+	applicationClient          *applicationinternalclient.ApplicationClient
+	applicationVersionedClient applicationversionedclient.ApplicationV1Interface
+	platformClient             platformversionedclient.PlatformV1Interface
+	registryClient             registryversionedclient.RegistryV1Interface
+	authorizer                 authorizer.Authorizer
+	repo                       appconfig.RepoConfiguration
 }
 
 type ApplicationStorage interface {
@@ -76,18 +78,20 @@ type ApplicationStorage interface {
 func NewREST(
 	application ApplicationStorage,
 	applicationClient *applicationinternalclient.ApplicationClient,
+	applicationVersionedClient applicationversionedclient.ApplicationV1Interface,
 	platformClient platformversionedclient.PlatformV1Interface,
 	registryClient registryversionedclient.RegistryV1Interface,
 	authorizer authorizer.Authorizer,
 	repo appconfig.RepoConfiguration,
 ) *REST {
 	rest := &REST{
-		application:       application,
-		applicationClient: applicationClient,
-		platformClient:    platformClient,
-		registryClient:    registryClient,
-		authorizer:        authorizer,
-		repo:              repo,
+		application:                application,
+		applicationClient:          applicationClient,
+		applicationVersionedClient: applicationVersionedClient,
+		platformClient:             platformClient,
+		registryClient:             registryClient,
+		authorizer:                 authorizer,
+		repo:                       repo,
 	}
 	return rest
 }
@@ -225,7 +229,7 @@ func (rs *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 	}
 
 	// Copy over non-user fields
-	strategy := applicationstrategy.NewStrategy(rs.applicationClient)
+	strategy := applicationstrategy.NewStrategy(rs.applicationClient, rs.applicationVersionedClient, rs.platformClient, rs.repo)
 	if err := rest.BeforeUpdate(strategy, ctx, app, oldApp); err != nil {
 		return nil, false, err
 	}
