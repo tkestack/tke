@@ -271,6 +271,12 @@ func (c *Controller) syncItem(key string) error {
 				log.String("name", name))
 			_ = c.processDeletion(key)
 			err = c.appResourcesDeleter.Delete(ctx, namespace, name)
+			if err != nil {
+				log.Error("resource delete failed",
+					log.String("namespace", app.Namespace),
+					log.String("name", app.Name),
+					log.Err(err))
+			}
 			metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 			metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
