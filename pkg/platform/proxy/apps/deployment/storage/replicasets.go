@@ -20,6 +20,7 @@ package storage
 
 import (
 	"context"
+	"sort"
 
 	appsv1 "k8s.io/api/apps/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
@@ -32,6 +33,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	platforminternalclient "tkestack.io/tke/api/client/clientset/internalversion/typed/platform/internalversion"
 	"tkestack.io/tke/pkg/platform/proxy"
+	"tkestack.io/tke/pkg/platform/util"
 	"tkestack.io/tke/pkg/util/apiclient"
 	"tkestack.io/tke/pkg/util/page"
 )
@@ -119,6 +121,9 @@ func listReplicaSetsByExtensions(ctx context.Context, client *kubernetes.Clients
 		}
 	}
 
+	rss := util.NewEXReplicaSets(rsList.Items)
+	sort.Sort(rss)
+	rsList.Items = rss.GetReplicaSets()
 	if listOpts.Continue != "" {
 		start, limit, err := page.DecodeContinue(ctx, "Deployment/ReplicaSets", name, listOpts.Continue)
 		if err != nil {
@@ -185,6 +190,9 @@ func listReplicaSetsByApps(ctx context.Context, client *kubernetes.Clientset, na
 		}
 	}
 
+	rss := util.NewReplicaSets(rsList.Items)
+	sort.Sort(rss)
+	rsList.Items = rss.GetReplicaSets()
 	if listOpts.Continue != "" {
 		start, limit, err := page.DecodeContinue(ctx, "Deployment/ReplicaSets", name, listOpts.Continue)
 		if err != nil {
