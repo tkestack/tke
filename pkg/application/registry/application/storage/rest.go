@@ -25,6 +25,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/release"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metainternal "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -128,6 +129,10 @@ func (rs *REST) List(ctx context.Context, options *metainternalversion.ListOptio
 
 func (rs *REST) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
 	return rs.application.Watch(ctx, options)
+}
+
+func (rs *REST) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *metainternal.ListOptions) (runtime.Object, error) {
+	return nil, errors.NewBadRequest("bad request")
 }
 
 func (rs *REST) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
