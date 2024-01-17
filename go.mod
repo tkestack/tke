@@ -19,7 +19,7 @@ replace (
 	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v0.20.0
 	go.opentelemetry.io/proto/otlp => go.opentelemetry.io/proto/otlp v0.7.0
 	google.golang.org/grpc => google.golang.org/grpc v1.38.0
-	helm.sh/helm/v3 => github.com/GaoXiaodong/helm/v3 v3.0.0-20230307081209-b0c7a18b87bd
+	helm.sh/helm/v3 => github.com/GaoXiaodong/helm/v3 v3.9.1-0.20240117095740-2ac2d2bb312d
 	k8s.io/api => k8s.io/api v0.24.0
 	k8s.io/apimachinery => k8s.io/apimachinery v0.24.0
 	k8s.io/client-go => k8s.io/client-go v0.24.0
@@ -213,6 +213,8 @@ require (
 	github.com/gorilla/handlers v1.5.1 // indirect
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
+	github.com/hashicorp/errwrap v1.1.0 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect

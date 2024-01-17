@@ -20,6 +20,9 @@ package action
 
 import (
 	"context"
+	"errors"
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
@@ -30,6 +33,7 @@ import (
 	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
 	"tkestack.io/tke/pkg/application/util"
 	chartpath "tkestack.io/tke/pkg/application/util/chartpath/v1"
+	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
 
@@ -136,6 +140,12 @@ func Install(ctx context.Context,
 		})
 
 		if err != nil {
+			if errors.Is(err, errors.New("chart manifest is empty")) {
+				log.Errorf(fmt.Sprintf("ERROR: install cluster %s app %s manifest is empty, file %s", app.Spec.TargetCluster, app.Name, destfile))
+				metrics.GaugeApplicationManifestFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+			} else {
+				metrics.GaugeApplicationManifestFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
+			}
 			if updateStatusFunc != nil {
 				newStatus := app.Status.DeepCopy()
 				var updateStatusErr error

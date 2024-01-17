@@ -20,6 +20,10 @@ package action
 
 import (
 	"context"
+	"errors"
+	"fmt"
+
+	"tkestack.io/tke/pkg/util/log"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applicationv1 "tkestack.io/tke/api/application/v1"
@@ -128,6 +132,12 @@ func Upgrade(ctx context.Context,
 			WaitForJobs:      app.Spec.Chart.UpgradePara.WaitForJobs,
 		})
 		if err != nil {
+			if errors.Is(err, errors.New("chart manifest is empty")) {
+				log.Errorf(fmt.Sprintf("ERROR: upgrade cluster %s app %s manifest is empty, file %s", app.Spec.TargetCluster, app.Name, destfile))
+				metrics.GaugeApplicationManifestFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+			} else {
+				metrics.GaugeApplicationManifestFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
+			}
 			if updateStatusFunc != nil {
 				newStatus := app.Status.DeepCopy()
 				var updateStatusErr error
@@ -185,6 +195,7 @@ func Upgrade(ctx context.Context,
 			metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 			metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
+			metrics.GaugeApplicationManifestFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 		}
 		app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
 		if updateStatusErr != nil {

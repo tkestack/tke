@@ -85,6 +85,10 @@ var (
 		Name: "applicationInstallFailed",
 		Help: "application install failed count",
 	}, []string{"cluster", "application"})
+	GaugeApplicationManifestFailed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "applicationManifestFailed",
+		Help: "application manifest failed",
+	}, []string{"cluster", "application"})
 	GaugeApplicationUpgradeFailed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "applicationUpgradeFailed",
 		Help: "application upgrade failed count",
@@ -101,5 +105,5 @@ var (
 
 func init() {
 	// Register the summary and the histogram with Prometheus's default registry.
-	prometheus.MustRegister(GaugeApplicationInstallFailed, GaugeApplicationUpgradeFailed, GaugeApplicationRollbackFailed, GaugeApplicationSyncFailed)
+	prometheus.MustRegister(GaugeApplicationInstallFailed, GaugeApplicationUpgradeFailed, GaugeApplicationRollbackFailed, GaugeApplicationSyncFailed, GaugeApplicationManifestFailed)
 }
