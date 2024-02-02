@@ -56076,6 +56076,13 @@ func schema_tke_api_platform_v1_ClusterSpec(ref common.ReferenceCallback) common
 							Format:      "",
 						},
 					},
+					"clusterLevel": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ClusterLevel is the expect level of cluster",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"tenantID", "type", "version"},
 			},
@@ -56268,6 +56275,13 @@ func schema_tke_api_platform_v1_ClusterStatus(ref common.ReferenceCallback) comm
 					"componentPhase": {
 						SchemaProps: spec.SchemaProps{
 							Description: "ComponentPhase is the status of components, contains \"deployed\", \"pending-upgrade\", \"failed\" status",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"clusterLevel": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ClusterLevel is the real level of cluster",
 							Type:        []string{"string"},
 							Format:      "",
 						},

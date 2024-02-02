@@ -338,6 +338,7 @@ var map_ClusterSpec = map[string]string{
 	"hostnameAsNodename":   "If true will use hostname as nodename, if false will use machine IP as nodename.",
 	"bootstrapApps":        "BootstrapApps will install apps during creating cluster",
 	"appVersion":           "AppVersion is the overall version of system components",
+	"clusterLevel":         "ClusterLevel is the expect level of cluster",
 }
 
 func (ClusterSpec) SwaggerDoc() map[string]string {
@@ -351,6 +352,7 @@ var map_ClusterStatus = map[string]string{
 	"addresses":      "List of addresses reachable to the cluster.",
 	"appVersion":     "AppVersion is the overall version of system components",
 	"componentPhase": "ComponentPhase is the status of components, contains \"deployed\", \"pending-upgrade\", \"failed\" status",
+	"clusterLevel":   "ClusterLevel is the real level of cluster",
 }
 
 func (ClusterStatus) SwaggerDoc() map[string]string {

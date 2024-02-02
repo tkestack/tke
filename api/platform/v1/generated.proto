@@ -650,6 +650,10 @@ message ClusterSpec {
   // AppVersion is the overall version of system components
   // +optional
   optional string appVersion = 27;
+
+  // ClusterLevel is the expect level of cluster
+  // +optional
+  optional string clusterLevel = 28;
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -727,6 +731,10 @@ message ClusterStatus {
   // ComponentPhase is the status of components, contains "deployed", "pending-upgrade", "failed" status
   // +optional
   optional string componentPhase = 22;
+
+  // ClusterLevel is the real level of cluster
+  // +optional
+  optional string clusterLevel = 23;
 }
 
 // ConfigMap holds configuration data for tke to consume.
