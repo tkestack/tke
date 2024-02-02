@@ -358,7 +358,7 @@ func (c *Controller) reconcile(ctx context.Context, key string, cluster *platfor
 		err = c.onUpdate(ctx, cluster)
 	case platformv1.ClusterUpscaling, platformv1.ClusterDownscaling:
 		err = c.onUpdate(ctx, cluster)
-	case platformv1.ClusterIdling, platformv1.ClusterConfined:
+	case platformv1.ClusterIdling, platformv1.ClusterConfined, platformv1.ClusterRecovering:
 		err = c.onUpdate(ctx, cluster)
 	case platformv1.ClusterTerminating:
 		log.FromContext(ctx).Info("Cluster has been terminated. Attempting to cleanup resources")
@@ -444,7 +444,8 @@ func (c *Controller) onUpdate(ctx context.Context, cluster *platformv1.Cluster) 
 	if clusterWrapper.Status.Phase == platformv1.ClusterRunning ||
 		clusterWrapper.Status.Phase == platformv1.ClusterFailed ||
 		clusterWrapper.Status.Phase == platformv1.ClusterIdling ||
-		clusterWrapper.Status.Phase == platformv1.ClusterConfined {
+		clusterWrapper.Status.Phase == platformv1.ClusterConfined ||
+		clusterWrapper.Status.Phase == platformv1.ClusterRecovering {
 		err = provider.OnUpdate(ctx, clusterWrapper)
 		clusterWrapper = c.checkHealth(ctx, clusterWrapper)
 		if err != nil {
