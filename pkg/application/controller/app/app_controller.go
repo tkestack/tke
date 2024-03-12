@@ -161,7 +161,10 @@ func (c *Controller) needsUpdate(old *applicationv1.App, new *applicationv1.App)
 		new.Status.Phase == applicationv1.AppPhaseInstallFailed ||
 		new.Status.Phase == applicationv1.AppPhaseUpgradFailed ||
 		new.Status.Phase == applicationv1.AppPhaseSucceeded ||
-		new.Status.Phase == applicationv1.AppPhaseTerminating {
+		new.Status.Phase == applicationv1.AppPhaseTerminating ||
+		// ds升级，通过添加注解触发再次进入app处理状态
+		new.Status.Phase == applicationv1.AppPhaseUpgradingDaemonset ||
+		new.Status.Phase == applicationv1.AppPhaseUpgradingDaemonsetFailed {
 		return true
 	}
 
@@ -379,6 +382,21 @@ func (c *Controller) handlePhase(ctx context.Context, key string, cachedApp *cac
 		break
 	case applicationv1.AppPhaseSyncFailed:
 		return c.syncAppFromRelease(ctx, cachedApp, app)
+	case applicationv1.AppPhaseUpgradingDaemonset:
+		// if only update status, generation won't change, and we won't upgrade
+		log.Infof("handle for %s/%s: AppPhaseUpgradingDaemonset", app.Namespace, app.Name)
+		if hasSynced(app) {
+			newStatus := app.Status.DeepCopy()
+			newStatus.Phase = applicationv1.AppPhaseSucceeded
+			newStatus.Message = ""
+			newStatus.Reason = ""
+			newStatus.LastTransitionTime = metav1.Now()
+			log.Infof("handle for %s/%s: AppPhaseUpgradingDaemonset hasSynced", app.Namespace, app.Name)
+			return c.updateStatus(ctx, app, &app.Status, newStatus)
+		}
+		return action.UpgradeDaemonset(ctx, c.client.ApplicationV1(), c.platformClient, app, c.repo, c.updateStatus)
+	case applicationv1.AppPhaseUpgradingDaemonsetFailed:
+		return action.UpgradeDaemonset(ctx, c.client.ApplicationV1(), c.platformClient, app, c.repo, c.updateStatus)
 	default:
 		break
 	}

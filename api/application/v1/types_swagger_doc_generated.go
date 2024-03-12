@@ -214,12 +214,81 @@ func (RollbackProxyOptions) SwaggerDoc() map[string]string {
 	return map_RollbackProxyOptions
 }
 
+var map_UpgradeJob = map[string]string{
+	"": "UpgradeJob is an example type with a spec.",
+}
+
+func (UpgradeJob) SwaggerDoc() map[string]string {
+	return map_UpgradeJob
+}
+
+var map_UpgradeJobList = map[string]string{
+	"": "UpgradeJobList is a list of upgradeJob objects.",
+}
+
+func (UpgradeJobList) SwaggerDoc() map[string]string {
+	return map_UpgradeJobList
+}
+
+var map_UpgradeJobSpec = map[string]string{
+	"":                     "UpgradeJobSpec is the specification of a upgradeJob.",
+	"batchIntervalSeconds": "this is set to 30 by default",
+	"maxFailed":            "this is set to 0 by default",
+	"maxSurge":             "this is set to 3 by default",
+}
+
+func (UpgradeJobSpec) SwaggerDoc() map[string]string {
+	return map_UpgradeJobSpec
+}
+
+var map_UpgradeJobStatus = map[string]string{
+	"":                   "UpgradeJobStatus is the status of a upgradeJob.",
+	"batchCompleteNum":   "number of batches completed currently",
+	"batchOrder":         "batch num which is being processed",
+	"batchUpdatedNode":   "list of nodes upgraded in the current batch",
+	"batchStartTime":     "start time of the current batch",
+	"batchCompleteTime":  "end time of the current batch",
+	"batchCompleteNodes": "total number of nodes upgraded",
+	"reason":             "failed reason",
+}
+
+func (UpgradeJobStatus) SwaggerDoc() map[string]string {
+	return map_UpgradeJobStatus
+}
+
 var map_UpgradePara = map[string]string{
 	"": "parameters used to upgrade a chart",
 }
 
 func (UpgradePara) SwaggerDoc() map[string]string {
 	return map_UpgradePara
+}
+
+var map_UpgradePolicy = map[string]string{
+	"": "UpgradePolicy is an example type with a spec and a status.",
+}
+
+func (UpgradePolicy) SwaggerDoc() map[string]string {
+	return map_UpgradePolicy
+}
+
+var map_UpgradePolicyList = map[string]string{
+	"": "UpgradePolicyList is a list of upgradePolicy objects.",
+}
+
+func (UpgradePolicyList) SwaggerDoc() map[string]string {
+	return map_UpgradePolicyList
+}
+
+var map_UpgradePolicySpec = map[string]string{
+	"":                     "UpgradePolicySpec is the specification of a upgradePolicy.",
+	"batchIntervalSeconds": "this is set to 30 by default",
+	"maxFailed":            "this is set to 0 by default",
+	"maxSurge":             "this is set to 3 by default",
+}
+
+func (UpgradePolicySpec) SwaggerDoc() map[string]string {
+	return map_UpgradePolicySpec
 }
 
 // AUTO-GENERATED FUNCTIONS END HERE

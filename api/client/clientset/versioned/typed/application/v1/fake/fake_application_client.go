@@ -46,6 +46,14 @@ func (c *FakeApplicationV1) ConfigMaps() v1.ConfigMapInterface {
 	return &FakeConfigMaps{c}
 }
 
+func (c *FakeApplicationV1) UpgradeJobs(namespace string) v1.UpgradeJobInterface {
+	return &FakeUpgradeJobs{c, namespace}
+}
+
+func (c *FakeApplicationV1) UpgradePolicies() v1.UpgradePolicyInterface {
+	return &FakeUpgradePolicies{c}
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeApplicationV1) RESTClient() rest.Interface {

@@ -74,7 +74,8 @@ type ApplicationStorage interface {
 // NewREST returns a wrapper around the underlying generic storage and performs
 // allocations and deallocations of various helm releases related resources like ports.
 // TODO: all transactional behavior should be supported from within generic storage
-//   or the strategy.
+//
+//	or the strategy.
 func NewREST(
 	application ApplicationStorage,
 	applicationClient *applicationinternalclient.ApplicationClient,
@@ -245,7 +246,8 @@ func (rs *REST) Update(ctx context.Context, name string, objInfo rest.UpdatedObj
 		}
 	}
 
-	if !reflect.DeepEqual(oldApp.Spec, app.Spec) && oldApp.Status.Phase != applicationapi.AppPhaseRolledBack && oldApp.Status.Phase != applicationapi.AppPhaseTerminating {
+	if !reflect.DeepEqual(oldApp.Spec, app.Spec) && oldApp.Status.Phase != applicationapi.AppPhaseRolledBack &&
+		oldApp.Status.Phase != applicationapi.AppPhaseTerminating {
 		app.Status.Phase = applicationapi.AppPhaseUpgrading
 	}
 

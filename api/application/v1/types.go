@@ -69,6 +69,8 @@ type AppSpec struct {
 	// +optional
 	Finalizers []FinalizerName `json:"finalizers,omitempty" protobuf:"bytes,8,rep,name=finalizers,casttype=FinalizerName"`
 	DryRun     bool            `json:"dryRun" protobuf:"bytes,9,opt,name=dryRun"`
+	// +optional
+	UpgradePolicy string `json:"upgradePolicy" protobuf:"bytes,10,opt,name=upgradePolicy"`
 }
 
 // Chart is a description of a chart.
@@ -263,6 +265,10 @@ const (
 	AppPhaseInstallFailed AppPhase = "InstallFailed"
 	// Upgrading means the upgrade for the App is running.
 	AppPhaseUpgrading AppPhase = "Upgrading"
+	// UpgradingDaemonset means the upgrade for the App's daemonset is running.
+	AppPhaseUpgradingDaemonset AppPhase = "UpgradingDaemonset"
+	// UpgradingDaemonsetFailed means the upgrade for the App's daemonset is running.
+	AppPhaseUpgradingDaemonsetFailed AppPhase = "UpgradingDaemonsetFailed"
 	// Succeeded means the dry-run, installation, or upgrade for the
 	// App succeeded.
 	AppPhaseSucceeded AppPhase = "Succeeded"
@@ -418,3 +424,123 @@ const (
 	// AppCheckLevelRisk means risk unHealthy
 	AppCheckLevelRisk AppCheckLevel = "risk"
 )
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// UpgradePolicyList is a list of upgradePolicy objects.
+type UpgradePolicyList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	Items []UpgradePolicy `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// UpgradePolicySpec is the specification of a upgradePolicy.
+type UpgradePolicySpec struct {
+	BatchNum *int32 `json:"batchNum" protobuf:"varint,4,opt,name=batchNum"`
+
+	// this is set to 30 by default
+	// +optional
+	BatchIntervalSeconds *int32 `json:"batchIntervalSeconds" protobuf:"varint,5,opt,name=batchIntervalSeconds"`
+
+	// this is set to 0 by default
+	// +optional
+	MaxFailed *int32 `json:"maxFailed" protobuf:"varint,6,opt,name=maxFailed"`
+
+	// this is set to 3 by default
+	// +optional
+	MaxSurge *int32 `json:"maxSurge" protobuf:"varint,7,opt,name=maxSurge"`
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// UpgradePolicy is an example type with a spec and a status.
+type UpgradePolicy struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	Spec UpgradePolicySpec `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// UpgradeJobList is a list of upgradeJob objects.
+type UpgradeJobList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	Items []UpgradeJob `json:"items" protobuf:"bytes,2,rep,name=items"`
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// UpgradeJob is an example type with a spec.
+type UpgradeJob struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+
+	Spec   UpgradeJobSpec   `json:"spec,omitempty" protobuf:"bytes,2,opt,name=spec"`
+	Status UpgradeJobStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// UpgradeJobSpec is the specification of a upgradeJob.
+type UpgradeJobSpec struct {
+	TenantID string `json:"tenantID" protobuf:"bytes,1,opt,name=tenantID"`
+
+	Target string `json:"target" protobuf:"bytes,2,opt,name=target"`
+
+	// +optional
+	AppRefer string `json:"appRefer" protobuf:"bytes,3,opt,name=appRefer"`
+
+	BatchNum *int32 `json:"batchNum" protobuf:"varint,4,opt,name=batchNum"`
+
+	// this is set to 30 by default
+	// +optional
+	BatchIntervalSeconds *int32 `json:"batchIntervalSeconds" protobuf:"varint,5,opt,name=batchIntervalSeconds"`
+
+	// this is set to 0 by default
+	// +optional
+	MaxFailed *int32 `json:"maxFailed" protobuf:"varint,6,opt,name=maxFailed"`
+
+	// this is set to 3 by default
+	// +optional
+	MaxSurge *int32 `json:"maxSurge" protobuf:"varint,7,opt,name=maxSurge"`
+
+	// +optional
+	Pause bool `json:"pause" protobuf:"varint,8,opt,name=pause"`
+}
+
+// UpgradeJobStatus is the status of a upgradeJob.
+type UpgradeJobStatus struct {
+	// number of batches completed currently
+	// +optional
+	BatchCompleteNum int32 `json:"batchCompleteNum" protobuf:"varint,1,opt,name=batchCompleteNum"`
+
+	// batch num which is being processed
+	// +optional
+	BatchOrder int32 `json:"batchOrder" protobuf:"varint,2,opt,name=batchOrder"`
+
+	// list of nodes upgraded in the current batch
+	// +optional
+	BatchUpdatedNode []string `json:"batchUpdatedNode" protobuf:"bytes,3,opt,name=batchUpdatedNode"`
+
+	// start time of the current batch
+	// +optional
+	BatchStartTime metav1.Time `json:"batchStartTime" protobuf:"bytes,4,opt,name=batchStartTime"`
+
+	// end time of the current batch
+	// +optional
+	BatchCompleteTime metav1.Time `json:"batchCompleteTime" protobuf:"bytes,5,opt,name=batchCompleteTime"`
+
+	// total number of nodes upgraded
+	// +optional
+	BatchCompleteNodes int32 `json:"batchCompleteNodes" protobuf:"varint,6,opt,name=batchCompleteNodes"`
+
+	// failed reason
+	// +optional
+	Reason *string `json:"reason" protobuf:"varint,7,opt,name=reason"`
+}

@@ -249,6 +249,46 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
+	if err := s.AddGeneratedConversionFunc((*UpgradeJob)(nil), (*application.UpgradeJob)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_UpgradeJob_To_application_UpgradeJob(a.(*UpgradeJob), b.(*application.UpgradeJob), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*application.UpgradeJob)(nil), (*UpgradeJob)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_application_UpgradeJob_To_v1_UpgradeJob(a.(*application.UpgradeJob), b.(*UpgradeJob), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*UpgradeJobList)(nil), (*application.UpgradeJobList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_UpgradeJobList_To_application_UpgradeJobList(a.(*UpgradeJobList), b.(*application.UpgradeJobList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*application.UpgradeJobList)(nil), (*UpgradeJobList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_application_UpgradeJobList_To_v1_UpgradeJobList(a.(*application.UpgradeJobList), b.(*UpgradeJobList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*UpgradeJobSpec)(nil), (*application.UpgradeJobSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_UpgradeJobSpec_To_application_UpgradeJobSpec(a.(*UpgradeJobSpec), b.(*application.UpgradeJobSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*application.UpgradeJobSpec)(nil), (*UpgradeJobSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_application_UpgradeJobSpec_To_v1_UpgradeJobSpec(a.(*application.UpgradeJobSpec), b.(*UpgradeJobSpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*UpgradeJobStatus)(nil), (*application.UpgradeJobStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_UpgradeJobStatus_To_application_UpgradeJobStatus(a.(*UpgradeJobStatus), b.(*application.UpgradeJobStatus), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*application.UpgradeJobStatus)(nil), (*UpgradeJobStatus)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_application_UpgradeJobStatus_To_v1_UpgradeJobStatus(a.(*application.UpgradeJobStatus), b.(*UpgradeJobStatus), scope)
+	}); err != nil {
+		return err
+	}
 	if err := s.AddGeneratedConversionFunc((*UpgradePara)(nil), (*application.UpgradePara)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1_UpgradePara_To_application_UpgradePara(a.(*UpgradePara), b.(*application.UpgradePara), scope)
 	}); err != nil {
@@ -256,6 +296,36 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddGeneratedConversionFunc((*application.UpgradePara)(nil), (*UpgradePara)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_application_UpgradePara_To_v1_UpgradePara(a.(*application.UpgradePara), b.(*UpgradePara), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*UpgradePolicy)(nil), (*application.UpgradePolicy)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_UpgradePolicy_To_application_UpgradePolicy(a.(*UpgradePolicy), b.(*application.UpgradePolicy), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*application.UpgradePolicy)(nil), (*UpgradePolicy)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_application_UpgradePolicy_To_v1_UpgradePolicy(a.(*application.UpgradePolicy), b.(*UpgradePolicy), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*UpgradePolicyList)(nil), (*application.UpgradePolicyList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_UpgradePolicyList_To_application_UpgradePolicyList(a.(*UpgradePolicyList), b.(*application.UpgradePolicyList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*application.UpgradePolicyList)(nil), (*UpgradePolicyList)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_application_UpgradePolicyList_To_v1_UpgradePolicyList(a.(*application.UpgradePolicyList), b.(*UpgradePolicyList), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*UpgradePolicySpec)(nil), (*application.UpgradePolicySpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1_UpgradePolicySpec_To_application_UpgradePolicySpec(a.(*UpgradePolicySpec), b.(*application.UpgradePolicySpec), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddGeneratedConversionFunc((*application.UpgradePolicySpec)(nil), (*UpgradePolicySpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_application_UpgradePolicySpec_To_v1_UpgradePolicySpec(a.(*application.UpgradePolicySpec), b.(*UpgradePolicySpec), scope)
 	}); err != nil {
 		return err
 	}
@@ -629,6 +699,7 @@ func autoConvert_v1_AppSpec_To_application_AppSpec(in *AppSpec, out *application
 	}
 	out.Finalizers = *(*[]application.FinalizerName)(unsafe.Pointer(&in.Finalizers))
 	out.DryRun = in.DryRun
+	out.UpgradePolicy = in.UpgradePolicy
 	return nil
 }
 
@@ -651,6 +722,7 @@ func autoConvert_application_AppSpec_To_v1_AppSpec(in *application.AppSpec, out 
 	}
 	out.Finalizers = *(*[]FinalizerName)(unsafe.Pointer(&in.Finalizers))
 	out.DryRun = in.DryRun
+	out.UpgradePolicy = in.UpgradePolicy
 	return nil
 }
 
@@ -1000,6 +1072,126 @@ func Convert_url_Values_To_v1_RollbackProxyOptions(in *url.Values, out *Rollback
 	return autoConvert_url_Values_To_v1_RollbackProxyOptions(in, out, s)
 }
 
+func autoConvert_v1_UpgradeJob_To_application_UpgradeJob(in *UpgradeJob, out *application.UpgradeJob, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1_UpgradeJobSpec_To_application_UpgradeJobSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_v1_UpgradeJobStatus_To_application_UpgradeJobStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1_UpgradeJob_To_application_UpgradeJob is an autogenerated conversion function.
+func Convert_v1_UpgradeJob_To_application_UpgradeJob(in *UpgradeJob, out *application.UpgradeJob, s conversion.Scope) error {
+	return autoConvert_v1_UpgradeJob_To_application_UpgradeJob(in, out, s)
+}
+
+func autoConvert_application_UpgradeJob_To_v1_UpgradeJob(in *application.UpgradeJob, out *UpgradeJob, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_application_UpgradeJobSpec_To_v1_UpgradeJobSpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	if err := Convert_application_UpgradeJobStatus_To_v1_UpgradeJobStatus(&in.Status, &out.Status, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_application_UpgradeJob_To_v1_UpgradeJob is an autogenerated conversion function.
+func Convert_application_UpgradeJob_To_v1_UpgradeJob(in *application.UpgradeJob, out *UpgradeJob, s conversion.Scope) error {
+	return autoConvert_application_UpgradeJob_To_v1_UpgradeJob(in, out, s)
+}
+
+func autoConvert_v1_UpgradeJobList_To_application_UpgradeJobList(in *UpgradeJobList, out *application.UpgradeJobList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]application.UpgradeJob)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_UpgradeJobList_To_application_UpgradeJobList is an autogenerated conversion function.
+func Convert_v1_UpgradeJobList_To_application_UpgradeJobList(in *UpgradeJobList, out *application.UpgradeJobList, s conversion.Scope) error {
+	return autoConvert_v1_UpgradeJobList_To_application_UpgradeJobList(in, out, s)
+}
+
+func autoConvert_application_UpgradeJobList_To_v1_UpgradeJobList(in *application.UpgradeJobList, out *UpgradeJobList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]UpgradeJob)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_application_UpgradeJobList_To_v1_UpgradeJobList is an autogenerated conversion function.
+func Convert_application_UpgradeJobList_To_v1_UpgradeJobList(in *application.UpgradeJobList, out *UpgradeJobList, s conversion.Scope) error {
+	return autoConvert_application_UpgradeJobList_To_v1_UpgradeJobList(in, out, s)
+}
+
+func autoConvert_v1_UpgradeJobSpec_To_application_UpgradeJobSpec(in *UpgradeJobSpec, out *application.UpgradeJobSpec, s conversion.Scope) error {
+	out.TenantID = in.TenantID
+	out.Target = in.Target
+	out.AppRefer = in.AppRefer
+	out.BatchNum = (*int32)(unsafe.Pointer(in.BatchNum))
+	out.BatchIntervalSeconds = (*int32)(unsafe.Pointer(in.BatchIntervalSeconds))
+	out.MaxFailed = (*int32)(unsafe.Pointer(in.MaxFailed))
+	out.MaxSurge = (*int32)(unsafe.Pointer(in.MaxSurge))
+	out.Pause = in.Pause
+	return nil
+}
+
+// Convert_v1_UpgradeJobSpec_To_application_UpgradeJobSpec is an autogenerated conversion function.
+func Convert_v1_UpgradeJobSpec_To_application_UpgradeJobSpec(in *UpgradeJobSpec, out *application.UpgradeJobSpec, s conversion.Scope) error {
+	return autoConvert_v1_UpgradeJobSpec_To_application_UpgradeJobSpec(in, out, s)
+}
+
+func autoConvert_application_UpgradeJobSpec_To_v1_UpgradeJobSpec(in *application.UpgradeJobSpec, out *UpgradeJobSpec, s conversion.Scope) error {
+	out.TenantID = in.TenantID
+	out.Target = in.Target
+	out.AppRefer = in.AppRefer
+	out.BatchNum = (*int32)(unsafe.Pointer(in.BatchNum))
+	out.BatchIntervalSeconds = (*int32)(unsafe.Pointer(in.BatchIntervalSeconds))
+	out.MaxFailed = (*int32)(unsafe.Pointer(in.MaxFailed))
+	out.MaxSurge = (*int32)(unsafe.Pointer(in.MaxSurge))
+	out.Pause = in.Pause
+	return nil
+}
+
+// Convert_application_UpgradeJobSpec_To_v1_UpgradeJobSpec is an autogenerated conversion function.
+func Convert_application_UpgradeJobSpec_To_v1_UpgradeJobSpec(in *application.UpgradeJobSpec, out *UpgradeJobSpec, s conversion.Scope) error {
+	return autoConvert_application_UpgradeJobSpec_To_v1_UpgradeJobSpec(in, out, s)
+}
+
+func autoConvert_v1_UpgradeJobStatus_To_application_UpgradeJobStatus(in *UpgradeJobStatus, out *application.UpgradeJobStatus, s conversion.Scope) error {
+	out.BatchCompleteNum = in.BatchCompleteNum
+	out.BatchOrder = in.BatchOrder
+	out.BatchUpdatedNode = *(*[]string)(unsafe.Pointer(&in.BatchUpdatedNode))
+	out.BatchStartTime = in.BatchStartTime
+	out.BatchCompleteTime = in.BatchCompleteTime
+	out.BatchCompleteNodes = in.BatchCompleteNodes
+	out.Reason = (*string)(unsafe.Pointer(in.Reason))
+	return nil
+}
+
+// Convert_v1_UpgradeJobStatus_To_application_UpgradeJobStatus is an autogenerated conversion function.
+func Convert_v1_UpgradeJobStatus_To_application_UpgradeJobStatus(in *UpgradeJobStatus, out *application.UpgradeJobStatus, s conversion.Scope) error {
+	return autoConvert_v1_UpgradeJobStatus_To_application_UpgradeJobStatus(in, out, s)
+}
+
+func autoConvert_application_UpgradeJobStatus_To_v1_UpgradeJobStatus(in *application.UpgradeJobStatus, out *UpgradeJobStatus, s conversion.Scope) error {
+	out.BatchCompleteNum = in.BatchCompleteNum
+	out.BatchOrder = in.BatchOrder
+	out.BatchUpdatedNode = *(*[]string)(unsafe.Pointer(&in.BatchUpdatedNode))
+	out.BatchStartTime = in.BatchStartTime
+	out.BatchCompleteTime = in.BatchCompleteTime
+	out.BatchCompleteNodes = in.BatchCompleteNodes
+	out.Reason = (*string)(unsafe.Pointer(in.Reason))
+	return nil
+}
+
+// Convert_application_UpgradeJobStatus_To_v1_UpgradeJobStatus is an autogenerated conversion function.
+func Convert_application_UpgradeJobStatus_To_v1_UpgradeJobStatus(in *application.UpgradeJobStatus, out *UpgradeJobStatus, s conversion.Scope) error {
+	return autoConvert_application_UpgradeJobStatus_To_v1_UpgradeJobStatus(in, out, s)
+}
+
 func autoConvert_v1_UpgradePara_To_application_UpgradePara(in *UpgradePara, out *application.UpgradePara, s conversion.Scope) error {
 	if err := Convert_v1_HelmPublicPara_To_application_HelmPublicPara(&in.HelmPublicPara, &out.HelmPublicPara, s); err != nil {
 		return err
@@ -1022,4 +1214,78 @@ func autoConvert_application_UpgradePara_To_v1_UpgradePara(in *application.Upgra
 // Convert_application_UpgradePara_To_v1_UpgradePara is an autogenerated conversion function.
 func Convert_application_UpgradePara_To_v1_UpgradePara(in *application.UpgradePara, out *UpgradePara, s conversion.Scope) error {
 	return autoConvert_application_UpgradePara_To_v1_UpgradePara(in, out, s)
+}
+
+func autoConvert_v1_UpgradePolicy_To_application_UpgradePolicy(in *UpgradePolicy, out *application.UpgradePolicy, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_v1_UpgradePolicySpec_To_application_UpgradePolicySpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_v1_UpgradePolicy_To_application_UpgradePolicy is an autogenerated conversion function.
+func Convert_v1_UpgradePolicy_To_application_UpgradePolicy(in *UpgradePolicy, out *application.UpgradePolicy, s conversion.Scope) error {
+	return autoConvert_v1_UpgradePolicy_To_application_UpgradePolicy(in, out, s)
+}
+
+func autoConvert_application_UpgradePolicy_To_v1_UpgradePolicy(in *application.UpgradePolicy, out *UpgradePolicy, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_application_UpgradePolicySpec_To_v1_UpgradePolicySpec(&in.Spec, &out.Spec, s); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Convert_application_UpgradePolicy_To_v1_UpgradePolicy is an autogenerated conversion function.
+func Convert_application_UpgradePolicy_To_v1_UpgradePolicy(in *application.UpgradePolicy, out *UpgradePolicy, s conversion.Scope) error {
+	return autoConvert_application_UpgradePolicy_To_v1_UpgradePolicy(in, out, s)
+}
+
+func autoConvert_v1_UpgradePolicyList_To_application_UpgradePolicyList(in *UpgradePolicyList, out *application.UpgradePolicyList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]application.UpgradePolicy)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_v1_UpgradePolicyList_To_application_UpgradePolicyList is an autogenerated conversion function.
+func Convert_v1_UpgradePolicyList_To_application_UpgradePolicyList(in *UpgradePolicyList, out *application.UpgradePolicyList, s conversion.Scope) error {
+	return autoConvert_v1_UpgradePolicyList_To_application_UpgradePolicyList(in, out, s)
+}
+
+func autoConvert_application_UpgradePolicyList_To_v1_UpgradePolicyList(in *application.UpgradePolicyList, out *UpgradePolicyList, s conversion.Scope) error {
+	out.ListMeta = in.ListMeta
+	out.Items = *(*[]UpgradePolicy)(unsafe.Pointer(&in.Items))
+	return nil
+}
+
+// Convert_application_UpgradePolicyList_To_v1_UpgradePolicyList is an autogenerated conversion function.
+func Convert_application_UpgradePolicyList_To_v1_UpgradePolicyList(in *application.UpgradePolicyList, out *UpgradePolicyList, s conversion.Scope) error {
+	return autoConvert_application_UpgradePolicyList_To_v1_UpgradePolicyList(in, out, s)
+}
+
+func autoConvert_v1_UpgradePolicySpec_To_application_UpgradePolicySpec(in *UpgradePolicySpec, out *application.UpgradePolicySpec, s conversion.Scope) error {
+	out.BatchNum = (*int32)(unsafe.Pointer(in.BatchNum))
+	out.BatchIntervalSeconds = (*int32)(unsafe.Pointer(in.BatchIntervalSeconds))
+	out.MaxFailed = (*int32)(unsafe.Pointer(in.MaxFailed))
+	out.MaxSurge = (*int32)(unsafe.Pointer(in.MaxSurge))
+	return nil
+}
+
+// Convert_v1_UpgradePolicySpec_To_application_UpgradePolicySpec is an autogenerated conversion function.
+func Convert_v1_UpgradePolicySpec_To_application_UpgradePolicySpec(in *UpgradePolicySpec, out *application.UpgradePolicySpec, s conversion.Scope) error {
+	return autoConvert_v1_UpgradePolicySpec_To_application_UpgradePolicySpec(in, out, s)
+}
+
+func autoConvert_application_UpgradePolicySpec_To_v1_UpgradePolicySpec(in *application.UpgradePolicySpec, out *UpgradePolicySpec, s conversion.Scope) error {
+	out.BatchNum = (*int32)(unsafe.Pointer(in.BatchNum))
+	out.BatchIntervalSeconds = (*int32)(unsafe.Pointer(in.BatchIntervalSeconds))
+	out.MaxFailed = (*int32)(unsafe.Pointer(in.MaxFailed))
+	out.MaxSurge = (*int32)(unsafe.Pointer(in.MaxSurge))
+	return nil
+}
+
+// Convert_application_UpgradePolicySpec_To_v1_UpgradePolicySpec is an autogenerated conversion function.
+func Convert_application_UpgradePolicySpec_To_v1_UpgradePolicySpec(in *application.UpgradePolicySpec, out *UpgradePolicySpec, s conversion.Scope) error {
+	return autoConvert_application_UpgradePolicySpec_To_v1_UpgradePolicySpec(in, out, s)
 }

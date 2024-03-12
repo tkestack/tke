@@ -72,6 +72,11 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&AppUpgradeOptions{},
 		&AppDeleteOptions{},
 		&AppCheckResultList{},
+
+		&UpgradePolicy{},
+		&UpgradePolicyList{},
+		&UpgradeJob{},
+		&UpgradeJobList{},
 	)
 
 	return nil

@@ -30,6 +30,10 @@ type Interface interface {
 	Apps() AppInformer
 	// ConfigMaps returns a ConfigMapInformer.
 	ConfigMaps() ConfigMapInformer
+	// UpgradeJobs returns a UpgradeJobInformer.
+	UpgradeJobs() UpgradeJobInformer
+	// UpgradePolicies returns a UpgradePolicyInformer.
+	UpgradePolicies() UpgradePolicyInformer
 }
 
 type version struct {
@@ -51,4 +55,14 @@ func (v *version) Apps() AppInformer {
 // ConfigMaps returns a ConfigMapInformer.
 func (v *version) ConfigMaps() ConfigMapInformer {
 	return &configMapInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// UpgradeJobs returns a UpgradeJobInformer.
+func (v *version) UpgradeJobs() UpgradeJobInformer {
+	return &upgradeJobInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// UpgradePolicies returns a UpgradePolicyInformer.
+func (v *version) UpgradePolicies() UpgradePolicyInformer {
+	return &upgradePolicyInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
