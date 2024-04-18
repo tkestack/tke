@@ -169,6 +169,9 @@ message AppSpec {
   repeated string finalizers = 8;
 
   optional bool dryRun = 9;
+
+  // +optional
+  optional string upgradePolicy = 10;
 }
 
 // AppStatus represents information about the status of a bootstrap.
@@ -357,8 +360,113 @@ message RollbackProxyOptions {
   optional string cluster = 2;
 }
 
+// UpgradeJob is an example type with a spec.
+message UpgradeJob {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  optional UpgradeJobSpec spec = 2;
+
+  optional UpgradeJobStatus status = 3;
+}
+
+// UpgradeJobList is a list of upgradeJob objects.
+message UpgradeJobList {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  repeated UpgradeJob items = 2;
+}
+
+// UpgradeJobSpec is the specification of a upgradeJob.
+message UpgradeJobSpec {
+  optional string tenantID = 1;
+
+  optional string target = 2;
+
+  // +optional
+  optional string appRefer = 3;
+
+  optional int32 batchNum = 4;
+
+  // this is set to 30 by default
+  // +optional
+  optional int32 batchIntervalSeconds = 5;
+
+  // this is set to 0 by default
+  // +optional
+  optional int32 maxFailed = 6;
+
+  // this is set to 3 by default
+  // +optional
+  optional int32 maxSurge = 7;
+
+  // +optional
+  optional bool pause = 8;
+}
+
+// UpgradeJobStatus is the status of a upgradeJob.
+message UpgradeJobStatus {
+  // number of batches completed currently
+  // +optional
+  optional int32 batchCompleteNum = 1;
+
+  // batch num which is being processed
+  // +optional
+  optional int32 batchOrder = 2;
+
+  // list of nodes upgraded in the current batch
+  // +optional
+  repeated string batchUpdatedNode = 3;
+
+  // start time of the current batch
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time batchStartTime = 4;
+
+  // end time of the current batch
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time batchCompleteTime = 5;
+
+  // total number of nodes upgraded
+  // +optional
+  optional int32 batchCompleteNodes = 6;
+
+  // failed reason
+  // +optional
+  optional string reason = 7;
+}
+
 // parameters used to upgrade a chart
 message UpgradePara {
   optional HelmPublicPara helmPublicPara = 1;
+}
+
+// UpgradePolicy is an example type with a spec and a status.
+message UpgradePolicy {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
+
+  optional UpgradePolicySpec spec = 2;
+}
+
+// UpgradePolicyList is a list of upgradePolicy objects.
+message UpgradePolicyList {
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
+
+  repeated UpgradePolicy items = 2;
+}
+
+// UpgradePolicySpec is the specification of a upgradePolicy.
+message UpgradePolicySpec {
+  optional int32 batchNum = 4;
+
+  // this is set to 30 by default
+  // +optional
+  optional int32 batchIntervalSeconds = 5;
+
+  // this is set to 0 by default
+  // +optional
+  optional int32 maxFailed = 6;
+
+  // this is set to 3 by default
+  // +optional
+  optional int32 maxSurge = 7;
 }
 

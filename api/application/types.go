@@ -69,6 +69,8 @@ type AppSpec struct {
 	Finalizers []FinalizerName
 	// +optional
 	DryRun bool
+	// +optional
+	UpgradePolicy string
 }
 
 // Chart is a description of a chart.
@@ -263,6 +265,10 @@ const (
 	AppPhaseInstallFailed AppPhase = "InstallFailed"
 	// Upgrading means the upgrade for the App is running.
 	AppPhaseUpgrading AppPhase = "Upgrading"
+	// UpgradingDaemonset means the upgrade for the App's daemonset is running.
+	AppPhaseUpgradingDaemonset AppPhase = "UpgradingDaemonset"
+	// UpgradingDaemonsetFailed means the upgrade for the App's daemonset is running.
+	AppPhaseUpgradingDaemonsetFailed AppPhase = "UpgradingDaemonsetFailed"
 	// Succeeded means the dry-run, installation, or upgrade for the
 	// App succeeded.
 	AppPhaseSucceeded AppPhase = "Succeeded"
@@ -413,3 +419,93 @@ const (
 	// AppCheckLevelRisk means risk unHealthy
 	AppCheckLevelRisk AppCheckLevel = "risk"
 )
+
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// UpgradePolicyList is a list of upgradePolicy objects.
+type UpgradePolicyList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+
+	Items []UpgradePolicy
+}
+
+// UpgradePolicySpec is the specification of a upgradePolicy.
+type UpgradePolicySpec struct {
+	BatchNum             *int32
+	BatchIntervalSeconds *int32
+	MaxFailed            *int32
+	MaxSurge             *int32
+}
+
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// UpgradePolicy is an example type with a spec and a status.
+type UpgradePolicy struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+
+	Spec UpgradePolicySpec
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// UpgradeJobList is a list of upgradeJob objects.
+type UpgradeJobList struct {
+	metav1.TypeMeta
+	metav1.ListMeta
+
+	Items []UpgradeJob
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// UpgradeJob is an example type with a spec and a status.
+type UpgradeJob struct {
+	metav1.TypeMeta
+	metav1.ObjectMeta
+
+	Spec   UpgradeJobSpec
+	Status UpgradeJobStatus
+}
+
+// UpgradeJobSpec is the specification of a upgradeJob.
+type UpgradeJobSpec struct {
+	TenantID string
+	Target   string
+	AppRefer string
+
+	BatchNum             *int32
+	BatchIntervalSeconds *int32
+	MaxFailed            *int32
+	MaxSurge             *int32
+	Pause                bool
+}
+
+// UpgradeJobStatus is the status of a upgradeJob.
+type UpgradeJobStatus struct {
+	// +optional
+	BatchCompleteNum int32
+
+	// +optional
+	BatchOrder int32
+
+	// +optional
+	BatchUpdatedNode []string
+
+	// +optional
+	BatchStartTime metav1.Time
+
+	// +optional
+	BatchCompleteTime metav1.Time
+
+	// +optional
+	BatchCompleteNodes int32
+
+	// +optional
+	Reason *string
+}

@@ -35,6 +35,8 @@ import (
 	appconfig "tkestack.io/tke/pkg/application/config"
 	applicationstorage "tkestack.io/tke/pkg/application/registry/application/storage"
 	configmapstorage "tkestack.io/tke/pkg/application/registry/configmap/storage"
+	upgradejobstorage "tkestack.io/tke/pkg/application/registry/upgradejob/storage"
+	upgradepolicystorage "tkestack.io/tke/pkg/application/registry/upgradepolicy/storage"
 )
 
 // StorageProvider is a REST type for core resources storage that implement
@@ -75,6 +77,11 @@ func (s *StorageProvider) v1Storage(apiResourceConfigSource serverstorage.APIRes
 	{
 		configMapREST := configmapstorage.NewStorage(restOptionsGetter)
 		storageMap["configmaps"] = configMapREST.ConfigMap
+
+		upgradePolicyMapREST := upgradepolicystorage.NewStorage(restOptionsGetter)
+		storageMap["upgradepolicies"] = upgradePolicyMapREST.UpgradePolicy
+		upgradeJobMapREST := upgradejobstorage.NewStorage(restOptionsGetter)
+		storageMap["upgradejobs"] = upgradeJobMapREST.UpgradeJob
 
 		appRESTStorage := applicationstorage.NewStorage(restOptionsGetter,
 			applicationClient,

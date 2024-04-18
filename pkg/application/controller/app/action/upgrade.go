@@ -22,9 +22,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"tkestack.io/tke/pkg/util/log"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	applicationversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/application/v1"
@@ -35,6 +32,7 @@ import (
 	applicationprovider "tkestack.io/tke/pkg/application/provider/application"
 	"tkestack.io/tke/pkg/application/util"
 	chartpath "tkestack.io/tke/pkg/application/util/chartpath/v1"
+	"tkestack.io/tke/pkg/util/log"
 	"tkestack.io/tke/pkg/util/metrics"
 )
 
@@ -47,27 +45,22 @@ func Upgrade(ctx context.Context,
 	updateStatusFunc applicationprovider.UpdateStatusFunc) (*applicationv1.App, error) {
 	hooks := getHooks(app)
 
-	if app.Status.Message != "hook pre upgrade app failed" && app.Status.Message != "upgrade app failed" && app.Status.Message != "hook post upgrade app failed" {
-		app.Status.Message = ""
-	}
-	if app.Status.Message == "" || app.Status.Message == "hook pre upgrade app failed" {
-		err := hooks.PreUpgrade(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
-		if err != nil {
-			if updateStatusFunc != nil {
-				newStatus := app.Status.DeepCopy()
-				var updateStatusErr error
-				newStatus.Phase = applicationv1.AppPhaseUpgradFailed
-				newStatus.Message = "hook pre upgrade app failed"
-				newStatus.Reason = err.Error()
-				newStatus.LastTransitionTime = metav1.Now()
-				metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
-				if updateStatusErr != nil {
-					return app, updateStatusErr
-				}
+	err := hooks.PreUpgrade(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	if err != nil {
+		if updateStatusFunc != nil {
+			newStatus := app.Status.DeepCopy()
+			var updateStatusErr error
+			newStatus.Phase = applicationv1.AppPhaseUpgradFailed
+			newStatus.Message = "hook pre upgrade app failed"
+			newStatus.Reason = err.Error()
+			newStatus.LastTransitionTime = metav1.Now()
+			metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+			app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
+			if updateStatusErr != nil {
+				return app, updateStatusErr
 			}
-			return nil, err
 		}
+		return nil, err
 	}
 
 	destfile, err := Pull(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
@@ -87,95 +80,128 @@ func Upgrade(ctx context.Context,
 		return nil, err
 	}
 
-	if app.Status.Message == "" || app.Status.Message == "hook pre upgrade app failed" || app.Status.Message == "upgrade app failed" {
-		client, err := util.NewHelmClientWithProvider(ctx, platformClient, app)
-		if err != nil {
-			return nil, err
-		}
-		values, err := helmutil.MergeValues(app.Spec.Values.Values, app.Spec.Values.RawValues, string(app.Spec.Values.RawValuesType))
-		if err != nil {
-			return nil, err
-		}
-		chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(repo, app.Spec.Chart)
-		if err != nil {
-			return nil, err
-		}
-		chartPathBasicOptions.ExistedFile = destfile
-		// * provide compatibility with online tke addon apps */
-		if app.Annotations != nil && app.Annotations[applicationprovider.AnnotationProviderNameKey] == "managecontrolplane" {
-			app.Spec.Chart.UpgradePara.Atomic = false
-			app.Spec.Chart.UpgradePara.Wait = true
-			app.Spec.Chart.UpgradePara.WaitForJobs = true
-			if app.Annotations["ignore-upgrade-wait"] == "true" {
-				app.Spec.Chart.UpgradePara.Wait = false
-				app.Spec.Chart.UpgradePara.WaitForJobs = false
-			}
-		}
-		// * compatibility over, above code need to be deleted atfer the online addon apps are migrated */
-
-		var clientTimeout = defaultTimeout
-		if app.Spec.Chart.UpgradePara.Timeout > 0 {
-			clientTimeout = app.Spec.Chart.UpgradePara.Timeout
-		}
-
-		_, err = client.Upgrade(ctx, &helmaction.UpgradeOptions{
-			Namespace:        app.Spec.TargetNamespace,
-			ReleaseName:      app.Spec.Name,
-			DependencyUpdate: true,
-			Install:          true,
-			Values:           values,
-			Timeout:          clientTimeout,
-			ChartPathOptions: chartPathBasicOptions,
-			MaxHistory:       clientMaxHistory,
-			Atomic:           app.Spec.Chart.UpgradePara.Atomic,
-			Wait:             app.Spec.Chart.UpgradePara.Wait,
-			WaitForJobs:      app.Spec.Chart.UpgradePara.WaitForJobs,
-		})
-		if err != nil {
-			if errors.Is(err, errors.New("chart manifest is empty")) {
-				log.Errorf(fmt.Sprintf("ERROR: upgrade cluster %s app %s manifest is empty, file %s", app.Spec.TargetCluster, app.Name, destfile))
-				metrics.GaugeApplicationManifestFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-			} else {
-				metrics.GaugeApplicationManifestFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
-			}
-			if updateStatusFunc != nil {
-				newStatus := app.Status.DeepCopy()
-				var updateStatusErr error
-				newStatus.Phase = applicationv1.AppPhaseUpgradFailed
-				newStatus.Message = "upgrade app failed"
-				newStatus.Reason = err.Error()
-				newStatus.LastTransitionTime = metav1.Now()
-				if hooks.NeedMetrics(ctx, applicationClient, platformClient, app, repo) {
-					metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-				}
-				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
-				if updateStatusErr != nil {
-					return app, updateStatusErr
-				}
-			}
-			return nil, err
+	client, err := util.NewHelmClientWithProvider(ctx, platformClient, app)
+	if err != nil {
+		return nil, err
+	}
+	values, err := helmutil.MergeValues(app.Spec.Values.Values, app.Spec.Values.RawValues, string(app.Spec.Values.RawValuesType))
+	if err != nil {
+		return nil, err
+	}
+	chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(repo, app.Spec.Chart)
+	if err != nil {
+		return nil, err
+	}
+	chartPathBasicOptions.ExistedFile = destfile
+	// * provide compatibility with online tke addon apps */
+	if app.Annotations != nil && app.Annotations[applicationprovider.AnnotationProviderNameKey] == "managecontrolplane" {
+		app.Spec.Chart.UpgradePara.Atomic = false
+		app.Spec.Chart.UpgradePara.Wait = true
+		app.Spec.Chart.UpgradePara.WaitForJobs = true
+		if app.Annotations["ignore-upgrade-wait"] == "true" {
+			app.Spec.Chart.UpgradePara.Wait = false
+			app.Spec.Chart.UpgradePara.WaitForJobs = false
 		}
 	}
+	// * compatibility over, above code need to be deleted atfer the online addon apps are migrated */
 
-	if app.Status.Message == "" || app.Status.Message == "hook pre upgrade app failed" || app.Status.Message == "upgrade app failed" || app.Status.Message == "hook post upgrade app failed" {
-		err = hooks.PostUpgrade(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
-		// 先走完hook，在更新app状态为succeed
+	var clientTimeout = defaultTimeout
+	if app.Spec.Chart.UpgradePara.Timeout > 0 {
+		clientTimeout = app.Spec.Chart.UpgradePara.Timeout
+	}
+
+	_, err = client.Upgrade(ctx, &helmaction.UpgradeOptions{
+		Namespace:        app.Spec.TargetNamespace,
+		ReleaseName:      app.Spec.Name,
+		DependencyUpdate: true,
+		Install:          true,
+		Values:           values,
+		Timeout:          clientTimeout,
+		ChartPathOptions: chartPathBasicOptions,
+		MaxHistory:       clientMaxHistory,
+		Atomic:           app.Spec.Chart.UpgradePara.Atomic,
+		Wait:             app.Spec.Chart.UpgradePara.Wait,
+		WaitForJobs:      app.Spec.Chart.UpgradePara.WaitForJobs,
+	})
+	if err != nil {
+		if errors.Is(err, errors.New("chart manifest is empty")) {
+			log.Errorf(fmt.Sprintf("ERROR: upgrade cluster %s app %s manifest is empty, file %s", app.Spec.TargetCluster, app.Name, destfile))
+			metrics.GaugeApplicationManifestFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+		} else {
+			metrics.GaugeApplicationManifestFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
+		}
+		if updateStatusFunc != nil {
+			newStatus := app.Status.DeepCopy()
+			var updateStatusErr error
+			newStatus.Phase = applicationv1.AppPhaseUpgradFailed
+			newStatus.Message = "upgrade app failed"
+			newStatus.Reason = err.Error()
+			newStatus.LastTransitionTime = metav1.Now()
+			if hooks.NeedMetrics(ctx, applicationClient, platformClient, app, repo) {
+				metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+			}
+			app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
+			if updateStatusErr != nil {
+				return app, updateStatusErr
+			}
+		}
+		return nil, err
+	}
+
+	// 可以重试
+	if app.Spec.UpgradePolicy != "" {
+		if _, err := applicationClient.UpgradePolicies().Get(context.TODO(), app.Spec.UpgradePolicy, metav1.GetOptions{}); err != nil {
+			log.Errorf("get UpgradePolicy for app %s/%s failed: %v", app.Namespace, app.Name, err)
+			return nil, err
+		}
+
+		daemonsets, err := getOndeleteDaemonsets(ctx, platformClient, app, repo)
 		if err != nil {
-			if updateStatusFunc != nil {
+			log.Errorf("getOndeleteDaemonsets for app %s/%s failed: %v", app.Namespace, app.Name, err)
+			return nil, err
+		}
+
+		log.Infof("upgrade app %s/%s: %s %v %v", app.Namespace, app.Name, app.Spec.UpgradePolicy, app.Status, daemonsets)
+		if len(daemonsets) != 0 {
+			if err := createUpgradeJobsIfNotExist(ctx, applicationClient, platformClient, app, daemonsets); err != nil {
 				newStatus := app.Status.DeepCopy()
-				var updateStatusErr error
 				newStatus.Phase = applicationv1.AppPhaseUpgradFailed
-				newStatus.Message = "hook post upgrade app failed"
+				newStatus.Message = "create upgrade job failed"
 				newStatus.Reason = err.Error()
 				newStatus.LastTransitionTime = metav1.Now()
-				metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
-				if updateStatusErr != nil {
-					return app, updateStatusErr
-				}
+				log.Infof("Change app %s/%s policy %s status to %s: %v", app.Namespace, app.Name, app.Spec.UpgradePolicy, newStatus.Phase, err)
+				return updateStatusFunc(ctx, app, &app.Status, newStatus)
+			} else {
+				newStatus := app.Status.DeepCopy()
+				newStatus.Phase = applicationv1.AppPhaseUpgradingDaemonset
+				newStatus.Message = ""
+				newStatus.Reason = ""
+				newStatus.LastTransitionTime = metav1.Now()
+				log.Infof("Change app %s/%s policy %s status to %s", app.Namespace, app.Name, app.Spec.UpgradePolicy, newStatus.Phase)
+				return updateStatusFunc(ctx, app, &app.Status, newStatus)
 			}
-			return app, err
 		}
+
+		// 无须进行ds灰度升级场景，继续进行后续的 PostUpgrade
+	}
+
+	err = hooks.PostUpgrade(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	// 先走完hook，在更新app状态为succeed
+	if err != nil {
+		if updateStatusFunc != nil {
+			newStatus := app.Status.DeepCopy()
+			var updateStatusErr error
+			newStatus.Phase = applicationv1.AppPhaseUpgradFailed
+			newStatus.Message = "hook post upgrade app failed"
+			newStatus.Reason = err.Error()
+			newStatus.LastTransitionTime = metav1.Now()
+			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+			app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
+			if updateStatusErr != nil {
+				return app, updateStatusErr
+			}
+		}
+		return app, err
 	}
 
 	if updateStatusFunc != nil {

@@ -31,6 +31,8 @@ type ApplicationInterface interface {
 	AppHistoriesGetter
 	AppResourcesGetter
 	ConfigMapsGetter
+	UpgradeJobsGetter
+	UpgradePoliciesGetter
 }
 
 // ApplicationClient is used to interact with features provided by the application.tkestack.io group.
@@ -52,6 +54,14 @@ func (c *ApplicationClient) AppResources(namespace string) AppResourceInterface 
 
 func (c *ApplicationClient) ConfigMaps() ConfigMapInterface {
 	return newConfigMaps(c)
+}
+
+func (c *ApplicationClient) UpgradeJobs(namespace string) UpgradeJobInterface {
+	return newUpgradeJobs(c, namespace)
+}
+
+func (c *ApplicationClient) UpgradePolicies() UpgradePolicyInterface {
+	return newUpgradePolicies(c)
 }
 
 // NewForConfig creates a new ApplicationClient for the given config.

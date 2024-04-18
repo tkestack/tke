@@ -32,6 +32,8 @@ type ApplicationV1Interface interface {
 	AppHistoriesGetter
 	AppResourcesGetter
 	ConfigMapsGetter
+	UpgradeJobsGetter
+	UpgradePoliciesGetter
 }
 
 // ApplicationV1Client is used to interact with features provided by the application.tkestack.io group.
@@ -53,6 +55,14 @@ func (c *ApplicationV1Client) AppResources(namespace string) AppResourceInterfac
 
 func (c *ApplicationV1Client) ConfigMaps() ConfigMapInterface {
 	return newConfigMaps(c)
+}
+
+func (c *ApplicationV1Client) UpgradeJobs(namespace string) UpgradeJobInterface {
+	return newUpgradeJobs(c, namespace)
+}
+
+func (c *ApplicationV1Client) UpgradePolicies() UpgradePolicyInterface {
+	return newUpgradePolicies(c)
 }
 
 // NewForConfig creates a new ApplicationV1Client for the given config.

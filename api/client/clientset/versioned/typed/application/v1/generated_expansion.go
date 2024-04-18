@@ -27,3 +27,7 @@ type AppHistoryExpansion interface{}
 type AppResourceExpansion interface{}
 
 type ConfigMapExpansion interface{}
+
+type UpgradeJobExpansion interface{}
+
+type UpgradePolicyExpansion interface{}

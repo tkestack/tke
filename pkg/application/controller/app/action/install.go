@@ -46,28 +46,22 @@ func Install(ctx context.Context,
 	updateStatusFunc applicationprovider.UpdateStatusFunc) (*applicationv1.App, error) {
 	hooks := getHooks(app)
 
-	if app.Status.Message != "hook pre install app failed" && app.Status.Message != "install app failed" && app.Status.Message != "hook post install app failed" {
-		app.Status.Message = ""
-	}
-
-	if app.Status.Message == "" || app.Status.Message == "hook pre install app failed" {
-		err := hooks.PreInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
-		if err != nil {
-			if updateStatusFunc != nil {
-				newStatus := app.Status.DeepCopy()
-				var updateStatusErr error
-				newStatus.Phase = applicationv1.AppPhaseInstallFailed
-				newStatus.Message = "hook pre install app failed"
-				newStatus.Reason = err.Error()
-				newStatus.LastTransitionTime = metav1.Now()
-				metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
-				if updateStatusErr != nil {
-					return app, updateStatusErr
-				}
+	err := hooks.PreInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	if err != nil {
+		if updateStatusFunc != nil {
+			newStatus := app.Status.DeepCopy()
+			var updateStatusErr error
+			newStatus.Phase = applicationv1.AppPhaseInstallFailed
+			newStatus.Message = "hook pre install app failed"
+			newStatus.Reason = err.Error()
+			newStatus.LastTransitionTime = metav1.Now()
+			metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+			app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
+			if updateStatusErr != nil {
+				return app, updateStatusErr
 			}
-			return nil, err
 		}
+		return nil, err
 	}
 
 	destfile, err := Pull(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
@@ -86,104 +80,100 @@ func Install(ctx context.Context,
 		}
 	}
 
-	if app.Status.Message == "" || app.Status.Message == "hook pre install app failed" || app.Status.Message == "install app failed" {
-		client, err := util.NewHelmClientWithProvider(ctx, platformClient, app)
-		if err != nil {
-			return nil, err
-		}
-		values, err := helmutil.MergeValues(app.Spec.Values.Values, app.Spec.Values.RawValues, string(app.Spec.Values.RawValuesType))
-		if err != nil {
-			return nil, err
-		}
-		chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(repo, app.Spec.Chart)
-		if err != nil {
-			return nil, err
-		}
-		chartPathBasicOptions.ExistedFile = destfile
+	client, err := util.NewHelmClientWithProvider(ctx, platformClient, app)
+	if err != nil {
+		return nil, err
+	}
+	values, err := helmutil.MergeValues(app.Spec.Values.Values, app.Spec.Values.RawValues, string(app.Spec.Values.RawValuesType))
+	if err != nil {
+		return nil, err
+	}
+	chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(repo, app.Spec.Chart)
+	if err != nil {
+		return nil, err
+	}
+	chartPathBasicOptions.ExistedFile = destfile
 
-		/* provide compatibility with online tke addon apps */
-		if app.Annotations != nil && app.Annotations[applicationprovider.AnnotationProviderNameKey] == "managecontrolplane" {
-			app.Spec.Chart.InstallPara.Atomic = false
+	/* provide compatibility with online tke addon apps */
+	if app.Annotations != nil && app.Annotations[applicationprovider.AnnotationProviderNameKey] == "managecontrolplane" {
+		app.Spec.Chart.InstallPara.Atomic = false
+		app.Spec.Chart.InstallPara.Wait = true
+		app.Spec.Chart.InstallPara.WaitForJobs = true
+		if app.Annotations["ignore-install-wait"] == "true" {
+			app.Spec.Chart.InstallPara.Wait = false
+			app.Spec.Chart.InstallPara.WaitForJobs = false
+		}
+		if app.Labels != nil && app.Labels["application.tkestack.io/type"] == "internal-addon" {
+			app.Spec.Chart.InstallPara.Wait = false
+			app.Spec.Chart.InstallPara.WaitForJobs = false
+		}
+		if app.Spec.Chart.ChartName == "cranescheduler" {
 			app.Spec.Chart.InstallPara.Wait = true
 			app.Spec.Chart.InstallPara.WaitForJobs = true
-			if app.Annotations["ignore-install-wait"] == "true" {
-				app.Spec.Chart.InstallPara.Wait = false
-				app.Spec.Chart.InstallPara.WaitForJobs = false
-			}
-			if app.Labels != nil && app.Labels["application.tkestack.io/type"] == "internal-addon" {
-				app.Spec.Chart.InstallPara.Wait = false
-				app.Spec.Chart.InstallPara.WaitForJobs = false
-			}
-			if app.Spec.Chart.ChartName == "cranescheduler" {
-				app.Spec.Chart.InstallPara.Wait = true
-				app.Spec.Chart.InstallPara.WaitForJobs = true
-			}
-		}
-		/* compatibility over, above code need to be deleted atfer the online addon apps are migrated */
-
-		var clientTimeout = defaultTimeout
-		if app.Spec.Chart.InstallPara.Timeout > 0 {
-			clientTimeout = app.Spec.Chart.InstallPara.Timeout
-		}
-
-		_, err = client.Install(ctx, &helmaction.InstallOptions{
-			Namespace:        app.Spec.TargetNamespace,
-			ReleaseName:      app.Spec.Name,
-			DependencyUpdate: true,
-			Values:           values,
-			Timeout:          clientTimeout,
-			ChartPathOptions: chartPathBasicOptions,
-			CreateNamespace:  app.Spec.Chart.InstallPara.CreateNamespace,
-			Atomic:           app.Spec.Chart.InstallPara.Atomic,
-			Wait:             app.Spec.Chart.InstallPara.Wait,
-			WaitForJobs:      app.Spec.Chart.InstallPara.WaitForJobs,
-		})
-
-		if err != nil {
-			if errors.Is(err, errors.New("chart manifest is empty")) {
-				log.Errorf(fmt.Sprintf("ERROR: install cluster %s app %s manifest is empty, file %s", app.Spec.TargetCluster, app.Name, destfile))
-				metrics.GaugeApplicationManifestFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-			} else {
-				metrics.GaugeApplicationManifestFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
-			}
-			if updateStatusFunc != nil {
-				newStatus := app.Status.DeepCopy()
-				var updateStatusErr error
-				newStatus.Phase = applicationv1.AppPhaseInstallFailed
-				newStatus.Message = "install app failed"
-				newStatus.Reason = err.Error()
-				newStatus.LastTransitionTime = metav1.Now()
-				if hooks.NeedMetrics(ctx, applicationClient, platformClient, app, repo) {
-					metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-				}
-				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
-				if updateStatusErr != nil {
-					return app, updateStatusErr
-				}
-			}
-			return app, err
 		}
 	}
+	/* compatibility over, above code need to be deleted atfer the online addon apps are migrated */
 
-	if app.Status.Message == "" || app.Status.Message == "hook pre install app failed" || app.Status.Message == "install app failed" || app.Status.Message == "hook post install app failed" {
-		err = hooks.PostInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
-		// 先走完hook，在更新app状态为succeed
-		if err != nil {
-			if updateStatusFunc != nil {
-				newStatus := app.Status.DeepCopy()
-				var updateStatusErr error
-				newStatus.Phase = applicationv1.AppPhaseInstallFailed
-				newStatus.Message = "hook post install app failed"
-				newStatus.Reason = err.Error()
-				newStatus.LastTransitionTime = metav1.Now()
-				metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
-				app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
-				if updateStatusErr != nil {
-					return app, updateStatusErr
-				}
-			}
-			return app, err
+	var clientTimeout = defaultTimeout
+	if app.Spec.Chart.InstallPara.Timeout > 0 {
+		clientTimeout = app.Spec.Chart.InstallPara.Timeout
+	}
+
+	_, err = client.Install(ctx, &helmaction.InstallOptions{
+		Namespace:        app.Spec.TargetNamespace,
+		ReleaseName:      app.Spec.Name,
+		DependencyUpdate: true,
+		Values:           values,
+		Timeout:          clientTimeout,
+		ChartPathOptions: chartPathBasicOptions,
+		CreateNamespace:  app.Spec.Chart.InstallPara.CreateNamespace,
+		Atomic:           app.Spec.Chart.InstallPara.Atomic,
+		Wait:             app.Spec.Chart.InstallPara.Wait,
+		WaitForJobs:      app.Spec.Chart.InstallPara.WaitForJobs,
+	})
+
+	if err != nil {
+		if errors.Is(err, errors.New("chart manifest is empty")) {
+			log.Errorf(fmt.Sprintf("ERROR: install cluster %s app %s manifest is empty, file %s", app.Spec.TargetCluster, app.Name, destfile))
+			metrics.GaugeApplicationManifestFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+		} else {
+			metrics.GaugeApplicationManifestFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 		}
+		if updateStatusFunc != nil {
+			newStatus := app.Status.DeepCopy()
+			var updateStatusErr error
+			newStatus.Phase = applicationv1.AppPhaseInstallFailed
+			newStatus.Message = "install app failed"
+			newStatus.Reason = err.Error()
+			newStatus.LastTransitionTime = metav1.Now()
+			if hooks.NeedMetrics(ctx, applicationClient, platformClient, app, repo) {
+				metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+			}
+			app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
+			if updateStatusErr != nil {
+				return app, updateStatusErr
+			}
+		}
+		return app, err
+	}
+
+	err = hooks.PostInstall(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
+	// 先走完hook，在更新app状态为succeed
+	if err != nil {
+		if updateStatusFunc != nil {
+			newStatus := app.Status.DeepCopy()
+			var updateStatusErr error
+			newStatus.Phase = applicationv1.AppPhaseInstallFailed
+			newStatus.Message = "hook post install app failed"
+			newStatus.Reason = err.Error()
+			newStatus.LastTransitionTime = metav1.Now()
+			metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+			app, updateStatusErr = updateStatusFunc(ctx, app, &app.Status, newStatus)
+			if updateStatusErr != nil {
+				return app, updateStatusErr
+			}
+		}
+		return app, err
 	}
 
 	if updateStatusFunc != nil {

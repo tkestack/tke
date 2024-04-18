@@ -49,6 +49,7 @@ func NewControllerInitializers() map[string]InitFunc {
 	controllers := map[string]InitFunc{}
 
 	controllers["app"] = startAppController
+	controllers["upgradejob"] = startUpgradeJobController
 	return controllers
 }
 

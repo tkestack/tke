@@ -47,3 +47,15 @@ type AppResourceNamespaceListerExpansion interface{}
 // ConfigMapListerExpansion allows custom methods to be added to
 // ConfigMapLister.
 type ConfigMapListerExpansion interface{}
+
+// UpgradeJobListerExpansion allows custom methods to be added to
+// UpgradeJobLister.
+type UpgradeJobListerExpansion interface{}
+
+// UpgradeJobNamespaceListerExpansion allows custom methods to be added to
+// UpgradeJobNamespaceLister.
+type UpgradeJobNamespaceListerExpansion interface{}
+
+// UpgradePolicyListerExpansion allows custom methods to be added to
+// UpgradePolicyLister.
+type UpgradePolicyListerExpansion interface{}

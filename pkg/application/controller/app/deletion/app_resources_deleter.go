@@ -27,6 +27,7 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	applicationv1 "tkestack.io/tke/api/application/v1"
@@ -123,6 +124,11 @@ func (d *applicationResourcesDeleter) Delete(ctx context.Context, namespace, app
 	// the latest view of the app asserts that app is no longer deleting.
 	if app.DeletionTimestamp.IsZero() {
 		return nil
+	}
+
+	err = d.deleteUpgradeJobApplication(ctx, app)
+	if err != nil {
+		return err
 	}
 
 	// Delete the app if it is already finalized.
@@ -296,4 +302,14 @@ func deleteApplication(ctx context.Context,
 		}
 	}
 	return err
+}
+
+func (d *applicationResourcesDeleter) deleteUpgradeJobApplication(ctx context.Context, app *applicationv1.App) error {
+	if app.Spec.UpgradePolicy == "" {
+		return nil
+	}
+
+	return d.applicationClient.UpgradeJobs(app.Namespace).DeleteCollection(ctx, metav1.DeleteOptions{},
+		metav1.ListOptions{LabelSelector: labels.SelectorFromSet(
+			labels.Set{"upgradejob.application.tkestack.io/appname": app.Name}).String()})
 }

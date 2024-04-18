@@ -60,6 +60,11 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&AppUpgradeOptions{},
 		&AppDeleteOptions{},
 		&AppCheckResultList{},
+
+		&UpgradePolicy{},
+		&UpgradePolicyList{},
+		&UpgradeJob{},
+		&UpgradeJobList{},
 	)
 
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
