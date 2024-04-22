@@ -148,9 +148,10 @@ func Upgrade(ctx context.Context,
 		return nil, err
 	}
 
-	// 可以重试
+	// 当切换到upgraded状态时，总是进行DaemonsetUpgradeFailed的reset
+	metrics.GaugeApplicationDaemonsetUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 	if app.Spec.UpgradePolicy != "" {
-		if _, err := applicationClient.UpgradePolicies().Get(context.TODO(), app.Spec.UpgradePolicy, metav1.GetOptions{}); err != nil {
+		if _, err := applicationClient.UpgradePolicies().Get(ctx, app.Spec.UpgradePolicy, metav1.GetOptions{}); err != nil {
 			log.Errorf("get UpgradePolicy for app %s/%s failed: %v", app.Namespace, app.Name, err)
 			return nil, err
 		}
@@ -163,12 +164,15 @@ func Upgrade(ctx context.Context,
 
 		log.Infof("upgrade app %s/%s: %s %v %v", app.Namespace, app.Name, app.Spec.UpgradePolicy, app.Status, daemonsets)
 		if len(daemonsets) != 0 {
-			if err := createUpgradeJobsIfNotExist(ctx, applicationClient, platformClient, app, daemonsets); err != nil {
+			if err := createUpgradeJobsIfNotExist(ctx, applicationClient, app, daemonsets); err != nil {
 				newStatus := app.Status.DeepCopy()
 				newStatus.Phase = applicationv1.AppPhaseUpgradFailed
 				newStatus.Message = "create upgrade job failed"
 				newStatus.Reason = err.Error()
 				newStatus.LastTransitionTime = metav1.Now()
+				if hooks.NeedMetrics(ctx, applicationClient, platformClient, app, repo) {
+					metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
+				}
 				log.Infof("Change app %s/%s policy %s status to %s: %v", app.Namespace, app.Name, app.Spec.UpgradePolicy, newStatus.Phase, err)
 				return updateStatusFunc(ctx, app, &app.Status, newStatus)
 			} else {

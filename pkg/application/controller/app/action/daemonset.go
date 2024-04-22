@@ -67,7 +67,7 @@ func UpgradeDaemonset(ctx context.Context,
 		return app, nil
 	}
 
-	ujs, err := applicationClient.UpgradeJobs(app.Namespace).List(context.TODO(), metav1.ListOptions{
+	ujs, err := applicationClient.UpgradeJobs(app.Namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(labels.Set{
 			upgradeJobAppNameLabel:       app.Name,
 			upgradeJobAppGenerationLabel: strconv.Itoa(int(app.Generation)),
@@ -89,6 +89,7 @@ func UpgradeDaemonset(ctx context.Context,
 			newStatus.Message = daemonsetsUpgradeFailed
 			newStatus.Reason = *uj.Status.Reason
 			newStatus.LastTransitionTime = metav1.Now()
+			metrics.GaugeApplicationDaemonsetUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(1)
 			return updateStatusFunc(ctx, app, &app.Status, newStatus)
 		}
 
@@ -127,6 +128,7 @@ func UpgradeDaemonset(ctx context.Context,
 	newStatus.LastTransitionTime = metav1.Now()
 	metrics.GaugeApplicationInstallFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 	metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
+	metrics.GaugeApplicationDaemonsetUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 	metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 	metrics.GaugeApplicationManifestFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 	var updateStatusErr error
@@ -214,11 +216,10 @@ func getOndeleteDaemonsets(ctx context.Context,
 
 func createUpgradeJobsIfNotExist(ctx context.Context,
 	applicationClient applicationversionedclient.ApplicationV1Interface,
-	platformClient platformversionedclient.PlatformV1Interface,
 	app *applicationv1.App,
 	daemonsets []string) error {
 
-	ujs, err := applicationClient.UpgradeJobs(app.Namespace).List(context.TODO(), metav1.ListOptions{
+	ujs, err := applicationClient.UpgradeJobs(app.Namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(labels.Set{
 			upgradeJobAppNameLabel: app.Name,
 		}).String(),
@@ -232,7 +233,7 @@ func createUpgradeJobsIfNotExist(ctx context.Context,
 	for _, uj := range ujs.Items {
 		// 删除之前版本对应的job
 		if uj.Labels[upgradeJobAppGenerationLabel] != strconv.Itoa(int(app.Generation)) {
-			if err := applicationClient.UpgradeJobs(uj.Namespace).Delete(context.TODO(), uj.Name, metav1.DeleteOptions{}); err != nil {
+			if err := applicationClient.UpgradeJobs(uj.Namespace).Delete(ctx, uj.Name, metav1.DeleteOptions{}); err != nil {
 				log.Errorf("delete UpgradeJob for app %s/%s failed: %v", app.Namespace, app.Name, err)
 				return err
 			}
@@ -249,7 +250,7 @@ func createUpgradeJobsIfNotExist(ctx context.Context,
 			continue
 		}
 		// create job from policy
-		_, err := createUpgradeJobFromPolicy(applicationClient, ds, app)
+		_, err := createUpgradeJobFromPolicy(ctx, applicationClient, ds, app)
 		if err != nil {
 			log.Errorf("create UpgradeJob for app %s/%s failed: %v", app.Namespace, app.Name, err)
 			return err
@@ -259,9 +260,9 @@ func createUpgradeJobsIfNotExist(ctx context.Context,
 	return nil
 }
 
-func createUpgradeJobFromPolicy(applicationClient applicationversionedclient.ApplicationV1Interface, ds string, app *applicationv1.App) (*applicationv1.UpgradeJob, error) {
+func createUpgradeJobFromPolicy(ctx context.Context, applicationClient applicationversionedclient.ApplicationV1Interface, ds string, app *applicationv1.App) (*applicationv1.UpgradeJob, error) {
 	//create new job from policy
-	up, err := applicationClient.UpgradePolicies().Get(context.TODO(), app.Spec.UpgradePolicy, metav1.GetOptions{})
+	up, err := applicationClient.UpgradePolicies().Get(ctx, app.Spec.UpgradePolicy, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -295,7 +296,7 @@ func createUpgradeJobFromPolicy(applicationClient applicationversionedclient.App
 		},
 	}
 
-	return applicationClient.UpgradeJobs(app.Namespace).Create(context.TODO(), uj, metav1.CreateOptions{})
+	return applicationClient.UpgradeJobs(app.Namespace).Create(ctx, uj, metav1.CreateOptions{})
 }
 
 func getUpgradeJobNameFromApp(ds string, app *applicationv1.App) string {
