@@ -284,6 +284,7 @@ func (c *Controller) syncItem(key string) error {
 			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 			metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 			metrics.GaugeApplicationSyncFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
+			metrics.GaugeApplicationDaemonsetUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 			// If err is not nil, do not update object status when phase is Terminating.
 			// DeletionTimestamp is not empty and object will be deleted when you request updateStatus
 		} else if app.Status.Phase == "Isolated" {
@@ -291,6 +292,7 @@ func (c *Controller) syncItem(key string) error {
 			metrics.GaugeApplicationUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 			metrics.GaugeApplicationRollbackFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 			metrics.GaugeApplicationSyncFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
+			metrics.GaugeApplicationDaemonsetUpgradeFailed.WithLabelValues(app.Spec.TargetCluster, app.Name).Set(0)
 		} else {
 			cachedApp := c.cache.getOrCreate(key)
 			err = c.processUpdate(ctx, cachedApp, app, key)
