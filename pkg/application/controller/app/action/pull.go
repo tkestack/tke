@@ -42,7 +42,7 @@ func Pull(ctx context.Context,
 	if err != nil {
 		return "", err
 	}
-	chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(repo, app.Spec.Chart)
+	chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(repo, app)
 	if err != nil {
 		return "", err
 	}

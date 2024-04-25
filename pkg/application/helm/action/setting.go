@@ -20,6 +20,7 @@ package action
 
 import (
 	"fmt"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
@@ -58,7 +59,7 @@ func NewSettings(repoDir string) (*cli.EnvSettings, error) {
 // ExpandFile expand existed file to destDir
 func ExpandFile(srcFile, destDir string) (string, error) {
 	if srcFile != "" && file.IsFile(srcFile) {
-		temp, err := securejoin.SecureJoin(destDir, strconv.FormatInt(time.Now().Unix(), 10))
+		temp, err := securejoin.SecureJoin(destDir, strconv.FormatInt(time.Now().Unix(), 10)+"-"+fmt.Sprintf("%d", rand.Intn(1000)))
 		if err != nil {
 			return "", err
 		}
