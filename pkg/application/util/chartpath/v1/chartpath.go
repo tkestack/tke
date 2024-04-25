@@ -41,7 +41,8 @@ func FullfillChartInfo(appChart v1.Chart, cg registryv1.ChartGroup) (v1.Chart, e
 }
 
 // BuildChartPathBasicOptions will judge chartgroup type and return well-structured ChartPathOptions
-func BuildChartPathBasicOptions(repo config.RepoConfiguration, appChart v1.Chart) (opt helmaction.ChartPathOptions, err error) {
+func BuildChartPathBasicOptions(repo config.RepoConfiguration, app *v1.App) (opt helmaction.ChartPathOptions, err error) {
+	appChart := app.Spec.Chart
 	if appChart.ImportedRepo {
 		password, err := registryutil.VerifyDecodedPassword(appChart.RepoPassword)
 		if err != nil {
@@ -63,7 +64,7 @@ func BuildChartPathBasicOptions(repo config.RepoConfiguration, appChart v1.Chart
 		opt.Password = repo.AdminPassword
 	}
 
-	opt.ChartRepo = appChart.TenantID + "/" + appChart.ChartGroupName
+	opt.ChartRepo = appChart.TenantID + "/" + app.Spec.TargetCluster + "-" + app.Spec.TargetNamespace + "/" + appChart.ChartGroupName
 	opt.Chart = appChart.ChartName
 	opt.Version = appChart.ChartVersion
 	return opt, nil

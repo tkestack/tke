@@ -339,21 +339,13 @@ func (rs *REST) getChart(ctx context.Context, app *application.App, cg *registry
 }
 
 func (rs *REST) dryRun(ctx context.Context, app *application.App) (*release.Release, error) {
-	chartGroup, err := rs.getChartGroup(ctx, app)
-	if err != nil {
-		return nil, err
-	}
-	appChart, err := chartpath.FullfillChartInfo(app.Spec.Chart, chartGroup)
-	if err != nil {
-		return nil, errors.NewInternalError(err)
-	}
-	chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(rs.repo, appChart)
-	if err != nil {
-		return nil, errors.NewInternalError(err)
-	}
 	appv1 := &v1.App{}
 	if err := v1.Convert_application_App_To_v1_App(app, appv1, nil); err != nil {
 		return nil, err
+	}
+	chartPathBasicOptions, err := chartpath.BuildChartPathBasicOptions(rs.repo, appv1)
+	if err != nil {
+		return nil, errors.NewInternalError(err)
 	}
 	client, err := util.NewHelmClientWithProvider(ctx, rs.platformClient, appv1)
 	if err != nil {
