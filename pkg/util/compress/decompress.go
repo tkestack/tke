@@ -33,6 +33,7 @@ func ExtractTarGz(src, dest string) error {
 	if err != nil {
 		return fmt.Errorf("ExtractTarGz: Open file: %s failed", src)
 	}
+	defer gzipStream.Close()
 
 	uncompressedStream, err := gzip.NewReader(gzipStream)
 	if err != nil {
