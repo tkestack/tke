@@ -1145,6 +1145,11 @@ func (in *ClusterSpec) DeepCopyInto(out *ClusterSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.ClusterLevel != nil {
+		in, out := &in.ClusterLevel, &out.ClusterLevel
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 
@@ -1188,6 +1193,11 @@ func (in *ClusterStatus) DeepCopyInto(out *ClusterStatus) {
 		in, out := &in.RegistryIPs, &out.RegistryIPs
 		*out = make([]string, len(*in))
 		copy(*out, *in)
+	}
+	if in.ClusterLevel != nil {
+		in, out := &in.ClusterLevel, &out.ClusterLevel
+		*out = new(string)
+		**out = **in
 	}
 	return
 }

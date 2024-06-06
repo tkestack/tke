@@ -220,6 +220,9 @@ type ClusterSpec struct {
 	// AppVersion is the overall version of system components
 	// +optional
 	AppVersion string
+	// ClusterLevel is the expect level of cluster
+	// +optional
+	ClusterLevel *string
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -277,6 +280,9 @@ type ClusterStatus struct {
 	// ComponentPhase is the status of components, contains "deployed", "pending-upgrade", "failed" status
 	// +optional
 	ComponentPhase ComponentPhase
+	// ClusterLevel is the real level of cluster
+	// +optional
+	ClusterLevel *string
 }
 
 // FinalizerName is the name identifying a finalizer during cluster lifecycle.

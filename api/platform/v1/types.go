@@ -231,6 +231,9 @@ type ClusterSpec struct {
 	// AppVersion is the overall version of system components
 	// +optional
 	AppVersion string `json:"appVersion,omitempty" protobuf:"bytes,27,opt,name=appVersion"`
+	// ClusterLevel is the expect level of cluster
+	// +optional
+	ClusterLevel *string `json:"clusterLevel,omitempty" protobuf:"bytes,28,opt,name=clusterLevel"`
 }
 
 // ClusterStatus represents information about the status of a cluster.
@@ -288,6 +291,9 @@ type ClusterStatus struct {
 	// ComponentPhase is the status of components, contains "deployed", "pending-upgrade", "failed" status
 	// +optional
 	ComponentPhase ComponentPhase `json:"componentPhase,omitempty" protobuf:"bytes,22,opt,name=componentPhase"`
+	// ClusterLevel is the real level of cluster
+	// +optional
+	ClusterLevel *string `json:"clusterLevel,omitempty" protobuf:"bytes,23,opt,name=clusterLevel"`
 }
 
 // FinalizerName is the name identifying a finalizer during cluster lifecycle.
