@@ -345,6 +345,8 @@ const (
 	ClusterUpscaling ClusterPhase = "Upscaling"
 	// ClusterDownscaling means the cluster is undergoing graceful down scaling.
 	ClusterDownscaling ClusterPhase = "Downscaling"
+	// ClusterRecovering means the cluster is recovering form confined.
+	ClusterRecovering ClusterPhase = "Recovering"
 )
 
 // ComponentPhase defines the phase of anywhere cluster component
