@@ -25,9 +25,9 @@ import (
 	"fmt"
 	"sync"
 
-	"k8s.io/client-go/util/flowcontrol"
-
 	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/client-go/util/flowcontrol"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
 var (
@@ -109,5 +109,5 @@ var (
 
 func init() {
 	// Register the summary and the histogram with Prometheus's default registry.
-	prometheus.MustRegister(GaugeApplicationInstallFailed, GaugeApplicationUpgradeFailed, GaugeApplicationDaemonsetUpgradeFailed, GaugeApplicationRollbackFailed, GaugeApplicationSyncFailed, GaugeApplicationManifestFailed)
+	metrics.Registry.MustRegister(GaugeApplicationInstallFailed, GaugeApplicationUpgradeFailed, GaugeApplicationDaemonsetUpgradeFailed, GaugeApplicationRollbackFailed, GaugeApplicationSyncFailed, GaugeApplicationManifestFailed)
 }
