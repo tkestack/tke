@@ -31,6 +31,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+	_ "k8s.io/component-base/metrics/prometheus/workqueue"
 	applicationv1 "tkestack.io/tke/api/application/v1"
 	clientset "tkestack.io/tke/api/client/clientset/versioned"
 	platformversionedclient "tkestack.io/tke/api/client/clientset/versioned/typed/platform/v1"

@@ -26,8 +26,8 @@ import (
 	"sync"
 
 	"k8s.io/client-go/util/flowcontrol"
-
-	"github.com/prometheus/client_golang/prometheus"
+	compbasemetrics "k8s.io/component-base/metrics"
+	"k8s.io/component-base/metrics/legacyregistry"
 )
 
 var (
@@ -36,7 +36,7 @@ var (
 )
 
 type rateLimiterMetric struct {
-	metric prometheus.Gauge
+	metric *compbasemetrics.Gauge
 	stopCh chan struct{}
 }
 
@@ -48,12 +48,12 @@ func registerRateLimiterMetric(ownerName string) error {
 		// only register once in Prometheus. We happen to see an ownerName reused in parallel integration tests.
 		return nil
 	}
-	metric := prometheus.NewGauge(prometheus.GaugeOpts{
+	metric := compbasemetrics.NewGauge(&compbasemetrics.GaugeOpts{
 		Name:      "rate_limiter_use",
 		Subsystem: ownerName,
 		Help:      fmt.Sprintf("A metric measuring the saturation of the rate limiter for %v", ownerName),
 	})
-	if err := prometheus.Register(metric); err != nil {
+	if err := legacyregistry.Register(metric); err != nil {
 		return fmt.Errorf("error registering rate limiter usage metric: %v", err)
 	}
 	stopCh := make(chan struct{})
@@ -81,27 +81,27 @@ func RegisterMetricAndTrackRateLimiterUsage(ownerName string, rateLimiter flowco
 }
 
 var (
-	GaugeApplicationInstallFailed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	GaugeApplicationInstallFailed = compbasemetrics.NewGaugeVec(&compbasemetrics.GaugeOpts{
 		Name: "applicationInstallFailed",
 		Help: "application install failed count",
 	}, []string{"cluster", "application"})
-	GaugeApplicationManifestFailed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	GaugeApplicationManifestFailed = compbasemetrics.NewGaugeVec(&compbasemetrics.GaugeOpts{
 		Name: "applicationManifestFailed",
 		Help: "application manifest failed",
 	}, []string{"cluster", "application"})
-	GaugeApplicationUpgradeFailed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	GaugeApplicationUpgradeFailed = compbasemetrics.NewGaugeVec(&compbasemetrics.GaugeOpts{
 		Name: "applicationUpgradeFailed",
 		Help: "application upgrade failed count",
 	}, []string{"cluster", "application"})
-	GaugeApplicationDaemonsetUpgradeFailed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	GaugeApplicationDaemonsetUpgradeFailed = compbasemetrics.NewGaugeVec(&compbasemetrics.GaugeOpts{
 		Name: "applicationDaemonsetUpgradeFailed",
 		Help: "application daemonset upgrade failed count",
 	}, []string{"cluster", "application"})
-	GaugeApplicationRollbackFailed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	GaugeApplicationRollbackFailed = compbasemetrics.NewGaugeVec(&compbasemetrics.GaugeOpts{
 		Name: "applicationRollbackFailed",
 		Help: "application rollback failed count",
 	}, []string{"cluster", "application"})
-	GaugeApplicationSyncFailed = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+	GaugeApplicationSyncFailed = compbasemetrics.NewGaugeVec(&compbasemetrics.GaugeOpts{
 		Name: "applicationSyncFailed",
 		Help: "application sync failed count",
 	}, []string{"cluster", "application"})
@@ -109,5 +109,5 @@ var (
 
 func init() {
 	// Register the summary and the histogram with Prometheus's default registry.
-	prometheus.MustRegister(GaugeApplicationInstallFailed, GaugeApplicationUpgradeFailed, GaugeApplicationDaemonsetUpgradeFailed, GaugeApplicationRollbackFailed, GaugeApplicationSyncFailed, GaugeApplicationManifestFailed)
+	legacyregistry.MustRegister(GaugeApplicationInstallFailed, GaugeApplicationUpgradeFailed, GaugeApplicationDaemonsetUpgradeFailed, GaugeApplicationRollbackFailed, GaugeApplicationSyncFailed, GaugeApplicationManifestFailed)
 }
