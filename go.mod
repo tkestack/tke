@@ -50,7 +50,7 @@ require (
 	github.com/emicklei/go-restful v2.11.1+incompatible
 	github.com/evanphx/json-patch v4.12.0+incompatible
 	github.com/fatih/color v1.13.0
-	github.com/fsnotify/fsnotify v1.4.9
+	github.com/fsnotify/fsnotify v1.5.1
 	github.com/go-openapi/inflect v0.19.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/gofuzz v1.2.0
@@ -67,8 +67,8 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de
 	github.com/moul/http2curl v1.0.0 // indirect
-	github.com/onsi/ginkgo v1.16.4
-	github.com/onsi/gomega v1.15.0
+	github.com/onsi/ginkgo v1.16.5
+	github.com/onsi/gomega v1.18.1
 	github.com/parnurzeal/gorequest v0.2.15
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.10.1
@@ -89,7 +89,7 @@ require (
 	github.com/thoas/go-funk v0.4.0
 	go.etcd.io/etcd/client/pkg/v3 v3.5.1
 	go.etcd.io/etcd/client/v3 v3.5.1
-	go.uber.org/zap v1.19.0
+	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.19.0
 	golang.org/x/net v0.21.0
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
@@ -119,7 +119,7 @@ require (
 	k8s.io/kubectl v0.24.0
 	k8s.io/metrics v0.24.0
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
-	sigs.k8s.io/controller-runtime v0.6.0
+	sigs.k8s.io/controller-runtime v0.12.0
 	sigs.k8s.io/yaml v1.3.0
 	yunion.io/x/pkg v0.0.0-20200603123312-ad58e621aec0
 )
