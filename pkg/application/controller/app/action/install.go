@@ -64,6 +64,7 @@ func Install(ctx context.Context,
 		return nil, err
 	}
 
+	// 能看日志，是不是有限流？
 	destfile, err := Pull(ctx, applicationClient, platformClient, app, repo, updateStatusFunc)
 	if err != nil {
 		newStatus := app.Status.DeepCopy()
