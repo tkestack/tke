@@ -35,7 +35,7 @@ import (
 
 // Run runs the specified application controller manager. This should never exit.
 func Run(cfg *config.Config, stopCh <-chan struct{}) error {
-	log.Info("Starting Tencent Kubernetes Engine application controller manager")
+	log.Infof("Starting Tencent Kubernetes Engine application controller manager: %v", cfg.Component.Debugging)
 
 	// Setup any healthz checks we will want to use.
 	var checks []healthz.HealthChecker
