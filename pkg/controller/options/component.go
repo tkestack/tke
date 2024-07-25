@@ -62,8 +62,6 @@ type ComponentOptions struct {
 
 	allControllers               []string
 	disabledByDefaultControllers []string
-
-	Debugging componentconfig.DebuggingConfiguration
 }
 
 // ComponentConfiguration holds configuration for a generic controller-manager
@@ -128,7 +126,6 @@ func NewComponentOptions(allControllers []string, disabledByDefaultControllers [
 		ContainerRegistryDomain:      "docker.io",
 		allControllers:               allControllers,
 		disabledByDefaultControllers: disabledByDefaultControllers,
-		Debugging:                    componentconfig.DebuggingConfiguration{EnableProfiling: true},
 	}
 }
 
@@ -214,6 +211,5 @@ func (o *ComponentOptions) ApplyTo(cfg *ComponentConfiguration) error {
 	cfg.LeaderElection.RetryPeriod = metav1.Duration{Duration: o.LeaderElection.RetryPeriod}
 	cfg.LeaderElection.RenewDeadline = metav1.Duration{Duration: o.LeaderElection.RenewDeadline}
 	cfg.LeaderElection.LeaseDuration = metav1.Duration{Duration: o.LeaderElection.LeaseDuration}
-	cfg.Debugging = o.Debugging
 	return nil
 }

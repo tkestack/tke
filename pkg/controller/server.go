@@ -56,12 +56,12 @@ func BuildHandlerChain(apiHandler http.Handler, authorizationInfo *apiserver.Aut
 func NewBaseHandler(c *componentconfig.DebuggingConfiguration, checks ...healthz.HealthChecker) *mux.PathRecorderMux {
 	m := mux.NewPathRecorderMux("controller-manager")
 	healthz.InstallHandler(m, checks...)
-	//if c.EnableProfiling {
-	routes.Profiling{}.Install(m)
-	if c.EnableContentionProfiling {
-		goruntime.SetBlockProfileRate(1)
+	if c.EnableProfiling {
+		routes.Profiling{}.Install(m)
+		if c.EnableContentionProfiling {
+			goruntime.SetBlockProfileRate(1)
+		}
 	}
-	//}
 	m.Handle("/metrics", legacyregistry.HandlerWithReset())
 
 	return m
