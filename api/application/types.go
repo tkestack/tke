@@ -152,6 +152,22 @@ type AppStatus struct {
 	// Dryrun result.
 	// +optional
 	Manifest string
+	// The healthStatus for the application
+	// +optional
+	HealthStatus string
+	// lastHealthCheckTime is the last health check time for the application
+	// +optional
+	LastHealthCheckTime metav1.Time
+	// healthCheckDetails is the detail info of last health check result
+	// +optional
+	HealthCheckDetails []HealthCheckDetail
+}
+
+type HealthCheckDetail struct {
+	WorkloadType  string
+	WorkloadName  string
+	PodDesiredNum int32
+	PodReadyNum   int32
 }
 
 // +genclient

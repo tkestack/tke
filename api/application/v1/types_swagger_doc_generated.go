@@ -115,17 +115,20 @@ func (AppSpec) SwaggerDoc() map[string]string {
 }
 
 var map_AppStatus = map[string]string{
-	"":                   "AppStatus represents information about the status of a bootstrap.",
-	"phase":              "Phase the release is in, one of ('ChartFetched', 'ChartFetchFailed', 'Installing', 'Upgrading', 'Succeeded', 'RollingBack', 'RolledBack', 'RollbackFailed')",
-	"observedGeneration": "ObservedGeneration is the most recent generation observed by the operator.",
-	"releaseStatus":      "ReleaseStatus is the status as given by Helm for the release managed by this resource.",
-	"releaseLastUpdated": "ReleaseLastUpdated is the last updated time for the release",
-	"revision":           "Revision holds the Git hash or version of the chart currently deployed.",
-	"rollbackRevision":   "RollbackRevision specify the target rollback version of the chart",
-	"lastTransitionTime": "The last time the condition transitioned from one status to another.",
-	"reason":             "The reason for the condition's last transition.",
-	"message":            "A human readable message indicating details about the transition.",
-	"manifest":           "Dryrun result.",
+	"":                    "AppStatus represents information about the status of a bootstrap.",
+	"phase":               "Phase the release is in, one of ('ChartFetched', 'ChartFetchFailed', 'Installing', 'Upgrading', 'Succeeded', 'RollingBack', 'RolledBack', 'RollbackFailed')",
+	"observedGeneration":  "ObservedGeneration is the most recent generation observed by the operator.",
+	"releaseStatus":       "ReleaseStatus is the status as given by Helm for the release managed by this resource.",
+	"releaseLastUpdated":  "ReleaseLastUpdated is the last updated time for the release",
+	"revision":            "Revision holds the Git hash or version of the chart currently deployed.",
+	"rollbackRevision":    "RollbackRevision specify the target rollback version of the chart",
+	"lastTransitionTime":  "The last time the condition transitioned from one status to another.",
+	"reason":              "The reason for the condition's last transition.",
+	"message":             "A human readable message indicating details about the transition.",
+	"manifest":            "Dryrun result.",
+	"healthStatus":        "The healthStatus for the application",
+	"lastHealthCheckTime": "lastHealthCheckTime is the last health check time for the application",
+	"healthCheckDetails":  "healthCheckDetails is the detail info of last health check result",
 }
 
 func (AppStatus) SwaggerDoc() map[string]string {

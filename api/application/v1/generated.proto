@@ -220,6 +220,18 @@ message AppStatus {
   // Dryrun result.
   // +optional
   optional string manifest = 10;
+
+  // The healthStatus for the application
+  // +optional
+  optional string healthStatus = 11;
+
+  // lastHealthCheckTime is the last health check time for the application
+  // +optional
+  optional k8s.io.apimachinery.pkg.apis.meta.v1.Time lastHealthCheckTime = 12;
+
+  // healthCheckDetails is the detail info of last health check result
+  // +optional
+  repeated HealthCheckDetail healthCheckDetails = 13;
 }
 
 // AppUpgradeOptions is the options to app for upgrade.
@@ -297,6 +309,16 @@ message ConfigMapList {
 
   // Items is the list of ConfigMaps.
   repeated ConfigMap items = 2;
+}
+
+message HealthCheckDetail {
+  optional string workloadType = 1;
+
+  optional string workloadName = 2;
+
+  optional int32 podDesiredNum = 3;
+
+  optional int32 podReadyNum = 4;
 }
 
 // public parameters used in helm install and helm upgrade command

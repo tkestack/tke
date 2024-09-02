@@ -152,6 +152,15 @@ type AppStatus struct {
 	// Dryrun result.
 	// +optional
 	Manifest string `json:"manifest" protobuf:"bytes,10,opt,name=manifest"`
+	// The healthStatus for the application
+	// +optional
+	HealthStatus string `json:"healthStatus,omitempty" protobuf:"bytes,11,opt,name=healthStatus"`
+	// lastHealthCheckTime is the last health check time for the application
+	// +optional
+	LastHealthCheckTime metav1.Time `json:"lastHealthCheckTime,omitempty" protobuf:"bytes,12,opt,name=lastHealthCheckTime"`
+	// healthCheckDetails is the detail info of last health check result
+	// +optional
+	HealthCheckDetails []HealthCheckDetail `json:"healthCheckDetails" protobuf:"bytes,13,opt,name=healthCheckDetails"`
 }
 
 // +genclient
@@ -257,6 +266,13 @@ const (
 
 // AppPhase indicates the phase of app.
 type AppPhase string
+
+type HealthCheckDetail struct {
+	WorkloadType  string `json:"workloadType,omitempty" protobuf:"bytes,1,opt,name=workloadType"`
+	WorkloadName  string `json:"workloadName,omitempty" protobuf:"bytes,2,opt,name=workloadName"`
+	PodDesiredNum int32  `json:"podDesiredNum,omitempty" protobuf:"varint,3,opt,name=podDesiredNum"`
+	PodReadyNum   int32  `json:"podReadyNum,omitempty" protobuf:"varint,4,opt,name=podReadyNum"`
+}
 
 const (
 	// Installing means the installation for the App is running.

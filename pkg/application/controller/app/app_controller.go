@@ -371,7 +371,8 @@ func (c *Controller) handlePhase(ctx context.Context, key string, cachedApp *cac
 	case applicationv1.AppPhaseSucceeded:
 		c.startAppHealthCheck(ctx, key)
 		// sync release status
-		return c.syncAppFromRelease(ctx, cachedApp, app)
+		c.syncAppFromRelease(ctx, cachedApp, app)
+		return action.HealthCheck(ctx, c.client.ApplicationV1(), c.platformClient, app, c.repo)
 	case applicationv1.AppPhaseUpgradFailed:
 		return action.Upgrade(ctx, c.client.ApplicationV1(), c.platformClient, app, c.repo, c.updateStatus)
 	case applicationv1.AppPhaseRollingBack:

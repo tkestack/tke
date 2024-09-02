@@ -3,6 +3,7 @@ module tkestack.io/tke
 go 1.17
 
 replace (
+    git.code.oa.com/tke-micro/tke-quality-inspector => git.woa.com/alexmlqi/tke-quality-inspector v0.0.0-20231010135807-1640daeb0063
 	github.com/NetEase-Object-Storage/nos-golang-sdk => github.com/karuppiah7890/nos-golang-sdk v0.0.0-20191116042345-0792ba35abcc
 	github.com/chartmuseum/storage => github.com/leoryu/chartmuseum-storage v0.11.1-0.20211104032734-9da39e8f5170
 	github.com/deislabs/oras => github.com/deislabs/oras v0.8.0
