@@ -156,11 +156,7 @@ func buildDirector(r *http.Request, config *rest.Config) func(req *http.Request)
 		if config.BearerToken != "" {
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", config.BearerToken))
 		}
-		req.URL = &url.URL{
-			Scheme: "https",
-			// TODO: support apiserver with path
-			Host: strings.TrimPrefix(config.Host, "https://"),
-			Path: r.RequestURI,
-		}
+		req.URL.Scheme = "https"
+		req.URL.Host = strings.TrimPrefix(config.Host, "https://")
 	}
 }
